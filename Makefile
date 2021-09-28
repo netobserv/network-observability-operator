@@ -49,6 +49,13 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+# Image building tool (docker / podman)
+ifeq (,$(shell which podman 2>/dev/null))
+OCI_BIN=docker
+else
+OCI_BIN=podman
+endif
+
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -98,11 +105,11 @@ build: generate fmt vet ## Build manager binary.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
-docker-build: test ## Build docker image with the manager.
-	docker build -t ${IMG} .
+image-build: test ## Build OCI image with the manager.
+	$(OCI_BIN) build -t ${IMG} .
 
-docker-push: ## Push docker image with the manager.
-	docker push ${IMG}
+image-push: ## Push OCI image with the manager.
+	$(OCI_BIN) push ${IMG}
 
 ##@ Deployment
 
@@ -155,11 +162,11 @@ bundle: manifests kustomize ## Generate bundle manifests and metadata, then vali
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
-	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	$(OCI_BIN) build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
-	$(MAKE) docker-push IMG=$(BUNDLE_IMG)
+	$(MAKE) image-push IMG=$(BUNDLE_IMG)
 
 .PHONY: opm
 OPM = ./bin/opm
@@ -200,4 +207,4 @@ catalog-build: opm ## Build a catalog image.
 # Push the catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
-	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+	$(MAKE) image-push IMG=$(CATALOG_IMG)
