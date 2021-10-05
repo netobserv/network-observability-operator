@@ -31,8 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	cachev1alpha1 "github.com/jotak/network-observability-operator/api/v1alpha1"
-	"github.com/jotak/network-observability-operator/controllers"
+	cachev1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
 

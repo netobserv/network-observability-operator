@@ -1,4 +1,4 @@
-module github.com/jotak/network-observability-operator
+module github.com/netobserv/network-observability-operator
 
 go 1.16
 
