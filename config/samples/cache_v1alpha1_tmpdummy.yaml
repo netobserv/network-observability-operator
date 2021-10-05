@@ -1,0 +1,7 @@
+apiVersion: cache.netobserv.io/v1alpha1
+kind: TmpDummy
+metadata:
+  name: tmpdummy-sample
+spec:
+  # Add fields here
+  foo: bar

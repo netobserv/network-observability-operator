@@ -1,0 +1,19 @@
+domain: netobserv.io
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: network-observability-operator
+repo: github.com/netobserv/network-observability-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: netobserv.io
+  group: cache
+  kind: TmpDummy
+  path: github.com/netobserv/network-observability-operator/api/v1alpha1
+  version: v1alpha1
+version: "3"
