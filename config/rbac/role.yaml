@@ -1,0 +1,34 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - flows.netobserv.io
+  resources:
+  - flowcollectors
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - flows.netobserv.io
+  resources:
+  - flowcollectors/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - flows.netobserv.io
+  resources:
+  - flowcollectors/status
+  verbs:
+  - get
+  - patch
+  - update

@@ -1,0 +1,24 @@
+# permissions for end users to edit flowcollectors.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: flowcollector-editor-role
+rules:
+- apiGroups:
+  - flows.netobserv.io
+  resources:
+  - flowcollectors
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - flows.netobserv.io
+  resources:
+  - flowcollectors/status
+  verbs:
+  - get

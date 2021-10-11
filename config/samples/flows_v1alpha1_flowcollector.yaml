@@ -1,0 +1,7 @@
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowCollector
+metadata:
+  name: flowcollector-sample
+spec:
+  # Add fields here
+  foo: bar
