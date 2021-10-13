@@ -17,12 +17,9 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // FlowCollectorSpec defines the desired state of FlowCollector
@@ -44,7 +41,7 @@ type FlowCollectorIPFIX struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	// CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending
-	CacheActiveTimeout time.Duration `json:"cacheActiveTimeout,omitempty"`
+	CacheActiveTimeout metav1.Duration `json:"cacheActiveTimeout,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	// CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows
@@ -93,17 +90,17 @@ type FlowCollectorLoki struct {
 	URL string `json:"url,omitempty"`
 
 	// BatchWait is max time to wait before sending a batch
-	BatchWait time.Duration `json:"batchWait,omitempty"`
+	BatchWait metav1.Duration `json:"batchWait,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
 	// BatchSize is max batch size (in bytes) of logs to accumulate before sending
 	BatchSize int64 `json:"batchSize,omitempty"`
 
 	// MinBackoff is the initial backoff time for client connection between retries
-	MinBackoff time.Duration `json:"minBackoff,omitempty"`
+	MinBackoff metav1.Duration `json:"minBackoff,omitempty"`
 
 	// MaxBackoff is the maximum backoff time for client connection between retries
-	MaxBackoff time.Duration `json:"maxBackoff,omitempty"`
+	MaxBackoff metav1.Duration `json:"maxBackoff,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	// MaxRetries is the maximum number of retries for client connections

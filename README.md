@@ -18,7 +18,7 @@ make image-build image-push deploy
 IMG="docker.io/myuser/netobserv:latest" make image-build image-push deploy
 ```
 
-By default, the operator is deployed in namespace "network-observability-operator-system".
+By default, the operator is deployed in namespace "network-observability".
 
 ## Resources
 

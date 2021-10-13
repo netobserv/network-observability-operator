@@ -89,8 +89,7 @@ spec:
                   cacheActiveTimeout:
                     description: CacheActiveTimeout is the max period during which
                       the reporter will aggregate flows before sending
-                    format: int64
-                    type: integer
+                    type: string
                   cacheMaxFlows:
                     description: CacheMaxFlows is the max number of flows in an aggregate;
                       when reached, the reporter sends the flows
@@ -115,13 +114,11 @@ spec:
                     type: integer
                   batchWait:
                     description: BatchWait is max time to wait before sending a batch
-                    format: int64
-                    type: integer
+                    type: string
                   maxBackoff:
                     description: MaxBackoff is the maximum backoff time for client
                       connection between retries
-                    format: int64
-                    type: integer
+                    type: string
                   maxRetries:
                     description: MaxRetries is the maximum number of retries for client
                       connections
@@ -131,8 +128,7 @@ spec:
                   minBackoff:
                     description: MinBackoff is the initial backoff time for client
                       connection between retries
-                    format: int64
-                    type: integer
+                    type: string
                   staticLabels:
                     additionalProperties:
                       type: string

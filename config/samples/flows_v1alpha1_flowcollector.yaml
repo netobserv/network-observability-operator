@@ -3,5 +3,22 @@ kind: FlowCollector
 metadata:
   name: flowcollector-sample
 spec:
-  # Add fields here
-  foo: bar
+  ipfix:
+    cacheActiveTimeout: 60s
+    cacheMaxFlows: 400
+    sampling: 100
+  collector:
+    kind: DaemonSet
+    port: 2055
+    image: 'quay.io/netobserv/goflow-kube:v1'
+    imagePullPolicy: IfNotPresent
+    logLevel: info
+  loki:
+    url: 'http://loki:3100/'
+    batchWait: 1s
+    batchSize: 102400
+    minBackoff: 1s
+    maxBackoff: 300s
+    maxRetries: 10
+    staticLabels:
+      app: netobserv-flowcollector
