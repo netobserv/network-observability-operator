@@ -121,6 +121,7 @@ type FlowCollectorStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:scope=Cluster
 
 // FlowCollector is the Schema for the flowcollectors API
 type FlowCollector struct {

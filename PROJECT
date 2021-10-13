@@ -9,7 +9,6 @@ repo: github.com/netobserv/network-observability-operator
 resources:
 - api:
     crdVersion: v1
-    namespaced: true
   controller: true
   domain: netobserv.io
   group: flows
