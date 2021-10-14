@@ -1,13 +1,13 @@
-# permissions for end users to edit tmpdummies.
+# permissions for end users to edit flowcollectors.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: tmpdummy-editor-role
+  name: flowcollector-editor-role
 rules:
 - apiGroups:
-  - cache.netobserv.io
+  - flows.netobserv.io
   resources:
-  - tmpdummies
+  - flowcollectors
   verbs:
   - create
   - delete
@@ -17,8 +17,8 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache.netobserv.io
+  - flows.netobserv.io
   resources:
-  - tmpdummies/status
+  - flowcollectors/status
   verbs:
   - get

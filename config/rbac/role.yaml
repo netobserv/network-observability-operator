@@ -7,9 +7,9 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - cache.netobserv.io
+  - flows.netobserv.io
   resources:
-  - tmpdummies
+  - flowcollectors
   verbs:
   - create
   - delete
@@ -19,15 +19,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache.netobserv.io
+  - flows.netobserv.io
   resources:
-  - tmpdummies/finalizers
+  - flowcollectors/finalizers
   verbs:
   - update
 - apiGroups:
-  - cache.netobserv.io
+  - flows.netobserv.io
   resources:
-  - tmpdummies/status
+  - flowcollectors/status
   verbs:
   - get
   - patch

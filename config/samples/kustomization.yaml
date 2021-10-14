@@ -1,4 +1,4 @@
 ## Append samples you want in your CSV to this file as resources ##
 resources:
-- cache_v1alpha1_tmpdummy.yaml
+- flows_v1alpha1_flowcollector.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

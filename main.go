@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	cachev1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
@@ -44,7 +44,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(cachev1alpha1.AddToScheme(scheme))
+	utilruntime.Must(flowsv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -78,11 +78,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.TmpDummyReconciler{
+	if err = (&controllers.FlowCollectorReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "TmpDummy")
+		setupLog.Error(err, "unable to create controller", "controller", "FlowCollector")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
