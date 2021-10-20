@@ -7,10 +7,11 @@ spec:
     cacheActiveTimeout: 60s
     cacheMaxFlows: 400
     sampling: 100
-  collector:
-    kind: DaemonSet
+  goflowkube:
+    kind: Deployment
+    replicas: 1
     port: 2055
-    image: 'quay.io/netobserv/goflow-kube:v1'
+    image: 'quay.io/netobserv/goflow-kube:dev'
     imagePullPolicy: IfNotPresent
     logLevel: info
   loki:
