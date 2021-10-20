@@ -12,13 +12,13 @@ import (
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 )
 
-func goflowKubeLabels() map[string]string {
+func buildLabels() map[string]string {
 	return map[string]string{
 		"app": gfkName,
 	}
 }
 
-func goflowKubeDeployment(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *appsv1.Deployment {
+func buildDeployment(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      gfkName,
@@ -27,14 +27,14 @@ func goflowKubeDeployment(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns str
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &desired.Replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: goflowKubeLabels(),
+				MatchLabels: buildLabels(),
 			},
-			Template: *goflowKubePodTemplate(desired),
+			Template: *buildPodTemplate(desired),
 		},
 	}
 }
 
-func goflowKubeDaemonSet(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *appsv1.DaemonSet {
+func buildDaemonSet(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *appsv1.DaemonSet {
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      gfkName,
@@ -42,18 +42,18 @@ func goflowKubeDaemonSet(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns stri
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: goflowKubeLabels(),
+				MatchLabels: buildLabels(),
 			},
-			Template: *goflowKubePodTemplate(desired),
+			Template: *buildPodTemplate(desired),
 		},
 	}
 }
 
-func goflowKubePodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) *corev1.PodTemplateSpec {
-	cmd := goflowKubeMainCommand(desired)
+func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) *corev1.PodTemplateSpec {
+	cmd := buildMainCommand(desired)
 	return &corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: goflowKubeLabels(),
+			Labels: buildLabels(),
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
@@ -67,19 +67,19 @@ func goflowKubePodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) *core
 	}
 }
 
-func goflowKubeMainCommand(desired *flowsv1alpha1.FlowCollectorGoflowKube) string {
+func buildMainCommand(desired *flowsv1alpha1.FlowCollectorGoflowKube) string {
 	return fmt.Sprintf(`/kube-enricher -loglevel %s -stdinsourceformat pb -listen "netflow://:%d"`, desired.LogLevel, desired.Port)
 }
 
-func goflowKubeService(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *corev1.Service {
+func buildService(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      gfkName,
 			Namespace: ns,
-			Labels:    goflowKubeLabels(),
+			Labels:    buildLabels(),
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: goflowKubeLabels(),
+			Selector: buildLabels(),
 			Ports: []corev1.ServicePort{{
 				Port:     desired.Port,
 				Protocol: "UDP",
@@ -92,19 +92,19 @@ func goflowKubeService(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string
 //+kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,resources=pods;services,verbs=get;list;watch
 
-func goflowKubeRBAC(ns string) []client.Object {
+func buildRBAC(ns string) []client.Object {
 	return []client.Object{
 		&corev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      gfkName,
 				Namespace: ns,
-				Labels:    goflowKubeLabels(),
+				Labels:    buildLabels(),
 			},
 		},
 		&rbacv1.ClusterRole{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   gfkName,
-				Labels: goflowKubeLabels(),
+				Labels: buildLabels(),
 			},
 			Rules: []rbacv1.PolicyRule{{
 				APIGroups: []string{""},
@@ -119,7 +119,7 @@ func goflowKubeRBAC(ns string) []client.Object {
 		&rbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   gfkName,
-				Labels: goflowKubeLabels(),
+				Labels: buildLabels(),
 			},
 			RoleRef: rbacv1.RoleRef{
 				APIGroup: "rbac.authorization.k8s.io",

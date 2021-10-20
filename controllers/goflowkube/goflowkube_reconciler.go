@@ -55,11 +55,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowC
 			r.delete(ctx, oldDS, daemonSetKind)
 		}
 		if oldDepl == nil || deploymentNeedsUpdate(oldDepl.(*appsv1.Deployment), desired) {
-			newDepl := goflowKubeDeployment(desired, r.OperatorNamespace)
+			newDepl := buildDeployment(desired, r.OperatorNamespace)
 			r.createOrUpdate(ctx, oldDepl, newDepl, deploymentKind)
 		}
 		if oldSVC == nil || serviceNeedsUpdate(oldSVC.(*corev1.Service), desired) {
-			newSVC := goflowKubeService(desired, r.OperatorNamespace)
+			newSVC := buildService(desired, r.OperatorNamespace)
 			r.createOrUpdate(ctx, oldSVC, newSVC, serviceKind)
 		}
 	case daemonSetKind:
@@ -71,7 +71,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowC
 		if oldDS != nil && !daemonSetNeedsUpdate(oldDS.(*appsv1.DaemonSet), desired) {
 			return nil
 		}
-		newDS := goflowKubeDaemonSet(desired, r.OperatorNamespace)
+		newDS := buildDaemonSet(desired, r.OperatorNamespace)
 		r.createOrUpdate(ctx, oldDS, newDS, daemonSetKind)
 	default:
 		return fmt.Errorf("Could not reconcile collector, invalid kind: %s", desired.Kind)
@@ -82,7 +82,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowC
 func (r *Reconciler) setupPermissions(ctx context.Context) {
 	log := log.FromContext(ctx)
 	log.Info("Setup permissions for " + gfkName)
-	rbacObjects := goflowKubeRBAC(r.OperatorNamespace)
+	rbacObjects := buildRBAC(r.OperatorNamespace)
 	for _, rbacObj := range rbacObjects {
 		err := r.SetControllerReference(rbacObj)
 		if err != nil {
@@ -166,7 +166,7 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flowsv1alpha1.FlowCo
 	if desired.Image != container.Image || desired.ImagePullPolicy != string(container.ImagePullPolicy) {
 		return true
 	}
-	if len(container.Command) != 3 || container.Command[2] != goflowKubeMainCommand(desired) {
+	if len(container.Command) != 3 || container.Command[2] != buildMainCommand(desired) {
 		return true
 	}
 	return false
