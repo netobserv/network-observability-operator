@@ -24,13 +24,13 @@ import (
 
 // FlowCollectorSpec defines the desired state of FlowCollector
 type FlowCollectorSpec struct {
-	// Important: Run "make" to regenerate code after modifying this file
+	// Important: Run "make generate" to regenerate code after modifying this file
 
 	// IPFIX contains IPFIX-related settings for the flow reporter
 	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
 
-	// Collector contains settings related to the flows collector
-	Collector FlowCollectorCollector `json:"collector,omitempty"`
+	// GoflowKube contains settings related to goflow-kube
+	GoflowKube FlowCollectorGoflowKube `json:"goflowkube,omitempty"`
 
 	// Loki contains settings related to the loki client
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
@@ -40,27 +40,32 @@ type FlowCollectorSpec struct {
 type FlowCollectorIPFIX struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
+	//+kubebuilder:default:="10s"
 	// CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending
 	CacheActiveTimeout metav1.Duration `json:"cacheActiveTimeout,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=100
 	// CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows
 	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=400
 	// Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 means disabled.
 	Sampling int32 `json:"sampling,omitempty"`
 }
 
-// FlowCollectorCollector defines the desired collector state of FlowCollector
-type FlowCollectorCollector struct {
+// FlowCollectorGoflowKube defines the desired goflow-kube state of FlowCollector
+type FlowCollectorGoflowKube struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:validation:Enum=DaemonSet;Deployment
+	//+kubebuilder:default:=DaemonSet
 	// Kind is the workload kind, either DaemonSet or Deployment
 	Kind string `json:"kind,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=1
 	// Replicas defines the number of replicas (pods) to start for Deployment kind. Ignored for DaemonSet.
 	Replicas int32 `json:"replicas,omitempty"`
 
@@ -69,43 +74,54 @@ type FlowCollectorCollector struct {
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
+	//+kubebuilder:default:=2055
 	// Port is the collector port: either a service port for Deployment kind, or host port for DaemonSet kind
 	Port int32 `json:"port,omitempty"`
 
+	//+kubebuilder:default:="quay.io/netobserv/goflow-kube:latest"
 	// Image is the collector image (including domain and tag)
 	Image string `json:"image,omitempty"`
 
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
+	//+kubebuilder:default:=IfNotPresent
 	// ImagePullPolicy is the Kubernetes pull policy for the image defined above
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 
 	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic
+	//+kubebuilder:default:=info
 	// LogLevel defines the log level for the collector runtime
 	LogLevel string `json:"logLevel,omitempty"`
 }
 
 // FlowCollectorLoki defines the desired state for FlowCollector's Loki client
 type FlowCollectorLoki struct {
+	//+kubebuilder:default:="http://loki:3100/"
 	// URL is the address of an existing Loki service to push the flows to.
 	URL string `json:"url,omitempty"`
 
+	//+kubebuilder:default:="1s"
 	// BatchWait is max time to wait before sending a batch
 	BatchWait metav1.Duration `json:"batchWait,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:default:=102400
 	// BatchSize is max batch size (in bytes) of logs to accumulate before sending
 	BatchSize int64 `json:"batchSize,omitempty"`
 
+	//+kubebuilder:default:="1s"
 	// MinBackoff is the initial backoff time for client connection between retries
 	MinBackoff metav1.Duration `json:"minBackoff,omitempty"`
 
+	//+kubebuilder:default:="300s"
 	// MaxBackoff is the maximum backoff time for client connection between retries
 	MaxBackoff metav1.Duration `json:"maxBackoff,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=10
 	// MaxRetries is the maximum number of retries for client connections
 	MaxRetries int32 `json:"maxRetries,omitempty"`
 
+	//+kubebuilder:default:={"app":"netobserv-flowcollector"}
 	// StaticLabels is a map of common labels to set on each flow
 	StaticLabels map[string]string `json:"staticLabels,omitempty"`
 }
