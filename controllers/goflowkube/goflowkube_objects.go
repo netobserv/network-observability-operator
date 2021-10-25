@@ -61,6 +61,7 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) *corev1.Po
 				Image:           desired.Image,
 				ImagePullPolicy: corev1.PullPolicy(desired.ImagePullPolicy),
 				Command:         []string{"/bin/sh", "-c", cmd},
+				Resources:       *desired.Resources.DeepCopy(),
 			}},
 			ServiceAccountName: gfkName,
 		},
