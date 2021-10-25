@@ -16,3 +16,7 @@ resources:
 - auth_proxy_role.yaml
 - auth_proxy_role_binding.yaml
 - auth_proxy_client_clusterrole.yaml
+# Roles to allow CNO to subscribe to the ConfigMap containing
+# the flow tracing configuration, and the NOO to update it
+- flowtracing_config_subscriber_role.yaml
+- flowtracing_config_updater_role.yaml

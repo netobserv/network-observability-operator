@@ -1,0 +1,30 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ovs-flows-config-updater-role
+  namespace: openshift-network-operator
+  annotations:
+    openshift.io/description: "Can modify the ovs-flows-config ConfigMap values"
+rules:
+  - apiGroups: [ "" ]
+    resources:
+      - configmaps
+    resourceNames:
+      - ovs-flows-config
+    verbs: ["create", "delete", "deletecollection", "patch", "update"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ovs-flows-config-subscriber-role-binding
+  namespace: openshift-network-operator
+  annotations:
+    openshift.io/description: "Grants read access to the ovs-flows-config ConfigMap values"
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: openshift-network-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ovs-flows-config-subscriber-role
