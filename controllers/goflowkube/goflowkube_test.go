@@ -50,7 +50,6 @@ func getGoflowKubeConfig() flowsv1alpha1.FlowCollectorGoflowKube {
 }
 
 func getContainerSpecs() (corev1.PodSpec, flowsv1alpha1.FlowCollectorGoflowKube) {
-
 	var podSpec = corev1.PodSpec{
 		Containers: []corev1.Container{
 			{
@@ -119,7 +118,7 @@ func TestServiceUpdateCheck(t *testing.T) {
 	serviceSpec, goflowKube := getServiceSpecs()
 	assert.Equal(serviceNeedsUpdate(&serviceSpec, &goflowKube), false)
 
-	//wrong port number
+	//wrong port protocol
 	serviceSpec, goflowKube = getServiceSpecs()
 	serviceSpec.Spec.Ports[0].Protocol = "TCP"
 	assert.Equal(serviceNeedsUpdate(&serviceSpec, &goflowKube), true)
