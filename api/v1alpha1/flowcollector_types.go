@@ -73,7 +73,7 @@ type FlowCollectorGoflowKube struct {
 
 	// HPA spec of an horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.
 	// +optional
-	HPA FlowCollectorHPA `json:"hpa,omitempty"`
+	HPA *FlowCollectorHPA `json:"hpa,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535

@@ -21,8 +21,10 @@ import (
 	"testing"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
+	ascv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +43,9 @@ var commands = []string{
 }
 var image = "quay.io/netobserv/goflow2-kube:dev"
 var pullPolicy = corev1.PullIfNotPresent
+var minReplicas = int32(1)
+var maxReplicas = int32(5)
+var targetCPU = int32(75)
 
 func getGoflowKubeConfig() flowsv1alpha1.FlowCollectorGoflowKube {
 	return flowsv1alpha1.FlowCollectorGoflowKube{
@@ -49,7 +54,12 @@ func getGoflowKubeConfig() flowsv1alpha1.FlowCollectorGoflowKube {
 		ImagePullPolicy: string(pullPolicy),
 		LogLevel:        "trace",
 		Resources:       resources,
-		PrintOutput:     false,
+		HPA: &flowsv1alpha1.FlowCollectorHPA{
+			MinReplicas:                    &minReplicas,
+			MaxReplicas:                    maxReplicas,
+			TargetCPUUtilizationPercentage: &targetCPU,
+		},
+		PrintOutput: false,
 	}
 }
 
@@ -75,7 +85,7 @@ func getContainerSpecs() (corev1.PodSpec, flowsv1alpha1.FlowCollectorGoflowKube)
 	var podSpec = corev1.PodSpec{
 		Containers: []corev1.Container{
 			{
-				Name:            "goflow-kube",
+				Name:            constants.GoflowKubeName,
 				Image:           image,
 				Command:         commands,
 				Resources:       resources,
@@ -108,6 +118,22 @@ func TestBuildMainCommand(t *testing.T) {
 	_, goflowKube := getContainerSpecs()
 	cmd := buildMainCommand(&goflowKube)
 	assert.Equal(commands[2], cmd)
+}
+
+func getAutoScalerSpecs() (ascv1.HorizontalPodAutoscaler, flowsv1alpha1.FlowCollectorGoflowKube) {
+	var autoScaler = ascv1.HorizontalPodAutoscaler{
+		Spec: ascv1.HorizontalPodAutoscalerSpec{
+			ScaleTargetRef: ascv1.CrossVersionObjectReference{
+				Kind: constants.DeploymentKind,
+				Name: constants.GoflowKubeName,
+			},
+			MinReplicas:                    &minReplicas,
+			MaxReplicas:                    maxReplicas,
+			TargetCPUUtilizationPercentage: &targetCPU,
+		},
+	}
+
+	return autoScaler, getGoflowKubeConfig()
 }
 
 func TestContainerUpdateCheck(t *testing.T) {
@@ -174,4 +200,27 @@ func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	assert.EqualValues(loki.BatchSize, lokiCfg["batchSize"])
 	assert.EqualValues([]interface{}{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload"}, lokiCfg["labels"])
 	assert.Equal(fmt.Sprintf("%v", loki.StaticLabels), fmt.Sprintf("%v", lokiCfg["staticLabels"]))
+}
+
+func TestAutoScalerUpdateCheck(t *testing.T) {
+	assert := assert.New(t)
+
+	//equals specs
+	autoScalerSpec, goflowKube := getAutoScalerSpecs()
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube), false)
+
+	//wrong max replicas
+	autoScalerSpec, goflowKube = getAutoScalerSpecs()
+	autoScalerSpec.Spec.MaxReplicas = 10
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube), true)
+
+	//missing min replicas
+	autoScalerSpec, goflowKube = getAutoScalerSpecs()
+	autoScalerSpec.Spec.MinReplicas = nil
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube), true)
+
+	//missing min target CPU
+	autoScalerSpec, goflowKube = getAutoScalerSpecs()
+	autoScalerSpec.Spec.TargetCPUUtilizationPercentage = nil
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube), true)
 }

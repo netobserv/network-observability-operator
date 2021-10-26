@@ -73,9 +73,15 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 			newSVC := buildService(desiredGoflowKube, r.OperatorNamespace)
 			r.createOrUpdate(ctx, oldSVC, newSVC, constants.DeploymentKind)
 		}
-		if oldASC == nil || autoScalerNeedsUpdate(oldASC.(*ascv1.HorizontalPodAutoscaler), desiredGoflowKube) {
-			newASC := buildAutoScaler(desiredGoflowKube, r.OperatorNamespace)
-			r.createOrUpdate(ctx, oldASC, newASC, constants.AutoscalerKind)
+
+		//Delete or Create / Update Autoscaler according to HPA option
+		if oldASC != nil && desiredGoflowKube.HPA == nil {
+			r.delete(ctx, oldASC, constants.AutoscalerKind)
+		} else if desiredGoflowKube.HPA != nil {
+			if oldASC == nil || autoScalerNeedsUpdate(oldASC.(*ascv1.HorizontalPodAutoscaler), desiredGoflowKube) {
+				newASC := buildAutoScaler(desiredGoflowKube, r.OperatorNamespace)
+				r.createOrUpdate(ctx, oldASC, newASC, constants.AutoscalerKind)
+			}
 		}
 	case constants.DaemonSetKind:
 		// Kind changed: delete Deployment/Service and create DaemonSet
