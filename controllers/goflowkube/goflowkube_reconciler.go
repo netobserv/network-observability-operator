@@ -3,6 +3,7 @@ package goflowkube
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -164,6 +165,9 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flowsv1alpha1.FlowCo
 		return true
 	}
 	if desired.Image != container.Image || desired.ImagePullPolicy != string(container.ImagePullPolicy) {
+		return true
+	}
+	if !reflect.DeepEqual(desired.Resources, container.Resources) {
 		return true
 	}
 	if len(container.Command) != 3 || container.Command[2] != buildMainCommand(desired) {
