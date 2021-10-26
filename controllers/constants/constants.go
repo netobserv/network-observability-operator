@@ -7,4 +7,5 @@ const (
 	DeploymentKind = "Deployment"
 	DaemonSetKind  = "DaemonSet"
 	ServiceKind    = "Service"
+	AutoscalerKind = "HorizontalPodAutoscaler"
 )
