@@ -191,6 +191,7 @@ func buildAutoScaler(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) 
 
 // The operator needs to have at least the same permissions as goflow-kube in order to grant them
 //+kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get;list;watch
+//+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
 //+kubebuilder:rbac:groups=core,resources=pods;services,verbs=get;list;watch
 
 func buildRBAC(ns string) []client.Object {
@@ -215,6 +216,10 @@ func buildRBAC(ns string) []client.Object {
 				APIGroups: []string{"apps"},
 				Verbs:     []string{"list", "get", "watch"},
 				Resources: []string{"replicasets"},
+			}, {
+				APIGroups: []string{"autoscaling"},
+				Verbs:     []string{"create", "delete", "patch", "update", "get", "watch", "list"},
+				Resources: []string{"horizontalpodautoscalers"},
 			}},
 		},
 		&rbacv1.ClusterRoleBinding{
