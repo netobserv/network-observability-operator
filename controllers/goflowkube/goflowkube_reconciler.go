@@ -84,10 +84,15 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 			}
 		}
 	case constants.DaemonSetKind:
-		// Kind changed: delete Deployment/Service and create DaemonSet
+		// Kind changed: delete Deployment / Service / HPA and create DaemonSet
 		if oldDepl != nil {
 			r.delete(ctx, oldDepl, constants.DeploymentKind)
+		}
+		if oldSVC != nil {
 			r.delete(ctx, oldSVC, constants.ServiceKind)
+		}
+		if oldASC != nil {
+			r.delete(ctx, oldASC, constants.AutoscalerKind)
 		}
 		if oldDS != nil && !daemonSetNeedsUpdate(oldDS.(*appsv1.DaemonSet), desiredGoflowKube) {
 			return nil
