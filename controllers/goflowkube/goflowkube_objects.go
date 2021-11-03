@@ -12,6 +12,11 @@ import (
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 )
 
+const configMapName = "goflow-kube-config"
+const configVolume = "config-volume"
+const configPath = "/etc/goflow-kube"
+const configFile = "config.yaml"
+
 func buildLabels() map[string]string {
 	return map[string]string{
 		"app": gfkName,
@@ -56,12 +61,26 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) *corev1.Po
 			Labels: buildLabels(),
 		},
 		Spec: corev1.PodSpec{
+			Volumes: []corev1.Volume{{
+				Name: configVolume,
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: configMapName,
+						},
+					},
+				},
+			}},
 			Containers: []corev1.Container{{
 				Name:            gfkName,
 				Image:           desired.Image,
 				ImagePullPolicy: corev1.PullPolicy(desired.ImagePullPolicy),
 				Command:         []string{"/bin/sh", "-c", cmd},
 				Resources:       *desired.Resources.DeepCopy(),
+				VolumeMounts: []corev1.VolumeMount{{
+					MountPath: configPath,
+					Name:      configVolume,
+				}},
 			}},
 			ServiceAccountName: gfkName,
 		},
@@ -69,7 +88,27 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) *corev1.Po
 }
 
 func buildMainCommand(desired *flowsv1alpha1.FlowCollectorGoflowKube) string {
-	return fmt.Sprintf(`/kube-enricher -loglevel %s -stdinsourceformat pb -listen "netflow://:%d"`, desired.LogLevel, desired.Port)
+	return fmt.Sprintf(`/goflow-kube -loglevel "%s" -config %s/%s`, desired.LogLevel, configPath, configFile)
+}
+
+func buildConfigMap(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *corev1.ConfigMap {
+	data := fmt.Sprintf(`
+{
+listen: "netflow://:%d",
+loki: {
+	labels: ["SrcNamespace","SrcWorkload","DstNamespace","DstWorkload"]
+}}
+`, desired.Port)
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      configMapName,
+			Namespace: ns,
+			Labels:    buildLabels(),
+		},
+		Data: map[string]string{
+			configFile: data,
+		},
+	}
 }
 
 func buildService(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *corev1.Service {

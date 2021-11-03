@@ -23,6 +23,7 @@ type Reconciler struct {
 }
 
 const gfkName = "goflow-kube"
+const configMapKind = "ConfigMap"
 const deploymentKind = "Deployment"
 const daemonSetKind = "DaemonSet"
 const serviceKind = "Service"
@@ -43,10 +44,19 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowC
 	if err != nil {
 		return err
 	}
+	oldCM, err := r.getObj(ctx, types.NamespacedName{Name: configMapName, Namespace: r.OperatorNamespace}, &corev1.ConfigMap{}, configMapKind)
+	if err != nil {
+		return err
+	}
 
 	// If none of them already exist, it must be the first setup. Thus, setup permissions.
 	if oldDepl == nil && oldDS == nil {
 		r.setupPermissions(ctx)
+	}
+
+	newCM := buildConfigMap(desired, r.OperatorNamespace)
+	if oldCM == nil || !reflect.DeepEqual(newCM, oldCM.(*corev1.ConfigMap).Data) {
+		r.createOrUpdate(ctx, oldCM, newCM, configMapKind)
 	}
 
 	switch desired.Kind {
