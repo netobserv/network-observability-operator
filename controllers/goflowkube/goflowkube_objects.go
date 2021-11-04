@@ -179,8 +179,9 @@ func buildAutoScaler(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) 
 		},
 		Spec: ascv1.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: ascv1.CrossVersionObjectReference{
-				Kind: constants.DeploymentKind,
-				Name: constants.GoflowKubeName,
+				Kind:       constants.DeploymentKind,
+				Name:       constants.GoflowKubeName,
+				APIVersion: "apps/v1",
 			},
 			MinReplicas:                    desired.HPA.MinReplicas,
 			MaxReplicas:                    desired.HPA.MaxReplicas,
