@@ -21,6 +21,7 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -34,7 +35,7 @@ var resources = corev1.ResourceRequirements{
 var commands = []string{
 	"/bin/sh",
 	"-c",
-	`/kube-enricher -loglevel trace -stdinsourceformat pb -listen "netflow://:2055"`,
+	`/goflow-kube -loglevel "trace" -config /etc/goflow-kube/config.yaml`,
 }
 var image = "quay.io/netobserv/goflow2-kube:dev"
 var pullPolicy = corev1.PullIfNotPresent
@@ -80,6 +81,14 @@ func getServiceSpecs() (corev1.Service, flowsv1alpha1.FlowCollectorGoflowKube) {
 	return service, getGoflowKubeConfig()
 }
 
+func TestBuildMainCommand(t *testing.T) {
+	assert := assert.New(t)
+
+	_, goflowKube := getContainerSpecs()
+	cmd := buildMainCommand(&goflowKube)
+	assert.Equal(commands[2], cmd)
+}
+
 func TestContainerUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 
@@ -95,11 +104,6 @@ func TestContainerUpdateCheck(t *testing.T) {
 	//wrong log level
 	podSpec, goflowKube = getContainerSpecs()
 	goflowKube.LogLevel = "info"
-	assert.Equal(containerNeedsUpdate(&podSpec, &goflowKube), true)
-
-	//wrong port number
-	podSpec, goflowKube = getContainerSpecs()
-	goflowKube.Port = 0
 	assert.Equal(containerNeedsUpdate(&podSpec, &goflowKube), true)
 
 	//wrong resources
@@ -122,4 +126,22 @@ func TestServiceUpdateCheck(t *testing.T) {
 	serviceSpec, goflowKube = getServiceSpecs()
 	serviceSpec.Spec.Ports[0].Protocol = "TCP"
 	assert.Equal(serviceNeedsUpdate(&serviceSpec, &goflowKube), true)
+}
+
+func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
+	assert := assert.New(t)
+
+	_, goflowKube := getContainerSpecs()
+	cm := buildConfigMap(&goflowKube, "namespace")
+	data, ok := cm.Data[configFile]
+	assert.True(ok)
+
+	var decoded map[string]interface{}
+	err := yaml.Unmarshal([]byte(data), &decoded)
+
+	assert.Nil(err)
+	assert.Equal("netflow://:2055", decoded["listen"])
+
+	lokiCfg := decoded["loki"].(map[interface{}]interface{})
+	assert.Equal([]interface{}{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload"}, lokiCfg["labels"])
 }

@@ -11,7 +11,7 @@ spec:
     kind: Deployment
     replicas: 1
     port: 2055
-    image: 'quay.io/netobserv/goflow-kube:dev'
+    image: 'quay.io/netobserv/goflow2-kube:latest'
     imagePullPolicy: IfNotPresent
     logLevel: info
   loki:
