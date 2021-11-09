@@ -24,6 +24,7 @@ import (
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var resources = corev1.ResourceRequirements{
@@ -47,6 +48,24 @@ func getGoflowKubeConfig() flowsv1alpha1.FlowCollectorGoflowKube {
 		ImagePullPolicy: string(pullPolicy),
 		LogLevel:        "trace",
 		Resources:       resources,
+	}
+}
+
+func getLokiConfig() flowsv1alpha1.FlowCollectorLoki {
+	return flowsv1alpha1.FlowCollectorLoki{
+		URL: "http://loki:3100/",
+		BatchWait: v1.Duration{
+			Duration: 1,
+		},
+		BatchSize: 102400,
+		MinBackoff: v1.Duration{
+			Duration: 1,
+		},
+		MaxBackoff: v1.Duration{
+			Duration: 300,
+		},
+		MaxRetries:   10,
+		StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
 	}
 }
 
@@ -131,8 +150,9 @@ func TestServiceUpdateCheck(t *testing.T) {
 func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	assert := assert.New(t)
 
-	_, goflowKube := getContainerSpecs()
-	cm := buildConfigMap(&goflowKube, "namespace")
+	goflowKube := getGoflowKubeConfig()
+	loki := getLokiConfig()
+	cm := buildConfigMap(&goflowKube, &loki, "namespace")
 	data, ok := cm.Data[configFile]
 	assert.True(ok)
 
@@ -143,5 +163,6 @@ func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	assert.Equal("netflow://:2055", decoded["listen"])
 
 	lokiCfg := decoded["loki"].(map[interface{}]interface{})
+	assert.Equal(loki.URL, lokiCfg["url"])
 	assert.Equal([]interface{}{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload"}, lokiCfg["labels"])
 }

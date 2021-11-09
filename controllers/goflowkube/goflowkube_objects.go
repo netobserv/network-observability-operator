@@ -91,14 +91,16 @@ func buildMainCommand(desired *flowsv1alpha1.FlowCollectorGoflowKube) string {
 	return fmt.Sprintf(`/goflow-kube -loglevel "%s" -config %s/%s`, desired.LogLevel, configPath, configFile)
 }
 
-func buildConfigMap(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *corev1.ConfigMap {
+func buildConfigMap(desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
+	desiredLoki *flowsv1alpha1.FlowCollectorLoki, ns string) *corev1.ConfigMap {
 	data := fmt.Sprintf(`
 {
 listen: "netflow://:%d",
 loki: {
-	labels: ["SrcNamespace","SrcWorkload","DstNamespace","DstWorkload"]
+	url: %s,
+	labels: ["SrcNamespace","SrcWorkload","DstNamespace","DstWorkload"],
 }}
-`, desired.Port)
+`, desiredGoflowKube.Port, desiredLoki.URL)
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
