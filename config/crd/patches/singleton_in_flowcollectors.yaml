@@ -1,0 +1,6 @@
+# The following patch make a CRD be a "singleton".
+# Only one CR can be created because validation restricts the value of
+# name and namespace.
+- op: add
+  path: /spec/versions/0/schema/openAPIV3Schema/properties/metadata/properties
+  value: {"name" : {"type": "string", "pattern": "^cluster$"}}
