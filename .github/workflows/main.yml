@@ -32,7 +32,7 @@ jobs:
         tags: ${{ steps.build-image.outputs.tags }}
         registry: quay.io/netobserv
         username: netobserv+github_ci
-        password: ${{ secrets.QUAY_SECRET }}
+        password: test
 
     - name: Print image url
       run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
