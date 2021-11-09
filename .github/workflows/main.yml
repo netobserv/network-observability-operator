@@ -1,0 +1,19 @@
+name: Log in to Quay.io
+on:
+#  push:
+#    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  login:
+    name: Log in to image registry
+    runs-on: ubuntu-20.04
+    steps:
+
+      - name: Log in to Quay.io
+        uses: redhat-actions/podman-login@v1
+        with:
+          username: netobserv+github_ci
+          password: ${{ secrets.QUAY_SECRET }}
+          registry: quay.io
