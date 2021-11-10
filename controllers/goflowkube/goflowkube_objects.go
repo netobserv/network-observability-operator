@@ -1,6 +1,7 @@
 package goflowkube
 
 import (
+	"encoding/json"
 	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -16,6 +17,23 @@ const configMapName = "goflow-kube-config"
 const configVolume = "config-volume"
 const configPath = "/etc/goflow-kube"
 const configFile = "config.yaml"
+
+type ConfigMap struct {
+	Listen string        `json:"listen,omitempty"`
+	Loki   LokiConfigMap `json:"loki,omitempty"`
+}
+
+type LokiConfigMap struct {
+	URL          string            `json:"url,omitempty"`
+	BatchWait    metav1.Duration   `json:"batchWait,omitempty"`
+	BatchSize    int64             `json:"batchSize,omitempty"`
+	Timeout      metav1.Duration   `json:"timeout,omitempty"`
+	MinBackoff   metav1.Duration   `json:"minBackoff,omitempty"`
+	MaxBackoff   metav1.Duration   `json:"maxBackoff,omitempty"`
+	MaxRetries   int32             `json:"maxRetries,omitempty"`
+	Labels       []string          `json:"labels,omitempty"`
+	StaticLabels map[string]string `json:"staticLabels,omitempty"`
+}
 
 func buildLabels() map[string]string {
 	return map[string]string{
@@ -93,14 +111,29 @@ func buildMainCommand(desired *flowsv1alpha1.FlowCollectorGoflowKube) string {
 
 func buildConfigMap(desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
 	desiredLoki *flowsv1alpha1.FlowCollectorLoki, ns string) *corev1.ConfigMap {
-	data := fmt.Sprintf(`
-{
-listen: "netflow://:%d",
-loki: {
-	url: %s,
-	labels: ["SrcNamespace","SrcWorkload","DstNamespace","DstWorkload"],
-}}
-`, desiredGoflowKube.Port, desiredLoki.URL)
+
+	configStr := `{}`
+	config := &ConfigMap{
+		Listen: fmt.Sprintf("netflow://:%d", desiredGoflowKube.Port),
+		Loki:   LokiConfigMap{},
+	}
+	if desiredLoki != nil {
+		config.Loki.BatchSize = desiredLoki.BatchSize
+		config.Loki.BatchWait = desiredLoki.BatchWait
+		config.Loki.MaxBackoff = desiredLoki.MaxBackoff
+		config.Loki.MaxRetries = desiredLoki.MaxRetries
+		config.Loki.MinBackoff = desiredLoki.MinBackoff
+		config.Loki.StaticLabels = desiredLoki.StaticLabels
+		config.Loki.Timeout = desiredLoki.Timeout
+		config.Loki.URL = desiredLoki.URL
+	}
+	config.Loki.Labels = []string{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload"}
+
+	b, err := json.Marshal(config)
+	if err == nil {
+		configStr = string(b)
+	}
+
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
@@ -108,7 +141,7 @@ loki: {
 			Labels:    buildLabels(),
 		},
 		Data: map[string]string{
-			configFile: data,
+			configFile: configStr,
 		},
 	}
 }

@@ -115,6 +115,11 @@ type FlowCollectorLoki struct {
 	// BatchSize is max batch size (in bytes) of logs to accumulate before sending
 	BatchSize int64 `json:"batchSize,omitempty"`
 
+	//+kubebuilder:default:="10s"
+	// Timeout is the maximum time connection / request limit
+	// A Timeout of zero means no timeout.
+	Timeout metav1.Duration `json:"timeout,omitempty"`
+
 	//+kubebuilder:default:="1s"
 	// MinBackoff is the initial backoff time for client connection between retries
 	MinBackoff metav1.Duration `json:"minBackoff,omitempty"`

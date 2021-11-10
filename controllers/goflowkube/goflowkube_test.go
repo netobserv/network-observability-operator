@@ -17,6 +17,7 @@ limitations under the License.
 package goflowkube
 
 import (
+	"fmt"
 	"testing"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
@@ -160,9 +161,15 @@ func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	err := yaml.Unmarshal([]byte(data), &decoded)
 
 	assert.Nil(err)
-	assert.Equal("netflow://:2055", decoded["listen"])
+	assert.Equal(fmt.Sprintf("netflow://:%d", goflowKube.Port), decoded["listen"])
 
 	lokiCfg := decoded["loki"].(map[interface{}]interface{})
 	assert.Equal(loki.URL, lokiCfg["url"])
-	assert.Equal([]interface{}{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload"}, lokiCfg["labels"])
+	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg["batchWait"])
+	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg["minBackoff"])
+	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg["maxBackoff"])
+	assert.EqualValues(loki.MaxRetries, lokiCfg["maxRetries"])
+	assert.EqualValues(loki.BatchSize, lokiCfg["batchSize"])
+	assert.EqualValues([]interface{}{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload"}, lokiCfg["labels"])
+	assert.Equal(fmt.Sprintf("%v", loki.StaticLabels), fmt.Sprintf("%v", lokiCfg["staticLabels"]))
 }

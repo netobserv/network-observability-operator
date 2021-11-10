@@ -178,6 +178,11 @@ spec:
                     description: StaticLabels is a map of common labels to set on
                       each flow
                     type: object
+                  timeout:
+                    default: 10s
+                    description: Timeout is the maximum time connection / request
+                      limit A Timeout of zero means no timeout.
+                    type: string
                   url:
                     default: http://loki:3100/
                     description: URL is the address of an existing Loki service to
