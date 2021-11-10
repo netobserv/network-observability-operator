@@ -45,7 +45,7 @@ This part will eventually be done automatically by the operator, but for the tim
 #### On KIND
 
 ```bash
-GF_IP=`kubectl get svc goflow-kube -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
+GF_IP=`kubectl get svc goflow-kube -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
 kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPFIX_TARGETS="$GF_IP:2055"
 ```
 
@@ -54,7 +54,7 @@ kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPF
 In OpenShift, a difference with the upstream `ovn-kubernetes` is that the flows export config is managed by the `ClusterNetworkOperator`.
 
 ```bash
-GF_IP=`oc get svc goflow-kube -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
+GF_IP=`oc get svc goflow-kube -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
 oc patch networks.operator.openshift.io cluster --type='json' -p "$(sed -e "s/GF_IP/$GF_IP/" ./config/samples/net-cluster-patch.json)"
 ```
 
