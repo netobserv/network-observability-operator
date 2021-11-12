@@ -19,8 +19,10 @@ const configPath = "/etc/goflow-kube"
 const configFile = "config.yaml"
 
 type ConfigMap struct {
-	Listen string        `json:"listen,omitempty"`
-	Loki   LokiConfigMap `json:"loki,omitempty"`
+	Listen      string        `json:"listen,omitempty"`
+	Loki        LokiConfigMap `json:"loki,omitempty"`
+	PrintInput  bool          `json:"printInput"`
+	PrintOutput bool          `json:"printOutput"`
 }
 
 type LokiConfigMap struct {
@@ -114,8 +116,10 @@ func buildConfigMap(desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
 
 	configStr := `{}`
 	config := &ConfigMap{
-		Listen: fmt.Sprintf("netflow://:%d", desiredGoflowKube.Port),
-		Loki:   LokiConfigMap{},
+		Listen:      fmt.Sprintf("netflow://:%d", desiredGoflowKube.Port),
+		Loki:        LokiConfigMap{},
+		PrintInput:  false,
+		PrintOutput: desiredGoflowKube.PrintOutput,
 	}
 	if desiredLoki != nil {
 		config.Loki.BatchSize = desiredLoki.BatchSize

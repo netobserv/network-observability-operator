@@ -98,6 +98,10 @@ type FlowCollectorGoflowKube struct {
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
+
+	//+kubebuilder:default:=false
+	// PrintOutput is a debug flag to print flows exported in kube-enricher logs
+	PrintOutput bool `json:"printOutput,omitempty"`
 }
 
 // FlowCollectorLoki defines the desired state for FlowCollector's Loki client

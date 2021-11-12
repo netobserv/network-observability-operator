@@ -49,6 +49,7 @@ func getGoflowKubeConfig() flowsv1alpha1.FlowCollectorGoflowKube {
 		ImagePullPolicy: string(pullPolicy),
 		LogLevel:        "trace",
 		Resources:       resources,
+		PrintOutput:     false,
 	}
 }
 
@@ -162,6 +163,7 @@ func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 
 	assert.Nil(err)
 	assert.Equal(fmt.Sprintf("netflow://:%d", goflowKube.Port), decoded["listen"])
+	assert.Equal(goflowKube.PrintOutput, decoded["printOutput"])
 
 	lokiCfg := decoded["loki"].(map[interface{}]interface{})
 	assert.Equal(loki.URL, lokiCfg["url"])
