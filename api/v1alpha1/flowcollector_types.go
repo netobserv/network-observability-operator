@@ -41,19 +41,20 @@ type FlowCollectorSpec struct {
 type FlowCollectorIPFIX struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
+	//+kubebuilder:validation:Pattern:=^\d+(ns|ms|s|m)?$
 	//+kubebuilder:default:="10s"
 	// CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending
-	CacheActiveTimeout metav1.Duration `json:"cacheActiveTimeout,omitempty"`
+	CacheActiveTimeout string `json:"cacheActiveTimeout,omitempty" mapstructure:"cacheActiveTimeout,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=100
 	// CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows
-	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty"`
+	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty" mapstructure:"cacheMaxFlows,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=400
 	// Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 means disabled.
-	Sampling int32 `json:"sampling,omitempty"`
+	Sampling int32 `json:"sampling,omitempty" mapstructure:"sampling,omitempty"`
 }
 
 // FlowCollectorGoflowKube defines the desired goflow-kube state of FlowCollector

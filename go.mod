@@ -3,6 +3,7 @@ module github.com/netobserv/network-observability-operator
 go 1.16
 
 require (
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.13.0
 	github.com/stretchr/testify v1.7.0

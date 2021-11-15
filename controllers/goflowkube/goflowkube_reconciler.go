@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
 // Reconciler reconciles the current goflow-kube state with the desired configuration
@@ -22,31 +23,25 @@ type Reconciler struct {
 	OperatorNamespace      string
 }
 
-const gfkName = "goflow-kube"
-const configMapKind = "ConfigMap"
-const deploymentKind = "Deployment"
-const daemonSetKind = "DaemonSet"
-const serviceKind = "Service"
-
 // Reconcile is the reconciler entry point to reconcile the current goflow-kube state with the desired configuration
 func (r *Reconciler) Reconcile(ctx context.Context,
 	desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
 	desiredLoki *flowsv1alpha1.FlowCollectorLoki) error {
 	// Check if goflow-kube already exists, as a deployment or as a daemon set
-	nsname := types.NamespacedName{Name: gfkName, Namespace: r.OperatorNamespace}
-	oldDepl, err := r.getObj(ctx, nsname, &appsv1.Deployment{}, deploymentKind)
+	nsname := types.NamespacedName{Name: constants.GoflowKubeName, Namespace: r.OperatorNamespace}
+	oldDepl, err := r.getObj(ctx, nsname, &appsv1.Deployment{}, constants.DeploymentKind)
 	if err != nil {
 		return err
 	}
-	oldDS, err := r.getObj(ctx, nsname, &appsv1.DaemonSet{}, daemonSetKind)
+	oldDS, err := r.getObj(ctx, nsname, &appsv1.DaemonSet{}, constants.DaemonSetKind)
 	if err != nil {
 		return err
 	}
-	oldSVC, err := r.getObj(ctx, nsname, &corev1.Service{}, serviceKind)
+	oldSVC, err := r.getObj(ctx, nsname, &corev1.Service{}, constants.ServiceKind)
 	if err != nil {
 		return err
 	}
-	oldCM, err := r.getObj(ctx, types.NamespacedName{Name: configMapName, Namespace: r.OperatorNamespace}, &corev1.ConfigMap{}, configMapKind)
+	oldCM, err := r.getObj(ctx, types.NamespacedName{Name: configMapName, Namespace: r.OperatorNamespace}, &corev1.ConfigMap{}, constants.ConfigMapKind)
 	if err != nil {
 		return err
 	}
@@ -58,34 +53,34 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 
 	newCM := buildConfigMap(desiredGoflowKube, desiredLoki, r.OperatorNamespace)
 	if oldCM == nil || !reflect.DeepEqual(newCM, oldCM.(*corev1.ConfigMap).Data) {
-		r.createOrUpdate(ctx, oldCM, newCM, configMapKind)
+		r.createOrUpdate(ctx, oldCM, newCM, constants.ConfigMapKind)
 	}
 
 	switch desiredGoflowKube.Kind {
-	case deploymentKind:
+	case constants.DeploymentKind:
 		// Kind changed: delete DaemonSet and create Deployment+Service
 		if oldDS != nil {
-			r.delete(ctx, oldDS, daemonSetKind)
+			r.delete(ctx, oldDS, constants.DaemonSetKind)
 		}
 		if oldDepl == nil || deploymentNeedsUpdate(oldDepl.(*appsv1.Deployment), desiredGoflowKube) {
 			newDepl := buildDeployment(desiredGoflowKube, r.OperatorNamespace)
-			r.createOrUpdate(ctx, oldDepl, newDepl, deploymentKind)
+			r.createOrUpdate(ctx, oldDepl, newDepl, constants.DeploymentKind)
 		}
 		if oldSVC == nil || serviceNeedsUpdate(oldSVC.(*corev1.Service), desiredGoflowKube) {
 			newSVC := buildService(desiredGoflowKube, r.OperatorNamespace)
-			r.createOrUpdate(ctx, oldSVC, newSVC, serviceKind)
+			r.createOrUpdate(ctx, oldSVC, newSVC, constants.DeploymentKind)
 		}
-	case daemonSetKind:
+	case constants.DaemonSetKind:
 		// Kind changed: delete Deployment/Service and create DaemonSet
 		if oldDepl != nil {
-			r.delete(ctx, oldDepl, deploymentKind)
-			r.delete(ctx, oldSVC, serviceKind)
+			r.delete(ctx, oldDepl, constants.DeploymentKind)
+			r.delete(ctx, oldSVC, constants.ServiceKind)
 		}
 		if oldDS != nil && !daemonSetNeedsUpdate(oldDS.(*appsv1.DaemonSet), desiredGoflowKube) {
 			return nil
 		}
 		newDS := buildDaemonSet(desiredGoflowKube, r.OperatorNamespace)
-		r.createOrUpdate(ctx, oldDS, newDS, daemonSetKind)
+		r.createOrUpdate(ctx, oldDS, newDS, constants.DaemonSetKind)
 	default:
 		return fmt.Errorf("Could not reconcile collector, invalid kind: %s", desiredGoflowKube.Kind)
 	}
@@ -94,7 +89,7 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 
 func (r *Reconciler) setupPermissions(ctx context.Context) {
 	log := log.FromContext(ctx)
-	log.Info("Setup permissions for " + gfkName)
+	log.Info("Setup permissions for " + constants.GoflowKubeName)
 	rbacObjects := buildRBAC(r.OperatorNamespace)
 	for _, rbacObj := range rbacObjects {
 		err := r.SetControllerReference(rbacObj)
@@ -103,7 +98,7 @@ func (r *Reconciler) setupPermissions(ctx context.Context) {
 		}
 		err = r.Create(ctx, rbacObj)
 		if err != nil {
-			log.Error(err, "Failed to setup permissions for "+gfkName)
+			log.Error(err, "Failed to setup permissions for "+constants.GoflowKubeName)
 		}
 	}
 }
@@ -114,7 +109,7 @@ func (r *Reconciler) getObj(ctx context.Context, nsname types.NamespacedName, ob
 		if errors.IsNotFound(err) {
 			return nil, nil
 		} else {
-			log.FromContext(ctx).Error(err, "Failed to get "+gfkName+" "+kind)
+			log.FromContext(ctx).Error(err, "Failed to get "+constants.GoflowKubeName+" "+kind)
 			return nil, err
 		}
 	}
@@ -190,7 +185,7 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flowsv1alpha1.FlowCo
 
 func findContainer(podSpec *corev1.PodSpec) *corev1.Container {
 	for _, ctnr := range podSpec.Containers {
-		if ctnr.Name == gfkName {
+		if ctnr.Name == constants.GoflowKubeName {
 			return &ctnr
 		}
 	}

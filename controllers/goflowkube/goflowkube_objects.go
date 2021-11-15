@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -39,14 +41,14 @@ type LokiConfigMap struct {
 
 func buildLabels() map[string]string {
 	return map[string]string{
-		"app": gfkName,
+		"app": constants.GoflowKubeName,
 	}
 }
 
 func buildDeployment(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      gfkName,
+			Name:      constants.GoflowKubeName,
 			Namespace: ns,
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -62,7 +64,7 @@ func buildDeployment(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) 
 func buildDaemonSet(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *appsv1.DaemonSet {
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      gfkName,
+			Name:      constants.GoflowKubeName,
 			Namespace: ns,
 		},
 		Spec: appsv1.DaemonSetSpec{
@@ -92,7 +94,7 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) *corev1.Po
 				},
 			}},
 			Containers: []corev1.Container{{
-				Name:            gfkName,
+				Name:            constants.GoflowKubeName,
 				Image:           desired.Image,
 				ImagePullPolicy: corev1.PullPolicy(desired.ImagePullPolicy),
 				Command:         []string{"/bin/sh", "-c", cmd},
@@ -102,7 +104,7 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) *corev1.Po
 					Name:      configVolume,
 				}},
 			}},
-			ServiceAccountName: gfkName,
+			ServiceAccountName: constants.GoflowKubeName,
 		},
 	}
 }
@@ -153,7 +155,7 @@ func buildConfigMap(desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
 func buildService(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      gfkName,
+			Name:      constants.GoflowKubeName,
 			Namespace: ns,
 			Labels:    buildLabels(),
 		},
@@ -175,14 +177,14 @@ func buildRBAC(ns string) []client.Object {
 	return []client.Object{
 		&corev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      gfkName,
+				Name:      constants.GoflowKubeName,
 				Namespace: ns,
 				Labels:    buildLabels(),
 			},
 		},
 		&rbacv1.ClusterRole{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:   gfkName,
+				Name:   constants.GoflowKubeName,
 				Labels: buildLabels(),
 			},
 			Rules: []rbacv1.PolicyRule{{
@@ -197,17 +199,17 @@ func buildRBAC(ns string) []client.Object {
 		},
 		&rbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:   gfkName,
+				Name:   constants.GoflowKubeName,
 				Labels: buildLabels(),
 			},
 			RoleRef: rbacv1.RoleRef{
 				APIGroup: "rbac.authorization.k8s.io",
 				Kind:     "ClusterRole",
-				Name:     gfkName,
+				Name:     constants.GoflowKubeName,
 			},
 			Subjects: []rbacv1.Subject{{
 				Kind:      "ServiceAccount",
-				Name:      gfkName,
+				Name:      constants.GoflowKubeName,
 				Namespace: ns,
 			}},
 		},
