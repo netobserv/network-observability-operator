@@ -24,6 +24,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -43,8 +44,8 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
 	utilruntime.Must(flowsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(corev1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -78,10 +79,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.FlowCollectorReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = controllers.NewFlowCollectorReconciler(mgr.GetClient(), mgr.GetScheme()).
+		SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "FlowCollector")
 		os.Exit(1)
 	}

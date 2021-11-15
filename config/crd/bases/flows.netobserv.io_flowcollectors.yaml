@@ -128,6 +128,7 @@ spec:
                     default: 10s
                     description: CacheActiveTimeout is the max period during which
                       the reporter will aggregate flows before sending
+                    pattern: ^\d+(ns|ms|s|m)?$
                     type: string
                   cacheMaxFlows:
                     default: 100
