@@ -71,8 +71,9 @@ type FlowCollectorGoflowKube struct {
 	// Replicas defines the number of replicas (pods) to start for Deployment kind. Ignored for DaemonSet.
 	Replicas int32 `json:"replicas,omitempty"`
 
-	// TODO: HPA spec of an horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.
-	// TODO: HPA interface{} `json:"hpa,omitempty"`
+	// HPA spec of an horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.
+	// +optional
+	HPA *FlowCollectorHPA `json:"hpa,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
@@ -103,6 +104,22 @@ type FlowCollectorGoflowKube struct {
 	//+kubebuilder:default:=false
 	// PrintOutput is a debug flag to print flows exported in kube-enricher logs
 	PrintOutput bool `json:"printOutput,omitempty"`
+}
+
+type FlowCollectorHPA struct {
+	// minReplicas is the lower limit for the number of replicas to which the autoscaler
+	// can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the
+	// alpha feature gate HPAScaleToZero is enabled and at least one Object or External
+	// metric is configured.  Scaling is active as long as at least one metric value is
+	// available.
+	// +optional
+	MinReplicas *int32 `json:"minReplicas,omitempty" protobuf:"varint,2,opt,name=minReplicas"`
+	// upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.
+	MaxReplicas int32 `json:"maxReplicas" protobuf:"varint,3,opt,name=maxReplicas"`
+	// target average CPU utilization (represented as a percentage of requested CPU) over all the pods;
+	// if not specified the default autoscaling policy will be used.
+	// +optional
+	TargetCPUUtilizationPercentage *int32 `json:"targetCPUUtilizationPercentage,omitempty" protobuf:"varint,4,opt,name=targetCPUUtilizationPercentage"`
 }
 
 // FlowCollectorLoki defines the desired state for FlowCollector's Loki client

@@ -7,6 +7,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 
 	appsv1 "k8s.io/api/apps/v1"
+	ascv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -169,8 +170,29 @@ func buildService(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *co
 	}
 }
 
+func buildAutoScaler(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *ascv1.HorizontalPodAutoscaler {
+	return &ascv1.HorizontalPodAutoscaler{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.GoflowKubeName,
+			Namespace: ns,
+			Labels:    buildLabels(),
+		},
+		Spec: ascv1.HorizontalPodAutoscalerSpec{
+			ScaleTargetRef: ascv1.CrossVersionObjectReference{
+				Kind:       constants.DeploymentKind,
+				Name:       constants.GoflowKubeName,
+				APIVersion: "apps/v1",
+			},
+			MinReplicas:                    desired.HPA.MinReplicas,
+			MaxReplicas:                    desired.HPA.MaxReplicas,
+			TargetCPUUtilizationPercentage: desired.HPA.TargetCPUUtilizationPercentage,
+		},
+	}
+}
+
 // The operator needs to have at least the same permissions as goflow-kube in order to grant them
 //+kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get;list;watch
+//+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
 //+kubebuilder:rbac:groups=core,resources=pods;services,verbs=get;list;watch
 
 func buildRBAC(ns string) []client.Object {
@@ -195,6 +217,10 @@ func buildRBAC(ns string) []client.Object {
 				APIGroups: []string{"apps"},
 				Verbs:     []string{"list", "get", "watch"},
 				Resources: []string{"replicasets"},
+			}, {
+				APIGroups: []string{"autoscaling"},
+				Verbs:     []string{"create", "delete", "patch", "update", "get", "watch", "list"},
+				Resources: []string{"horizontalpodautoscalers"},
 			}},
 		},
 		&rbacv1.ClusterRoleBinding{

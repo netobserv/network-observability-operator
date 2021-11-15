@@ -39,6 +39,33 @@ spec:
               goflowkube:
                 description: GoflowKube contains settings related to goflow-kube
                 properties:
+                  hpa:
+                    description: HPA spec of an horizontal pod autoscaler to set up
+                      for the collector Deployment. Ignored for DaemonSet.
+                    properties:
+                      maxReplicas:
+                        description: upper limit for the number of pods that can be
+                          set by the autoscaler; cannot be smaller than MinReplicas.
+                        format: int32
+                        type: integer
+                      minReplicas:
+                        description: minReplicas is the lower limit for the number
+                          of replicas to which the autoscaler can scale down.  It
+                          defaults to 1 pod.  minReplicas is allowed to be 0 if the
+                          alpha feature gate HPAScaleToZero is enabled and at least
+                          one Object or External metric is configured.  Scaling is
+                          active as long as at least one metric value is available.
+                        format: int32
+                        type: integer
+                      targetCPUUtilizationPercentage:
+                        description: target average CPU utilization (represented as
+                          a percentage of requested CPU) over all the pods; if not
+                          specified the default autoscaling policy will be used.
+                        format: int32
+                        type: integer
+                    required:
+                    - maxReplicas
+                    type: object
                   image:
                     default: quay.io/netobserv/goflow-kube:latest
                     description: Image is the collector image (including domain and

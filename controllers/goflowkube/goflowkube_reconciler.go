@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
+	ascv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -37,7 +38,15 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 	if err != nil {
 		return err
 	}
+	// If none of them already exist, it must be the first setup. Thus, setup permissions.
+	if oldDepl == nil && oldDS == nil {
+		r.setupPermissions(ctx)
+	}
 	oldSVC, err := r.getObj(ctx, nsname, &corev1.Service{}, constants.ServiceKind)
+	if err != nil {
+		return err
+	}
+	oldASC, err := r.getObj(ctx, nsname, &ascv1.HorizontalPodAutoscaler{}, constants.AutoscalerKind)
 	if err != nil {
 		return err
 	}
@@ -45,12 +54,6 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 	if err != nil {
 		return err
 	}
-
-	// If none of them already exist, it must be the first setup. Thus, setup permissions.
-	if oldDepl == nil && oldDS == nil {
-		r.setupPermissions(ctx)
-	}
-
 	newCM := buildConfigMap(desiredGoflowKube, desiredLoki, r.OperatorNamespace)
 	if oldCM == nil || !reflect.DeepEqual(newCM, oldCM.(*corev1.ConfigMap).Data) {
 		r.createOrUpdate(ctx, oldCM, newCM, constants.ConfigMapKind)
@@ -70,11 +73,26 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 			newSVC := buildService(desiredGoflowKube, r.OperatorNamespace)
 			r.createOrUpdate(ctx, oldSVC, newSVC, constants.DeploymentKind)
 		}
+
+		//Delete or Create / Update Autoscaler according to HPA option
+		if oldASC != nil && desiredGoflowKube.HPA == nil {
+			r.delete(ctx, oldASC, constants.AutoscalerKind)
+		} else if desiredGoflowKube.HPA != nil {
+			if oldASC == nil || autoScalerNeedsUpdate(oldASC.(*ascv1.HorizontalPodAutoscaler), desiredGoflowKube) {
+				newASC := buildAutoScaler(desiredGoflowKube, r.OperatorNamespace)
+				r.createOrUpdate(ctx, oldASC, newASC, constants.AutoscalerKind)
+			}
+		}
 	case constants.DaemonSetKind:
-		// Kind changed: delete Deployment/Service and create DaemonSet
+		// Kind changed: delete Deployment / Service / HPA and create DaemonSet
 		if oldDepl != nil {
 			r.delete(ctx, oldDepl, constants.DeploymentKind)
+		}
+		if oldSVC != nil {
 			r.delete(ctx, oldSVC, constants.ServiceKind)
+		}
+		if oldASC != nil {
+			r.delete(ctx, oldASC, constants.AutoscalerKind)
 		}
 		if oldDS != nil && !daemonSetNeedsUpdate(oldDS.(*appsv1.DaemonSet), desiredGoflowKube) {
 			return nil
@@ -178,6 +196,15 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flowsv1alpha1.FlowCo
 		return true
 	}
 	if len(container.Command) != 3 || container.Command[2] != buildMainCommand(desired) {
+		return true
+	}
+	return false
+}
+
+func autoScalerNeedsUpdate(asc *ascv1.HorizontalPodAutoscaler, desired *flowsv1alpha1.FlowCollectorGoflowKube) bool {
+	if asc.Spec.MaxReplicas != desired.HPA.MaxReplicas ||
+		asc.Spec.MinReplicas != desired.HPA.MinReplicas ||
+		asc.Spec.TargetCPUUtilizationPercentage != desired.HPA.TargetCPUUtilizationPercentage {
 		return true
 	}
 	return false
