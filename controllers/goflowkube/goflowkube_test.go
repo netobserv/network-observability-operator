@@ -17,6 +17,7 @@ limitations under the License.
 package goflowkube
 
 import (
+	"fmt"
 	"testing"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
@@ -24,6 +25,7 @@ import (
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var resources = corev1.ResourceRequirements{
@@ -47,6 +49,25 @@ func getGoflowKubeConfig() flowsv1alpha1.FlowCollectorGoflowKube {
 		ImagePullPolicy: string(pullPolicy),
 		LogLevel:        "trace",
 		Resources:       resources,
+		PrintOutput:     false,
+	}
+}
+
+func getLokiConfig() flowsv1alpha1.FlowCollectorLoki {
+	return flowsv1alpha1.FlowCollectorLoki{
+		URL: "http://loki:3100/",
+		BatchWait: v1.Duration{
+			Duration: 1,
+		},
+		BatchSize: 102400,
+		MinBackoff: v1.Duration{
+			Duration: 1,
+		},
+		MaxBackoff: v1.Duration{
+			Duration: 300,
+		},
+		MaxRetries:   10,
+		StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
 	}
 }
 
@@ -131,8 +152,9 @@ func TestServiceUpdateCheck(t *testing.T) {
 func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	assert := assert.New(t)
 
-	_, goflowKube := getContainerSpecs()
-	cm := buildConfigMap(&goflowKube, "namespace")
+	goflowKube := getGoflowKubeConfig()
+	loki := getLokiConfig()
+	cm := buildConfigMap(&goflowKube, &loki, "namespace")
 	data, ok := cm.Data[configFile]
 	assert.True(ok)
 
@@ -140,8 +162,16 @@ func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	err := yaml.Unmarshal([]byte(data), &decoded)
 
 	assert.Nil(err)
-	assert.Equal("netflow://:2055", decoded["listen"])
+	assert.Equal(fmt.Sprintf("netflow://:%d", goflowKube.Port), decoded["listen"])
+	assert.Equal(goflowKube.PrintOutput, decoded["printOutput"])
 
 	lokiCfg := decoded["loki"].(map[interface{}]interface{})
-	assert.Equal([]interface{}{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload"}, lokiCfg["labels"])
+	assert.Equal(loki.URL, lokiCfg["url"])
+	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg["batchWait"])
+	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg["minBackoff"])
+	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg["maxBackoff"])
+	assert.EqualValues(loki.MaxRetries, lokiCfg["maxRetries"])
+	assert.EqualValues(loki.BatchSize, lokiCfg["batchSize"])
+	assert.EqualValues([]interface{}{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload"}, lokiCfg["labels"])
+	assert.Equal(fmt.Sprintf("%v", loki.StaticLabels), fmt.Sprintf("%v", lokiCfg["staticLabels"]))
 }

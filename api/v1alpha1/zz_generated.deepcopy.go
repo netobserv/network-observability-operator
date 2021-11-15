@@ -119,6 +119,7 @@ func (in *FlowCollectorList) DeepCopyObject() runtime.Object {
 func (in *FlowCollectorLoki) DeepCopyInto(out *FlowCollectorLoki) {
 	*out = *in
 	out.BatchWait = in.BatchWait
+	out.Timeout = in.Timeout
 	out.MinBackoff = in.MinBackoff
 	out.MaxBackoff = in.MaxBackoff
 	if in.StaticLabels != nil {

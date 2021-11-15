@@ -98,6 +98,10 @@ type FlowCollectorGoflowKube struct {
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
+
+	//+kubebuilder:default:=false
+	// PrintOutput is a debug flag to print flows exported in kube-enricher logs
+	PrintOutput bool `json:"printOutput,omitempty"`
 }
 
 // FlowCollectorLoki defines the desired state for FlowCollector's Loki client
@@ -114,6 +118,11 @@ type FlowCollectorLoki struct {
 	//+kubebuilder:default:=102400
 	// BatchSize is max batch size (in bytes) of logs to accumulate before sending
 	BatchSize int64 `json:"batchSize,omitempty"`
+
+	//+kubebuilder:default:="10s"
+	// Timeout is the maximum time connection / request limit
+	// A Timeout of zero means no timeout.
+	Timeout metav1.Duration `json:"timeout,omitempty"`
 
 	//+kubebuilder:default:="1s"
 	// MinBackoff is the initial backoff time for client connection between retries

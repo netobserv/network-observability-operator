@@ -29,7 +29,9 @@ const daemonSetKind = "DaemonSet"
 const serviceKind = "Service"
 
 // Reconcile is the reconciler entry point to reconcile the current goflow-kube state with the desired configuration
-func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollectorGoflowKube) error {
+func (r *Reconciler) Reconcile(ctx context.Context,
+	desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
+	desiredLoki *flowsv1alpha1.FlowCollectorLoki) error {
 	// Check if goflow-kube already exists, as a deployment or as a daemon set
 	nsname := types.NamespacedName{Name: gfkName, Namespace: r.OperatorNamespace}
 	oldDepl, err := r.getObj(ctx, nsname, &appsv1.Deployment{}, deploymentKind)
@@ -54,23 +56,23 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowC
 		r.setupPermissions(ctx)
 	}
 
-	newCM := buildConfigMap(desired, r.OperatorNamespace)
+	newCM := buildConfigMap(desiredGoflowKube, desiredLoki, r.OperatorNamespace)
 	if oldCM == nil || !reflect.DeepEqual(newCM, oldCM.(*corev1.ConfigMap).Data) {
 		r.createOrUpdate(ctx, oldCM, newCM, configMapKind)
 	}
 
-	switch desired.Kind {
+	switch desiredGoflowKube.Kind {
 	case deploymentKind:
 		// Kind changed: delete DaemonSet and create Deployment+Service
 		if oldDS != nil {
 			r.delete(ctx, oldDS, daemonSetKind)
 		}
-		if oldDepl == nil || deploymentNeedsUpdate(oldDepl.(*appsv1.Deployment), desired) {
-			newDepl := buildDeployment(desired, r.OperatorNamespace)
+		if oldDepl == nil || deploymentNeedsUpdate(oldDepl.(*appsv1.Deployment), desiredGoflowKube) {
+			newDepl := buildDeployment(desiredGoflowKube, r.OperatorNamespace)
 			r.createOrUpdate(ctx, oldDepl, newDepl, deploymentKind)
 		}
-		if oldSVC == nil || serviceNeedsUpdate(oldSVC.(*corev1.Service), desired) {
-			newSVC := buildService(desired, r.OperatorNamespace)
+		if oldSVC == nil || serviceNeedsUpdate(oldSVC.(*corev1.Service), desiredGoflowKube) {
+			newSVC := buildService(desiredGoflowKube, r.OperatorNamespace)
 			r.createOrUpdate(ctx, oldSVC, newSVC, serviceKind)
 		}
 	case daemonSetKind:
@@ -79,13 +81,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowC
 			r.delete(ctx, oldDepl, deploymentKind)
 			r.delete(ctx, oldSVC, serviceKind)
 		}
-		if oldDS != nil && !daemonSetNeedsUpdate(oldDS.(*appsv1.DaemonSet), desired) {
+		if oldDS != nil && !daemonSetNeedsUpdate(oldDS.(*appsv1.DaemonSet), desiredGoflowKube) {
 			return nil
 		}
-		newDS := buildDaemonSet(desired, r.OperatorNamespace)
+		newDS := buildDaemonSet(desiredGoflowKube, r.OperatorNamespace)
 		r.createOrUpdate(ctx, oldDS, newDS, daemonSetKind)
 	default:
-		return fmt.Errorf("Could not reconcile collector, invalid kind: %s", desired.Kind)
+		return fmt.Errorf("Could not reconcile collector, invalid kind: %s", desiredGoflowKube.Kind)
 	}
 	return nil
 }

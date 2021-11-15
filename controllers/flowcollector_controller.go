@@ -67,7 +67,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		},
 		OperatorNamespace: operatorNamespace,
 	}
-	err = gfReconciler.Reconcile(ctx, &desired.Spec.GoflowKube)
+	err = gfReconciler.Reconcile(ctx, &desired.Spec.GoflowKube, &desired.Spec.Loki)
 	if err != nil {
 		log.Error(err, "Failed to get FlowCollector")
 		return ctrl.Result{}, err
