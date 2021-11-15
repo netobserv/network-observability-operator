@@ -3,6 +3,8 @@ package ovs
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -23,6 +25,7 @@ type FlowsConfigController struct {
 	operatorNamespace string
 	cnoNamespace      string
 	client            client.Client
+	lookupIP          func(string) ([]net.IP, error)
 }
 
 func NewFlowsConfigController(client client.Client,
@@ -32,7 +35,19 @@ func NewFlowsConfigController(client client.Client,
 		operatorNamespace: operatorNamespace,
 		cnoNamespace:      cnoNamespace,
 		ovsConfigMapName:  ovsConfigMapName,
+		lookupIP:          net.LookupIP,
 	}
+}
+
+// NewTestFlowsConfigController allows creating a FlowsConfigController instance that with an
+// injected IP resolver for testing.
+func NewTestFlowsConfigController(client client.Client,
+	operatorNamespace, cnoNamespace, ovsConfigMapName string,
+	lookupIP func(string) ([]net.IP, error),
+) FlowsConfigController {
+	fc := NewFlowsConfigController(client, operatorNamespace, cnoNamespace, ovsConfigMapName)
+	fc.lookupIP = lookupIP
+	return fc
 }
 
 // Reconcile reconciles the status of the ovs-flows-config configmap with
@@ -120,8 +135,24 @@ func (c *FlowsConfigController) desired(
 		}, &svc); err != nil {
 			return nil, err
 		}
+		// service IP resolution
+		svcHost := svc.Name + "." + svc.Namespace
+		addrs, err := c.lookupIP(svcHost)
+		if err != nil {
+			return nil, fmt.Errorf("can't resolve IP address for service %v: %w", svcHost, err)
+		}
+		var ip string
+		for _, addr := range addrs {
+			if len(addr) > 0 {
+				ip = addr.String()
+				break
+			}
+		}
+		if ip == "" {
+			return nil, fmt.Errorf("can't find any suitable IP for host %s", svcHost)
+		}
 		// TODO: if spec/goflowkube is empty or port is empty, fetch first UDP port in the service spec
-		conf.SharedTarget = fmt.Sprintf("%s.%s:%d", svc.Name, svc.Namespace, coll.Spec.GoflowKube.Port)
+		conf.SharedTarget = net.JoinHostPort(ip, strconv.Itoa(int(coll.Spec.GoflowKube.Port)))
 		return &conf, nil
 	}
 	return nil, fmt.Errorf("unexpected GoflowKube kind: %s", coll.Spec.GoflowKube.Kind)

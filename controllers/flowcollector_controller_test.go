@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"fmt"
+	"net"
 	"time"
 
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -18,7 +18,10 @@ var _ = Describe("FlowCollector Controller", func() {
 
 	const timeout = time.Second * 30
 	const interval = time.Second * 1
-	expectedSharedTarget := fmt.Sprintf("%s.%s:999", constants.GoflowKubeName, operatorNamespace)
+	const flowCollectorPort = 999
+	ipResolver.On("LookupIP", constants.GoflowKubeName+"."+operatorNamespace).
+		Return([]net.IP{net.IPv4(11, 22, 33, 44)}, nil)
+	expectedSharedTarget := "11.22.33.44:999"
 	configMapKey := types.NamespacedName{
 		Name:      "ovs-flows-config",
 		Namespace: cnoNamespace,
@@ -50,7 +53,7 @@ var _ = Describe("FlowCollector Controller", func() {
 				Spec: flowsv1alpha1.FlowCollectorSpec{
 					GoflowKube: flowsv1alpha1.FlowCollectorGoflowKube{
 						Kind:            "Deployment",
-						Port:            999,
+						Port:            flowCollectorPort,
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
 						Image:           "testimg:latest",

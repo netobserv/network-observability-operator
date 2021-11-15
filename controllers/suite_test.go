@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"net"
 	"path/filepath"
 	"testing"
 
@@ -25,8 +26,10 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/mock"
+
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -38,6 +41,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -45,13 +49,12 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	cfg          *rest.Config
-	ctx          context.Context
-	k8sManager   manager.Manager
-	k8sClient    client.Client
-	testEnv      *envtest.Environment
-	fcReconciler *FlowCollectorReconciler
-	cancel       context.CancelFunc
+	ctx        context.Context
+	k8sManager manager.Manager
+	k8sClient  client.Client
+	testEnv    *envtest.Environment
+	cancel     context.CancelFunc
+	ipResolver ipResolverMock
 )
 
 func TestAPIs(t *testing.T) {
@@ -94,7 +97,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sManager).NotTo(BeNil())
 
-	err = NewFlowCollectorReconciler(k8sManager.GetClient(), k8sManager.GetScheme()).
+	err = NewTestFlowCollectorReconciler(k8sManager.GetClient(), k8sManager.GetScheme()).
 		SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
@@ -124,4 +127,24 @@ func prepareNamespaces() error {
 		TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: cnoNamespace},
 	})
+}
+
+// NewTestFlowCollectorReconciler allows mocking the IP resolutor of a
+// FlowCollectorReconciler
+func NewTestFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *FlowCollectorReconciler {
+	return &FlowCollectorReconciler{
+		Client: client,
+		Scheme: scheme,
+		ovsConfigController: ovs.NewTestFlowsConfigController(client,
+			operatorNamespace, cnoNamespace, ovsFlowsConfigMapName, ipResolver.LookupIP),
+	}
+}
+
+type ipResolverMock struct {
+	mock.Mock
+}
+
+func (ipr *ipResolverMock) LookupIP(host string) ([]net.IP, error) {
+	m := ipr.Called(host)
+	return m.Get(0).([]net.IP), m.Error(1)
 }
