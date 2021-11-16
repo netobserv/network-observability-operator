@@ -36,6 +36,65 @@ spec:
           spec:
             description: FlowCollectorSpec defines the desired state of FlowCollector
             properties:
+              consolePlugin:
+                description: ConsolePlugin contains settings related to the console
+                  dynamic plugin
+                properties:
+                  image:
+                    default: quay.io/netobserv/console-plugin:latest
+                    description: Image is the plugin image (including domain and tag)
+                    type: string
+                  imagePullPolicy:
+                    default: IfNotPresent
+                    description: ImagePullPolicy is the Kubernetes pull policy for
+                      the image defined above
+                    enum:
+                    - IfNotPresent
+                    - Always
+                    - Never
+                    type: string
+                  port:
+                    default: 9001
+                    description: Port is the plugin service port
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
+                    type: integer
+                  replicas:
+                    default: 1
+                    description: Replicas defines the number of replicas (pods) to
+                      start.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  resources:
+                    description: 'Compute Resources required by this container. Cannot
+                      be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                    type: object
+                type: object
               goflowkube:
                 description: GoflowKube contains settings related to goflow-kube
                 properties:

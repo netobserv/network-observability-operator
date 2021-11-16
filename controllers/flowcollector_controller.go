@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"strings"
 
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 
@@ -14,12 +15,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
 	"github.com/netobserv/network-observability-operator/controllers/goflowkube"
+	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 )
 
 // Make sure it always matches config/default/kustomization.yaml:namespace
@@ -34,6 +38,7 @@ type FlowCollectorReconciler struct {
 	client.Client
 	Scheme              *runtime.Scheme
 	ovsConfigController ovs.FlowsConfigController
+	consoleEnabled      bool
 }
 
 func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *FlowCollectorReconciler {
@@ -42,6 +47,7 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *F
 		Scheme: scheme,
 		ovsConfigController: ovs.NewFlowsConfigController(client,
 			operatorNamespace, cnoNamespace, ovsFlowsConfigMapName),
+		consoleEnabled: false,
 	}
 }
 
@@ -49,6 +55,7 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *F
 //+kubebuilder:rbac:groups=core,resources=services;configmaps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;create;delete
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;clusterrolebindings,verbs=get;create;delete
+//+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins;clusterrolebindings,verbs=get;create;delete;update;patch;list
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors/finalizers,verbs=update
@@ -99,6 +106,22 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		log.Error(err, "Failed to reconcile ovs-flows-config ConfigMap")
 	}
 
+	// Console plugin
+	if r.consoleEnabled {
+		cpReconciler := consoleplugin.Reconciler{
+			Client: r.Client,
+			SetControllerReference: func(obj client.Object) error {
+				return ctrl.SetControllerReference(desired, obj, r.Scheme)
+			},
+			OperatorNamespace: operatorNamespace,
+		}
+		err := cpReconciler.Reconcile(ctx, &desired.Spec.ConsolePlugin)
+		if err != nil {
+			log.Error(err, "Failed to get ConsolePlugin")
+			return ctrl.Result{}, err
+		}
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -125,16 +148,43 @@ func (r *FlowCollectorReconciler) checkFinalizerStatus(ctx context.Context, desi
 	return nil
 }
 
+func isConsoleEnabled(mgr ctrl.Manager) (bool, error) {
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
+	if err != nil {
+		return false, err
+	}
+	groupsList, err := discoveryClient.ServerGroups()
+	if err != nil {
+		return false, err
+	}
+	for _, group := range groupsList.Groups {
+		if strings.HasSuffix(group.Name, osv1alpha1.GroupName) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *FlowCollectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
+	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&flowsv1alpha1.FlowCollector{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&appsv1.DaemonSet{}).
 		Owns(&corev1.Service{}).
 		Owns(&ascv1.HorizontalPodAutoscaler{}).
-		Complete(r)
+		Owns(&corev1.Service{})
+
+	var err error
+	r.consoleEnabled, err = isConsoleEnabled(mgr)
+	if err != nil {
+		return err
+	}
+	if r.consoleEnabled {
+		builder = builder.Owns(&osv1alpha1.ConsolePlugin{})
+	}
+	return builder.Complete(r)
 }
 
 func (r *FlowCollectorReconciler) deleteExternalResources(ctx context.Context) error {
