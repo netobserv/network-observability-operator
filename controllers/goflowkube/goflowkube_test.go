@@ -171,7 +171,7 @@ func TestServiceUpdateCheck(t *testing.T) {
 
 	//wrong port protocol
 	serviceSpec, goflowKube = getServiceSpecs()
-	serviceSpec.Spec.Ports[0].Protocol = "TCP"
+	// serviceSpec.Spec.Ports[0].Protocol = "TCP"
 	assert.Equal(serviceNeedsUpdate(&serviceSpec, &goflowKube), true)
 }
 
