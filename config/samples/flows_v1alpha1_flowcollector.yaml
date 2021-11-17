@@ -23,3 +23,7 @@ spec:
     maxRetries: 10
     staticLabels:
       app: netobserv-flowcollector
+  consolePlugin:
+    image: 'quay.io/netobserv/network-observability-console-plugin:dev'
+    imagePullPolicy: IfNotPresent
+    port: 9001

@@ -35,6 +35,9 @@ type FlowCollectorSpec struct {
 
 	// Loki contains settings related to the loki client
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
+
+	// ConsolePlugin contains settings related to the console dynamic plugin
+	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 }
 
 // FlowCollectorIPFIX defines the desired IPFIX state of FlowCollector
@@ -158,6 +161,37 @@ type FlowCollectorLoki struct {
 	//+kubebuilder:default:={"app":"netobserv-flowcollector"}
 	// StaticLabels is a map of common labels to set on each flow
 	StaticLabels map[string]string `json:"staticLabels,omitempty"`
+}
+
+// FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector
+type FlowCollectorConsolePlugin struct {
+	// Important: Run "make generate" to regenerate code after modifying this file
+
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=1
+	// Replicas defines the number of replicas (pods) to start.
+	Replicas int32 `json:"replicas,omitempty"`
+
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=65535
+	//+kubebuilder:default:=9001
+	// Port is the plugin service port
+	Port int32 `json:"port,omitempty"`
+
+	//+kubebuilder:default:="quay.io/netobserv/console-plugin:latest"
+	// Image is the plugin image (including domain and tag)
+	Image string `json:"image,omitempty"`
+
+	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
+	//+kubebuilder:default:=IfNotPresent
+	// ImagePullPolicy is the Kubernetes pull policy for the image defined above
+	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
+
+	// Compute Resources required by this container.
+	// Cannot be updated.
+	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+	// +optional
+	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 }
 
 // FlowCollectorStatus defines the observed state of FlowCollector

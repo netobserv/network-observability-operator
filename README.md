@@ -58,6 +58,22 @@ GF_IP=`oc get svc goflow-kube -n network-observability -ojsonpath='{.spec.cluste
 oc patch networks.operator.openshift.io cluster --type='json' -p "$(sed -e "s/GF_IP/$GF_IP/" ./config/samples/net-cluster-patch.json)"
 ```
 
+### Enabling the console plugin
+
+The plugin automatically deploy an OpenShift console dynamic plugin.
+
+The plugin then needs to be enabled through the console configuration:
+
+```
+$ oc edit console.operator.openshift.io cluster
+```
+
+```
+spec:
+  plugins:
+  - network-observability-plugin
+```
+
 ## Resources
 
-- [Advanced topics](https://sdk.operatorframework.io/docs/building-operators/golang/advanced-topics/) (generic / operator framework) 
+- [Advanced topics](https://sdk.operatorframework.io/docs/building-operators/golang/advanced-topics/) (generic / operator framework)
