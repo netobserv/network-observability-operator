@@ -84,7 +84,7 @@ type FlowCollectorGoflowKube struct {
 	// Port is the collector port: either a service port for Deployment kind, or host port for DaemonSet kind
 	Port int32 `json:"port,omitempty"`
 
-	//+kubebuilder:default:="quay.io/netobserv/goflow-kube:latest"
+	//+kubebuilder:default:="quay.io/netobserv/goflow2-kube:main"
 	// Image is the collector image (including domain and tag)
 	Image string `json:"image,omitempty"`
 
@@ -178,7 +178,7 @@ type FlowCollectorConsolePlugin struct {
 	// Port is the plugin service port
 	Port int32 `json:"port,omitempty"`
 
-	//+kubebuilder:default:="quay.io/netobserv/console-plugin:latest"
+	//+kubebuilder:default:="quay.io/netobserv/network-observability-console-plugin:main"
 	// Image is the plugin image (including domain and tag)
 	Image string `json:"image,omitempty"`
 

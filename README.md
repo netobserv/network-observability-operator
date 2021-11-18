@@ -12,12 +12,12 @@ By default, the operator is deployed in namespace "network-observability".
 
 ## Deploy an existing image
 
-Images are built and pushed through CI to [quay.io](https://quay.io/repository/netobserv/network-observability-operator?tab=tags). To refer to the latest version of the `main` branch, use `IMG=quay.io/netobserv/network-observability-operator:main` or simply `VERSION=main`. To refer to older versions, use the commit short-SHA as the image tag.
+Images are built and pushed through CI to [quay.io](https://quay.io/repository/netobserv/network-observability-operator?tab=tags). To refer to the latest version of the `main` branch, use `IMG=quay.io/netobserv/network-observability-operator:main` or simply `VERSION=main`. To refer to older versions, use the commit short-SHA as the image tag. By default, `main` will be used.
 
-E.g. to deploy the latest build of branch `main`:
+E.g. to deploy the latest build:
 
 ```bash
-VERSION=main make deploy
+make deploy
 ```
 
 ## Build / push / deploy

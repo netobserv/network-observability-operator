@@ -11,9 +11,10 @@ spec:
     kind: Deployment
     replicas: 1
     port: 2055
-    image: 'quay.io/netobserv/goflow2-kube:latest'
+    image: 'quay.io/netobserv/goflow2-kube:main'
     imagePullPolicy: IfNotPresent
     logLevel: info
+    printOutput: false
   loki:
     url: 'http://loki:3100/'
     batchWait: 1s
@@ -24,6 +25,6 @@ spec:
     staticLabels:
       app: netobserv-flowcollector
   consolePlugin:
-    image: 'quay.io/netobserv/network-observability-console-plugin:dev'
+    image: 'quay.io/netobserv/network-observability-console-plugin:main'
     imagePullPolicy: IfNotPresent
     port: 9001
