@@ -4,12 +4,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/netobserv/network-observability-operator/controllers/constants"
-	v1 "k8s.io/api/core/v1"
-
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -43,7 +43,7 @@ var _ = Describe("FlowCollector Controller", func() {
 	// your API definition.
 	// Avoid adding tests for vanilla CRUD operations because they would
 	// test Kubernetes API server, which isn't the goal here.
-	Context("Cluster with autho-scaling", func() {
+	Context("Deployment with autho-scaling", func() {
 		It("Should create successfully", func() {
 
 			created := &flowsv1alpha1.FlowCollector{
@@ -119,6 +119,50 @@ var _ = Describe("FlowCollector Controller", func() {
 			Eventually(func() error {
 				return k8sClient.Get(ctx, configMapKey, &v1.ConfigMap{})
 			}, timeout, interval).ShouldNot(Succeed())
+		})
+	})
+	Context("Deploying as DaemonSet", func() {
+		It("Should create successfully", func() {
+			created := &flowsv1alpha1.FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: key.Name,
+				},
+				Spec: flowsv1alpha1.FlowCollectorSpec{
+					GoflowKube: flowsv1alpha1.FlowCollectorGoflowKube{
+						Kind:            "DaemonSet",
+						Port:            7891,
+						ImagePullPolicy: "Never",
+						LogLevel:        "error",
+						Image:           "testimg:latest",
+					},
+					IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
+						Sampling: 200,
+					},
+				},
+			}
+			// Create
+			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
+
+			By("Expecting to create the ovn-flows-configmap with the configuration from the FlowCollector")
+			Eventually(func() interface{} {
+				ofc := v1.ConfigMap{}
+				if err := k8sClient.Get(ctx, configMapKey, &ofc); err != nil {
+					return err
+				}
+				return ofc.Data
+			}, timeout, interval).Should(Equal(map[string]string{
+				"sampling":           "200",
+				"nodePort":           "7891",
+				"cacheMaxFlows":      "100",
+				"cacheActiveTimeout": "10s",
+			}))
+		})
+		Specify("daemonset deletion", func() {
+			Eventually(func() error {
+				f := &flowsv1alpha1.FlowCollector{}
+				_ = k8sClient.Get(ctx, key, f)
+				return k8sClient.Delete(ctx, f)
+			}, timeout, interval).Should(Succeed())
 		})
 	})
 })
