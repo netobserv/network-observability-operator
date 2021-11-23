@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -12,8 +13,6 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 )
 
 const configMapName = "goflow-kube-config"
@@ -57,7 +56,7 @@ func buildDeployment(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) 
 			Selector: &metav1.LabelSelector{
 				MatchLabels: buildLabels(),
 			},
-			Template: *buildPodTemplate(desired),
+			Template: buildPodTemplate(desired),
 		},
 	}
 }
@@ -72,18 +71,33 @@ func buildDaemonSet(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *
 			Selector: &metav1.LabelSelector{
 				MatchLabels: buildLabels(),
 			},
-			Template: *buildPodTemplate(desired),
+			Template: buildPodTemplate(desired),
 		},
 	}
 }
 
-func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) *corev1.PodTemplateSpec {
+func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) corev1.PodTemplateSpec {
 	cmd := buildMainCommand(desired)
-	return &corev1.PodTemplateSpec{
+	var ports []corev1.ContainerPort
+	var tolerations []corev1.Toleration
+	if desired.Kind == constants.DaemonSetKind {
+		ports = []corev1.ContainerPort{{
+			Name:          constants.GoflowKubeName,
+			HostPort:      desired.Port,
+			ContainerPort: desired.Port,
+			Protocol:      corev1.ProtocolUDP,
+		}}
+		// This allows deploying an instance in the master node, the same technique used in the
+		// companion ovnkube-node daemonset definition
+		tolerations = []corev1.Toleration{{Operator: corev1.TolerationOpExists}}
+	}
+
+	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: buildLabels(),
 		},
 		Spec: corev1.PodSpec{
+			Tolerations: tolerations,
 			Volumes: []corev1.Volume{{
 				Name: configVolume,
 				VolumeSource: corev1.VolumeSource{
@@ -104,6 +118,7 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) *corev1.Po
 					MountPath: configPath,
 					Name:      configVolume,
 				}},
+				Ports: ports,
 			}},
 			ServiceAccountName: constants.GoflowKubeName,
 		},
@@ -221,6 +236,11 @@ func buildRBAC(ns string) []client.Object {
 				APIGroups: []string{"autoscaling"},
 				Verbs:     []string{"create", "delete", "patch", "update", "get", "watch", "list"},
 				Resources: []string{"horizontalpodautoscalers"},
+			}, {
+				APIGroups:     []string{"security.openshift.io"},
+				Verbs:         []string{"use"},
+				Resources:     []string{"securitycontextconstraints"},
+				ResourceNames: []string{"hostnetwork"},
 			}},
 		},
 		&rbacv1.ClusterRoleBinding{
