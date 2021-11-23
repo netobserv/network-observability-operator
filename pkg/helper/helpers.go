@@ -10,3 +10,7 @@ func ContainsString(slice []string, s string) bool {
 	}
 	return false
 }
+
+func Int32Ptr(v int32) *int32 {
+	return &v
+}

@@ -1,8 +1,13 @@
 package controllers
 
 import (
+	"fmt"
 	"net"
 	"time"
+
+	ascv1 "k8s.io/api/autoscaling/v1"
+
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -16,8 +21,8 @@ import (
 
 var _ = Describe("FlowCollector Controller", func() {
 
-	const timeout = time.Second * 30
-	const interval = time.Second * 1
+	const timeout = time.Second * 10
+	const interval = 50 * time.Millisecond
 	const flowCollectorPort = 999
 	ipResolver.On("LookupIP", constants.GoflowKubeName+"."+operatorNamespace).
 		Return([]net.IP{net.IPv4(11, 22, 33, 44)}, nil)
@@ -57,6 +62,10 @@ var _ = Describe("FlowCollector Controller", func() {
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
 						Image:           "testimg:latest",
+						HPA: &flowsv1alpha1.FlowCollectorHPA{
+							MinReplicas: helper.Int32Ptr(1),
+							MaxReplicas: 1,
+						},
 					},
 					IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
 						Sampling: 200,
@@ -106,6 +115,33 @@ var _ = Describe("FlowCollector Controller", func() {
 				"cacheMaxFlows":      "100",
 				"cacheActiveTimeout": "30s",
 			}))
+		})
+
+		It("Should autoscale when the HPA options change", func() {
+			gfKey := types.NamespacedName{
+				Name:      constants.GoflowKubeName,
+				Namespace: operatorNamespace,
+			}
+			hpa := ascv1.HorizontalPodAutoscaler{}
+			Expect(k8sClient.Get(ctx, gfKey, &hpa)).To(Succeed())
+			Expect(*hpa.Spec.MinReplicas).To(Equal(int32(1)))
+			Expect(hpa.Spec.MaxReplicas).To(Equal(int32(1)))
+			// update FlowCollector and verify that HPA spec also changed
+			fc := flowsv1alpha1.FlowCollector{}
+			Expect(k8sClient.Get(ctx, key, &fc)).To(Succeed())
+			fc.Spec.GoflowKube.HPA.MinReplicas = helper.Int32Ptr(2)
+			fc.Spec.GoflowKube.HPA.MaxReplicas = 2
+			Expect(k8sClient.Update(ctx, &fc)).To(Succeed())
+			Eventually(func() error {
+				if err := k8sClient.Get(ctx, gfKey, &hpa); err != nil {
+					return err
+				}
+				if *hpa.Spec.MinReplicas != int32(2) || hpa.Spec.MaxReplicas != int32(2) {
+					return fmt.Errorf("expected min, max replicas to be 2. Got %v, %v",
+						*hpa.Spec.MinReplicas, hpa.Spec.MaxReplicas)
+				}
+				return nil
+			}, timeout, interval).Should(Succeed())
 		})
 
 		It("Should delete successfully", func() {
