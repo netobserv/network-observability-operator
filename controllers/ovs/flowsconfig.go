@@ -6,18 +6,15 @@ import (
 	"net"
 	"strconv"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type FlowsConfigController struct {
@@ -85,7 +82,7 @@ func (c *FlowsConfigController) Reconcile(
 }
 
 func (c *FlowsConfigController) Finalize(ctx context.Context) error {
-	return c.client.Delete(ctx, &corev1.ConfigMap{
+	err := c.client.Delete(ctx, &corev1.ConfigMap{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
@@ -95,6 +92,13 @@ func (c *FlowsConfigController) Finalize(ctx context.Context) error {
 			Namespace: c.cnoNamespace,
 		},
 	})
+	if errors.IsNotFound(err) {
+		rlog := log.FromContext(ctx, "component", "FlowsConfigController")
+		rlog.Error(err, "can't delete non-existing configmap. Ignoring",
+			"name", c.ovsConfigMapName, "namespace", c.cnoNamespace)
+		return nil
+	}
+	return err
 }
 
 func (c *FlowsConfigController) current(ctx context.Context) (*flowsConfig, error) {
@@ -127,6 +131,7 @@ func (c *FlowsConfigController) desired(
 	switch coll.Spec.GoflowKube.Kind {
 	case constants.DaemonSetKind:
 		conf.NodePort = coll.Spec.GoflowKube.Port
+		return &conf, nil
 	case constants.DeploymentKind:
 		svc := corev1.Service{}
 		if err := c.client.Get(ctx, types.NamespacedName{
