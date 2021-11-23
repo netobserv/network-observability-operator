@@ -58,6 +58,12 @@ GF_IP=`oc get svc goflow-kube -n network-observability -ojsonpath='{.spec.cluste
 oc patch networks.operator.openshift.io cluster --type='json' -p "$(sed -e "s/GF_IP/$GF_IP/" ./config/samples/net-cluster-patch.json)"
 ```
 
+### Installing Loki
+
+Loki is used to store the flows, however its installation is not managed directly by the operator. There are several options to install Loki, like using the `loki-operator` or the helm charts. Get some help about it on [this page](https://github.com/netobserv/documents/blob/main/hack_loki.md).
+
+Once Loki is setup, you may have to update the `flowcollector` CR to update the Loki URL (use an URL that is accessible in-cluster by the `goflow-kube` pods; default is `http://loki:3100/`).
+
 ### Enabling the console plugin
 
 The plugin automatically deploy an OpenShift console dynamic plugin.
@@ -76,7 +82,11 @@ To do so, you can apply this patch:
 oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["network-observability-plugin"]}]'
 ```
 
-## Resources
+## FlowCollector custom resource
+
+A `FlowCollector` sample file is available [here](./config/samples/flows_v1alpha1_flowcollector.yaml).
+
+## Other resources
 
 - [Advanced topics](https://sdk.operatorframework.io/docs/building-operators/golang/advanced-topics/) (generic / operator framework)
 - [API Reference](./docs/FlowCollector.md)
