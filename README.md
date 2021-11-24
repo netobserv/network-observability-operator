@@ -77,3 +77,4 @@ spec:
 ## Resources
 
 - [Advanced topics](https://sdk.operatorframework.io/docs/building-operators/golang/advanced-topics/) (generic / operator framework)
+- [API Reference](https://github.com/netobserv/network-observability-operator/docs/crd.md)
