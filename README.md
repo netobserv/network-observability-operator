@@ -77,3 +77,4 @@ spec:
 ## Resources
 
 - [Advanced topics](https://sdk.operatorframework.io/docs/building-operators/golang/advanced-topics/) (generic / operator framework)
+- [API Reference](./docs/FlowCollector.md)
