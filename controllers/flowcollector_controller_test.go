@@ -1,8 +1,15 @@
 package controllers
 
 import (
+	"fmt"
 	"net"
 	"time"
+
+	appsv1 "k8s.io/api/apps/v1"
+
+	ascv1 "k8s.io/api/autoscaling/v1"
+
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -16,8 +23,8 @@ import (
 
 var _ = Describe("FlowCollector Controller", func() {
 
-	const timeout = time.Second * 30
-	const interval = time.Second * 1
+	const timeout = time.Second * 10
+	const interval = 50 * time.Millisecond
 	const flowCollectorPort = 999
 	ipResolver.On("LookupIP", constants.GoflowKubeName+"."+operatorNamespace).
 		Return([]net.IP{net.IPv4(11, 22, 33, 44)}, nil)
@@ -25,6 +32,10 @@ var _ = Describe("FlowCollector Controller", func() {
 	configMapKey := types.NamespacedName{
 		Name:      "ovs-flows-config",
 		Namespace: cnoNamespace,
+	}
+	gfKey := types.NamespacedName{
+		Name:      constants.GoflowKubeName,
+		Namespace: operatorNamespace,
 	}
 	key := types.NamespacedName{
 		Name:      "test-cluster",
@@ -57,6 +68,11 @@ var _ = Describe("FlowCollector Controller", func() {
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
 						Image:           "testimg:latest",
+						HPA: &flowsv1alpha1.FlowCollectorHPA{
+							MinReplicas:                    helper.Int32Ptr(1),
+							MaxReplicas:                    1,
+							TargetCPUUtilizationPercentage: helper.Int32Ptr(90),
+						},
 					},
 					IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
 						Sampling: 200,
@@ -67,7 +83,31 @@ var _ = Describe("FlowCollector Controller", func() {
 			// Create
 			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
 
-			By("Expecting to create the ovn-flows-configmap with the configuration from the FlowCollector")
+			By("Expecting to create the goflow-kube Deployment")
+			Eventually(func() interface{} {
+				dp := appsv1.Deployment{}
+				if err := k8sClient.Get(ctx, gfKey, &dp); err != nil {
+					return err
+				}
+				return *dp.Spec.Replicas
+			}, timeout, interval).Should(Equal(int32(1)))
+
+			svc := v1.Service{}
+			By("Expecting to create the goflow-kube Service")
+			Eventually(func() interface{} {
+				if err := k8sClient.Get(ctx, gfKey, &svc); err != nil {
+					return err
+				}
+				return svc
+			}, timeout, interval).Should(Satisfy(func(svc v1.Service) bool {
+				return svc.Labels != nil && svc.Labels["app"] == constants.GoflowKubeName &&
+					svc.Spec.Selector != nil && svc.Spec.Selector["app"] == constants.GoflowKubeName &&
+					len(svc.Spec.Ports) == 1 &&
+					svc.Spec.Ports[0].Protocol == v1.ProtocolUDP &&
+					svc.Spec.Ports[0].Port == flowCollectorPort
+			}), "unexpected service contents", helper.AsyncJSON{Ptr: svc})
+
+			By("Creating the ovn-flows-configmap with the configuration from the FlowCollector")
 			Eventually(func() interface{} {
 				ofc := v1.ConfigMap{}
 				if err := k8sClient.Get(ctx, configMapKey, &ofc); err != nil {
@@ -106,6 +146,34 @@ var _ = Describe("FlowCollector Controller", func() {
 				"cacheMaxFlows":      "100",
 				"cacheActiveTimeout": "30s",
 			}))
+		})
+
+		It("Should autoscale when the HPA options change", func() {
+			hpa := ascv1.HorizontalPodAutoscaler{}
+			Expect(k8sClient.Get(ctx, gfKey, &hpa)).To(Succeed())
+			Expect(*hpa.Spec.MinReplicas).To(Equal(int32(1)))
+			Expect(hpa.Spec.MaxReplicas).To(Equal(int32(1)))
+			Expect(*hpa.Spec.TargetCPUUtilizationPercentage).To(Equal(int32(90)))
+			// update FlowCollector and verify that HPA spec also changed
+			fc := flowsv1alpha1.FlowCollector{}
+			Expect(k8sClient.Get(ctx, key, &fc)).To(Succeed())
+			fc.Spec.GoflowKube.HPA.MinReplicas = helper.Int32Ptr(2)
+			fc.Spec.GoflowKube.HPA.MaxReplicas = 2
+			Expect(k8sClient.Update(ctx, &fc)).To(Succeed())
+
+			By("Changing the Horizontal Pod Autoscaler instance")
+			Eventually(func() error {
+				if err := k8sClient.Get(ctx, gfKey, &hpa); err != nil {
+					return err
+				}
+				if *hpa.Spec.MinReplicas != int32(2) || hpa.Spec.MaxReplicas != int32(2) ||
+					*hpa.Spec.TargetCPUUtilizationPercentage != int32(90) {
+					return fmt.Errorf("expected {2, 2, 90}: Got %v, %v, %v",
+						*hpa.Spec.MinReplicas, hpa.Spec.MaxReplicas,
+						*hpa.Spec.TargetCPUUtilizationPercentage)
+				}
+				return nil
+			}, timeout, interval).Should(Succeed())
 		})
 
 		It("Should delete successfully", func() {

@@ -177,7 +177,7 @@ func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowC
 
 func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollectorGoflowKube) bool {
 	for _, port := range svc.Spec.Ports {
-		if port.Port == desired.Port && port.Protocol == "UDP" {
+		if port.Port == desired.Port && port.Protocol == corev1.ProtocolUDP {
 			return false
 		}
 	}
@@ -202,9 +202,12 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flowsv1alpha1.FlowCo
 }
 
 func autoScalerNeedsUpdate(asc *ascv1.HorizontalPodAutoscaler, desired *flowsv1alpha1.FlowCollectorGoflowKube) bool {
+	differentPointerValues := func(a, b *int32) bool {
+		return (a == nil && b != nil) || (a != nil && b == nil) || (a != nil && *a != *b)
+	}
 	if asc.Spec.MaxReplicas != desired.HPA.MaxReplicas ||
-		asc.Spec.MinReplicas != desired.HPA.MinReplicas ||
-		asc.Spec.TargetCPUUtilizationPercentage != desired.HPA.TargetCPUUtilizationPercentage {
+		differentPointerValues(asc.Spec.MinReplicas, desired.HPA.MinReplicas) ||
+		differentPointerValues(asc.Spec.TargetCPUUtilizationPercentage, desired.HPA.TargetCPUUtilizationPercentage) {
 		return true
 	}
 	return false

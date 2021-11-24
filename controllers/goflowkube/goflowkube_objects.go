@@ -164,7 +164,7 @@ func buildService(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *co
 			Selector: buildLabels(),
 			Ports: []corev1.ServicePort{{
 				Port:     desired.Port,
-				Protocol: "UDP",
+				Protocol: corev1.ProtocolUDP,
 			}},
 		},
 	}
