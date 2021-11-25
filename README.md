@@ -64,14 +64,16 @@ The plugin automatically deploy an OpenShift console dynamic plugin.
 
 The plugin then needs to be enabled through the console configuration:
 
-```
-$ oc edit console.operator.openshift.io cluster
-```
-
-```
+```yaml
 spec:
   plugins:
   - network-observability-plugin
+```
+
+To do so, you can apply this patch:
+
+```bash
+oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["network-observability-plugin"]}]'
 ```
 
 ## Resources

@@ -69,9 +69,8 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorConsolePlugin) *corev1
 					ReadOnly:  true,
 				}},
 				Args: []string{
-					"--ssl",
-					"--cert=/var/serving-cert/tls.crt",
-					"--key=/var/serving-cert/tls.key",
+					"-cert", "/var/serving-cert/tls.crt",
+					"-key", "/var/serving-cert/tls.key",
 				},
 			}},
 			Volumes: []corev1.Volume{{
