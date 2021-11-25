@@ -27,6 +27,7 @@ import (
 	ascv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -46,6 +47,8 @@ var pullPolicy = corev1.PullIfNotPresent
 var minReplicas = int32(1)
 var maxReplicas = int32(5)
 var targetCPU = int32(75)
+
+const testNamespace = "goflowkube"
 
 func getGoflowKubeConfig() flowsv1alpha1.FlowCollectorGoflowKube {
 	return flowsv1alpha1.FlowCollectorGoflowKube{
@@ -99,6 +102,9 @@ func getContainerSpecs() (corev1.PodSpec, flowsv1alpha1.FlowCollectorGoflowKube)
 
 func getServiceSpecs() (corev1.Service, flowsv1alpha1.FlowCollectorGoflowKube) {
 	var service = corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: testNamespace,
+		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
 				{
@@ -122,6 +128,9 @@ func TestBuildMainCommand(t *testing.T) {
 
 func getAutoScalerSpecs() (ascv1.HorizontalPodAutoscaler, flowsv1alpha1.FlowCollectorGoflowKube) {
 	var autoScaler = ascv1.HorizontalPodAutoscaler{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: testNamespace,
+		},
 		Spec: ascv1.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: ascv1.CrossVersionObjectReference{
 				Kind: constants.DeploymentKind,
@@ -167,12 +176,17 @@ func TestServiceUpdateCheck(t *testing.T) {
 
 	//equals specs
 	serviceSpec, goflowKube := getServiceSpecs()
-	assert.Equal(serviceNeedsUpdate(&serviceSpec, &goflowKube), false)
+	assert.Equal(serviceNeedsUpdate(&serviceSpec, &goflowKube, testNamespace), false)
 
 	//wrong port protocol
 	serviceSpec, goflowKube = getServiceSpecs()
 	serviceSpec.Spec.Ports[0].Protocol = "TCP"
-	assert.Equal(serviceNeedsUpdate(&serviceSpec, &goflowKube), true)
+	assert.Equal(serviceNeedsUpdate(&serviceSpec, &goflowKube, testNamespace), true)
+
+	//wrong namespace
+	serviceSpec, goflowKube = getServiceSpecs()
+	serviceSpec.Namespace = "NewNamespace"
+	assert.Equal(serviceNeedsUpdate(&serviceSpec, &goflowKube, testNamespace), true)
 }
 
 func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
@@ -207,20 +221,25 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 
 	//equals specs
 	autoScalerSpec, goflowKube := getAutoScalerSpecs()
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube), false)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube, testNamespace), false)
 
 	//wrong max replicas
 	autoScalerSpec, goflowKube = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MaxReplicas = 10
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube), true)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube, testNamespace), true)
 
 	//missing min replicas
 	autoScalerSpec, goflowKube = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MinReplicas = nil
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube), true)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube, testNamespace), true)
 
 	//missing min target CPU
 	autoScalerSpec, goflowKube = getAutoScalerSpecs()
 	autoScalerSpec.Spec.TargetCPUUtilizationPercentage = nil
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube), true)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube, testNamespace), true)
+
+	//wrong namespace
+	autoScalerSpec, goflowKube = getAutoScalerSpecs()
+	autoScalerSpec.Namespace = "NewNamespace"
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube, testNamespace), true)
 }

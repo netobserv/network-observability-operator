@@ -18,31 +18,31 @@ import (
 )
 
 type FlowsConfigController struct {
-	ovsConfigMapName  string
-	operatorNamespace string
-	cnoNamespace      string
-	client            client.Client
-	lookupIP          func(string) ([]net.IP, error)
+	ovsConfigMapName    string
+	goflowkubeNamespace string
+	cnoNamespace        string
+	client              client.Client
+	lookupIP            func(string) ([]net.IP, error)
 }
 
 func NewFlowsConfigController(client client.Client,
-	operatorNamespace, cnoNamespace, ovsConfigMapName string) FlowsConfigController {
-	return FlowsConfigController{
-		client:            client,
-		operatorNamespace: operatorNamespace,
-		cnoNamespace:      cnoNamespace,
-		ovsConfigMapName:  ovsConfigMapName,
-		lookupIP:          net.LookupIP,
+	goflowkubeNamespace, cnoNamespace, ovsConfigMapName string) *FlowsConfigController {
+	return &FlowsConfigController{
+		client:              client,
+		goflowkubeNamespace: goflowkubeNamespace,
+		cnoNamespace:        cnoNamespace,
+		ovsConfigMapName:    ovsConfigMapName,
+		lookupIP:            net.LookupIP,
 	}
 }
 
 // NewTestFlowsConfigController allows creating a FlowsConfigController instance that with an
 // injected IP resolver for testing.
 func NewTestFlowsConfigController(client client.Client,
-	operatorNamespace, cnoNamespace, ovsConfigMapName string,
+	goflowkubeNamespace, cnoNamespace, ovsConfigMapName string,
 	lookupIP func(string) ([]net.IP, error),
-) FlowsConfigController {
-	fc := NewFlowsConfigController(client, operatorNamespace, cnoNamespace, ovsConfigMapName)
+) *FlowsConfigController {
+	fc := NewFlowsConfigController(client, goflowkubeNamespace, cnoNamespace, ovsConfigMapName)
 	fc.lookupIP = lookupIP
 	return fc
 }
@@ -135,7 +135,7 @@ func (c *FlowsConfigController) desired(
 	case constants.DeploymentKind:
 		svc := corev1.Service{}
 		if err := c.client.Get(ctx, types.NamespacedName{
-			Namespace: c.operatorNamespace,
+			Namespace: c.goflowkubeNamespace,
 			Name:      constants.GoflowKubeName,
 		}, &svc); err != nil {
 			return nil, err

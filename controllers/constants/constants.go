@@ -8,4 +8,5 @@ const (
 	DaemonSetKind  = "DaemonSet"
 	ServiceKind    = "Service"
 	AutoscalerKind = "HorizontalPodAutoscaler"
+	NamespaceKind  = "Namespace"
 )

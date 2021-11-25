@@ -31,7 +31,7 @@ var _ = Describe("FlowCollector Controller", func() {
 	expectedSharedTarget := "11.22.33.44:999"
 	configMapKey := types.NamespacedName{
 		Name:      "ovs-flows-config",
-		Namespace: cnoNamespace,
+		Namespace: "openshift-network-operator",
 	}
 	gfKey := types.NamespacedName{
 		Name:      constants.GoflowKubeName,

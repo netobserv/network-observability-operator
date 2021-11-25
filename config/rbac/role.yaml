@@ -55,6 +55,7 @@ rules:
   - ""
   resources:
   - configmaps
+  - namespaces
   - services
   verbs:
   - create
