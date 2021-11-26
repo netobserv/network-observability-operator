@@ -20,15 +20,15 @@ import (
 	"fmt"
 	"testing"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 	ascv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
 var resources = corev1.ResourceRequirements{
@@ -69,14 +69,14 @@ func getGoflowKubeConfig() flowsv1alpha1.FlowCollectorGoflowKube {
 func getLokiConfig() flowsv1alpha1.FlowCollectorLoki {
 	return flowsv1alpha1.FlowCollectorLoki{
 		URL: "http://loki:3100/",
-		BatchWait: v1.Duration{
+		BatchWait: metav1.Duration{
 			Duration: 1,
 		},
 		BatchSize: 102400,
-		MinBackoff: v1.Duration{
+		MinBackoff: metav1.Duration{
 			Duration: 1,
 		},
-		MaxBackoff: v1.Duration{
+		MaxBackoff: metav1.Duration{
 			Duration: 300,
 		},
 		MaxRetries:   10,

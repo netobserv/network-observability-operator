@@ -24,92 +24,123 @@ type Reconciler struct {
 	Namespace              string
 }
 
+type ownedObjects struct {
+	deployment *appsv1.Deployment
+	daemonSet  *appsv1.DaemonSet
+	service    *corev1.Service
+	hpa        *ascv1.HorizontalPodAutoscaler
+	configMap  *corev1.ConfigMap
+}
+
 // Reconcile is the reconciler entry point to reconcile the current goflow-kube state with the desired configuration
 func (r *Reconciler) Reconcile(ctx context.Context,
 	desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
 	desiredLoki *flowsv1alpha1.FlowCollectorLoki) error {
 
 	// Check if goflow-kube already exists, as a deployment or as a daemon set
-	nsname := types.NamespacedName{Name: constants.GoflowKubeName, Namespace: r.Namespace}
-	oldDepl, err := r.getObj(ctx, nsname, &appsv1.Deployment{}, constants.DeploymentKind)
+	old, err := r.getOwnedObjects(ctx)
 	if err != nil {
 		return err
 	}
-	oldDS, err := r.getObj(ctx, nsname, &appsv1.DaemonSet{}, constants.DaemonSetKind)
-	if err != nil {
-		return err
+	// If neither deployment nor daemonset already exists, it must be the first setup. Thus, setup permissions.
+	if old.deployment == nil && old.daemonSet == nil {
+		r.setupPermissions(ctx)
 	}
-	// If none of them already exist, it must be the first setup. Thus, setup permissions.
-	if oldDepl == nil && oldDS == nil {
-		r.setupPermissions(ctx, r.Namespace)
-	}
-	oldSVC, err := r.getObj(ctx, nsname, &corev1.Service{}, constants.ServiceKind)
-	if err != nil {
-		return err
-	}
-	oldASC, err := r.getObj(ctx, nsname, &ascv1.HorizontalPodAutoscaler{}, constants.AutoscalerKind)
-	if err != nil {
-		return err
-	}
-	oldCM, err := r.getObj(ctx, types.NamespacedName{Name: configMapName, Namespace: r.Namespace}, &corev1.ConfigMap{}, constants.ConfigMapKind)
-	if err != nil {
-		return err
-	}
+
 	newCM := buildConfigMap(desiredGoflowKube, desiredLoki, r.Namespace)
-	if oldCM == nil || !reflect.DeepEqual(newCM, oldCM.(*corev1.ConfigMap).Data) {
-		r.createOrUpdate(ctx, oldCM, newCM, constants.ConfigMapKind)
+	if old.configMap == nil || !reflect.DeepEqual(newCM, old.configMap.Data) {
+		r.createOrUpdate(ctx, old.configMap, newCM, constants.ConfigMapKind)
 	}
 
 	switch desiredGoflowKube.Kind {
 	case constants.DeploymentKind:
-		// Kind changed: delete DaemonSet and create Deployment+Service
-		if oldDS != nil {
-			r.delete(ctx, oldDS, constants.DaemonSetKind)
-		}
-		if oldDepl == nil || deploymentNeedsUpdate(oldDepl.(*appsv1.Deployment), desiredGoflowKube, r.Namespace) {
-			newDepl := buildDeployment(desiredGoflowKube, r.Namespace)
-			r.createOrUpdate(ctx, oldDepl, newDepl, constants.DeploymentKind)
-		}
-		if oldSVC == nil || serviceNeedsUpdate(oldSVC.(*corev1.Service), desiredGoflowKube, r.Namespace) {
-			newSVC := buildService(desiredGoflowKube, r.Namespace)
-			r.createOrUpdate(ctx, oldSVC, newSVC, constants.DeploymentKind)
-		}
-
-		//Delete or Create / Update Autoscaler according to HPA option
-		if oldASC != nil && desiredGoflowKube.HPA == nil {
-			r.delete(ctx, oldASC, constants.AutoscalerKind)
-		} else if desiredGoflowKube.HPA != nil {
-			if oldASC == nil || autoScalerNeedsUpdate(oldASC.(*ascv1.HorizontalPodAutoscaler), desiredGoflowKube, r.Namespace) {
-				newASC := buildAutoScaler(desiredGoflowKube, r.Namespace)
-				r.createOrUpdate(ctx, oldASC, newASC, constants.AutoscalerKind)
-			}
-		}
+		r.reconcileAsDeployment(ctx, old, desiredGoflowKube)
 	case constants.DaemonSetKind:
-		// Kind changed: delete Deployment / Service / HPA and create DaemonSet
-		if oldDepl != nil {
-			r.delete(ctx, oldDepl, constants.DeploymentKind)
-		}
-		if oldSVC != nil {
-			r.delete(ctx, oldSVC, constants.ServiceKind)
-		}
-		if oldASC != nil {
-			r.delete(ctx, oldASC, constants.AutoscalerKind)
-		}
-		if oldDS != nil && !daemonSetNeedsUpdate(oldDS.(*appsv1.DaemonSet), desiredGoflowKube, r.Namespace) {
-			return nil
-		}
-		newDS := buildDaemonSet(desiredGoflowKube, r.Namespace)
-		r.createOrUpdate(ctx, oldDS, newDS, constants.DaemonSetKind)
+		r.reconcileAsDaemonSet(ctx, old, desiredGoflowKube)
 	default:
-		return fmt.Errorf("Could not reconcile collector, invalid kind: %s", desiredGoflowKube.Kind)
+		return fmt.Errorf("could not reconcile collector, invalid kind: %s", desiredGoflowKube.Kind)
 	}
 	return nil
 }
 
-func (r *Reconciler) setupPermissions(ctx context.Context, ns string) {
+// getOwnedObjects retrieves current / old objects before the reconciliation run
+func (r *Reconciler) getOwnedObjects(ctx context.Context) (*ownedObjects, error) {
+	nsname := types.NamespacedName{Name: constants.GoflowKubeName, Namespace: r.Namespace}
+	objs := ownedObjects{}
+	if oldDepl, err := r.getObj(ctx, nsname, &appsv1.Deployment{}, constants.DeploymentKind); err != nil {
+		return nil, err
+	} else if oldDepl != nil {
+		objs.deployment = oldDepl.(*appsv1.Deployment)
+	}
+	if oldDS, err := r.getObj(ctx, nsname, &appsv1.DaemonSet{}, constants.DaemonSetKind); err != nil {
+		return nil, err
+	} else if oldDS != nil {
+		objs.daemonSet = oldDS.(*appsv1.DaemonSet)
+	}
+	if oldSVC, err := r.getObj(ctx, nsname, &corev1.Service{}, constants.ServiceKind); err != nil {
+		return nil, err
+	} else if oldSVC != nil {
+		objs.service = oldSVC.(*corev1.Service)
+	}
+	if oldASC, err := r.getObj(ctx, nsname, &ascv1.HorizontalPodAutoscaler{}, constants.AutoscalerKind); err != nil {
+		return nil, err
+	} else if oldASC != nil {
+		objs.hpa = oldASC.(*ascv1.HorizontalPodAutoscaler)
+	}
+	if oldCM, err := r.getObj(ctx, types.NamespacedName{Name: configMapName, Namespace: r.Namespace}, &corev1.ConfigMap{}, constants.ConfigMapKind); err != nil {
+		return nil, err
+	} else if oldCM != nil {
+		objs.configMap = oldCM.(*corev1.ConfigMap)
+	}
+	return &objs, nil
+}
+
+func (r *Reconciler) reconcileAsDeployment(ctx context.Context, old *ownedObjects, desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube) {
+	// Kind changed: delete DaemonSet and create Deployment+Service
+	if old.daemonSet != nil {
+		r.delete(ctx, old.daemonSet, constants.DaemonSetKind)
+	}
+	if old.deployment == nil || deploymentNeedsUpdate(old.deployment, desiredGoflowKube, r.Namespace) {
+		newDepl := buildDeployment(desiredGoflowKube, r.Namespace)
+		r.createOrUpdate(ctx, old.deployment, newDepl, constants.DeploymentKind)
+	}
+	if old.service == nil || serviceNeedsUpdate(old.service, desiredGoflowKube, r.Namespace) {
+		newSVC := buildService(desiredGoflowKube, r.Namespace)
+		r.createOrUpdate(ctx, old.service, newSVC, constants.DeploymentKind)
+	}
+
+	// Delete or Create / Update Autoscaler according to HPA option
+	if old.hpa != nil && desiredGoflowKube.HPA == nil {
+		r.delete(ctx, old.hpa, constants.AutoscalerKind)
+	} else if desiredGoflowKube.HPA != nil {
+		if old.hpa == nil || autoScalerNeedsUpdate(old.hpa, desiredGoflowKube, r.Namespace) {
+			newASC := buildAutoScaler(desiredGoflowKube, r.Namespace)
+			r.createOrUpdate(ctx, old.hpa, newASC, constants.AutoscalerKind)
+		}
+	}
+}
+
+func (r *Reconciler) reconcileAsDaemonSet(ctx context.Context, old *ownedObjects, desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube) {
+	// Kind changed: delete Deployment / Service / HPA and create DaemonSet
+	if old.deployment != nil {
+		r.delete(ctx, old.deployment, constants.DeploymentKind)
+	}
+	if old.service != nil {
+		r.delete(ctx, old.service, constants.ServiceKind)
+	}
+	if old.hpa != nil {
+		r.delete(ctx, old.hpa, constants.AutoscalerKind)
+	}
+	if old.daemonSet == nil || daemonSetNeedsUpdate(old.daemonSet, desiredGoflowKube, r.Namespace) {
+		newDS := buildDaemonSet(desiredGoflowKube, r.Namespace)
+		r.createOrUpdate(ctx, old.daemonSet, newDS, constants.DaemonSetKind)
+	}
+}
+
+func (r *Reconciler) setupPermissions(ctx context.Context) {
 	log := log.FromContext(ctx)
 	log.Info("Setup permissions for " + constants.GoflowKubeName)
-	rbacObjects := buildRBAC(ns)
+	rbacObjects := buildRBAC(r.Namespace)
 	for _, rbacObj := range rbacObjects {
 		err := r.SetControllerReference(rbacObj)
 		if err != nil {
@@ -127,10 +158,9 @@ func (r *Reconciler) getObj(ctx context.Context, nsname types.NamespacedName, ob
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, nil
-		} else {
-			log.FromContext(ctx).Error(err, "Failed to get "+constants.GoflowKubeName+" "+kind)
-			return nil, err
 		}
+		log.FromContext(ctx).Error(err, "Failed to get "+constants.GoflowKubeName+" "+kind)
+		return nil, err
 	}
 	return obj, nil
 }
@@ -141,7 +171,8 @@ func (r *Reconciler) createOrUpdate(ctx context.Context, old, new client.Object,
 	if err != nil {
 		log.Error(err, "Failed to set controller reference")
 	}
-	if old == nil {
+	// "old" may be nil but have a type assigned so "old == nil" won't work
+	if reflect.ValueOf(old).IsNil() {
 		log.Info("Creating a new "+kind, "Namespace", new.GetNamespace(), "Name", new.GetName())
 		err := r.Create(ctx, new)
 		if err != nil {
@@ -227,9 +258,9 @@ func autoScalerNeedsUpdate(asc *ascv1.HorizontalPodAutoscaler, desired *flowsv1a
 }
 
 func findContainer(podSpec *corev1.PodSpec) *corev1.Container {
-	for _, ctnr := range podSpec.Containers {
-		if ctnr.Name == constants.GoflowKubeName {
-			return &ctnr
+	for i := range podSpec.Containers {
+		if podSpec.Containers[i].Name == constants.GoflowKubeName {
+			return &podSpec.Containers[i]
 		}
 	}
 	return nil

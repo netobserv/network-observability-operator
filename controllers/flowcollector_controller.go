@@ -4,12 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/netobserv/network-observability-operator/pkg/helper"
-
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	"github.com/netobserv/network-observability-operator/controllers/ovs"
-
+	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -19,12 +14,14 @@ import (
 	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
 	"github.com/netobserv/network-observability-operator/controllers/goflowkube"
-	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/ovs"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 // Make sure it always matches config/default/kustomization.yaml:namespace
@@ -182,8 +179,8 @@ func isConsoleEnabled(mgr ctrl.Manager) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	for _, group := range groupsList.Groups {
-		if strings.HasSuffix(group.Name, osv1alpha1.GroupName) {
+	for i := range groupsList.Groups {
+		if strings.HasSuffix(groupsList.Groups[i].Name, osv1alpha1.GroupName) {
 			return true, nil
 		}
 	}
@@ -218,9 +215,8 @@ func (r *FlowCollectorReconciler) deleteExternalResources(ctx context.Context) e
 func getNamespaceName(desired *flowsv1alpha1.FlowCollector) string {
 	if desired.Spec.Namespace != "" {
 		return desired.Spec.Namespace
-	} else {
-		return operatorNamespace
 	}
+	return operatorNamespace
 }
 
 func (r *FlowCollectorReconciler) namespaceExist(ctx context.Context, nsName string) (bool, error) {
@@ -228,10 +224,9 @@ func (r *FlowCollectorReconciler) namespaceExist(ctx context.Context, nsName str
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return false, nil
-		} else {
-			log.FromContext(ctx).Error(err, "Failed to get namespace")
-			return false, err
 		}
+		log.FromContext(ctx).Error(err, "Failed to get namespace")
+		return false, err
 	}
 	return true, nil
 }

@@ -41,6 +41,7 @@ IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.21
+GOLANGCI_LINT_VERSION = v1.42.1
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -90,6 +91,11 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 	GOFLAGS="" go install fybrik.io/crdoc@latest
 	crdoc --resources config/crd/bases/flows.netobserv.io_flowcollectors.yaml --output docs/FlowCollector.md
 
+.PHONY: prereqs
+prereqs:
+	@echo "### Test if prerequisites are met, and installing missing dependencies"
+	test -f $(go env GOPATH)/bin/golangci-lint || GOFLAGS="" go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}
+
 .PHONY: vendors
 vendors:
 	@echo "### Checking vendors"
@@ -98,18 +104,20 @@ vendors:
 fmt: ## Run go fmt against code.
 	go fmt ./...
 
-vet: ## Run go vet against code.
-	go vet ./...
+.PHONY: lint
+lint: prereqs
+	@echo "### Linting code"
+	golangci-lint run ./...
 
-test: manifests generate fmt vet envtest ## Run tests.
+test: manifests generate envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
 
-build: generate fmt vet ## Build manager binary.
+build: generate fmt lint ## Build manager binary.
 	go build -mod vendor -o bin/manager main.go
 
-run: manifests generate fmt vet ## Run a controller from your host.
+run: manifests generate fmt lint ## Run a controller from your host.
 	go run ./main.go
 
 image-build: test ## Build OCI image with the manager.

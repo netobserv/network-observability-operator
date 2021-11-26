@@ -5,17 +5,17 @@ import (
 	"net"
 	"time"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
 	appsv1 "k8s.io/api/apps/v1"
 	ascv1 "k8s.io/api/autoscaling/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 var _ = Describe("FlowCollector Controller", func() {
@@ -229,17 +229,17 @@ var _ = Describe("FlowCollector Controller", func() {
 
 			By("Creating the required HostPort to access Goflow through the NodeIP", func() {
 				var cnt *v1.Container
-				for _, c := range ds.Spec.Template.Spec.Containers {
-					if c.Name == constants.GoflowKubeName {
-						cnt = &c
+				for i := range ds.Spec.Template.Spec.Containers {
+					if ds.Spec.Template.Spec.Containers[i].Name == constants.GoflowKubeName {
+						cnt = &ds.Spec.Template.Spec.Containers[i]
 						break
 					}
 				}
 				Expect(cnt).ToNot(BeNil(), "can't find a container named", constants.GoflowKubeName)
 				var cp *v1.ContainerPort
-				for _, p := range cnt.Ports {
-					if p.Name == constants.GoflowKubeName {
-						cp = &p
+				for i := range cnt.Ports {
+					if cnt.Ports[i].Name == constants.GoflowKubeName {
+						cp = &cnt.Ports[i]
 						break
 					}
 				}

@@ -2,9 +2,11 @@ package ovs
 
 import (
 	"fmt"
-	"github.com/mitchellh/mapstructure"
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"reflect"
+
+	"github.com/mitchellh/mapstructure"
+
+	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 )
 
 type flowsConfig struct {

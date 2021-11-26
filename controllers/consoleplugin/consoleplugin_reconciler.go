@@ -94,25 +94,12 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flowsv1alpha1.FlowCo
 }
 
 func findContainer(podSpec *corev1.PodSpec) *corev1.Container {
-	for _, ctnr := range podSpec.Containers {
-		if ctnr.Name == pluginName {
-			return &ctnr
+	for i := range podSpec.Containers {
+		if podSpec.Containers[i].Name == pluginName {
+			return &podSpec.Containers[i]
 		}
 	}
 	return nil
-}
-
-func (r *Reconciler) getIfExist(ctx context.Context, nsname types.NamespacedName, obj client.Object) (client.Object, error) {
-	err := r.Get(ctx, nsname, obj)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil, nil
-		} else {
-			log.FromContext(ctx).Error(err, "Failed to get object")
-			return nil, err
-		}
-	}
-	return obj, nil
 }
 
 func (r *Reconciler) createOrUpdate(ctx context.Context, old, new client.Object) {
@@ -143,10 +130,9 @@ func (r *Reconciler) getObj(ctx context.Context, nsname types.NamespacedName, ob
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, nil
-		} else {
-			log.FromContext(ctx).Error(err, "Failed to get object", obj.GetName())
-			return nil, err
 		}
+		log.FromContext(ctx).Error(err, "Failed to get object", obj.GetName())
+		return nil, err
 	}
 	return obj, nil
 }

@@ -84,6 +84,13 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspeccno">cno</a></b></td>
+        <td>object</td>
+        <td>
+          CNO contains settings related to the cluster network operator<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecconsoleplugin">consolePlugin</a></b></td>
         <td>object</td>
         <td>
@@ -109,6 +116,44 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td>object</td>
         <td>
           Loki contains settings related to the loki client<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace  where console plugin and goflowkube pods are going to be deployed. If empty, the namespace of the operator is going to be used<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.cno
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+CNO contains settings related to the cluster network operator
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace  where the configmap is going to be deployed.<br/>
+          <br/>
+            <i>Default</i>: openshift-network-operator<br/>
         </td>
         <td>false</td>
       </tr></tbody>
