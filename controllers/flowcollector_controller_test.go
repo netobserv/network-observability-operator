@@ -5,17 +5,14 @@ import (
 	"net"
 	"time"
 
-	appsv1 "k8s.io/api/apps/v1"
-
-	ascv1 "k8s.io/api/autoscaling/v1"
-
-	"github.com/netobserv/network-observability-operator/pkg/helper"
-
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	appsv1 "k8s.io/api/apps/v1"
+	ascv1 "k8s.io/api/autoscaling/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -224,6 +221,42 @@ var _ = Describe("FlowCollector Controller", func() {
 				"cacheMaxFlows":      "100",
 				"cacheActiveTimeout": "10s",
 			}))
+
+			ds := appsv1.DaemonSet{}
+			Expect(k8sClient.Get(ctx, types.NamespacedName{
+				Name: constants.GoflowKubeName, Namespace: operatorNamespace,
+			}, &ds)).To(Succeed())
+
+			By("Creating the required HostPort to access Goflow through the NodeIP", func() {
+				var cnt *v1.Container
+				for _, c := range ds.Spec.Template.Spec.Containers {
+					if c.Name == constants.GoflowKubeName {
+						cnt = &c
+						break
+					}
+				}
+				Expect(cnt).ToNot(BeNil(), "can't find a container named", constants.GoflowKubeName)
+				var cp *v1.ContainerPort
+				for _, p := range cnt.Ports {
+					if p.Name == constants.GoflowKubeName {
+						cp = &p
+						break
+					}
+				}
+				Expect(cp).
+					ToNot(BeNil(), "can't find a container port named", constants.GoflowKubeName)
+				Expect(*cp).To(Equal(v1.ContainerPort{
+					Name:          constants.GoflowKubeName,
+					HostPort:      7891,
+					ContainerPort: 7891,
+					Protocol:      "UDP",
+				}))
+			})
+
+			By("Allocating the proper toleration to allow its placement in the master nodes", func() {
+				Expect(ds.Spec.Template.Spec.Tolerations).
+					To(ContainElement(v1.Toleration{Operator: v1.TolerationOpExists}))
+			})
 		})
 		Specify("daemonset deletion", func() {
 			Eventually(func() error {

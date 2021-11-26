@@ -116,3 +116,11 @@ rules:
   - create
   - delete
   - get
+- apiGroups:
+  - security.openshift.io
+  resourceNames:
+  - hostnetwork
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - use
