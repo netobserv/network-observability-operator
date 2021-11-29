@@ -5,6 +5,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/netobserv/network-observability-operator/controllers/goflowkube"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
@@ -52,6 +54,7 @@ var _ = Describe("FlowCollector Controller", func() {
 	// Avoid adding tests for vanilla CRUD operations because they would
 	// test Kubernetes API server, which isn't the goal here.
 	Context("Deployment with autho-scaling", func() {
+		var oldGoflowConfigDigest string
 		It("Should create successfully", func() {
 
 			created := &flowsv1alpha1.FlowCollector{
@@ -85,6 +88,10 @@ var _ = Describe("FlowCollector Controller", func() {
 				dp := appsv1.Deployment{}
 				if err := k8sClient.Get(ctx, gfKey, &dp); err != nil {
 					return err
+				}
+				oldGoflowConfigDigest = dp.Spec.Template.Annotations[goflowkube.PodConfigurationDigest]
+				if oldGoflowConfigDigest == "" {
+					return fmt.Errorf("%q annotation can't be empty", goflowkube.PodConfigurationDigest)
 				}
 				return *dp.Spec.Replicas
 			}, timeout, interval).Should(Equal(int32(1)))
@@ -145,6 +152,31 @@ var _ = Describe("FlowCollector Controller", func() {
 			}))
 		})
 
+		It("Should redeploy if the spec doesn't change but the external goflow-kube-config does", func() {
+			Eventually(func() error {
+				fc := flowsv1alpha1.FlowCollector{}
+				if err := k8sClient.Get(ctx, key, &fc); err != nil {
+					return err
+				}
+				fc.Spec.Loki.MaxRetries = 7
+				return k8sClient.Update(ctx, &fc)
+			}).Should(Succeed())
+
+			By("Expecting that the goflowkube.PodConfigurationDigest attribute has changed")
+			Eventually(func() error {
+				dp := appsv1.Deployment{}
+				if err := k8sClient.Get(ctx, gfKey, &dp); err != nil {
+					return err
+				}
+				currentGoflowConfigDigest := dp.Spec.Template.Annotations[goflowkube.PodConfigurationDigest]
+				if currentGoflowConfigDigest != oldGoflowConfigDigest {
+					return fmt.Errorf("annotation %v %q was expected to change",
+						goflowkube.PodConfigurationDigest, currentGoflowConfigDigest)
+				}
+				return nil
+			}).Should(Succeed())
+		})
+
 		It("Should autoscale when the HPA options change", func() {
 			hpa := ascv1.HorizontalPodAutoscaler{}
 			Expect(k8sClient.Get(ctx, gfKey, &hpa)).To(Succeed())
@@ -187,6 +219,7 @@ var _ = Describe("FlowCollector Controller", func() {
 		})
 	})
 	Context("Deploying as DaemonSet", func() {
+		var oldGoflowConfigDigest string
 		It("Should create successfully", func() {
 			created := &flowsv1alpha1.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{
@@ -223,9 +256,10 @@ var _ = Describe("FlowCollector Controller", func() {
 			}))
 
 			ds := appsv1.DaemonSet{}
-			Expect(k8sClient.Get(ctx, types.NamespacedName{
-				Name: constants.GoflowKubeName, Namespace: operatorNamespace,
-			}, &ds)).To(Succeed())
+			Expect(k8sClient.Get(ctx, gfKey, &ds)).To(Succeed())
+
+			oldGoflowConfigDigest = ds.Spec.Template.Annotations[goflowkube.PodConfigurationDigest]
+			Expect(oldGoflowConfigDigest).ToNot(BeEmpty())
 
 			By("Creating the required HostPort to access Goflow through the NodeIP", func() {
 				var cnt *v1.Container
@@ -257,6 +291,30 @@ var _ = Describe("FlowCollector Controller", func() {
 				Expect(ds.Spec.Template.Spec.Tolerations).
 					To(ContainElement(v1.Toleration{Operator: v1.TolerationOpExists}))
 			})
+		})
+		It("Should redeploy if the spec doesn't change but the external goflow-kube-config does", func() {
+			Eventually(func() error {
+				fc := flowsv1alpha1.FlowCollector{}
+				if err := k8sClient.Get(ctx, key, &fc); err != nil {
+					return err
+				}
+				fc.Spec.Loki.MaxRetries = 7
+				return k8sClient.Update(ctx, &fc)
+			}).Should(Succeed())
+
+			By("Expecting that the goflowkube.PodConfigurationDigest attribute has changed")
+			Eventually(func() error {
+				dp := appsv1.DaemonSet{}
+				if err := k8sClient.Get(ctx, gfKey, &dp); err != nil {
+					return err
+				}
+				currentGoflowConfigDigest := dp.Spec.Template.Annotations[goflowkube.PodConfigurationDigest]
+				if currentGoflowConfigDigest != oldGoflowConfigDigest {
+					return fmt.Errorf("annotation %v %q was expected to change",
+						goflowkube.PodConfigurationDigest, currentGoflowConfigDigest)
+				}
+				return nil
+			}).Should(Succeed())
 		})
 		Specify("daemonset deletion", func() {
 			Eventually(func() error {

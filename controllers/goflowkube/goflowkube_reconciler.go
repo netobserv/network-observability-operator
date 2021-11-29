@@ -47,16 +47,16 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 		r.setupPermissions(ctx)
 	}
 
-	newCM := buildConfigMap(desiredGoflowKube, desiredLoki, r.Namespace)
+	newCM, configDigest := buildConfigMap(desiredGoflowKube, desiredLoki, r.Namespace)
 	if old.configMap == nil || !reflect.DeepEqual(newCM, old.configMap.Data) {
 		r.createOrUpdate(ctx, old.configMap, newCM, constants.ConfigMapKind)
 	}
 
 	switch desiredGoflowKube.Kind {
 	case constants.DeploymentKind:
-		r.reconcileAsDeployment(ctx, old, desiredGoflowKube)
+		r.reconcileAsDeployment(ctx, old, desiredGoflowKube, configDigest)
 	case constants.DaemonSetKind:
-		r.reconcileAsDaemonSet(ctx, old, desiredGoflowKube)
+		r.reconcileAsDaemonSet(ctx, old, desiredGoflowKube, configDigest)
 	default:
 		return fmt.Errorf("could not reconcile collector, invalid kind: %s", desiredGoflowKube.Kind)
 	}
@@ -95,13 +95,15 @@ func (r *Reconciler) getOwnedObjects(ctx context.Context) (*ownedObjects, error)
 	return &objs, nil
 }
 
-func (r *Reconciler) reconcileAsDeployment(ctx context.Context, old *ownedObjects, desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube) {
+func (r *Reconciler) reconcileAsDeployment(ctx context.Context, old *ownedObjects,
+	desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube, configDigest string) {
 	// Kind changed: delete DaemonSet and create Deployment+Service
 	if old.daemonSet != nil {
 		r.delete(ctx, old.daemonSet, constants.DaemonSetKind)
 	}
-	if old.deployment == nil || deploymentNeedsUpdate(old.deployment, desiredGoflowKube, r.Namespace) {
-		newDepl := buildDeployment(desiredGoflowKube, r.Namespace)
+	if old.deployment == nil ||
+		deploymentNeedsUpdate(old.deployment, desiredGoflowKube, r.Namespace, configDigest) {
+		newDepl := buildDeployment(desiredGoflowKube, r.Namespace, configDigest)
 		r.createOrUpdate(ctx, old.deployment, newDepl, constants.DeploymentKind)
 	}
 	if old.service == nil || serviceNeedsUpdate(old.service, desiredGoflowKube, r.Namespace) {
@@ -120,7 +122,8 @@ func (r *Reconciler) reconcileAsDeployment(ctx context.Context, old *ownedObject
 	}
 }
 
-func (r *Reconciler) reconcileAsDaemonSet(ctx context.Context, old *ownedObjects, desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube) {
+func (r *Reconciler) reconcileAsDaemonSet(ctx context.Context, old *ownedObjects,
+	desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube, configDigest string) {
 	// Kind changed: delete Deployment / Service / HPA and create DaemonSet
 	if old.deployment != nil {
 		r.delete(ctx, old.deployment, constants.DeploymentKind)
@@ -131,8 +134,9 @@ func (r *Reconciler) reconcileAsDaemonSet(ctx context.Context, old *ownedObjects
 	if old.hpa != nil {
 		r.delete(ctx, old.hpa, constants.AutoscalerKind)
 	}
-	if old.daemonSet == nil || daemonSetNeedsUpdate(old.daemonSet, desiredGoflowKube, r.Namespace) {
-		newDS := buildDaemonSet(desiredGoflowKube, r.Namespace)
+	if old.daemonSet == nil ||
+		daemonSetNeedsUpdate(old.daemonSet, desiredGoflowKube, r.Namespace, configDigest) {
+		newDS := buildDaemonSet(desiredGoflowKube, r.Namespace, configDigest)
 		r.createOrUpdate(ctx, old.daemonSet, newDS, constants.DaemonSetKind)
 	}
 }
@@ -198,19 +202,27 @@ func (r *Reconciler) delete(ctx context.Context, old client.Object, kind string)
 	}
 }
 
-func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) bool {
+func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flowsv1alpha1.FlowCollectorGoflowKube,
+	ns, configDigest string) bool {
 	if ds.Namespace != ns {
 		return true
 	}
-	return containerNeedsUpdate(&ds.Spec.Template.Spec, desired)
+	return containerNeedsUpdate(&ds.Spec.Template.Spec, desired) ||
+		configChanged(&ds.Spec.Template, configDigest)
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) bool {
+func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorGoflowKube,
+	ns, configDigest string) bool {
 	if depl.Namespace != ns {
 		return true
 	}
 	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired) ||
+		configChanged(&depl.Spec.Template, configDigest) ||
 		*depl.Spec.Replicas != desired.Replicas
+}
+
+func configChanged(tmpl *corev1.PodTemplateSpec, configDigest string) bool {
+	return tmpl.Annotations == nil || tmpl.Annotations[PodConfigurationDigest] != configDigest
 }
 
 func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) bool {
