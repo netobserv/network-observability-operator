@@ -21,15 +21,16 @@ import (
 type Reconciler struct {
 	client.Client
 	SetControllerReference func(client.Object) error
-	OperatorNamespace      string
+	Namespace              string
 }
 
 // Reconcile is the reconciler entry point to reconcile the current goflow-kube state with the desired configuration
 func (r *Reconciler) Reconcile(ctx context.Context,
 	desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
 	desiredLoki *flowsv1alpha1.FlowCollectorLoki) error {
+
 	// Check if goflow-kube already exists, as a deployment or as a daemon set
-	nsname := types.NamespacedName{Name: constants.GoflowKubeName, Namespace: r.OperatorNamespace}
+	nsname := types.NamespacedName{Name: constants.GoflowKubeName, Namespace: r.Namespace}
 	oldDepl, err := r.getObj(ctx, nsname, &appsv1.Deployment{}, constants.DeploymentKind)
 	if err != nil {
 		return err
@@ -40,7 +41,7 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 	}
 	// If none of them already exist, it must be the first setup. Thus, setup permissions.
 	if oldDepl == nil && oldDS == nil {
-		r.setupPermissions(ctx)
+		r.setupPermissions(ctx, r.Namespace)
 	}
 	oldSVC, err := r.getObj(ctx, nsname, &corev1.Service{}, constants.ServiceKind)
 	if err != nil {
@@ -50,11 +51,11 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	oldCM, err := r.getObj(ctx, types.NamespacedName{Name: configMapName, Namespace: r.OperatorNamespace}, &corev1.ConfigMap{}, constants.ConfigMapKind)
+	oldCM, err := r.getObj(ctx, types.NamespacedName{Name: configMapName, Namespace: r.Namespace}, &corev1.ConfigMap{}, constants.ConfigMapKind)
 	if err != nil {
 		return err
 	}
-	newCM := buildConfigMap(desiredGoflowKube, desiredLoki, r.OperatorNamespace)
+	newCM := buildConfigMap(desiredGoflowKube, desiredLoki, r.Namespace)
 	if oldCM == nil || !reflect.DeepEqual(newCM, oldCM.(*corev1.ConfigMap).Data) {
 		r.createOrUpdate(ctx, oldCM, newCM, constants.ConfigMapKind)
 	}
@@ -65,12 +66,12 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 		if oldDS != nil {
 			r.delete(ctx, oldDS, constants.DaemonSetKind)
 		}
-		if oldDepl == nil || deploymentNeedsUpdate(oldDepl.(*appsv1.Deployment), desiredGoflowKube) {
-			newDepl := buildDeployment(desiredGoflowKube, r.OperatorNamespace)
+		if oldDepl == nil || deploymentNeedsUpdate(oldDepl.(*appsv1.Deployment), desiredGoflowKube, r.Namespace) {
+			newDepl := buildDeployment(desiredGoflowKube, r.Namespace)
 			r.createOrUpdate(ctx, oldDepl, newDepl, constants.DeploymentKind)
 		}
-		if oldSVC == nil || serviceNeedsUpdate(oldSVC.(*corev1.Service), desiredGoflowKube) {
-			newSVC := buildService(desiredGoflowKube, r.OperatorNamespace)
+		if oldSVC == nil || serviceNeedsUpdate(oldSVC.(*corev1.Service), desiredGoflowKube, r.Namespace) {
+			newSVC := buildService(desiredGoflowKube, r.Namespace)
 			r.createOrUpdate(ctx, oldSVC, newSVC, constants.DeploymentKind)
 		}
 
@@ -78,8 +79,8 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 		if oldASC != nil && desiredGoflowKube.HPA == nil {
 			r.delete(ctx, oldASC, constants.AutoscalerKind)
 		} else if desiredGoflowKube.HPA != nil {
-			if oldASC == nil || autoScalerNeedsUpdate(oldASC.(*ascv1.HorizontalPodAutoscaler), desiredGoflowKube) {
-				newASC := buildAutoScaler(desiredGoflowKube, r.OperatorNamespace)
+			if oldASC == nil || autoScalerNeedsUpdate(oldASC.(*ascv1.HorizontalPodAutoscaler), desiredGoflowKube, r.Namespace) {
+				newASC := buildAutoScaler(desiredGoflowKube, r.Namespace)
 				r.createOrUpdate(ctx, oldASC, newASC, constants.AutoscalerKind)
 			}
 		}
@@ -94,10 +95,10 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 		if oldASC != nil {
 			r.delete(ctx, oldASC, constants.AutoscalerKind)
 		}
-		if oldDS != nil && !daemonSetNeedsUpdate(oldDS.(*appsv1.DaemonSet), desiredGoflowKube) {
+		if oldDS != nil && !daemonSetNeedsUpdate(oldDS.(*appsv1.DaemonSet), desiredGoflowKube, r.Namespace) {
 			return nil
 		}
-		newDS := buildDaemonSet(desiredGoflowKube, r.OperatorNamespace)
+		newDS := buildDaemonSet(desiredGoflowKube, r.Namespace)
 		r.createOrUpdate(ctx, oldDS, newDS, constants.DaemonSetKind)
 	default:
 		return fmt.Errorf("Could not reconcile collector, invalid kind: %s", desiredGoflowKube.Kind)
@@ -105,10 +106,10 @@ func (r *Reconciler) Reconcile(ctx context.Context,
 	return nil
 }
 
-func (r *Reconciler) setupPermissions(ctx context.Context) {
+func (r *Reconciler) setupPermissions(ctx context.Context, ns string) {
 	log := log.FromContext(ctx)
 	log.Info("Setup permissions for " + constants.GoflowKubeName)
-	rbacObjects := buildRBAC(r.OperatorNamespace)
+	rbacObjects := buildRBAC(ns)
 	for _, rbacObj := range rbacObjects {
 		err := r.SetControllerReference(rbacObj)
 		if err != nil {
@@ -166,16 +167,25 @@ func (r *Reconciler) delete(ctx context.Context, old client.Object, kind string)
 	}
 }
 
-func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flowsv1alpha1.FlowCollectorGoflowKube) bool {
+func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) bool {
+	if ds.Namespace != ns {
+		return true
+	}
 	return containerNeedsUpdate(&ds.Spec.Template.Spec, desired)
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorGoflowKube) bool {
+func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) bool {
+	if depl.Namespace != ns {
+		return true
+	}
 	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired) ||
 		*depl.Spec.Replicas != desired.Replicas
 }
 
-func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollectorGoflowKube) bool {
+func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) bool {
+	if svc.Namespace != ns {
+		return true
+	}
 	for _, port := range svc.Spec.Ports {
 		if port.Port == desired.Port && port.Protocol == corev1.ProtocolUDP {
 			return false
@@ -201,7 +211,10 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flowsv1alpha1.FlowCo
 	return false
 }
 
-func autoScalerNeedsUpdate(asc *ascv1.HorizontalPodAutoscaler, desired *flowsv1alpha1.FlowCollectorGoflowKube) bool {
+func autoScalerNeedsUpdate(asc *ascv1.HorizontalPodAutoscaler, desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) bool {
+	if asc.Namespace != ns {
+		return true
+	}
 	differentPointerValues := func(a, b *int32) bool {
 		return (a == nil && b != nil) || (a != nil && b == nil) || (a != nil && *a != *b)
 	}

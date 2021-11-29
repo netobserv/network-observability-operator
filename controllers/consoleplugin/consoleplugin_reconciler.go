@@ -18,15 +18,14 @@ import (
 type Reconciler struct {
 	client.Client
 	SetControllerReference func(client.Object) error
-	OperatorNamespace      string
+	Namespace              string
 }
 
 const pluginName = "network-observability-plugin"
 
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
 func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollectorConsolePlugin) error {
-	// Check if goflow-kube already exists, as a deployment or as a daemon set
-	nsname := types.NamespacedName{Name: pluginName, Namespace: r.OperatorNamespace}
+	nsname := types.NamespacedName{Name: pluginName, Namespace: r.Namespace}
 
 	// Get existing objects
 	oldDepl, err := r.getObj(ctx, nsname, &appsv1.Deployment{})
@@ -40,32 +39,38 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowC
 
 	// First deployment, creating permissions and container plugin
 	if oldDepl == nil && oldSVC == nil {
-		rbac := buildRBAC(r.OperatorNamespace)
+		rbac := buildRBAC(r.Namespace)
 		for _, rbacObject := range rbac {
 			r.createOrUpdate(ctx, nil, rbacObject)
 		}
-		consolePlugin := buildConsolePlugin(desired, r.OperatorNamespace)
+		consolePlugin := buildConsolePlugin(desired, r.Namespace)
 		r.createOrUpdate(ctx, nil, consolePlugin)
 	}
 
 	// Check if objects need update
-	if oldDepl == nil || deploymentNeedsUpdate(oldDepl.(*appsv1.Deployment), desired) {
-		newDepl := buildDeployment(desired, r.OperatorNamespace)
+	if oldDepl == nil || deploymentNeedsUpdate(oldDepl.(*appsv1.Deployment), desired, r.Namespace) {
+		newDepl := buildDeployment(desired, r.Namespace)
 		r.createOrUpdate(ctx, oldDepl, newDepl)
 	}
-	if oldSVC == nil || serviceNeedsUpdate(oldSVC.(*corev1.Service), desired) {
-		newSVC := buildService(desired, r.OperatorNamespace)
+	if oldSVC == nil || serviceNeedsUpdate(oldSVC.(*corev1.Service), desired, r.Namespace) {
+		newSVC := buildService(desired, r.Namespace)
 		r.createOrUpdate(ctx, oldSVC, newSVC)
 	}
 	return nil
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorConsolePlugin) bool {
+func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns string) bool {
+	if depl.Namespace != ns {
+		return true
+	}
 	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired) ||
 		*depl.Spec.Replicas != desired.Replicas
 }
 
-func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollectorConsolePlugin) bool {
+func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns string) bool {
+	if svc.Namespace != ns {
+		return true
+	}
 	for _, port := range svc.Spec.Ports {
 		if port.Port == desired.Port && port.Protocol == "TCP" {
 			return false

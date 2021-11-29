@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const testImage = "quay.io/netobserv/network-observability-console-plugin:dev"
@@ -46,6 +47,9 @@ func getContainerSpecs() (corev1.PodSpec, flowsv1alpha1.FlowCollectorConsolePlug
 
 func getServiceSpecs() (corev1.Service, flowsv1alpha1.FlowCollectorConsolePlugin) {
 	var service = corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: testNamespace,
+		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
 				{
@@ -91,17 +95,22 @@ func TestServiceUpdateCheck(t *testing.T) {
 
 	//equals specs
 	serviceSpec, containerConfig := getServiceSpecs()
-	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig), false)
+	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, testNamespace), false)
 
 	//wrong port protocol
 	serviceSpec, containerConfig = getServiceSpecs()
 	serviceSpec.Spec.Ports[0].Protocol = "UDP"
-	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig), true)
+	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, testNamespace), true)
 
 	//wrong port number
 	serviceSpec, containerConfig = getServiceSpecs()
 	serviceSpec.Spec.Ports[0].Port = 8080
-	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig), true)
+	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, testNamespace), true)
+
+	//wrong namespace
+	serviceSpec, containerConfig = getServiceSpecs()
+	serviceSpec.Namespace = "OldNamespace"
+	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, testNamespace), true)
 
 }
 
@@ -120,6 +129,6 @@ func TestBuiltService(t *testing.T) {
 	//newly created service should not need update
 	containerConfig := getPluginConfig()
 	newService := buildService(&containerConfig, testNamespace)
-	assert.Equal(serviceNeedsUpdate(newService, &containerConfig), false)
+	assert.Equal(serviceNeedsUpdate(newService, &containerConfig, testNamespace), false)
 
 }

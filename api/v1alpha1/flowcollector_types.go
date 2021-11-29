@@ -27,6 +27,11 @@ import (
 type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
+	//+kubebuilder:default:=""
+	// Namespace  where console plugin and goflowkube pods are going to be deployed.
+	// If empty, the namespace of the operator is going to be used
+	Namespace string `json:"namespace,omitempty"`
+
 	// IPFIX contains IPFIX-related settings for the flow reporter
 	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
 
@@ -38,6 +43,9 @@ type FlowCollectorSpec struct {
 
 	// ConsolePlugin contains settings related to the console dynamic plugin
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
+
+	// CNO contains settings related to the cluster network operator
+	Cno ClusterNetworkOperator `json:"cno,omitempty"`
 }
 
 // FlowCollectorIPFIX defines the desired IPFIX state of FlowCollector
@@ -192,6 +200,15 @@ type FlowCollectorConsolePlugin struct {
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
+}
+
+// CNO defines the desired configuration related to the Cluster Network Configuration
+type ClusterNetworkOperator struct {
+	// Important: Run "make generate" to regenerate code after modifying this file
+
+	//+kubebuilder:default:=openshift-network-operator
+	// Namespace  where the configmap is going to be deployed.
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // FlowCollectorStatus defines the observed state of FlowCollector

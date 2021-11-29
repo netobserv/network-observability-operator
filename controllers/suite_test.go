@@ -49,12 +49,14 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	ctx        context.Context
-	k8sManager manager.Manager
-	k8sClient  client.Client
-	testEnv    *envtest.Environment
-	cancel     context.CancelFunc
-	ipResolver ipResolverMock
+	ctx                       context.Context
+	k8sManager                manager.Manager
+	k8sClient                 client.Client
+	testEnv                   *envtest.Environment
+	cancel                    context.CancelFunc
+	ipResolver                ipResolverMock
+	testCnoNamespace          string
+	testOvsFlowsConfigMapName string
 )
 
 func TestAPIs(t *testing.T) {
@@ -91,6 +93,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
+	testCnoNamespace = "openshift-network-operator"
+	testOvsFlowsConfigMapName = "ovs-flows-config"
+
 	Expect(prepareNamespaces()).NotTo(HaveOccurred())
 
 	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{Scheme: scheme.Scheme})
@@ -125,7 +130,7 @@ func prepareNamespaces() error {
 	}
 	return k8sClient.Create(ctx, &corev1.Namespace{
 		TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
-		ObjectMeta: metav1.ObjectMeta{Name: cnoNamespace},
+		ObjectMeta: metav1.ObjectMeta{Name: testCnoNamespace},
 	})
 }
 
@@ -136,7 +141,7 @@ func NewTestFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme
 		Client: client,
 		Scheme: scheme,
 		ovsConfigController: ovs.NewTestFlowsConfigController(client,
-			operatorNamespace, cnoNamespace, ovsFlowsConfigMapName, ipResolver.LookupIP),
+			operatorNamespace, testCnoNamespace, testOvsFlowsConfigMapName, ipResolver.LookupIP),
 	}
 }
 

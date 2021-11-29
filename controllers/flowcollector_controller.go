@@ -15,6 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,7 +30,7 @@ import (
 // Make sure it always matches config/default/kustomization.yaml:namespace
 // See also https://github.com/operator-framework/operator-lib/issues/74
 const operatorNamespace = "network-observability"
-const cnoNamespace = "openshift-network-operator"
+
 const ovsFlowsConfigMapName = "ovs-flows-config"
 const finalizerName = "flows.netobserv.io/finalizer"
 
@@ -37,22 +38,21 @@ const finalizerName = "flows.netobserv.io/finalizer"
 type FlowCollectorReconciler struct {
 	client.Client
 	Scheme              *runtime.Scheme
-	ovsConfigController ovs.FlowsConfigController
+	ovsConfigController *ovs.FlowsConfigController
 	consoleEnabled      bool
 }
 
 func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *FlowCollectorReconciler {
 	return &FlowCollectorReconciler{
-		Client: client,
-		Scheme: scheme,
-		ovsConfigController: ovs.NewFlowsConfigController(client,
-			operatorNamespace, cnoNamespace, ovsFlowsConfigMapName),
-		consoleEnabled: false,
+		Client:              client,
+		Scheme:              scheme,
+		ovsConfigController: nil,
+		consoleEnabled:      false,
 	}
 }
 
 //+kubebuilder:rbac:groups=apps,resources=deployments;daemonsets,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=services;configmaps,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=namespaces;services;configmaps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;create;delete
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;clusterrolebindings,verbs=get;create;delete
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins;clusterrolebindings,verbs=get;create;delete;update;patch;list
@@ -90,18 +90,42 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
+	ns := getNamespaceName(desired)
+	// If namespace does not exist, we create it
+	nsExist, err := r.namespaceExist(ctx, ns)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if !nsExist {
+		err = r.Create(ctx, buildNamespace(ns))
+		if err != nil {
+			log.Error(err, "Failed to create Namespace")
+			return ctrl.Result{}, err
+		}
+	}
+
 	// Goflow
 	gfReconciler := goflowkube.Reconciler{
 		Client: r.Client,
 		SetControllerReference: func(obj client.Object) error {
 			return ctrl.SetControllerReference(desired, obj, r.Scheme)
 		},
-		OperatorNamespace: operatorNamespace,
+		Namespace: ns,
 	}
 	if err := gfReconciler.Reconcile(ctx, &desired.Spec.GoflowKube, &desired.Spec.Loki); err != nil {
 		log.Error(err, "Failed to get FlowCollector")
 		return ctrl.Result{}, err
 	}
+
+	//ovsConfig is not initialized yet
+	if r.ovsConfigController == nil {
+		newFlowConfigController := ovs.NewFlowsConfigController(r.Client,
+			ns,
+			desired.Spec.Cno.Namespace,
+			ovsFlowsConfigMapName)
+		r.ovsConfigController = newFlowConfigController
+	}
+
 	// ovs-flows-config map for CNO
 	if err := r.ovsConfigController.Reconcile(ctx, desired); err != nil {
 		log.Error(err, "Failed to reconcile ovs-flows-config ConfigMap")
@@ -114,7 +138,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			SetControllerReference: func(obj client.Object) error {
 				return ctrl.SetControllerReference(desired, obj, r.Scheme)
 			},
-			OperatorNamespace: operatorNamespace,
+			Namespace: ns,
 		}
 		err := cpReconciler.Reconcile(ctx, &desired.Spec.ConsolePlugin)
 		if err != nil {
@@ -189,4 +213,25 @@ func (r *FlowCollectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *FlowCollectorReconciler) deleteExternalResources(ctx context.Context) error {
 	return r.ovsConfigController.Finalize(ctx)
+}
+
+func getNamespaceName(desired *flowsv1alpha1.FlowCollector) string {
+	if desired.Spec.Namespace != "" {
+		return desired.Spec.Namespace
+	} else {
+		return operatorNamespace
+	}
+}
+
+func (r *FlowCollectorReconciler) namespaceExist(ctx context.Context, nsName string) (bool, error) {
+	err := r.Get(ctx, types.NamespacedName{Name: nsName}, &corev1.Namespace{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return false, nil
+		} else {
+			log.FromContext(ctx).Error(err, "Failed to get namespace")
+			return false, err
+		}
+	}
+	return true, nil
 }

@@ -36,6 +36,15 @@ spec:
           spec:
             description: FlowCollectorSpec defines the desired state of FlowCollector
             properties:
+              cno:
+                description: CNO contains settings related to the cluster network
+                  operator
+                properties:
+                  namespace:
+                    default: openshift-network-operator
+                    description: Namespace  where the configmap is going to be deployed.
+                    type: string
+                type: object
               consolePlugin:
                 description: ConsolePlugin contains settings related to the console
                   dynamic plugin
@@ -281,6 +290,12 @@ spec:
                       push the flows to.
                     type: string
                 type: object
+              namespace:
+                default: ""
+                description: Namespace  where console plugin and goflowkube pods are
+                  going to be deployed. If empty, the namespace of the operator is
+                  going to be used
+                type: string
             type: object
           status:
             description: FlowCollectorStatus defines the observed state of FlowCollector
