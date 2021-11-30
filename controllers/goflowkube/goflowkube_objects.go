@@ -3,6 +3,8 @@ package goflowkube
 import (
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
+	"strconv"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -19,6 +21,10 @@ const configMapName = "goflow-kube-config"
 const configVolume = "config-volume"
 const configPath = "/etc/goflow-kube"
 const configFile = "config.yaml"
+
+// PodConfigurationDigest is an annotation name to facilitate pod restart after
+// any external configuration change
+const PodConfigurationDigest = "flows.netobserv.io/goflow-kube-config"
 
 type ConfigMap struct {
 	Listen      string        `json:"listen,omitempty"`
@@ -45,7 +51,7 @@ func buildLabels() map[string]string {
 	}
 }
 
-func buildDeployment(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *appsv1.Deployment {
+func buildDeployment(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns, configDigest string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.GoflowKubeName,
@@ -56,12 +62,12 @@ func buildDeployment(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) 
 			Selector: &metav1.LabelSelector{
 				MatchLabels: buildLabels(),
 			},
-			Template: buildPodTemplate(desired),
+			Template: buildPodTemplate(desired, configDigest),
 		},
 	}
 }
 
-func buildDaemonSet(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *appsv1.DaemonSet {
+func buildDaemonSet(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns, configDigest string) *appsv1.DaemonSet {
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.GoflowKubeName,
@@ -71,12 +77,12 @@ func buildDaemonSet(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *
 			Selector: &metav1.LabelSelector{
 				MatchLabels: buildLabels(),
 			},
-			Template: buildPodTemplate(desired),
+			Template: buildPodTemplate(desired, configDigest),
 		},
 	}
 }
 
-func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) corev1.PodTemplateSpec {
+func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube, configDigest string) corev1.PodTemplateSpec {
 	cmd := buildMainCommand(desired)
 	var ports []corev1.ContainerPort
 	var tolerations []corev1.Toleration
@@ -95,6 +101,9 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube) corev1.Pod
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: buildLabels(),
+			Annotations: map[string]string{
+				PodConfigurationDigest: configDigest,
+			},
 		},
 		Spec: corev1.PodSpec{
 			Tolerations: tolerations,
@@ -129,8 +138,10 @@ func buildMainCommand(desired *flowsv1alpha1.FlowCollectorGoflowKube) string {
 	return fmt.Sprintf(`/goflow-kube -loglevel "%s" -config %s/%s`, desired.LogLevel, configPath, configFile)
 }
 
+// returns a configmap with a digest of its configuration contents, which will be used to
+// detect any configuration change
 func buildConfigMap(desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
-	desiredLoki *flowsv1alpha1.FlowCollectorLoki, ns string) *corev1.ConfigMap {
+	desiredLoki *flowsv1alpha1.FlowCollectorLoki, ns string) (*corev1.ConfigMap, string) {
 
 	configStr := `{}`
 	config := &ConfigMap{
@@ -156,7 +167,7 @@ func buildConfigMap(desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
 		configStr = string(b)
 	}
 
-	return &corev1.ConfigMap{
+	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
 			Namespace: ns,
@@ -166,6 +177,10 @@ func buildConfigMap(desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
 			configFile: configStr,
 		},
 	}
+	hasher := fnv.New64a()
+	_, _ = hasher.Write([]byte(configStr))
+	digest := strconv.FormatUint(hasher.Sum64(), 36)
+	return &configMap, digest
 }
 
 func buildService(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *corev1.Service {

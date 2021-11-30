@@ -194,7 +194,9 @@ func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 
 	goflowKube := getGoflowKubeConfig()
 	loki := getLokiConfig()
-	cm := buildConfigMap(&goflowKube, &loki, "namespace")
+	cm, digest := buildConfigMap(&goflowKube, &loki, "namespace")
+	assert.NotEmpty(t, digest)
+
 	data, ok := cm.Data[configFile]
 	assert.True(ok)
 
