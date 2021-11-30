@@ -3,6 +3,7 @@ kind: FlowCollector
 metadata:
   name: cluster
 spec:
+  namespace: "network-observability"
   ipfix:
     cacheActiveTimeout: 60s
     cacheMaxFlows: 400
@@ -28,3 +29,5 @@ spec:
     image: 'quay.io/netobserv/network-observability-console-plugin:main'
     imagePullPolicy: IfNotPresent
     port: 9001
+  cno:
+    namespace: "openshift-network-operator"
