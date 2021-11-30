@@ -298,13 +298,18 @@ spec:
                 type: object
               namespace:
                 default: ""
-                description: Namespace  where console plugin and goflowkube pods are
+                description: Namespace where console plugin and goflowkube pods are
                   going to be deployed. If empty, the namespace of the operator is
                   going to be used
                 type: string
             type: object
           status:
             description: FlowCollectorStatus defines the observed state of FlowCollector
+            properties:
+              namespace:
+                description: Namespace where console plugin and goflowkube have been
+                  deployed.
+                type: string
             type: object
         type: object
     served: true

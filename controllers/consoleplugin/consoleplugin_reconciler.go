@@ -7,11 +7,13 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
 // Reconciler reconciles the current goflow-kube state with the desired configuration
@@ -24,17 +26,30 @@ type Reconciler struct {
 const pluginName = "network-observability-plugin"
 
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
-func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollectorSpec) error {
-	nsname := types.NamespacedName{Name: pluginName, Namespace: r.Namespace}
-
-	// Get existing objects
-	oldDepl, err := r.getObj(ctx, nsname, &appsv1.Deployment{})
-	if err != nil {
-		return err
-	}
-	oldSVC, err := r.getObj(ctx, nsname, &corev1.Service{})
-	if err != nil {
-		return err
+func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollectorSpec, previousNamespace string) error {
+	var oldDepl, oldSVC client.Object
+	var err error
+	if previousNamespace != "" {
+		if previousNamespace != r.Namespace {
+			// Switching namespace => delete everything in the previous namespace
+			meta := metav1.ObjectMeta{
+				Name:      pluginName,
+				Namespace: previousNamespace,
+			}
+			r.delete(ctx, &appsv1.Deployment{ObjectMeta: meta}, constants.DeploymentKind)
+			r.delete(ctx, &corev1.Service{ObjectMeta: meta}, constants.ServiceKind)
+		} else {
+			// Retrieve current owned objects
+			nsname := types.NamespacedName{Name: pluginName, Namespace: r.Namespace}
+			oldDepl, err = r.getObj(ctx, nsname, &appsv1.Deployment{})
+			if err != nil {
+				return err
+			}
+			oldSVC, err = r.getObj(ctx, nsname, &corev1.Service{})
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	// First deployment, creating permissions and container plugin
@@ -147,4 +162,13 @@ func (r *Reconciler) getObj(ctx context.Context, nsname types.NamespacedName, ob
 		return nil, err
 	}
 	return obj, nil
+}
+
+func (r *Reconciler) delete(ctx context.Context, old client.Object, kind string) {
+	log := log.FromContext(ctx)
+	log.Info("Deleting old "+kind, "Namespace", old.GetNamespace(), "Name", old.GetName())
+	err := r.Delete(ctx, old)
+	if err != nil {
+		log.Error(err, "Failed to delete old "+kind, "Namespace", old.GetNamespace(), "Name", old.GetName())
+	}
 }

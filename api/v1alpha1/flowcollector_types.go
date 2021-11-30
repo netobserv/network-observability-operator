@@ -27,7 +27,7 @@ type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=""
-	// Namespace  where console plugin and goflowkube pods are going to be deployed.
+	// Namespace where console plugin and goflowkube pods are going to be deployed.
 	// If empty, the namespace of the operator is going to be used
 	Namespace string `json:"namespace,omitempty"`
 
@@ -218,8 +218,10 @@ type ClusterNetworkOperator struct {
 
 // FlowCollectorStatus defines the observed state of FlowCollector
 type FlowCollectorStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// Namespace where console plugin and goflowkube have been deployed.
+	Namespace string `json:"namespace,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -8,7 +8,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -35,16 +37,22 @@ type ownedObjects struct {
 // Reconcile is the reconciler entry point to reconcile the current goflow-kube state with the desired configuration
 func (r *Reconciler) Reconcile(ctx context.Context,
 	desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
-	desiredLoki *flowsv1alpha1.FlowCollectorLoki) error {
+	desiredLoki *flowsv1alpha1.FlowCollectorLoki, previousNamespace string) error {
 
-	// Check if goflow-kube already exists, as a deployment or as a daemon set
-	old, err := r.getOwnedObjects(ctx)
-	if err != nil {
-		return err
-	}
-	// If neither deployment nor daemonset already exists, it must be the first setup. Thus, setup permissions.
-	if old.deployment == nil && old.daemonSet == nil {
-		r.setupPermissions(ctx)
+	old := &ownedObjects{}
+	var err error
+	if previousNamespace == "" {
+		r.createPermissions(ctx)
+	} else if previousNamespace != r.Namespace {
+		// Switching namespace => delete everything in the previous namespace
+		r.updatePermissions(ctx, previousNamespace)
+		r.deleteOwnedObjects(ctx, previousNamespace)
+	} else {
+		// Retrieve current owned objects
+		old, err = r.getOwnedObjects(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	newCM, configDigest := buildConfigMap(desiredGoflowKube, desiredLoki, r.Namespace)
@@ -95,6 +103,21 @@ func (r *Reconciler) getOwnedObjects(ctx context.Context) (*ownedObjects, error)
 	return &objs, nil
 }
 
+func (r *Reconciler) deleteOwnedObjects(ctx context.Context, ns string) {
+	meta := metav1.ObjectMeta{
+		Name:      constants.GoflowKubeName,
+		Namespace: ns,
+	}
+	r.delete(ctx, &appsv1.Deployment{ObjectMeta: meta}, constants.DeploymentKind)
+	r.delete(ctx, &appsv1.DaemonSet{ObjectMeta: meta}, constants.DaemonSetKind)
+	r.delete(ctx, &corev1.Service{ObjectMeta: meta}, constants.ServiceKind)
+	r.delete(ctx, &ascv1.HorizontalPodAutoscaler{ObjectMeta: meta}, constants.AutoscalerKind)
+	r.delete(ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
+		Name:      configMapName,
+		Namespace: ns,
+	}}, constants.ConfigMapKind)
+}
+
 func (r *Reconciler) reconcileAsDeployment(ctx context.Context, old *ownedObjects,
 	desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube, configDigest string) {
 	// Kind changed: delete DaemonSet and create Deployment+Service
@@ -141,20 +164,28 @@ func (r *Reconciler) reconcileAsDaemonSet(ctx context.Context, old *ownedObjects
 	}
 }
 
-func (r *Reconciler) setupPermissions(ctx context.Context) {
-	log := log.FromContext(ctx)
-	log.Info("Setup permissions for " + constants.GoflowKubeName)
-	rbacObjects := buildRBAC(r.Namespace)
-	for _, rbacObj := range rbacObjects {
-		err := r.SetControllerReference(rbacObj)
-		if err != nil {
-			log.Error(err, "Failed to set controller reference")
-		}
-		err = r.Create(ctx, rbacObj)
-		if err != nil {
-			log.Error(err, "Failed to setup permissions for "+constants.GoflowKubeName)
-		}
+func (r *Reconciler) createPermissions(ctx context.Context) {
+	r.createOrUpdate(ctx, nil, buildClusterRole(), "ClusterRole")
+	r.createOrUpdate(ctx, nil, buildServiceAccount(r.Namespace), "ServiceAccount")
+	r.createOrUpdate(ctx, nil, buildClusterRoleBinding(r.Namespace), "ClusterRoleBinding")
+}
+
+func (r *Reconciler) updatePermissions(ctx context.Context, previousNamespace string) {
+	// Replace service account (delete+create), update binding
+	oldSA := corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.GoflowKubeName,
+			Namespace: previousNamespace,
+		},
 	}
+	crbID := rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: constants.GoflowKubeName,
+		},
+	}
+	r.delete(ctx, &oldSA, "ServiceAccount")
+	r.createOrUpdate(ctx, nil, buildServiceAccount(r.Namespace), "ServiceAccount")
+	r.createOrUpdate(ctx, &crbID, buildClusterRoleBinding(r.Namespace), "ClusterRoleBinding")
 }
 
 func (r *Reconciler) getObj(ctx context.Context, nsname types.NamespacedName, obj client.Object, kind string) (client.Object, error) {
@@ -176,7 +207,7 @@ func (r *Reconciler) createOrUpdate(ctx context.Context, old, new client.Object,
 		log.Error(err, "Failed to set controller reference")
 	}
 	// "old" may be nil but have a type assigned so "old == nil" won't work
-	if reflect.ValueOf(old).IsNil() {
+	if old == nil || reflect.ValueOf(old).IsNil() {
 		log.Info("Creating a new "+kind, "Namespace", new.GetNamespace(), "Name", new.GetName())
 		err := r.Create(ctx, new)
 		if err != nil {

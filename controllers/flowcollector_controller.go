@@ -101,6 +101,18 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 
+	previousNamespace := desired.Status.Namespace
+
+	// Update status (installed namespace)
+	if ns != previousNamespace {
+		desired.Status.Namespace = ns
+		err = r.Status().Update(ctx, desired)
+		if err != nil {
+			log.Error(err, "Failed to update FlowCollector status")
+			return ctrl.Result{}, err
+		}
+	}
+
 	// Goflow
 	gfReconciler := goflowkube.Reconciler{
 		Client: r.Client,
@@ -109,12 +121,12 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		},
 		Namespace: ns,
 	}
-	if err := gfReconciler.Reconcile(ctx, &desired.Spec.GoflowKube, &desired.Spec.Loki); err != nil {
+	if err := gfReconciler.Reconcile(ctx, &desired.Spec.GoflowKube, &desired.Spec.Loki, previousNamespace); err != nil {
 		log.Error(err, "Failed to get FlowCollector")
 		return ctrl.Result{}, err
 	}
 
-	//ovsConfig is not initialized yet
+	// ovsConfig is not initialized yet
 	if r.ovsConfigController == nil {
 		newFlowConfigController := ovs.NewFlowsConfigController(r.Client,
 			ns,
@@ -137,7 +149,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			},
 			Namespace: ns,
 		}
-		err := cpReconciler.Reconcile(ctx, &desired.Spec)
+		err := cpReconciler.Reconcile(ctx, &desired.Spec, previousNamespace)
 		if err != nil {
 			log.Error(err, "Failed to get ConsolePlugin")
 			return ctrl.Result{}, err
