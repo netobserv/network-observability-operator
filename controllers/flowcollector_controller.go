@@ -137,7 +137,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			},
 			Namespace: ns,
 		}
-		err := cpReconciler.Reconcile(ctx, &desired.Spec.ConsolePlugin)
+		err := cpReconciler.Reconcile(ctx, &desired.Spec)
 		if err != nil {
 			log.Error(err, "Failed to get ConsolePlugin")
 			return ctrl.Result{}, err

@@ -24,7 +24,7 @@ type Reconciler struct {
 const pluginName = "network-observability-plugin"
 
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
-func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollectorConsolePlugin) error {
+func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollectorSpec) error {
 	nsname := types.NamespacedName{Name: pluginName, Namespace: r.Namespace}
 
 	// Get existing objects
@@ -43,7 +43,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowC
 		for _, rbacObject := range rbac {
 			r.createOrUpdate(ctx, nil, rbacObject)
 		}
-		consolePlugin := buildConsolePlugin(desired, r.Namespace)
+		consolePlugin := buildConsolePlugin(&desired.ConsolePlugin, r.Namespace)
 		r.createOrUpdate(ctx, nil, consolePlugin)
 	}
 
@@ -52,19 +52,31 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowC
 		newDepl := buildDeployment(desired, r.Namespace)
 		r.createOrUpdate(ctx, oldDepl, newDepl)
 	}
-	if oldSVC == nil || serviceNeedsUpdate(oldSVC.(*corev1.Service), desired, r.Namespace) {
-		newSVC := buildService(desired, r.Namespace)
+	if oldSVC == nil || serviceNeedsUpdate(oldSVC.(*corev1.Service), &desired.ConsolePlugin, r.Namespace) {
+		newSVC := buildService(&desired.ConsolePlugin, r.Namespace)
 		r.createOrUpdate(ctx, oldSVC, newSVC)
 	}
 	return nil
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns string) bool {
+func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorSpec, ns string) bool {
 	if depl.Namespace != ns {
 		return true
 	}
-	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired) ||
-		*depl.Spec.Replicas != desired.Replicas
+	return containerNeedsUpdate(&depl.Spec.Template.Spec, &desired.ConsolePlugin) ||
+		hasLokiURLChanged(depl, &desired.Loki) ||
+		*depl.Spec.Replicas != desired.ConsolePlugin.Replicas
+}
+
+func hasLokiURLChanged(depl *appsv1.Deployment, loki *flowsv1alpha1.FlowCollectorLoki) bool {
+	return depl.Annotations[lokiURLAnnotation] != querierURL(loki)
+}
+
+func querierURL(loki *flowsv1alpha1.FlowCollectorLoki) string {
+	if loki.QuerierURL != "" {
+		return loki.QuerierURL
+	}
+	return loki.URL
 }
 
 func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns string) bool {

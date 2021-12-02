@@ -19,6 +19,9 @@ func buildLabels() map[string]string {
 const secretName = "console-serving-cert"
 const displayName = "Network Observability plugin"
 
+// lokiURLAnnotation contains the used Loki querier URL, facilitating the change management
+const lokiURLAnnotation = "flows.netobserv.io/loki-url"
+
 func buildConsolePlugin(desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns string) *osv1alpha1.ConsolePlugin {
 	return &osv1alpha1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
@@ -36,14 +39,17 @@ func buildConsolePlugin(desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns st
 	}
 }
 
-func buildDeployment(desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns string) *appsv1.Deployment {
+func buildDeployment(desired *flowsv1alpha1.FlowCollectorSpec, ns string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pluginName,
 			Namespace: ns,
+			Annotations: map[string]string{
+				lokiURLAnnotation: querierURL(&desired.Loki),
+			},
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &desired.Replicas,
+			Replicas: &desired.ConsolePlugin.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: buildLabels(),
 			},
@@ -52,7 +58,7 @@ func buildDeployment(desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns strin
 	}
 }
 
-func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorConsolePlugin) *corev1.PodTemplateSpec {
+func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorSpec) *corev1.PodTemplateSpec {
 	return &corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: buildLabels(),
@@ -60,9 +66,9 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorConsolePlugin) *corev1
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
 				Name:            pluginName,
-				Image:           desired.Image,
-				ImagePullPolicy: corev1.PullPolicy(desired.ImagePullPolicy),
-				Resources:       *desired.Resources.DeepCopy(),
+				Image:           desired.ConsolePlugin.Image,
+				ImagePullPolicy: corev1.PullPolicy(desired.ConsolePlugin.ImagePullPolicy),
+				Resources:       *desired.ConsolePlugin.Resources.DeepCopy(),
 				VolumeMounts: []corev1.VolumeMount{{
 					Name:      secretName,
 					MountPath: "/var/serving-cert",
@@ -71,6 +77,7 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorConsolePlugin) *corev1
 				Args: []string{
 					"-cert", "/var/serving-cert/tls.crt",
 					"-key", "/var/serving-cert/tls.key",
+					"-loki", querierURL(&desired.Loki),
 				},
 			}},
 			Volumes: []corev1.Volume{{
