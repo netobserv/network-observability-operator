@@ -3,11 +3,12 @@ package consoleplugin
 import (
 	"testing"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 )
 
 const testImage = "quay.io/netobserv/network-observability-console-plugin:dev"
@@ -131,7 +132,6 @@ func TestBuiltService(t *testing.T) {
 
 	//newly created service should not need update
 	containerConfig := getPluginConfig()
-	newService := buildService(&containerConfig, testNamespace)
+	newService := buildService(nil, &containerConfig, testNamespace)
 	assert.Equal(serviceNeedsUpdate(newService, &containerConfig, testNamespace), false)
-
 }

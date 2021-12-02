@@ -5,7 +5,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 )
@@ -93,34 +92,40 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorSpec) *corev1.PodTempl
 	}
 }
 
-func buildService(desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns string) *corev1.Service {
-	return &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      pluginName,
-			Namespace: ns,
-			Labels:    buildLabels(),
-			Annotations: map[string]string{
-				"service.alpha.openshift.io/serving-cert-secret-name": "console-serving-cert",
-			},
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: buildLabels(),
-			Ports: []corev1.ServicePort{{
-				Port:     desired.Port,
-				Protocol: "TCP",
-			}},
-		},
-	}
-}
-
-func buildRBAC(ns string) []client.Object {
-	return []client.Object{
-		&corev1.ServiceAccount{
+func buildService(old *corev1.Service, desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns string) *corev1.Service {
+	if old == nil {
+		return &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pluginName,
 				Namespace: ns,
 				Labels:    buildLabels(),
+				Annotations: map[string]string{
+					"service.alpha.openshift.io/serving-cert-secret-name": "console-serving-cert",
+				},
 			},
+			Spec: corev1.ServiceSpec{
+				Selector: buildLabels(),
+				Ports: []corev1.ServicePort{{
+					Port:     desired.Port,
+					Protocol: "TCP",
+				}},
+			},
+		}
+	}
+	// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
+	old.Spec.Ports = []corev1.ServicePort{{
+		Port:     desired.Port,
+		Protocol: corev1.ProtocolUDP,
+	}}
+	return old
+}
+
+func buildServiceAccount(ns string) *corev1.ServiceAccount {
+	return &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pluginName,
+			Namespace: ns,
+			Labels:    buildLabels(),
 		},
 	}
 }

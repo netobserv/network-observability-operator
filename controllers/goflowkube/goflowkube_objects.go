@@ -182,21 +182,29 @@ func buildConfigMap(desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
 	return &configMap, digest
 }
 
-func buildService(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *corev1.Service {
-	return &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.GoflowKubeName,
-			Namespace: ns,
-			Labels:    buildLabels(),
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: buildLabels(),
-			Ports: []corev1.ServicePort{{
-				Port:     desired.Port,
-				Protocol: corev1.ProtocolUDP,
-			}},
-		},
+func buildService(old *corev1.Service, desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *corev1.Service {
+	if old == nil {
+		return &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      constants.GoflowKubeName,
+				Namespace: ns,
+				Labels:    buildLabels(),
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: buildLabels(),
+				Ports: []corev1.ServicePort{{
+					Port:     desired.Port,
+					Protocol: corev1.ProtocolUDP,
+				}},
+			},
+		}
 	}
+	// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
+	old.Spec.Ports = []corev1.ServicePort{{
+		Port:     desired.Port,
+		Protocol: corev1.ProtocolUDP,
+	}}
+	return old
 }
 
 func buildAutoScaler(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *ascv1.HorizontalPodAutoscaler {
