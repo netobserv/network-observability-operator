@@ -123,41 +123,8 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	// Check namespace changed
 	if ns != previousNamespace {
-		if previousNamespace == "" {
-			// First install: create one-shot resources
-			err := gfReconciler.InitStaticResources(ctx)
-			if err != nil {
-				log.Error(err, "Failed to init goflow-kube one-shot resources")
-				return ctrl.Result{}, err
-			}
-			if r.consoleEnabled {
-				err := cpReconciler.InitStaticResources(ctx)
-				if err != nil {
-					log.Error(err, "Failed to init console plugin one-shot resources")
-					return ctrl.Result{}, err
-				}
-			}
-		} else {
-			// Namespace updated, clean up previous namespace
-			err := gfReconciler.PrepareNamespaceChange(ctx)
-			if err != nil {
-				log.Error(err, "Failed to init goflow-kube one-shot resources")
-				return ctrl.Result{}, err
-			}
-			if r.consoleEnabled {
-				err := cpReconciler.PrepareNamespaceChange(ctx)
-				if err != nil {
-					log.Error(err, "Failed to init console plugin one-shot resources")
-					return ctrl.Result{}, err
-				}
-			}
-		}
-
-		// Update namespace in status
-		desired.Status.Namespace = ns
-		err = r.Status().Update(ctx, desired)
-		if err != nil {
-			log.Error(err, "Failed to update FlowCollector status")
+		if err := r.handleNamespaceChanged(ctx, previousNamespace, ns, desired, &gfReconciler, &cpReconciler); err != nil {
+			log.Error(err, "Failed to handle namespace change")
 			return ctrl.Result{}, err
 		}
 	}
@@ -183,6 +150,44 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *FlowCollectorReconciler) handleNamespaceChanged(
+	ctx context.Context,
+	oldNS, newNS string,
+	desired *flowsv1alpha1.FlowCollector,
+	gfReconciler *goflowkube.GFKReconciler,
+	cpReconciler *consoleplugin.CPReconciler,
+) error {
+	if oldNS == "" {
+		// First install: create one-shot resources
+		err := gfReconciler.InitStaticResources(ctx)
+		if err != nil {
+			return err
+		}
+		if r.consoleEnabled {
+			err := cpReconciler.InitStaticResources(ctx)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		// Namespace updated, clean up previous namespace
+		err := gfReconciler.PrepareNamespaceChange(ctx)
+		if err != nil {
+			return err
+		}
+		if r.consoleEnabled {
+			err := cpReconciler.PrepareNamespaceChange(ctx)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Update namespace in status
+	desired.Status.Namespace = newNS
+	return r.Status().Update(ctx, desired)
 }
 
 func isConsoleEnabled(mgr ctrl.Manager) (bool, error) {

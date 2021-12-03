@@ -30,5 +30,5 @@ linters-settings:
       - indexAlloc
       - deprecatedComment
   cyclop:
-    max-complexity: 15
+    max-complexity: 20
 
