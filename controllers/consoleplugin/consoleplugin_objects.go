@@ -113,11 +113,12 @@ func buildService(old *corev1.Service, desired *flowsv1alpha1.FlowCollectorConso
 		}
 	}
 	// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
-	old.Spec.Ports = []corev1.ServicePort{{
+	newService := old.DeepCopy()
+	newService.Spec.Ports = []corev1.ServicePort{{
 		Port:     desired.Port,
 		Protocol: corev1.ProtocolUDP,
 	}}
-	return old
+	return newService
 }
 
 func buildServiceAccount(ns string) *corev1.ServiceAccount {

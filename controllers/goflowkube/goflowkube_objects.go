@@ -200,11 +200,12 @@ func buildService(old *corev1.Service, desired *flowsv1alpha1.FlowCollectorGoflo
 		}
 	}
 	// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
-	old.Spec.Ports = []corev1.ServicePort{{
+	newService := old.DeepCopy()
+	newService.Spec.Ports = []corev1.ServicePort{{
 		Port:     desired.Port,
 		Protocol: corev1.ProtocolUDP,
 	}}
-	return old
+	return newService
 }
 
 func buildAutoScaler(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *ascv1.HorizontalPodAutoscaler {
