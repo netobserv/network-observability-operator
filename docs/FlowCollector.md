@@ -566,6 +566,13 @@ Loki contains settings related to the loki client
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>querierUrl</b></td>
+        <td>string</td>
+        <td>
+          QuerierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are int he same host).<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>staticLabels</b></td>
         <td>map[string]string</td>
         <td>

@@ -138,6 +138,12 @@ type FlowCollectorLoki struct {
 	// URL is the address of an existing Loki service to push the flows to.
 	URL string `json:"url,omitempty"`
 
+	//+kubebuilder:validation:optional
+	// QuerierURL specifies the address of the Loki querier service, in case it is different from the
+	// Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester
+	// and querier are int he same host).
+	QuerierURL string `json:"querierUrl,omitempty"`
+
 	//+kubebuilder:default:="1s"
 	// BatchWait is max time to wait before sending a batch
 	BatchWait metav1.Duration `json:"batchWait,omitempty"`

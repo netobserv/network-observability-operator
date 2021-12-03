@@ -118,9 +118,12 @@ func TestBuiltContainer(t *testing.T) {
 	assert := assert.New(t)
 
 	//newly created containers should not need update
-	containerConfig := getPluginConfig()
-	newContainer := buildPodTemplate(&containerConfig)
-	assert.Equal(containerNeedsUpdate(&newContainer.Spec, &containerConfig), false)
+	config := flowsv1alpha1.FlowCollectorSpec{
+		Loki:          flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234"},
+		ConsolePlugin: getPluginConfig(),
+	}
+	newContainer := buildPodTemplate(&config)
+	assert.Equal(containerNeedsUpdate(&newContainer.Spec, &config.ConsolePlugin), false)
 }
 
 func TestBuiltService(t *testing.T) {

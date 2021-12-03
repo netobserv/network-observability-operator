@@ -271,6 +271,12 @@ spec:
                     description: MinBackoff is the initial backoff time for client
                       connection between retries
                     type: string
+                  querierUrl:
+                    description: QuerierURL specifies the address of the Loki querier
+                      service, in case it is different from the Loki ingester URL.
+                      If empty, the URL value will be used (assuming that the Loki
+                      ingester and querier are int he same host).
+                    type: string
                   staticLabels:
                     additionalProperties:
                       type: string
