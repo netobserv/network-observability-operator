@@ -382,6 +382,37 @@ var _ = Describe("FlowCollector Controller", func() {
 		})
 	})
 
+	Context("Configuring the Loki URL", func() {
+		It("Should be initially configured with default Loki URL", func() {
+			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki"),
+				timeout, interval).Should(Equal("http://loki:3100/"))
+		})
+		It("Should update the Loki URL in the Console Plugin if it changes in the Spec", func() {
+			Expect(func() error {
+				upd := flowsv1alpha1.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &upd); err != nil {
+					return err
+				}
+				upd.Spec.Loki.URL = "http://loki.namespace:8888"
+				return k8sClient.Update(ctx, &upd)
+			}()).Should(Succeed())
+			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki"),
+				timeout, interval).Should(Equal("http://loki.namespace:8888"))
+		})
+		It("Should use the Loki Querier URL instead of the Loki URL, if the first is defined", func() {
+			Expect(func() error {
+				upd := flowsv1alpha1.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &upd); err != nil {
+					return err
+				}
+				upd.Spec.Loki.QuerierURL = "http://loki-querier:6789"
+				return k8sClient.Update(ctx, &upd)
+			}()).Should(Succeed())
+			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki"),
+				timeout, interval).Should(Equal("http://loki-querier:6789"))
+		})
+	})
+
 	Context("Changing namespace", func() {
 		It("Should update namespace successfully", func() {
 			Eventually(func() error {
@@ -524,64 +555,6 @@ var _ = Describe("FlowCollector Controller", func() {
 				}, &cm)
 				return &cm
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
-		})
-	})
-	Context("configuring the Console plugin", func() {
-		dKey := types.NamespacedName{
-			Name:      "console-plugin-flowcollector",
-			Namespace: operatorNamespace,
-		}
-		created := &flowsv1alpha1.FlowCollector{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: dKey.Name,
-			},
-			Spec: flowsv1alpha1.FlowCollectorSpec{
-				GoflowKube: flowsv1alpha1.FlowCollectorGoflowKube{
-					Kind:            "Deployment",
-					Port:            7891,
-					ImagePullPolicy: "Never",
-					LogLevel:        "error",
-					Image:           "testimg:latest",
-				},
-				Loki: flowsv1alpha1.FlowCollectorLoki{
-					URL: "http://loki:1234",
-				},
-				ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
-					Replicas:        1,
-					Port:            8888,
-					Image:           "console:latest",
-					ImagePullPolicy: "Never",
-				},
-			},
-		}
-		It("Should configure the Loki URL in the Console plugin backend", func() {
-			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
-			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki"),
-				timeout, interval).Should(Equal("http://loki:1234"))
-		})
-		It("Should update the Loki URL in the Console Plugin if it changes in the Spec", func() {
-			Expect(func() error {
-				upd := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, dKey, &upd); err != nil {
-					return err
-				}
-				upd.Spec.Loki.URL = "http://loki.namespace:8888"
-				return k8sClient.Update(ctx, &upd)
-			}()).Should(Succeed())
-			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki"),
-				timeout, interval).Should(Equal("http://loki.namespace:8888"))
-		})
-		It("Should use the Loki Querier URL instead of the Loki URL, if the first is defined", func() {
-			Expect(func() error {
-				upd := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, dKey, &upd); err != nil {
-					return err
-				}
-				upd.Spec.Loki.QuerierURL = "http://loki-querier:6789"
-				return k8sClient.Update(ctx, &upd)
-			}()).Should(Succeed())
-			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki"),
-				timeout, interval).Should(Equal("http://loki-querier:6789"))
 		})
 	})
 })

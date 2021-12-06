@@ -113,7 +113,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	gfReconciler := goflowkube.NewReconciler(clientHelper, ns, previousNamespace)
 	ovsConfigController := ovs.NewFlowsConfigController(clientHelper,
 		ns,
-		desired.Spec.Cno.Namespace,
+		desired.Spec.CNO.Namespace,
 		ovsFlowsConfigMapName,
 		r.lookupIP)
 	var cpReconciler consoleplugin.CPReconciler

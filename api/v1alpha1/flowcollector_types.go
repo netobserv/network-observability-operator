@@ -44,7 +44,7 @@ type FlowCollectorSpec struct {
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
 	// CNO contains settings related to the cluster network operator
-	Cno ClusterNetworkOperator `json:"cno,omitempty"`
+	CNO ClusterNetworkOperator `json:"cno,omitempty"`
 }
 
 // FlowCollectorIPFIX defines the desired IPFIX state of FlowCollector

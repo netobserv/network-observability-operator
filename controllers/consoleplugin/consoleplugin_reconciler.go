@@ -59,7 +59,7 @@ func (r *CPReconciler) PrepareNamespaceChange(ctx context.Context) error {
 }
 
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
-func (r *CPReconciler) Reconcile(ctx context.Context, desired *pluginSpec) error {
+func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollectorSpec) error {
 	ns := r.nobjMngr.Namespace
 	// Retrieve current owned objects
 	err := r.nobjMngr.FetchAll(ctx)
@@ -80,12 +80,12 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *pluginSpec) error
 	}
 
 	// Check if objects need update
-	consolePlugin := buildConsolePlugin(desired, ns)
+	consolePlugin := buildConsolePlugin(&desired.ConsolePlugin, ns)
 	if !pluginExists {
 		if err := r.CreateOwned(ctx, consolePlugin); err != nil {
 			return err
 		}
-	} else if pluginNeedsUpdate(&oldPlg, desired, ns) {
+	} else if pluginNeedsUpdate(&oldPlg, &desired.ConsolePlugin, ns) {
 		if err := r.UpdateOwned(ctx, &oldPlg, consolePlugin); err != nil {
 			return err
 		}
@@ -103,12 +103,12 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *pluginSpec) error
 	}
 
 	if !r.nobjMngr.Exists(r.owned.service) {
-		newSVC := buildService(nil, desired, ns)
+		newSVC := buildService(nil, &desired.ConsolePlugin, ns)
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
 			return err
 		}
-	} else if serviceNeedsUpdate(r.owned.service, desired, ns) {
-		newSVC := buildService(r.owned.service, desired, ns)
+	} else if serviceNeedsUpdate(r.owned.service, &desired.ConsolePlugin, ns) {
+		newSVC := buildService(r.owned.service, &desired.ConsolePlugin, ns)
 		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
 			return err
 		}
@@ -121,7 +121,7 @@ func pluginNeedsUpdate(plg *osv1alpha1.ConsolePlugin, desired *pluginSpec, ns st
 		plg.Spec.Service.Port != desired.Port
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *pluginSpec, ns string) bool {
+func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorSpec, ns string) bool {
 	if depl.Namespace != ns {
 		return true
 	}
