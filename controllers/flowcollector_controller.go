@@ -83,7 +83,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Info("no need to reconcile status of a FlowCollector that is being deleted. Ignoring")
+		log.Info("No need to reconcile status of a FlowCollector that is being deleted. Ignoring")
 		return ctrl.Result{}, nil
 	}
 
@@ -159,8 +159,10 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	gfReconciler *goflowkube.GFKReconciler,
 	cpReconciler *consoleplugin.CPReconciler,
 ) error {
+	log := log.FromContext(ctx)
 	if oldNS == "" {
 		// First install: create one-shot resources
+		log.Info("FlowCollector first install: creating initial resources")
 		err := gfReconciler.InitStaticResources(ctx)
 		if err != nil {
 			return err
@@ -173,6 +175,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 		}
 	} else {
 		// Namespace updated, clean up previous namespace
+		log.Info("FlowCollector namespace change detected: cleaning up previous namespace and preparing next one", "old namespace", oldNS, "new namepace", newNS)
 		err := gfReconciler.PrepareNamespaceChange(ctx)
 		if err != nil {
 			return err
@@ -186,6 +189,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	}
 
 	// Update namespace in status
+	log.Info("Updating status with new namespace " + newNS)
 	desired.Status.Namespace = newNS
 	return r.Status().Update(ctx, desired)
 }
