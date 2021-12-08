@@ -6,45 +6,35 @@ import (
 	"net"
 	"strconv"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 )
 
 type FlowsConfigController struct {
 	ovsConfigMapName    string
 	goflowkubeNamespace string
 	cnoNamespace        string
-	client              client.Client
+	client              reconcilers.ClientHelper
 	lookupIP            func(string) ([]net.IP, error)
 }
 
-func NewFlowsConfigController(client client.Client,
-	goflowkubeNamespace, cnoNamespace, ovsConfigMapName string) *FlowsConfigController {
+func NewFlowsConfigController(client reconcilers.ClientHelper,
+	goflowkubeNamespace, cnoNamespace, ovsConfigMapName string,
+	lookupIP func(string) ([]net.IP, error)) *FlowsConfigController {
 	return &FlowsConfigController{
 		client:              client,
 		goflowkubeNamespace: goflowkubeNamespace,
 		cnoNamespace:        cnoNamespace,
 		ovsConfigMapName:    ovsConfigMapName,
-		lookupIP:            net.LookupIP,
+		lookupIP:            lookupIP,
 	}
-}
-
-// NewTestFlowsConfigController allows creating a FlowsConfigController instance that with an
-// injected IP resolver for testing.
-func NewTestFlowsConfigController(client client.Client,
-	goflowkubeNamespace, cnoNamespace, ovsConfigMapName string,
-	lookupIP func(string) ([]net.IP, error),
-) *FlowsConfigController {
-	fc := NewFlowsConfigController(client, goflowkubeNamespace, cnoNamespace, ovsConfigMapName)
-	fc.lookupIP = lookupIP
-	return fc
 }
 
 // Reconcile reconciles the status of the ovs-flows-config configmap with
@@ -53,10 +43,6 @@ func (c *FlowsConfigController) Reconcile(
 	ctx context.Context, target *flowsv1alpha1.FlowCollector) error {
 	rlog := log.FromContext(ctx, "component", "FlowsConfigController")
 
-	if !target.ObjectMeta.DeletionTimestamp.IsZero() {
-		rlog.Info("no need to reconcile status of a FlowCollector that is being deleted. Ignoring")
-		return nil
-	}
 	current, err := c.current(ctx)
 	if err != nil {
 		return err
@@ -69,36 +55,24 @@ func (c *FlowsConfigController) Reconcile(
 
 	if current == nil {
 		rlog.Info("Provided IPFIX configuration. Creating " + c.ovsConfigMapName + " ConfigMap")
-		return c.client.Create(ctx, c.flowsConfigMap(desired))
+		cm, err := c.flowsConfigMap(desired)
+		if err != nil {
+			return err
+		}
+		return c.client.Create(ctx, cm)
 	}
 
 	if desired != nil && *desired != *current {
 		rlog.Info("Provided IPFIX configuration differs current configuration. Updating")
-		return c.client.Update(ctx, c.flowsConfigMap(desired))
+		cm, err := c.flowsConfigMap(desired)
+		if err != nil {
+			return err
+		}
+		return c.client.Update(ctx, cm)
 	}
 
 	rlog.Info("No changes needed")
 	return nil
-}
-
-func (c *FlowsConfigController) Finalize(ctx context.Context) error {
-	err := c.client.Delete(ctx, &corev1.ConfigMap{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      c.ovsConfigMapName,
-			Namespace: c.cnoNamespace,
-		},
-	})
-	if errors.IsNotFound(err) {
-		rlog := log.FromContext(ctx, "component", "FlowsConfigController")
-		rlog.Error(err, "can't delete non-existing configmap. Ignoring",
-			"name", c.ovsConfigMapName, "namespace", c.cnoNamespace)
-		return nil
-	}
-	return err
 }
 
 func (c *FlowsConfigController) current(ctx context.Context) (*flowsConfig, error) {
@@ -138,7 +112,7 @@ func (c *FlowsConfigController) desired(
 			Namespace: c.goflowkubeNamespace,
 			Name:      constants.GoflowKubeName,
 		}, &svc); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("can't get service %s in %s: %w", constants.GoflowKubeName, c.goflowkubeNamespace, err)
 		}
 		// service IP resolution
 		svcHost := svc.Name + "." + svc.Namespace
@@ -163,8 +137,8 @@ func (c *FlowsConfigController) desired(
 	return nil, fmt.Errorf("unexpected GoflowKube kind: %s", coll.Spec.GoflowKube.Kind)
 }
 
-func (c *FlowsConfigController) flowsConfigMap(fc *flowsConfig) *corev1.ConfigMap {
-	return &corev1.ConfigMap{
+func (c *FlowsConfigController) flowsConfigMap(fc *flowsConfig) (*corev1.ConfigMap, error) {
+	cm := &corev1.ConfigMap{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
@@ -175,4 +149,8 @@ func (c *FlowsConfigController) flowsConfigMap(fc *flowsConfig) *corev1.ConfigMa
 		},
 		Data: fc.asStringMap(),
 	}
+	if err := c.client.SetControllerReference(cm); err != nil {
+		return nil, err
+	}
+	return cm, nil
 }

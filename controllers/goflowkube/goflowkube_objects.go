@@ -6,15 +6,14 @@ import (
 	"hash/fnv"
 	"strconv"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
-
 	appsv1 "k8s.io/api/apps/v1"
 	ascv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
 const configMapName = "goflow-kube-config"
@@ -183,21 +182,30 @@ func buildConfigMap(desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
 	return &configMap, digest
 }
 
-func buildService(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *corev1.Service {
-	return &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.GoflowKubeName,
-			Namespace: ns,
-			Labels:    buildLabels(),
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: buildLabels(),
-			Ports: []corev1.ServicePort{{
-				Port:     desired.Port,
-				Protocol: corev1.ProtocolUDP,
-			}},
-		},
+func buildService(old *corev1.Service, desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *corev1.Service {
+	if old == nil {
+		return &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      constants.GoflowKubeName,
+				Namespace: ns,
+				Labels:    buildLabels(),
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: buildLabels(),
+				Ports: []corev1.ServicePort{{
+					Port:     desired.Port,
+					Protocol: corev1.ProtocolUDP,
+				}},
+			},
+		}
 	}
+	// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
+	newService := old.DeepCopy()
+	newService.Spec.Ports = []corev1.ServicePort{{
+		Port:     desired.Port,
+		Protocol: corev1.ProtocolUDP,
+	}}
+	return newService
 }
 
 func buildAutoScaler(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *ascv1.HorizontalPodAutoscaler {
@@ -225,54 +233,58 @@ func buildAutoScaler(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) 
 //+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
 //+kubebuilder:rbac:groups=core,resources=pods;services,verbs=get;list;watch
 
-func buildRBAC(ns string) []client.Object {
-	return []client.Object{
-		&corev1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      constants.GoflowKubeName,
-				Namespace: ns,
-				Labels:    buildLabels(),
-			},
+func buildClusterRole() *rbacv1.ClusterRole {
+	return &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   constants.GoflowKubeName,
+			Labels: buildLabels(),
 		},
-		&rbacv1.ClusterRole{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   constants.GoflowKubeName,
-				Labels: buildLabels(),
-			},
-			Rules: []rbacv1.PolicyRule{{
-				APIGroups: []string{""},
-				Verbs:     []string{"list", "get", "watch"},
-				Resources: []string{"pods", "services"},
-			}, {
-				APIGroups: []string{"apps"},
-				Verbs:     []string{"list", "get", "watch"},
-				Resources: []string{"replicasets"},
-			}, {
-				APIGroups: []string{"autoscaling"},
-				Verbs:     []string{"create", "delete", "patch", "update", "get", "watch", "list"},
-				Resources: []string{"horizontalpodautoscalers"},
-			}, {
-				APIGroups:     []string{"security.openshift.io"},
-				Verbs:         []string{"use"},
-				Resources:     []string{"securitycontextconstraints"},
-				ResourceNames: []string{"hostnetwork"},
-			}},
+		Rules: []rbacv1.PolicyRule{{
+			APIGroups: []string{""},
+			Verbs:     []string{"list", "get", "watch"},
+			Resources: []string{"pods", "services"},
+		}, {
+			APIGroups: []string{"apps"},
+			Verbs:     []string{"list", "get", "watch"},
+			Resources: []string{"replicasets"},
+		}, {
+			APIGroups: []string{"autoscaling"},
+			Verbs:     []string{"create", "delete", "patch", "update", "get", "watch", "list"},
+			Resources: []string{"horizontalpodautoscalers"},
+		}, {
+			APIGroups:     []string{"security.openshift.io"},
+			Verbs:         []string{"use"},
+			Resources:     []string{"securitycontextconstraints"},
+			ResourceNames: []string{"hostnetwork"},
+		}},
+	}
+}
+
+func buildServiceAccount(ns string) *corev1.ServiceAccount {
+	return &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.GoflowKubeName,
+			Namespace: ns,
+			Labels:    buildLabels(),
 		},
-		&rbacv1.ClusterRoleBinding{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   constants.GoflowKubeName,
-				Labels: buildLabels(),
-			},
-			RoleRef: rbacv1.RoleRef{
-				APIGroup: "rbac.authorization.k8s.io",
-				Kind:     "ClusterRole",
-				Name:     constants.GoflowKubeName,
-			},
-			Subjects: []rbacv1.Subject{{
-				Kind:      "ServiceAccount",
-				Name:      constants.GoflowKubeName,
-				Namespace: ns,
-			}},
+	}
+}
+
+func buildClusterRoleBinding(ns string) *rbacv1.ClusterRoleBinding {
+	return &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   constants.GoflowKubeName,
+			Labels: buildLabels(),
 		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     constants.GoflowKubeName,
+		},
+		Subjects: []rbacv1.Subject{{
+			Kind:      "ServiceAccount",
+			Name:      constants.GoflowKubeName,
+			Namespace: ns,
+		}},
 	}
 }

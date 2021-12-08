@@ -4,59 +4,121 @@ import (
 	"context"
 	"reflect"
 
+	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 )
-
-// Reconciler reconciles the current goflow-kube state with the desired configuration
-type Reconciler struct {
-	client.Client
-	SetControllerReference func(client.Object) error
-	Namespace              string
-}
 
 const pluginName = "network-observability-plugin"
 
+// Type alias
+type pluginSpec = flowsv1alpha1.FlowCollectorConsolePlugin
+
+// CPReconciler reconciles the current console plugin state with the desired configuration
+type CPReconciler struct {
+	reconcilers.ClientHelper
+	nobjMngr *reconcilers.NamespacedObjectManager
+	owned    ownedObjects
+}
+
+type ownedObjects struct {
+	deployment     *appsv1.Deployment
+	service        *corev1.Service
+	serviceAccount *corev1.ServiceAccount
+}
+
+func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) CPReconciler {
+	owned := ownedObjects{
+		deployment:     &appsv1.Deployment{},
+		service:        &corev1.Service{},
+		serviceAccount: &corev1.ServiceAccount{},
+	}
+	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
+	nobjMngr.AddManagedObject(pluginName, owned.deployment)
+	nobjMngr.AddManagedObject(pluginName, owned.service)
+	nobjMngr.AddManagedObject(pluginName, owned.serviceAccount)
+
+	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
+}
+
+// InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
+func (r *CPReconciler) InitStaticResources(ctx context.Context) error {
+	return r.CreateOwned(ctx, buildServiceAccount(r.nobjMngr.Namespace))
+}
+
+// PrepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
+func (r *CPReconciler) PrepareNamespaceChange(ctx context.Context) error {
+	// Switching namespace => delete everything in the previous namespace
+	r.nobjMngr.CleanupNamespace(ctx)
+	return r.CreateOwned(ctx, buildServiceAccount(r.nobjMngr.Namespace))
+}
+
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
-func (r *Reconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollectorSpec) error {
-	nsname := types.NamespacedName{Name: pluginName, Namespace: r.Namespace}
-
-	// Get existing objects
-	oldDepl, err := r.getObj(ctx, nsname, &appsv1.Deployment{})
-	if err != nil {
-		return err
-	}
-	oldSVC, err := r.getObj(ctx, nsname, &corev1.Service{})
+func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollectorSpec) error {
+	ns := r.nobjMngr.Namespace
+	// Retrieve current owned objects
+	err := r.nobjMngr.FetchAll(ctx)
 	if err != nil {
 		return err
 	}
 
-	// First deployment, creating permissions and container plugin
-	if oldDepl == nil && oldSVC == nil {
-		rbac := buildRBAC(r.Namespace)
-		for _, rbacObject := range rbac {
-			r.createOrUpdate(ctx, nil, rbacObject)
+	// Console plugin is cluster-scope (it's not deployed in our namespace) however it must still be updated if our namespace changes
+	oldPlg := osv1alpha1.ConsolePlugin{}
+	pluginExists := true
+	err = r.Get(ctx, types.NamespacedName{Name: pluginName}, &oldPlg)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			pluginExists = false
+		} else {
+			return err
 		}
-		consolePlugin := buildConsolePlugin(&desired.ConsolePlugin, r.Namespace)
-		r.createOrUpdate(ctx, nil, consolePlugin)
 	}
 
 	// Check if objects need update
-	if oldDepl == nil || deploymentNeedsUpdate(oldDepl.(*appsv1.Deployment), desired, r.Namespace) {
-		newDepl := buildDeployment(desired, r.Namespace)
-		r.createOrUpdate(ctx, oldDepl, newDepl)
+	consolePlugin := buildConsolePlugin(&desired.ConsolePlugin, ns)
+	if !pluginExists {
+		if err := r.CreateOwned(ctx, consolePlugin); err != nil {
+			return err
+		}
+	} else if pluginNeedsUpdate(&oldPlg, &desired.ConsolePlugin, ns) {
+		if err := r.UpdateOwned(ctx, &oldPlg, consolePlugin); err != nil {
+			return err
+		}
 	}
-	if oldSVC == nil || serviceNeedsUpdate(oldSVC.(*corev1.Service), &desired.ConsolePlugin, r.Namespace) {
-		newSVC := buildService(&desired.ConsolePlugin, r.Namespace)
-		r.createOrUpdate(ctx, oldSVC, newSVC)
+
+	newDepl := buildDeployment(desired, ns)
+	if !r.nobjMngr.Exists(r.owned.deployment) {
+		if err := r.CreateOwned(ctx, newDepl); err != nil {
+			return err
+		}
+	} else if deploymentNeedsUpdate(r.owned.deployment, desired, ns) {
+		if err := r.UpdateOwned(ctx, r.owned.deployment, newDepl); err != nil {
+			return err
+		}
+	}
+
+	if !r.nobjMngr.Exists(r.owned.service) {
+		newSVC := buildService(nil, &desired.ConsolePlugin, ns)
+		if err := r.CreateOwned(ctx, newSVC); err != nil {
+			return err
+		}
+	} else if serviceNeedsUpdate(r.owned.service, &desired.ConsolePlugin, ns) {
+		newSVC := buildService(r.owned.service, &desired.ConsolePlugin, ns)
+		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func pluginNeedsUpdate(plg *osv1alpha1.ConsolePlugin, desired *pluginSpec, ns string) bool {
+	return plg.Spec.Service.Namespace != ns ||
+		plg.Spec.Service.Port != desired.Port
 }
 
 func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorSpec, ns string) bool {
@@ -91,8 +153,8 @@ func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollecto
 	return true
 }
 
-func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flowsv1alpha1.FlowCollectorConsolePlugin) bool {
-	container := findContainer(podSpec)
+func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pluginSpec) bool {
+	container := reconcilers.FindContainer(podSpec, pluginName)
 	if container == nil {
 		return true
 	}
@@ -103,48 +165,4 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flowsv1alpha1.FlowCo
 		return true
 	}
 	return false
-}
-
-func findContainer(podSpec *corev1.PodSpec) *corev1.Container {
-	for i := range podSpec.Containers {
-		if podSpec.Containers[i].Name == pluginName {
-			return &podSpec.Containers[i]
-		}
-	}
-	return nil
-}
-
-func (r *Reconciler) createOrUpdate(ctx context.Context, old, new client.Object) {
-	log := log.FromContext(ctx)
-	err := r.SetControllerReference(new)
-	if err != nil {
-		log.Error(err, "Failed to set controller reference")
-	}
-	if old == nil {
-		log.Info("Creating a new object", "Namespace", new.GetNamespace(), "Name", new.GetName())
-		err := r.Create(ctx, new)
-		if err != nil {
-			log.Error(err, "Failed to create new object", "Namespace", new.GetNamespace(), "Name", new.GetName())
-			return
-		}
-	} else {
-		log.Info("Updating object", "Namespace", new.GetNamespace(), "Name", new.GetName())
-		err := r.Update(ctx, new)
-		if err != nil {
-			log.Error(err, "Failed to update object", "Namespace", new.GetNamespace(), "Name", new.GetName())
-			return
-		}
-	}
-}
-
-func (r *Reconciler) getObj(ctx context.Context, nsname types.NamespacedName, obj client.Object) (client.Object, error) {
-	err := r.Get(ctx, nsname, obj)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil, nil
-		}
-		log.FromContext(ctx).Error(err, "Failed to get object", obj.GetName())
-		return nil, err
-	}
-	return obj, nil
 }

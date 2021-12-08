@@ -22,12 +22,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/openshift/api/console/v1alpha1"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	"github.com/stretchr/testify/mock"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,7 +39,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -91,7 +88,7 @@ var _ = BeforeSuite(func() {
 	err = corev1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = v1alpha1.Install(scheme.Scheme)
+	err = osv1alpha1.Install(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
@@ -145,10 +142,9 @@ func prepareNamespaces() error {
 // FlowCollectorReconciler
 func NewTestFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *FlowCollectorReconciler {
 	return &FlowCollectorReconciler{
-		Client: client,
-		Scheme: scheme,
-		ovsConfigController: ovs.NewTestFlowsConfigController(client,
-			operatorNamespace, testCnoNamespace, testOvsFlowsConfigMapName, ipResolver.LookupIP),
+		Client:   client,
+		Scheme:   scheme,
+		lookupIP: ipResolver.LookupIP,
 	}
 }
 

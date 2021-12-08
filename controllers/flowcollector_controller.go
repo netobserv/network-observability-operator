@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"net"
 	"strings"
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
@@ -14,14 +15,13 @@ import (
 	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
 	"github.com/netobserv/network-observability-operator/controllers/goflowkube"
 	"github.com/netobserv/network-observability-operator/controllers/ovs"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 )
 
 // Make sure it always matches config/default/kustomization.yaml:namespace
@@ -29,30 +29,29 @@ import (
 const operatorNamespace = "network-observability"
 
 const ovsFlowsConfigMapName = "ovs-flows-config"
-const finalizerName = "flows.netobserv.io/finalizer"
 
 // FlowCollectorReconciler reconciles a FlowCollector object
 type FlowCollectorReconciler struct {
 	client.Client
-	Scheme              *runtime.Scheme
-	ovsConfigController *ovs.FlowsConfigController
-	consoleEnabled      bool
+	Scheme         *runtime.Scheme
+	consoleEnabled bool
+	lookupIP       func(string) ([]net.IP, error)
 }
 
 func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *FlowCollectorReconciler {
 	return &FlowCollectorReconciler{
-		Client:              client,
-		Scheme:              scheme,
-		ovsConfigController: nil,
-		consoleEnabled:      false,
+		Client:         client,
+		Scheme:         scheme,
+		consoleEnabled: false,
+		lookupIP:       net.LookupIP,
 	}
 }
 
 //+kubebuilder:rbac:groups=apps,resources=deployments;daemonsets,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=namespaces;services;configmaps,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;create;delete
-//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;clusterrolebindings,verbs=get;create;delete
-//+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins;clusterrolebindings,verbs=get;create;delete;update;patch;list
+//+kubebuilder:rbac:groups=core,resources=namespaces;services;serviceaccounts;configmaps,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles,verbs=get;create;delete
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;create;delete;update
+//+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;delete;update;patch;list
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors/finalizers,verbs=update
@@ -83,8 +82,9 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	if err := r.checkFinalizerStatus(ctx, desired); err != nil {
-		return ctrl.Result{}, err
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+		log.Info("No need to reconcile status of a FlowCollector that is being deleted. Ignoring")
+		return ctrl.Result{}, nil
 	}
 
 	ns := getNamespaceName(desired)
@@ -101,45 +101,50 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 
-	// Goflow
-	gfReconciler := goflowkube.Reconciler{
+	clientHelper := reconcilers.ClientHelper{
 		Client: r.Client,
 		SetControllerReference: func(obj client.Object) error {
 			return ctrl.SetControllerReference(desired, obj, r.Scheme)
 		},
-		Namespace: ns,
 	}
+	previousNamespace := desired.Status.Namespace
+
+	// Create reconcilers
+	gfReconciler := goflowkube.NewReconciler(clientHelper, ns, previousNamespace)
+	ovsConfigController := ovs.NewFlowsConfigController(clientHelper,
+		ns,
+		desired.Spec.CNO.Namespace,
+		ovsFlowsConfigMapName,
+		r.lookupIP)
+	var cpReconciler consoleplugin.CPReconciler
+	if r.consoleEnabled {
+		cpReconciler = consoleplugin.NewReconciler(clientHelper, ns, previousNamespace)
+	}
+
+	// Check namespace changed
+	if ns != previousNamespace {
+		if err := r.handleNamespaceChanged(ctx, previousNamespace, ns, desired, &gfReconciler, &cpReconciler); err != nil {
+			log.Error(err, "Failed to handle namespace change")
+			return ctrl.Result{}, err
+		}
+	}
+
+	// Goflow
 	if err := gfReconciler.Reconcile(ctx, &desired.Spec.GoflowKube, &desired.Spec.Loki); err != nil {
-		log.Error(err, "Failed to get FlowCollector")
+		log.Error(err, "Failed to reconcile goflow-kube")
 		return ctrl.Result{}, err
 	}
 
-	//ovsConfig is not initialized yet
-	if r.ovsConfigController == nil {
-		newFlowConfigController := ovs.NewFlowsConfigController(r.Client,
-			ns,
-			desired.Spec.Cno.Namespace,
-			ovsFlowsConfigMapName)
-		r.ovsConfigController = newFlowConfigController
-	}
-
-	// ovs-flows-config map for CNO
-	if err := r.ovsConfigController.Reconcile(ctx, desired); err != nil {
+	// OVS config map for CNO
+	if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
 		log.Error(err, "Failed to reconcile ovs-flows-config ConfigMap")
 	}
 
 	// Console plugin
 	if r.consoleEnabled {
-		cpReconciler := consoleplugin.Reconciler{
-			Client: r.Client,
-			SetControllerReference: func(obj client.Object) error {
-				return ctrl.SetControllerReference(desired, obj, r.Scheme)
-			},
-			Namespace: ns,
-		}
 		err := cpReconciler.Reconcile(ctx, &desired.Spec)
 		if err != nil {
-			log.Error(err, "Failed to get ConsolePlugin")
+			log.Error(err, "Failed to reconcile console plugin")
 			return ctrl.Result{}, err
 		}
 	}
@@ -147,27 +152,46 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{}, nil
 }
 
-func (r *FlowCollectorReconciler) checkFinalizerStatus(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+func (r *FlowCollectorReconciler) handleNamespaceChanged(
+	ctx context.Context,
+	oldNS, newNS string,
+	desired *flowsv1alpha1.FlowCollector,
+	gfReconciler *goflowkube.GFKReconciler,
+	cpReconciler *consoleplugin.CPReconciler,
+) error {
 	log := log.FromContext(ctx)
-	if desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		// the object is not being deleted. Register the required finalizer if not already there
-		if !helper.ContainsString(desired.GetFinalizers(), finalizerName) {
-			log.Info("registering finalizer, if not already present", "finalizerName", finalizerName)
-			controllerutil.AddFinalizer(desired, finalizerName)
-			return r.Update(ctx, desired)
+	if oldNS == "" {
+		// First install: create one-shot resources
+		log.Info("FlowCollector first install: creating initial resources")
+		err := gfReconciler.InitStaticResources(ctx)
+		if err != nil {
+			return err
 		}
-	} else {
-		// the object is being deleted. Execute finalizer, if present, and unregister it
-		if helper.ContainsString(desired.GetFinalizers(), finalizerName) {
-			log.Info("deleting external resources", "finalizerName", finalizerName)
-			if err := r.deleteExternalResources(ctx); err != nil {
+		if r.consoleEnabled {
+			err := cpReconciler.InitStaticResources(ctx)
+			if err != nil {
 				return err
 			}
-			controllerutil.RemoveFinalizer(desired, finalizerName)
-			return r.Update(ctx, desired)
+		}
+	} else {
+		// Namespace updated, clean up previous namespace
+		log.Info("FlowCollector namespace change detected: cleaning up previous namespace and preparing next one", "old namespace", oldNS, "new namepace", newNS)
+		err := gfReconciler.PrepareNamespaceChange(ctx)
+		if err != nil {
+			return err
+		}
+		if r.consoleEnabled {
+			err := cpReconciler.PrepareNamespaceChange(ctx)
+			if err != nil {
+				return err
+			}
 		}
 	}
-	return nil
+
+	// Update namespace in status
+	log.Info("Updating status with new namespace " + newNS)
+	desired.Status.Namespace = newNS
+	return r.Status().Update(ctx, desired)
 }
 
 func isConsoleEnabled(mgr ctrl.Manager) (bool, error) {
@@ -206,10 +230,6 @@ func (r *FlowCollectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		builder = builder.Owns(&osv1alpha1.ConsolePlugin{})
 	}
 	return builder.Complete(r)
-}
-
-func (r *FlowCollectorReconciler) deleteExternalResources(ctx context.Context) error {
-	return r.ovsConfigController.Finalize(ctx)
 }
 
 func getNamespaceName(desired *flowsv1alpha1.FlowCollector) string {

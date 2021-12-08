@@ -42,7 +42,6 @@ rules:
 - apiGroups:
   - console.openshift.io
   resources:
-  - clusterrolebindings
   - consoleplugins
   verbs:
   - create
@@ -56,6 +55,7 @@ rules:
   resources:
   - configmaps
   - namespaces
+  - serviceaccounts
   - services
   verbs:
   - create
@@ -74,14 +74,6 @@ rules:
   - get
   - list
   - watch
-- apiGroups:
-  - ""
-  resources:
-  - serviceaccounts
-  verbs:
-  - create
-  - delete
-  - get
 - apiGroups:
   - flows.netobserv.io
   resources:
@@ -112,6 +104,14 @@ rules:
   - rbac.authorization.k8s.io
   resources:
   - clusterrolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - update
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
   - clusterroles
   verbs:
   - create

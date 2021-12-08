@@ -57,7 +57,7 @@ FlowCollector is the Schema for the flowcollectors API
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>status</b></td>
+        <td><b><a href="#flowcollectorstatus">status</a></b></td>
         <td>object</td>
         <td>
           FlowCollectorStatus defines the observed state of FlowCollector<br/>
@@ -122,7 +122,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace  where console plugin and goflowkube pods are going to be deployed. If empty, the namespace of the operator is going to be used<br/>
+          Namespace where console plugin and goflowkube pods are going to be deployed. If empty, the namespace of the operator is going to be used<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -597,6 +597,33 @@ Loki contains settings related to the loki client
           URL is the address of an existing Loki service to push the flows to.<br/>
           <br/>
             <i>Default</i>: http://loki:3100/<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.status
+<sup><sup>[↩ Parent](#flowcollector)</sup></sup>
+
+
+
+FlowCollectorStatus defines the observed state of FlowCollector
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace where console plugin and goflowkube have been deployed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
