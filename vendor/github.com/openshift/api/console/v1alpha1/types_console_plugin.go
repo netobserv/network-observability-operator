@@ -87,7 +87,7 @@ type ConsolePluginProxyService struct {
 	// +kubebuilder:validation:Pattern=`^-----BEGIN CERTIFICATE-----([\s\S]*)-----END CERTIFICATE-----\s?$`
 	// +kubebuilder:validation:Optional
 	// +optional
-	CACertificate string `json:"caCertificate"`
+	CACertificate string `json:"caCertificate,omitempty"`
 	// authorize indicates if the proxied request will logged-in user's
 	// OpenShift access token in the "Authorization" request header:
 	//
@@ -97,7 +97,7 @@ type ConsolePluginProxyService struct {
 	// +kubebuilder:default:=false
 	// +kubebuilder:validation:Optional
 	// +optional
-	Authorize bool `json:"authorize"`
+	Authorize bool `json:"authorize,omitempty"`
 }
 
 // ConsolePluginService holds information on Service that is serving

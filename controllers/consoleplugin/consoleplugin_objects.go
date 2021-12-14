@@ -34,6 +34,13 @@ func buildConsolePlugin(desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns st
 				Port:      desired.Port,
 				BasePath:  "/",
 			},
+			Proxy: osv1alpha1.ConsolePluginProxy{
+				Services: []osv1alpha1.ConsolePluginProxyService{{
+					Name:      pluginName,
+					Namespace: ns,
+					Port:      desired.Port,
+				}},
+			},
 		},
 	}
 }
