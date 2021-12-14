@@ -1,0 +1,333 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "flows.netobserv.io/v1alpha1",
+          "kind": "FlowCollector",
+          "metadata": {
+            "name": "cluster"
+          },
+          "spec": {
+            "cno": {
+              "namespace": "openshift-network-operator"
+            },
+            "consolePlugin": {
+              "image": "quay.io/netobserv/network-observability-console-plugin:main",
+              "imagePullPolicy": "IfNotPresent",
+              "port": 9001
+            },
+            "goflowkube": {
+              "image": "quay.io/netobserv/goflow2-kube:main",
+              "imagePullPolicy": "IfNotPresent",
+              "kind": "Deployment",
+              "logLevel": "info",
+              "port": 2055,
+              "printOutput": false,
+              "replicas": 1
+            },
+            "ipfix": {
+              "cacheActiveTimeout": "60s",
+              "cacheMaxFlows": 400,
+              "sampling": 100
+            },
+            "loki": {
+              "batchSize": 102400,
+              "batchWait": "1s",
+              "maxBackoff": "300s",
+              "maxRetries": 10,
+              "minBackoff": "1s",
+              "staticLabels": {
+                "app": "netobserv-flowcollector"
+              },
+              "url": "http://loki:3100/"
+            },
+            "namespace": "network-observability"
+          }
+        }
+      ]
+    capabilities: Basic Install
+    operators.operatorframework.io/builder: operator-sdk-v1.14.0+git
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+  name: network-observability-operator.v0.0.1
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: FlowCollector is the Schema for the flowcollectors API
+      displayName: Flow Collector
+      kind: FlowCollector
+      name: flowcollectors.flows.netobserv.io
+      version: v1alpha1
+  description: An OpenShift / Kubernetes operator for network observability.
+  displayName: Network Observability Operator
+  icon:
+  - base64data: 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eG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iCiAgICB4bWxuczpzdEV2dD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlRXZlbnQjIgogICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICAgeG1sbnM6R0lNUD0iaHR0cDovL3d3dy5naW1wLm9yZy94bXAvIgogICAgeG1sbnM6dGlmZj0iaHR0cDovL25zLmFkb2JlLmNvbS90aWZmLzEuMC8iCiAgICB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iCiAgIHhtcE1NOkRvY3VtZW50SUQ9ImdpbXA6ZG9jaWQ6Z2ltcDpjODQ1NDk1NC02Njc2LTRkOGUtYjMyNS05YWY2ODNiZGMxOGYiCiAgIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NzJhNjEwNmQtNzhhMy00NmRjLWIzOTAtODgyMjVlYmJmNjQzIgogICB4bXBNTTpPcmlnaW5hbERvY3VtZW50SUQ9InhtcC5kaWQ6OGNmNGFmMjAtM2M2MS00YjBkLWFlNDUtOGEyNjkzYzlmOTlkIgogICBkYzpGb3JtYXQ9ImltYWdlL3BuZyIKICAgR0lNUDpBUEk9IjIuMCIKICAgR0lNUDpQbGF0Zm9ybT0iTWFjIE9TIgogICBHSU1QOlRpbWVTdGFtcD0iMTYzOTQ5NzI4MTQxNjcyOCIKICAgR0lNUDpWZXJzaW9uPSIyLjEwLjI4IgogICB0aWZmOk9yaWVudGF0aW9uPSIxIgogICB4bXA6Q3JlYXRvclRvb2w9IkdJTVAgMi4xMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InNhdmVkIgogICAgICBzdEV2dDpjaGFuZ2VkPSIvIgogICAgICBzdEV2dDppbnN0YW5jZUlEPSJ4bXAuaWlkOjZhMWU5MTdjLTNhM2YtNDZkYi1hZjEyLTAwYjM2MTQyOWQ5MSIKICAgICAgc3RFdnQ6c29mdHdhcmVBZ2VudD0iR2ltcCAyLjEwIChNYWMgT1MpIgogICAgICBzdEV2dDp3aGVuPSIyMDIxLTEyLTE0VDE2OjU0OjQxKzAxOjAwIi8+CiAgICA8L3JkZjpTZXE+CiAgIDwveG1wTU06SGlzdG9yeT4KICA8L3JkZjpEZXNjcmlwdGlvbj4KIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAKPD94cGFja2V0IGVuZD0idyI/PoZeawcAAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQflDA4PNilvgPSHAAAHDUlEQVRYw82XS2xcVxnHf+fcxzzuTMbO+JnETtMY8rCJEEUOiC7ooqKIBVKkLppFEAuQUIKQ2GTVLmDFhg01kSohWKCqUlRUKYtWLCpIiQg1QUkbm7zsPMb2xK+xPXPndWbOOSzmkRnbKSndcKSje3XOvd/3P9/zfwSfY/w0kRAGxoEXgBFgsLm1DGSAaxJmfhOG9lllimf56GwicRT4CfAqMPxfPs8CF4ELU2F46wsBOJtI7Ad+BZxufTs0MsJQXx+9ySS+5+FIiQEWVle5ef165+8WeBs4PxWGi58bwNlE4lXgLaAnGgQcHRvj4MAAQTSK4ziNKWX7vVit8rebN3lxYoKlXI6r168T5nIAm8CPp8Lw4jMDOJtIvA78AuDw2BhfPnCAqOftqrj9vm2tpjX/vHePv1+50hL7xlQY/nK7Ludpyh3X5asTE4z09SGlBNGBVYidyEX3ius4jPT3c2BkhHuZDLpWe2nS9820UpefCqBp9t86rsuJY8foCYIdgnmKYqU1a6USBVXDdx1cIRBCkAoCDo2OcuvhwxaI2WmlZncAaAbc+0D0yOHDpOJxykoxc/cuG8Ui6VQKsc0KAHVjuLK6xoexOJUjRzETXyE7PEx2+TEDWuNISRCNMjw4yOzt2wAvT/r+H6eVKnQBmPT9C8DkwOAg/akUAOv5PBsbG5RLJdLpNJ7T7TFjLe9mFlka2sf+kVGG9w2x78B+jh4/zsQrr/CPhQwDuRxSCFKJBMTjLGQyUWBwWqk/AciOPD/teh79qRRaa7TWpIKAVE8Pg0ND+I5DXWvqxlDXmqJSvHtvntvIpjEs1oI1FmMMUkpOnjrFp/k82hisMXx9bIzE3r0Ap5s6GxaY9P3XgW/0pdME0eiTAJGS3mSS1LZYWKtU+cPdOT4phMQTAYlEgngQEIvHiUQjOI5DTSkqlQpza2uMFAogBI6U+LEY8/fvC8BMK/WBcy6ZFMDvgORAOt3wc4cy0aworeetrTwfLGb5/uh+ruc2Ea5LNBYlEonieS5SSrTWlMtlCvk8D7KPGSvkG5nR18feQ4f4+KOPAEZPRiK/dq2148BwJBIBQGvdrGO2K1VqxnA1t0nS8/jB8weJui6DvsdSGJLfyhOLx/E8D2uhXC4TbVqymM2iTUNm32uvER8aYvSdd3g0NzdsrR13m40Fz/Mayu3OPrJVq3EjH/K13h76Y1GEtdSNYSKV5P7yGhu5HK7rYq1FVasUCnl838da2JtdQvelG03i4kX83l6GBwZ4NDcH8ILb7Go4TdN1AbCWTKVKDXhxbw+e4zyxEHBszx4uPV6lkM8DllpNUSoWicfjeL6P2trk2z17qBuDBcoPHqAePSIVj7dEjLitlmqa0W2bvq5by7I2DPg+Sd/Dao3usIq2lr8ur/Kd/jSz+QKZrTzVapVCoUAkEiViND8a2Ud0l4N1VJNBt53TxrRPVzUWJQz7fA8H215vgTPWcmV1nYOxGOO9Kb7Zn2ahVGZdKYpa8+elJX4+foR0JLJrTBljnpTsJploA9CAlJbkNnN3Crm2mWckGuH5RBytNY7j8Fwi4LBM8pflFU7tH2Y0CBoW3SWmVK3Wel2WTSbTLjJWa6SUxMfH2wWpPY3hZj5k0Hc5EPHba639hbDIcrnCZH+665+61l1zo1BoAchI4For/VrzzKVL/Oy99zh+7lzXj/dLZfpcyYDrdinWWlOt1/nw8QrfHR7EGrNjvxPs8tpaC8A1VwoxY6zNGmOG602T+7EYQkq8IGi7YV0bko7DHiGeBKu17bj4ZHOLb6V7iQqxq99bo6IUy4uLAFkJM87HSjHp+6PASWstQgg+vXyZ2zduMHvhAgChsUSFIJBiBy8A2KzVKNQ1Y4lg1/3OyH+4usrKygrA798Mw/dbveABcNZaKwBq6+tszswgAAW4QhB5imAD/LtY5sSeBMYYiuUyUkocKXfwhrox/GtmBl2rWeCH00qtOQDTSq1N+v6XgBPW2i4FUoidtKnjRJmq4rlYBEcIMtksGxsb5La26Ekmd4CYy2ZZa5z+7akwfKuVhq1xHvge0LM9/fQuvsRaSsYSEwLXWqpKUVOqYRWtCSsVPPeJ+FwYcn9+vkVSz+9gRNNKFSZ9f77J/bvzdzdaJgShMfS6Trt1V2s1tNa4nkdfT0+bQYWVCrN37mAbBejMVBhe3ZUTTis1O+n7BniJjijfrlgAZWtJyCY5bSoKYjGCIKA3lWqbf6tU4s78PKZh1TemwvDCZ7LiaaUubwex23CapLMbm8BxHASgjWF5c5OFxcWWjGej5R0gZoGXgai1FmvtkybyGbRcG8NWqcTSygrFMGz5/Mz2k//PV7PWKR0pkc0ppMQaQ61eRzUD8Qtfzf4vLqfbx7lkUjQp3FOv50KImTcLhWe+nv8HSg24inLC1x4AAAAASUVORK5CYII=
+    mediatype: image/png
+  install:
+    spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - apps
+          resources:
+          - daemonsets
+          - deployments
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - replicasets
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - autoscaling
+          resources:
+          - horizontalpodautoscalers
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - console.openshift.io
+          resources:
+          - consoleplugins
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - namespaces
+          - serviceaccounts
+          - services
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          - services
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - flows.netobserv.io
+          resources:
+          - flowcollectors
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - flows.netobserv.io
+          resources:
+          - flowcollectors/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - flows.netobserv.io
+          resources:
+          - flowcollectors/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - clusterrolebindings
+          verbs:
+          - create
+          - delete
+          - get
+          - update
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - clusterroles
+          verbs:
+          - create
+          - delete
+          - get
+        - apiGroups:
+          - security.openshift.io
+          resourceNames:
+          - hostnetwork
+          resources:
+          - securitycontextconstraints
+          verbs:
+          - use
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        serviceAccountName: netobserv-controller-manager
+      deployments:
+      - name: netobserv-controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              control-plane: controller-manager
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                control-plane: controller-manager
+            spec:
+              containers:
+              - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=10
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
+                  protocol: TCP
+                resources: {}
+              - args:
+                - --health-probe-bind-address=:8081
+                - --metrics-bind-address=127.0.0.1:8080
+                - --leader-elect
+                command:
+                - /manager
+                image: quay.io/netobserv/network-observability-operator:main
+                imagePullPolicy: IfNotPresent
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 100Mi
+                  requests:
+                    cpu: 100m
+                    memory: 20Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: netobserv-controller-manager
+              terminationGracePeriodSeconds: 10
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        serviceAccountName: netobserv-controller-manager
+    strategy: deployment
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - network observability
+  - ipfix
+  - flow tracing
+  - flows
+  - network
+  - observability
+  links:
+  - name: Network Observability Operator
+    url: https://network-observability-operator.domain
+  maintainers:
+  - email: jtakvori@redhat.com
+    name: Joel Takvorian
+  - email: jpinsonn@redhat.com
+    name: Julien Pinsonneau
+  - email: mmaciasl@redhat.com
+    name: Mario Macias
+  - email: ocazade@redhat.com
+    name: Olivier Cazade
+  maturity: alpha
+  provider:
+    name: Red Hat
+    url: https://www.redhat.com
+  version: 0.0.1
