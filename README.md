@@ -48,6 +48,32 @@ Then, you can deploy a custom resource, e.g.:
 kubectl apply -f ./config/samples/flows_v1alpha1_flowcollector.yaml
 ```
 
+## Deploy as bundle
+
+For more details, refer to the [Operator Lifecycle Manager (OLM) bundle quickstart documentation](https://sdk.operatorframework.io/docs/olm-integration/quickstart-bundle/).
+
+This task should be automatically done by the CI/CD pipeline. However, if you want to deploy as
+bundle for local testing, you should execute the following commands:
+
+```
+export USERNAME=<container-registry-username>
+export VERSION=0.0.1
+export IMG=docker.io/$USERNAME/network-observability-operator:v$VERSION
+export BUNDLE_IMG=docker.io/$USERNAME/network-observability-operator-bundle:v$VERSION
+make bundle bundle-build bundle-push
+```
+
+Optionally, you might validate the bundle:
+```
+operator-sdk bundle validate $BUNDLE_IMG
+```
+
+And finally, locally install the bundle with the OLM:
+
+```
+operator-sdk run bundle $BUNDLE_IMG
+```
+
 ## FlowCollector custom resource
 
 The `FlowCollector` custom resource is used to configure the operator and its managed components. You can read its [full documentation](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md) and check this [sample file](./config/samples/flows_v1alpha1_flowcollector.yaml) that you can copy, edit and install.
