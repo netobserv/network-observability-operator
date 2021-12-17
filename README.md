@@ -56,10 +56,11 @@ This task should be automatically done by the CI/CD pipeline. However, if you wa
 bundle for local testing, you should execute the following commands:
 
 ```
-export USERNAME=<container-registry-username>
+export USER=<container-registry-username>
 export VERSION=0.0.1
-export IMG=docker.io/$USERNAME/network-observability-operator:v$VERSION
-export BUNDLE_IMG=docker.io/$USERNAME/network-observability-operator-bundle:v$VERSION
+export IMG=quay.io/$USER/network-observability-operator:v$VERSION
+export BUNDLE_IMG=quay.io/$USER/network-observability-operator-bundle:v$VERSION
+make image-build image-push
 make bundle bundle-build bundle-push
 ```
 
@@ -68,11 +69,50 @@ Optionally, you might validate the bundle:
 operator-sdk bundle validate $BUNDLE_IMG
 ```
 
-And finally, locally install the bundle with the OLM:
+### Deploy as bundle from command line
+
+This mode is recommended to quickly test the operator during its development:
 
 ```
 operator-sdk run bundle $BUNDLE_IMG
 ```
+
+### Deploy as bundle from the Console's OperatorHub page
+
+This mode is recommended when you want to test the customer experience of navigating through the
+operators' catalog and installing/configuring it manually through the UI.
+
+First, create and push a catalog image:
+
+```
+export CATALOG_IMG=quay.io/$USER/network-observability-operator-catalog:v$VERSION
+make catalog-build catalog-push
+```
+
+Then, you need to create your own development catalog file. E.g. `catalog.yml`:
+
+```yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: noo-dev-catalog
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: quay.io/<your-org>/network-observability-operator-catalog:v<your-version>
+  displayName: Network observability development catalog
+  publisher: Me
+  updateStrategy:
+    registryPoll:
+      interval: 1m
+```
+
+Then run:
+```
+oc apply -f catalog.yml
+```
+
+The Network Observability Operator should be now available in the OperatorHub items.
 
 ## FlowCollector custom resource
 
