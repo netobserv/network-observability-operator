@@ -1,5 +1,7 @@
 # Network Observability Operator (NOO)
 
+[![Docker Repository on Quay](https://quay.io/repository/netobserv/network-observability-operator/status "Docker Repository on Quay")](https://quay.io/repository/netobserv/network-observability-operator)
+
 An OpenShift / Kubernetes operator for network observability. It deploys a flow collector (IPFIX standard), an OpenShift console plugin (if working with OpenShift) and it configures the OpenShift Cluster Network Operator to enable flow exports. The `OVN-Kubernetes` CNI is required.
 
 A Grafana dashboard is also provided.
