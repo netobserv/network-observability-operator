@@ -88,7 +88,7 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-	GOFLAGS="" go install fybrik.io/crdoc@latest
+	GOFLAGS="" go install fybrik.io/crdoc@v0.5.2
 	crdoc --resources config/crd/bases/flows.netobserv.io_flowcollectors.yaml --output docs/FlowCollector.md
 
 .PHONY: prereqs
@@ -223,3 +223,8 @@ catalog-build: opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) image-push IMG=$(CATALOG_IMG)
+
+# Deploy the sample FlowCollector CR
+.PHONY: create-sample
+create-sample:
+	kubectl apply -f ./config/samples/flows_v1alpha1_flowcollector.yaml
