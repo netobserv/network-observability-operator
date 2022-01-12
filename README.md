@@ -48,6 +48,9 @@ Then, you can deploy a custom resource, e.g.:
 
 ```bash
 kubectl apply -f ./config/samples/flows_v1alpha1_flowcollector.yaml
+
+# or using make
+make create-sample
 ```
 
 ## Deploy as bundle
@@ -124,7 +127,7 @@ Note that the `FlowCollector` resource must be unique and must be named `cluster
 
 ## Enabling OVS IPFIX export
 
-This part will eventually be done automatically by the operator, but for the time being it requires manual intervention.
+If you use OpenShift 4.10, you don't have anything to do: the operator will configure OVS *via* the Cluster Network Operator. Else, some manual steps are still required:
 
 <a name="ovnk-config"></a>
 
@@ -135,7 +138,7 @@ GF_IP=`kubectl get svc goflow-kube -n network-observability -ojsonpath='{.spec.c
 kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPFIX_TARGETS="$GF_IP:2055"
 ```
 
-### On OpenShift with OVN-Kubernetes CNI
+### On older OpenShift with OVN-Kubernetes CNI
 
 In OpenShift, a difference with the upstream `ovn-kubernetes` is that the flows export config is managed by the `ClusterNetworkOperator`.
 
