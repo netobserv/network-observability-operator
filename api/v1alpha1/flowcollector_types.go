@@ -91,6 +91,12 @@ type FlowCollectorGoflowKube struct {
 	// Port is the collector port: either a service port for Deployment kind, or host port for DaemonSet kind
 	Port int32 `json:"port,omitempty"`
 
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=65535
+	//+kubebuilder:default:=8080
+	// HealthPort is a collector HTTP port in the Pod that exposes the health check API
+	HealthPort int32 `json:"healthPort,omitempty"`
+
 	//+kubebuilder:default:="quay.io/netobserv/goflow2-kube:main"
 	// Image is the collector image (including domain and tag)
 	Image string `json:"image,omitempty"`
