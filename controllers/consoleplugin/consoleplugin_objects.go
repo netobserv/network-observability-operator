@@ -17,6 +17,7 @@ func buildLabels() map[string]string {
 
 const secretName = "console-serving-cert"
 const displayName = "Network Observability plugin"
+const proxyAlias = "backend"
 
 // lokiURLAnnotation contains the used Loki querier URL, facilitating the change management
 const lokiURLAnnotation = "flows.netobserv.io/loki-url"
@@ -34,13 +35,15 @@ func buildConsolePlugin(desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns st
 				Port:      desired.Port,
 				BasePath:  "/",
 			},
-			Proxy: osv1alpha1.ConsolePluginProxy{
-				Services: []osv1alpha1.ConsolePluginProxyService{{
+			Proxy: []osv1alpha1.ConsolePluginProxy{{
+				Type:  osv1alpha1.ProxyTypeService,
+				Alias: proxyAlias,
+				Service: osv1alpha1.ConsolePluginProxyServiceConfig{
 					Name:      pluginName,
 					Namespace: ns,
 					Port:      desired.Port,
-				}},
-			},
+				},
+			}},
 		},
 	}
 }
