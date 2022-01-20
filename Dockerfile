@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM registry.access.redhat.com/ubi8/go-toolset:1.16.7-5 as builder
+FROM golang:1.17 as builder
 
 WORKDIR /opt/app-root
 
