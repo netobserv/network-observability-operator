@@ -8,33 +8,297 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1637249202749,
+  "iteration": 1643205063531,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
-      "collapsed": false,
-      "datasource": null,
+      "collapsed": true,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 13,
+      "id": 19,
       "panels": [],
-      "title": "By Namespace",
+      "title": "Flows",
       "type": "row"
     },
     {
-      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "yyEYmhxnz"
+          },
+          "expr": "sum ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\" }[1m]))",
+          "refId": "A"
+        }
+      ],
+      "title": "Total flows",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "yyEYmhxnz"
+          },
+          "expr": "sum by(SrcNamespace) ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\" }[1m]))",
+          "refId": "A"
+        }
+      ],
+      "title": "Flows by source namespace",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "yyEYmhxnz"
+          },
+          "expr": "sum by(DstNamespace) ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\" }[1m]))",
+          "refId": "A"
+        }
+      ],
+      "title": "Flows by destination namespace",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 13,
+      "panels": [],
+      "title": "Volumetry",
+      "type": "row"
+    },
+    {
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -90,7 +354,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 1
+        "y": 18
       },
       "id": 10,
       "options": {
@@ -113,7 +377,6 @@
       "type": "timeseries"
     },
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -169,7 +432,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 1
+        "y": 18
       },
       "id": 11,
       "options": {
@@ -192,21 +455,6 @@
       "type": "timeseries"
     },
     {
-      "collapsed": false,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 9
-      },
-      "id": 16,
-      "panels": [],
-      "title": "By Workload",
-      "type": "row"
-    },
-    {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -262,7 +510,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 26
       },
       "id": 14,
       "options": {
@@ -285,7 +533,6 @@
       "type": "timeseries"
     },
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -341,7 +588,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 26
       },
       "id": 17,
       "options": {
@@ -365,17 +612,15 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 34
       },
       "id": 6,
       "panels": [
         {
-          "datasource": null,
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -407,14 +652,21 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 9
+            "y": 19
           },
           "id": 8,
           "options": {
+            "footer": {
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
             "frameIndex": 118,
             "showHeader": true
           },
-          "pluginVersion": "8.0.3",
+          "pluginVersion": "8.3.3",
           "targets": [
             {
               "expr": "{app=\"netobserv-flowcollector\"}",
@@ -430,12 +682,11 @@
     },
     {
       "collapsed": false,
-      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 35
       },
       "id": 4,
       "panels": [],
@@ -443,17 +694,18 @@
       "type": "row"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 14,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 36
       },
       "id": 2,
       "options": {
         "dedupStrategy": "none",
         "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
         "showLabels": false,
         "showTime": false,
         "sortOrder": "Descending",
@@ -469,24 +721,20 @@
       "type": "logs"
     }
   ],
-  "refresh": false,
-  "schemaVersion": 30,
+  "refresh": "30s",
+  "schemaVersion": 34,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
-        "allValue": null,
         "current": {
           "isNone": true,
           "selected": false,
           "text": "None",
           "value": ""
         },
-        "datasource": null,
         "definition": " label_values({app=\"netobserv-flowcollector\"}, \"SrcNamespace\")",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "(ignored)",
@@ -506,8 +754,6 @@
           "text": ".*",
           "value": ".*"
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "label": "Source namespace",
         "name": "SrcNamespace",
@@ -525,22 +771,20 @@
       {
         "current": {
           "selected": false,
-          "text": ".*monitoring",
-          "value": ".*monitoring"
+          "text": ".*",
+          "value": ".*"
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "label": "Dest namespace",
         "name": "DstNamespace",
         "options": [
           {
             "selected": true,
-            "text": ".*monitoring",
-            "value": ".*monitoring"
+            "text": ".*",
+            "value": ".*"
           }
         ],
-        "query": ".*monitoring",
+        "query": ".*",
         "skipUrlSync": false,
         "type": "textbox"
       },
@@ -550,8 +794,6 @@
           "text": ".*",
           "value": ".*"
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "label": "Source workload",
         "name": "SrcWorkload",
@@ -572,8 +814,6 @@
           "text": ".*",
           "value": ".*"
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "label": "Dest workload",
         "name": "DstWorkload",
@@ -591,12 +831,13 @@
     ]
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Network Observability",
   "uid": "u0RKeXcnz",
-  "version": 8
+  "version": 2,
+  "weekStart": ""
 }
