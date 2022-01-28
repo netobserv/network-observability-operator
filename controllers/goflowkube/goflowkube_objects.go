@@ -191,7 +191,8 @@ func buildService(old *corev1.Service, desired *flowsv1alpha1.FlowCollectorGoflo
 				Labels:    buildLabels(),
 			},
 			Spec: corev1.ServiceSpec{
-				Selector: buildLabels(),
+				Selector:        buildLabels(),
+				SessionAffinity: corev1.ServiceAffinityClientIP,
 				Ports: []corev1.ServicePort{{
 					Port:     desired.Port,
 					Protocol: corev1.ProtocolUDP,
