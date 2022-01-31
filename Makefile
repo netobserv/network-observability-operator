@@ -110,7 +110,13 @@ lint: prereqs
 	golangci-lint run ./...
 
 test: manifests generate envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverpkg=./... -coverprofile cover.out
+
+coverage-report:
+	go tool cover --func=./cover.out
+
+coverage-report-html:
+	go tool cover --html=./cover.out
 
 ##@ Build
 
