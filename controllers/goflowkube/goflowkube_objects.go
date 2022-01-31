@@ -33,15 +33,16 @@ type ConfigMap struct {
 }
 
 type LokiConfigMap struct {
-	URL          string            `json:"url,omitempty"`
-	BatchWait    metav1.Duration   `json:"batchWait,omitempty"`
-	BatchSize    int64             `json:"batchSize,omitempty"`
-	Timeout      metav1.Duration   `json:"timeout,omitempty"`
-	MinBackoff   metav1.Duration   `json:"minBackoff,omitempty"`
-	MaxBackoff   metav1.Duration   `json:"maxBackoff,omitempty"`
-	MaxRetries   int32             `json:"maxRetries,omitempty"`
-	Labels       []string          `json:"labels,omitempty"`
-	StaticLabels map[string]string `json:"staticLabels,omitempty"`
+	URL            string            `json:"url,omitempty"`
+	BatchWait      metav1.Duration   `json:"batchWait,omitempty"`
+	BatchSize      int64             `json:"batchSize,omitempty"`
+	Timeout        metav1.Duration   `json:"timeout,omitempty"`
+	MinBackoff     metav1.Duration   `json:"minBackoff,omitempty"`
+	MaxBackoff     metav1.Duration   `json:"maxBackoff,omitempty"`
+	MaxRetries     int32             `json:"maxRetries,omitempty"`
+	Labels         []string          `json:"labels,omitempty"`
+	StaticLabels   map[string]string `json:"staticLabels,omitempty"`
+	TimestampLabel string            `json:"timestampLabel,omitempty"`
 }
 
 func buildLabels() map[string]string {
@@ -158,6 +159,7 @@ func buildConfigMap(desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
 		config.Loki.StaticLabels = desiredLoki.StaticLabels
 		config.Loki.Timeout = desiredLoki.Timeout
 		config.Loki.URL = desiredLoki.URL
+		config.Loki.TimestampLabel = desiredLoki.TimestampLabel
 	}
 	config.Loki.Labels = []string{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload"}
 
