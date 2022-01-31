@@ -290,6 +290,11 @@ spec:
                     description: Timeout is the maximum time connection / request
                       limit A Timeout of zero means no timeout.
                     type: string
+                  timestampLabel:
+                    default: TimeFlowEnd
+                    description: TimestampLabel is the label to use for time indexing
+                      in Loki. E.g. "TimeReceived", "TimeFlowStart", "TimeFlowEnd".
+                    type: string
                   url:
                     default: http://loki:3100/
                     description: URL is the address of an existing Loki service to

@@ -23,6 +23,7 @@ spec:
     minBackoff: 1s
     maxBackoff: 300s
     maxRetries: 10
+    timestampLabel: TimeFlowEnd
     staticLabels:
       app: netobserv-flowcollector
   consolePlugin:
