@@ -594,7 +594,7 @@ Loki contains settings related to the loki client
         <td><b>timestampLabel</b></td>
         <td>string</td>
         <td>
-          TimestampLabel is the label to use for time-series indexing in Loki. E.g. "TimeReceived", "TimeFlowStart", "TimeFlowEnd".<br/>
+          TimestampLabel is the label to use for time indexing in Loki. E.g. "TimeReceived", "TimeFlowStart", "TimeFlowEnd".<br/>
           <br/>
             <i>Default</i>: TimeFlowEnd<br/>
         </td>
