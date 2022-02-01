@@ -1,7 +1,13 @@
 # Build the manager binary
-FROM golang:1.17 as builder
+FROM registry.access.redhat.com/ubi8/go-toolset:1.16.7-5 as builder
 
 WORKDIR /opt/app-root
+
+# TEMPORARY STEPS UNTIL ubi8 releases a go1.17 image
+RUN wget -q https://go.dev/dl/go1.17.6.linux-amd64.tar.gz && tar -xzf go1.17.6.linux-amd64.tar.gz
+ENV GOROOT /opt/app-root/go
+ENV PATH $GOROOT/bin:$PATH
+# END OF LINES TO REMOVE
 
 # Copy the go manifests and source
 COPY go.mod go.mod
