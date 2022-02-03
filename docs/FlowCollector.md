@@ -280,6 +280,18 @@ GoflowKube contains settings related to goflow-kube
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>healthPort</b></td>
+        <td>integer</td>
+        <td>
+          HealthPort is a collector HTTP port in the Pod that exposes the health check API<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 8080<br/>
+            <i>Minimum</i>: 1<br/>
+            <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecgoflowkubehpa">hpa</a></b></td>
         <td>object</td>
         <td>

@@ -40,7 +40,7 @@ var resources = corev1.ResourceRequirements{
 var commands = []string{
 	"/bin/sh",
 	"-c",
-	`/goflow-kube -loglevel "trace" -config /etc/goflow-kube/config.yaml`,
+	`/goflow-kube -loglevel "trace" -config /etc/goflow-kube/config.yaml -healthport 8080`,
 }
 var image = "quay.io/netobserv/goflow2-kube:dev"
 var pullPolicy = corev1.PullIfNotPresent
@@ -63,6 +63,7 @@ func getGoflowKubeConfig() flowsv1alpha1.FlowCollectorGoflowKube {
 			TargetCPUUtilizationPercentage: &targetCPU,
 		},
 		PrintOutput: false,
+		HealthPort:  8080,
 	}
 }
 

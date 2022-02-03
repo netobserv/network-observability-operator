@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -20,6 +21,14 @@ const configMapName = "goflow-kube-config"
 const configVolume = "config-volume"
 const configPath = "/etc/goflow-kube"
 const configFile = "config.yaml"
+
+const (
+	healthServiceName       = "health"
+	healthTimeoutSeconds    = 5
+	livenessPeriodSeconds   = 10
+	startupFailureThreshold = 5
+	startupPeriodSeconds    = 10
+)
 
 // PodConfigurationDigest is an annotation name to facilitate pod restart after
 // any external configuration change
@@ -98,6 +107,18 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube, configDige
 		tolerations = []corev1.Toleration{{Operator: corev1.TolerationOpExists}}
 	}
 
+	ports = append(ports, corev1.ContainerPort{
+		Name:          healthServiceName,
+		ContainerPort: desired.HealthPort,
+	})
+
+	healthProbe := corev1.ProbeHandler{
+		HTTPGet: &corev1.HTTPGetAction{
+			Path: "/health/live",
+			Port: intstr.FromString(healthServiceName),
+		},
+	}
+
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: buildLabels(),
@@ -128,6 +149,17 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube, configDige
 					Name:      configVolume,
 				}},
 				Ports: ports,
+				LivenessProbe: &corev1.Probe{
+					ProbeHandler:   healthProbe,
+					TimeoutSeconds: healthTimeoutSeconds,
+					PeriodSeconds:  livenessPeriodSeconds,
+				},
+				StartupProbe: &corev1.Probe{
+					ProbeHandler:     healthProbe,
+					TimeoutSeconds:   healthTimeoutSeconds,
+					PeriodSeconds:    startupPeriodSeconds,
+					FailureThreshold: startupFailureThreshold,
+				},
 			}},
 			ServiceAccountName: constants.GoflowKubeName,
 		},
@@ -135,7 +167,8 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube, configDige
 }
 
 func buildMainCommand(desired *flowsv1alpha1.FlowCollectorGoflowKube) string {
-	return fmt.Sprintf(`/goflow-kube -loglevel "%s" -config %s/%s`, desired.LogLevel, configPath, configFile)
+	return fmt.Sprintf(`/goflow-kube -loglevel "%s" -config %s/%s -healthport %d`,
+		desired.LogLevel, configPath, configFile, desired.HealthPort)
 }
 
 // returns a configmap with a digest of its configuration contents, which will be used to

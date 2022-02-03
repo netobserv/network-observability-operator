@@ -109,6 +109,14 @@ spec:
               goflowkube:
                 description: GoflowKube contains settings related to goflow-kube
                 properties:
+                  healthPort:
+                    default: 8080
+                    description: HealthPort is a collector HTTP port in the Pod that
+                      exposes the health check API
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
+                    type: integer
                   hpa:
                     description: HPA spec of an horizontal pod autoscaler to set up
                       for the collector Deployment. Ignored for DaemonSet.
