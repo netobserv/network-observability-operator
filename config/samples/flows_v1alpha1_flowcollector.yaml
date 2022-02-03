@@ -16,6 +16,7 @@ spec:
     imagePullPolicy: IfNotPresent
     logLevel: info
     printOutput: false
+    healthPort: 8080
   loki:
     url: 'http://loki:3100/'
     batchWait: 1s
