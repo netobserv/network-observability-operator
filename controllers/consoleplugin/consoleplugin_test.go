@@ -119,19 +119,41 @@ func TestBuiltContainer(t *testing.T) {
 	assert := assert.New(t)
 
 	//newly created containers should not need update
-	config := flowsv1alpha1.FlowCollectorSpec{
-		Loki:          flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234"},
-		ConsolePlugin: getPluginConfig(),
-	}
-	newContainer := buildPodTemplate(&config)
-	assert.Equal(containerNeedsUpdate(&newContainer.Spec, &config.ConsolePlugin), false)
+	plugin := getPluginConfig()
+	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234"}
+	builder := newBuilder(testNamespace, &plugin, loki)
+	newContainer := builder.podTemplate()
+	assert.Equal(containerNeedsUpdate(&newContainer.Spec, &plugin), false)
 }
 
 func TestBuiltService(t *testing.T) {
 	assert := assert.New(t)
 
 	//newly created service should not need update
-	containerConfig := getPluginConfig()
-	newService := buildService(nil, &containerConfig, testNamespace)
-	assert.Equal(serviceNeedsUpdate(newService, &containerConfig, testNamespace), false)
+	plugin := getPluginConfig()
+	builder := newBuilder(testNamespace, &plugin, nil)
+	newService := builder.service(nil)
+	assert.Equal(serviceNeedsUpdate(newService, &plugin, testNamespace), false)
+}
+
+func TestLabels(t *testing.T) {
+	assert := assert.New(t)
+
+	plugin := getPluginConfig()
+	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234"}
+	builder := newBuilder(testNamespace, &plugin, loki)
+
+	// Deployment
+	depl := builder.deployment()
+	assert.Equal("network-observability-plugin", depl.Labels["app"])
+	assert.Equal("network-observability-plugin", depl.Spec.Template.Labels["app"])
+	assert.Equal("dev", depl.Labels["version"])
+	assert.Equal("dev", depl.Spec.Template.Labels["version"])
+
+	// Service
+	svc := builder.service(nil)
+	assert.Equal("network-observability-plugin", svc.Labels["app"])
+	assert.Equal("network-observability-plugin", svc.Spec.Selector["app"])
+	assert.Equal("dev", svc.Labels["version"])
+	assert.Equal("dev", svc.Spec.Selector["version"])
 }

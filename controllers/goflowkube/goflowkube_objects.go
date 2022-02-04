@@ -15,6 +15,7 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 const configMapName = "goflow-kube-config"
@@ -54,52 +55,68 @@ type LokiConfigMap struct {
 	TimestampLabel string            `json:"timestampLabel,omitempty"`
 }
 
-func buildLabels() map[string]string {
-	return map[string]string{
-		"app": constants.GoflowKubeName,
+type builder struct {
+	namespace   string
+	labels      map[string]string
+	desired     *flowsv1alpha1.FlowCollectorGoflowKube
+	desiredLoki *flowsv1alpha1.FlowCollectorLoki
+}
+
+func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorGoflowKube, desiredLoki *flowsv1alpha1.FlowCollectorLoki) builder {
+	version := helper.ExtractVersion(desired.Image)
+	return builder{
+		namespace: ns,
+		labels: map[string]string{
+			"app":     constants.GoflowKubeName,
+			"version": version,
+		},
+		desired:     desired,
+		desiredLoki: desiredLoki,
 	}
 }
 
-func buildDeployment(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns, configDigest string) *appsv1.Deployment {
+func (b *builder) deployment(configDigest string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.GoflowKubeName,
-			Namespace: ns,
+			Namespace: b.namespace,
+			Labels:    b.labels,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &desired.Replicas,
+			Replicas: &b.desired.Replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: buildLabels(),
+				MatchLabels: b.labels,
 			},
-			Template: buildPodTemplate(desired, configDigest),
+			Template: b.podTemplate(configDigest),
 		},
 	}
 }
 
-func buildDaemonSet(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns, configDigest string) *appsv1.DaemonSet {
+func (b *builder) daemonSet(configDigest string) *appsv1.DaemonSet {
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.GoflowKubeName,
-			Namespace: ns,
+			Namespace: b.namespace,
+			Labels:    b.labels,
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: buildLabels(),
+				MatchLabels: b.labels,
 			},
-			Template: buildPodTemplate(desired, configDigest),
+			Template: b.podTemplate(configDigest),
 		},
 	}
 }
 
-func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube, configDigest string) corev1.PodTemplateSpec {
-	cmd := buildMainCommand(desired)
+func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
+	cmd := buildMainCommand(b.desired)
 	var ports []corev1.ContainerPort
 	var tolerations []corev1.Toleration
-	if desired.Kind == constants.DaemonSetKind {
+	if b.desired.Kind == constants.DaemonSetKind {
 		ports = []corev1.ContainerPort{{
 			Name:          constants.GoflowKubeName,
-			HostPort:      desired.Port,
-			ContainerPort: desired.Port,
+			HostPort:      b.desired.Port,
+			ContainerPort: b.desired.Port,
 			Protocol:      corev1.ProtocolUDP,
 		}}
 		// This allows deploying an instance in the master node, the same technique used in the
@@ -109,7 +126,7 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube, configDige
 
 	ports = append(ports, corev1.ContainerPort{
 		Name:          healthServiceName,
-		ContainerPort: desired.HealthPort,
+		ContainerPort: b.desired.HealthPort,
 	})
 
 	healthProbe := corev1.ProbeHandler{
@@ -121,7 +138,7 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube, configDige
 
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: buildLabels(),
+			Labels: b.labels,
 			Annotations: map[string]string{
 				PodConfigurationDigest: configDigest,
 			},
@@ -140,10 +157,10 @@ func buildPodTemplate(desired *flowsv1alpha1.FlowCollectorGoflowKube, configDige
 			}},
 			Containers: []corev1.Container{{
 				Name:            constants.GoflowKubeName,
-				Image:           desired.Image,
-				ImagePullPolicy: corev1.PullPolicy(desired.ImagePullPolicy),
+				Image:           b.desired.Image,
+				ImagePullPolicy: corev1.PullPolicy(b.desired.ImagePullPolicy),
 				Command:         []string{"/bin/sh", "-c", cmd},
-				Resources:       *desired.Resources.DeepCopy(),
+				Resources:       *b.desired.Resources.DeepCopy(),
 				VolumeMounts: []corev1.VolumeMount{{
 					MountPath: configPath,
 					Name:      configVolume,
@@ -173,39 +190,37 @@ func buildMainCommand(desired *flowsv1alpha1.FlowCollectorGoflowKube) string {
 
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
-func buildConfigMap(desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
-	desiredLoki *flowsv1alpha1.FlowCollectorLoki, ns string) (*corev1.ConfigMap, string) {
-
+func (b *builder) configMap() (*corev1.ConfigMap, string) {
 	configStr := `{}`
 	config := &ConfigMap{
-		Listen:      fmt.Sprintf("netflow://:%d", desiredGoflowKube.Port),
+		Listen:      fmt.Sprintf("netflow://:%d", b.desired.Port),
 		Loki:        LokiConfigMap{},
 		PrintInput:  false,
-		PrintOutput: desiredGoflowKube.PrintOutput,
+		PrintOutput: b.desired.PrintOutput,
 	}
-	if desiredLoki != nil {
-		config.Loki.BatchSize = desiredLoki.BatchSize
-		config.Loki.BatchWait = desiredLoki.BatchWait
-		config.Loki.MaxBackoff = desiredLoki.MaxBackoff
-		config.Loki.MaxRetries = desiredLoki.MaxRetries
-		config.Loki.MinBackoff = desiredLoki.MinBackoff
-		config.Loki.StaticLabels = desiredLoki.StaticLabels
-		config.Loki.Timeout = desiredLoki.Timeout
-		config.Loki.URL = desiredLoki.URL
-		config.Loki.TimestampLabel = desiredLoki.TimestampLabel
+	if b.desiredLoki != nil {
+		config.Loki.BatchSize = b.desiredLoki.BatchSize
+		config.Loki.BatchWait = b.desiredLoki.BatchWait
+		config.Loki.MaxBackoff = b.desiredLoki.MaxBackoff
+		config.Loki.MaxRetries = b.desiredLoki.MaxRetries
+		config.Loki.MinBackoff = b.desiredLoki.MinBackoff
+		config.Loki.StaticLabels = b.desiredLoki.StaticLabels
+		config.Loki.Timeout = b.desiredLoki.Timeout
+		config.Loki.URL = b.desiredLoki.URL
+		config.Loki.TimestampLabel = b.desiredLoki.TimestampLabel
 	}
 	config.Loki.Labels = []string{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload"}
 
-	b, err := json.Marshal(config)
+	bs, err := json.Marshal(config)
 	if err == nil {
-		configStr = string(b)
+		configStr = string(bs)
 	}
 
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
-			Namespace: ns,
-			Labels:    buildLabels(),
+			Namespace: b.namespace,
+			Labels:    b.labels,
 		},
 		Data: map[string]string{
 			configFile: configStr,
@@ -217,19 +232,19 @@ func buildConfigMap(desiredGoflowKube *flowsv1alpha1.FlowCollectorGoflowKube,
 	return &configMap, digest
 }
 
-func buildService(old *corev1.Service, desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *corev1.Service {
+func (b *builder) service(old *corev1.Service) *corev1.Service {
 	if old == nil {
 		return &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      constants.GoflowKubeName,
-				Namespace: ns,
-				Labels:    buildLabels(),
+				Namespace: b.namespace,
+				Labels:    b.labels,
 			},
 			Spec: corev1.ServiceSpec{
-				Selector:        buildLabels(),
+				Selector:        b.labels,
 				SessionAffinity: corev1.ServiceAffinityClientIP,
 				Ports: []corev1.ServicePort{{
-					Port:     desired.Port,
+					Port:     b.desired.Port,
 					Protocol: corev1.ProtocolUDP,
 				}},
 			},
@@ -238,18 +253,18 @@ func buildService(old *corev1.Service, desired *flowsv1alpha1.FlowCollectorGoflo
 	// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
 	newService := old.DeepCopy()
 	newService.Spec.Ports = []corev1.ServicePort{{
-		Port:     desired.Port,
+		Port:     b.desired.Port,
 		Protocol: corev1.ProtocolUDP,
 	}}
 	return newService
 }
 
-func buildAutoScaler(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) *ascv1.HorizontalPodAutoscaler {
+func (b *builder) autoScaler() *ascv1.HorizontalPodAutoscaler {
 	return &ascv1.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.GoflowKubeName,
-			Namespace: ns,
-			Labels:    buildLabels(),
+			Namespace: b.namespace,
+			Labels:    b.labels,
 		},
 		Spec: ascv1.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: ascv1.CrossVersionObjectReference{
@@ -257,9 +272,9 @@ func buildAutoScaler(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) 
 				Name:       constants.GoflowKubeName,
 				APIVersion: "apps/v1",
 			},
-			MinReplicas:                    desired.HPA.MinReplicas,
-			MaxReplicas:                    desired.HPA.MaxReplicas,
-			TargetCPUUtilizationPercentage: desired.HPA.TargetCPUUtilizationPercentage,
+			MinReplicas:                    b.desired.HPA.MinReplicas,
+			MaxReplicas:                    b.desired.HPA.MaxReplicas,
+			TargetCPUUtilizationPercentage: b.desired.HPA.TargetCPUUtilizationPercentage,
 		},
 	}
 }
@@ -269,11 +284,17 @@ func buildAutoScaler(desired *flowsv1alpha1.FlowCollectorGoflowKube, ns string) 
 //+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
 //+kubebuilder:rbac:groups=core,resources=pods;services,verbs=get;list;watch
 
+func buildAppLabel() map[string]string {
+	return map[string]string{
+		"app": constants.GoflowKubeName,
+	}
+}
+
 func buildClusterRole() *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   constants.GoflowKubeName,
-			Labels: buildLabels(),
+			Labels: buildAppLabel(),
 		},
 		Rules: []rbacv1.PolicyRule{{
 			APIGroups: []string{""},
@@ -301,7 +322,7 @@ func buildServiceAccount(ns string) *corev1.ServiceAccount {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.GoflowKubeName,
 			Namespace: ns,
-			Labels:    buildLabels(),
+			Labels:    buildAppLabel(),
 		},
 	}
 }
@@ -310,7 +331,7 @@ func buildClusterRoleBinding(ns string) *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   constants.GoflowKubeName,
-			Labels: buildLabels(),
+			Labels: buildAppLabel(),
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
