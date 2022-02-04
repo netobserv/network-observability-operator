@@ -14,3 +14,6 @@ images:
 - name: controller
   newName: quay.io/netobserv/network-observability-operator
   newTag: main
+commonLabels:
+  app: network-observability-operator
+  version: main

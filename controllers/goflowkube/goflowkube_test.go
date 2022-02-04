@@ -192,10 +192,14 @@ func TestServiceUpdateCheck(t *testing.T) {
 func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	assert := assert.New(t)
 
+	ns := "namespace"
 	goflowKube := getGoflowKubeConfig()
 	loki := getLokiConfig()
-	cm, digest := buildConfigMap(&goflowKube, &loki, "namespace")
+	b := newBuilder(ns, &goflowKube, &loki)
+	cm, digest := b.configMap()
 	assert.NotEmpty(t, digest)
+
+	assert.Equal("dev", cm.Labels["version"])
 
 	data, ok := cm.Data[configFile]
 	assert.True(ok)
@@ -244,4 +248,32 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	autoScalerSpec, goflowKube = getAutoScalerSpecs()
 	autoScalerSpec.Namespace = "NewNamespace"
 	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube, testNamespace), true)
+}
+
+func TestLabels(t *testing.T) {
+	assert := assert.New(t)
+
+	gfk := getGoflowKubeConfig()
+	builder := newBuilder("ns", &gfk, nil)
+
+	// Deployment
+	depl := builder.deployment("digest")
+	assert.Equal("goflow-kube", depl.Labels["app"])
+	assert.Equal("goflow-kube", depl.Spec.Template.Labels["app"])
+	assert.Equal("dev", depl.Labels["version"])
+	assert.Equal("dev", depl.Spec.Template.Labels["version"])
+
+	// DaemonSet
+	ds := builder.daemonSet("digest")
+	assert.Equal("goflow-kube", ds.Labels["app"])
+	assert.Equal("goflow-kube", ds.Spec.Template.Labels["app"])
+	assert.Equal("dev", ds.Labels["version"])
+	assert.Equal("dev", ds.Spec.Template.Labels["version"])
+
+	// Service
+	svc := builder.service(nil)
+	assert.Equal("goflow-kube", svc.Labels["app"])
+	assert.Equal("goflow-kube", svc.Spec.Selector["app"])
+	assert.Equal("dev", svc.Labels["version"])
+	assert.Equal("dev", svc.Spec.Selector["version"])
 }
