@@ -79,8 +79,11 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 		}
 	}
 
+	// Create object builder
+	builder := newBuilder(ns, &desired.ConsolePlugin, &desired.Loki)
+
 	// Check if objects need update
-	consolePlugin := buildConsolePlugin(&desired.ConsolePlugin, ns)
+	consolePlugin := builder.consolePlugin()
 	if !pluginExists {
 		if err := r.CreateOwned(ctx, consolePlugin); err != nil {
 			return err
@@ -91,7 +94,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 		}
 	}
 
-	newDepl := buildDeployment(desired, ns)
+	newDepl := builder.deployment()
 	if !r.nobjMngr.Exists(r.owned.deployment) {
 		if err := r.CreateOwned(ctx, newDepl); err != nil {
 			return err
@@ -103,12 +106,12 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 	}
 
 	if !r.nobjMngr.Exists(r.owned.service) {
-		newSVC := buildService(nil, &desired.ConsolePlugin, ns)
+		newSVC := builder.service(nil)
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
 			return err
 		}
 	} else if serviceNeedsUpdate(r.owned.service, &desired.ConsolePlugin, ns) {
-		newSVC := buildService(r.owned.service, &desired.ConsolePlugin, ns)
+		newSVC := builder.service(r.owned.service)
 		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
 			return err
 		}

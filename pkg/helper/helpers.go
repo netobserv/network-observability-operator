@@ -2,6 +2,8 @@
 // to perform some basic computational operations
 package helper
 
+import "strings"
+
 func ContainsString(slice []string, s string) bool {
 	for _, item := range slice {
 		if item == s {
@@ -9,4 +11,13 @@ func ContainsString(slice []string, s string) bool {
 		}
 	}
 	return false
+}
+
+func ExtractVersion(image string) string {
+	parts := strings.Split(image, ":")
+	nparts := len(parts)
+	if nparts > 1 {
+		return parts[nparts-1]
+	}
+	return "unknown"
 }

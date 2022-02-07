@@ -68,12 +68,13 @@ func (r *GFKReconciler) PrepareNamespaceChange(ctx context.Context) error {
 
 // Reconcile is the reconciler entry point to reconcile the current goflow-kube state with the desired configuration
 func (r *GFKReconciler) Reconcile(ctx context.Context, desiredGoflowKube *goflowKubeSpec, desiredLoki *lokiSpec) error {
+	builder := newBuilder(r.nobjMngr.Namespace, desiredGoflowKube, desiredLoki)
 	// Retrieve current owned objects
 	err := r.nobjMngr.FetchAll(ctx)
 	if err != nil {
 		return err
 	}
-	newCM, configDigest := buildConfigMap(desiredGoflowKube, desiredLoki, r.nobjMngr.Namespace)
+	newCM, configDigest := builder.configMap()
 	if !r.nobjMngr.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
 			return err
@@ -86,20 +87,20 @@ func (r *GFKReconciler) Reconcile(ctx context.Context, desiredGoflowKube *goflow
 
 	switch desiredGoflowKube.Kind {
 	case constants.DeploymentKind:
-		return r.reconcileAsDeployment(ctx, desiredGoflowKube, configDigest)
+		return r.reconcileAsDeployment(ctx, desiredGoflowKube, &builder, configDigest)
 	case constants.DaemonSetKind:
-		return r.reconcileAsDaemonSet(ctx, desiredGoflowKube, configDigest)
+		return r.reconcileAsDaemonSet(ctx, desiredGoflowKube, &builder, configDigest)
 	default:
 		return fmt.Errorf("could not reconcile collector, invalid kind: %s", desiredGoflowKube.Kind)
 	}
 }
 
-func (r *GFKReconciler) reconcileAsDeployment(ctx context.Context, desiredGoflowKube *goflowKubeSpec, configDigest string) error {
+func (r *GFKReconciler) reconcileAsDeployment(ctx context.Context, desiredGoflowKube *goflowKubeSpec, builder *builder, configDigest string) error {
 	// Kind changed: delete DaemonSet and create Deployment+Service
 	ns := r.nobjMngr.Namespace
 	r.nobjMngr.TryDelete(ctx, r.owned.daemonSet)
 
-	newDepl := buildDeployment(desiredGoflowKube, ns, configDigest)
+	newDepl := builder.deployment(configDigest)
 	if !r.nobjMngr.Exists(r.owned.deployment) {
 		if err := r.CreateOwned(ctx, newDepl); err != nil {
 			return err
@@ -110,12 +111,12 @@ func (r *GFKReconciler) reconcileAsDeployment(ctx context.Context, desiredGoflow
 		}
 	}
 	if !r.nobjMngr.Exists(r.owned.service) {
-		newSVC := buildService(nil, desiredGoflowKube, ns)
+		newSVC := builder.service(nil)
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
 			return err
 		}
 	} else if serviceNeedsUpdate(r.owned.service, desiredGoflowKube, ns) {
-		newSVC := buildService(r.owned.service, desiredGoflowKube, ns)
+		newSVC := builder.service(r.owned.service)
 		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
 			return err
 		}
@@ -125,7 +126,7 @@ func (r *GFKReconciler) reconcileAsDeployment(ctx context.Context, desiredGoflow
 	if desiredGoflowKube.HPA == nil {
 		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
 	} else if desiredGoflowKube.HPA != nil {
-		newASC := buildAutoScaler(desiredGoflowKube, ns)
+		newASC := builder.autoScaler()
 		if !r.nobjMngr.Exists(r.owned.hpa) {
 			if err := r.CreateOwned(ctx, newASC); err != nil {
 				return err
@@ -139,13 +140,13 @@ func (r *GFKReconciler) reconcileAsDeployment(ctx context.Context, desiredGoflow
 	return nil
 }
 
-func (r *GFKReconciler) reconcileAsDaemonSet(ctx context.Context, desiredGoflowKube *goflowKubeSpec, configDigest string) error {
+func (r *GFKReconciler) reconcileAsDaemonSet(ctx context.Context, desiredGoflowKube *goflowKubeSpec, builder *builder, configDigest string) error {
 	// Kind changed: delete Deployment / Service / HPA and create DaemonSet
 	ns := r.nobjMngr.Namespace
 	r.nobjMngr.TryDelete(ctx, r.owned.deployment)
 	r.nobjMngr.TryDelete(ctx, r.owned.service)
 	r.nobjMngr.TryDelete(ctx, r.owned.hpa)
-	newDS := buildDaemonSet(desiredGoflowKube, ns, configDigest)
+	newDS := builder.daemonSet(configDigest)
 	if !r.nobjMngr.Exists(r.owned.daemonSet) {
 		if err := r.CreateOwned(ctx, newDS); err != nil {
 			return err

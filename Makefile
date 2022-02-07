@@ -121,13 +121,13 @@ coverage-report-html:
 ##@ Build
 
 build: generate fmt lint ## Build manager binary.
-	go build -mod vendor -o bin/manager main.go
+	go build -ldflags "-X main.version=${VERSION}" -mod vendor -o bin/manager main.go
 
 run: manifests generate fmt lint ## Run a controller from your host.
 	go run ./main.go
 
 image-build: test ## Build OCI image with the manager.
-	$(OCI_BIN) build -t ${IMG} .
+	$(OCI_BIN) build --build-arg OPVERSION="$(VERSION)" -t ${IMG} .
 
 image-push: ## Push OCI image with the manager.
 	$(OCI_BIN) push ${IMG}
@@ -142,11 +142,11 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set label version:$(VERSION)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
-
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
@@ -154,7 +154,7 @@ controller-gen: ## Download controller-gen locally if necessary.
 
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.8)
 
 ENVTEST = $(shell pwd)/bin/setup-envtest
 envtest: ## Download envtest-setup locally if necessary.
@@ -178,6 +178,7 @@ endef
 bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	cd config/manager && $(KUSTOMIZE) edit set label version:$(VERSION)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 
@@ -233,4 +234,4 @@ catalog-push: ## Push a catalog image.
 # Deploy the sample FlowCollector CR
 .PHONY: create-sample
 create-sample:
-	kubectl apply -f ./config/samples/flows_v1alpha1_flowcollector.yaml
+	sed -e 's~:main~:$(VERSION)~' ./config/samples/flows_v1alpha1_flowcollector.yaml | echo | kubectl apply -f -
