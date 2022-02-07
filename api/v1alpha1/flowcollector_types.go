@@ -85,10 +85,12 @@ type FlowCollectorGoflowKube struct {
 	// +optional
 	HPA *FlowCollectorHPA `json:"hpa,omitempty"`
 
-	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Minimum=1025
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=2055
 	// Port is the collector port: either a service port for Deployment kind, or host port for DaemonSet kind
+	// By conventions, some value are not authorized port must not be below 1024 and must not equal this values:
+	// 4789,6081,500, and 4500
 	Port int32 `json:"port,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1

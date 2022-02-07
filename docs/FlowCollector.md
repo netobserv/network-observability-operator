@@ -341,11 +341,11 @@ GoflowKube contains settings related to goflow-kube
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          Port is the collector port: either a service port for Deployment kind, or host port for DaemonSet kind<br/>
+          Port is the collector port: either a service port for Deployment kind, or host port for DaemonSet kind By conventions, some value are not authorized port must not be below 1024 and must not equal this values: 4789,6081,500, and 4500<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 2055<br/>
-            <i>Minimum</i>: 1<br/>
+            <i>Minimum</i>: 1025<br/>
             <i>Maximum</i>: 65535<br/>
         </td>
         <td>false</td>

@@ -66,11 +66,26 @@ func (r *GFKReconciler) PrepareNamespaceChange(ctx context.Context) error {
 	return r.createPermissions(ctx, false)
 }
 
+func validateDesired(desiredGoflowKube *goflowKubeSpec) error {
+	if desiredGoflowKube.Port == 4789 ||
+		desiredGoflowKube.Port == 6081 ||
+		desiredGoflowKube.Port == 500 ||
+		desiredGoflowKube.Port == 4500 {
+		return fmt.Errorf("goflowkube port value is not authorized")
+	}
+	return nil
+}
+
 // Reconcile is the reconciler entry point to reconcile the current goflow-kube state with the desired configuration
 func (r *GFKReconciler) Reconcile(ctx context.Context, desiredGoflowKube *goflowKubeSpec, desiredLoki *lokiSpec) error {
+	err := validateDesired(desiredGoflowKube)
+	if err != nil {
+		return err
+	}
+
 	builder := newBuilder(r.nobjMngr.Namespace, desiredGoflowKube, desiredLoki)
 	// Retrieve current owned objects
-	err := r.nobjMngr.FetchAll(ctx)
+	err = r.nobjMngr.FetchAll(ctx)
 	if err != nil {
 		return err
 	}

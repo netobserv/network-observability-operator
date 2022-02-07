@@ -76,7 +76,7 @@ var _ = Describe("FlowCollector Controller", func() {
 				Spec: flowsv1alpha1.FlowCollectorSpec{
 					GoflowKube: flowsv1alpha1.FlowCollectorGoflowKube{
 						Kind:            "Deployment",
-						Port:            999,
+						Port:            9999,
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
 						Image:           "testimg:latest",
@@ -126,7 +126,7 @@ var _ = Describe("FlowCollector Controller", func() {
 					svc.Spec.Selector != nil && svc.Spec.Selector["app"] == constants.GoflowKubeName &&
 					len(svc.Spec.Ports) == 1 &&
 					svc.Spec.Ports[0].Protocol == v1.ProtocolUDP &&
-					svc.Spec.Ports[0].Port == 999
+					svc.Spec.Ports[0].Port == 9999
 			}), "unexpected service contents", helper.AsyncJSON{Ptr: svc})
 
 			By("Creating the ovn-flows-configmap with the configuration from the FlowCollector")
@@ -138,7 +138,7 @@ var _ = Describe("FlowCollector Controller", func() {
 				return ofc.Data
 			}, timeout, interval).Should(Equal(map[string]string{
 				"sampling":           "200",
-				"sharedTarget":       "11.22.33.44:999",
+				"sharedTarget":       "11.22.33.44:9999",
 				"cacheMaxFlows":      "100",
 				"cacheActiveTimeout": "10s",
 			}))
@@ -421,7 +421,7 @@ var _ = Describe("FlowCollector Controller", func() {
 					return err
 				}
 				fc.Spec.GoflowKube.Kind = "Deployment"
-				fc.Spec.GoflowKube.Port = 999
+				fc.Spec.GoflowKube.Port = 9999
 				fc.Spec.Namespace = otherNamespace
 				fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
 					Sampling: 200,
@@ -466,7 +466,7 @@ var _ = Describe("FlowCollector Controller", func() {
 				return ofc.Data
 			}, timeout, interval).Should(Equal(map[string]string{
 				"sampling":           "200",
-				"sharedTarget":       "111.122.133.144:999",
+				"sharedTarget":       "111.122.133.144:9999",
 				"cacheMaxFlows":      "100",
 				"cacheActiveTimeout": "10s",
 			}))
