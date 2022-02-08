@@ -17,7 +17,8 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: FlowCollector is the Schema for the flowcollectors API
+        description: FlowCollector is the Schema for the flowcollectors API, which
+          pilots and configures netflow collection.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -52,7 +53,7 @@ spec:
                   dynamic plugin
                 properties:
                   image:
-                    default: quay.io/netobserv/network-observability-console-plugin:main
+                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.0-rc1
                     description: Image is the plugin image (including domain and tag)
                     type: string
                   imagePullPolicy:
@@ -137,7 +138,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/goflow2-kube:main
+                    default: quay.io/netobserv/goflow2-kube:v0.1.0-rc1
                     description: Image is the collector image (including domain and
                       tag)
                     type: string
