@@ -119,6 +119,37 @@ oc apply -f catalog.yml
 
 The Network Observability Operator should be now available in the OperatorHub items.
 
+## Publish on central OperatorHub
+
+We target two distincts repositories for OperatorHub: one for [generic community](https://github.com/k8s-operatorhub/community-operators) (non-OpenShift) and one for [OpenShift / OKD community](https://github.com/redhat-openshift-ecosystem/community-operators-prod).
+
+Assuming the components release images are already pushed and tagged, you can then publish the new version on the operator hubs. Make sure you have forked/cloned/fetched each of the two repos mentioned above, then run:
+
+```bash
+# Adapt version (without "v" prefix, e.g. version="0.1.5")
+version="the-new-version"
+# Adapt to your local path:
+path_hubs=("../community-operators" "../community-operators-okd")
+
+VERSION="$version" IMAGE_TAG_BASE="quay.io/netobserv/network-observability-operator" make bundle bundle-build bundle-push
+for hub in "${path_hubs[@]}"; do
+  mkdir -p $hub/operators/netobserv-operator/$version && \
+  cp "bundle.Dockerfile" "$hub/operators/netobserv-operator/$version" && \
+  cp -r "bundle/manifests" "$hub/operators/netobserv-operator/$version" && \
+  cp -r "bundle/metadata" "$hub/operators/netobserv-operator/$version"
+done
+for hub in "${path_hubs[@]}"; do
+  cd $hub && \
+  git add -A && \
+  git commit -m "operators netobserv-operator ($version)" && \
+  git push origin HEAD:bump-$version
+done
+```
+
+Then go to github and open a new PR for each repo.
+
+(See also `hack/release.sh` file)
+
 ## FlowCollector custom resource
 
 The `FlowCollector` custom resource is used to configure the operator and its managed components. You can read its [full documentation](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md) and check this [sample file](./config/samples/flows_v1alpha1_flowcollector.yaml) that you can copy, edit and install.

@@ -14,4 +14,7 @@ data:
       resourceName: 7a7ecdcd.netobserv.io
 kind: ConfigMap
 metadata:
+  labels:
+    app: network-observability-operator
+    version: 0.1.0-rc0
   name: netobserv-manager-config
