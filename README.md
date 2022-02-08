@@ -91,30 +91,7 @@ First, create and push a catalog image:
 
 ```
 export CATALOG_IMG=quay.io/$USER/network-observability-operator-catalog:v$VERSION
-make catalog-build catalog-push
-```
-
-Then, you need to create your own development catalog file. E.g. `catalog.yml`:
-
-```yaml
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-  name: noo-dev-catalog
-  namespace: openshift-marketplace
-spec:
-  sourceType: grpc
-  image: quay.io/<your-org>/network-observability-operator-catalog:v<your-version>
-  displayName: Network observability development catalog
-  publisher: Me
-  updateStrategy:
-    registryPoll:
-      interval: 1m
-```
-
-Then run:
-```
-oc apply -f catalog.yml
+make catalog-build catalog-push catalog-deploy
 ```
 
 The Network Observability Operator should be now available in the OperatorHub items.
