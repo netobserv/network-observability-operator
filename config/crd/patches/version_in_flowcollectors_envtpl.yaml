@@ -1,0 +1,7 @@
+# This patch updates the version for default images
+- op: add
+  path: /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/consolePlugin/properties/image/default
+  value: "quay.io/netobserv/network-observability-console-plugin:v$VERSION"
+- op: add
+  path: /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/goflowkube/properties/image/default
+  value: "quay.io/netobserv/goflow2-kube:v$VERSION"

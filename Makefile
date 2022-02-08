@@ -170,6 +170,7 @@ endef
 
 .PHONY: bundle
 bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
+	envsubst < config/crd/patches/version_in_flowcollectors_envtpl.yaml > config/crd/patches/version_in_flowcollectors.yaml
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	cd config/manager && $(KUSTOMIZE) edit set label version:$(VERSION)

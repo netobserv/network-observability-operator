@@ -53,7 +53,7 @@ spec:
                   dynamic plugin
                 properties:
                   image:
-                    default: quay.io/netobserv/network-observability-console-plugin:main
+                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.0-rc0
                     description: Image is the plugin image (including domain and tag)
                     type: string
                   imagePullPolicy:
@@ -138,7 +138,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/goflow2-kube:main
+                    default: quay.io/netobserv/goflow2-kube:v0.1.0-rc0
                     description: Image is the collector image (including domain and
                       tag)
                     type: string

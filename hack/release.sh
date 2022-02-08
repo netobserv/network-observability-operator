@@ -36,7 +36,7 @@ for hub in "${path_hubs[@]}"; do
   mkdir -p $hub/operators/netobserv-operator/$version && \
   cp "bundle.Dockerfile" "$hub/operators/netobserv-operator/$version" && \
   cp -r "bundle/manifests" "$hub/operators/netobserv-operator/$version" && \
-  cp -r "bundle/metadata" "$hub/operators/netobserv-operator/$version" && \
+  cp -r "bundle/metadata" "$hub/operators/netobserv-operator/$version"
 done
 for hub in "${path_hubs[@]}"; do
   cd $hub && \
