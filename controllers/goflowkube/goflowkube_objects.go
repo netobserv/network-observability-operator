@@ -209,7 +209,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		config.Loki.URL = b.desiredLoki.URL
 		config.Loki.TimestampLabel = b.desiredLoki.TimestampLabel
 	}
-	config.Loki.Labels = []string{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload"}
+	config.Loki.Labels = constants.Labels
 
 	bs, err := json.Marshal(config)
 	if err == nil {
