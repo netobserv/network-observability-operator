@@ -15,12 +15,12 @@ metadata:
               "namespace": "openshift-network-operator"
             },
             "consolePlugin": {
-              "image": "quay.io/netobserv/network-observability-console-plugin:v0.1.0-rc1",
+              "image": "quay.io/netobserv/network-observability-console-plugin:v0.1.0",
               "imagePullPolicy": "IfNotPresent",
               "port": 9001
             },
             "goflowkube": {
-              "image": "quay.io/netobserv/goflow2-kube:v0.1.0-rc1",
+              "image": "quay.io/netobserv/goflow2-kube:v0.1.0",
               "imagePullPolicy": "IfNotPresent",
               "kind": "Deployment",
               "logLevel": "info",
@@ -51,7 +51,7 @@ metadata:
     capabilities: Basic Install
     operators.operatorframework.io/builder: operator-sdk-v1.14.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
-  name: network-observability-operator.v0.1.0-rc1
+  name: network-observability-operator.v0.1.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -261,14 +261,14 @@ spec:
             matchLabels:
               app: network-observability-operator
               control-plane: controller-manager
-              version: 0.1.0-rc1
+              version: 0.1.0
           strategy: {}
           template:
             metadata:
               labels:
                 app: network-observability-operator
                 control-plane: controller-manager
-                version: 0.1.0-rc1
+                version: 0.1.0
             spec:
               containers:
               - args:
@@ -289,7 +289,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/netobserv/network-observability-operator:0.1.0-rc1
+                image: quay.io/netobserv/network-observability-operator:0.1.0
                 imagePullPolicy: IfNotPresent
                 livenessProbe:
                   httpGet:
@@ -388,4 +388,4 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  version: 0.1.0-rc1
+  version: 0.1.0
