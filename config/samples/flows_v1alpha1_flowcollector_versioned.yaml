@@ -1,0 +1,33 @@
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowCollector
+metadata:
+  name: cluster
+spec:
+  namespace: "network-observability"
+  ipfix:
+    cacheActiveTimeout: 60s
+    cacheMaxFlows: 400
+    sampling: 100
+  goflowkube:
+    kind: Deployment
+    replicas: 1
+    port: 2055
+    image: 'quay.io/netobserv/goflow2-kube:v0.1.0-rc1'
+    imagePullPolicy: IfNotPresent
+    logLevel: info
+    printOutput: false
+  loki:
+    url: 'http://loki:3100/'
+    batchWait: 1s
+    batchSize: 102400
+    minBackoff: 1s
+    maxBackoff: 300s
+    maxRetries: 10
+    staticLabels:
+      app: netobserv-flowcollector
+  consolePlugin:
+    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.0-rc1'
+    imagePullPolicy: IfNotPresent
+    port: 9001
+  cno:
+    namespace: "openshift-network-operator"

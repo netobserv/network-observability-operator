@@ -228,7 +228,7 @@ type FlowCollectorStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster
 
-// FlowCollector is the Schema for the flowcollectors API
+// FlowCollector is the Schema for the flowcollectors API, which pilots and configures netflow collection.
 type FlowCollector struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

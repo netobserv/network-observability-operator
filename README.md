@@ -91,33 +91,41 @@ First, create and push a catalog image:
 
 ```
 export CATALOG_IMG=quay.io/$USER/network-observability-operator-catalog:v$VERSION
-make catalog-build catalog-push
+make catalog-build catalog-push catalog-deploy
 ```
 
-Then, you need to create your own development catalog file. E.g. `catalog.yml`:
+The Netobserv Operator should be now available in the OperatorHub items.
 
-```yaml
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-  name: noo-dev-catalog
-  namespace: openshift-marketplace
-spec:
-  sourceType: grpc
-  image: quay.io/<your-org>/network-observability-operator-catalog:v<your-version>
-  displayName: Network observability development catalog
-  publisher: Me
-  updateStrategy:
-    registryPoll:
-      interval: 1m
+## Publish on central OperatorHub
+
+We target two distincts repositories for OperatorHub: one for [generic community](https://github.com/k8s-operatorhub/community-operators) (non-OpenShift) and one for [OpenShift / OKD community](https://github.com/redhat-openshift-ecosystem/community-operators-prod).
+
+Assuming the components release images are already pushed and tagged, you can then publish the new version on the operator hubs. Make sure you have forked/cloned/fetched each of the two repos mentioned above, then run:
+
+```bash
+# Adapt version (without "v" prefix, e.g. version="0.1.5")
+version="the-new-version"
+# Adapt to your local path:
+path_hubs=("../community-operators" "../community-operators-okd")
+
+VERSION="$version" IMAGE_TAG_BASE="quay.io/netobserv/network-observability-operator" make bundle bundle-build bundle-push
+for hub in "${path_hubs[@]}"; do
+  mkdir -p $hub/operators/netobserv-operator/$version && \
+  cp "bundle.Dockerfile" "$hub/operators/netobserv-operator/$version" && \
+  cp -r "bundle/manifests" "$hub/operators/netobserv-operator/$version" && \
+  cp -r "bundle/metadata" "$hub/operators/netobserv-operator/$version"
+done
+for hub in "${path_hubs[@]}"; do
+  cd $hub && \
+  git add -A && \
+  git commit -m "operators netobserv-operator ($version)" && \
+  git push origin HEAD:bump-$version
+done
 ```
 
-Then run:
-```
-oc apply -f catalog.yml
-```
+Then go to github and open a new PR for each repo.
 
-The Network Observability Operator should be now available in the OperatorHub items.
+(See also `hack/release.sh` file)
 
 ## FlowCollector custom resource
 
@@ -144,7 +152,7 @@ In OpenShift, a difference with the upstream `ovn-kubernetes` is that the flows 
 
 ```bash
 GF_IP=`oc get svc goflow-kube -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
-oc patch networks.operator.openshift.io cluster --type='json' -p "$(sed -e "s/GF_IP/$GF_IP/" ./config/samples/net-cluster-patch.json)"
+oc patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$GF_IP:2055']}}}}]"
 ```
 
 ## Installing Loki
