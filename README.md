@@ -171,10 +171,18 @@ To do so, you can apply this patch:
 oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["network-observability-plugin"]}]'
 ```
 
+It provides new views in the OpenShift Console: a new submenu _Network Traffic_ in _Observe_, and new tabs in several details views (Pods, Deployments, Services...).
+
+![Main view](./docs/assets/network-traffic-main.png)
+_Main view_ 
+
+![Pod traffic](./docs/assets/network-traffic-pod.png)
+_Pod traffic_
+
 ### Grafana dashboard
 
 Grafana can be used to retrieve and show the collected flows from Loki. You can [find here](https://github.com/netobserv/documents/blob/main/hack_loki.md#grafana) some help to install Grafana if needed.
 
 Then import [this dashboard](./config/samples/dashboards/Network%20Observability.json) in Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
 
-![Grafana dashboard](./config/samples/dashboards/netobserv-grafana-dashboard.png)
+![Grafana dashboard](./docs/assets/netobserv-grafana-dashboard.png)
