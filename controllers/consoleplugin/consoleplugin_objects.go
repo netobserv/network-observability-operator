@@ -1,12 +1,15 @@
 package consoleplugin
 
 import (
+	"strings"
+
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -103,6 +106,7 @@ func (b *builder) podTemplate() *corev1.PodTemplateSpec {
 					"-cert", "/var/serving-cert/tls.crt",
 					"-key", "/var/serving-cert/tls.key",
 					"-loki", querierURL(b.desiredLoki),
+					"-loki-labels", strings.Join(constants.Labels, ","),
 				},
 			}},
 			Volumes: []corev1.Volume{{

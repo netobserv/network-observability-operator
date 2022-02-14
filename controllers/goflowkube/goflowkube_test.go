@@ -219,7 +219,7 @@ func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg["maxBackoff"])
 	assert.EqualValues(loki.MaxRetries, lokiCfg["maxRetries"])
 	assert.EqualValues(loki.BatchSize, lokiCfg["batchSize"])
-	assert.EqualValues([]interface{}{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload"}, lokiCfg["labels"])
+	assert.EqualValues([]interface{}{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload", "FlowDirection"}, lokiCfg["labels"])
 	assert.Equal(fmt.Sprintf("%v", loki.StaticLabels), fmt.Sprintf("%v", lokiCfg["staticLabels"]))
 }
 

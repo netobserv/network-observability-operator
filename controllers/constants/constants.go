@@ -6,3 +6,5 @@ const (
 	DeploymentKind = "Deployment"
 	DaemonSetKind  = "DaemonSet"
 )
+
+var Labels = []string{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload", "FlowDirection"}
