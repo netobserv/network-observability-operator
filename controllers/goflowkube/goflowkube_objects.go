@@ -58,6 +58,7 @@ type LokiConfigMap struct {
 type builder struct {
 	namespace   string
 	labels      map[string]string
+	selector    map[string]string
 	desired     *flowsv1alpha1.FlowCollectorGoflowKube
 	desiredLoki *flowsv1alpha1.FlowCollectorLoki
 }
@@ -69,6 +70,9 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorGoflowKube, desir
 		labels: map[string]string{
 			"app":     constants.GoflowKubeName,
 			"version": version,
+		},
+		selector: map[string]string{
+			"app": constants.GoflowKubeName,
 		},
 		desired:     desired,
 		desiredLoki: desiredLoki,
@@ -85,7 +89,7 @@ func (b *builder) deployment(configDigest string) *appsv1.Deployment {
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &b.desired.Replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: b.labels,
+				MatchLabels: b.selector,
 			},
 			Template: b.podTemplate(configDigest),
 		},
@@ -101,7 +105,7 @@ func (b *builder) daemonSet(configDigest string) *appsv1.DaemonSet {
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: b.labels,
+				MatchLabels: b.selector,
 			},
 			Template: b.podTemplate(configDigest),
 		},
@@ -241,7 +245,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 				Labels:    b.labels,
 			},
 			Spec: corev1.ServiceSpec{
-				Selector:        b.labels,
+				Selector:        b.selector,
 				SessionAffinity: corev1.ServiceAffinityClientIP,
 				Ports: []corev1.ServicePort{{
 					Port:     b.desired.Port,

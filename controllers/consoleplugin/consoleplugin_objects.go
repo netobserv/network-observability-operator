@@ -23,6 +23,7 @@ const lokiURLAnnotation = "flows.netobserv.io/loki-url"
 type builder struct {
 	namespace   string
 	labels      map[string]string
+	selector    map[string]string
 	desired     *flowsv1alpha1.FlowCollectorConsolePlugin
 	desiredLoki *flowsv1alpha1.FlowCollectorLoki
 }
@@ -34,6 +35,9 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorConsolePlugin, de
 		labels: map[string]string{
 			"app":     pluginName,
 			"version": version,
+		},
+		selector: map[string]string{
+			"app": pluginName,
 		},
 		desired:     desired,
 		desiredLoki: desiredLoki,
@@ -79,7 +83,7 @@ func (b *builder) deployment() *appsv1.Deployment {
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &b.desired.Replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: b.labels,
+				MatchLabels: b.selector,
 			},
 			Template: *b.podTemplate(),
 		},
@@ -134,7 +138,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 				},
 			},
 			Spec: corev1.ServiceSpec{
-				Selector: b.labels,
+				Selector: b.selector,
 				Ports: []corev1.ServicePort{{
 					Port:     b.desired.Port,
 					Protocol: "TCP",
