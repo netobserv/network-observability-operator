@@ -74,6 +74,8 @@ Optionally, you might validate the bundle:
 operator-sdk bundle validate $BUNDLE_IMG
 ```
 
+Note: the base64 logo can be generated with: `base64 -w 0 <image file>`
+
 ### Deploy as bundle from command line
 
 This mode is recommended to quickly test the operator during its development:
