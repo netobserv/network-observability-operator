@@ -3,8 +3,7 @@ layout:
 - go.kubebuilder.io/v3
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
-  scorecard.sdk.operatorframework.io/v2: {}
-projectName: network-observability-operator
+projectName: netobserv-operator
 repo: github.com/netobserv/network-observability-operator
 resources:
 - api:

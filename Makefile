@@ -176,9 +176,11 @@ endef
 
 .PHONY: bundle
 bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
+	envsubst < config/crd/patches/version_in_flowcollectors_envtpl.yaml > config/crd/patches/version_in_flowcollectors.yaml
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	cd config/manager && $(KUSTOMIZE) edit set label version:$(VERSION)
+	sed -e 's~:main~:v$(VERSION)~' ./config/samples/flows_v1alpha1_flowcollector.yaml > ./config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 
@@ -231,7 +233,12 @@ catalog-build: opm ## Build a catalog image.
 catalog-push: ## Push a catalog image.
 	$(MAKE) image-push IMG=$(CATALOG_IMG)
 
+# Deploy the catalog.
+.PHONY: catalog-deploy
+catalog-deploy:
+	sed -e 's~<IMG>~$(CATALOG_IMG)~' ./config/samples/catalog/catalog.yaml | kubectl apply -f -
+
 # Deploy the sample FlowCollector CR
 .PHONY: create-sample
 create-sample:
-	sed -e 's~:main~:$(VERSION)~' ./config/samples/flows_v1alpha1_flowcollector.yaml | echo | kubectl apply -f -
+	sed -e 's~:main~:v$(VERSION)~' ./config/samples/flows_v1alpha1_flowcollector.yaml | kubectl apply -f -
