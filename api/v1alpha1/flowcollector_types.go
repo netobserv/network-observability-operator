@@ -28,15 +28,15 @@ type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=""
-	// Namespace where console plugin and goflowkube pods are going to be deployed.
+	// Namespace where console plugin and collector pods are going to be deployed.
 	// If empty, the namespace of the operator is going to be used
 	Namespace string `json:"namespace,omitempty"`
 
 	// IPFIX contains IPFIX-related settings for the flow reporter
 	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
 
-	// GoflowKube contains settings related to goflow-kube
-	GoflowKube FlowCollectorGoflowKube `json:"goflowkube,omitempty"`
+	// FlowlogsPipeline contains settings related to the flowlogs-pipeline component
+	FlowlogsPipeline FlowCollectorFLP `json:"flowlogsPipeline,omitempty"`
 
 	// Loki contains settings related to the loki client
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
@@ -44,8 +44,8 @@ type FlowCollectorSpec struct {
 	// ConsolePlugin contains settings related to the console dynamic plugin
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
-	// CNO contains settings related to the cluster network operator
-	CNO ClusterNetworkOperator `json:"cno,omitempty"`
+	// ClusterNetworkOperator contains settings related to the cluster network operator
+	ClusterNetworkOperator ClusterNetworkOperator `json:"clusterNetworkOperator,omitempty"`
 }
 
 // FlowCollectorIPFIX defines the desired IPFIX state of FlowCollector
@@ -68,8 +68,8 @@ type FlowCollectorIPFIX struct {
 	Sampling int32 `json:"sampling,omitempty" mapstructure:"sampling,omitempty"`
 }
 
-// FlowCollectorGoflowKube defines the desired goflow-kube state of FlowCollector
-type FlowCollectorGoflowKube struct {
+// FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector
+type FlowCollectorFLP struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:validation:Enum=DaemonSet;Deployment
@@ -100,7 +100,7 @@ type FlowCollectorGoflowKube struct {
 	// HealthPort is a collector HTTP port in the Pod that exposes the health check API
 	HealthPort int32 `json:"healthPort,omitempty"`
 
-	//+kubebuilder:default:="quay.io/netobserv/goflow2-kube:main"
+	//+kubebuilder:default:="quay.io/netobserv/flowlogs-pipeline:main"
 	// Image is the collector image (including domain and tag)
 	Image string `json:"image,omitempty"`
 
@@ -120,8 +120,12 @@ type FlowCollectorGoflowKube struct {
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
+	//+kubebuilder:default:=true
+	// EnableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes
+	EnableKubeProbes bool `json:"enableKubeProbes,omitempty"`
+
 	//+kubebuilder:default:=false
-	// PrintOutput is a debug flag to print flows exported in kube-enricher logs
+	// PrintOutput is a debug flag to print flows exported in flowlogs-pipeline stdout
 	PrintOutput bool `json:"printOutput,omitempty"`
 }
 
@@ -236,7 +240,7 @@ type ClusterNetworkOperator struct {
 type FlowCollectorStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Namespace where console plugin and goflowkube have been deployed.
+	// Namespace where console plugin and flowlogs-pipeline have been deployed.
 	Namespace string `json:"namespace,omitempty"`
 }
 

@@ -47,20 +47,20 @@ spec:
     You need to explicitly turn on IPFIX export in ovn-kubernetes:
 
     ```
-    GF_IP=`kubectl get svc goflow-kube -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
+    GF_IP=`kubectl get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
     kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPFIX_TARGETS="$GF_IP:2055"
     ```
 
     To turn it off, remove the `OVN_IPFIX_TARGETS` env from `daemonset/ovnkube-node`.
 
     #### OpenShift 4.10 and above
-    No further action is required to enable IPFIX exports. Do not configure manually the goflow-kube IP in OVS, as it would conflict with the operator action (you can, however, set an additional target IP if you run another flow collector). If you want to turn off the exports, remove the `FlowCollector` cluster resource.
+    No further action is required to enable IPFIX exports. Do not configure manually the flowlogs-pipeline IP in OVS, as it would conflict with the operator action (you can, however, set an additional target IP if you run another flow collector). If you want to turn off the exports, remove the `FlowCollector` cluster resource.
 
     #### OpenShift 4.8 or 4.9
     You need to explicitly turn on IPFIX export for the `ClusterNetworkOperator`:
 
     ```
-    GF_IP=`oc get svc goflow-kube -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
+    GF_IP=`oc get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
     oc patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$GF_IP:2055']}}}}]"
     ```
     To turn it off, remove the `exportNetworkFlows` from `networks.operator.openshift.io/cluster`.

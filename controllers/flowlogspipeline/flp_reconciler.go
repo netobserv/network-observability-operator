@@ -1,4 +1,4 @@
-package goflowkube
+package flowlogspipeline
 
 import (
 	"context"
@@ -15,11 +15,11 @@ import (
 )
 
 // Type alias
-type goflowKubeSpec = flowsv1alpha1.FlowCollectorGoflowKube
+type flpSpec = flowsv1alpha1.FlowCollectorFLP
 type lokiSpec = flowsv1alpha1.FlowCollectorLoki
 
-// GFKReconciler reconciles the current goflow-kube state with the desired configuration
-type GFKReconciler struct {
+// FLPReconciler reconciles the current flowlogs-pipeline state with the desired configuration
+type FLPReconciler struct {
 	reconcilers.ClientHelper
 	nobjMngr *reconcilers.NamespacedObjectManager
 	owned    ownedObjects
@@ -34,7 +34,7 @@ type ownedObjects struct {
 	configMap      *corev1.ConfigMap
 }
 
-func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) GFKReconciler {
+func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) FLPReconciler {
 	owned := ownedObjects{
 		deployment:     &appsv1.Deployment{},
 		daemonSet:      &appsv1.DaemonSet{},
@@ -44,46 +44,46 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) GFKReconciler
 		configMap:      &corev1.ConfigMap{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
-	nobjMngr.AddManagedObject(constants.GoflowKubeName, owned.deployment)
-	nobjMngr.AddManagedObject(constants.GoflowKubeName, owned.daemonSet)
-	nobjMngr.AddManagedObject(constants.GoflowKubeName, owned.service)
-	nobjMngr.AddManagedObject(constants.GoflowKubeName, owned.hpa)
-	nobjMngr.AddManagedObject(constants.GoflowKubeName, owned.serviceAccount)
+	nobjMngr.AddManagedObject(constants.FLPName, owned.deployment)
+	nobjMngr.AddManagedObject(constants.FLPName, owned.daemonSet)
+	nobjMngr.AddManagedObject(constants.FLPName, owned.service)
+	nobjMngr.AddManagedObject(constants.FLPName, owned.hpa)
+	nobjMngr.AddManagedObject(constants.FLPName, owned.serviceAccount)
 	nobjMngr.AddManagedObject(configMapName, owned.configMap)
 
-	return GFKReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
+	return FLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
 }
 
 // InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
-func (r *GFKReconciler) InitStaticResources(ctx context.Context) error {
+func (r *FLPReconciler) InitStaticResources(ctx context.Context) error {
 	return r.createPermissions(ctx, true)
 }
 
 // PrepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
-func (r *GFKReconciler) PrepareNamespaceChange(ctx context.Context) error {
+func (r *FLPReconciler) PrepareNamespaceChange(ctx context.Context) error {
 	// Switching namespace => delete everything in the previous namespace
 	r.nobjMngr.CleanupNamespace(ctx)
 	return r.createPermissions(ctx, false)
 }
 
-func validateDesired(desiredGoflowKube *goflowKubeSpec) error {
-	if desiredGoflowKube.Port == 4789 ||
-		desiredGoflowKube.Port == 6081 ||
-		desiredGoflowKube.Port == 500 ||
-		desiredGoflowKube.Port == 4500 {
-		return fmt.Errorf("goflowkube port value is not authorized")
+func validateDesired(desired *flpSpec) error {
+	if desired.Port == 4789 ||
+		desired.Port == 6081 ||
+		desired.Port == 500 ||
+		desired.Port == 4500 {
+		return fmt.Errorf("flowlogs-pipeline port value is not authorized")
 	}
 	return nil
 }
 
-// Reconcile is the reconciler entry point to reconcile the current goflow-kube state with the desired configuration
-func (r *GFKReconciler) Reconcile(ctx context.Context, desiredGoflowKube *goflowKubeSpec, desiredLoki *lokiSpec) error {
-	err := validateDesired(desiredGoflowKube)
+// Reconcile is the reconciler entry point to reconcile the current flowlogs-pipeline state with the desired configuration
+func (r *FLPReconciler) Reconcile(ctx context.Context, desiredFLP *flpSpec, desiredLoki *lokiSpec) error {
+	err := validateDesired(desiredFLP)
 	if err != nil {
 		return err
 	}
 
-	builder := newBuilder(r.nobjMngr.Namespace, desiredGoflowKube, desiredLoki)
+	builder := newBuilder(r.nobjMngr.Namespace, desiredFLP, desiredLoki)
 	// Retrieve current owned objects
 	err = r.nobjMngr.FetchAll(ctx)
 	if err != nil {
@@ -94,34 +94,33 @@ func (r *GFKReconciler) Reconcile(ctx context.Context, desiredGoflowKube *goflow
 		if err := r.CreateOwned(ctx, newCM); err != nil {
 			return err
 		}
-	} else if !reflect.DeepEqual(newCM, r.owned.configMap.Data) {
+	} else if !reflect.DeepEqual(newCM.Data, r.owned.configMap.Data) {
 		if err := r.UpdateOwned(ctx, r.owned.configMap, newCM); err != nil {
 			return err
 		}
 	}
 
-	switch desiredGoflowKube.Kind {
+	switch desiredFLP.Kind {
 	case constants.DeploymentKind:
-		return r.reconcileAsDeployment(ctx, desiredGoflowKube, &builder, configDigest)
+		return r.reconcileAsDeployment(ctx, desiredFLP, &builder, configDigest)
 	case constants.DaemonSetKind:
-		return r.reconcileAsDaemonSet(ctx, desiredGoflowKube, &builder, configDigest)
+		return r.reconcileAsDaemonSet(ctx, desiredFLP, &builder, configDigest)
 	default:
-		return fmt.Errorf("could not reconcile collector, invalid kind: %s", desiredGoflowKube.Kind)
+		return fmt.Errorf("could not reconcile collector, invalid kind: %s", desiredFLP.Kind)
 	}
 }
 
-func (r *GFKReconciler) reconcileAsDeployment(ctx context.Context, desiredGoflowKube *goflowKubeSpec, builder *builder, configDigest string) error {
-	// Kind changed: delete DaemonSet and create Deployment+Service
+func (r *FLPReconciler) reconcileAsDeployment(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
+	// Kind may have changed: try delete DaemonSet and create Deployment+Service
 	ns := r.nobjMngr.Namespace
 	r.nobjMngr.TryDelete(ctx, r.owned.daemonSet)
 
-	newDepl := builder.deployment(configDigest)
 	if !r.nobjMngr.Exists(r.owned.deployment) {
-		if err := r.CreateOwned(ctx, newDepl); err != nil {
+		if err := r.CreateOwned(ctx, builder.deployment(configDigest)); err != nil {
 			return err
 		}
-	} else if deploymentNeedsUpdate(r.owned.deployment, desiredGoflowKube, ns, configDigest) {
-		if err := r.UpdateOwned(ctx, r.owned.deployment, newDepl); err != nil {
+	} else if deploymentNeedsUpdate(r.owned.deployment, desiredFLP, configDigest) {
+		if err := r.UpdateOwned(ctx, r.owned.deployment, builder.deployment(configDigest)); err != nil {
 			return err
 		}
 	}
@@ -130,7 +129,7 @@ func (r *GFKReconciler) reconcileAsDeployment(ctx context.Context, desiredGoflow
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
 			return err
 		}
-	} else if serviceNeedsUpdate(r.owned.service, desiredGoflowKube, ns) {
+	} else if serviceNeedsUpdate(r.owned.service, desiredFLP) {
 		newSVC := builder.service(r.owned.service)
 		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
 			return err
@@ -138,15 +137,15 @@ func (r *GFKReconciler) reconcileAsDeployment(ctx context.Context, desiredGoflow
 	}
 
 	// Delete or Create / Update Autoscaler according to HPA option
-	if desiredGoflowKube.HPA == nil {
+	if desiredFLP.HPA == nil {
 		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
-	} else if desiredGoflowKube.HPA != nil {
+	} else if desiredFLP.HPA != nil {
 		newASC := builder.autoScaler()
 		if !r.nobjMngr.Exists(r.owned.hpa) {
 			if err := r.CreateOwned(ctx, newASC); err != nil {
 				return err
 			}
-		} else if autoScalerNeedsUpdate(r.owned.hpa, desiredGoflowKube, ns) {
+		} else if autoScalerNeedsUpdate(r.owned.hpa, desiredFLP, ns) {
 			if err := r.UpdateOwned(ctx, r.owned.hpa, newASC); err != nil {
 				return err
 			}
@@ -155,26 +154,20 @@ func (r *GFKReconciler) reconcileAsDeployment(ctx context.Context, desiredGoflow
 	return nil
 }
 
-func (r *GFKReconciler) reconcileAsDaemonSet(ctx context.Context, desiredGoflowKube *goflowKubeSpec, builder *builder, configDigest string) error {
-	// Kind changed: delete Deployment / Service / HPA and create DaemonSet
-	ns := r.nobjMngr.Namespace
+func (r *FLPReconciler) reconcileAsDaemonSet(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
+	// Kind may have changed: try delete Deployment / Service / HPA and create DaemonSet
 	r.nobjMngr.TryDelete(ctx, r.owned.deployment)
 	r.nobjMngr.TryDelete(ctx, r.owned.service)
 	r.nobjMngr.TryDelete(ctx, r.owned.hpa)
-	newDS := builder.daemonSet(configDigest)
 	if !r.nobjMngr.Exists(r.owned.daemonSet) {
-		if err := r.CreateOwned(ctx, newDS); err != nil {
-			return err
-		}
-	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredGoflowKube, ns, configDigest) {
-		if err := r.UpdateOwned(ctx, r.owned.daemonSet, newDS); err != nil {
-			return err
-		}
+		return r.CreateOwned(ctx, builder.daemonSet(configDigest))
+	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredFLP, configDigest) {
+		return r.UpdateOwned(ctx, r.owned.daemonSet, builder.daemonSet(configDigest))
 	}
 	return nil
 }
 
-func (r *GFKReconciler) createPermissions(ctx context.Context, firstInstall bool) error {
+func (r *FLPReconciler) createPermissions(ctx context.Context, firstInstall bool) error {
 	// Cluster role is only installed once
 	if firstInstall {
 		if err := r.CreateOwned(ctx, buildClusterRole()); err != nil {
@@ -198,19 +191,13 @@ func (r *GFKReconciler) createPermissions(ctx context.Context, firstInstall bool
 	return nil
 }
 
-func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *goflowKubeSpec, ns, configDigest string) bool {
-	if ds.Namespace != ns {
-		return true
-	}
-	return containerNeedsUpdate(&ds.Spec.Template.Spec, desired) ||
+func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flpSpec, configDigest string) bool {
+	return containerNeedsUpdate(&ds.Spec.Template.Spec, desired, true) ||
 		configChanged(&ds.Spec.Template, configDigest)
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *goflowKubeSpec, ns, configDigest string) bool {
-	if depl.Namespace != ns {
-		return true
-	}
-	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired) ||
+func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, configDigest string) bool {
+	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired, false) ||
 		configChanged(&depl.Spec.Template, configDigest) ||
 		(desired.HPA == nil && *depl.Spec.Replicas != desired.Replicas)
 }
@@ -219,10 +206,7 @@ func configChanged(tmpl *corev1.PodTemplateSpec, configDigest string) bool {
 	return tmpl.Annotations == nil || tmpl.Annotations[PodConfigurationDigest] != configDigest
 }
 
-func serviceNeedsUpdate(svc *corev1.Service, desired *goflowKubeSpec, ns string) bool {
-	if svc.Namespace != ns {
-		return true
-	}
+func serviceNeedsUpdate(svc *corev1.Service, desired *flpSpec) bool {
 	for _, port := range svc.Spec.Ports {
 		if port.Port == desired.Port && port.Protocol == corev1.ProtocolUDP {
 			return false
@@ -231,24 +215,25 @@ func serviceNeedsUpdate(svc *corev1.Service, desired *goflowKubeSpec, ns string)
 	return true
 }
 
-func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *goflowKubeSpec) bool {
-	container := reconcilers.FindContainer(podSpec, constants.GoflowKubeName)
-	if container == nil {
-		return true
-	}
-	if desired.Image != container.Image || desired.ImagePullPolicy != string(container.ImagePullPolicy) {
-		return true
-	}
-	if !reflect.DeepEqual(desired.Resources, container.Resources) {
-		return true
-	}
-	if len(container.Command) != 3 || container.Command[2] != buildMainCommand(desired) {
-		return true
-	}
-	return false
+func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flpSpec, expectHostPort bool) bool {
+	// Note, we don't check for changed port / host port here, because that would change also the configmap,
+	//	which also triggers pod update anyway
+	container := reconcilers.FindContainer(podSpec, constants.FLPName)
+	return container == nil ||
+		desired.Image != container.Image ||
+		desired.ImagePullPolicy != string(container.ImagePullPolicy) ||
+		probesNeedUpdate(container, desired.EnableKubeProbes) ||
+		!reflect.DeepEqual(desired.Resources, container.Resources)
 }
 
-func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired *goflowKubeSpec, ns string) bool {
+func probesNeedUpdate(container *corev1.Container, enabled bool) bool {
+	if enabled {
+		return container.LivenessProbe == nil || container.StartupProbe == nil
+	}
+	return container.LivenessProbe != nil || container.StartupProbe != nil
+}
+
+func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired *flpSpec, ns string) bool {
 	if asc.Namespace != ns {
 		return true
 	}

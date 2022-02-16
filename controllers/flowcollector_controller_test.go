@@ -16,7 +16,7 @@ import (
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
-	"github.com/netobserv/network-observability-operator/controllers/goflowkube"
+	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -25,9 +25,9 @@ var _ = Describe("FlowCollector Controller", func() {
 	const timeout = time.Second * 10
 	const interval = 50 * time.Millisecond
 	const otherNamespace = "other-namespace"
-	ipResolver.On("LookupIP", constants.GoflowKubeName+"."+operatorNamespace).
+	ipResolver.On("LookupIP", constants.FLPName+"."+operatorNamespace).
 		Return([]net.IP{net.IPv4(11, 22, 33, 44)}, nil)
-	ipResolver.On("LookupIP", constants.GoflowKubeName+"."+otherNamespace).
+	ipResolver.On("LookupIP", constants.FLPName+"."+otherNamespace).
 		Return([]net.IP{net.IPv4(111, 122, 133, 144)}, nil)
 	crKey := types.NamespacedName{
 		Name: "cluster",
@@ -37,11 +37,11 @@ var _ = Describe("FlowCollector Controller", func() {
 		Namespace: "openshift-network-operator",
 	}
 	gfKey1 := types.NamespacedName{
-		Name:      constants.GoflowKubeName,
+		Name:      constants.FLPName,
 		Namespace: operatorNamespace,
 	}
 	gfKey2 := types.NamespacedName{
-		Name:      constants.GoflowKubeName,
+		Name:      constants.FLPName,
 		Namespace: otherNamespace,
 	}
 	cpKey1 := types.NamespacedName{
@@ -66,7 +66,7 @@ var _ = Describe("FlowCollector Controller", func() {
 	// Avoid adding tests for vanilla CRUD operations because they would
 	// test Kubernetes API server, which isn't the goal here.
 	Context("Deployment with autho-scaling", func() {
-		var oldGoflowConfigDigest string
+		var oldDigest string
 		It("Should create successfully", func() {
 
 			created := &flowsv1alpha1.FlowCollector{
@@ -74,7 +74,7 @@ var _ = Describe("FlowCollector Controller", func() {
 					Name: crKey.Name,
 				},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
-					GoflowKube: flowsv1alpha1.FlowCollectorGoflowKube{
+					FlowlogsPipeline: flowsv1alpha1.FlowCollectorFLP{
 						Kind:            "Deployment",
 						Port:            9999,
 						ImagePullPolicy: "Never",
@@ -123,30 +123,30 @@ var _ = Describe("FlowCollector Controller", func() {
 			// Create
 			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
 
-			By("Expecting to create the goflow-kube Deployment")
+			By("Expecting to create the flowlogs-pipeline Deployment")
 			Eventually(func() interface{} {
 				dp := appsv1.Deployment{}
 				if err := k8sClient.Get(ctx, gfKey1, &dp); err != nil {
 					return err
 				}
-				oldGoflowConfigDigest = dp.Spec.Template.Annotations[goflowkube.PodConfigurationDigest]
-				if oldGoflowConfigDigest == "" {
-					return fmt.Errorf("%q annotation can't be empty", goflowkube.PodConfigurationDigest)
+				oldDigest = dp.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
+				if oldDigest == "" {
+					return fmt.Errorf("%q annotation can't be empty", flowlogspipeline.PodConfigurationDigest)
 				}
 
 				return *dp.Spec.Replicas
 			}, timeout, interval).Should(Equal(int32(1)))
 
 			svc := v1.Service{}
-			By("Expecting to create the goflow-kube Service")
+			By("Expecting to create the flowlogs-pipeline Service")
 			Eventually(func() interface{} {
 				if err := k8sClient.Get(ctx, gfKey1, &svc); err != nil {
 					return err
 				}
 				return svc
 			}, timeout, interval).Should(Satisfy(func(svc v1.Service) bool {
-				return svc.Labels != nil && svc.Labels["app"] == constants.GoflowKubeName &&
-					svc.Spec.Selector != nil && svc.Spec.Selector["app"] == constants.GoflowKubeName &&
+				return svc.Labels != nil && svc.Labels["app"] == constants.FLPName &&
+					svc.Spec.Selector != nil && svc.Spec.Selector["app"] == constants.FLPName &&
 					len(svc.Spec.Ports) == 1 &&
 					svc.Spec.Ports[0].Protocol == v1.ProtocolUDP &&
 					svc.Spec.Ports[0].Port == 9999
@@ -175,11 +175,11 @@ var _ = Describe("FlowCollector Controller", func() {
 				}
 				fc.Spec.IPFIX.CacheActiveTimeout = "30s"
 				fc.Spec.IPFIX.Sampling = 1234
-				fc.Spec.GoflowKube.Port = 1999
+				fc.Spec.FlowlogsPipeline.Port = 1999
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 
-			By("Expecting updated goflow-kube Service port")
+			By("Expecting updated flowlogs-pipeline Service port")
 			Eventually(func() interface{} {
 				svc := v1.Service{}
 				if err := k8sClient.Get(ctx, gfKey1, &svc); err != nil {
@@ -203,7 +203,7 @@ var _ = Describe("FlowCollector Controller", func() {
 			}))
 		})
 
-		It("Should redeploy if the spec doesn't change but the external goflow-kube-config does", func() {
+		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
 			Eventually(func() error {
 				fc := flowsv1alpha1.FlowCollector{}
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
@@ -213,16 +213,16 @@ var _ = Describe("FlowCollector Controller", func() {
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 
-			By("Expecting that the goflowkube.PodConfigurationDigest attribute has changed")
+			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
 			Eventually(func() error {
 				dp := appsv1.Deployment{}
 				if err := k8sClient.Get(ctx, gfKey1, &dp); err != nil {
 					return err
 				}
-				currentGoflowConfigDigest := dp.Spec.Template.Annotations[goflowkube.PodConfigurationDigest]
-				if currentGoflowConfigDigest == oldGoflowConfigDigest {
+				currentConfigDigest := dp.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
+				if currentConfigDigest == oldDigest {
 					return fmt.Errorf("annotation %v %q was expected to change",
-						goflowkube.PodConfigurationDigest, currentGoflowConfigDigest)
+						flowlogspipeline.PodConfigurationDigest, currentConfigDigest)
 				}
 				return nil
 			}).Should(Succeed())
@@ -237,8 +237,8 @@ var _ = Describe("FlowCollector Controller", func() {
 			// update FlowCollector and verify that HPA spec also changed
 			fc := flowsv1alpha1.FlowCollector{}
 			Expect(k8sClient.Get(ctx, crKey, &fc)).To(Succeed())
-			fc.Spec.GoflowKube.HPA.MinReplicas = helper.Int32Ptr(2)
-			fc.Spec.GoflowKube.HPA.MaxReplicas = 2
+			fc.Spec.FlowlogsPipeline.HPA.MinReplicas = helper.Int32Ptr(2)
+			fc.Spec.FlowlogsPipeline.HPA.MaxReplicas = 2
 			Expect(k8sClient.Update(ctx, &fc)).To(Succeed())
 
 			By("Changing the Horizontal Pod Autoscaler instance")
@@ -258,11 +258,11 @@ var _ = Describe("FlowCollector Controller", func() {
 	})
 
 	Context("Deploying as DaemonSet", func() {
-		var oldGoflowConfigDigest string
+		var oldConfigDigest string
 		It("Should update successfully", func() {
 			fc := flowsv1alpha1.FlowCollector{}
 			Expect(k8sClient.Get(ctx, crKey, &fc)).Should(Succeed())
-			fc.Spec.GoflowKube = flowsv1alpha1.FlowCollectorGoflowKube{
+			fc.Spec.FlowlogsPipeline = flowsv1alpha1.FlowCollectorFLP{
 				Kind:            "DaemonSet",
 				Port:            7891,
 				ImagePullPolicy: "Never",
@@ -293,29 +293,29 @@ var _ = Describe("FlowCollector Controller", func() {
 			ds := appsv1.DaemonSet{}
 			Expect(k8sClient.Get(ctx, gfKey1, &ds)).To(Succeed())
 
-			oldGoflowConfigDigest = ds.Spec.Template.Annotations[goflowkube.PodConfigurationDigest]
-			Expect(oldGoflowConfigDigest).ToNot(BeEmpty())
+			oldConfigDigest = ds.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
+			Expect(oldConfigDigest).ToNot(BeEmpty())
 
-			By("Creating the required HostPort to access Goflow through the NodeIP", func() {
+			By("Creating the required HostPort to access flowlogs-pipeline through the NodeIP", func() {
 				var cnt *v1.Container
 				for i := range ds.Spec.Template.Spec.Containers {
-					if ds.Spec.Template.Spec.Containers[i].Name == constants.GoflowKubeName {
+					if ds.Spec.Template.Spec.Containers[i].Name == constants.FLPName {
 						cnt = &ds.Spec.Template.Spec.Containers[i]
 						break
 					}
 				}
-				Expect(cnt).ToNot(BeNil(), "can't find a container named", constants.GoflowKubeName)
+				Expect(cnt).ToNot(BeNil(), "can't find a container named", constants.FLPName)
 				var cp *v1.ContainerPort
 				for i := range cnt.Ports {
-					if cnt.Ports[i].Name == constants.GoflowKubeName {
+					if cnt.Ports[i].Name == constants.FLPPortName {
 						cp = &cnt.Ports[i]
 						break
 					}
 				}
 				Expect(cp).
-					ToNot(BeNil(), "can't find a container port named", constants.GoflowKubeName)
+					ToNot(BeNil(), "can't find a container port named", constants.FLPPortName)
 				Expect(*cp).To(Equal(v1.ContainerPort{
-					Name:          constants.GoflowKubeName,
+					Name:          constants.FLPPortName,
 					HostPort:      7891,
 					ContainerPort: 7891,
 					Protocol:      "UDP",
@@ -327,7 +327,7 @@ var _ = Describe("FlowCollector Controller", func() {
 					To(ContainElement(v1.Toleration{Operator: v1.TolerationOpExists}))
 			})
 		})
-		It("Should redeploy if the spec doesn't change but the external goflow-kube-config does", func() {
+		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
 			Eventually(func() error {
 				fc := flowsv1alpha1.FlowCollector{}
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
@@ -337,16 +337,16 @@ var _ = Describe("FlowCollector Controller", func() {
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 
-			By("Expecting that the goflowkube.PodConfigurationDigest attribute has changed")
+			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
 			Eventually(func() error {
 				dp := appsv1.DaemonSet{}
 				if err := k8sClient.Get(ctx, gfKey1, &dp); err != nil {
 					return err
 				}
-				currentGoflowConfigDigest := dp.Spec.Template.Annotations[goflowkube.PodConfigurationDigest]
-				if currentGoflowConfigDigest == oldGoflowConfigDigest {
+				currentConfigDigest := dp.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
+				if currentConfigDigest == oldConfigDigest {
 					return fmt.Errorf("annotation %v %q was expected to change (was %q)",
-						goflowkube.PodConfigurationDigest, currentGoflowConfigDigest, oldGoflowConfigDigest)
+						flowlogspipeline.PodConfigurationDigest, currentConfigDigest, oldConfigDigest)
 				}
 				return nil
 			}).Should(Succeed())
@@ -444,8 +444,8 @@ var _ = Describe("FlowCollector Controller", func() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.GoflowKube.Kind = "Deployment"
-				fc.Spec.GoflowKube.Port = 9999
+				fc.Spec.FlowlogsPipeline.Kind = "Deployment"
+				fc.Spec.FlowlogsPipeline.Port = 9999
 				fc.Spec.Namespace = otherNamespace
 				fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
 					Sampling: 200,
@@ -458,17 +458,17 @@ var _ = Describe("FlowCollector Controller", func() {
 			By("Expecting daemonset in previous namespace to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, gfKey1, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(MatchError(`daemonsets.apps "goflow-kube" not found`))
+			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline" not found`))
 
 			By("Expecting deployment in previous namespace to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, gfKey1, &appsv1.Deployment{})
-			}, timeout, interval).Should(MatchError(`deployments.apps "goflow-kube" not found`))
+			}, timeout, interval).Should(MatchError(`deployments.apps "flowlogs-pipeline" not found`))
 
 			By("Expecting service in previous namespace to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, gfKey1, &v1.Service{})
-			}, timeout, interval).Should(MatchError(`services "goflow-kube" not found`))
+			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline" not found`))
 
 			By("Expecting deployment to be created in new namespace")
 			Eventually(func() interface{} {
@@ -535,14 +535,14 @@ var _ = Describe("FlowCollector Controller", func() {
 		})
 
 		It("Should be garbage collected", func() {
-			By("Expecting goflow-kube deployment to be garbage collected")
+			By("Expecting flowlogs-pipeline deployment to be garbage collected")
 			Eventually(func() interface{} {
 				d := appsv1.Deployment{}
 				_ = k8sClient.Get(ctx, gfKey2, &d)
 				return &d
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
 
-			By("Expecting goflow-kube service to be garbage collected")
+			By("Expecting flowlogs-pipeline service to be garbage collected")
 			Eventually(func() interface{} {
 				svc := v1.Service{}
 				_ = k8sClient.Get(ctx, gfKey2, &svc)
@@ -570,11 +570,11 @@ var _ = Describe("FlowCollector Controller", func() {
 				return &cm
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
 
-			By("Expecting goflow-kube configmap to be garbage collected")
+			By("Expecting flowlogs-pipeline configmap to be garbage collected")
 			Eventually(func() interface{} {
 				cm := v1.ConfigMap{}
 				_ = k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "goflow-kube-config",
+					Name:      "flowlogs-pipeline-config",
 					Namespace: otherNamespace,
 				}, &cm)
 				return &cm

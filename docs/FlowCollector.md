@@ -84,10 +84,10 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspeccno">cno</a></b></td>
+        <td><b><a href="#flowcollectorspecclusternetworkoperator">clusterNetworkOperator</a></b></td>
         <td>object</td>
         <td>
-          CNO contains settings related to the cluster network operator<br/>
+          ClusterNetworkOperator contains settings related to the cluster network operator<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -98,10 +98,10 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkube">goflowkube</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipeline">flowlogsPipeline</a></b></td>
         <td>object</td>
         <td>
-          GoflowKube contains settings related to goflow-kube<br/>
+          FlowlogsPipeline contains settings related to the flowlogs-pipeline component<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -122,7 +122,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where console plugin and goflowkube pods are going to be deployed. If empty, the namespace of the operator is going to be used<br/>
+          Namespace where console plugin and collector pods are going to be deployed. If empty, the namespace of the operator is going to be used<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -131,12 +131,12 @@ FlowCollectorSpec defines the desired state of FlowCollector
 </table>
 
 
-### FlowCollector.spec.cno
+### FlowCollector.spec.clusterNetworkOperator
 <sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
 
 
 
-CNO contains settings related to the cluster network operator
+ClusterNetworkOperator contains settings related to the cluster network operator
 
 <table>
     <thead>
@@ -1179,12 +1179,12 @@ Compute Resources required by this container. Cannot be updated. More info: http
 </table>
 
 
-### FlowCollector.spec.goflowkube
+### FlowCollector.spec.flowlogsPipeline
 <sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
 
 
 
-GoflowKube contains settings related to goflow-kube
+FlowlogsPipeline contains settings related to the flowlogs-pipeline component
 
 <table>
     <thead>
@@ -1196,6 +1196,15 @@ GoflowKube contains settings related to goflow-kube
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>enableKubeProbes</b></td>
+        <td>boolean</td>
+        <td>
+          EnableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>healthPort</b></td>
         <td>integer</td>
         <td>
@@ -1208,7 +1217,7 @@ GoflowKube contains settings related to goflow-kube
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpa">hpa</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpa">hpa</a></b></td>
         <td>object</td>
         <td>
           HPA spec of an horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.<br/>
@@ -1220,7 +1229,7 @@ GoflowKube contains settings related to goflow-kube
         <td>
           Image is the collector image (including domain and tag)<br/>
           <br/>
-            <i>Default</i>: quay.io/netobserv/goflow2-kube:main<br/>
+            <i>Default</i>: quay.io/netobserv/flowlogs-pipeline:main<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1269,7 +1278,7 @@ GoflowKube contains settings related to goflow-kube
         <td><b>printOutput</b></td>
         <td>boolean</td>
         <td>
-          PrintOutput is a debug flag to print flows exported in kube-enricher logs<br/>
+          PrintOutput is a debug flag to print flows exported in flowlogs-pipeline stdout<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -1286,7 +1295,7 @@ GoflowKube contains settings related to goflow-kube
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkuberesources">resources</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelineresources">resources</a></b></td>
         <td>object</td>
         <td>
           Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
@@ -1296,8 +1305,8 @@ GoflowKube contains settings related to goflow-kube
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkube)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipeline)</sup></sup>
 
 
 
@@ -2205,8 +2214,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.goflowkube.resources
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkube)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.resources
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipeline)</sup></sup>
 
 
 
@@ -2422,7 +2431,7 @@ FlowCollectorStatus defines the observed state of FlowCollector
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where console plugin and goflowkube have been deployed.<br/>
+          Namespace where console plugin and flowlogs-pipeline have been deployed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

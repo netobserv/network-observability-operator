@@ -1,4 +1,4 @@
-package goflowkube
+package flowlogspipeline
 
 import (
 	"encoding/json"
@@ -18,9 +18,9 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
-const configMapName = "goflow-kube-config"
+const configMapName = "flowlogs-pipeline-config"
 const configVolume = "config-volume"
-const configPath = "/etc/goflow-kube"
+const configPath = "/etc/flowlogs-pipeline"
 const configFile = "config.yaml"
 
 const (
@@ -33,16 +33,55 @@ const (
 
 // PodConfigurationDigest is an annotation name to facilitate pod restart after
 // any external configuration change
-const PodConfigurationDigest = "flows.netobserv.io/goflow-kube-config"
+const PodConfigurationDigest = "flows.netobserv.io/" + configMapName
 
-type ConfigMap struct {
-	Listen      string        `json:"listen,omitempty"`
-	Loki        LokiConfigMap `json:"loki,omitempty"`
-	PrintInput  bool          `json:"printInput"`
-	PrintOutput bool          `json:"printOutput"`
+type Config struct {
+	LogLevel string   `json:"log-level,omitempty"`
+	Pipeline Pipeline `json:"pipeline,omitempty"`
+	Health   Health   `json:"health,omitempty"`
 }
 
-type LokiConfigMap struct {
+type Health struct {
+	Port int `json:"port"`
+}
+
+type Pipeline struct {
+	Ingest    Ingest      `json:"ingest"`
+	Decode    Decode      `json:"decode"`
+	Encode    Encode      `json:"encode"`
+	Extract   Extract     `json:"extract"`
+	Transform []Transform `json:"transform"`
+	Write     Write       `json:"write"`
+}
+
+type Ingest struct {
+	Collector Collector `json:"collector"`
+	Type      string    `json:"type"`
+}
+
+type Collector struct {
+	Hostname string `json:"hostname"`
+	Port     int    `json:"port"`
+}
+
+type Decode struct {
+	Type string `json:"type"`
+}
+
+type Encode struct {
+	Type string `json:"type"`
+}
+
+type Extract struct {
+	Type string `json:"type"`
+}
+
+type Write struct {
+	Loki Loki   `json:"loki"`
+	Type string `json:"type"`
+}
+
+type Loki struct {
 	URL            string            `json:"url,omitempty"`
 	BatchWait      metav1.Duration   `json:"batchWait,omitempty"`
 	BatchSize      int64             `json:"batchSize,omitempty"`
@@ -55,24 +94,40 @@ type LokiConfigMap struct {
 	TimestampLabel string            `json:"timestampLabel,omitempty"`
 }
 
+type Transform struct {
+	Network Network `json:"network"`
+	Type    string  `json:"type"`
+}
+
+type Network struct {
+	Rules []Rule `json:"rules"`
+}
+
+type Rule struct {
+	Input      string `json:"input,omitempty"`
+	Output     string `json:"output,omitempty"`
+	Type       string `json:"type,omitempty"`
+	Parameters string `json:"parameters,omitempty"`
+}
+
 type builder struct {
 	namespace   string
 	labels      map[string]string
 	selector    map[string]string
-	desired     *flowsv1alpha1.FlowCollectorGoflowKube
+	desired     *flowsv1alpha1.FlowCollectorFLP
 	desiredLoki *flowsv1alpha1.FlowCollectorLoki
 }
 
-func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorGoflowKube, desiredLoki *flowsv1alpha1.FlowCollectorLoki) builder {
+func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki) builder {
 	version := helper.ExtractVersion(desired.Image)
 	return builder{
 		namespace: ns,
 		labels: map[string]string{
-			"app":     constants.GoflowKubeName,
+			"app":     constants.FLPName,
 			"version": version,
 		},
 		selector: map[string]string{
-			"app": constants.GoflowKubeName,
+			"app": constants.FLPName,
 		},
 		desired:     desired,
 		desiredLoki: desiredLoki,
@@ -82,7 +137,7 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorGoflowKube, desir
 func (b *builder) deployment(configDigest string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.GoflowKubeName,
+			Name:      constants.FLPName,
 			Namespace: b.namespace,
 			Labels:    b.labels,
 		},
@@ -99,7 +154,7 @@ func (b *builder) deployment(configDigest string) *appsv1.Deployment {
 func (b *builder) daemonSet(configDigest string) *appsv1.DaemonSet {
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.GoflowKubeName,
+			Name:      constants.FLPName,
 			Namespace: b.namespace,
 			Labels:    b.labels,
 		},
@@ -113,12 +168,11 @@ func (b *builder) daemonSet(configDigest string) *appsv1.DaemonSet {
 }
 
 func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
-	cmd := buildMainCommand(b.desired)
 	var ports []corev1.ContainerPort
 	var tolerations []corev1.Toleration
 	if b.desired.Kind == constants.DaemonSetKind {
 		ports = []corev1.ContainerPort{{
-			Name:          constants.GoflowKubeName,
+			Name:          constants.FLPPortName,
 			HostPort:      b.desired.Port,
 			ContainerPort: b.desired.Port,
 			Protocol:      corev1.ProtocolUDP,
@@ -133,11 +187,40 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 		ContainerPort: b.desired.HealthPort,
 	})
 
-	healthProbe := corev1.ProbeHandler{
-		HTTPGet: &corev1.HTTPGetAction{
-			Path: "/health/live",
-			Port: intstr.FromString(healthServiceName),
-		},
+	container := corev1.Container{
+		Name:            constants.FLPName,
+		Image:           b.desired.Image,
+		ImagePullPolicy: corev1.PullPolicy(b.desired.ImagePullPolicy),
+		Args:            []string{fmt.Sprintf(`--config=%s/%s`, configPath, configFile)},
+		Resources:       *b.desired.Resources.DeepCopy(),
+		VolumeMounts: []corev1.VolumeMount{{
+			MountPath: configPath,
+			Name:      configVolume,
+		}},
+		Ports: ports,
+	}
+	if b.desired.EnableKubeProbes {
+		container.LivenessProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/live",
+					Port: intstr.FromString(healthServiceName),
+				},
+			},
+			TimeoutSeconds: healthTimeoutSeconds,
+			PeriodSeconds:  livenessPeriodSeconds,
+		}
+		container.StartupProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/ready",
+					Port: intstr.FromString(healthServiceName),
+				},
+			},
+			TimeoutSeconds:   healthTimeoutSeconds,
+			PeriodSeconds:    startupPeriodSeconds,
+			FailureThreshold: startupFailureThreshold,
+		}
 	}
 
 	return corev1.PodTemplateSpec{
@@ -159,61 +242,56 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 					},
 				},
 			}},
-			Containers: []corev1.Container{{
-				Name:            constants.GoflowKubeName,
-				Image:           b.desired.Image,
-				ImagePullPolicy: corev1.PullPolicy(b.desired.ImagePullPolicy),
-				Command:         []string{"/bin/sh", "-c", cmd},
-				Resources:       *b.desired.Resources.DeepCopy(),
-				VolumeMounts: []corev1.VolumeMount{{
-					MountPath: configPath,
-					Name:      configVolume,
-				}},
-				Ports: ports,
-				LivenessProbe: &corev1.Probe{
-					ProbeHandler:   healthProbe,
-					TimeoutSeconds: healthTimeoutSeconds,
-					PeriodSeconds:  livenessPeriodSeconds,
-				},
-				StartupProbe: &corev1.Probe{
-					ProbeHandler:     healthProbe,
-					TimeoutSeconds:   healthTimeoutSeconds,
-					PeriodSeconds:    startupPeriodSeconds,
-					FailureThreshold: startupFailureThreshold,
-				},
-			}},
-			ServiceAccountName: constants.GoflowKubeName,
+			Containers:         []corev1.Container{container},
+			ServiceAccountName: constants.FLPName,
 		},
 	}
-}
-
-func buildMainCommand(desired *flowsv1alpha1.FlowCollectorGoflowKube) string {
-	return fmt.Sprintf(`/goflow-kube -loglevel "%s" -config %s/%s -healthport %d`,
-		desired.LogLevel, configPath, configFile, desired.HealthPort)
 }
 
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
 func (b *builder) configMap() (*corev1.ConfigMap, string) {
 	configStr := `{}`
-	config := &ConfigMap{
-		Listen:      fmt.Sprintf("netflow://:%d", b.desired.Port),
-		Loki:        LokiConfigMap{},
-		PrintInput:  false,
-		PrintOutput: b.desired.PrintOutput,
+	config := &Config{
+		LogLevel: b.desired.LogLevel,
+		Health:   Health{Port: int(b.desired.HealthPort)},
+		Pipeline: Pipeline{
+			Ingest: Ingest{Type: "collector", Collector: Collector{
+				Hostname: "0.0.0.0",
+				Port:     int(b.desired.Port),
+			}},
+			Decode:  Decode{Type: "json"},
+			Encode:  Encode{Type: "none"},
+			Extract: Extract{Type: "none"},
+			Transform: []Transform{
+				{Type: "network", Network: Network{
+					Rules: []Rule{
+						{
+							Input:  "SrcAddr",
+							Output: "SrcK8S",
+							Type:   "add_kubernetes",
+						},
+						{
+							Input:  "DstAddr",
+							Output: "DstK8S",
+							Type:   "add_kubernetes",
+						},
+					},
+				}}},
+			Write: Write{Type: "loki", Loki: Loki{Labels: constants.LokiIndexFields}},
+		},
 	}
 	if b.desiredLoki != nil {
-		config.Loki.BatchSize = b.desiredLoki.BatchSize
-		config.Loki.BatchWait = b.desiredLoki.BatchWait
-		config.Loki.MaxBackoff = b.desiredLoki.MaxBackoff
-		config.Loki.MaxRetries = b.desiredLoki.MaxRetries
-		config.Loki.MinBackoff = b.desiredLoki.MinBackoff
-		config.Loki.StaticLabels = b.desiredLoki.StaticLabels
-		config.Loki.Timeout = b.desiredLoki.Timeout
-		config.Loki.URL = b.desiredLoki.URL
-		config.Loki.TimestampLabel = b.desiredLoki.TimestampLabel
+		config.Pipeline.Write.Loki.BatchSize = b.desiredLoki.BatchSize
+		config.Pipeline.Write.Loki.BatchWait = b.desiredLoki.BatchWait
+		config.Pipeline.Write.Loki.MaxBackoff = b.desiredLoki.MaxBackoff
+		config.Pipeline.Write.Loki.MaxRetries = b.desiredLoki.MaxRetries
+		config.Pipeline.Write.Loki.MinBackoff = b.desiredLoki.MinBackoff
+		config.Pipeline.Write.Loki.StaticLabels = b.desiredLoki.StaticLabels
+		config.Pipeline.Write.Loki.Timeout = b.desiredLoki.Timeout
+		config.Pipeline.Write.Loki.URL = b.desiredLoki.URL
+		config.Pipeline.Write.Loki.TimestampLabel = b.desiredLoki.TimestampLabel
 	}
-	config.Loki.Labels = constants.Labels
 
 	bs, err := json.Marshal(config)
 	if err == nil {
@@ -240,7 +318,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 	if old == nil {
 		return &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      constants.GoflowKubeName,
+				Name:      constants.FLPName,
 				Namespace: b.namespace,
 				Labels:    b.labels,
 			},
@@ -266,14 +344,14 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 	return &ascv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.GoflowKubeName,
+			Name:      constants.FLPName,
 			Namespace: b.namespace,
 			Labels:    b.labels,
 		},
 		Spec: ascv2.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: ascv2.CrossVersionObjectReference{
 				Kind:       constants.DeploymentKind,
-				Name:       constants.GoflowKubeName,
+				Name:       constants.FLPName,
 				APIVersion: "apps/v1",
 			},
 			MinReplicas: b.desired.HPA.MinReplicas,
@@ -283,27 +361,27 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 	}
 }
 
-// The operator needs to have at least the same permissions as goflow-kube in order to grant them
+// The operator needs to have at least the same permissions as flowlogs-pipeline in order to grant them
 //+kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get;list;watch
 //+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
-//+kubebuilder:rbac:groups=core,resources=pods;services,verbs=get;list;watch
+//+kubebuilder:rbac:groups=core,resources=pods;services;nodes,verbs=get;list;watch
 
 func buildAppLabel() map[string]string {
 	return map[string]string{
-		"app": constants.GoflowKubeName,
+		"app": constants.FLPName,
 	}
 }
 
 func buildClusterRole() *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   constants.GoflowKubeName,
+			Name:   constants.FLPName,
 			Labels: buildAppLabel(),
 		},
 		Rules: []rbacv1.PolicyRule{{
 			APIGroups: []string{""},
 			Verbs:     []string{"list", "get", "watch"},
-			Resources: []string{"pods", "services"},
+			Resources: []string{"pods", "services", "nodes"},
 		}, {
 			APIGroups: []string{"apps"},
 			Verbs:     []string{"list", "get", "watch"},
@@ -324,7 +402,7 @@ func buildClusterRole() *rbacv1.ClusterRole {
 func buildServiceAccount(ns string) *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.GoflowKubeName,
+			Name:      constants.FLPName,
 			Namespace: ns,
 			Labels:    buildAppLabel(),
 		},
@@ -334,17 +412,17 @@ func buildServiceAccount(ns string) *corev1.ServiceAccount {
 func buildClusterRoleBinding(ns string) *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   constants.GoflowKubeName,
+			Name:   constants.FLPName,
 			Labels: buildAppLabel(),
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     constants.GoflowKubeName,
+			Name:     constants.FLPName,
 		},
 		Subjects: []rbacv1.Subject{{
 			Kind:      "ServiceAccount",
-			Name:      constants.GoflowKubeName,
+			Name:      constants.FLPName,
 			Namespace: ns,
 		}},
 	}

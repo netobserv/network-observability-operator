@@ -9,13 +9,13 @@ import (
 func TestExtractVersion(t *testing.T) {
 	assert := assert.New(t)
 
-	v := ExtractVersion("quay.io/netobserv/goflow-kube:v0.1.0")
+	v := ExtractVersion("quay.io/netobserv/flowlogs-pipeline:v0.1.0")
 	assert.Equal("v0.1.0", v)
 }
 
 func TestExtractUnknownVersion(t *testing.T) {
 	assert := assert.New(t)
 
-	v := ExtractVersion("goflow-kube")
+	v := ExtractVersion("flowlogs-pipeline")
 	assert.Equal("unknown", v)
 }

@@ -111,7 +111,7 @@ func (b *builder) podTemplate() *corev1.PodTemplateSpec {
 					"-cert", "/var/serving-cert/tls.crt",
 					"-key", "/var/serving-cert/tls.key",
 					"-loki", querierURL(b.desiredLoki),
-					"-loki-labels", strings.Join(constants.Labels, ","),
+					"-loki-labels", strings.Join(constants.LokiIndexFields, ","),
 				},
 			}},
 			Volumes: []corev1.Volume{{

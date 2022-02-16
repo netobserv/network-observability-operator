@@ -18,22 +18,22 @@ import (
 )
 
 type FlowsConfigController struct {
-	ovsConfigMapName    string
-	goflowkubeNamespace string
-	cnoNamespace        string
-	client              reconcilers.ClientHelper
-	lookupIP            func(string) ([]net.IP, error)
+	ovsConfigMapName   string
+	collectorNamespace string
+	cnoNamespace       string
+	client             reconcilers.ClientHelper
+	lookupIP           func(string) ([]net.IP, error)
 }
 
 func NewFlowsConfigController(client reconcilers.ClientHelper,
-	goflowkubeNamespace, cnoNamespace, ovsConfigMapName string,
+	collectorNamespace, cnoNamespace, ovsConfigMapName string,
 	lookupIP func(string) ([]net.IP, error)) *FlowsConfigController {
 	return &FlowsConfigController{
-		client:              client,
-		goflowkubeNamespace: goflowkubeNamespace,
-		cnoNamespace:        cnoNamespace,
-		ovsConfigMapName:    ovsConfigMapName,
-		lookupIP:            lookupIP,
+		client:             client,
+		collectorNamespace: collectorNamespace,
+		cnoNamespace:       cnoNamespace,
+		ovsConfigMapName:   ovsConfigMapName,
+		lookupIP:           lookupIP,
 	}
 }
 
@@ -102,17 +102,17 @@ func (c *FlowsConfigController) desired(
 	// According to the "OVS flow export configuration" RFE:
 	// nodePort be set by the NOO when the collector is deployed as a DaemonSet
 	// sharedTarget set when deployed as Deployment + Service
-	switch coll.Spec.GoflowKube.Kind {
+	switch coll.Spec.FlowlogsPipeline.Kind {
 	case constants.DaemonSetKind:
-		conf.NodePort = coll.Spec.GoflowKube.Port
+		conf.NodePort = coll.Spec.FlowlogsPipeline.Port
 		return &conf, nil
 	case constants.DeploymentKind:
 		svc := corev1.Service{}
 		if err := c.client.Get(ctx, types.NamespacedName{
-			Namespace: c.goflowkubeNamespace,
-			Name:      constants.GoflowKubeName,
+			Namespace: c.collectorNamespace,
+			Name:      constants.FLPName,
 		}, &svc); err != nil {
-			return nil, fmt.Errorf("can't get service %s in %s: %w", constants.GoflowKubeName, c.goflowkubeNamespace, err)
+			return nil, fmt.Errorf("can't get service %s in %s: %w", constants.FLPName, c.collectorNamespace, err)
 		}
 		// service IP resolution
 		svcHost := svc.Name + "." + svc.Namespace
@@ -130,11 +130,11 @@ func (c *FlowsConfigController) desired(
 		if ip == "" {
 			return nil, fmt.Errorf("can't find any suitable IP for host %s", svcHost)
 		}
-		// TODO: if spec/goflowkube is empty or port is empty, fetch first UDP port in the service spec
-		conf.SharedTarget = net.JoinHostPort(ip, strconv.Itoa(int(coll.Spec.GoflowKube.Port)))
+		// TODO: if spec/flowlogsPipeline is empty or port is empty, fetch first UDP port in the service spec
+		conf.SharedTarget = net.JoinHostPort(ip, strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)))
 		return &conf, nil
 	}
-	return nil, fmt.Errorf("unexpected GoflowKube kind: %s", coll.Spec.GoflowKube.Kind)
+	return nil, fmt.Errorf("unexpected flowlogsPipeline kind: %s", coll.Spec.FlowlogsPipeline.Kind)
 }
 
 func (c *FlowsConfigController) flowsConfigMap(fc *flowsConfig) (*corev1.ConfigMap, error) {

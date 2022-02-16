@@ -8,14 +8,15 @@ spec:
     cacheActiveTimeout: 60s
     cacheMaxFlows: 400
     sampling: 100
-  goflowkube:
+  flowlogsPipeline:
     kind: Deployment
     replicas: 1
     port: 2055
-    image: 'quay.io/netobserv/goflow2-kube:v0.1.1'
+    image: 'quay.io/netobserv/flowlogs-pipeline:v0.1.1'
     imagePullPolicy: IfNotPresent
     logLevel: info
     printOutput: false
+    enableKubeProbes: true
     healthPort: 8080
   loki:
     url: 'http://loki:3100/'
@@ -31,5 +32,5 @@ spec:
     image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.1'
     imagePullPolicy: IfNotPresent
     port: 9001
-  cno:
+  clusterNetworkOperator:
     namespace: "openshift-network-operator"
