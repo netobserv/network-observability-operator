@@ -181,7 +181,7 @@ bundle: manifests kustomize ## Generate bundle manifests and metadata, then vali
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	cd config/manager && $(KUSTOMIZE) edit set label version:$(VERSION)
 	sed -e 's~:main~:v$(VERSION)~' ./config/samples/flows_v1alpha1_flowcollector.yaml > ./config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(KUSTOMIZE) build config/manifests | sed -e 's~:container-image:~$(IMG)~' | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 
 .PHONY: bundle-build
