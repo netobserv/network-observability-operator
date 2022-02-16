@@ -2,12 +2,61 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   annotations:
-    alm-examples: '[]'
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "flows.netobserv.io/v1alpha1",
+          "kind": "FlowCollector",
+          "metadata": {
+            "name": "cluster"
+          },
+          "spec": {
+            "cno": {
+              "namespace": "openshift-network-operator"
+            },
+            "consolePlugin": {
+              "image": "quay.io/netobserv/network-observability-console-plugin:v0.1.0",
+              "imagePullPolicy": "IfNotPresent",
+              "port": 9001
+            },
+            "goflowkube": {
+              "healthPort": 8080,
+              "image": "quay.io/netobserv/goflow2-kube:v0.1.0",
+              "imagePullPolicy": "IfNotPresent",
+              "kind": "Deployment",
+              "logLevel": "info",
+              "port": 2055,
+              "printOutput": false,
+              "replicas": 1
+            },
+            "ipfix": {
+              "cacheActiveTimeout": "60s",
+              "cacheMaxFlows": 400,
+              "sampling": 100
+            },
+            "loki": {
+              "batchSize": 102400,
+              "batchWait": "1s",
+              "maxBackoff": "300s",
+              "maxRetries": 10,
+              "minBackoff": "1s",
+              "staticLabels": {
+                "app": "netobserv-flowcollector"
+              },
+              "timestampLabel": "TimeFlowEnd",
+              "url": "http://loki:3100/"
+            },
+            "namespace": "network-observability"
+          }
+        }
+      ]
     capabilities: Basic Install
     categories: Monitoring
-    containerImage: ':container-image:'
+    containerImage: quay.io/netobserv/network-observability-operator:0.1.0
     description: A network observability operator based on netflows (IPFIX) for OVN
-  name: netobserv-operator.v0.0.0
+    operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+  name: netobserv-operator.v0.1.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -75,8 +124,239 @@ spec:
     mediatype: image/png
   install:
     spec:
-      deployments: null
-    strategy: ""
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - apps
+          resources:
+          - daemonsets
+          - deployments
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - replicasets
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - autoscaling
+          resources:
+          - horizontalpodautoscalers
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - console.openshift.io
+          resources:
+          - consoleplugins
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - namespaces
+          - serviceaccounts
+          - services
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          - services
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - flows.netobserv.io
+          resources:
+          - flowcollectors
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - flows.netobserv.io
+          resources:
+          - flowcollectors/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - flows.netobserv.io
+          resources:
+          - flowcollectors/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - clusterrolebindings
+          verbs:
+          - create
+          - delete
+          - get
+          - update
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - clusterroles
+          verbs:
+          - create
+          - delete
+          - get
+        - apiGroups:
+          - security.openshift.io
+          resourceNames:
+          - hostnetwork
+          resources:
+          - securitycontextconstraints
+          verbs:
+          - use
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        serviceAccountName: netobserv-controller-manager
+      deployments:
+      - name: netobserv-controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: network-observability-operator
+              control-plane: controller-manager
+              version: 0.1.0
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                app: network-observability-operator
+                control-plane: controller-manager
+                version: 0.1.0
+            spec:
+              containers:
+              - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=10
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
+                  protocol: TCP
+                resources: {}
+              - args:
+                - --health-probe-bind-address=:8081
+                - --metrics-bind-address=127.0.0.1:8080
+                - --leader-elect
+                command:
+                - /manager
+                image: quay.io/netobserv/network-observability-operator:0.1.0
+                imagePullPolicy: IfNotPresent
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 100Mi
+                  requests:
+                    cpu: 100m
+                    memory: 20Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: netobserv-controller-manager
+              terminationGracePeriodSeconds: 10
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        serviceAccountName: netobserv-controller-manager
+    strategy: deployment
   installModes:
   - supported: true
     type: OwnNamespace
@@ -113,4 +393,4 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  version: 0.0.0
+  version: 0.1.0

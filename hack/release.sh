@@ -10,7 +10,7 @@
 path_noo="../network-observability-operator"
 path_gfk="../goflow2-kube-enricher"
 path_plg="../network-observability-console-plugin"
-version="0.1.1-rc0"
+version="0.1.0"
 user=netobserv
 remote=upstream
 
