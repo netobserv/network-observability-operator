@@ -69,7 +69,9 @@ DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
-all: build
+NAMESPACE ?= network-observability
+
+all: help
 
 ##@ General
 
@@ -149,7 +151,7 @@ install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl delete -f -
+	$(KUSTOMIZE) build config/crd | kubectl --ignore-not-found=true delete -f - || true
 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
@@ -157,7 +159,10 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/default | kubectl delete -f -
+	$(KUSTOMIZE) build config/default | kubectl --ignore-not-found=true delete -f - || true
+
+run: manifests generate fmt lint ## Run a controller from your host.
+	go run ./main.go
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
@@ -250,6 +255,82 @@ catalog-deploy:
 	sed -e 's~<IMG>~$(CATALOG_IMG)~' ./config/samples/catalog/catalog.yaml | kubectl apply -f -
 
 # Deploy the sample FlowCollector CR
-.PHONY: create-sample
-create-sample:
-	sed -e 's~:main~:v$(VERSION)~' ./config/samples/flows_v1alpha1_flowcollector.yaml | kubectl apply -f -
+.PHONY: deploy-sample-cr
+deploy-sample-cr:
+	sed -e 's~:main~:$(VERSION)~' ./config/samples/flows_v1alpha1_flowcollector.yaml | kubectl apply -f - || true
+
+# Undeploy the sample FlowCollector CR
+.PHONY: undeploy-sample-cr
+undeploy-sample-cr:
+	sed -e 's~:main~:$(VERSION)~' ./config/samples/flows_v1alpha1_flowcollector.yaml | kubectl --ignore-not-found=true delete -f - || true
+
+##@ Development
+
+.PHONY: deploy-loki
+deploy-loki: ## Deploy loki.
+	@echo "### Deploying loki"
+	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
+	kubectl config set-context --current --namespace=$(NAMESPACE)
+	curl -S -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/1-storage.yaml | kubectl create -f - || true
+	curl -S -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/2-loki.yaml	 | kubectl create -f - || true
+	kubectl wait --timeout=120s --for=condition=ready pod -l app=loki
+	-pkill --oldest --full "3100:3100"
+	kubectl port-forward --address 0.0.0.0 svc/loki 3100:3100 2>&1 >/dev/null &
+	@echo -e "\n===> loki endpoint is available on http://localhost:3100\n"
+
+.PHONY: undeploy-loki
+undeploy-loki: ## Undeploy loki.
+	kubectl config set-context --current --namespace=$(NAMESPACE)
+	curl -S -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/2-loki.yaml	 | kubectl --ignore-not-found=true  delete -f - || true
+	curl -S -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/1-storage.yaml | kubectl --ignore-not-found=true  delete -f - || true
+	-pkill --oldest --full "3100:3100"
+
+.PHONY: deploy-grafana
+deploy-grafana: ## Deploy grafana.
+	@echo "### Deploying grafana"
+	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
+	kubectl config set-context --current --namespace=$(NAMESPACE)
+	./hack/deploy-grafana.sh $(NAMESPACE)
+	-pkill --oldest --full "3000:3000"
+	kubectl port-forward --address 0.0.0.0 svc/grafana 3000:3000 2>&1 >/dev/null &
+	@echo -e "\ngrafana ui is available (user: admin password: admin) on http://localhost:3000\n"
+
+.PHONY: undeploy-grafana
+undeploy-grafana: ## Undeploy grafana.
+	kubectl config set-context --current --namespace=$(NAMESPACE)
+	kubectl delete --ignore-not-found=true deployment grafana
+	kubectl delete --ignore-not-found=true service grafana
+	kubectl delete --ignore-not-found=true route grafana
+	kubectl delete --ignore-not-found=true configMap grafana-datasources
+	-pkill --oldest --full "3000:3000"
+
+.PHONY: ocp-deploy
+ocp-deploy: manifests generate fmt lint deploy-loki deploy-grafana install deploy-sample-cr   ## OCP deploy (loki, grafana and example-cr)
+	oc expose service grafana || true
+	@grafana_url=$$(oc get route grafana -o jsonpath='{.spec.host}'); \
+	echo -e "\nAccess grafana on OCP using: http://"$$grafana_url"\n"
+	oc expose service loki || true
+	@loki_url=$$(oc get route loki -o jsonpath='{.spec.host}'); \
+	echo -e "\nAccess loki on OCP using: http://"$$loki_url"\n"
+
+.PHONY: ocp-undeploy
+ocp-cleanup: undeploy-loki undeploy-grafana uninstall undeploy-sample-cr   ## OCP cleanup
+	-PID=$$(pgrep --oldest --full "main.go"); pkill -P $$PID; pkill $$PID
+
+.PHONY: ocp-run
+ocp-run: ocp-cleanup ocp-deploy   ## OCP-deploy + run the operator locally
+	@echo "### Running operator locally (in background process)"
+	-PID=$$(pgrep --oldest --full "main.go"); pkill -P $$PID; pkill $$PID
+	go run ./main.go &
+	@echo "### Waiting for goflow-kube pod to be ready"
+	while : ; do kubectl get deployment goflow-kube && break; sleep 1; done
+	kubectl wait --timeout=120s --for=condition=ready pod -l app=goflow-kube
+	@echo "### Enable network-observability-plugin in OCP console"
+	oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["network-observability-plugin"]}]'
+	@echo "### Starting log-flows export into goflow-kube pod"
+	GF_IP=`oc get svc goflow-kube -o jsonpath='{.spec.clusterIP}'` && \
+	echo "goflow-kube pod ID: $$GF_IP" && \
+	oc patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$$GF_IP:2055']}}}}]"
+	@echo "### Operator process info"
+	@PID=$$(pgrep --oldest --full "main.go"); echo -e "\n===> The operator is running in process $$PID\nTo stop the operator process use: pkill -p $$PID"
+	@echo "### Done"

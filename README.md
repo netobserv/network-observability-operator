@@ -50,7 +50,7 @@ Then, you can deploy a custom resource, e.g.:
 kubectl apply -f ./config/samples/flows_v1alpha1_flowcollector.yaml
 
 # or using make
-make create-sample
+make deploy-sample-cr
 ```
 
 ## Deploy as bundle
