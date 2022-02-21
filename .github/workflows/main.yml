@@ -17,7 +17,7 @@ jobs:
       id: build-image
       uses: redhat-actions/buildah-build@v2
       with:
-        image: network-observability-operator
+        image: netobserv-operator
         tags: pr-${{ github.sha }}
         dockerfiles: |
           ./Dockerfile

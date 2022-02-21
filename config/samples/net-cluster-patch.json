@@ -1,7 +1,0 @@
-[
-  {
-    "op": "add",
-    "path": "/spec",
-    "value": {"exportNetworkFlows": {"ipfix": { "collectors": ["GF_IP:2055"]}}}
-  }
-]

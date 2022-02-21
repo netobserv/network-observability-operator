@@ -1,0 +1,13 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: noo-dev-catalog
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: <IMG>
+  displayName: Network observability development catalog
+  publisher: Me
+  updateStrategy:
+    registryPoll:
+      interval: 1m
