@@ -276,5 +276,5 @@ func TestLabels(t *testing.T) {
 	assert.Equal("goflow-kube", svc.Labels["app"])
 	assert.Equal("goflow-kube", svc.Spec.Selector["app"])
 	assert.Equal("dev", svc.Labels["version"])
-	assert.Equal("dev", svc.Spec.Selector["version"])
+	assert.Empty(svc.Spec.Selector["version"])
 }
