@@ -9,10 +9,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
 const testImage = "quay.io/netobserv/network-observability-console-plugin:dev"
-const testNamespace = pluginName
+const testNamespace = constants.PluginName
 
 var testPullPolicy = corev1.PullIfNotPresent
 var testResources = corev1.ResourceRequirements{
@@ -35,7 +36,7 @@ func getContainerSpecs() (corev1.PodSpec, flowsv1alpha1.FlowCollectorConsolePlug
 	var podSpec = corev1.PodSpec{
 		Containers: []corev1.Container{
 			{
-				Name:            pluginName,
+				Name:            constants.PluginName,
 				Image:           testImage,
 				Resources:       testResources,
 				ImagePullPolicy: testPullPolicy,

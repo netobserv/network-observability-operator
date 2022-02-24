@@ -11,10 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 )
-
-const pluginName = "network-observability-plugin"
 
 // Type alias
 type pluginSpec = flowsv1alpha1.FlowCollectorConsolePlugin
@@ -39,9 +38,9 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) CPReconciler 
 		serviceAccount: &corev1.ServiceAccount{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
-	nobjMngr.AddManagedObject(pluginName, owned.deployment)
-	nobjMngr.AddManagedObject(pluginName, owned.service)
-	nobjMngr.AddManagedObject(pluginName, owned.serviceAccount)
+	nobjMngr.AddManagedObject(constants.PluginName, owned.deployment)
+	nobjMngr.AddManagedObject(constants.PluginName, owned.service)
+	nobjMngr.AddManagedObject(constants.PluginName, owned.serviceAccount)
 
 	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
 }
@@ -70,7 +69,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 	// Console plugin is cluster-scope (it's not deployed in our namespace) however it must still be updated if our namespace changes
 	oldPlg := osv1alpha1.ConsolePlugin{}
 	pluginExists := true
-	err = r.Get(ctx, types.NamespacedName{Name: pluginName}, &oldPlg)
+	err = r.Get(ctx, types.NamespacedName{Name: constants.PluginName}, &oldPlg)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			pluginExists = false
@@ -157,7 +156,7 @@ func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollecto
 }
 
 func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pluginSpec) bool {
-	container := reconcilers.FindContainer(podSpec, pluginName)
+	container := reconcilers.FindContainer(podSpec, constants.PluginName)
 	if container == nil {
 		return true
 	}
