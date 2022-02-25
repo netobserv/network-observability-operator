@@ -212,7 +212,7 @@ func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *goflowKubeSpec, ns,
 	}
 	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired) ||
 		configChanged(&depl.Spec.Template, configDigest) ||
-		*depl.Spec.Replicas != desired.Replicas
+		(desired.HPA == nil && *depl.Spec.Replicas != desired.Replicas)
 }
 
 func configChanged(tmpl *corev1.PodTemplateSpec, configDigest string) bool {
