@@ -217,6 +217,10 @@ type FlowCollectorConsolePlugin struct {
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
+
+	// HPA spec of an horizontal pod autoscaler to set up for the plugin Deployment.
+	// +optional
+	HPA *FlowCollectorHPA `json:"hpa,omitempty"`
 }
 
 // CNO defines the desired configuration related to the Cluster Network Configuration

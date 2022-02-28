@@ -177,6 +177,13 @@ ConsolePlugin contains settings related to the console dynamic plugin
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginhpa">hpa</a></b></td>
+        <td>object</td>
+        <td>
+          HPA spec of an horizontal pod autoscaler to set up for the plugin Deployment.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>image</b></td>
         <td>string</td>
         <td>
@@ -223,6 +230,53 @@ ConsolePlugin contains settings related to the console dynamic plugin
         <td>object</td>
         <td>
           Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.hpa
+<sup><sup>[↩ Parent](#flowcollectorspecconsoleplugin)</sup></sup>
+
+
+
+HPA spec of an horizontal pod autoscaler to set up for the plugin Deployment.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>maxReplicas</b></td>
+        <td>integer</td>
+        <td>
+          upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>minReplicas</b></td>
+        <td>integer</td>
+        <td>
+          minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>targetCPUUtilizationPercentage</b></td>
+        <td>integer</td>
+        <td>
+          target average CPU utilization (represented as a percentage of requested CPU) over all the pods; if not specified the default autoscaling policy will be used.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
         </td>
         <td>false</td>
       </tr></tbody>

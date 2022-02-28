@@ -5,6 +5,7 @@ import (
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	ascv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -122,6 +123,26 @@ func (b *builder) podTemplate() *corev1.PodTemplateSpec {
 				},
 			}},
 			ServiceAccountName: constants.PluginName,
+		},
+	}
+}
+
+func (b *builder) autoScaler() *ascv1.HorizontalPodAutoscaler {
+	return &ascv1.HorizontalPodAutoscaler{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.PluginName,
+			Namespace: b.namespace,
+			Labels:    b.labels,
+		},
+		Spec: ascv1.HorizontalPodAutoscalerSpec{
+			ScaleTargetRef: ascv1.CrossVersionObjectReference{
+				Kind:       constants.DeploymentKind,
+				Name:       constants.PluginName,
+				APIVersion: "apps/v1",
+			},
+			MinReplicas:                    b.desired.HPA.MinReplicas,
+			MaxReplicas:                    b.desired.HPA.MaxReplicas,
+			TargetCPUUtilizationPercentage: b.desired.HPA.TargetCPUUtilizationPercentage,
 		},
 	}
 }

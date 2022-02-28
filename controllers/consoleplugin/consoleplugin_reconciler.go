@@ -6,6 +6,7 @@ import (
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	ascv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -28,6 +29,7 @@ type CPReconciler struct {
 type ownedObjects struct {
 	deployment     *appsv1.Deployment
 	service        *corev1.Service
+	hpa            *ascv1.HorizontalPodAutoscaler
 	serviceAccount *corev1.ServiceAccount
 }
 
@@ -35,11 +37,13 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) CPReconciler 
 	owned := ownedObjects{
 		deployment:     &appsv1.Deployment{},
 		service:        &corev1.Service{},
+		hpa:            &ascv1.HorizontalPodAutoscaler{},
 		serviceAccount: &corev1.ServiceAccount{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.deployment)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.service)
+	nobjMngr.AddManagedObject(constants.PluginName, owned.hpa)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.serviceAccount)
 
 	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
@@ -115,6 +119,23 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 			return err
 		}
 	}
+
+	// Delete or Create / Update Autoscaler according to HPA option
+	if desired.ConsolePlugin.HPA == nil {
+		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
+	} else {
+		newASC := builder.autoScaler()
+		if !r.nobjMngr.Exists(r.owned.hpa) {
+			if err := r.CreateOwned(ctx, newASC); err != nil {
+				return err
+			}
+		} else if autoScalerNeedsUpdate(r.owned.hpa, &desired.ConsolePlugin, ns) {
+			if err := r.UpdateOwned(ctx, r.owned.hpa, newASC); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -129,7 +150,7 @@ func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowC
 	}
 	return containerNeedsUpdate(&depl.Spec.Template.Spec, &desired.ConsolePlugin) ||
 		hasLokiURLChanged(depl, &desired.Loki) ||
-		*depl.Spec.Replicas != desired.ConsolePlugin.Replicas
+		(desired.ConsolePlugin.HPA == nil && *depl.Spec.Replicas != desired.ConsolePlugin.Replicas)
 }
 
 func hasLokiURLChanged(depl *appsv1.Deployment, loki *flowsv1alpha1.FlowCollectorLoki) bool {
@@ -164,6 +185,21 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pluginSpec) bool {
 		return true
 	}
 	if !reflect.DeepEqual(desired.Resources, container.Resources) {
+		return true
+	}
+	return false
+}
+
+func autoScalerNeedsUpdate(asc *ascv1.HorizontalPodAutoscaler, desired *pluginSpec, ns string) bool {
+	if asc.Namespace != ns {
+		return true
+	}
+	differentPointerValues := func(a, b *int32) bool {
+		return (a == nil && b != nil) || (a != nil && b == nil) || (a != nil && *a != *b)
+	}
+	if asc.Spec.MaxReplicas != desired.HPA.MaxReplicas ||
+		differentPointerValues(asc.Spec.MinReplicas, desired.HPA.MinReplicas) ||
+		differentPointerValues(asc.Spec.TargetCPUUtilizationPercentage, desired.HPA.TargetCPUUtilizationPercentage) {
 		return true
 	}
 	return false
