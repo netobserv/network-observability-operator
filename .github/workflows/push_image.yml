@@ -1,0 +1,48 @@
+name: push to quay.io
+on:
+  push:
+    branches: [ main ]
+
+env:
+  REGISTRY_USER: netobserv+github_ci
+  REGISTRY_PASSWORD: ${{ secrets.QUAY_SECRET }}
+  REGISTRY: quay.io/netobserv
+  IMAGE: network-observability-operator
+  TAGS: main
+
+jobs:
+  push-image:
+    name: push image
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        go: ['1.17']
+    steps:
+      - name: install make
+        run: sudo apt-get install make
+      - name: set up go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: build images
+        run: make image-sha-build
+      - name: podman login to quay.io
+        uses: redhat-actions/podman-login@v1
+        with:
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ env.REGISTRY_PASSWORD }}
+          registry: quay.io
+      - name: get short sha
+        id: shortsha
+        run: echo "::set-output name=short_sha::$(git rev-parse --short HEAD)"
+      - name: push to quay.io
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.IMAGE }}
+          tags: ${{ env.TAGS }} ${{ steps.shortsha.outputs.short_sha }}
+          registry: ${{ env.REGISTRY }}
+      - name: print image url
+        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"

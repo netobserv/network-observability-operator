@@ -4,6 +4,9 @@
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
 VERSION ?= main
+BUILD_VERSION := $(shell git describe --long HEAD)
+BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
+BUILD_SHA := $(shell git rev-parse --short HEAD)
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -37,6 +40,7 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 
 # Image URL to use all building/pushing image targets
 IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
+IMG_SHA = $(IMAGE_TAG_BASE):$(BUILD_SHA)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
@@ -123,13 +127,18 @@ coverage-report-html:
 ##@ Build
 
 build: generate fmt lint ## Build manager binary.
-	go build -ldflags "-X main.version=${VERSION}" -mod vendor -o bin/manager main.go
+	go build -ldflags "-X 'main.buildVersion=${BUILD_VERSION}' -X 'main.buildDate=${BUILD_DATE}'" -mod vendor -o bin/manager main.go
 
 run: manifests generate fmt lint ## Run a controller from your host.
 	go run ./main.go
 
-image-build: test ## Build OCI image with the manager.
-	$(OCI_BIN) build --build-arg OPVERSION="$(VERSION)" -t ${IMG} .
+image-build:
+	$(OCI_BIN) build --build-arg BUILD_VERSION="${BUILD_VERSION}" -t ${IMG} .
+
+image-sha-build: image-build
+	echo "FROM ${IMG}" > tmp.Dockerfile && \
+		$(OCI_BIN) build --label quay.expires-after=2w -t ${IMG_SHA} -f tmp.Dockerfile . && \
+		rm tmp.Dockerfile
 
 image-push: ## Push OCI image with the manager.
 	$(OCI_BIN) push ${IMG}

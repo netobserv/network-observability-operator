@@ -41,9 +41,10 @@ import (
 const app = "network-observability-operator"
 
 var (
-	version  = "unknown"
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	buildVersion = "unknown"
+	buildDate    = "unknown"
+	scheme       = runtime.NewScheme()
+	setupLog     = ctrl.Log.WithName("setup")
 )
 
 func init() {
@@ -73,7 +74,7 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	appVersion := fmt.Sprintf("%s %s", app, version)
+	appVersion := fmt.Sprintf("%s [build version: %s, build date: %s]", app, buildVersion, buildDate)
 	if versionFlag {
 		fmt.Println(appVersion)
 		os.Exit(0)
