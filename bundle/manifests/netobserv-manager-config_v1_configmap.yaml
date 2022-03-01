@@ -16,5 +16,5 @@ kind: ConfigMap
 metadata:
   labels:
     app: network-observability-operator
-    version: 0.1.0
+    version: 0.1.1-rc0
   name: netobserv-manager-config

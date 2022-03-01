@@ -10,7 +10,11 @@
 path_noo="../network-observability-operator"
 path_gfk="../goflow2-kube-enricher"
 path_plg="../network-observability-console-plugin"
-version="0.1.0"
+changelogs="../changelogs"
+version="0.1.1-rc0"
+since_date="2022-01-28 08:58:11"
+# since-tag=v0.1.0
+
 user=netobserv
 remote=upstream
 
@@ -19,17 +23,25 @@ vv=v$version
 cd $path_plg && \
  VERSION="$vv" USER="$user" make image push && \
  git tag -a "$vv" -m "$vv" && \
- git push $remote --tags
+ git push $remote --tags && \
+ github_changelog_generator -u netobserv -p network-observability-console-plugin --since-commit "$since_date" --future-release "$vv" -o "$changelogs/plg.md" && \
+#  github_changelog_generator -u netobserv -p network-observability-console-plugin --since-tag "$since-tag" --future-release "$vv" -o "$changelogs/plg.md" && \
+ sed -i 's/\(NETOBSERV-[0-9]\+\)/[\1](https:\/\/issues.redhat.com\/browse\/\1)/g' "$changelogs/plg.md"
 
 cd $path_gfk && \
  VERSION="$vv" USER="$user" make image push && \
  git tag -a "$vv" -m "$vv" && \
- git push $remote --tags
+ git push $remote --tags && \
+ github_changelog_generator -u netobserv -p goflow2-kube-enricher --since-commit "$since_date" --future-release "$vv" -o "$changelogs/gfk.md" && \
+#  github_changelog_generator -u netobserv -p goflow2-kube-enricher --since-tag "$since-tag" --future-release "$vv" -o "$changelogs/gfk.md" && \
+ sed -i 's/\(NETOBSERV-[0-9]\+\)/[\1](https:\/\/issues.redhat.com\/browse\/\1)/g' "$changelogs/gfk.md"
 
-cd $path_noo
-VERSION="$version" IMAGE_TAG_BASE="quay.io/$user/network-observability-operator" make image-build image-push
-VERSION="$version" IMAGE_TAG_BASE="quay.io/$user/network-observability-operator" make bundle bundle-build bundle-push
-git commit -a -m "Prepare release $vv"
-# TODO: push upstream, then:
-# git tag -a "$vv" -m "$vv"
-# git push $remote --tags
+cd $path_noo && \
+ VERSION="$version" IMAGE_TAG_BASE="quay.io/$user/network-observability-operator" make image-push bundle-push && \
+ git tag -a "$vv" -m "$vv" && \
+ git push $remote --tags && \
+ github_changelog_generator -u netobserv -p network-observability-operator --since-commit "$since_date" --future-release "$vv" -o "$changelogs/noo.md" && \
+#  github_changelog_generator -u netobserv -p network-observability-operator --since-tag "$since-tag" --future-release "$vv" -o "$changelogs/noo.md" && \
+ sed -i 's/\(NETOBSERV-[0-9]\+\)/[\1](https:\/\/issues.redhat.com\/browse\/\1)/g' "$changelogs/noo.md"
+
+# Then in github, create release from tag and paste the generated changelogs in all three repos
