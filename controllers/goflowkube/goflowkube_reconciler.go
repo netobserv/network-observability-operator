@@ -6,7 +6,7 @@ import (
 	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
-	ascv1 "k8s.io/api/autoscaling/v1"
+	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
@@ -29,7 +29,7 @@ type ownedObjects struct {
 	deployment     *appsv1.Deployment
 	daemonSet      *appsv1.DaemonSet
 	service        *corev1.Service
-	hpa            *ascv1.HorizontalPodAutoscaler
+	hpa            *ascv2.HorizontalPodAutoscaler
 	serviceAccount *corev1.ServiceAccount
 	configMap      *corev1.ConfigMap
 }
@@ -39,7 +39,7 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) GFKReconciler
 		deployment:     &appsv1.Deployment{},
 		daemonSet:      &appsv1.DaemonSet{},
 		service:        &corev1.Service{},
-		hpa:            &ascv1.HorizontalPodAutoscaler{},
+		hpa:            &ascv2.HorizontalPodAutoscaler{},
 		serviceAccount: &corev1.ServiceAccount{},
 		configMap:      &corev1.ConfigMap{},
 	}
@@ -248,7 +248,7 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *goflowKubeSpec) bool
 	return false
 }
 
-func autoScalerNeedsUpdate(asc *ascv1.HorizontalPodAutoscaler, desired *goflowKubeSpec, ns string) bool {
+func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired *goflowKubeSpec, ns string) bool {
 	if asc.Namespace != ns {
 		return true
 	}
@@ -256,8 +256,10 @@ func autoScalerNeedsUpdate(asc *ascv1.HorizontalPodAutoscaler, desired *goflowKu
 		return (a == nil && b != nil) || (a != nil && b == nil) || (a != nil && *a != *b)
 	}
 	if asc.Spec.MaxReplicas != desired.HPA.MaxReplicas ||
-		differentPointerValues(asc.Spec.MinReplicas, desired.HPA.MinReplicas) ||
-		differentPointerValues(asc.Spec.TargetCPUUtilizationPercentage, desired.HPA.TargetCPUUtilizationPercentage) {
+		differentPointerValues(asc.Spec.MinReplicas, desired.HPA.MinReplicas) {
+		return true
+	}
+	if !reflect.DeepEqual(asc.Spec.Metrics, desired.HPA.Metrics) {
 		return true
 	}
 	return false

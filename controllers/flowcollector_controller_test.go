@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
-	ascv1 "k8s.io/api/autoscaling/v1"
+	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -81,9 +81,18 @@ var _ = Describe("FlowCollector Controller", func() {
 						LogLevel:        "error",
 						Image:           "testimg:latest",
 						HPA: &flowsv1alpha1.FlowCollectorHPA{
-							MinReplicas:                    helper.Int32Ptr(1),
-							MaxReplicas:                    1,
-							TargetCPUUtilizationPercentage: helper.Int32Ptr(90),
+							MinReplicas: helper.Int32Ptr(1),
+							MaxReplicas: 1,
+							Metrics: []ascv2.MetricSpec{{
+								Type: ascv2.ResourceMetricSourceType,
+								Resource: &ascv2.ResourceMetricSource{
+									Name: v1.ResourceCPU,
+									Target: ascv2.MetricTarget{
+										Type:               ascv2.UtilizationMetricType,
+										AverageUtilization: helper.Int32Ptr(90),
+									},
+								},
+							}},
 						},
 					},
 					IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
@@ -93,6 +102,20 @@ var _ = Describe("FlowCollector Controller", func() {
 						Port:            9001,
 						ImagePullPolicy: "Never",
 						Image:           "testimg:latest",
+						HPA: &flowsv1alpha1.FlowCollectorHPA{
+							MinReplicas: helper.Int32Ptr(1),
+							MaxReplicas: 1,
+							Metrics: []ascv2.MetricSpec{{
+								Type: ascv2.ResourceMetricSourceType,
+								Resource: &ascv2.ResourceMetricSource{
+									Name: v1.ResourceCPU,
+									Target: ascv2.MetricTarget{
+										Type:               ascv2.UtilizationMetricType,
+										AverageUtilization: helper.Int32Ptr(90),
+									},
+								},
+							}},
+						},
 					},
 				},
 			}
@@ -206,11 +229,11 @@ var _ = Describe("FlowCollector Controller", func() {
 		})
 
 		It("Should autoscale when the HPA options change", func() {
-			hpa := ascv1.HorizontalPodAutoscaler{}
+			hpa := ascv2.HorizontalPodAutoscaler{}
 			Expect(k8sClient.Get(ctx, gfKey1, &hpa)).To(Succeed())
 			Expect(*hpa.Spec.MinReplicas).To(Equal(int32(1)))
 			Expect(hpa.Spec.MaxReplicas).To(Equal(int32(1)))
-			Expect(*hpa.Spec.TargetCPUUtilizationPercentage).To(Equal(int32(90)))
+			Expect(*hpa.Spec.Metrics[0].Resource.Target.AverageUtilization).To(Equal(int32(90)))
 			// update FlowCollector and verify that HPA spec also changed
 			fc := flowsv1alpha1.FlowCollector{}
 			Expect(k8sClient.Get(ctx, crKey, &fc)).To(Succeed())
@@ -224,10 +247,10 @@ var _ = Describe("FlowCollector Controller", func() {
 					return err
 				}
 				if *hpa.Spec.MinReplicas != int32(2) || hpa.Spec.MaxReplicas != int32(2) ||
-					*hpa.Spec.TargetCPUUtilizationPercentage != int32(90) {
+					*hpa.Spec.Metrics[0].Resource.Target.AverageUtilization != int32(90) {
 					return fmt.Errorf("expected {2, 2, 90}: Got %v, %v, %v",
 						*hpa.Spec.MinReplicas, hpa.Spec.MaxReplicas,
-						*hpa.Spec.TargetCPUUtilizationPercentage)
+						*hpa.Spec.Metrics[0].Resource.Target.AverageUtilization)
 				}
 				return nil
 			}, timeout, interval).Should(Succeed())
@@ -359,6 +382,7 @@ var _ = Describe("FlowCollector Controller", func() {
 				}
 				fc.Spec.ConsolePlugin.Port = 9099
 				fc.Spec.ConsolePlugin.Replicas = 2
+				fc.Spec.ConsolePlugin.HPA = nil
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 

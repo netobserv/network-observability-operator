@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,6 +30,20 @@ func getPluginConfig() flowsv1alpha1.FlowCollectorConsolePlugin {
 		Image:           testImage,
 		ImagePullPolicy: string(testPullPolicy),
 		Resources:       testResources,
+		HPA: &flowsv1alpha1.FlowCollectorHPA{
+			MinReplicas: &minReplicas,
+			MaxReplicas: maxReplicas,
+			Metrics: []ascv2.MetricSpec{ascv2.MetricSpec{
+				Type: ascv2.ResourceMetricSourceType,
+				Resource: &ascv2.ResourceMetricSource{
+					Name: corev1.ResourceCPU,
+					Target: ascv2.MetricTarget{
+						Type:               ascv2.UtilizationMetricType,
+						AverageUtilization: &targetCPU,
+					},
+				},
+			}},
+		},
 	}
 }
 
@@ -63,6 +78,38 @@ func getServiceSpecs() (corev1.Service, flowsv1alpha1.FlowCollectorConsolePlugin
 	}
 
 	return service, getPluginConfig()
+}
+
+var minReplicas = int32(1)
+var maxReplicas = int32(5)
+var targetCPU = int32(75)
+
+func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowsv1alpha1.FlowCollectorConsolePlugin) {
+	var autoScaler = ascv2.HorizontalPodAutoscaler{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: testNamespace,
+		},
+		Spec: ascv2.HorizontalPodAutoscalerSpec{
+			ScaleTargetRef: ascv2.CrossVersionObjectReference{
+				Kind: constants.DeploymentKind,
+				Name: constants.PluginName,
+			},
+			MinReplicas: &minReplicas,
+			MaxReplicas: maxReplicas,
+			Metrics: []ascv2.MetricSpec{{
+				Type: ascv2.ResourceMetricSourceType,
+				Resource: &ascv2.ResourceMetricSource{
+					Name: corev1.ResourceCPU,
+					Target: ascv2.MetricTarget{
+						Type:               ascv2.UtilizationMetricType,
+						AverageUtilization: &targetCPU,
+					},
+				},
+			}},
+		},
+	}
+
+	return autoScaler, getPluginConfig()
 }
 
 func TestContainerUpdateCheck(t *testing.T) {
@@ -157,4 +204,32 @@ func TestLabels(t *testing.T) {
 	assert.Equal("network-observability-plugin", svc.Spec.Selector["app"])
 	assert.Equal("dev", svc.Labels["version"])
 	assert.Empty(svc.Spec.Selector["version"])
+}
+
+func TestAutoScalerUpdateCheck(t *testing.T) {
+	assert := assert.New(t)
+
+	//equals specs
+	autoScalerSpec, plugin := getAutoScalerSpecs()
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), false)
+
+	//wrong max replicas
+	autoScalerSpec, plugin = getAutoScalerSpecs()
+	autoScalerSpec.Spec.MaxReplicas = 10
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), true)
+
+	//missing min replicas
+	autoScalerSpec, plugin = getAutoScalerSpecs()
+	autoScalerSpec.Spec.MinReplicas = nil
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), true)
+
+	//missing metrics
+	autoScalerSpec, plugin = getAutoScalerSpecs()
+	autoScalerSpec.Spec.Metrics = []ascv2.MetricSpec{}
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), true)
+
+	//wrong namespace
+	autoScalerSpec, plugin = getAutoScalerSpecs()
+	autoScalerSpec.Namespace = "NewNamespace"
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), true)
 }
