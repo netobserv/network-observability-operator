@@ -3,6 +3,9 @@ approvers:
 - jotak
 - jpinsonneau
 - OlivierCazade
+- eranra
+- KalmanMeth
+- ronensc
 options: {}
 reviewers:
 - mariomac
@@ -13,3 +16,6 @@ reviewers:
 - jechen0648
 - memodi
 - stleerh
+- eranra
+- KalmanMeth
+- ronensc
