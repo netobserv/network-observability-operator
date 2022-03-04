@@ -8,7 +8,7 @@
 # Make sure also all repo have the correct HEAD & clean state
 
 path_noo="../network-observability-operator"
-version="0.1.1-rc0"
+version="0.1.1-rc1"
 
 user=netobserv
 remote=upstream

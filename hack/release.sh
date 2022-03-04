@@ -11,7 +11,7 @@ path_noo="../network-observability-operator"
 path_gfk="../goflow2-kube-enricher"
 path_plg="../network-observability-console-plugin"
 changelogs="../changelogs"
-version="0.1.1-rc0"
+version="0.1.1-rc1"
 since_date="2022-01-28 08:58:11"
 # since-tag=v0.1.0
 
