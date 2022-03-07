@@ -7,7 +7,7 @@ import (
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
-	ascv1 "k8s.io/api/autoscaling/v1"
+	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -218,7 +218,7 @@ func (r *FlowCollectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.ConfigMap{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&appsv1.DaemonSet{}).
-		Owns(&ascv1.HorizontalPodAutoscaler{}).
+		Owns(&ascv2.HorizontalPodAutoscaler{}).
 		Owns(&corev1.Service{})
 
 	var err error

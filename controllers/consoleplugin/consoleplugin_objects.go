@@ -5,6 +5,7 @@ import (
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -33,11 +34,11 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorConsolePlugin, de
 	return builder{
 		namespace: ns,
 		labels: map[string]string{
-			"app":     pluginName,
+			"app":     constants.PluginName,
 			"version": version,
 		},
 		selector: map[string]string{
-			"app": pluginName,
+			"app": constants.PluginName,
 		},
 		desired:     desired,
 		desiredLoki: desiredLoki,
@@ -47,12 +48,12 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorConsolePlugin, de
 func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 	return &osv1alpha1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: pluginName,
+			Name: constants.PluginName,
 		},
 		Spec: osv1alpha1.ConsolePluginSpec{
 			DisplayName: displayName,
 			Service: osv1alpha1.ConsolePluginService{
-				Name:      pluginName,
+				Name:      constants.PluginName,
 				Namespace: b.namespace,
 				Port:      b.desired.Port,
 				BasePath:  "/",
@@ -61,7 +62,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 				Type:  osv1alpha1.ProxyTypeService,
 				Alias: proxyAlias,
 				Service: osv1alpha1.ConsolePluginProxyServiceConfig{
-					Name:      pluginName,
+					Name:      constants.PluginName,
 					Namespace: b.namespace,
 					Port:      b.desired.Port,
 				},
@@ -73,7 +74,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 func (b *builder) deployment() *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pluginName,
+			Name:      constants.PluginName,
 			Namespace: b.namespace,
 			Labels:    b.labels,
 			Annotations: map[string]string{
@@ -97,7 +98,7 @@ func (b *builder) podTemplate() *corev1.PodTemplateSpec {
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
-				Name:            pluginName,
+				Name:            constants.PluginName,
 				Image:           b.desired.Image,
 				ImagePullPolicy: corev1.PullPolicy(b.desired.ImagePullPolicy),
 				Resources:       *b.desired.Resources.DeepCopy(),
@@ -121,7 +122,27 @@ func (b *builder) podTemplate() *corev1.PodTemplateSpec {
 					},
 				},
 			}},
-			ServiceAccountName: pluginName,
+			ServiceAccountName: constants.PluginName,
+		},
+	}
+}
+
+func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
+	return &ascv2.HorizontalPodAutoscaler{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.PluginName,
+			Namespace: b.namespace,
+			Labels:    b.labels,
+		},
+		Spec: ascv2.HorizontalPodAutoscalerSpec{
+			ScaleTargetRef: ascv2.CrossVersionObjectReference{
+				Kind:       constants.DeploymentKind,
+				Name:       constants.PluginName,
+				APIVersion: "apps/v1",
+			},
+			MinReplicas: b.desired.HPA.MinReplicas,
+			MaxReplicas: b.desired.HPA.MaxReplicas,
+			Metrics:     b.desired.HPA.Metrics,
 		},
 	}
 }
@@ -130,7 +151,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 	if old == nil {
 		return &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      pluginName,
+				Name:      constants.PluginName,
 				Namespace: b.namespace,
 				Labels:    b.labels,
 				Annotations: map[string]string{
@@ -158,10 +179,10 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 func buildServiceAccount(ns string) *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pluginName,
+			Name:      constants.PluginName,
 			Namespace: ns,
 			Labels: map[string]string{
-				"app": pluginName,
+				"app": constants.PluginName,
 			},
 		},
 	}

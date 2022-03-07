@@ -22,7 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
-	ascv1 "k8s.io/api/autoscaling/v1"
+	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,9 +58,18 @@ func getGoflowKubeConfig() flowsv1alpha1.FlowCollectorGoflowKube {
 		LogLevel:        "trace",
 		Resources:       resources,
 		HPA: &flowsv1alpha1.FlowCollectorHPA{
-			MinReplicas:                    &minReplicas,
-			MaxReplicas:                    maxReplicas,
-			TargetCPUUtilizationPercentage: &targetCPU,
+			MinReplicas: &minReplicas,
+			MaxReplicas: maxReplicas,
+			Metrics: []ascv2.MetricSpec{ascv2.MetricSpec{
+				Type: ascv2.ResourceMetricSourceType,
+				Resource: &ascv2.ResourceMetricSource{
+					Name: corev1.ResourceCPU,
+					Target: ascv2.MetricTarget{
+						Type:               ascv2.UtilizationMetricType,
+						AverageUtilization: &targetCPU,
+					},
+				},
+			}},
 		},
 		PrintOutput: false,
 		HealthPort:  8080,
@@ -127,19 +136,28 @@ func TestBuildMainCommand(t *testing.T) {
 	assert.Equal(commands[2], cmd)
 }
 
-func getAutoScalerSpecs() (ascv1.HorizontalPodAutoscaler, flowsv1alpha1.FlowCollectorGoflowKube) {
-	var autoScaler = ascv1.HorizontalPodAutoscaler{
+func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowsv1alpha1.FlowCollectorGoflowKube) {
+	var autoScaler = ascv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: testNamespace,
 		},
-		Spec: ascv1.HorizontalPodAutoscalerSpec{
-			ScaleTargetRef: ascv1.CrossVersionObjectReference{
+		Spec: ascv2.HorizontalPodAutoscalerSpec{
+			ScaleTargetRef: ascv2.CrossVersionObjectReference{
 				Kind: constants.DeploymentKind,
 				Name: constants.GoflowKubeName,
 			},
-			MinReplicas:                    &minReplicas,
-			MaxReplicas:                    maxReplicas,
-			TargetCPUUtilizationPercentage: &targetCPU,
+			MinReplicas: &minReplicas,
+			MaxReplicas: maxReplicas,
+			Metrics: []ascv2.MetricSpec{ascv2.MetricSpec{
+				Type: ascv2.ResourceMetricSourceType,
+				Resource: &ascv2.ResourceMetricSource{
+					Name: corev1.ResourceCPU,
+					Target: ascv2.MetricTarget{
+						Type:               ascv2.UtilizationMetricType,
+						AverageUtilization: &targetCPU,
+					},
+				},
+			}},
 		},
 	}
 
@@ -240,9 +258,9 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	autoScalerSpec.Spec.MinReplicas = nil
 	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube, testNamespace), true)
 
-	//missing min target CPU
+	//missing metrics
 	autoScalerSpec, goflowKube = getAutoScalerSpecs()
-	autoScalerSpec.Spec.TargetCPUUtilizationPercentage = nil
+	autoScalerSpec.Spec.Metrics = []ascv2.MetricSpec{}
 	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &goflowKube, testNamespace), true)
 
 	//wrong namespace

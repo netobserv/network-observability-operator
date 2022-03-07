@@ -16,6 +16,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -134,10 +135,9 @@ type FlowCollectorHPA struct {
 	MinReplicas *int32 `json:"minReplicas,omitempty" protobuf:"varint,2,opt,name=minReplicas"`
 	// upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.
 	MaxReplicas int32 `json:"maxReplicas" protobuf:"varint,3,opt,name=maxReplicas"`
-	// target average CPU utilization (represented as a percentage of requested CPU) over all the pods;
-	// if not specified the default autoscaling policy will be used.
+	// Metrics used by the pod autoscaler
 	// +optional
-	TargetCPUUtilizationPercentage *int32 `json:"targetCPUUtilizationPercentage,omitempty" protobuf:"varint,4,opt,name=targetCPUUtilizationPercentage"`
+	Metrics []ascv2.MetricSpec `json:"metrics"`
 }
 
 // FlowCollectorLoki defines the desired state for FlowCollector's Loki client
@@ -217,6 +217,10 @@ type FlowCollectorConsolePlugin struct {
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
+
+	// HPA spec of an horizontal pod autoscaler to set up for the plugin Deployment.
+	// +optional
+	HPA *FlowCollectorHPA `json:"hpa,omitempty"`
 }
 
 // CNO defines the desired configuration related to the Cluster Network Configuration

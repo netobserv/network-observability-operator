@@ -3,6 +3,7 @@ package constants
 
 const (
 	GoflowKubeName = "goflow-kube"
+	PluginName     = "network-observability-plugin"
 	DeploymentKind = "Deployment"
 	DaemonSetKind  = "DaemonSet"
 )

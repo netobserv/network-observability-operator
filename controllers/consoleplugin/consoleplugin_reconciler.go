@@ -6,15 +6,15 @@ import (
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 )
-
-const pluginName = "network-observability-plugin"
 
 // Type alias
 type pluginSpec = flowsv1alpha1.FlowCollectorConsolePlugin
@@ -29,6 +29,7 @@ type CPReconciler struct {
 type ownedObjects struct {
 	deployment     *appsv1.Deployment
 	service        *corev1.Service
+	hpa            *ascv2.HorizontalPodAutoscaler
 	serviceAccount *corev1.ServiceAccount
 }
 
@@ -36,12 +37,14 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) CPReconciler 
 	owned := ownedObjects{
 		deployment:     &appsv1.Deployment{},
 		service:        &corev1.Service{},
+		hpa:            &ascv2.HorizontalPodAutoscaler{},
 		serviceAccount: &corev1.ServiceAccount{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
-	nobjMngr.AddManagedObject(pluginName, owned.deployment)
-	nobjMngr.AddManagedObject(pluginName, owned.service)
-	nobjMngr.AddManagedObject(pluginName, owned.serviceAccount)
+	nobjMngr.AddManagedObject(constants.PluginName, owned.deployment)
+	nobjMngr.AddManagedObject(constants.PluginName, owned.service)
+	nobjMngr.AddManagedObject(constants.PluginName, owned.hpa)
+	nobjMngr.AddManagedObject(constants.PluginName, owned.serviceAccount)
 
 	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
 }
@@ -67,10 +70,33 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 		return err
 	}
 
+	// Create object builder
+	builder := newBuilder(ns, &desired.ConsolePlugin, &desired.Loki)
+
+	if err = r.reconcilePlugin(ctx, builder, desired, ns); err != nil {
+		return err
+	}
+
+	if err = r.reconcileDeployment(ctx, builder, desired, ns); err != nil {
+		return err
+	}
+
+	if err = r.reconcileService(ctx, builder, desired, ns); err != nil {
+		return err
+	}
+
+	if err = r.reconcileHPA(ctx, builder, desired, ns); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) error {
 	// Console plugin is cluster-scope (it's not deployed in our namespace) however it must still be updated if our namespace changes
 	oldPlg := osv1alpha1.ConsolePlugin{}
 	pluginExists := true
-	err = r.Get(ctx, types.NamespacedName{Name: pluginName}, &oldPlg)
+	err := r.Get(ctx, types.NamespacedName{Name: constants.PluginName}, &oldPlg)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			pluginExists = false
@@ -78,9 +104,6 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 			return err
 		}
 	}
-
-	// Create object builder
-	builder := newBuilder(ns, &desired.ConsolePlugin, &desired.Loki)
 
 	// Check if objects need update
 	consolePlugin := builder.consolePlugin()
@@ -93,7 +116,10 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 			return err
 		}
 	}
+	return nil
+}
 
+func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) error {
 	newDepl := builder.deployment()
 	if !r.nobjMngr.Exists(r.owned.deployment) {
 		if err := r.CreateOwned(ctx, newDepl); err != nil {
@@ -104,7 +130,10 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 			return err
 		}
 	}
+	return nil
+}
 
+func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) error {
 	if !r.nobjMngr.Exists(r.owned.service) {
 		newSVC := builder.service(nil)
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
@@ -114,6 +143,25 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 		newSVC := builder.service(r.owned.service)
 		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func (r *CPReconciler) reconcileHPA(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) error {
+	// Delete or Create / Update Autoscaler according to HPA option
+	if desired.ConsolePlugin.HPA == nil {
+		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
+	} else {
+		newASC := builder.autoScaler()
+		if !r.nobjMngr.Exists(r.owned.hpa) {
+			if err := r.CreateOwned(ctx, newASC); err != nil {
+				return err
+			}
+		} else if autoScalerNeedsUpdate(r.owned.hpa, &desired.ConsolePlugin, ns) {
+			if err := r.UpdateOwned(ctx, r.owned.hpa, newASC); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -130,7 +178,7 @@ func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowC
 	}
 	return containerNeedsUpdate(&depl.Spec.Template.Spec, &desired.ConsolePlugin) ||
 		hasLokiURLChanged(depl, &desired.Loki) ||
-		*depl.Spec.Replicas != desired.ConsolePlugin.Replicas
+		(desired.ConsolePlugin.HPA == nil && *depl.Spec.Replicas != desired.ConsolePlugin.Replicas)
 }
 
 func hasLokiURLChanged(depl *appsv1.Deployment, loki *flowsv1alpha1.FlowCollectorLoki) bool {
@@ -157,7 +205,7 @@ func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollecto
 }
 
 func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pluginSpec) bool {
-	container := reconcilers.FindContainer(podSpec, pluginName)
+	container := reconcilers.FindContainer(podSpec, constants.PluginName)
 	if container == nil {
 		return true
 	}
@@ -165,6 +213,23 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pluginSpec) bool {
 		return true
 	}
 	if !reflect.DeepEqual(desired.Resources, container.Resources) {
+		return true
+	}
+	return false
+}
+
+func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired *pluginSpec, ns string) bool {
+	if asc.Namespace != ns {
+		return true
+	}
+	differentPointerValues := func(a, b *int32) bool {
+		return (a == nil && b != nil) || (a != nil && b == nil) || (a != nil && *a != *b)
+	}
+	if asc.Spec.MaxReplicas != desired.HPA.MaxReplicas ||
+		differentPointerValues(asc.Spec.MinReplicas, desired.HPA.MinReplicas) {
+		return true
+	}
+	if !reflect.DeepEqual(asc.Spec.Metrics, desired.HPA.Metrics) {
 		return true
 	}
 	return false
