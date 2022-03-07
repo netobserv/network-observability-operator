@@ -56,7 +56,7 @@ func getFLPConfig() flowsv1alpha1.FlowCollectorFLP {
 		HPA: &flowsv1alpha1.FlowCollectorHPA{
 			MinReplicas: &minReplicas,
 			MaxReplicas: maxReplicas,
-			Metrics: []ascv2.MetricSpec{ascv2.MetricSpec{
+			Metrics: []ascv2.MetricSpec{{
 				Type: ascv2.ResourceMetricSourceType,
 				Resource: &ascv2.ResourceMetricSource{
 					Name: corev1.ResourceCPU,
@@ -69,6 +69,19 @@ func getFLPConfig() flowsv1alpha1.FlowCollectorFLP {
 		},
 		PrintOutput: false,
 		HealthPort:  8080,
+	}
+}
+
+func getFLPConfigNoHPA() flowsv1alpha1.FlowCollectorFLP {
+	return flowsv1alpha1.FlowCollectorFLP{
+		Replicas:        1,
+		Port:            2055,
+		Image:           image,
+		ImagePullPolicy: string(pullPolicy),
+		LogLevel:        "trace",
+		Resources:       resources,
+		PrintOutput:     false,
+		HealthPort:      8080,
 	}
 }
 
@@ -102,7 +115,7 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowsv1alpha1.FlowColl
 			},
 			MinReplicas: &minReplicas,
 			MaxReplicas: maxReplicas,
-			Metrics: []ascv2.MetricSpec{ascv2.MetricSpec{
+			Metrics: []ascv2.MetricSpec{{
 				Type: ascv2.ResourceMetricSourceType,
 				Resource: &ascv2.ResourceMetricSource{
 					Name: corev1.ResourceCPU,
@@ -258,13 +271,33 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.True(deploymentNeedsUpdate(fourth, &flp, digest))
 	assert.False(deploymentNeedsUpdate(third, &flp, digest))
 
+	// Check replicas didn't change because HPA is used
+	flp2 := flp
+	flp2.Replicas = 5
+	b = newBuilder(ns, &flp2, &loki)
+	_, digest = b.configMap()
+
+	assert.False(deploymentNeedsUpdate(fifth, &flp2, digest))
+}
+
+func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
+	assert := assert.New(t)
+
+	// Get first
+	ns := "namespace"
+	flp := getFLPConfigNoHPA()
+	loki := getLokiConfig()
+	b := newBuilder(ns, &flp, &loki)
+	_, digest := b.configMap()
+	first := b.deployment(digest)
+
 	// Check replicas changed (need to copy flp, as Spec.Replicas stores a pointer)
 	flp2 := flp
 	flp2.Replicas = 5
 	b = newBuilder(ns, &flp2, &loki)
 	_, digest = b.configMap()
 
-	assert.True(deploymentNeedsUpdate(fifth, &flp2, digest))
+	assert.True(deploymentNeedsUpdate(first, &flp2, digest))
 }
 
 func TestServiceNoChange(t *testing.T) {
@@ -330,13 +363,12 @@ func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal("trace", decoded["log-level"])
 
-	pipeline := decoded["pipeline"].(map[interface{}]interface{})
-	ingest := pipeline["ingest"].(map[interface{}]interface{})
+	parameters := decoded["parameters"].([]interface{})
+	ingest := parameters[0].(map[interface{}]interface{})["ingest"].(map[interface{}]interface{})
 	collector := ingest["collector"].(map[interface{}]interface{})
 	assert.Equal(flp.Port, int32(collector["port"].(int)))
 
-	write := pipeline["write"].(map[interface{}]interface{})
-	lokiCfg := write["loki"].(map[interface{}]interface{})
+	lokiCfg := parameters[4].(map[interface{}]interface{})["write"].(map[interface{}]interface{})["loki"].(map[interface{}]interface{})
 	assert.Equal(loki.URL, lokiCfg["url"])
 	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg["batchWait"])
 	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg["minBackoff"])

@@ -1,11 +1,11 @@
 package flowlogspipeline
 
 import (
-	"encoding/json"
 	"fmt"
 	"hash/fnv"
 	"strconv"
 
+	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -34,81 +34,6 @@ const (
 // PodConfigurationDigest is an annotation name to facilitate pod restart after
 // any external configuration change
 const PodConfigurationDigest = "flows.netobserv.io/" + configMapName
-
-type Config struct {
-	LogLevel string   `json:"log-level,omitempty"`
-	Pipeline Pipeline `json:"pipeline,omitempty"`
-	Health   Health   `json:"health,omitempty"`
-}
-
-type Health struct {
-	Port int `json:"port"`
-}
-
-type Pipeline struct {
-	Ingest    Ingest      `json:"ingest"`
-	Decode    Decode      `json:"decode"`
-	Encode    Encode      `json:"encode"`
-	Extract   Extract     `json:"extract"`
-	Transform []Transform `json:"transform"`
-	Write     Write       `json:"write"`
-}
-
-type Ingest struct {
-	Collector Collector `json:"collector"`
-	Type      string    `json:"type"`
-}
-
-type Collector struct {
-	Hostname string `json:"hostname"`
-	Port     int    `json:"port"`
-}
-
-type Decode struct {
-	Type string `json:"type"`
-}
-
-type Encode struct {
-	Type string `json:"type"`
-}
-
-type Extract struct {
-	Type string `json:"type"`
-}
-
-type Write struct {
-	Loki Loki   `json:"loki"`
-	Type string `json:"type"`
-}
-
-type Loki struct {
-	URL            string            `json:"url,omitempty"`
-	BatchWait      metav1.Duration   `json:"batchWait,omitempty"`
-	BatchSize      int64             `json:"batchSize,omitempty"`
-	Timeout        metav1.Duration   `json:"timeout,omitempty"`
-	MinBackoff     metav1.Duration   `json:"minBackoff,omitempty"`
-	MaxBackoff     metav1.Duration   `json:"maxBackoff,omitempty"`
-	MaxRetries     int32             `json:"maxRetries,omitempty"`
-	Labels         []string          `json:"labels,omitempty"`
-	StaticLabels   map[string]string `json:"staticLabels,omitempty"`
-	TimestampLabel string            `json:"timestampLabel,omitempty"`
-}
-
-type Transform struct {
-	Network Network `json:"network"`
-	Type    string  `json:"type"`
-}
-
-type Network struct {
-	Rules []Rule `json:"rules"`
-}
-
-type Rule struct {
-	Input      string `json:"input,omitempty"`
-	Output     string `json:"output,omitempty"`
-	Type       string `json:"type,omitempty"`
-	Parameters string `json:"parameters,omitempty"`
-}
 
 type builder struct {
 	namespace   string
@@ -251,49 +176,91 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
 func (b *builder) configMap() (*corev1.ConfigMap, string) {
-	configStr := `{}`
-	config := &Config{
-		LogLevel: b.desired.LogLevel,
-		Health:   Health{Port: int(b.desired.HealthPort)},
-		Pipeline: Pipeline{
-			Ingest: Ingest{Type: "collector", Collector: Collector{
-				Hostname: "0.0.0.0",
-				Port:     int(b.desired.Port),
-			}},
-			Decode:  Decode{Type: "json"},
-			Encode:  Encode{Type: "none"},
-			Extract: Extract{Type: "none"},
-			Transform: []Transform{
-				{Type: "network", Network: Network{
-					Rules: []Rule{
-						{
-							Input:  "SrcAddr",
-							Output: "SrcK8S",
-							Type:   "add_kubernetes",
-						},
-						{
-							Input:  "DstAddr",
-							Output: "DstK8S",
-							Type:   "add_kubernetes",
-						},
-					},
-				}}},
-			Write: Write{Type: "loki", Loki: Loki{Labels: constants.LokiIndexFields}},
-		},
+	lokiWrite := map[string]interface{}{
+		"type":   "loki",
+		"labels": constants.LokiIndexFields,
 	}
 	if b.desiredLoki != nil {
-		config.Pipeline.Write.Loki.BatchSize = b.desiredLoki.BatchSize
-		config.Pipeline.Write.Loki.BatchWait = b.desiredLoki.BatchWait
-		config.Pipeline.Write.Loki.MaxBackoff = b.desiredLoki.MaxBackoff
-		config.Pipeline.Write.Loki.MaxRetries = b.desiredLoki.MaxRetries
-		config.Pipeline.Write.Loki.MinBackoff = b.desiredLoki.MinBackoff
-		config.Pipeline.Write.Loki.StaticLabels = b.desiredLoki.StaticLabels
-		config.Pipeline.Write.Loki.Timeout = b.desiredLoki.Timeout
-		config.Pipeline.Write.Loki.URL = b.desiredLoki.URL
-		config.Pipeline.Write.Loki.TimestampLabel = b.desiredLoki.TimestampLabel
+		lokiWrite["batchSize"] = b.desiredLoki.BatchSize
+		lokiWrite["batchWait"] = b.desiredLoki.BatchWait.ToUnstructured()
+		lokiWrite["maxBackoff"] = b.desiredLoki.MaxBackoff.ToUnstructured()
+		lokiWrite["maxRetries"] = b.desiredLoki.MaxRetries
+		lokiWrite["minBackoff"] = b.desiredLoki.MinBackoff.ToUnstructured()
+		lokiWrite["staticLabels"] = b.desiredLoki.StaticLabels
+		lokiWrite["timeout"] = b.desiredLoki.Timeout.ToUnstructured()
+		lokiWrite["url"] = b.desiredLoki.URL
+		lokiWrite["timestampLabel"] = b.desiredLoki.TimestampLabel
+	}
+	config := map[string]interface{}{
+		"log-level": b.desired.LogLevel,
+		"health": map[string]interface{}{
+			"port": b.desired.HealthPort,
+		},
+		"pipeline": []map[string]string{
+			{"name": "ingest"},
+			{"name": "decode",
+				"follows": "ingest",
+			},
+			{"name": "enrich",
+				"follows": "decode",
+			},
+			{"name": "encode",
+				"follows": "enrich",
+			},
+			{"name": "loki",
+				"follows": "encode",
+			},
+		},
+		"parameters": []map[string]interface{}{
+			{"name": "ingest",
+				"ingest": map[string]interface{}{
+					"type": "collector",
+					"collector": map[string]interface{}{
+						"port":     b.desired.Port,
+						"hostname": "0.0.0.0",
+					},
+				},
+			},
+			{"name": "decode",
+				"decode": map[string]interface{}{
+					"type": "json",
+				},
+			},
+			{"name": "enrich",
+				"transform": map[string]interface{}{
+					"type": "network",
+					"network": map[string]interface{}{
+						"rules": []map[string]interface{}{
+							{
+								"input":  "SrcAddr",
+								"output": "SrcK8S",
+								"type":   "add_kubernetes",
+							},
+							{
+								"input":  "DstAddr",
+								"output": "DstK8S",
+								"type":   "add_kubernetes",
+							},
+						},
+					},
+				},
+			},
+			{"name": "encode",
+				"encode": map[string]interface{}{
+					"type": "none",
+				},
+			},
+			{"name": "loki",
+				"write": map[string]interface{}{
+					"type": "loki",
+					"loki": lokiWrite,
+				},
+			},
+		},
 	}
 
-	bs, err := json.Marshal(config)
+	configStr := "{}"
+	bs, err := yaml.Marshal(config)
 	if err == nil {
 		configStr = string(bs)
 	}
