@@ -7,7 +7,7 @@
 
 path_noo="../network-observability-operator"
 path_hubs=("../community-operators" "../community-operators-okd")
-version="0.1.0"
+version="0.1.1"
 
 cd $path_noo
 for hub in "${path_hubs[@]}"; do
