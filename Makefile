@@ -131,9 +131,6 @@ coverage-report-html:
 build: generate fmt lint ## Build manager binary.
 	go build -ldflags "-X 'main.buildVersion=${BUILD_VERSION}' -X 'main.buildDate=${BUILD_DATE}'" -mod vendor -o bin/manager main.go
 
-run: manifests generate fmt lint ## Run a controller from your host.
-	go run ./main.go
-
 image-build:
 	$(OCI_BIN) build --build-arg BUILD_VERSION="${BUILD_VERSION}" -t ${IMG} .
 
