@@ -324,9 +324,9 @@ ocp-run: ocp-cleanup ocp-deploy   ## OCP-deploy + run the operator locally
 	kubectl wait --timeout=120s --for=condition=ready pod -l app=goflow-kube
 	@echo "### Enable network-observability-plugin in OCP console"
 	oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["network-observability-plugin"]}]'
-	@echo "### Starting log-flows export into goflow-kube pod"
-	GF_IP=`oc get svc goflow-kube -o jsonpath='{.spec.clusterIP}'` && \
-	echo "goflow-kube pod ID: $$GF_IP" && \
+	@echo "### Starting log-flows export into flowlogs-pipeline service"
+	GF_IP=`oc get svc flowlogs-pipeline -o jsonpath='{.spec.clusterIP}'` && \
+	echo "flowlogs-pipeline service IP: $$GF_IP" && \
 	oc patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$$GF_IP:2055']}}}}]"
 	@echo "### Operator process info"
 	@PID=$$(pgrep --oldest --full "main.go"); echo -e "\n===> The operator is running in process $$PID\nTo stop the operator process use: pkill -p $$PID"
