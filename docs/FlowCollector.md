@@ -230,6 +230,8 @@ ConsolePlugin contains settings related to the console dynamic plugin
         <td>object</td>
         <td>
           Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          <br/>
+            <i>Default</i>: map[limits:map[memory:100Mi] requests:map[cpu:100m memory:50Mi]]<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1299,6 +1301,8 @@ FlowlogsPipeline contains settings related to the flowlogs-pipeline component
         <td>object</td>
         <td>
           Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          <br/>
+            <i>Default</i>: map[limits:map[memory:300Mi] requests:map[cpu:100m memory:100Mi]]<br/>
         </td>
         <td>false</td>
       </tr></tbody>
