@@ -316,18 +316,18 @@ ocp-cleanup: undeploy-loki undeploy-grafana uninstall undeploy-sample-cr   ## OC
 
 .PHONY: ocp-run
 ocp-run: ocp-cleanup ocp-deploy   ## OCP-deploy + run the operator locally
-	@echo "### Running operator locally (in background process)"
+	@echo "====> Running operator locally (in background process)"
 	-PID=$$(pgrep --oldest --full "main.go"); pkill -P $$PID; pkill $$PID
 	go run ./main.go &
-	@echo "### Waiting for goflow-kube pod to be ready"
-	while : ; do kubectl get deployment goflow-kube && break; sleep 1; done
-	kubectl wait --timeout=120s --for=condition=ready pod -l app=goflow-kube
-	@echo "### Enable network-observability-plugin in OCP console"
+	@echo "====> Waiting for flowlogs-pipeline pod to be ready"
+	while : ; do kubectl get deployment flowlogs-pipeline && break; sleep 1; done
+	kubectl wait --timeout=120s --for=condition=ready pod -l app=flowlogs-pipeline
+	@echo "====> Enable network-observability-plugin in OCP console"
 	oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["network-observability-plugin"]}]'
-	@echo "### Starting log-flows export into flowlogs-pipeline service"
+	@echo "====> Starting log-flows export into flowlogs-pipeline service"
 	GF_IP=`oc get svc flowlogs-pipeline -o jsonpath='{.spec.clusterIP}'` && \
 	echo "flowlogs-pipeline service IP: $$GF_IP" && \
 	oc patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$$GF_IP:2055']}}}}]"
-	@echo "### Operator process info"
+	@echo "====> Operator process info"
 	@PID=$$(pgrep --oldest --full "main.go"); echo -e "\n===> The operator is running in process $$PID\nTo stop the operator process use: pkill -p $$PID"
-	@echo "### Done"
+	@echo "====> Done"
