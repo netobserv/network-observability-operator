@@ -2,10 +2,11 @@
 package constants
 
 const (
-	GoflowKubeName = "goflow-kube"
+	FLPName        = "flowlogs-pipeline"
+	FLPPortName    = "flp" // must be <15 chars
 	PluginName     = "network-observability-plugin"
 	DeploymentKind = "Deployment"
 	DaemonSetKind  = "DaemonSet"
 )
 
-var Labels = []string{"SrcNamespace", "SrcWorkload", "DstNamespace", "DstWorkload", "FlowDirection"}
+var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}

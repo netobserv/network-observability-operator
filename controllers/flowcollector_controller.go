@@ -19,7 +19,7 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
-	"github.com/netobserv/network-observability-operator/controllers/goflowkube"
+	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
 	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 )
@@ -110,10 +110,10 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	previousNamespace := desired.Status.Namespace
 
 	// Create reconcilers
-	gfReconciler := goflowkube.NewReconciler(clientHelper, ns, previousNamespace)
+	gfReconciler := flowlogspipeline.NewReconciler(clientHelper, ns, previousNamespace)
 	ovsConfigController := ovs.NewFlowsConfigController(clientHelper,
 		ns,
-		desired.Spec.CNO.Namespace,
+		desired.Spec.ClusterNetworkOperator.Namespace,
 		ovsFlowsConfigMapName,
 		r.lookupIP)
 	var cpReconciler consoleplugin.CPReconciler
@@ -129,9 +129,9 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 
-	// Goflow
-	if err := gfReconciler.Reconcile(ctx, &desired.Spec.GoflowKube, &desired.Spec.Loki); err != nil {
-		log.Error(err, "Failed to reconcile goflow-kube")
+	// Flowlogs-pipeline
+	if err := gfReconciler.Reconcile(ctx, &desired.Spec.FlowlogsPipeline, &desired.Spec.Loki); err != nil {
+		log.Error(err, "Failed to reconcile flowlogs-pipeline")
 		return ctrl.Result{}, err
 	}
 
@@ -156,7 +156,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	ctx context.Context,
 	oldNS, newNS string,
 	desired *flowsv1alpha1.FlowCollector,
-	gfReconciler *goflowkube.GFKReconciler,
+	gfReconciler *flowlogspipeline.FLPReconciler,
 	cpReconciler *consoleplugin.CPReconciler,
 ) error {
 	log := log.FromContext(ctx)

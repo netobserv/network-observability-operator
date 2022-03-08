@@ -84,10 +84,10 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspeccno">cno</a></b></td>
+        <td><b><a href="#flowcollectorspecclusternetworkoperator">clusterNetworkOperator</a></b></td>
         <td>object</td>
         <td>
-          CNO contains settings related to the cluster network operator<br/>
+          ClusterNetworkOperator contains settings related to the cluster network operator<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -98,10 +98,10 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkube">goflowkube</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipeline">flowlogsPipeline</a></b></td>
         <td>object</td>
         <td>
-          GoflowKube contains settings related to goflow-kube<br/>
+          FlowlogsPipeline contains settings related to the flowlogs-pipeline component<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -122,7 +122,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where console plugin and goflowkube pods are going to be deployed. If empty, the namespace of the operator is going to be used<br/>
+          Namespace where console plugin and collector pods are going to be deployed. If empty, the namespace of the operator is going to be used<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -131,12 +131,12 @@ FlowCollectorSpec defines the desired state of FlowCollector
 </table>
 
 
-### FlowCollector.spec.cno
+### FlowCollector.spec.clusterNetworkOperator
 <sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
 
 
 
-CNO contains settings related to the cluster network operator
+ClusterNetworkOperator contains settings related to the cluster network operator
 
 <table>
     <thead>
@@ -1179,12 +1179,12 @@ Compute Resources required by this container. Cannot be updated. More info: http
 </table>
 
 
-### FlowCollector.spec.goflowkube
+### FlowCollector.spec.flowlogsPipeline
 <sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
 
 
 
-GoflowKube contains settings related to goflow-kube
+FlowlogsPipeline contains settings related to the flowlogs-pipeline component
 
 <table>
     <thead>
@@ -1196,6 +1196,15 @@ GoflowKube contains settings related to goflow-kube
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>enableKubeProbes</b></td>
+        <td>boolean</td>
+        <td>
+          EnableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>healthPort</b></td>
         <td>integer</td>
         <td>
@@ -1208,7 +1217,7 @@ GoflowKube contains settings related to goflow-kube
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpa">hpa</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpa">hpa</a></b></td>
         <td>object</td>
         <td>
           HPA spec of an horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.<br/>
@@ -1220,7 +1229,7 @@ GoflowKube contains settings related to goflow-kube
         <td>
           Image is the collector image (including domain and tag)<br/>
           <br/>
-            <i>Default</i>: quay.io/netobserv/goflow2-kube:main<br/>
+            <i>Default</i>: quay.io/netobserv/flowlogs-pipeline:main<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1269,7 +1278,7 @@ GoflowKube contains settings related to goflow-kube
         <td><b>printOutput</b></td>
         <td>boolean</td>
         <td>
-          PrintOutput is a debug flag to print flows exported in kube-enricher logs<br/>
+          PrintOutput is a debug flag to print flows exported in flowlogs-pipeline stdout<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -1286,7 +1295,7 @@ GoflowKube contains settings related to goflow-kube
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkuberesources">resources</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelineresources">resources</a></b></td>
         <td>object</td>
         <td>
           Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
@@ -1296,8 +1305,8 @@ GoflowKube contains settings related to goflow-kube
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkube)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipeline)</sup></sup>
 
 
 
@@ -1322,7 +1331,7 @@ HPA spec of an horizontal pod autoscaler to set up for the collector Deployment.
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindex">metrics</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindex">metrics</a></b></td>
         <td>[]object</td>
         <td>
           Metrics used by the pod autoscaler<br/>
@@ -1341,8 +1350,8 @@ HPA spec of an horizontal pod autoscaler to set up for the collector Deployment.
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index]
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpa)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index]
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpa)</sup></sup>
 
 
 
@@ -1365,35 +1374,35 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexcontainerresource">containerResource</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexcontainerresource">containerResource</a></b></td>
         <td>object</td>
         <td>
           container resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexexternal">external</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexexternal">external</a></b></td>
         <td>object</td>
         <td>
           external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexobject">object</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexobject">object</a></b></td>
         <td>object</td>
         <td>
           object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexpods">pods</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexpods">pods</a></b></td>
         <td>object</td>
         <td>
           pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexresource">resource</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexresource">resource</a></b></td>
         <td>object</td>
         <td>
           resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
@@ -1403,8 +1412,8 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].containerResource
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindex)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].containerResource
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindex)</sup></sup>
 
 
 
@@ -1434,7 +1443,7 @@ container resource refers to a resource metric (such as those specified in reque
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexcontainerresourcetarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexcontainerresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -1444,8 +1453,8 @@ container resource refers to a resource metric (such as those specified in reque
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].containerResource.target
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexcontainerresource)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].containerResource.target
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexcontainerresource)</sup></sup>
 
 
 
@@ -1494,8 +1503,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].external
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindex)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].external
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindex)</sup></sup>
 
 
 
@@ -1511,14 +1520,14 @@ external refers to a global metric that is not associated with any Kubernetes ob
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexexternalmetric">metric</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexexternalmetric">metric</a></b></td>
         <td>object</td>
         <td>
           metric identifies the target metric by name and selector<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexexternaltarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexexternaltarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -1528,8 +1537,8 @@ external refers to a global metric that is not associated with any Kubernetes ob
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].external.metric
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexexternal)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].external.metric
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexexternal)</sup></sup>
 
 
 
@@ -1552,7 +1561,7 @@ metric identifies the target metric by name and selector
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexexternalmetricselector">selector</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexexternalmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
           selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
@@ -1562,8 +1571,8 @@ metric identifies the target metric by name and selector
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].external.metric.selector
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexexternalmetric)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].external.metric.selector
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexexternalmetric)</sup></sup>
 
 
 
@@ -1579,7 +1588,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexexternalmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexexternalmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
           matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
@@ -1596,8 +1605,8 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].external.metric.selector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexexternalmetricselector)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].external.metric.selector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexexternalmetricselector)</sup></sup>
 
 
 
@@ -1637,8 +1646,8 @@ A label selector requirement is a selector that contains values, a key, and an o
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].external.target
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexexternal)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].external.target
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexexternal)</sup></sup>
 
 
 
@@ -1687,8 +1696,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].object
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindex)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].object
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindex)</sup></sup>
 
 
 
@@ -1704,21 +1713,21 @@ object refers to a metric describing a single kubernetes object (for example, hi
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexobjectdescribedobject">describedObject</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexobjectdescribedobject">describedObject</a></b></td>
         <td>object</td>
         <td>
           CrossVersionObjectReference contains enough information to let you identify the referred resource.<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexobjectmetric">metric</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexobjectmetric">metric</a></b></td>
         <td>object</td>
         <td>
           metric identifies the target metric by name and selector<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexobjecttarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexobjecttarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -1728,8 +1737,8 @@ object refers to a metric describing a single kubernetes object (for example, hi
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].object.describedObject
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexobject)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].object.describedObject
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexobject)</sup></sup>
 
 
 
@@ -1769,8 +1778,8 @@ CrossVersionObjectReference contains enough information to let you identify the 
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].object.metric
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexobject)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].object.metric
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexobject)</sup></sup>
 
 
 
@@ -1793,7 +1802,7 @@ metric identifies the target metric by name and selector
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexobjectmetricselector">selector</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexobjectmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
           selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
@@ -1803,8 +1812,8 @@ metric identifies the target metric by name and selector
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].object.metric.selector
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexobjectmetric)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].object.metric.selector
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexobjectmetric)</sup></sup>
 
 
 
@@ -1820,7 +1829,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexobjectmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexobjectmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
           matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
@@ -1837,8 +1846,8 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].object.metric.selector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexobjectmetricselector)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].object.metric.selector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexobjectmetricselector)</sup></sup>
 
 
 
@@ -1878,8 +1887,8 @@ A label selector requirement is a selector that contains values, a key, and an o
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].object.target
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexobject)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].object.target
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexobject)</sup></sup>
 
 
 
@@ -1928,8 +1937,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].pods
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindex)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].pods
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindex)</sup></sup>
 
 
 
@@ -1945,14 +1954,14 @@ pods refers to a metric describing each pod in the current scale target (for exa
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexpodsmetric">metric</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexpodsmetric">metric</a></b></td>
         <td>object</td>
         <td>
           metric identifies the target metric by name and selector<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexpodstarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexpodstarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -1962,8 +1971,8 @@ pods refers to a metric describing each pod in the current scale target (for exa
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].pods.metric
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexpods)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].pods.metric
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexpods)</sup></sup>
 
 
 
@@ -1986,7 +1995,7 @@ metric identifies the target metric by name and selector
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexpodsmetricselector">selector</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexpodsmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
           selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
@@ -1996,8 +2005,8 @@ metric identifies the target metric by name and selector
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].pods.metric.selector
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexpodsmetric)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].pods.metric.selector
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexpodsmetric)</sup></sup>
 
 
 
@@ -2013,7 +2022,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexpodsmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexpodsmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
           matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
@@ -2030,8 +2039,8 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].pods.metric.selector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexpodsmetricselector)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].pods.metric.selector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexpodsmetricselector)</sup></sup>
 
 
 
@@ -2071,8 +2080,8 @@ A label selector requirement is a selector that contains values, a key, and an o
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].pods.target
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexpods)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].pods.target
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexpods)</sup></sup>
 
 
 
@@ -2121,8 +2130,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].resource
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindex)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].resource
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindex)</sup></sup>
 
 
 
@@ -2145,7 +2154,7 @@ resource refers to a resource metric (such as those specified in requests and li
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecgoflowkubehpametricsindexresourcetarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -2155,8 +2164,8 @@ resource refers to a resource metric (such as those specified in requests and li
 </table>
 
 
-### FlowCollector.spec.goflowkube.hpa.metrics[index].resource.target
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkubehpametricsindexresource)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].resource.target
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexresource)</sup></sup>
 
 
 
@@ -2205,8 +2214,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.goflowkube.resources
-<sup><sup>[↩ Parent](#flowcollectorspecgoflowkube)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.resources
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipeline)</sup></sup>
 
 
 
@@ -2422,7 +2431,7 @@ FlowCollectorStatus defines the observed state of FlowCollector
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where console plugin and goflowkube have been deployed.<br/>
+          Namespace where console plugin and flowlogs-pipeline have been deployed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

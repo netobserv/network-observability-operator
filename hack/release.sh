@@ -8,7 +8,7 @@
 # Make sure also all repo have the correct HEAD & clean state
 
 path_noo="../network-observability-operator"
-path_gfk="../goflow2-kube-enricher"
+path_gfk="../flowlogs-pipeline"
 path_plg="../network-observability-console-plugin"
 changelogs="../changelogs"
 version="0.1.1"

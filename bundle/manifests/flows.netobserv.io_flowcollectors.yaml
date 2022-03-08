@@ -39,9 +39,9 @@ spec:
           spec:
             description: FlowCollectorSpec defines the desired state of FlowCollector
             properties:
-              cno:
-                description: CNO contains settings related to the cluster network
-                  operator
+              clusterNetworkOperator:
+                description: ClusterNetworkOperator contains settings related to the
+                  cluster network operator
                 properties:
                   namespace:
                     default: openshift-network-operator
@@ -107,9 +107,15 @@ spec:
                         type: object
                     type: object
                 type: object
-              goflowkube:
-                description: GoflowKube contains settings related to goflow-kube
+              flowlogsPipeline:
+                description: FlowlogsPipeline contains settings related to the flowlogs-pipeline
+                  component
                 properties:
+                  enableKubeProbes:
+                    default: true
+                    description: EnableKubeProbes is a flag to enable or disable Kubernetes
+                      liveness/readiness probes
+                    type: boolean
                   healthPort:
                     default: 8080
                     description: HealthPort is a collector HTTP port in the Pod that
@@ -146,7 +152,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/goflow2-kube:v0.1.1
+                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.1
                     description: Image is the collector image (including domain and
                       tag)
                     type: string
@@ -192,7 +198,7 @@ spec:
                   printOutput:
                     default: false
                     description: PrintOutput is a debug flag to print flows exported
-                      in kube-enricher logs
+                      in flowlogs-pipeline stdout
                     type: boolean
                   replicas:
                     default: 1
@@ -316,7 +322,7 @@ spec:
                 type: object
               namespace:
                 default: ""
-                description: Namespace where console plugin and goflowkube pods are
+                description: Namespace where console plugin and collector pods are
                   going to be deployed. If empty, the namespace of the operator is
                   going to be used
                 type: string
@@ -325,8 +331,8 @@ spec:
             description: FlowCollectorStatus defines the observed state of FlowCollector
             properties:
               namespace:
-                description: Namespace where console plugin and goflowkube have been
-                  deployed.
+                description: Namespace where console plugin and flowlogs-pipeline
+                  have been deployed.
                 type: string
             type: object
         type: object

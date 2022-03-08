@@ -68,6 +68,7 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - nodes
   - pods
   - services
   verbs:
