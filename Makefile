@@ -134,10 +134,8 @@ build: generate fmt lint ## Build manager binary.
 image-build:
 	$(OCI_BIN) build --build-arg BUILD_VERSION="${BUILD_VERSION}" -t ${IMG} .
 
-image-sha-build: image-build
-	echo "FROM ${IMG}" > tmp.Dockerfile && \
-		$(OCI_BIN) build --label quay.expires-after=2w -t ${IMG_SHA} -f tmp.Dockerfile . && \
-		rm tmp.Dockerfile
+ci-images-build: image-build
+	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMG) -t $(IMG_SHA) -f ./shortlived.Dockerfile .
 
 image-push: ## Push OCI image with the manager.
 	$(OCI_BIN) push ${IMG}
