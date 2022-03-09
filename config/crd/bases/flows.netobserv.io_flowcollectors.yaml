@@ -597,6 +597,12 @@ spec:
                     minimum: 0
                     type: integer
                   resources:
+                    default:
+                      limits:
+                        memory: 100Mi
+                      requests:
+                        cpu: 100m
+                        memory: 50Mi
                     description: 'Compute Resources required by this container. Cannot
                       be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                     properties:
@@ -1217,6 +1223,12 @@ spec:
                     minimum: 0
                     type: integer
                   resources:
+                    default:
+                      limits:
+                        memory: 300Mi
+                      requests:
+                        cpu: 100m
+                        memory: 100Mi
                     description: 'Compute Resources required by this container. Cannot
                       be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                     properties:
