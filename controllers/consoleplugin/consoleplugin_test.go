@@ -170,7 +170,7 @@ func TestBuiltContainer(t *testing.T) {
 	plugin := getPluginConfig()
 	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234"}
 	builder := newBuilder(testNamespace, &plugin, loki)
-	newContainer := builder.podTemplate()
+	newContainer := builder.podTemplate("digest")
 	assert.Equal(containerNeedsUpdate(&newContainer.Spec, &plugin), false)
 }
 
@@ -192,7 +192,7 @@ func TestLabels(t *testing.T) {
 	builder := newBuilder(testNamespace, &plugin, loki)
 
 	// Deployment
-	depl := builder.deployment()
+	depl := builder.deployment("digest")
 	assert.Equal("network-observability-plugin", depl.Labels["app"])
 	assert.Equal("network-observability-plugin", depl.Spec.Template.Labels["app"])
 	assert.Equal("dev", depl.Labels["version"])

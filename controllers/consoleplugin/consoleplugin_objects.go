@@ -1,9 +1,12 @@
 package consoleplugin
 
 import (
+	"hash/fnv"
+	"strconv"
 	"strings"
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
+	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -17,6 +20,15 @@ import (
 const secretName = "console-serving-cert"
 const displayName = "Network Observability plugin"
 const proxyAlias = "backend"
+
+const configMapName = "console-plugin-config"
+const configFile = "config.yaml"
+const configVolume = "config-volume"
+const configPath = "/opt/app-root/"
+
+// PodConfigurationDigest is an annotation name to facilitate pod restart after
+// any external configuration change
+const PodConfigurationDigest = "flows.netobserv.io/" + configMapName
 
 // lokiURLAnnotation contains the used Loki querier URL, facilitating the change management
 const lokiURLAnnotation = "flows.netobserv.io/loki-url"
@@ -71,7 +83,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 	}
 }
 
-func (b *builder) deployment() *appsv1.Deployment {
+func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.PluginName,
@@ -86,15 +98,18 @@ func (b *builder) deployment() *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: b.selector,
 			},
-			Template: *b.podTemplate(),
+			Template: *b.podTemplate(cmDigest),
 		},
 	}
 }
 
-func (b *builder) podTemplate() *corev1.PodTemplateSpec {
+func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 	return &corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: b.labels,
+			Annotations: map[string]string{
+				PodConfigurationDigest: cmDigest,
+			},
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
@@ -106,12 +121,19 @@ func (b *builder) podTemplate() *corev1.PodTemplateSpec {
 					Name:      secretName,
 					MountPath: "/var/serving-cert",
 					ReadOnly:  true,
-				}},
+				},
+					{
+						Name:      configVolume,
+						MountPath: configPath,
+						ReadOnly:  true,
+					}},
 				Args: []string{
 					"-cert", "/var/serving-cert/tls.crt",
 					"-key", "/var/serving-cert/tls.key",
 					"-loki", querierURL(b.desiredLoki),
 					"-loki-labels", strings.Join(constants.LokiIndexFields, ","),
+					"-loglevel", b.desired.LogLevel,
+					"-frontend-config", configPath + configFile,
 				},
 			}},
 			Volumes: []corev1.Volume{{
@@ -121,7 +143,17 @@ func (b *builder) podTemplate() *corev1.PodTemplateSpec {
 						SecretName: secretName,
 					},
 				},
-			}},
+			}, {
+				Name: configVolume,
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: configMapName,
+						},
+					},
+				},
+			},
+			},
 			ServiceAccountName: constants.PluginName,
 		},
 	}
@@ -186,4 +218,32 @@ func buildServiceAccount(ns string) *corev1.ServiceAccount {
 			},
 		},
 	}
+}
+
+// returns a configmap with a digest of its configuration contents, which will be used to
+// detect any configuration change
+func (b *builder) configMap() (*corev1.ConfigMap, string) {
+	config := map[string]interface{}{
+		"portNaming": b.desired.PortNaming,
+	}
+
+	configStr := "{}"
+	if bs, err := yaml.Marshal(config); err == nil {
+		configStr = string(bs)
+	}
+
+	configMap := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      configMapName,
+			Namespace: b.namespace,
+			Labels:    b.labels,
+		},
+		Data: map[string]string{
+			configFile: configStr,
+		},
+	}
+	hasher := fnv.New64a()
+	_, _ = hasher.Write([]byte(configStr))
+	digest := strconv.FormatUint(hasher.Sum64(), 36)
+	return &configMap, digest
 }
