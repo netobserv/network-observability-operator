@@ -1,7 +1,7 @@
 name: release to quay.io
 on:
   push:
-    tags: [*]
+    tags: ['*']
 
 env:
   REGISTRY_USER: netobserv+github_ci
