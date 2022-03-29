@@ -95,7 +95,7 @@ var _ = Describe("FlowCollector Controller", func() {
 							}},
 						},
 					},
-					IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
+					IPFIX: &flowsv1alpha1.FlowCollectorIPFIX{
 						Sampling: 200,
 					},
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
@@ -270,7 +270,7 @@ var _ = Describe("FlowCollector Controller", func() {
 				Image:           "testimg:latest",
 			}
 			fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}
-			fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
+			fc.Spec.IPFIX = &flowsv1alpha1.FlowCollectorIPFIX{
 				Sampling: 200,
 			}
 			// Update
@@ -447,7 +447,7 @@ var _ = Describe("FlowCollector Controller", func() {
 				fc.Spec.FlowlogsPipeline.Kind = "Deployment"
 				fc.Spec.FlowlogsPipeline.Port = 9999
 				fc.Spec.Namespace = otherNamespace
-				fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
+				fc.Spec.IPFIX = &flowsv1alpha1.FlowCollectorIPFIX{
 					Sampling: 200,
 				}
 				return k8sClient.Update(ctx, &fc)

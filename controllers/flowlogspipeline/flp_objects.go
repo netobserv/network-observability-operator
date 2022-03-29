@@ -214,6 +214,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		"parameters": []map[string]interface{}{
 			{"name": "ingest",
 				"ingest": map[string]interface{}{
+					// // TODO: if ebpf is enabled, use another
 					"type": "collector",
 					"collector": map[string]interface{}{
 						"port":     b.desired.Port,

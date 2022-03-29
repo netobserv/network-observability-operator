@@ -630,6 +630,53 @@ spec:
                         type: object
                     type: object
                 type: object
+              ebpf:
+                description: EBPF contains the settings of an eBPF-based flow reporter.
+                  This section should not be defined if the ipfix section is already
+                  defined
+                properties:
+                  image:
+                    default: quay.io/netobserv/netobserv-agent:main
+                    description: Image is the NetObserv Agent image (including domain
+                      and tag)
+                    type: string
+                  imagePullPolicy:
+                    default: IfNotPresent
+                    description: ImagePullPolicy is the Kubernetes pull policy for
+                      the image defined above
+                    enum:
+                    - IfNotPresent
+                    - Always
+                    - Never
+                    type: string
+                  resources:
+                    description: 'Compute Resources required by this container. Cannot
+                      be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                    type: object
+                type: object
               flowlogsPipeline:
                 description: FlowlogsPipeline contains settings related to the flowlogs-pipeline
                   component
@@ -1257,7 +1304,9 @@ spec:
                     type: object
                 type: object
               ipfix:
-                description: IPFIX contains IPFIX-related settings for the flow reporter
+                description: IPFIX contains the settings of an IPFIX-based flow reporter.
+                  This section should not be defined if the ebpf section is already
+                  defined
                 properties:
                   cacheActiveTimeout:
                     default: 10s
