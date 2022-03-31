@@ -36,14 +36,15 @@ const (
 const PodConfigurationDigest = "flows.netobserv.io/" + configMapName
 
 type builder struct {
-	namespace   string
-	labels      map[string]string
-	selector    map[string]string
-	desired     *flowsv1alpha1.FlowCollectorFLP
-	desiredLoki *flowsv1alpha1.FlowCollectorLoki
+	namespace    string
+	labels       map[string]string
+	selector     map[string]string
+	portProtocol corev1.Protocol
+	desired      *flowsv1alpha1.FlowCollectorFLP
+	desiredLoki  *flowsv1alpha1.FlowCollectorLoki
 }
 
-func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki) builder {
+func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki) builder {
 	version := helper.ExtractVersion(desired.Image)
 	return builder{
 		namespace: ns,
@@ -54,8 +55,9 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki 
 		selector: map[string]string{
 			"app": constants.FLPName,
 		},
-		desired:     desired,
-		desiredLoki: desiredLoki,
+		desired:      desired,
+		desiredLoki:  desiredLoki,
+		portProtocol: portProtocol,
 	}
 }
 
@@ -100,7 +102,7 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 			Name:          constants.FLPPortName,
 			HostPort:      b.desired.Port,
 			ContainerPort: b.desired.Port,
-			Protocol:      corev1.ProtocolUDP,
+			Protocol:      b.portProtocol,
 		}}
 		// This allows deploying an instance in the master node, the same technique used in the
 		// companion ovnkube-node daemonset definition
@@ -191,6 +193,45 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		lokiWrite["url"] = b.desiredLoki.URL
 		lokiWrite["timestampLabel"] = b.desiredLoki.TimestampLabel
 	}
+
+	var ingest, decoder map[string]interface{}
+	if b.portProtocol == corev1.ProtocolUDP {
+		// UDP Port: IPFIX collector with JSON decoder
+		ingest = map[string]interface{}{
+			"name": "ingest",
+			"ingest": map[string]interface{}{
+				"type": "collector",
+				"collector": map[string]interface{}{
+					"port":     b.desired.Port,
+					"hostname": "0.0.0.0",
+				},
+			},
+		}
+		decoder = map[string]interface{}{
+			"name": "decode",
+			"decode": map[string]interface{}{
+				"type": "json",
+			},
+		}
+	} else {
+		// TCP Port: GRPC collector (eBPF agent) with Protobuf decoder
+		ingest = map[string]interface{}{
+			"name": "ingest",
+			"ingest": map[string]interface{}{
+				"type": "grpc",
+				"grpc": map[string]interface{}{
+					"port": b.desired.Port,
+				},
+			},
+		}
+		decoder = map[string]interface{}{
+			"name": "decode",
+			"decode": map[string]interface{}{
+				"type": "protobuf",
+			},
+		}
+	}
+
 	config := map[string]interface{}{
 		"log-level": b.desired.LogLevel,
 		"health": map[string]interface{}{
@@ -212,21 +253,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 			},
 		},
 		"parameters": []map[string]interface{}{
-			{"name": "ingest",
-				"ingest": map[string]interface{}{
-					// // TODO: if ebpf is enabled, use another
-					"type": "collector",
-					"collector": map[string]interface{}{
-						"port":     b.desired.Port,
-						"hostname": "0.0.0.0",
-					},
-				},
-			},
-			{"name": "decode",
-				"decode": map[string]interface{}{
-					"type": "json",
-				},
-			},
+			ingest, decoder,
 			{"name": "enrich",
 				"transform": map[string]interface{}{
 					"type": "network",
@@ -295,7 +322,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 				SessionAffinity: corev1.ServiceAffinityClientIP,
 				Ports: []corev1.ServicePort{{
 					Port:     b.desired.Port,
-					Protocol: corev1.ProtocolUDP,
+					Protocol: b.portProtocol,
 				}},
 			},
 		}
@@ -304,7 +331,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 	newService := old.DeepCopy()
 	newService.Spec.Ports = []corev1.ServicePort{{
 		Port:     b.desired.Port,
-		Protocol: corev1.ProtocolUDP,
+		Protocol: b.portProtocol,
 	}}
 	return newService
 }

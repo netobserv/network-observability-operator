@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	ierrors "errors"
+	"fmt"
 	"net"
 	"strings"
 
@@ -127,7 +128,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	// Flowlogs-pipeline
-	if err := gfReconciler.Reconcile(ctx, &desired.Spec.FlowlogsPipeline, &desired.Spec.Loki); err != nil {
+	if err := gfReconciler.Reconcile(ctx, desired); err != nil {
 		log.Error(err, "Failed to reconcile flowlogs-pipeline")
 		return ctrl.Result{}, err
 	}
@@ -146,13 +147,15 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			ovsFlowsConfigMapName,
 			r.lookupIP)
 		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
-			log.Error(err, "Failed to reconcile ovs-flows-config ConfigMap")
+			return ctrl.Result{},
+				fmt.Errorf("failed to reconcile ovs-flows-config ConfigMap: %w", err)
 		}
 	}
 	if desired.Spec.EBPF != nil {
 		ebpfAgentController := ebpf.NewAgentController(clientHelper, ns)
 		if err := ebpfAgentController.Reconcile(ctx, desired); err != nil {
-			log.Error(err, "Failed to reconcile eBPF Netobserv Agent")
+			return ctrl.Result{},
+				fmt.Errorf("failed to reconcile eBPF Netobserv Agent: %w", err)
 		}
 	}
 

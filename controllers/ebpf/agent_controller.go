@@ -58,15 +58,19 @@ func (c *AgentController) Reconcile(
 	desired := c.desired(target)
 	switch c.requiredAction(current, desired) {
 	case actionNone:
+		rlog.Info("action: none")
 		return nil
 	case actionCreate:
+		rlog.Info("action: create agent")
 		return c.client.Create(ctx, desired)
 	case actionDelete:
+		rlog.Info("action: delete agent")
 		return c.client.Delete(ctx, current)
 	case actionUpdate:
+		rlog.Info("action: update agent")
 		return c.client.Update(ctx, current)
 	}
-
+	rlog.Info("unexpected action. Doing nothing")
 	return nil
 }
 
@@ -106,8 +110,9 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 					Labels: map[string]string{"app": agentName},
 				},
 				Spec: corev1.PodSpec{
-					HostNetwork: true,
-					DNSPolicy:   corev1.DNSClusterFirstWithHostNet,
+					ServiceAccountName: "netobserv-agent",
+					HostNetwork:        true,
+					DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
 					Containers: []corev1.Container{{
 						Name:            agentName,
 						Image:           coll.Spec.EBPF.Image,
@@ -145,11 +150,6 @@ func (c *AgentController) flpEndpoint(coll *flowsv1alpha1.FlowCollector) []corev
 		return []corev1.EnvVar{{
 			Name:  flowsTargetHostEnvVar,
 			Value: constants.FLPName + "." + c.namespace,
-			ValueFrom: &corev1.EnvVarSource{
-				FieldRef: &corev1.ObjectFieldSelector{
-					FieldPath: "status.hostIP",
-				},
-			},
 		}, {
 			Name:  flowsTargetPortEnvVar,
 			Value: strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)),

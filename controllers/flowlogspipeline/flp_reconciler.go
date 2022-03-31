@@ -77,13 +77,18 @@ func validateDesired(desired *flpSpec) error {
 }
 
 // Reconcile is the reconciler entry point to reconcile the current flowlogs-pipeline state with the desired configuration
-func (r *FLPReconciler) Reconcile(ctx context.Context, desiredFLP *flpSpec, desiredLoki *lokiSpec) error {
+func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+	desiredFLP := &desired.Spec.FlowlogsPipeline
 	err := validateDesired(desiredFLP)
 	if err != nil {
 		return err
 	}
-
-	builder := newBuilder(r.nobjMngr.Namespace, desiredFLP, desiredLoki)
+	desiredLoki := &desired.Spec.Loki
+	portProtocol := corev1.ProtocolUDP
+	if desired.Spec.EBPF != nil {
+		portProtocol = corev1.ProtocolTCP
+	}
+	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki)
 	// Retrieve current owned objects
 	err = r.nobjMngr.FetchAll(ctx)
 	if err != nil {
