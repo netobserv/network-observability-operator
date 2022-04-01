@@ -8,6 +8,9 @@ BUILD_VERSION := $(shell git describe --long HEAD)
 BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
 BUILD_SHA := $(shell git rev-parse --short HEAD)
 
+# Port-forward (for loki/grafana deployments)
+PORT_FWD ?= true
+
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
@@ -270,8 +273,10 @@ deploy-loki: ## Deploy loki.
 	curl -S -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/2-loki.yaml	 | kubectl create -f - || true
 	kubectl wait --timeout=120s --for=condition=ready pod -l app=loki
 	-pkill --oldest --full "3100:3100"
+ifeq (true, $(PORT_FWD))
 	kubectl port-forward --address 0.0.0.0 svc/loki 3100:3100 2>&1 >/dev/null &
 	@echo -e "\n===> loki endpoint is available on http://localhost:3100\n"
+endif
 
 .PHONY: undeploy-loki
 undeploy-loki: ## Undeploy loki.
@@ -287,8 +292,10 @@ deploy-grafana: ## Deploy grafana.
 	kubectl config set-context --current --namespace=$(NAMESPACE)
 	./hack/deploy-grafana.sh $(NAMESPACE)
 	-pkill --oldest --full "3000:3000"
+ifeq (true, $(PORT_FWD))
 	kubectl port-forward --address 0.0.0.0 svc/grafana 3000:3000 2>&1 >/dev/null &
 	@echo -e "\ngrafana ui is available (user: admin password: admin) on http://localhost:3000\n"
+endif
 
 .PHONY: undeploy-grafana
 undeploy-grafana: ## Undeploy grafana.
