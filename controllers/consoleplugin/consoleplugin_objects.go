@@ -30,9 +30,6 @@ const configPath = "/opt/app-root/"
 // any external configuration change
 const PodConfigurationDigest = "flows.netobserv.io/" + configMapName
 
-// lokiURLAnnotation contains the used Loki querier URL, facilitating the change management
-const lokiURLAnnotation = "flows.netobserv.io/loki-url"
-
 type builder struct {
 	namespace   string
 	labels      map[string]string
@@ -89,9 +86,6 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 			Name:      constants.PluginName,
 			Namespace: b.namespace,
 			Labels:    b.labels,
-			Annotations: map[string]string{
-				lokiURLAnnotation: querierURL(b.desiredLoki),
-			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &b.desired.Replicas,
@@ -100,6 +94,17 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 			},
 			Template: *b.podTemplate(cmDigest),
 		},
+	}
+}
+
+func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki) []string {
+	return []string{
+		"-cert", "/var/serving-cert/tls.crt",
+		"-key", "/var/serving-cert/tls.key",
+		"-loki", querierURL(desiredLoki),
+		"-loki-labels", strings.Join(constants.LokiIndexFields, ","),
+		"-loglevel", desired.LogLevel,
+		"-frontend-config", configPath + configFile,
 	}
 }
 
