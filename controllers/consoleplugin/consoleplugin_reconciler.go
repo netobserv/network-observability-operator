@@ -198,18 +198,13 @@ func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowC
 	if depl.Namespace != ns {
 		return true
 	}
-	return containerNeedsUpdate(&depl.Spec.Template.Spec, &desired.ConsolePlugin) ||
-		hasLokiURLChanged(depl, &desired.Loki) ||
+	return containerNeedsUpdate(&depl.Spec.Template.Spec, &desired.ConsolePlugin, &desired.Loki) ||
 		configChanged(&depl.Spec.Template, cmDigest) ||
 		(desired.ConsolePlugin.HPA == nil && *depl.Spec.Replicas != desired.ConsolePlugin.Replicas)
 }
 
 func configChanged(tmpl *corev1.PodTemplateSpec, cmDigest string) bool {
 	return tmpl.Annotations == nil || tmpl.Annotations[PodConfigurationDigest] != cmDigest
-}
-
-func hasLokiURLChanged(depl *appsv1.Deployment, loki *flowsv1alpha1.FlowCollectorLoki) bool {
-	return depl.Annotations[lokiURLAnnotation] != querierURL(loki)
 }
 
 func querierURL(loki *flowsv1alpha1.FlowCollectorLoki) string {
@@ -219,7 +214,7 @@ func querierURL(loki *flowsv1alpha1.FlowCollectorLoki) string {
 	return loki.URL
 }
 
-func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns string) bool {
+func serviceNeedsUpdate(svc *corev1.Service, desired *pluginSpec, ns string) bool {
 	if svc.Namespace != ns {
 		return true
 	}
@@ -231,12 +226,16 @@ func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollecto
 	return true
 }
 
-func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pluginSpec) bool {
+func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pluginSpec, desiredLoki *flowsv1alpha1.FlowCollectorLoki) bool {
 	container := reconcilers.FindContainer(podSpec, constants.PluginName)
 	if container == nil {
 		return true
 	}
 	if desired.Image != container.Image || desired.ImagePullPolicy != string(container.ImagePullPolicy) {
+		return true
+	}
+	desiredArgs := buildArgs(desired, desiredLoki)
+	if !reflect.DeepEqual(desiredArgs, container.Args) {
 		return true
 	}
 	if !reflect.DeepEqual(desired.Resources, container.Resources) {
