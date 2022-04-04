@@ -224,9 +224,30 @@ type FlowCollectorConsolePlugin struct {
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
+	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic
+	//+kubebuilder:default:=info
+	// LogLevel defines the log level for the console plugin backend
+	LogLevel string `json:"logLevel,omitempty"`
+
 	// HPA spec of an horizontal pod autoscaler to set up for the plugin Deployment.
 	// +optional
 	HPA *FlowCollectorHPA `json:"hpa,omitempty"`
+
+	//+kubebuilder:default:={enable:true}
+	// Configuration of the port to service name translation
+	PortNaming ConsolePluginPortConfig `json:"portNaming,omitempty"`
+}
+
+// Configuration of the port to service name translation feature of the console plugin
+type ConsolePluginPortConfig struct {
+	//+kubebuilder:default:=true
+	// Should this feature be enabled
+	Enable bool `json:"enable,omitempty"`
+
+	// Additional port name to use in the console
+	// E.g. portNames: {"3100": "loki"}
+	// +optional
+	PortNames map[string]string `json:"portNames,omitempty" yaml:"portNames,omitempty"`
 }
 
 // CNO defines the desired configuration related to the Cluster Network Configuration

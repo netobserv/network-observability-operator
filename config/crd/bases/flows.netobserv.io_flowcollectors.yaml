@@ -582,6 +582,19 @@ spec:
                     - Always
                     - Never
                     type: string
+                  logLevel:
+                    default: info
+                    description: LogLevel defines the log level for the console plugin
+                      backend
+                    enum:
+                    - trace
+                    - debug
+                    - info
+                    - warn
+                    - error
+                    - fatal
+                    - panic
+                    type: string
                   port:
                     default: 9001
                     description: Port is the plugin service port
@@ -589,6 +602,22 @@ spec:
                     maximum: 65535
                     minimum: 1
                     type: integer
+                  portNaming:
+                    default:
+                      enable: true
+                    description: Configuration of the port to service name translation
+                    properties:
+                      enable:
+                        default: true
+                        description: Should this feature be enabled
+                        type: boolean
+                      portNames:
+                        additionalProperties:
+                          type: string
+                        description: 'Additional port name to use in the console E.g.
+                          portNames: {"3100": "loki"}'
+                        type: object
+                    type: object
                   replicas:
                     default: 1
                     description: Replicas defines the number of replicas (pods) to

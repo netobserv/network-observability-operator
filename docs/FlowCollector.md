@@ -203,6 +203,16 @@ ConsolePlugin contains settings related to the console dynamic plugin
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>logLevel</b></td>
+        <td>enum</td>
+        <td>
+          LogLevel defines the log level for the console plugin backend<br/>
+          <br/>
+            <i>Enum</i>: trace, debug, info, warn, error, fatal, panic<br/>
+            <i>Default</i>: info<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>port</b></td>
         <td>integer</td>
         <td>
@@ -212,6 +222,15 @@ ConsolePlugin contains settings related to the console dynamic plugin
             <i>Default</i>: 9001<br/>
             <i>Minimum</i>: 1<br/>
             <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginportnaming">portNaming</a></b></td>
+        <td>object</td>
+        <td>
+          Configuration of the port to service name translation<br/>
+          <br/>
+            <i>Default</i>: map[enable:true]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1141,6 +1160,42 @@ target specifies the target value for the given metric
         <td>int or string</td>
         <td>
           value is the target value of the metric (as a quantity).<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.portNaming
+<sup><sup>[↩ Parent](#flowcollectorspecconsoleplugin)</sup></sup>
+
+
+
+Configuration of the port to service name translation
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Should this feature be enabled<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>portNames</b></td>
+        <td>map[string]string</td>
+        <td>
+          Additional port name to use in the console E.g. portNames: {"3100": "loki"}<br/>
         </td>
         <td>false</td>
       </tr></tbody>

@@ -116,6 +116,12 @@ var _ = Describe("FlowCollector Controller", func() {
 								},
 							}},
 						},
+						PortNaming: flowsv1alpha1.ConsolePluginPortConfig{
+							Enable: true,
+							PortNames: map[string]string{
+								"3100": "loki",
+							},
+						},
 					},
 				},
 			}
@@ -372,6 +378,19 @@ var _ = Describe("FlowCollector Controller", func() {
 				}
 				return svc.Spec.Ports[0].Port
 			}, timeout, interval).Should(Equal(int32(9001)))
+			By("Creating the ovn-flows-configmap with the configuration from the FlowCollector")
+			Eventually(func() interface{} {
+				ofc := v1.ConfigMap{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "console-plugin-config",
+					Namespace: operatorNamespace,
+				}, &ofc); err != nil {
+					return err
+				}
+				return ofc.Data
+			}, timeout, interval).Should(Equal(map[string]string{
+				"config.yaml": "portNaming:\n  enable: true\n  portNames:\n    \"3100\": loki\n",
+			}))
 		})
 
 		It("Should update successfully", func() {

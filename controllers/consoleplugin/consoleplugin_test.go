@@ -1,6 +1,7 @@
 package consoleplugin
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,14 @@ import (
 const testImage = "quay.io/netobserv/network-observability-console-plugin:dev"
 const testNamespace = constants.PluginName
 
+var testArgs = []string{
+	"-cert", "/var/serving-cert/tls.crt",
+	"-key", "/var/serving-cert/tls.key",
+	"-loki", "http://loki:3100/",
+	"-loki-labels", "SrcK8S_Namespace,SrcK8S_OwnerName,DstK8S_Namespace,DstK8S_OwnerName,FlowDirection",
+	"-loglevel", "info",
+	"-frontend-config", "/opt/app-root/config.yaml",
+}
 var testPullPolicy = corev1.PullIfNotPresent
 var testResources = corev1.ResourceRequirements{
 	Limits: map[corev1.ResourceName]resource.Quantity{
@@ -33,7 +42,7 @@ func getPluginConfig() flowsv1alpha1.FlowCollectorConsolePlugin {
 		HPA: &flowsv1alpha1.FlowCollectorHPA{
 			MinReplicas: &minReplicas,
 			MaxReplicas: maxReplicas,
-			Metrics: []ascv2.MetricSpec{ascv2.MetricSpec{
+			Metrics: []ascv2.MetricSpec{{
 				Type: ascv2.ResourceMetricSourceType,
 				Resource: &ascv2.ResourceMetricSource{
 					Name: corev1.ResourceCPU,
@@ -44,6 +53,7 @@ func getPluginConfig() flowsv1alpha1.FlowCollectorConsolePlugin {
 				},
 			}},
 		},
+		LogLevel: "info",
 	}
 }
 
@@ -55,6 +65,7 @@ func getContainerSpecs() (corev1.PodSpec, flowsv1alpha1.FlowCollectorConsolePlug
 				Image:           testImage,
 				Resources:       testResources,
 				ImagePullPolicy: testPullPolicy,
+				Args:            testArgs,
 			},
 		},
 	}
@@ -117,7 +128,9 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	//equals specs
 	podSpec, containerConfig := getContainerSpecs()
-	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig), false)
+	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/"}
+	fmt.Printf("%v\n", buildArgs(&containerConfig, loki))
+	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig, loki), false)
 
 	//wrong resources
 	podSpec, containerConfig = getContainerSpecs()
@@ -125,17 +138,17 @@ func TestContainerUpdateCheck(t *testing.T) {
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
-	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig), true)
+	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
 
 	//new image
 	podSpec, containerConfig = getContainerSpecs()
 	containerConfig.Image = "quay.io/netobserv/network-observability-console-plugin:latest"
-	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig), true)
+	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
 
 	//new pull policy
 	podSpec, containerConfig = getContainerSpecs()
 	containerConfig.ImagePullPolicy = string(corev1.PullAlways)
-	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig), true)
+	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
 
 }
 
@@ -170,8 +183,8 @@ func TestBuiltContainer(t *testing.T) {
 	plugin := getPluginConfig()
 	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234"}
 	builder := newBuilder(testNamespace, &plugin, loki)
-	newContainer := builder.podTemplate()
-	assert.Equal(containerNeedsUpdate(&newContainer.Spec, &plugin), false)
+	newContainer := builder.podTemplate("digest")
+	assert.Equal(containerNeedsUpdate(&newContainer.Spec, &plugin, loki), false)
 }
 
 func TestBuiltService(t *testing.T) {
@@ -192,7 +205,7 @@ func TestLabels(t *testing.T) {
 	builder := newBuilder(testNamespace, &plugin, loki)
 
 	// Deployment
-	depl := builder.deployment()
+	depl := builder.deployment("digest")
 	assert.Equal("network-observability-plugin", depl.Labels["app"])
 	assert.Equal("network-observability-plugin", depl.Spec.Template.Labels["app"])
 	assert.Equal("dev", depl.Labels["version"])

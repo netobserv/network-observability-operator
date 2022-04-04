@@ -31,6 +31,7 @@ type ownedObjects struct {
 	service        *corev1.Service
 	hpa            *ascv2.HorizontalPodAutoscaler
 	serviceAccount *corev1.ServiceAccount
+	configMap      *corev1.ConfigMap
 }
 
 func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) CPReconciler {
@@ -39,12 +40,14 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) CPReconciler 
 		service:        &corev1.Service{},
 		hpa:            &ascv2.HorizontalPodAutoscaler{},
 		serviceAccount: &corev1.ServiceAccount{},
+		configMap:      &corev1.ConfigMap{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.deployment)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.service)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.hpa)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.serviceAccount)
+	nobjMngr.AddManagedObject(configMapName, owned.configMap)
 
 	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
 }
@@ -77,7 +80,12 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 		return err
 	}
 
-	if err = r.reconcileDeployment(ctx, builder, desired, ns); err != nil {
+	cmDigest, err := r.reconcileConfigMap(ctx, builder, desired, ns)
+	if err != nil {
+		return err
+	}
+
+	if err = r.reconcileDeployment(ctx, builder, desired, ns, cmDigest); err != nil {
 		return err
 	}
 
@@ -119,13 +127,27 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder builder, des
 	return nil
 }
 
-func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) error {
-	newDepl := builder.deployment()
+func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) (string, error) {
+	newCM, configDigest := builder.configMap()
+	if !r.nobjMngr.Exists(r.owned.configMap) {
+		if err := r.CreateOwned(ctx, newCM); err != nil {
+			return "", err
+		}
+	} else if !reflect.DeepEqual(newCM.Data, r.owned.configMap.Data) {
+		if err := r.UpdateOwned(ctx, r.owned.configMap, newCM); err != nil {
+			return "", err
+		}
+	}
+	return configDigest, nil
+}
+
+func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string, cmDigest string) error {
+	newDepl := builder.deployment(cmDigest)
 	if !r.nobjMngr.Exists(r.owned.deployment) {
 		if err := r.CreateOwned(ctx, newDepl); err != nil {
 			return err
 		}
-	} else if deploymentNeedsUpdate(r.owned.deployment, desired, ns) {
+	} else if deploymentNeedsUpdate(r.owned.deployment, desired, ns, cmDigest) {
 		if err := r.UpdateOwned(ctx, r.owned.deployment, newDepl); err != nil {
 			return err
 		}
@@ -172,17 +194,17 @@ func pluginNeedsUpdate(plg *osv1alpha1.ConsolePlugin, desired *pluginSpec, ns st
 		plg.Spec.Service.Port != desired.Port
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorSpec, ns string) bool {
+func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorSpec, ns string, cmDigest string) bool {
 	if depl.Namespace != ns {
 		return true
 	}
-	return containerNeedsUpdate(&depl.Spec.Template.Spec, &desired.ConsolePlugin) ||
-		hasLokiURLChanged(depl, &desired.Loki) ||
+	return containerNeedsUpdate(&depl.Spec.Template.Spec, &desired.ConsolePlugin, &desired.Loki) ||
+		configChanged(&depl.Spec.Template, cmDigest) ||
 		(desired.ConsolePlugin.HPA == nil && *depl.Spec.Replicas != desired.ConsolePlugin.Replicas)
 }
 
-func hasLokiURLChanged(depl *appsv1.Deployment, loki *flowsv1alpha1.FlowCollectorLoki) bool {
-	return depl.Annotations[lokiURLAnnotation] != querierURL(loki)
+func configChanged(tmpl *corev1.PodTemplateSpec, cmDigest string) bool {
+	return tmpl.Annotations == nil || tmpl.Annotations[PodConfigurationDigest] != cmDigest
 }
 
 func querierURL(loki *flowsv1alpha1.FlowCollectorLoki) string {
@@ -192,7 +214,7 @@ func querierURL(loki *flowsv1alpha1.FlowCollectorLoki) string {
 	return loki.URL
 }
 
-func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollectorConsolePlugin, ns string) bool {
+func serviceNeedsUpdate(svc *corev1.Service, desired *pluginSpec, ns string) bool {
 	if svc.Namespace != ns {
 		return true
 	}
@@ -204,12 +226,16 @@ func serviceNeedsUpdate(svc *corev1.Service, desired *flowsv1alpha1.FlowCollecto
 	return true
 }
 
-func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pluginSpec) bool {
+func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pluginSpec, desiredLoki *flowsv1alpha1.FlowCollectorLoki) bool {
 	container := reconcilers.FindContainer(podSpec, constants.PluginName)
 	if container == nil {
 		return true
 	}
 	if desired.Image != container.Image || desired.ImagePullPolicy != string(container.ImagePullPolicy) {
+		return true
+	}
+	desiredArgs := buildArgs(desired, desiredLoki)
+	if !reflect.DeepEqual(desiredArgs, container.Args) {
 		return true
 	}
 	if !reflect.DeepEqual(desired.Resources, container.Resources) {
