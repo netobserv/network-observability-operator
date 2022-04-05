@@ -32,40 +32,54 @@ const (
 	startupPeriodSeconds    = 10
 )
 
+const (
+	ConfSingle           = "allInOne"
+	ConfKafkaIngestor    = "kafkaIngestor"
+	ConfKafkaTransformer = "kafkaTransformer"
+)
+
+var flpConfSuffix = map[string]string{
+	ConfSingle:           "",
+	ConfKafkaIngestor:    "-kingestor",
+	ConfKafkaTransformer: "-ktransformer",
+}
+
 // PodConfigurationDigest is an annotation name to facilitate pod restart after
 // any external configuration change
 const PodConfigurationDigest = "flows.netobserv.io/" + configMapName
 
 type builder struct {
-	namespace    string
-	labels       map[string]string
-	selector     map[string]string
-	portProtocol corev1.Protocol
-	desired      *flowsv1alpha1.FlowCollectorFLP
-	desiredLoki  *flowsv1alpha1.FlowCollectorLoki
+	namespace      string
+	labels         map[string]string
+	selector       map[string]string
+	portProtocol   corev1.Protocol
+	desired        *flowsv1alpha1.FlowCollectorFLP
+	desiredLoki    *flowsv1alpha1.FlowCollectorLoki
+	confKindSuffix string
 }
 
-func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki) builder {
+func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, confKind string) builder {
 	version := helper.ExtractVersion(desired.Image)
 	return builder{
 		namespace: ns,
 		labels: map[string]string{
-			"app":     constants.FLPName,
+			"app":     constants.FLPName + flpConfSuffix[confKind],
 			"version": version,
 		},
 		selector: map[string]string{
-			"app": constants.FLPName,
+			"app": constants.FLPName + flpConfSuffix[confKind],
 		},
-		desired:      desired,
-		desiredLoki:  desiredLoki,
-		portProtocol: portProtocol,
+		desired:        desired,
+		desiredLoki:    desiredLoki,
+		portProtocol:   portProtocol,
+		confKindSuffix: flpConfSuffix[confKind],
 	}
 }
 
 func (b *builder) deployment(configDigest string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.FLPName,
+			Name:      constants.FLPName + b.confKindSuffix,
 			Namespace: b.namespace,
 			Labels:    b.labels,
 		},
@@ -82,7 +96,7 @@ func (b *builder) deployment(configDigest string) *appsv1.Deployment {
 func (b *builder) daemonSet(configDigest string) *appsv1.DaemonSet {
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.FLPName,
+			Name:      constants.FLPName + b.confKindSuffix,
 			Namespace: b.namespace,
 			Labels:    b.labels,
 		},
@@ -100,7 +114,7 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 	var tolerations []corev1.Toleration
 	if b.desired.Kind == constants.DaemonSetKind {
 		ports = []corev1.ContainerPort{{
-			Name:          constants.FLPPortName,
+			Name:          constants.FLPPortName + b.confKindSuffix,
 			HostPort:      b.desired.Port,
 			ContainerPort: b.desired.Port,
 			Protocol:      b.portProtocol,
@@ -121,7 +135,7 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 	})
 
 	container := corev1.Container{
-		Name:            constants.FLPName,
+		Name:            constants.FLPName + b.confKindSuffix,
 		Image:           b.desired.Image,
 		ImagePullPolicy: corev1.PullPolicy(b.desired.ImagePullPolicy),
 		Args:            []string{fmt.Sprintf(`--config=%s/%s`, configPath, configFile)},
@@ -170,7 +184,7 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 				VolumeSource: corev1.VolumeSource{
 					ConfigMap: &corev1.ConfigMapVolumeSource{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: configMapName,
+							Name: configMapName + b.confKindSuffix,
 						},
 					},
 				},
@@ -324,7 +338,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      configMapName,
+			Name:      configMapName + b.confKindSuffix,
 			Namespace: b.namespace,
 			Labels:    b.labels,
 		},
@@ -342,7 +356,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 	if old == nil {
 		return &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      constants.FLPName,
+				Name:      constants.FLPName + b.confKindSuffix,
 				Namespace: b.namespace,
 				Labels:    b.labels,
 			},
@@ -368,14 +382,14 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 	return &ascv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.FLPName,
+			Name:      constants.FLPName + b.confKindSuffix,
 			Namespace: b.namespace,
 			Labels:    b.labels,
 		},
 		Spec: ascv2.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: ascv2.CrossVersionObjectReference{
 				Kind:       constants.DeploymentKind,
-				Name:       constants.FLPName,
+				Name:       constants.FLPName + b.confKindSuffix,
 				APIVersion: "apps/v1",
 			},
 			MinReplicas: b.desired.HPA.MinReplicas,
@@ -390,9 +404,9 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 //+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
 //+kubebuilder:rbac:groups=core,resources=pods;services;nodes,verbs=get;list;watch
 
-func buildAppLabel() map[string]string {
+func buildAppLabel(confKind string) map[string]string {
 	return map[string]string{
-		"app": constants.FLPName,
+		"app": constants.FLPName + flpConfSuffix[confKind],
 	}
 }
 
@@ -400,7 +414,7 @@ func buildClusterRole() *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   constants.FLPName,
-			Labels: buildAppLabel(),
+			Labels: buildAppLabel(""),
 		},
 		Rules: []rbacv1.PolicyRule{{
 			APIGroups: []string{""},
@@ -428,7 +442,7 @@ func buildServiceAccount(ns string) *corev1.ServiceAccount {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.FLPName,
 			Namespace: ns,
-			Labels:    buildAppLabel(),
+			Labels:    buildAppLabel(""),
 		},
 	}
 }
@@ -437,7 +451,7 @@ func buildClusterRoleBinding(ns string) *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   constants.FLPName,
-			Labels: buildAppLabel(),
+			Labels: buildAppLabel(""),
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",

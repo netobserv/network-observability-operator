@@ -24,8 +24,16 @@ type flpSpec = flowsv1alpha1.FlowCollectorFLP
 // FLPReconciler reconciles the current flowlogs-pipeline state with the desired configuration
 type FLPReconciler struct {
 	reconcilers.ClientHelper
+	nobjMngr          *reconcilers.NamespacedObjectManager
+	owned             ownedObjects
+	singleReconcilers []singleFLPReconciler
+}
+
+type singleFLPReconciler struct {
+	reconcilers.ClientHelper
 	nobjMngr *reconcilers.NamespacedObjectManager
 	owned    ownedObjects
+	confKind string
 }
 
 type ownedObjects struct {
@@ -38,6 +46,18 @@ type ownedObjects struct {
 }
 
 func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) FLPReconciler {
+	owned := ownedObjects{
+		serviceAccount: &corev1.ServiceAccount{},
+	}
+	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
+	nobjMngr.AddManagedObject(constants.FLPName, owned.serviceAccount)
+
+	flpReconciler := FLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
+	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfSingle))
+	return flpReconciler
+}
+
+func newSingleReconciler(cl reconcilers.ClientHelper, ns string, prevNS string, confKind string) singleFLPReconciler {
 	owned := ownedObjects{
 		deployment:     &appsv1.Deployment{},
 		daemonSet:      &appsv1.DaemonSet{},
@@ -54,7 +74,7 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) FLPReconciler
 	nobjMngr.AddManagedObject(constants.FLPName, owned.serviceAccount)
 	nobjMngr.AddManagedObject(configMapName, owned.configMap)
 
-	return FLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
+	return singleFLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, confKind: confKind}
 }
 
 // InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
@@ -65,6 +85,9 @@ func (r *FLPReconciler) InitStaticResources(ctx context.Context) error {
 // PrepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
 func (r *FLPReconciler) PrepareNamespaceChange(ctx context.Context) error {
 	// Switching namespace => delete everything in the previous namespace
+	for _, singleFlp := range r.singleReconcilers {
+		singleFlp.nobjMngr.CleanupNamespace(ctx)
+	}
 	r.nobjMngr.CleanupNamespace(ctx)
 	return r.reconcilePermissions(ctx)
 }
@@ -79,19 +102,29 @@ func validateDesired(desired *flpSpec) error {
 	return nil
 }
 
-// Reconcile is the reconciler entry point to reconcile the current flowlogs-pipeline state with the desired configuration
 func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+	for _, singleFlp := range r.singleReconcilers {
+		err := singleFlp.Reconcile(ctx, desired)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Reconcile is the reconciler entry point to reconcile the current flowlogs-pipeline state with the desired configuration
+func (r *singleFLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
 	desiredFLP := &desired.Spec.FlowlogsPipeline
+	desiredLoki := &desired.Spec.Loki
 	err := validateDesired(desiredFLP)
 	if err != nil {
 		return err
 	}
-	desiredLoki := &desired.Spec.Loki
 	portProtocol := corev1.ProtocolUDP
 	if desired.Spec.Agent == flowsv1alpha1.AgentEBPF {
 		portProtocol = corev1.ProtocolTCP
 	}
-	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki)
+	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki, r.confKind)
 	// Retrieve current owned objects
 	err = r.nobjMngr.FetchAll(ctx)
 	if err != nil {
@@ -118,7 +151,7 @@ func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Fl
 	}
 }
 
-func (r *FLPReconciler) reconcileAsDeployment(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
+func (r *singleFLPReconciler) reconcileAsDeployment(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
 	// Kind may have changed: try delete DaemonSet and create Deployment+Service
 	ns := r.nobjMngr.Namespace
 	r.nobjMngr.TryDelete(ctx, r.owned.daemonSet)
@@ -162,7 +195,7 @@ func (r *FLPReconciler) reconcileAsDeployment(ctx context.Context, desiredFLP *f
 	return nil
 }
 
-func (r *FLPReconciler) reconcileAsDaemonSet(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
+func (r *singleFLPReconciler) reconcileAsDaemonSet(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
 	// Kind may have changed: try delete Deployment / Service / HPA and create DaemonSet
 	r.nobjMngr.TryDelete(ctx, r.owned.deployment)
 	r.nobjMngr.TryDelete(ctx, r.owned.service)
