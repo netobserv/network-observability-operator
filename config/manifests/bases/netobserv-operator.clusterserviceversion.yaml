@@ -36,7 +36,7 @@ spec:
     kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/2-loki.yaml) -n network-observability
     ```
 
-    - [Grafana](https://grafana.com/oss/grafana/) installed (optional): [a dashboard](https://github.com/netobserv/network-observability-operator/blob/main/config/samples/dashboards/Network%20Observability.json) can be imported to show flow logs and metrics.
+    - [Grafana](https://grafana.com/oss/grafana/) installed (optional): [a dashboard](https://github.com/netobserv/network-observability-operator/blob/v0.1.1/config/samples/dashboards/Network%20Observability.json) can be imported to show flow logs and metrics.
 
     ## Post-installation
     Because the installed workloads operate cluster-wide, there is only one `FlowCollector` that can be installed, named `cluster`. The custom resource is [documented here](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md). Make sure that Loki is reachable and its URL is properly configured in the operand resource.

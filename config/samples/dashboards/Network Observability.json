@@ -22,7 +22,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1643205063531,
+  "iteration": 1648485441524,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -105,7 +105,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -114,7 +115,7 @@
             "type": "loki",
             "uid": "yyEYmhxnz"
           },
-          "expr": "sum ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\" }[1m]))",
+          "expr": "sum ( rate({ app=\"netobserv-flowcollector\",SrcK8S_Namespace=~\"$SrcNamespace\",DstK8S_Namespace=~\"$DstNamespace\" }[1m]))",
           "refId": "A"
         }
       ],
@@ -187,7 +188,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -196,7 +198,7 @@
             "type": "loki",
             "uid": "yyEYmhxnz"
           },
-          "expr": "sum by(SrcNamespace) ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\" }[1m]))",
+          "expr": "sum by(SrcK8S_Namespace) ( rate({ app=\"netobserv-flowcollector\",SrcK8S_Namespace=~\"$SrcNamespace\",DstK8S_Namespace=~\"$DstNamespace\" }[1m]))",
           "refId": "A"
         }
       ],
@@ -269,7 +271,8 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -278,7 +281,7 @@
             "type": "loki",
             "uid": "yyEYmhxnz"
           },
-          "expr": "sum by(DstNamespace) ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\" }[1m]))",
+          "expr": "sum by(DstK8S_Namespace) ( rate({ app=\"netobserv-flowcollector\",SrcK8S_Namespace=~\"$SrcNamespace\",DstK8S_Namespace=~\"$DstNamespace\" }[1m]))",
           "refId": "A"
         }
       ],
@@ -364,12 +367,17 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "expr": "sum by(SrcNamespace) ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\" } | json | __error__=\"\" | unwrap Bytes [1m]))",
+          "datasource": {
+            "type": "loki",
+            "uid": "SBHrSKs7k"
+          },
+          "expr": "sum by(SrcK8S_Namespace) ( rate({ app=\"netobserv-flowcollector\",SrcK8S_Namespace=~\"$SrcNamespace\",DstK8S_Namespace=~\"$DstNamespace\" } | json | __error__=\"\" | unwrap Bytes [1m]))",
           "refId": "A"
         }
       ],
@@ -442,12 +450,17 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "expr": "sum by(DstNamespace) ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\" } | json | __error__=\"\" | unwrap Bytes [1m]))",
+          "datasource": {
+            "type": "loki",
+            "uid": "SBHrSKs7k"
+          },
+          "expr": "sum by(DstK8S_Namespace) ( rate({ app=\"netobserv-flowcollector\",SrcK8S_Namespace=~\"$SrcNamespace\",DstK8S_Namespace=~\"$DstNamespace\" } | json | __error__=\"\" | unwrap Bytes [1m]))",
           "refId": "A"
         }
       ],
@@ -520,12 +533,17 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "expr": "sum by(SrcNamespace,SrcWorkload) ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\",SrcWorkload=~\"$SrcWorkload\",DstWorkload=~\"$DstWorkload\" } | json | __error__=\"\" | unwrap Bytes [1m]))",
+          "datasource": {
+            "type": "loki",
+            "uid": "SBHrSKs7k"
+          },
+          "expr": "sum by(SrcK8S_Namespace,SrcK8S_OwnerName) ( rate({ app=\"netobserv-flowcollector\",SrcK8S_Namespace=~\"$SrcNamespace\",DstK8S_Namespace=~\"$DstNamespace\",SrcK8S_OwnerName=~\"$SrcWorkload\",DstK8S_OwnerName=~\"$DstWorkload\" } | json | __error__=\"\" | unwrap Bytes [1m]))",
           "refId": "A"
         }
       ],
@@ -598,12 +616,17 @@
           "placement": "bottom"
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
-          "expr": "sum by(DstNamespace,DstWorkload) ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\",SrcWorkload=~\"$SrcWorkload\",DstWorkload=~\"$DstWorkload\" } | json | __error__=\"\" | unwrap Bytes [1m]))",
+          "datasource": {
+            "type": "loki",
+            "uid": "SBHrSKs7k"
+          },
+          "expr": "sum by(DstK8S_Namespace,DstK8S_OwnerName) ( rate({ app=\"netobserv-flowcollector\",SrcK8S_Namespace=~\"$SrcNamespace\",DstK8S_Namespace=~\"$DstNamespace\",SrcK8S_OwnerName=~\"$SrcWorkload\",DstK8S_OwnerName=~\"$DstWorkload\" } | json | __error__=\"\" | unwrap Bytes [1m]))",
           "refId": "A"
         }
       ],
@@ -636,8 +659,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -722,7 +744,7 @@
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 34,
+  "schemaVersion": 35,
   "style": "dark",
   "tags": [],
   "templating": {
