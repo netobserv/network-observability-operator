@@ -1344,6 +1344,22 @@ spec:
                     - Always
                     - Never
                     type: string
+                  kafka:
+                    description: Kafka configurations, if empty the operator will
+                      deploy a all-in-one FLP
+                    properties:
+                      address:
+                        default: ""
+                        description: Address of the kafka server
+                        type: string
+                      topic:
+                        default: ""
+                        description: Address of the kafka topic to use
+                        type: string
+                    required:
+                    - address
+                    - topic
+                    type: object
                   kind:
                     default: DaemonSet
                     description: Kind is the workload kind, either DaemonSet or Deployment

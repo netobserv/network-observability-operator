@@ -54,6 +54,8 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) FLPReconciler
 
 	flpReconciler := FLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
 	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfSingle))
+	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfKafkaIngestor))
+	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfKafkaTransformer))
 	return flpReconciler
 }
 
@@ -67,12 +69,11 @@ func newSingleReconciler(cl reconcilers.ClientHelper, ns string, prevNS string, 
 		configMap:      &corev1.ConfigMap{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
-	nobjMngr.AddManagedObject(constants.FLPName, owned.deployment)
-	nobjMngr.AddManagedObject(constants.FLPName, owned.daemonSet)
-	nobjMngr.AddManagedObject(constants.FLPName, owned.service)
-	nobjMngr.AddManagedObject(constants.FLPName, owned.hpa)
-	nobjMngr.AddManagedObject(constants.FLPName, owned.serviceAccount)
-	nobjMngr.AddManagedObject(configMapName, owned.configMap)
+	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.deployment)
+	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.daemonSet)
+	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.service)
+	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.hpa)
+	nobjMngr.AddManagedObject(configMapName+FlpConfSuffix[confKind], owned.configMap)
 
 	return singleFLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, confKind: confKind}
 }
@@ -102,6 +103,13 @@ func validateDesired(desired *flpSpec) error {
 	return nil
 }
 
+func (r *FLPReconciler) GetServiceName(desiredFLP *flpSpec) string {
+	if single, _ := checkDeployNeeded(desiredFLP, ConfKafkaIngestor); single {
+		return constants.FLPName + FlpConfSuffix[ConfKafkaIngestor]
+	}
+	return constants.FLPName + FlpConfSuffix[ConfSingle]
+}
+
 func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
 	for _, singleFlp := range r.singleReconcilers {
 		err := singleFlp.Reconcile(ctx, desired)
@@ -112,6 +120,21 @@ func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Fl
 	return nil
 }
 
+// Check if a configKind should be deployed
+func checkDeployNeeded(desiredFLP *flpSpec, confKind string) (bool, error) {
+	switch confKind {
+	case ConfSingle:
+		return desiredFLP.Kafka == nil, nil
+	case ConfKafkaTransformer:
+		return desiredFLP.Kafka != nil, nil
+	case ConfKafkaIngestor:
+		//TODO should be disabled if ebpf-agent is enabled with kafka
+		return desiredFLP.Kafka != nil, nil
+	default:
+		return false, fmt.Errorf("unknown flowlogs-pipelines config kind")
+	}
+}
+
 // Reconcile is the reconciler entry point to reconcile the current flowlogs-pipeline state with the desired configuration
 func (r *singleFLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
 	desiredFLP := &desired.Spec.FlowlogsPipeline
@@ -120,6 +143,15 @@ func (r *singleFLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alp
 	if err != nil {
 		return err
 	}
+	shouldDeploy, err := checkDeployNeeded(desiredFLP, r.confKind)
+	if err != nil {
+		return err
+	}
+	if !shouldDeploy {
+		r.nobjMngr.CleanupNamespace(ctx)
+		return nil
+	}
+
 	portProtocol := corev1.ProtocolUDP
 	if desired.Spec.Agent == flowsv1alpha1.AgentEBPF {
 		portProtocol = corev1.ProtocolTCP
@@ -145,6 +177,9 @@ func (r *singleFLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alp
 	case constants.DeploymentKind:
 		return r.reconcileAsDeployment(ctx, desiredFLP, &builder, configDigest)
 	case constants.DaemonSetKind:
+		if r.confKind == ConfKafkaTransformer {
+			return r.reconcileAsDeployment(ctx, desiredFLP, &builder, configDigest)
+		}
 		return r.reconcileAsDaemonSet(ctx, desiredFLP, &builder, configDigest)
 	default:
 		return fmt.Errorf("could not reconcile collector, invalid kind: %s", desiredFLP.Kind)
@@ -160,19 +195,13 @@ func (r *singleFLPReconciler) reconcileAsDeployment(ctx context.Context, desired
 		if err := r.CreateOwned(ctx, builder.deployment(configDigest)); err != nil {
 			return err
 		}
-	} else if deploymentNeedsUpdate(r.owned.deployment, desiredFLP, configDigest) {
+	} else if deploymentNeedsUpdate(r.owned.deployment, desiredFLP, configDigest, constants.FLPName+FlpConfSuffix[r.confKind]) {
 		if err := r.UpdateOwned(ctx, r.owned.deployment, builder.deployment(configDigest)); err != nil {
 			return err
 		}
 	}
-	if !r.nobjMngr.Exists(r.owned.service) {
-		newSVC := builder.service(nil)
-		if err := r.CreateOwned(ctx, newSVC); err != nil {
-			return err
-		}
-	} else if serviceNeedsUpdate(r.owned.service, desiredFLP) {
-		newSVC := builder.service(r.owned.service)
-		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
+	if r.confKind != ConfKafkaTransformer {
+		if err := r.reconcileAsService(ctx, desiredFLP, builder); err != nil {
 			return err
 		}
 	}
@@ -195,6 +224,21 @@ func (r *singleFLPReconciler) reconcileAsDeployment(ctx context.Context, desired
 	return nil
 }
 
+func (r *singleFLPReconciler) reconcileAsService(ctx context.Context, desiredFLP *flpSpec, builder *builder) error {
+	if !r.nobjMngr.Exists(r.owned.service) {
+		newSVC := builder.service(nil)
+		if err := r.CreateOwned(ctx, newSVC); err != nil {
+			return err
+		}
+	} else if serviceNeedsUpdate(r.owned.service, desiredFLP) {
+		newSVC := builder.service(r.owned.service)
+		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *singleFLPReconciler) reconcileAsDaemonSet(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
 	// Kind may have changed: try delete Deployment / Service / HPA and create DaemonSet
 	r.nobjMngr.TryDelete(ctx, r.owned.deployment)
@@ -202,7 +246,7 @@ func (r *singleFLPReconciler) reconcileAsDaemonSet(ctx context.Context, desiredF
 	r.nobjMngr.TryDelete(ctx, r.owned.hpa)
 	if !r.nobjMngr.Exists(r.owned.daemonSet) {
 		return r.CreateOwned(ctx, builder.daemonSet(configDigest))
-	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredFLP, configDigest) {
+	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredFLP, configDigest, constants.FLPName+FlpConfSuffix[r.confKind]) {
 		return r.UpdateOwned(ctx, r.owned.daemonSet, builder.daemonSet(configDigest))
 	}
 	return nil
@@ -264,13 +308,13 @@ func (r *FLPReconciler) reconcileClusterRoleBinding(ctx context.Context) error {
 	return r.UpdateOwned(ctx, &actual, desired)
 }
 
-func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flpSpec, configDigest string) bool {
-	return containerNeedsUpdate(&ds.Spec.Template.Spec, desired, true) ||
+func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flpSpec, configDigest string, name string) bool {
+	return containerNeedsUpdate(&ds.Spec.Template.Spec, desired, true, name) ||
 		configChanged(&ds.Spec.Template, configDigest)
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, configDigest string) bool {
-	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired, false) ||
+func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, configDigest string, name string) bool {
+	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired, false, name) ||
 		configChanged(&depl.Spec.Template, configDigest) ||
 		(desired.HPA == nil && *depl.Spec.Replicas != desired.Replicas)
 }
@@ -288,10 +332,10 @@ func serviceNeedsUpdate(svc *corev1.Service, desired *flpSpec) bool {
 	return true
 }
 
-func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flpSpec, expectHostPort bool) bool {
+func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flpSpec, expectHostPort bool, name string) bool {
 	// Note, we don't check for changed port / host port here, because that would change also the configmap,
 	//	which also triggers pod update anyway
-	container := reconcilers.FindContainer(podSpec, constants.FLPName)
+	container := reconcilers.FindContainer(podSpec, name)
 	return container == nil ||
 		desired.Image != container.Image ||
 		desired.ImagePullPolicy != string(container.ImagePullPolicy) ||

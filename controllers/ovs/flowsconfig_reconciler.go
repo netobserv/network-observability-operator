@@ -40,7 +40,7 @@ func NewFlowsConfigController(client reconcilers.ClientHelper,
 // Reconcile reconciles the status of the ovs-flows-config configmap with
 // the target FlowCollector ipfix section map
 func (c *FlowsConfigController) Reconcile(
-	ctx context.Context, target *flowsv1alpha1.FlowCollector) error {
+	ctx context.Context, target *flowsv1alpha1.FlowCollector, flpServiceName string) error {
 	rlog := log.FromContext(ctx, "component", "FlowsConfigController")
 
 	current, err := c.current(ctx)
@@ -63,7 +63,7 @@ func (c *FlowsConfigController) Reconcile(
 		return nil
 	}
 
-	desired, err := c.desired(ctx, target)
+	desired, err := c.desired(ctx, target, flpServiceName)
 	// compare current and desired
 	if err != nil {
 		return err
@@ -111,7 +111,7 @@ func (c *FlowsConfigController) current(ctx context.Context) (*flowsConfig, erro
 }
 
 func (c *FlowsConfigController) desired(
-	ctx context.Context, coll *flowsv1alpha1.FlowCollector) (*flowsConfig, error) {
+	ctx context.Context, coll *flowsv1alpha1.FlowCollector, flpServiceName string) (*flowsConfig, error) {
 
 	conf := flowsConfig{FlowCollectorIPFIX: coll.Spec.IPFIX}
 
@@ -126,7 +126,7 @@ func (c *FlowsConfigController) desired(
 		svc := corev1.Service{}
 		if err := c.client.Get(ctx, types.NamespacedName{
 			Namespace: c.collectorNamespace,
-			Name:      constants.FLPName,
+			Name:      flpServiceName,
 		}, &svc); err != nil {
 			return nil, fmt.Errorf("can't get service %s in %s: %w", constants.FLPName, c.collectorNamespace, err)
 		}

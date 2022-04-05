@@ -1479,6 +1479,13 @@ FlowlogsPipeline contains settings related to the flowlogs-pipeline component
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecflowlogspipelinekafka">kafka</a></b></td>
+        <td>object</td>
+        <td>
+          Kafka configurations, if empty the operator will deploy a all-in-one FLP<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>kind</b></td>
         <td>enum</td>
         <td>
@@ -2451,6 +2458,44 @@ target specifies the target value for the given metric
           value is the target value of the metric (as a quantity).<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.flowlogsPipeline.kafka
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipeline)</sup></sup>
+
+
+
+Kafka configurations, if empty the operator will deploy a all-in-one FLP
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>address</b></td>
+        <td>string</td>
+        <td>
+          Address of the kafka server<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>topic</b></td>
+        <td>string</td>
+        <td>
+          Address of the kafka topic to use<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 

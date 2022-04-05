@@ -147,7 +147,7 @@ func TestDaemonSetNoChange(t *testing.T) {
 	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 
-	assert.False(daemonSetNeedsUpdate(first, &flp, digest))
+	assert.False(daemonSetNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
 
 func TestDaemonSetChanged(t *testing.T) {
@@ -167,7 +167,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	_, digest = b.configMap()
 	second := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(first, &flp, digest))
+	assert.True(daemonSetNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check log level change
 	flp.LogLevel = "info"
@@ -175,7 +175,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	_, digest = b.configMap()
 	third := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(second, &flp, digest))
+	assert.True(daemonSetNeedsUpdate(second, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check resource change
 	flp.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -186,7 +186,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	_, digest = b.configMap()
 	fourth := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(third, &flp, digest))
+	assert.True(daemonSetNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check reverting limits
 	flp.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -196,8 +196,8 @@ func TestDaemonSetChanged(t *testing.T) {
 	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 
-	assert.True(daemonSetNeedsUpdate(fourth, &flp, digest))
-	assert.False(daemonSetNeedsUpdate(third, &flp, digest))
+	assert.True(daemonSetNeedsUpdate(fourth, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.False(daemonSetNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
 
 func TestDeploymentNoChange(t *testing.T) {
@@ -217,7 +217,7 @@ func TestDeploymentNoChange(t *testing.T) {
 	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 
-	assert.False(deploymentNeedsUpdate(first, &flp, digest))
+	assert.False(deploymentNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
 
 func TestDeploymentChanged(t *testing.T) {
@@ -237,7 +237,7 @@ func TestDeploymentChanged(t *testing.T) {
 	_, digest = b.configMap()
 	second := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(first, &flp, digest))
+	assert.True(deploymentNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check log level change
 	flp.LogLevel = "info"
@@ -245,7 +245,7 @@ func TestDeploymentChanged(t *testing.T) {
 	_, digest = b.configMap()
 	third := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(second, &flp, digest))
+	assert.True(deploymentNeedsUpdate(second, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check resource change
 	flp.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -256,7 +256,7 @@ func TestDeploymentChanged(t *testing.T) {
 	_, digest = b.configMap()
 	fourth := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(third, &flp, digest))
+	assert.True(deploymentNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check reverting limits
 	flp.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -267,8 +267,8 @@ func TestDeploymentChanged(t *testing.T) {
 	_, digest = b.configMap()
 	fifth := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(fourth, &flp, digest))
-	assert.False(deploymentNeedsUpdate(third, &flp, digest))
+	assert.True(deploymentNeedsUpdate(fourth, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.False(deploymentNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check replicas didn't change because HPA is used
 	flp2 := flp
@@ -276,7 +276,7 @@ func TestDeploymentChanged(t *testing.T) {
 	b = newBuilder(ns, corev1.ProtocolUDP, &flp2, &loki, ConfSingle)
 	_, digest = b.configMap()
 
-	assert.False(deploymentNeedsUpdate(fifth, &flp2, digest))
+	assert.False(deploymentNeedsUpdate(fifth, &flp2, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
 
 func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
@@ -296,7 +296,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	b = newBuilder(ns, corev1.ProtocolUDP, &flp2, &loki, ConfSingle)
 	_, digest = b.configMap()
 
-	assert.True(deploymentNeedsUpdate(first, &flp2, digest))
+	assert.True(deploymentNeedsUpdate(first, &flp2, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
 
 func TestServiceNoChange(t *testing.T) {
@@ -437,4 +437,34 @@ func TestLabels(t *testing.T) {
 	assert.Equal("flowlogs-pipeline", svc.Spec.Selector["app"])
 	assert.Equal("dev", svc.Labels["version"])
 	assert.Empty(svc.Spec.Selector["version"])
+}
+
+func TestDeployNeeded(t *testing.T) {
+	assert := assert.New(t)
+
+	flp := getFLPConfig()
+
+	// Kafka not configured
+	res, err := checkDeployNeeded(&flp, ConfSingle)
+	assert.True(res)
+	assert.NoError(err)
+	res, err = checkDeployNeeded(&flp, ConfKafkaIngestor)
+	assert.False(res)
+	assert.NoError(err)
+	res, err = checkDeployNeeded(&flp, ConfKafkaTransformer)
+	assert.False(res)
+	assert.NoError(err)
+
+	// Kafka not configured
+	flp.Kafka = &flowsv1alpha1.FlowCollectorKafka{Address: "loaclhost:9092", Topic: "FLP"}
+	res, err = checkDeployNeeded(&flp, ConfSingle)
+	assert.False(res)
+	assert.NoError(err)
+	res, err = checkDeployNeeded(&flp, ConfKafkaIngestor)
+	assert.True(res)
+	assert.NoError(err)
+	res, err = checkDeployNeeded(&flp, ConfKafkaTransformer)
+	assert.True(res)
+	assert.NoError(err)
+
 }

@@ -38,10 +38,10 @@ const (
 	ConfKafkaTransformer = "kafkaTransformer"
 )
 
-var flpConfSuffix = map[string]string{
+var FlpConfSuffix = map[string]string{
 	ConfSingle:           "",
 	ConfKafkaIngestor:    "-kingestor",
-	ConfKafkaTransformer: "-ktransformer",
+	ConfKafkaTransformer: "-ktransform",
 }
 
 // PodConfigurationDigest is an annotation name to facilitate pod restart after
@@ -63,16 +63,16 @@ func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.
 	return builder{
 		namespace: ns,
 		labels: map[string]string{
-			"app":     constants.FLPName + flpConfSuffix[confKind],
+			"app":     constants.FLPName + FlpConfSuffix[confKind],
 			"version": version,
 		},
 		selector: map[string]string{
-			"app": constants.FLPName + flpConfSuffix[confKind],
+			"app": constants.FLPName + FlpConfSuffix[confKind],
 		},
 		desired:        desired,
 		desiredLoki:    desiredLoki,
 		portProtocol:   portProtocol,
-		confKindSuffix: flpConfSuffix[confKind],
+		confKindSuffix: FlpConfSuffix[confKind],
 	}
 }
 
@@ -406,7 +406,7 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 
 func buildAppLabel(confKind string) map[string]string {
 	return map[string]string{
-		"app": constants.FLPName + flpConfSuffix[confKind],
+		"app": constants.FLPName + FlpConfSuffix[confKind],
 	}
 }
 
