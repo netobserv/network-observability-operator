@@ -16,7 +16,7 @@ spec:
     image: 'quay.io/netobserv/flowlogs-pipeline:main'
     imagePullPolicy: IfNotPresent
     logLevel: info
-    enableKubeProbes: false
+    enableKubeProbes: true
     healthPort: 8080
   loki:
     url: 'http://loki:3100/'
