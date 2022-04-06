@@ -1239,11 +1239,6 @@ spec:
                     maximum: 65535
                     minimum: 1025
                     type: integer
-                  printOutput:
-                    default: false
-                    description: PrintOutput is a debug flag to print flows exported
-                      in flowlogs-pipeline stdout
-                    type: boolean
                   replicas:
                     default: 1
                     description: Replicas defines the number of replicas (pods) to

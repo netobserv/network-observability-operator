@@ -124,10 +124,6 @@ type FlowCollectorFLP struct {
 	//+kubebuilder:default:=true
 	// EnableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes
 	EnableKubeProbes bool `json:"enableKubeProbes,omitempty"`
-
-	//+kubebuilder:default:=false
-	// PrintOutput is a debug flag to print flows exported in flowlogs-pipeline stdout
-	PrintOutput bool `json:"printOutput,omitempty"`
 }
 
 type FlowCollectorHPA struct {
