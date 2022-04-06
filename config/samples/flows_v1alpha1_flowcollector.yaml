@@ -9,13 +9,13 @@ spec:
     cacheMaxFlows: 400
     sampling: 100
   flowlogsPipeline:
-    kind: Deployment
-    replicas: 1
+    kind: DaemonSet
+#    kind: Deployment
+#    replicas: 1
     port: 2055
     image: 'quay.io/netobserv/flowlogs-pipeline:main'
     imagePullPolicy: IfNotPresent
     logLevel: info
-    printOutput: false
     enableKubeProbes: false
     healthPort: 8080
   loki:

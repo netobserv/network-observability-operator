@@ -67,8 +67,7 @@ func getFLPConfig() flowsv1alpha1.FlowCollectorFLP {
 				},
 			}},
 		},
-		PrintOutput: false,
-		HealthPort:  8080,
+		HealthPort: 8080,
 	}
 }
 
@@ -80,7 +79,6 @@ func getFLPConfigNoHPA() flowsv1alpha1.FlowCollectorFLP {
 		ImagePullPolicy: string(pullPolicy),
 		LogLevel:        "trace",
 		Resources:       resources,
-		PrintOutput:     false,
 		HealthPort:      8080,
 	}
 }
