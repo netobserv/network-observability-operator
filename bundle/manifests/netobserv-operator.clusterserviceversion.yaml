@@ -17,10 +17,17 @@ metadata:
             "consolePlugin": {
               "image": "quay.io/netobserv/network-observability-console-plugin:v0.1.1",
               "imagePullPolicy": "IfNotPresent",
-              "port": 9001
+              "logLevel": "info",
+              "port": 9001,
+              "portNaming": {
+                "enable": true,
+                "portNames": {
+                  "3100": "loki"
+                }
+              }
             },
             "flowlogsPipeline": {
-              "enableKubeProbes": true,
+              "enableKubeProbes": false,
               "healthPort": 8080,
               "image": "quay.io/netobserv/flowlogs-pipeline:v0.1.1",
               "imagePullPolicy": "IfNotPresent",
@@ -53,13 +60,13 @@ metadata:
       ]
     capabilities: Basic Install
     categories: Monitoring
-    containerImage: quay.io/netobserv/network-observability-operator:0.1.1-rc0
-    createdAt: "2022-03-01T14:33:59Z"
+    containerImage: quay.io/netobserv/network-observability-operator:0.1.1
+    createdAt: "2022-04-05T09:44:27Z"
     description: A network observability operator based on netflows (IPFIX) for OVN
     operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
-  name: netobserv-operator.v0.1.1-rc0
+  name: netobserv-operator.v0.1.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -72,8 +79,8 @@ spec:
       name: flowcollectors.flows.netobserv.io
       version: v1alpha1
   description: |-
-    This is an OpenShift / Kubernetes operator for network observability. It deploys
-    a netflow (IPFIX) collector, a console plugin, and configures OVS for netflow exports. This is an early release ("dev preview") and is not considered production-ready yet.
+    This is an OpenShift / Kubernetes operator for network observability. It deploys an IPFIX network flow collector, a console plugin, and configures OVS for IPFIX exports.
+    This is an early release ("dev preview") and is not considered production-ready yet.
 
     ## Pre-requisite
 
@@ -82,38 +89,39 @@ spec:
     - [Loki](https://grafana.com/oss/loki/) installed: all collected flows are stored via Loki. Several installation options are [available here](https://grafana.com/docs/loki/latest/installation/). For a quick install, you can simply run:
 
     ```
+    kubectl create namespace network-observability
     kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/1-storage.yaml) -n network-observability
     kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/2-loki.yaml) -n network-observability
     ```
 
-    - [Grafana](https://grafana.com/oss/grafana/) installed (optional): [a dashboard](https://github.com/netobserv/network-observability-operator/blob/main/config/samples/dashboards/Network%20Observability.json) can be imported to show flow logs and metrics.
+    - [Grafana](https://grafana.com/oss/grafana/) installed (optional): [a dashboard](https://github.com/netobserv/network-observability-operator/blob/v0.1.1/config/samples/dashboards/Network%20Observability.json) can be imported to show flow logs and metrics.
 
     ## Post-installation
     Because the installed workloads operate cluster-wide, there is only one `FlowCollector` that can be installed, named `cluster`. The custom resource is [documented here](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md). Make sure that Loki is reachable and its URL is properly configured in the operand resource.
 
     ### Enabling IPFIX export
 
-    #### Generic Kubernetes with ovn-kubernetes
-    You need to explicitly turn on IPFIX export in ovn-kubernetes:
-
-    ```
-    GF_IP=`kubectl get svc goflow-kube -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
-    kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPFIX_TARGETS="$GF_IP:2055"
-    ```
-
-    To turn it off, remove the `OVN_IPFIX_TARGETS` env from `daemonset/ovnkube-node`.
-
     #### OpenShift 4.10 and above
-    No further action is required to enable IPFIX exports. Do not configure manually the goflow-kube IP in OVS, as it would conflict with the operator action (you can, however, set an additional target IP if you run another flow collector). If you want to turn off the exports, remove the `FlowCollector` cluster resource.
+    No further action is required to enable IPFIX exports. Do not configure manually the flowlogs-pipeline IP in OVS, as it would conflict with the operator action (you can, however, set an additional target IP if you run another flow collector). If you want to turn off the exports, remove the `FlowCollector` cluster resource.
 
     #### OpenShift 4.8 or 4.9
     You need to explicitly turn on IPFIX export for the `ClusterNetworkOperator`:
 
     ```
-    GF_IP=`oc get svc goflow-kube -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
+    GF_IP=`oc get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
     oc patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$GF_IP:2055']}}}}]"
     ```
     To turn it off, remove the `exportNetworkFlows` from `networks.operator.openshift.io/cluster`.
+
+    #### Generic Kubernetes with ovn-kubernetes
+    You need to explicitly turn on IPFIX export in ovn-kubernetes:
+
+    ```
+    GF_IP=`kubectl get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
+    kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPFIX_TARGETS="$GF_IP:2055"
+    ```
+
+    To turn it off, remove the `OVN_IPFIX_TARGETS` env from `daemonset/ovnkube-node`.
 
     ### OpenShift Console
     OpenShift 4.10 or above is required to use the Console plugin. It needs to be enabled explicitly, either via the Console itself, or via this command:
@@ -121,7 +129,7 @@ spec:
     ```
     oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["network-observability-plugin"]}]'
     ```
-  displayName: Netobserv Operator
+  displayName: NetObserv Operator
   icon:
   - base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI2LjAuMiwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMDAgMTAwOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6dXJsKCNTVkdJRF8xXyk7fQoJLnN0MXtmaWxsOiNGRkZGRkY7fQoJLnN0MntvcGFjaXR5OjAuNjt9Cgkuc3Qze29wYWNpdHk6MC41O30KCS5zdDR7b3BhY2l0eTowLjQ7fQo8L3N0eWxlPgo8Zz4KCTxnPgoJCTxnPgoJCQk8cmFkaWFsR3JhZGllbnQgaWQ9IlNWR0lEXzFfIiBjeD0iMTQuNzc1OCIgY3k9Ii0yLjk3NzEiIHI9IjkxLjYyNyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQkJPHN0b3AgIG9mZnNldD0iMCIgc3R5bGU9InN0b3AtY29sb3I6IzNDM0ZBNiIvPgoJCQkJPHN0b3AgIG9mZnNldD0iMSIgc3R5bGU9InN0b3AtY29sb3I6IzNCMDM0MCIvPgoJCQk8L3JhZGlhbEdyYWRpZW50PgoJCQk8cGF0aCBjbGFzcz0ic3QwIiBkPSJNNTAsOTljLTEzLjMsMC0yNS40LTUuMy0zNC4yLTEzLjlDNi43LDc2LjIsMSw2My43LDEsNTBDMSwyMi45LDIyLjksMSw1MCwxYzEzLjcsMCwyNi4yLDUuNywzNS4xLDE0LjgKCQkJCUM5My43LDI0LjYsOTksMzYuNyw5OSw1MEM5OSw3Ny4xLDc3LjEsOTksNTAsOTl6Ii8+CgkJPC9nPgoJCTxnPgoJCQk8Y2lyY2xlIGNsYXNzPSJzdDEiIGN4PSIzNy41IiBjeT0iODEuOSIgcj0iNSIvPgoJCTwvZz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNNDguNiw5MS45bDE4LjgtNDMuM2MtMi41LTAuMS01LTAuNy03LjItMkwzMy4yLDY4LjJsMS40LTEuOGwyMC0yNS4xYy0xLjUtMi40LTIuMy01LjEtMi4zLTcuOUw5LDUyLjIKCQkJbDQ3LjYtMjkuOWwwLDBjMC4xLTAuMSwwLjItMC4yLDAuMi0wLjJjNi4xLTYuMSwxNS45LTYuMSwyMiwwbDAuMSwwLjFjNiw2LjEsNiwxNS45LTAuMSwyMS45Yy0wLjEsMC4xLTAuMiwwLjItMC4yLDAuMmwwLDAKCQkJTDQ4LjYsOTEuOXoiLz4KCQk8ZyBjbGFzcz0ic3QyIj4KCQkJPGNpcmNsZSBjbGFzcz0ic3QxIiBjeD0iNTAuMyIgY3k9IjE0LjciIHI9IjMuMSIvPgoJCTwvZz4KCQk8ZyBjbGFzcz0ic3QzIj4KCQkJPGNpcmNsZSBjbGFzcz0ic3QxIiBjeD0iMjcuNyIgY3k9IjU4IiByPSIxLjciLz4KCQk8L2c+CgkJPGc+CgkJCTxjaXJjbGUgY2xhc3M9InN0MSIgY3g9Ijc3LjQiIGN5PSI2OS4zIiByPSIxLjciLz4KCQk8L2c+CgkJPGc+CgkJCTxjaXJjbGUgY2xhc3M9InN0MSIgY3g9IjE2LjMiIGN5PSIzNi42IiByPSIxLjciLz4KCQk8L2c+CgkJPGcgY2xhc3M9InN0NCI+CgkJCTxjaXJjbGUgY2xhc3M9InN0MSIgY3g9IjYzLjciIGN5PSI4NS45IiByPSIyLjIiLz4KCQk8L2c+CgkJPGc+CgkJCTxjaXJjbGUgY2xhc3M9InN0MSIgY3g9IjI5LjQiIGN5PSIxOS42IiByPSI0LjgiLz4KCQk8L2c+CgkJPGcgY2xhc3M9InN0MyI+CgkJCTxjaXJjbGUgY2xhc3M9InN0MSIgY3g9Ijg4IiBjeT0iNTAiIHI9IjQuOCIvPgoJCTwvZz4KCTwvZz4KPC9nPgo8L3N2Zz4K
     mediatype: image/svg+xml
@@ -191,6 +199,7 @@ spec:
         - apiGroups:
           - ""
           resources:
+          - nodes
           - pods
           - services
           verbs:
@@ -269,14 +278,14 @@ spec:
             matchLabels:
               app: network-observability-operator
               control-plane: controller-manager
-              version: 0.1.1-rc0
+              version: 0.1.1
           strategy: {}
           template:
             metadata:
               labels:
                 app: network-observability-operator
                 control-plane: controller-manager
-                version: 0.1.1-rc0
+                version: 0.1.1
             spec:
               containers:
               - args:
@@ -297,8 +306,8 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/netobserv/network-observability-operator:0.1.1-rc0
-                imagePullPolicy: IfNotPresent
+                image: quay.io/netobserv/network-observability-operator:0.1.1
+                imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -315,10 +324,10 @@ spec:
                 resources:
                   limits:
                     cpu: 200m
-                    memory: 100Mi
+                    memory: 200Mi
                   requests:
                     cpu: 100m
-                    memory: 20Mi
+                    memory: 100Mi
                 securityContext:
                   allowPrivilegeEscalation: false
               securityContext:
@@ -396,4 +405,4 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  version: 0.1.1-rc0
+  version: 0.1.1

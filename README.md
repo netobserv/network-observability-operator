@@ -96,7 +96,7 @@ export CATALOG_IMG=quay.io/$USER/network-observability-operator-catalog:v$VERSIO
 make catalog-build catalog-push catalog-deploy
 ```
 
-The Netobserv Operator should be now available in the OperatorHub items.
+The NetObserv Operator is available in OperatorHub: https://operatorhub.io/operator/netobserv-operator
 
 ## Publish on central OperatorHub
 

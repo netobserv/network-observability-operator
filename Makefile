@@ -195,6 +195,7 @@ bundle: manifests kustomize ## Generate bundle manifests and metadata, then vali
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	cd config/manager && $(KUSTOMIZE) edit set label version:$(VERSION)
 	sed -e 's~:main~:v$(VERSION)~' ./config/samples/flows_v1alpha1_flowcollector.yaml > ./config/samples/flows_v1alpha1_flowcollector_versioned.yaml
+	sed -i 's~blob/v[0-9]\+\.[0-9]\+\.[0-9]\+/~blob/v$(VERSION)/~' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
 	$(KUSTOMIZE) build config/manifests | sed -e 's~:container-image:~$(IMG)~' | sed -e 's~:created-at:~$(DATE)~' | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 

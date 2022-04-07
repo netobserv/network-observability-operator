@@ -32,5 +32,10 @@ spec:
     image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.1'
     imagePullPolicy: IfNotPresent
     port: 9001
+    logLevel: info
+    portNaming:
+      enable: true
+      portNames:
+        "3100": loki
   clusterNetworkOperator:
     namespace: "openshift-network-operator"
