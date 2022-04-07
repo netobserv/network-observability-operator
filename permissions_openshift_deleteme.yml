@@ -7,11 +7,12 @@ metadata:
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
-  name: example
+  name: netobserv-agent
+  namespace: network-observability
 allowPrivilegedContainer: true
-allowHostDirVolumePlugin: true
 allowHostNetwork: true
-allowHostPorts: true
+allowHostPorts: false
+allowHostDirVolumePlugin: false
 runAsUser:
   type: RunAsAny
 seLinuxContext:

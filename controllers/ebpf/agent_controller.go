@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +20,6 @@ import (
 )
 
 const (
-	agentName             = "netobserv-agent"
 	flowsTargetHostEnvVar = "FLOWS_TARGET_HOST"
 	flowsTargetPortEnvVar = "FLOWS_TARGET_PORT"
 )
@@ -49,7 +49,8 @@ func NewAgentController(client reconcilers.ClientHelper, namespace string) *Agen
 // the target FlowCollector ipfix section map
 func (c *AgentController) Reconcile(
 	ctx context.Context, target *flowsv1alpha1.FlowCollector) error {
-	rlog := log.FromContext(ctx, "component", "AgentController")
+	rlog := log.FromContext(ctx).WithName("AgentController")
+	ctx = log.IntoContext(ctx, rlog)
 
 	current, err := c.current(ctx)
 	if err != nil {
@@ -62,11 +63,17 @@ func (c *AgentController) Reconcile(
 		return nil
 	case actionCreate:
 		rlog.Info("action: create agent")
+		if err := permissions.Apply(ctx, c.client, c.namespace); err != nil {
+			return err
+		}
 		return c.client.Create(ctx, desired)
 	case actionDelete:
 		rlog.Info("action: delete agent")
 		return c.client.Delete(ctx, current)
 	case actionUpdate:
+		if err := permissions.Apply(ctx, c.client, c.namespace); err != nil {
+			return err
+		}
 		rlog.Info("action: update agent")
 		return c.client.Update(ctx, current)
 	}
@@ -77,11 +84,11 @@ func (c *AgentController) Reconcile(
 func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 	agentDS := v1.DaemonSet{}
 	if err := c.client.Get(ctx, types.NamespacedName{
-		Name:      agentName,
+		Name:      constants.EBPFAgentName,
 		Namespace: c.namespace,
 	}, &agentDS); err != nil {
 		return nil, fmt.Errorf("can't read DaemonSet %s/%s: %w",
-			c.namespace, agentName, err)
+			c.namespace, constants.EBPFAgentName, err)
 	}
 	return &agentDS, nil
 }
@@ -94,27 +101,27 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 	version := helper.ExtractVersion(coll.Spec.EBPF.Image)
 	return &v1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      agentName,
+			Name:      constants.EBPFAgentName,
 			Namespace: c.namespace,
 			Labels: map[string]string{
-				"app":     agentName,
+				"app":     constants.EBPFAgentName,
 				"version": version,
 			},
 		},
 		Spec: v1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{"app": agentName},
+				MatchLabels: map[string]string{"app": constants.EBPFAgentName},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{"app": agentName},
+					Labels: map[string]string{"app": constants.EBPFAgentName},
 				},
 				Spec: corev1.PodSpec{
-					ServiceAccountName: "netobserv-agent",
+					ServiceAccountName: constants.EBPFServiceAccount,
 					HostNetwork:        true,
 					DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
 					Containers: []corev1.Container{{
-						Name:            agentName,
+						Name:            constants.EBPFAgentName,
 						Image:           coll.Spec.EBPF.Image,
 						ImagePullPolicy: corev1.PullPolicy(coll.Spec.EBPF.ImagePullPolicy),
 						Resources:       coll.Spec.EBPF.Resources,

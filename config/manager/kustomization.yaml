@@ -13,7 +13,7 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/mmaciasl/network-observability-operator
-  newTag: 0331-5
+  newTag: "15"
 commonLabels:
   app: network-observability-operator
   version: main

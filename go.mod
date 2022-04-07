@@ -9,8 +9,9 @@ require (
 	github.com/openshift/api v0.0.0-20220112145620-704957ce4980
 	github.com/stretchr/testify v1.7.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.23.0
-	k8s.io/apimachinery v0.23.0
-	k8s.io/client-go v0.23.0
+	k8s.io/api v0.23.5
+	k8s.io/apimachinery v0.23.5
+	k8s.io/client-go v0.23.5
+	k8s.io/kube-aggregator v0.23.5
 	sigs.k8s.io/controller-runtime v0.11.0
 )
