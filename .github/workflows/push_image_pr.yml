@@ -1,18 +1,17 @@
-name: Build and push to quay.io
+name: Build and push PR image to quay.io
 on:
-  push:
-    branches: [ main ]
+  pull_request_target:
+    types: [labeled]
 
 env:
   REGISTRY_USER: netobserv+github_ci
-  REGISTRY_PASSWORD: ${{ secrets.QUAY_SECRET }}
   REGISTRY: quay.io/netobserv
   IMAGE: network-observability-operator
-  TAGS: main
 
 jobs:
-  push-image:
-    name: push image
+  push-pr-image:
+    if: ${{ github.event.label.name == 'ok-to-test' }}
+    name: push PR image
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -26,13 +25,15 @@ jobs:
           go-version: ${{ matrix.go }}
       - name: checkout
         uses: actions/checkout@v2
+        with:
+          ref: "refs/pull/${{ github.event.number }}/merge"
       - name: build images
-        run: make ci-images-build
+        run: VERSION=temp make ci-images-build
       - name: podman login to quay.io
         uses: redhat-actions/podman-login@v1
         with:
           username: ${{ env.REGISTRY_USER }}
-          password: ${{ env.REGISTRY_PASSWORD }}
+          password: ${{ secrets.QUAY_SECRET }}
           registry: quay.io
       - name: get short sha
         id: shortsha
@@ -42,7 +43,15 @@ jobs:
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ env.IMAGE }}
-          tags: ${{ env.TAGS }} ${{ steps.shortsha.outputs.short_sha }}
+          tags: ${{ steps.shortsha.outputs.short_sha }}
           registry: ${{ env.REGISTRY }}
-      - name: print image url
-        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
+      - uses: actions/github-script@v5
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'New image: ${{ steps.push-to-quay.outputs.registry-paths }}. It will expire after two weeks.'
+            })

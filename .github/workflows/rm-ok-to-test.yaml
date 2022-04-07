@@ -1,0 +1,15 @@
+name: Remove ok-to-test
+on:
+  pull_request_target:
+    types: [synchronize,reopened]
+
+jobs:
+  rm-ok-to-test:
+    if: contains(github.event.pull_request.labels.*.name, 'ok-to-test')
+    runs-on: ubuntu-20.04
+    name: Remove ok-to-test
+    steps:
+      - uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          labels: ok-to-test
+          fail_on_error: true
