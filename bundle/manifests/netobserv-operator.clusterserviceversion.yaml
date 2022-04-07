@@ -15,7 +15,7 @@ metadata:
               "namespace": "openshift-network-operator"
             },
             "consolePlugin": {
-              "image": "quay.io/netobserv/network-observability-console-plugin:v0.1.1",
+              "image": "quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc0",
               "imagePullPolicy": "IfNotPresent",
               "logLevel": "info",
               "port": 9001,
@@ -27,15 +27,13 @@ metadata:
               }
             },
             "flowlogsPipeline": {
-              "enableKubeProbes": false,
+              "enableKubeProbes": true,
               "healthPort": 8080,
-              "image": "quay.io/netobserv/flowlogs-pipeline:v0.1.1",
+              "image": "quay.io/netobserv/flowlogs-pipeline:v0.1.1-rc0",
               "imagePullPolicy": "IfNotPresent",
-              "kind": "Deployment",
+              "kind": "DaemonSet",
               "logLevel": "info",
-              "port": 2055,
-              "printOutput": false,
-              "replicas": 1
+              "port": 2055
             },
             "ipfix": {
               "cacheActiveTimeout": "60s",
@@ -60,13 +58,13 @@ metadata:
       ]
     capabilities: Basic Install
     categories: Monitoring
-    containerImage: quay.io/netobserv/network-observability-operator:0.1.1
-    createdAt: "2022-04-05T09:44:27Z"
+    containerImage: quay.io/netobserv/network-observability-operator:0.1.2-rc0
+    createdAt: "2022-04-07T15:29:10Z"
     description: A network observability operator based on netflows (IPFIX) for OVN
     operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
-  name: netobserv-operator.v0.1.1
+  name: netobserv-operator.v0.1.2-rc0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -94,7 +92,7 @@ spec:
     kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/2-loki.yaml) -n network-observability
     ```
 
-    - [Grafana](https://grafana.com/oss/grafana/) installed (optional): [a dashboard](https://github.com/netobserv/network-observability-operator/blob/v0.1.1/config/samples/dashboards/Network%20Observability.json) can be imported to show flow logs and metrics.
+    - [Grafana](https://grafana.com/oss/grafana/) installed (optional): [a dashboard](https://github.com/netobserv/network-observability-operator/blob/v0.1.2-rc0/config/samples/dashboards/Network%20Observability.json) can be imported to show flow logs and metrics.
 
     ## Post-installation
     Because the installed workloads operate cluster-wide, there is only one `FlowCollector` that can be installed, named `cluster`. The custom resource is [documented here](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md). Make sure that Loki is reachable and its URL is properly configured in the operand resource.
@@ -278,14 +276,14 @@ spec:
             matchLabels:
               app: network-observability-operator
               control-plane: controller-manager
-              version: 0.1.1
+              version: 0.1.2-rc0
           strategy: {}
           template:
             metadata:
               labels:
                 app: network-observability-operator
                 control-plane: controller-manager
-                version: 0.1.1
+                version: 0.1.2-rc0
             spec:
               containers:
               - args:
@@ -306,7 +304,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/netobserv/network-observability-operator:0.1.1
+                image: quay.io/netobserv/network-observability-operator:0.1.2-rc0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -405,4 +403,4 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  version: 0.1.1
+  version: 0.1.2-rc0
