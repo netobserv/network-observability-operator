@@ -1344,22 +1344,6 @@ spec:
                     - Always
                     - Never
                     type: string
-                  kafka:
-                    description: Kafka configurations, if empty the operator will
-                      deploy a all-in-one FLP
-                    properties:
-                      address:
-                        default: ""
-                        description: Address of the kafka server
-                        type: string
-                      topic:
-                        default: ""
-                        description: Address of the kafka topic to use
-                        type: string
-                    required:
-                    - address
-                    - topic
-                    type: object
                   kind:
                     default: DaemonSet
                     description: Kind is the workload kind, either DaemonSet or Deployment
@@ -1466,6 +1450,22 @@ spec:
                     format: int32
                     minimum: 0
                     type: integer
+                type: object
+              kafka:
+                description: Kafka configurations, if empty the operator will deploy
+                  a all-in-one FLP
+                properties:
+                  address:
+                    default: ""
+                    description: Address of the kafka server
+                    type: string
+                  topic:
+                    default: ""
+                    description: Kafka topic to use
+                    type: string
+                required:
+                - address
+                - topic
                 type: object
               loki:
                 description: Loki contains settings related to the loki client

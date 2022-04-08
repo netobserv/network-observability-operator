@@ -390,7 +390,7 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.FlowlogsPipeline.Kafka = &flowsv1alpha1.FlowCollectorKafka{Address: "loaclhost:9092", Topic: "FLP"}
+				fc.Spec.Kafka = &flowsv1alpha1.FlowCollectorKafka{Address: "loaclhost:9092", Topic: "FLP"}
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 		})
@@ -430,7 +430,7 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.FlowlogsPipeline.Kafka = nil
+				fc.Spec.Kafka = nil
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 		})

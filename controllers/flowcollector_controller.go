@@ -142,7 +142,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		desired.Spec.ClusterNetworkOperator.Namespace,
 		ovsFlowsConfigMapName,
 		r.lookupIP)
-	if err := ovsConfigController.Reconcile(ctx, desired, gfReconciler.GetServiceName(&desired.Spec.FlowlogsPipeline)); err != nil {
+	if err := ovsConfigController.Reconcile(ctx, desired, gfReconciler.GetServiceName(desired.Spec.Kafka)); err != nil {
 		return ctrl.Result{},
 			fmt.Errorf("failed to reconcile ovs-flows-config ConfigMap: %w", err)
 	}
