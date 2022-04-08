@@ -19,3 +19,21 @@ func TestExtractUnknownVersion(t *testing.T) {
 	v := ExtractVersion("flowlogs-pipeline")
 	assert.Equal("unknown", v)
 }
+
+func TestIsSubset(t *testing.T) {
+	assert.True(t, IsSubSet(
+		map[string]string{"a": "b", "c": "d", "e": "f"},
+		map[string]string{"a": "b", "c": "d", "e": "f"}))
+	assert.True(t, IsSubSet(
+		map[string]string{"a": "b", "c": "d", "e": "f"},
+		map[string]string{"a": "b", "e": "f"}))
+	assert.False(t, IsSubSet(
+		map[string]string{"a": "b", "c": "d", "e": "f"},
+		map[string]string{"a": "b", "e": "xxx"}))
+	assert.False(t, IsSubSet(
+		map[string]string{"a": "b", "c": "d", "e": "f"},
+		map[string]string{"a": "b", "z": "d"}))
+	assert.False(t, IsSubSet(
+		map[string]string{"a": "b", "c": "d", "e": "f"},
+		map[string]string{"a": "b", "c": "d", "e": "f", "g": "h"}))
+}

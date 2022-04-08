@@ -9,6 +9,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -34,14 +35,19 @@ const (
 )
 
 type AgentController struct {
-	client    reconcilers.ClientHelper
-	namespace string
+	client      reconcilers.ClientHelper
+	namespace   string
+	permissions permissions.Controller
 }
 
 func NewAgentController(client reconcilers.ClientHelper, namespace string) *AgentController {
 	return &AgentController{
 		client:    client,
 		namespace: namespace,
+		permissions: permissions.Controller{
+			Client:        client,
+			BaseNamespace: namespace,
+		},
 	}
 }
 
@@ -52,9 +58,12 @@ func (c *AgentController) Reconcile(
 	rlog := log.FromContext(ctx).WithName("AgentController")
 	ctx = log.IntoContext(ctx, rlog)
 
+	if err := c.permissions.Reconcile(ctx); err != nil {
+		return fmt.Errorf("reconciling permissions: %w", err)
+	}
 	current, err := c.current(ctx)
 	if err != nil {
-		rlog.Info("can't fetch current Agent. Assuming as non-existing", "error", err)
+		return fmt.Errorf("can't fetch current EBPF Agent: %w", err)
 	}
 	desired := c.desired(target)
 	switch c.requiredAction(current, desired) {
@@ -63,17 +72,14 @@ func (c *AgentController) Reconcile(
 		return nil
 	case actionCreate:
 		rlog.Info("action: create agent")
-		if err := permissions.Apply(ctx, c.client, c.namespace); err != nil {
-			return err
+		if err := c.client.SetControllerReference(desired); err != nil {
+			return fmt.Errorf("couldn't set controller reference: %w", err)
 		}
 		return c.client.Create(ctx, desired)
 	case actionDelete:
 		rlog.Info("action: delete agent")
 		return c.client.Delete(ctx, current)
 	case actionUpdate:
-		if err := permissions.Apply(ctx, c.client, c.namespace); err != nil {
-			return err
-		}
 		rlog.Info("action: update agent")
 		return c.client.Update(ctx, current)
 	}
@@ -87,6 +93,9 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 		Name:      constants.EBPFAgentName,
 		Namespace: c.namespace,
 	}, &agentDS); err != nil {
+		if errors.IsNotFound(err) {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("can't read DaemonSet %s/%s: %w",
 			c.namespace, constants.EBPFAgentName, err)
 	}

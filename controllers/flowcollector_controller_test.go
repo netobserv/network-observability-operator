@@ -652,3 +652,10 @@ func getContainerArgumentAfter(containerName, argName string) func() interface{}
 		return fmt.Errorf("container not found: %v", containerName)
 	}
 }
+
+/*
+ Nuevos tests
+	- Crear flowcollector ebpf y ver que agente y security stufff se ha creado
+	- Modificar namespaces/agente/serviceaccount/securitycontextconstraints y ver que vuelven a su lugar
+    - Borrar flowcollector y ver que todo se ha borrado
+*/

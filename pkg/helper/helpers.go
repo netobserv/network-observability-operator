@@ -21,3 +21,14 @@ func ExtractVersion(image string) string {
 	}
 	return "unknown"
 }
+
+// IsSubSet returns whether the first argument contains all the keys and values of the second
+// argument
+func IsSubSet(set, subset map[string]string) bool {
+	for k, v := range subset {
+		if sv, ok := set[k]; !ok || v != sv {
+			return false
+		}
+	}
+	return true
+}
