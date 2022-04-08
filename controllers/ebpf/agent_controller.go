@@ -31,7 +31,6 @@ const (
 	actionNone = iota
 	actionCreate
 	actionUpdate
-	actionDelete
 )
 
 type AgentController struct {
@@ -67,24 +66,19 @@ func (c *AgentController) Reconcile(
 	}
 	desired := c.desired(target)
 	switch c.requiredAction(current, desired) {
-	case actionNone:
-		rlog.Info("action: none")
-		return nil
 	case actionCreate:
 		rlog.Info("action: create agent")
 		if err := c.client.SetControllerReference(desired); err != nil {
 			return fmt.Errorf("couldn't set controller reference: %w", err)
 		}
-		return c.client.Create(ctx, desired)
-	case actionDelete:
-		rlog.Info("action: delete agent")
-		return c.client.Delete(ctx, current)
+		return c.client.CreateOwned(ctx, desired)
 	case actionUpdate:
 		rlog.Info("action: update agent")
-		return c.client.Update(ctx, current)
+		return c.client.UpdateOwned(ctx, current, desired)
+	default:
+		rlog.Info("action: nonthing to do")
+		return nil
 	}
-	rlog.Info("unexpected action. Doing nothing")
-	return nil
 }
 
 func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
@@ -175,11 +169,8 @@ func (c *AgentController) flpEndpoint(coll *flowsv1alpha1.FlowCollector) []corev
 }
 
 func (c *AgentController) requiredAction(current, desired *v1.DaemonSet) reconcileAction {
-	if current == nil && desired == nil {
+	if desired == nil {
 		return actionNone
-	}
-	if current != nil && desired == nil {
-		return actionDelete
 	}
 	if current == nil && desired != nil {
 		return actionCreate
