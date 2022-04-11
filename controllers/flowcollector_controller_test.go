@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
@@ -23,8 +23,7 @@ import (
 const timeout = time.Second * 10
 const interval = 50 * time.Millisecond
 
-var _ = Describe("FlowCollector Controller", func() {
-
+var _ = Describe("FlowCollector Controller", Serial, func() {
 	const otherNamespace = "other-namespace"
 	ipResolver.On("LookupIP", constants.FLPName+"."+operatorNamespace).
 		Return([]net.IP{net.IPv4(11, 22, 33, 44)}, nil)
@@ -59,8 +58,7 @@ var _ = Describe("FlowCollector Controller", func() {
 	})
 
 	AfterEach(func() {
-		// Cleanup some resources
-
+		// Add any teardown steps that needs to be executed after each test
 	})
 
 	// Add Tests for OpenAPI validation (or additonal CRD features) specified in
@@ -583,48 +581,6 @@ var _ = Describe("FlowCollector Controller", func() {
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
 		})
 	})
-
-	/*
-		 Nuevos tests
-			- Crear flowcollector ebpf y ver que agente y security stufff se ha creado
-			- Modificar namespaces/agente/serviceaccount/securitycontextconstraints y ver que vuelven a su lugar
-		    - Borrar flowcollector y ver que todo se ha borrado
-		//*/
-	//Context("Netobserv eBPF Agent Reconciler", func() {
-	//	It("Should deploy when it does not exist", func() {
-	//		const namespace, agentName = "network-observability", "netobserv-agent"
-	//		agentKey := types.NamespacedName{Name: agentName, Namespace: namespace}
-	//		crKey := types.NamespacedName{Name: "cluster", Namespace: namespace}
-	//		desired := &flowsv1alpha1.FlowCollector{
-	//			ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
-	//			Spec: flowsv1alpha1.FlowCollectorSpec{
-	//				FlowlogsPipeline: flowsv1alpha1.FlowCollectorFLP{
-	//					Kind:            "Deployment",
-	//					Port:            9999,
-	//					ImagePullPolicy: "Never",
-	//					LogLevel:        "error",
-	//					Image:           "testimg:latest",
-	//				},
-	//				EBPF: &flowsv1alpha1.FlowCollectorEBPF{},
-	//			},
-	//		}
-	//		// Create
-	//		Expect(k8sClient.Create(ctx, desired)).Should(Succeed())
-	//
-	//		By("Expecting to create the netobserv-agent DaemonSet")
-	//		Eventually(func() interface{} {
-	//			ds := appsv1.DaemonSet{}
-	//			if err := k8sClient.Get(ctx, agentKey, &ds); err != nil {
-	//				return err
-	//			}
-	//			return ds
-	//		}, timeout, interval).Should(Satisfy(func(ds appsv1.DaemonSet) bool {
-	//			// TODO: check stuff
-	//			return true
-	//		}))
-	//
-	//	})
-	//})
 })
 
 func getContainerArgumentAfter(containerName, argName string) func() interface{} {

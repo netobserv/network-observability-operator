@@ -4,8 +4,8 @@ go 1.16
 
 require (
 	github.com/mitchellh/mapstructure v1.4.1
-	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.17.0
+	github.com/onsi/ginkgo/v2 v2.1.3
+	github.com/onsi/gomega v1.19.0
 	github.com/openshift/api v0.0.0-20220112145620-704957ce4980
 	github.com/stretchr/testify v1.7.0
 	gopkg.in/yaml.v2 v2.4.0
