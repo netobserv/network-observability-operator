@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -101,7 +102,7 @@ func main() {
 	}
 
 	if err = controllers.NewFlowCollectorReconciler(mgr.GetClient(), mgr.GetScheme()).
-		SetupWithManager(mgr); err != nil {
+		SetupWithManager(context.Background(), mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "FlowCollector")
 		os.Exit(1)
 	}

@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
+	"github.com/netobserv/network-observability-operator/pkg/discover"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -36,17 +37,18 @@ const (
 type AgentController struct {
 	client      reconcilers.ClientHelper
 	namespace   string
-	permissions permissions.Controller
+	permissions permissions.Reconciler
 }
 
-func NewAgentController(client reconcilers.ClientHelper, namespace string) *AgentController {
+func NewAgentController(
+	client reconcilers.ClientHelper,
+	namespace string,
+	permissionsVendor *discover.Permissions,
+) *AgentController {
 	return &AgentController{
-		client:    client,
-		namespace: namespace,
-		permissions: permissions.Controller{
-			Client:        client,
-			BaseNamespace: namespace,
-		},
+		client:      client,
+		namespace:   namespace,
+		permissions: permissions.NewReconciler(client, namespace, permissionsVendor),
 	}
 }
 

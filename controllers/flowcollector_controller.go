@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
+	"github.com/netobserv/network-observability-operator/pkg/discover"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -37,6 +38,7 @@ const ovsFlowsConfigMapName = "ovs-flows-config"
 // FlowCollectorReconciler reconciles a FlowCollector object
 type FlowCollectorReconciler struct {
 	client.Client
+	permissions    discover.Permissions
 	Scheme         *runtime.Scheme
 	consoleEnabled bool
 	lookupIP       func(string) ([]net.IP, error)
@@ -44,6 +46,9 @@ type FlowCollectorReconciler struct {
 
 func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *FlowCollectorReconciler {
 	return &FlowCollectorReconciler{
+		permissions: discover.Permissions{
+			Client: client,
+		},
 		Client:         client,
 		Scheme:         scheme,
 		consoleEnabled: false,
@@ -73,23 +78,23 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *F
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	rlog := log.FromContext(ctx)
 	desired := &flowsv1alpha1.FlowCollector{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			log.Info("FlowCollector resource not found. Ignoring since object must be deleted")
+			rlog.Info("FlowCollector resource not found. Ignoring since object must be deleted")
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		log.Error(err, "Failed to get FlowCollector")
+		rlog.Error(err, "Failed to get FlowCollector")
 		return ctrl.Result{}, err
 	}
 
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Info("No need to reconcile status of a FlowCollector that is being deleted. Ignoring")
+		rlog.Info("No need to reconcile status of a FlowCollector that is being deleted. Ignoring")
 		return ctrl.Result{}, nil
 	}
 
@@ -102,7 +107,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if !nsExist {
 		err = r.Create(ctx, buildNamespace(ns))
 		if err != nil {
-			log.Error(err, "Failed to create Namespace")
+			rlog.Error(err, "Failed to create Namespace")
 			return ctrl.Result{}, err
 		}
 	}
@@ -125,21 +130,21 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	// Check namespace changed
 	if ns != previousNamespace {
 		if err := r.handleNamespaceChanged(ctx, previousNamespace, ns, desired, &gfReconciler, &cpReconciler); err != nil {
-			log.Error(err, "Failed to handle namespace change")
+			rlog.Error(err, "Failed to handle namespace change")
 			return ctrl.Result{}, err
 		}
 	}
 
 	// Flowlogs-pipeline
 	if err := gfReconciler.Reconcile(ctx, desired); err != nil {
-		log.Error(err, "Failed to reconcile flowlogs-pipeline")
+		rlog.Error(err, "Failed to reconcile flowlogs-pipeline")
 		return ctrl.Result{}, err
 	}
 
 	// OVS config map for CNO
 	if (desired.Spec.IPFIX == nil && desired.Spec.EBPF == nil) ||
 		(desired.Spec.IPFIX != nil && desired.Spec.EBPF != nil) {
-		log.Error(ierrors.New("either ipfix or ebpf sections must be defined, but not both"),
+		rlog.Error(ierrors.New("either ipfix or ebpf sections must be defined, but not both"),
 			"Failed to reconcile flow collectors")
 		return ctrl.Result{}, err
 	}
@@ -155,7 +160,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 	if desired.Spec.EBPF != nil {
-		ebpfAgentController := ebpf.NewAgentController(clientHelper, ns)
+		ebpfAgentController := ebpf.NewAgentController(clientHelper, ns, &r.permissions)
 		if err := ebpfAgentController.Reconcile(ctx, desired); err != nil {
 			return ctrl.Result{},
 				fmt.Errorf("failed to reconcile eBPF Netobserv Agent: %w", err)
@@ -166,7 +171,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if r.consoleEnabled {
 		err := cpReconciler.Reconcile(ctx, &desired.Spec)
 		if err != nil {
-			log.Error(err, "Failed to reconcile console plugin")
+			rlog.Error(err, "Failed to reconcile console plugin")
 			return ctrl.Result{}, err
 		}
 	}
@@ -234,7 +239,7 @@ func isConsoleEnabled(mgr ctrl.Manager) (bool, error) {
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *FlowCollectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *FlowCollectorReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&flowsv1alpha1.FlowCollector{}).
 		Owns(&corev1.ConfigMap{}).
@@ -243,8 +248,11 @@ func (r *FlowCollectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&ascv2.HorizontalPodAutoscaler{}).
 		Owns(&corev1.Namespace{}).
 		Owns(&corev1.Service{}).
-		Owns(&corev1.ServiceAccount{}).
-		Owns(&securityv1.SecurityContextConstraints{})
+		Owns(&corev1.ServiceAccount{})
+
+	if r.permissions.Vendor(ctx) == discover.VendorOpenShift {
+		builder = builder.Owns(&securityv1.SecurityContextConstraints{})
+	}
 
 	var err error
 	r.consoleEnabled, err = isConsoleEnabled(mgr)
