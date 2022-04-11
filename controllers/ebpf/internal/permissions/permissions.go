@@ -23,18 +23,22 @@ import (
 // - Create netobserv-agent service account in the non-privileged namespace
 // - For Openshift, apply the required SecurityContextConstraints for privileged Pod operation
 type Reconciler struct {
-	client        reconcilers.ClientHelper
-	baseNamespace string
+	client              reconcilers.ClientHelper
+	privilegedNamespace string
 	// vendor defaults to VendorUnknown and it will be fetched when needed
 	vendor *discover.Permissions
 }
 
 func NewReconciler(
 	client reconcilers.ClientHelper,
-	baseNamespace string,
+	privilegedNamespace string,
 	permissionsVendor *discover.Permissions,
 ) Reconciler {
-	return Reconciler{client: client, baseNamespace: baseNamespace, vendor: permissionsVendor}
+	return Reconciler{
+		client:              client,
+		privilegedNamespace: privilegedNamespace,
+		vendor:              permissionsVendor,
+	}
 }
 
 func (c *Reconciler) Reconcile(ctx context.Context) error {
@@ -53,10 +57,9 @@ func (c *Reconciler) Reconcile(ctx context.Context) error {
 }
 
 func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
-	namespace := c.privilegedNamespace()
-	rlog := log.FromContext(ctx, "privilegedNamespace", namespace)
+	rlog := log.FromContext(ctx, "PrivilegedNamespace", c.privilegedNamespace)
 	actual := &v1.Namespace{}
-	if err := c.client.Get(ctx, client.ObjectKey{Name: namespace}, actual); err != nil {
+	if err := c.client.Get(ctx, client.ObjectKey{Name: c.privilegedNamespace}, actual); err != nil {
 		if errors.IsNotFound(err) {
 			actual = nil
 		} else {
@@ -65,7 +68,7 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 	}
 	desired := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace,
+			Name: c.privilegedNamespace,
 			Labels: map[string]string{
 				"app":                                "network-observability-operator",
 				"pod-security.kubernetes.io/enforce": "privileged",
@@ -93,7 +96,7 @@ func (c *Reconciler) reconcileServiceAccount(ctx context.Context) error {
 	sAcc := &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFServiceAccount,
-			Namespace: c.baseNamespace,
+			Namespace: c.privilegedNamespace,
 		},
 	}
 	actual := &v1.ServiceAccount{}
@@ -138,7 +141,7 @@ func (c *Reconciler) reconcileOpenshiftPermissions(ctx context.Context) error {
 			Type: osv1.SELinuxStrategyRunAsAny,
 		},
 		Users: []string{
-			"system:serviceaccount:" + c.baseNamespace + ":" + constants.EBPFServiceAccount,
+			"system:serviceaccount:" + c.privilegedNamespace + ":" + constants.EBPFServiceAccount,
 		},
 	}
 	actual := &osv1.SecurityContextConstraints{}
@@ -163,8 +166,4 @@ func (c *Reconciler) reconcileOpenshiftPermissions(ctx context.Context) error {
 	}
 	rlog.Info("securitycontextconstraints already reconciled. Doing nothing")
 	return nil
-}
-
-func (c *Reconciler) privilegedNamespace() string {
-	return c.baseNamespace + constants.EBPFPrivilegedNSSuffix
 }

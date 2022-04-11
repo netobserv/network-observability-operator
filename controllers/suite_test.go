@@ -63,6 +63,12 @@ func TestAPIs(t *testing.T) {
 	RunSpecs(t, "Controller Suite")
 }
 
+// this way we make sure that both test sub-suites are not executed in parallel
+var _ = Describe("Controller suite tests", Ordered, Serial, func() {
+	flowCollectorControllerSpecs()
+	flowCollectorEBPFSpecs()
+})
+
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 	ctx, cancel = context.WithCancel(context.TODO())

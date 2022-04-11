@@ -35,20 +35,23 @@ const (
 )
 
 type AgentController struct {
-	client      reconcilers.ClientHelper
-	namespace   string
-	permissions permissions.Reconciler
+	client              reconcilers.ClientHelper
+	baseNamespace       string
+	privilegedNamespace string
+	permissions         permissions.Reconciler
 }
 
 func NewAgentController(
 	client reconcilers.ClientHelper,
-	namespace string,
+	baseNamespace string,
 	permissionsVendor *discover.Permissions,
 ) *AgentController {
+	pns := baseNamespace + constants.EBPFPrivilegedNSSuffix
 	return &AgentController{
-		client:      client,
-		namespace:   namespace,
-		permissions: permissions.NewReconciler(client, namespace, permissionsVendor),
+		client:              client,
+		baseNamespace:       baseNamespace,
+		privilegedNamespace: pns,
+		permissions:         permissions.NewReconciler(client, pns, permissionsVendor),
 	}
 }
 
@@ -70,9 +73,6 @@ func (c *AgentController) Reconcile(
 	switch c.requiredAction(current, desired) {
 	case actionCreate:
 		rlog.Info("action: create agent")
-		if err := c.client.SetControllerReference(desired); err != nil {
-			return fmt.Errorf("couldn't set controller reference: %w", err)
-		}
 		return c.client.CreateOwned(ctx, desired)
 	case actionUpdate:
 		rlog.Info("action: update agent")
@@ -87,13 +87,13 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 	agentDS := v1.DaemonSet{}
 	if err := c.client.Get(ctx, types.NamespacedName{
 		Name:      constants.EBPFAgentName,
-		Namespace: c.namespace,
+		Namespace: c.privilegedNamespace,
 	}, &agentDS); err != nil {
 		if errors.IsNotFound(err) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("can't read DaemonSet %s/%s: %w",
-			c.namespace, constants.EBPFAgentName, err)
+			c.privilegedNamespace, constants.EBPFAgentName, err)
 	}
 	return &agentDS, nil
 }
@@ -107,7 +107,7 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 	return &v1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFAgentName,
-			Namespace: c.namespace,
+			Namespace: c.privilegedNamespace,
 			Labels: map[string]string{
 				"app":     constants.EBPFAgentName,
 				"version": version,
@@ -161,7 +161,7 @@ func (c *AgentController) flpEndpoint(coll *flowsv1alpha1.FlowCollector) []corev
 	case constants.DeploymentKind:
 		return []corev1.EnvVar{{
 			Name:  flowsTargetHostEnvVar,
-			Value: constants.FLPName + "." + c.namespace,
+			Value: constants.FLPName + "." + c.baseNamespace,
 		}, {
 			Name:  flowsTargetPortEnvVar,
 			Value: strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)),

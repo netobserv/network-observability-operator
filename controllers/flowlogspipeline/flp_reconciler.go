@@ -56,6 +56,7 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) FLPReconciler
 
 // InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
 func (r *FLPReconciler) InitStaticResources(ctx context.Context) error {
+
 	return r.createPermissions(ctx, true)
 }
 
