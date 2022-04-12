@@ -23,6 +23,7 @@ import (
 const timeout = time.Second * 10
 const interval = 50 * time.Millisecond
 
+// nolint:cyclop
 func flowCollectorControllerSpecs() {
 	const otherNamespace = "other-namespace"
 	ipResolver.On("LookupIP", constants.FLPName+"."+operatorNamespace).

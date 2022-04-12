@@ -156,8 +156,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			return ctrl.Result{},
 				fmt.Errorf("failed to reconcile ovs-flows-config ConfigMap: %w", err)
 		}
-	}
-	if desired.Spec.EBPF != nil {
+	} else {
 		ebpfAgentController := ebpf.NewAgentController(clientHelper, ns, &r.permissions)
 		if err := ebpfAgentController.Reconcile(ctx, desired); err != nil {
 			return ctrl.Result{},
