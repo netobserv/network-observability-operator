@@ -20,7 +20,6 @@ import (
 
 // Type alias
 type flpSpec = flowsv1alpha1.FlowCollectorFLP
-type lokiSpec = flowsv1alpha1.FlowCollectorLoki
 
 // FLPReconciler reconciles the current flowlogs-pipeline state with the desired configuration
 type FLPReconciler struct {

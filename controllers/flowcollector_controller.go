@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -46,9 +47,6 @@ type FlowCollectorReconciler struct {
 
 func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *FlowCollectorReconciler {
 	return &FlowCollectorReconciler{
-		permissions: discover.Permissions{
-			Client: client,
-		},
 		Client:         client,
 		Scheme:         scheme,
 		consoleEnabled: false,
@@ -59,7 +57,7 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *F
 //+kubebuilder:rbac:groups=apps,resources=deployments;daemonsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=namespaces;services;serviceaccounts;configmaps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles,verbs=get;create;delete
-//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;create;delete;update
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;create;delete;update
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;delete;update;patch;list
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors/status,verbs=get;update;patch
@@ -78,23 +76,23 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *F
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	rlog := log.FromContext(ctx)
+	log := log.FromContext(ctx)
 	desired := &flowsv1alpha1.FlowCollector{}
 	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			rlog.Info("FlowCollector resource not found. Ignoring since object must be deleted")
+			log.Info("FlowCollector resource not found. Ignoring since object must be deleted")
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		rlog.Error(err, "Failed to get FlowCollector")
+		log.Error(err, "Failed to get FlowCollector")
 		return ctrl.Result{}, err
 	}
 
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		rlog.Info("No need to reconcile status of a FlowCollector that is being deleted. Ignoring")
+		log.Info("No need to reconcile status of a FlowCollector that is being deleted. Ignoring")
 		return ctrl.Result{}, nil
 	}
 
@@ -107,7 +105,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if !nsExist {
 		err = r.Create(ctx, buildNamespace(ns))
 		if err != nil {
-			rlog.Error(err, "Failed to create Namespace")
+			log.Error(err, "Failed to create Namespace")
 			return ctrl.Result{}, err
 		}
 	}
@@ -130,21 +128,21 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	// Check namespace changed
 	if ns != previousNamespace {
 		if err := r.handleNamespaceChanged(ctx, previousNamespace, ns, desired, &gfReconciler, &cpReconciler); err != nil {
-			rlog.Error(err, "Failed to handle namespace change")
+			log.Error(err, "Failed to handle namespace change")
 			return ctrl.Result{}, err
 		}
 	}
 
 	// Flowlogs-pipeline
 	if err := gfReconciler.Reconcile(ctx, desired); err != nil {
-		rlog.Error(err, "Failed to reconcile flowlogs-pipeline")
+		log.Error(err, "Failed to reconcile flowlogs-pipeline")
 		return ctrl.Result{}, err
 	}
 
 	// OVS config map for CNO
 	if (desired.Spec.IPFIX == nil && desired.Spec.EBPF == nil) ||
 		(desired.Spec.IPFIX != nil && desired.Spec.EBPF != nil) {
-		rlog.Error(ierrors.New("either ipfix or ebpf sections must be defined, but not both"),
+		log.Error(ierrors.New("either ipfix or ebpf sections must be defined, but not both"),
 			"Failed to reconcile flow collectors")
 		return ctrl.Result{}, err
 	}
@@ -171,7 +169,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if r.consoleEnabled {
 		err := cpReconciler.Reconcile(ctx, &desired.Spec)
 		if err != nil {
-			rlog.Error(err, "Failed to reconcile console plugin")
+			log.Error(err, "Failed to reconcile console plugin")
 			return ctrl.Result{}, err
 		}
 	}
@@ -250,8 +248,8 @@ func (r *FlowCollectorReconciler) SetupWithManager(ctx context.Context, mgr ctrl
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ServiceAccount{})
 
-	if r.permissions.Vendor(ctx) == discover.VendorOpenShift {
-		builder = builder.Owns(&securityv1.SecurityContextConstraints{})
+	if err := r.setupOpenshift(ctx, mgr, builder); err != nil {
+		return err
 	}
 
 	var err error
@@ -263,6 +261,20 @@ func (r *FlowCollectorReconciler) SetupWithManager(ctx context.Context, mgr ctrl
 		builder = builder.Owns(&osv1alpha1.ConsolePlugin{})
 	}
 	return builder.Complete(r)
+}
+
+func (r *FlowCollectorReconciler) setupOpenshift(ctx context.Context, mgr ctrl.Manager, builder *builder.Builder) error {
+	dc, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
+	if err != nil {
+		return fmt.Errorf("can't instantiate discovery client: %w", err)
+	}
+	r.permissions = discover.Permissions{
+		Client: dc,
+	}
+	if r.permissions.Vendor(ctx) == discover.VendorOpenShift {
+		builder.Owns(&securityv1.SecurityContextConstraints{})
+	}
+	return nil
 }
 
 func getNamespaceName(desired *flowsv1alpha1.FlowCollector) string {

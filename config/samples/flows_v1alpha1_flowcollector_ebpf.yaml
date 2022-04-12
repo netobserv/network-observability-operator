@@ -15,14 +15,14 @@ spec:
     kind: Deployment
     replicas: 1
     port: 2055
-    image: 'quay.io/mmaciasl/flowlogs-pipeline:latest'
+    image: 'quay.io/netobserv/flowlogs-pipeline:latest'
     imagePullPolicy: IfNotPresent
     logLevel: info
     printOutput: false
     enableKubeProbes: false
     healthPort: 8080
   loki:
-    url: 'http://loki.default:3100/'
+    url: 'http://loki:3100/'
     batchWait: 1s
     batchSize: 102400
     minBackoff: 1s

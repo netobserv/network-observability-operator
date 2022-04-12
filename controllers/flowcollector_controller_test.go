@@ -68,6 +68,7 @@ func flowCollectorControllerSpecs() {
 	Context("Deployment with autho-scaling", func() {
 		var oldDigest string
 		It("Should create successfully", func() {
+
 			created := &flowsv1alpha1.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: crKey.Name,

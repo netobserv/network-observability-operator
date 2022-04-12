@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/netobserv/network-observability-operator/pkg/discover"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
@@ -47,15 +46,15 @@ import (
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
+const testCnoNamespace = "openshift-network-operator"
+
 var (
-	ctx                       context.Context
-	k8sManager                manager.Manager
-	k8sClient                 client.Client
-	testEnv                   *envtest.Environment
-	cancel                    context.CancelFunc
-	ipResolver                ipResolverMock
-	testCnoNamespace          string
-	testOvsFlowsConfigMapName string
+	ctx        context.Context
+	k8sManager manager.Manager
+	k8sClient  client.Client
+	testEnv    *envtest.Environment
+	cancel     context.CancelFunc
+	ipResolver ipResolverMock
 )
 
 func TestAPIs(t *testing.T) {
@@ -63,7 +62,8 @@ func TestAPIs(t *testing.T) {
 	RunSpecs(t, "Controller Suite")
 }
 
-// this way we make sure that both test sub-suites are not executed in parallel
+// go test ./... runs always Ginkgo test suites in parallel and they would interfere
+// this way we make sure that both test sub-suites are executed serially
 var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
 	flowCollectorControllerSpecs()
 	flowCollectorEBPFSpecs()
@@ -108,10 +108,6 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
-	// TODO: make constant and remove?
-	testCnoNamespace = "openshift-network-operator"
-	testOvsFlowsConfigMapName = "ovs-flows-config"
-
 	Expect(prepareNamespaces()).NotTo(HaveOccurred())
 
 	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{Scheme: scheme.Scheme})
@@ -154,10 +150,9 @@ func prepareNamespaces() error {
 // FlowCollectorReconciler
 func NewTestFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *FlowCollectorReconciler {
 	return &FlowCollectorReconciler{
-		Client:      client,
-		Scheme:      scheme,
-		lookupIP:    ipResolver.LookupIP,
-		permissions: discover.Permissions{Client: client},
+		Client:   client,
+		Scheme:   scheme,
+		lookupIP: ipResolver.LookupIP,
 	}
 }
 

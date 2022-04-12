@@ -82,13 +82,8 @@ func flowCollectorEBPFSpecs() {
 				})
 			}))
 
-			sa := v1.ServiceAccount{}
 			By("expecting to create the netobserv-agent service account")
-			Expect(k8sClient.Get(ctx, saKey, &sa)).To(Succeed())
-		})
-
-		It("should restore the managed objects if manually changed", func() {
-			By("expecting to restore the network-observability-privileged namespace")
+			Expect(k8sClient.Get(ctx, saKey, &v1.ServiceAccount{})).To(Succeed())
 		})
 
 		It("should undeploy everything when deleted", func() {

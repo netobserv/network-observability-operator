@@ -19,14 +19,13 @@ import (
 
 // Reconciler reconciles the different resources to enable the privileged operation of the
 // Netobserv Agent:
-// - Create the privileged namespace with Pod Permissions annotations
+// - Create the privileged namespace with Pod Permissions annotations (for Vanilla K8s)
 // - Create netobserv-agent service account in the non-privileged namespace
 // - For Openshift, apply the required SecurityContextConstraints for privileged Pod operation
 type Reconciler struct {
 	client              reconcilers.ClientHelper
 	privilegedNamespace string
-	// vendor defaults to VendorUnknown and it will be fetched when needed
-	vendor *discover.Permissions
+	vendor              *discover.Permissions
 }
 
 func NewReconciler(
@@ -115,8 +114,6 @@ func (c *Reconciler) reconcileServiceAccount(ctx context.Context) error {
 	return nil
 }
 
-// reconcileVendorPermissions inspects into the API services to know which mechanism should use to
-// reconcile extra permissions (e.g. SecurityContextConstraints in OpenShift)
 func (c *Reconciler) reconcileVendorPermissions(ctx context.Context) error {
 	if c.vendor.Vendor(ctx) == discover.VendorOpenShift {
 		return c.reconcileOpenshiftPermissions(ctx)
@@ -164,6 +161,6 @@ func (c *Reconciler) reconcileOpenshiftPermissions(ctx context.Context) error {
 		rlog.Info("updating SecurityContextConstraints")
 		return c.client.UpdateOwned(ctx, actual, scc)
 	}
-	rlog.Info("securitycontextconstraints already reconciled. Doing nothing")
+	rlog.Info("SecurityContextConstraints already reconciled. Doing nothing")
 	return nil
 }

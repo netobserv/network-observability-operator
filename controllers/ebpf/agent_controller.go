@@ -33,6 +33,9 @@ const (
 	actionUpdate
 )
 
+// AgentController reconciles the status of the eBPF agent Daemonset, as well as the
+// associated objects that are required to bind the proper permissions: namespace, service
+// accounts, SecurityContextConstraints...
 type AgentController struct {
 	client              reconcilers.ClientHelper
 	baseNamespace       string
@@ -54,8 +57,6 @@ func NewAgentController(
 	}
 }
 
-// Reconcile reconciles the status of the ovs-flows-config configmap with
-// the target FlowCollector ipfix section map
 func (c *AgentController) Reconcile(
 	ctx context.Context, target *flowsv1alpha1.FlowCollector) error {
 	rlog := log.FromContext(ctx).WithName("AgentController")
