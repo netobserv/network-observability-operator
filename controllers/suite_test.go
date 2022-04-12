@@ -64,9 +64,8 @@ func TestAPIs(t *testing.T) {
 }
 
 // this way we make sure that both test sub-suites are not executed in parallel
-var _ = Describe("Controller suite tests", Ordered, Serial, func() {
-	// TODO: check if this is still needed
-	//flowCollectorControllerSpecs()
+var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
+	flowCollectorControllerSpecs()
 	flowCollectorEBPFSpecs()
 })
 
