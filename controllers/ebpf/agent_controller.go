@@ -3,7 +3,6 @@ package ebpf
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strconv"
 
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
@@ -177,11 +176,13 @@ func (c *AgentController) requiredAction(current, desired *v1.DaemonSet) reconci
 	if current == nil && desired != nil {
 		return actionCreate
 	}
-	same := reflect.DeepEqual(current.Spec.Template.Spec, desired.Spec.Template.Spec) &&
-		reflect.DeepEqual(current.Spec.Template.ObjectMeta, desired.Spec.Template.ObjectMeta) &&
-		reflect.DeepEqual(current.Spec.Selector, desired.Spec.Selector) &&
-		reflect.DeepEqual(current.ObjectMeta.Labels, desired.ObjectMeta.Labels)
-	if same {
+	dspec, cspec := &desired.Spec.Template.Spec, &current.Spec.Template.Spec
+	equal := helper.IsSubSet(current.ObjectMeta.Labels, desired.ObjectMeta.Labels) &&
+		dspec.ServiceAccountName == cspec.ServiceAccountName &&
+		dspec.HostNetwork == cspec.HostNetwork &&
+		dspec.DNSPolicy == cspec.DNSPolicy &&
+		len(dspec.Containers) == len(cspec.Containers)
+	if equal {
 		return actionNone
 	}
 	return actionUpdate
