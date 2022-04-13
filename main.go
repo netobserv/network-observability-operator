@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -24,12 +25,14 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
+	securityv1 "github.com/openshift/api/security/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -54,6 +57,8 @@ func init() {
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(ascv2.AddToScheme(scheme))
 	utilruntime.Must(osv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(apiregv1.AddToScheme(scheme))
+	utilruntime.Must(securityv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -97,7 +102,7 @@ func main() {
 	}
 
 	if err = controllers.NewFlowCollectorReconciler(mgr.GetClient(), mgr.GetScheme()).
-		SetupWithManager(mgr); err != nil {
+		SetupWithManager(context.Background(), mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "FlowCollector")
 		os.Exit(1)
 	}

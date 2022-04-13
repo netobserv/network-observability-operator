@@ -7,6 +7,14 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - apiregistration.k8s.io
+  resources:
+  - apiservices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - apps
   resources:
   - daemonsets
@@ -109,6 +117,7 @@ rules:
   - create
   - delete
   - get
+  - list
   - update
 - apiGroups:
   - rbac.authorization.k8s.io
@@ -118,6 +127,15 @@ rules:
   - create
   - delete
   - get
+- apiGroups:
+  - security.openshift.io
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - create
+  - list
+  - update
+  - watch
 - apiGroups:
   - security.openshift.io
   resourceNames:

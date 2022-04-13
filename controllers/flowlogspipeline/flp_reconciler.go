@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -16,7 +20,6 @@ import (
 
 // Type alias
 type flpSpec = flowsv1alpha1.FlowCollectorFLP
-type lokiSpec = flowsv1alpha1.FlowCollectorLoki
 
 // FLPReconciler reconciles the current flowlogs-pipeline state with the desired configuration
 type FLPReconciler struct {
@@ -56,14 +59,14 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) FLPReconciler
 
 // InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
 func (r *FLPReconciler) InitStaticResources(ctx context.Context) error {
-	return r.createPermissions(ctx, true)
+	return r.reconcilePermissions(ctx)
 }
 
 // PrepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
 func (r *FLPReconciler) PrepareNamespaceChange(ctx context.Context) error {
 	// Switching namespace => delete everything in the previous namespace
 	r.nobjMngr.CleanupNamespace(ctx)
-	return r.createPermissions(ctx, false)
+	return r.reconcilePermissions(ctx)
 }
 
 func validateDesired(desired *flpSpec) error {
@@ -77,13 +80,18 @@ func validateDesired(desired *flpSpec) error {
 }
 
 // Reconcile is the reconciler entry point to reconcile the current flowlogs-pipeline state with the desired configuration
-func (r *FLPReconciler) Reconcile(ctx context.Context, desiredFLP *flpSpec, desiredLoki *lokiSpec) error {
+func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+	desiredFLP := &desired.Spec.FlowlogsPipeline
 	err := validateDesired(desiredFLP)
 	if err != nil {
 		return err
 	}
-
-	builder := newBuilder(r.nobjMngr.Namespace, desiredFLP, desiredLoki)
+	desiredLoki := &desired.Spec.Loki
+	portProtocol := corev1.ProtocolUDP
+	if desired.Spec.EBPF != nil {
+		portProtocol = corev1.ProtocolTCP
+	}
+	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki)
 	// Retrieve current owned objects
 	err = r.nobjMngr.FetchAll(ctx)
 	if err != nil {
@@ -167,28 +175,60 @@ func (r *FLPReconciler) reconcileAsDaemonSet(ctx context.Context, desiredFLP *fl
 	return nil
 }
 
-func (r *FLPReconciler) createPermissions(ctx context.Context, firstInstall bool) error {
+func (r *FLPReconciler) reconcilePermissions(ctx context.Context) error {
 	// Cluster role is only installed once
-	if firstInstall {
-		if err := r.CreateOwned(ctx, buildClusterRole()); err != nil {
-			return err
-		}
+	if err := r.reconcileClusterRole(ctx); err != nil {
+		return err
 	}
 	// Service account has to be re-created when namespace changes (it is namespace-scoped)
 	if err := r.CreateOwned(ctx, buildServiceAccount(r.nobjMngr.Namespace)); err != nil {
 		return err
 	}
 	// Cluster role binding has to be updated when namespace changes (it is not namespace-scoped)
-	if firstInstall {
-		if err := r.CreateOwned(ctx, buildClusterRoleBinding(r.nobjMngr.Namespace)); err != nil {
-			return err
+	return r.reconcileClusterRoleBinding(ctx)
+}
+
+func (r *FLPReconciler) reconcileClusterRole(ctx context.Context) error {
+	desired := buildClusterRole()
+	actual := v1.ClusterRole{}
+	if err := r.Client.Get(ctx,
+		types.NamespacedName{Name: constants.FLPName},
+		&actual,
+	); err != nil {
+		if errors.IsNotFound(err) {
+			return r.CreateOwned(ctx, desired)
 		}
-	} else {
-		if err := r.UpdateOwned(ctx, nil, buildClusterRoleBinding(r.nobjMngr.Namespace)); err != nil {
-			return err
-		}
+		return fmt.Errorf("can't reconcile %s ClusterRole: %w", constants.FLPName, err)
 	}
-	return nil
+
+	if helper.IsSubSet(actual.Labels, desired.Labels) &&
+		reflect.DeepEqual(actual.Rules, desired.Rules) {
+		// cluster role already reconciled. Exiting
+		return nil
+	}
+
+	return r.UpdateOwned(ctx, &actual, desired)
+}
+
+func (r *FLPReconciler) reconcileClusterRoleBinding(ctx context.Context) error {
+	desired := buildClusterRoleBinding(r.nobjMngr.Namespace)
+	actual := v1.ClusterRoleBinding{}
+	if err := r.Client.Get(ctx,
+		types.NamespacedName{Name: constants.FLPName},
+		&actual,
+	); err != nil {
+		if errors.IsNotFound(err) {
+			return r.CreateOwned(ctx, desired)
+		}
+		return fmt.Errorf("can't reconcile %s ClusterRoleBinding: %w", constants.FLPName, err)
+	}
+	if helper.IsSubSet(actual.Labels, desired.Labels) &&
+		actual.RoleRef == desired.RoleRef &&
+		reflect.DeepEqual(actual.Subjects, desired.Subjects) {
+		// cluster role binding already reconciled. Exiting
+		return nil
+	}
+	return r.UpdateOwned(ctx, &actual, desired)
 }
 
 func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flpSpec, configDigest string) bool {

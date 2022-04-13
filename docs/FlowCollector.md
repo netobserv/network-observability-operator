@@ -98,6 +98,13 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecebpf">ebpf</a></b></td>
+        <td>object</td>
+        <td>
+          EBPF contains the settings of an eBPF-based flow reporter. This section should not be defined if the ipfix section is already defined<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecflowlogspipeline">flowlogsPipeline</a></b></td>
         <td>object</td>
         <td>
@@ -108,7 +115,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspecipfix">ipfix</a></b></td>
         <td>object</td>
         <td>
-          IPFIX contains IPFIX-related settings for the flow reporter<br/>
+          IPFIX contains the settings of an IPFIX-based flow reporter. This section should not be defined if the ebpf section is already defined<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1236,6 +1243,86 @@ Compute Resources required by this container. Cannot be updated. More info: http
 </table>
 
 
+### FlowCollector.spec.ebpf
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+EBPF contains the settings of an eBPF-based flow reporter. This section should not be defined if the ipfix section is already defined
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>image</b></td>
+        <td>string</td>
+        <td>
+          Image is the NetObserv Agent image (including domain and tag)<br/>
+          <br/>
+            <i>Default</i>: quay.io/netobserv/netobserv-agent:main<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>imagePullPolicy</b></td>
+        <td>enum</td>
+        <td>
+          ImagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
+          <br/>
+            <i>Enum</i>: IfNotPresent, Always, Never<br/>
+            <i>Default</i>: IfNotPresent<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecebpfresources">resources</a></b></td>
+        <td>object</td>
+        <td>
+          Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.ebpf.resources
+<sup><sup>[↩ Parent](#flowcollectorspecebpf)</sup></sup>
+
+
+
+Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>limits</b></td>
+        <td>map[string]int or string</td>
+        <td>
+          Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>requests</b></td>
+        <td>map[string]int or string</td>
+        <td>
+          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### FlowCollector.spec.flowlogsPipeline
 <sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
 
@@ -2312,7 +2399,7 @@ Compute Resources required by this container. Cannot be updated. More info: http
 
 
 
-IPFIX contains IPFIX-related settings for the flow reporter
+IPFIX contains the settings of an IPFIX-based flow reporter. This section should not be defined if the ebpf section is already defined
 
 <table>
     <thead>

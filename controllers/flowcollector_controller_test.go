@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
@@ -20,10 +20,11 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
-var _ = Describe("FlowCollector Controller", func() {
+const timeout = time.Second * 10
+const interval = 50 * time.Millisecond
 
-	const timeout = time.Second * 10
-	const interval = 50 * time.Millisecond
+// nolint:cyclop
+func flowCollectorControllerSpecs() {
 	const otherNamespace = "other-namespace"
 	ipResolver.On("LookupIP", constants.FLPName+"."+operatorNamespace).
 		Return([]net.IP{net.IPv4(11, 22, 33, 44)}, nil)
@@ -95,7 +96,7 @@ var _ = Describe("FlowCollector Controller", func() {
 							}},
 						},
 					},
-					IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
+					IPFIX: &flowsv1alpha1.FlowCollectorIPFIX{
 						Sampling: 200,
 					},
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
@@ -276,7 +277,7 @@ var _ = Describe("FlowCollector Controller", func() {
 				Image:           "testimg:latest",
 			}
 			fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}
-			fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
+			fc.Spec.IPFIX = &flowsv1alpha1.FlowCollectorIPFIX{
 				Sampling: 200,
 			}
 			// Update
@@ -466,7 +467,7 @@ var _ = Describe("FlowCollector Controller", func() {
 				fc.Spec.FlowlogsPipeline.Kind = "Deployment"
 				fc.Spec.FlowlogsPipeline.Port = 9999
 				fc.Spec.Namespace = otherNamespace
-				fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
+				fc.Spec.IPFIX = &flowsv1alpha1.FlowCollectorIPFIX{
 					Sampling: 200,
 				}
 				return k8sClient.Update(ctx, &fc)
@@ -600,7 +601,7 @@ var _ = Describe("FlowCollector Controller", func() {
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
 		})
 	})
-})
+}
 
 func getContainerArgumentAfter(containerName, argName string) func() interface{} {
 	pluginDeploymentKey := types.NamespacedName{

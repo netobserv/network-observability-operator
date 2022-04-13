@@ -1,0 +1,37 @@
+---
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowCollector
+metadata:
+  name: cluster
+spec:
+  namespace: "network-observability"
+  ebpf:
+    image: 'quay.io/netobserv/netobserv-agent:main'
+    imagePullPolicy: IfNotPresent
+#    resources:
+#      limits:
+#        cpu: "1000m"
+  flowlogsPipeline:
+    kind: Deployment
+    replicas: 1
+    port: 2055
+    image: 'quay.io/netobserv/flowlogs-pipeline:latest'
+    imagePullPolicy: IfNotPresent
+    logLevel: info
+    printOutput: false
+    enableKubeProbes: false
+    healthPort: 8080
+  loki:
+    url: 'http://loki:3100/'
+    batchWait: 1s
+    batchSize: 102400
+    minBackoff: 1s
+    maxBackoff: 300s
+    maxRetries: 10
+    timestampLabel: TimeFlowEnd
+    staticLabels:
+      app: netobserv-flowcollector
+  consolePlugin:
+    image: 'quay.io/netobserv/network-observability-console-plugin:main'
+    imagePullPolicy: IfNotPresent
+    port: 9001

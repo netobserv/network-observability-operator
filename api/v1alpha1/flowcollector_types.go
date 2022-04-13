@@ -32,8 +32,13 @@ type FlowCollectorSpec struct {
 	// If empty, the namespace of the operator is going to be used
 	Namespace string `json:"namespace,omitempty"`
 
-	// IPFIX contains IPFIX-related settings for the flow reporter
-	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
+	// IPFIX contains the settings of an IPFIX-based flow reporter. This section should not be
+	// defined if the ebpf section is already defined
+	IPFIX *FlowCollectorIPFIX `json:"ipfix,omitempty"`
+
+	// EBPF contains the settings of an eBPF-based flow reporter. This section should not be defined
+	// if the ipfix section is already defined
+	EBPF *FlowCollectorEBPF `json:"ebpf,omitempty"`
 
 	// FlowlogsPipeline contains settings related to the flowlogs-pipeline component
 	FlowlogsPipeline FlowCollectorFLP `json:"flowlogsPipeline,omitempty"`
@@ -48,7 +53,8 @@ type FlowCollectorSpec struct {
 	ClusterNetworkOperator ClusterNetworkOperator `json:"clusterNetworkOperator,omitempty"`
 }
 
-// FlowCollectorIPFIX defines the desired IPFIX state of FlowCollector
+// FlowCollectorIPFIX defines a FlowCollector that uses IPFIX on OVN-Kubernetes to collect the
+// flows information
 type FlowCollectorIPFIX struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
@@ -66,6 +72,27 @@ type FlowCollectorIPFIX struct {
 	//+kubebuilder:default:=400
 	// Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 means disabled.
 	Sampling int32 `json:"sampling,omitempty" mapstructure:"sampling,omitempty"`
+}
+
+// FlowCollectorEBPF defines a FlowCollector that uses eBPF to collect the flows information
+type FlowCollectorEBPF struct {
+	// TODO: other parameters when NETOBSERV-201 is implemented
+	// Important: Run "make generate" to regenerate code after modifying this file
+
+	//+kubebuilder:default:="quay.io/netobserv/netobserv-agent:main"
+	// Image is the NetObserv Agent image (including domain and tag)
+	Image string `json:"image,omitempty"`
+
+	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
+	//+kubebuilder:default:=IfNotPresent
+	// ImagePullPolicy is the Kubernetes pull policy for the image defined above
+	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
+
+	// Compute Resources required by this container.
+	// Cannot be updated.
+	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+	// +optional
+	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 }
 
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector

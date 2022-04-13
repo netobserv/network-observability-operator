@@ -2,10 +2,15 @@ package controllers
 
 import (
 	"context"
+	ierrors "errors"
+	"fmt"
 	"net"
 	"strings"
 
+	"github.com/netobserv/network-observability-operator/controllers/ebpf"
+	"github.com/netobserv/network-observability-operator/pkg/discover"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
+	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -14,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -33,6 +39,7 @@ const ovsFlowsConfigMapName = "ovs-flows-config"
 // FlowCollectorReconciler reconciles a FlowCollector object
 type FlowCollectorReconciler struct {
 	client.Client
+	permissions    discover.Permissions
 	Scheme         *runtime.Scheme
 	consoleEnabled bool
 	lookupIP       func(string) ([]net.IP, error)
@@ -50,12 +57,14 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *F
 //+kubebuilder:rbac:groups=apps,resources=deployments;daemonsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=namespaces;services;serviceaccounts;configmaps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles,verbs=get;create;delete
-//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;create;delete;update
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;create;delete;update
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;delete;update;patch;list
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors/finalizers,verbs=update
 //+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,resourceNames=hostnetwork,verbs=use
+//+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=list;create;update;watch
+//+kubebuilder:rbac:groups=apiregistration.k8s.io,resources=apiservices,verbs=list;get;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -111,11 +120,6 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	// Create reconcilers
 	gfReconciler := flowlogspipeline.NewReconciler(clientHelper, ns, previousNamespace)
-	ovsConfigController := ovs.NewFlowsConfigController(clientHelper,
-		ns,
-		desired.Spec.ClusterNetworkOperator.Namespace,
-		ovsFlowsConfigMapName,
-		r.lookupIP)
 	var cpReconciler consoleplugin.CPReconciler
 	if r.consoleEnabled {
 		cpReconciler = consoleplugin.NewReconciler(clientHelper, ns, previousNamespace)
@@ -130,14 +134,34 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	// Flowlogs-pipeline
-	if err := gfReconciler.Reconcile(ctx, &desired.Spec.FlowlogsPipeline, &desired.Spec.Loki); err != nil {
+	if err := gfReconciler.Reconcile(ctx, desired); err != nil {
 		log.Error(err, "Failed to reconcile flowlogs-pipeline")
 		return ctrl.Result{}, err
 	}
 
 	// OVS config map for CNO
-	if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
-		log.Error(err, "Failed to reconcile ovs-flows-config ConfigMap")
+	if (desired.Spec.IPFIX == nil && desired.Spec.EBPF == nil) ||
+		(desired.Spec.IPFIX != nil && desired.Spec.EBPF != nil) {
+		log.Error(ierrors.New("either ipfix or ebpf sections must be defined, but not both"),
+			"Failed to reconcile flow collectors")
+		return ctrl.Result{}, err
+	}
+	if desired.Spec.IPFIX != nil {
+		ovsConfigController := ovs.NewFlowsConfigController(clientHelper,
+			ns,
+			desired.Spec.ClusterNetworkOperator.Namespace,
+			ovsFlowsConfigMapName,
+			r.lookupIP)
+		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
+			return ctrl.Result{},
+				fmt.Errorf("failed to reconcile ovs-flows-config ConfigMap: %w", err)
+		}
+	} else {
+		ebpfAgentController := ebpf.NewAgentController(clientHelper, ns, &r.permissions)
+		if err := ebpfAgentController.Reconcile(ctx, desired); err != nil {
+			return ctrl.Result{},
+				fmt.Errorf("failed to reconcile eBPF Netobserv Agent: %w", err)
+		}
 	}
 
 	// Console plugin
@@ -212,14 +236,20 @@ func isConsoleEnabled(mgr ctrl.Manager) (bool, error) {
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *FlowCollectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *FlowCollectorReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&flowsv1alpha1.FlowCollector{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&appsv1.DaemonSet{}).
 		Owns(&ascv2.HorizontalPodAutoscaler{}).
-		Owns(&corev1.Service{})
+		Owns(&corev1.Namespace{}).
+		Owns(&corev1.Service{}).
+		Owns(&corev1.ServiceAccount{})
+
+	if err := r.setupOpenshift(ctx, mgr, builder); err != nil {
+		return err
+	}
 
 	var err error
 	r.consoleEnabled, err = isConsoleEnabled(mgr)
@@ -230,6 +260,20 @@ func (r *FlowCollectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		builder = builder.Owns(&osv1alpha1.ConsolePlugin{})
 	}
 	return builder.Complete(r)
+}
+
+func (r *FlowCollectorReconciler) setupOpenshift(ctx context.Context, mgr ctrl.Manager, builder *builder.Builder) error {
+	dc, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
+	if err != nil {
+		return fmt.Errorf("can't instantiate discovery client: %w", err)
+	}
+	r.permissions = discover.Permissions{
+		Client: dc,
+	}
+	if r.permissions.Vendor(ctx) == discover.VendorOpenShift {
+		builder.Owns(&securityv1.SecurityContextConstraints{})
+	}
+	return nil
 }
 
 func getNamespaceName(desired *flowsv1alpha1.FlowCollector) string {

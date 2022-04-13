@@ -22,18 +22,19 @@ import (
 	"path/filepath"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	"github.com/stretchr/testify/mock"
+	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
+	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -45,24 +46,28 @@ import (
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
+const testCnoNamespace = "openshift-network-operator"
+
 var (
-	ctx                       context.Context
-	k8sManager                manager.Manager
-	k8sClient                 client.Client
-	testEnv                   *envtest.Environment
-	cancel                    context.CancelFunc
-	ipResolver                ipResolverMock
-	testCnoNamespace          string
-	testOvsFlowsConfigMapName string
+	ctx        context.Context
+	k8sManager manager.Manager
+	k8sClient  client.Client
+	testEnv    *envtest.Environment
+	cancel     context.CancelFunc
+	ipResolver ipResolverMock
 )
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
-
-	RunSpecsWithDefaultAndCustomReporters(t,
-		"Controller Suite",
-		[]Reporter{printer.NewlineReporter{}})
+	RunSpecs(t, "Controller Suite")
 }
+
+// go test ./... runs always Ginkgo test suites in parallel and they would interfere
+// this way we make sure that both test sub-suites are executed serially
+var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
+	flowCollectorControllerSpecs()
+	flowCollectorEBPFSpecs()
+})
 
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
@@ -91,14 +96,17 @@ var _ = BeforeSuite(func() {
 	err = osv1alpha1.Install(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
+	err = apiregv1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = ascv2.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
 	//+kubebuilder:scaffold:scheme
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
-
-	testCnoNamespace = "openshift-network-operator"
-	testOvsFlowsConfigMapName = "ovs-flows-config"
 
 	Expect(prepareNamespaces()).NotTo(HaveOccurred())
 
@@ -107,7 +115,7 @@ var _ = BeforeSuite(func() {
 	Expect(k8sManager).NotTo(BeNil())
 
 	err = NewTestFlowCollectorReconciler(k8sManager.GetClient(), k8sManager.GetScheme()).
-		SetupWithManager(k8sManager)
+		SetupWithManager(ctx, k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
 	go func() {
@@ -116,7 +124,7 @@ var _ = BeforeSuite(func() {
 		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
 
-}, 60)
+})
 
 var _ = AfterSuite(func() {
 	cancel()

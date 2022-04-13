@@ -7,6 +7,12 @@ const (
 	PluginName     = "network-observability-plugin"
 	DeploymentKind = "Deployment"
 	DaemonSetKind  = "DaemonSet"
+
+	// EBPFAgentName and other constants for it
+	EBPFAgentName          = "netobserv-agent"
+	EBPFPrivilegedNSSuffix = "-privileged"
+	EBPFServiceAccount     = EBPFAgentName
+	EBPFSecurityContext    = EBPFAgentName
 )
 
 var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}
