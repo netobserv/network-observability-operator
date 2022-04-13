@@ -1265,7 +1265,7 @@ EBPF contains the settings of an eBPF-based flow reporter. This section should n
         <td>
           Image is the NetObserv Agent image (including domain and tag)<br/>
           <br/>
-            <i>Default</i>: quay.io/netobserv/netobserv-agent:main<br/>
+            <i>Default</i>: quay.io/netobserv/netobserv-ebpf-agent:main<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1416,15 +1416,6 @@ FlowlogsPipeline contains settings related to the flowlogs-pipeline component
             <i>Default</i>: 2055<br/>
             <i>Minimum</i>: 1025<br/>
             <i>Maximum</i>: 65535<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>printOutput</b></td>
-        <td>boolean</td>
-        <td>
-          PrintOutput is a debug flag to print flows exported in flowlogs-pipeline stdout<br/>
-          <br/>
-            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>

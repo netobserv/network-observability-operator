@@ -20,7 +20,7 @@ import (
 // Reconciler reconciles the different resources to enable the privileged operation of the
 // Netobserv Agent:
 // - Create the privileged namespace with Pod Permissions annotations (for Vanilla K8s)
-// - Create netobserv-agent service account in the non-privileged namespace
+// - Create netobserv-ebpf-agent service account in the privileged namespace
 // - For Openshift, apply the required SecurityContextConstraints for privileged Pod operation
 type Reconciler struct {
 	client              reconcilers.ClientHelper

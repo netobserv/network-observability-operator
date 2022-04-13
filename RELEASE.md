@@ -3,7 +3,7 @@
 ### Sub-components
 
 All components deployed by this operator can be released separatly, at their own pace.
-To release them, a tag in the format "v0.1.2" or "v0.1.2-rc0" must be set on the desired clean HEAD state (generally, up-to-date `main` branch), then pushed. It applies to [the console plugin](https://github.com/netobserv/network-observability-console-plugin/), [flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline) and [netobserv-agent](https://github.com/netobserv/netobserv-agent).
+To release them, a tag in the format "v0.1.2" or "v0.1.2-rc0" must be set on the desired clean HEAD state (generally, up-to-date `main` branch), then pushed. It applies to [the console plugin](https://github.com/netobserv/network-observability-console-plugin/), [flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline) and [netobserv-ebpf-agent](https://github.com/netobserv/netobserv-ebpf-agent).
 
 E.g:
 
@@ -17,7 +17,7 @@ The release script should be triggered (check github actions).
 When the last release candidate is accepted and the final release tag is pushed (using the same procedure), you can generate the release via the github interface:
 - [console plugin](https://github.com/netobserv/network-observability-console-plugin/releases/new)
 - [flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline/releases/new)
-- [netobserv-agent](https://github.com/netobserv/netobserv-agent/releases/new)
+- [netobserv-ebpf-agent](https://github.com/netobserv/netobserv-ebpf-agent/releases/new)
 
 Click the "Auto-generate release note" button.
 

@@ -665,7 +665,7 @@ spec:
                   defined
                 properties:
                   image:
-                    default: quay.io/netobserv/netobserv-agent:main
+                    default: quay.io/netobserv/netobserv-ebpf-agent:main
                     description: Image is the NetObserv Agent image (including domain
                       and tag)
                     type: string

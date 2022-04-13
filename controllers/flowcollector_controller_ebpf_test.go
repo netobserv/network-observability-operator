@@ -18,7 +18,7 @@ import (
 
 func flowCollectorEBPFSpecs() {
 	agentKey := types.NamespacedName{
-		Name:      "netobserv-agent",
+		Name:      "netobserv-ebpf-agent",
 		Namespace: "network-observability-privileged",
 	}
 	crKey := types.NamespacedName{Name: "cluster"}
@@ -46,20 +46,20 @@ func flowCollectorEBPFSpecs() {
 						Image:           "testimg:latest",
 					},
 					EBPF: &flowsv1alpha1.FlowCollectorEBPF{
-						Image: "netobserv-agent:latest",
+						Image: "netobserv-ebpf-agent:latest",
 					},
 				},
 			}
 			Expect(k8sClient.Create(ctx, desired)).Should(Succeed())
 
 			ds := appsv1.DaemonSet{}
-			By("Expecting to create the netobserv-agent DaemonSet")
+			By("Expecting to create the netobserv-ebpf-agent DaemonSet")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, agentKey, &ds)
 			}).WithTimeout(timeout).WithPolling(interval).Should(Succeed())
 
 			spec := ds.Spec.Template.Spec
-			By("expecting that the netobserv-agent daemonset is properly configured")
+			By("expecting that the netobserv-ebpf-agent daemonset is properly configured")
 			Expect(spec.HostNetwork).To(BeTrue())
 			Expect(spec.DNSPolicy).To(Equal(v1.DNSClusterFirstWithHostNet))
 			Expect(spec.ServiceAccountName).To(Equal(constants.EBPFServiceAccount))
@@ -82,7 +82,7 @@ func flowCollectorEBPFSpecs() {
 				})
 			}))
 
-			By("expecting to create the netobserv-agent service account")
+			By("expecting to create the netobserv-ebpf-agent service account")
 			Expect(k8sClient.Get(ctx, saKey, &v1.ServiceAccount{})).To(Succeed())
 		})
 
@@ -97,7 +97,7 @@ func flowCollectorEBPFSpecs() {
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 			})).Should(Succeed())
 
-			By("expecting to delete the netobserv-agent")
+			By("expecting to delete the netobserv-ebpf-agent")
 			Eventually(func() error {
 				return k8sClient.Get(ctx,
 					types.NamespacedName{Name: crKey.Name},
@@ -112,7 +112,7 @@ func flowCollectorEBPFSpecs() {
 			}).WithTimeout(timeout).WithPolling(interval).
 				Should(Satisfy(errors.IsNotFound))
 
-			By("expecting to delete netobserv-agent daemonset")
+			By("expecting to delete netobserv-ebpf-agent daemonset")
 			Eventually(func() interface{} {
 				ds := &appsv1.DaemonSet{}
 				if err := k8sClient.Get(ctx, agentKey, ds); err != nil {
@@ -132,7 +132,7 @@ func flowCollectorEBPFSpecs() {
 			}).WithTimeout(timeout).WithPolling(interval).
 				Should(BeGarbageCollectedBy(flowCR))
 
-			By("expecting to delete the netobserv-agent service account")
+			By("expecting to delete the netobserv-ebpf-agent service account")
 			Eventually(func() interface{} {
 				sa := &v1.ServiceAccount{}
 				if err := k8sClient.Get(ctx, saKey, sa); err != nil {
