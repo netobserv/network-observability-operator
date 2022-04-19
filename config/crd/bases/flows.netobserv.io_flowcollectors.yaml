@@ -664,6 +664,35 @@ spec:
                   This section should not be defined if the ipfix section is already
                   defined
                 properties:
+                  buffersLength:
+                    default: 50
+                    description: BuffersLength establishes the length of communication
+                      channels between the different processing stages of the Agent.
+                      This is an internal performance tuning parameter.
+                    type: integer
+                  cacheActiveTimeout:
+                    default: 5s
+                    description: CacheActiveTimeout is the max period during which
+                      the reporter will aggregate flows before sending
+                    pattern: ^\d+(ns|ms|s|m)?$
+                    type: string
+                  cacheMaxFlows:
+                    default: 1000
+                    description: CacheMaxFlows is the max number of flows in an aggregate;
+                      when reached, the reporter sends the flows
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  excludeInterfaces:
+                    default:
+                    - lo
+                    description: ExcludeInterfaces contains the interface names that
+                      will be excluded from flow tracing. If an entry is enclosed
+                      by slashes (e.g. `/br-/`), it will match as regular expression,
+                      otherwise it will be matched as a case-sensitive string.
+                    items:
+                      type: string
+                    type: array
                   image:
                     default: quay.io/netobserv/netobserv-ebpf-agent:main
                     description: Image is the NetObserv Agent image (including domain
@@ -678,6 +707,16 @@ spec:
                     - Always
                     - Never
                     type: string
+                  interfaces:
+                    description: Interfaces contains the interface names from where
+                      flows will be collected. If empty, the agent will fetch all
+                      the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
+                      If an entry is enclosed by slashes (e.g. `/br-/`), it will match
+                      as regular expression, otherwise it will be matched as a case-sensitive
+                      string.
+                    items:
+                      type: string
+                    type: array
                   resources:
                     description: 'Compute Resources required by this container. Cannot
                       be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
@@ -705,6 +744,15 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
+                  sampling:
+                    description: Sampling is the sampling rate on the reporter. 100
+                      means one flow on 100 is sent. 0 or 1 means disabled.
+                    format: int32
+                    type: integer
+                  verbose:
+                    default: false
+                    description: Verbose logs mode
+                    type: boolean
                 type: object
               flowlogsPipeline:
                 description: FlowlogsPipeline contains settings related to the flowlogs-pipeline

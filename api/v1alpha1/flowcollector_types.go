@@ -93,6 +93,42 @@ type FlowCollectorEBPF struct {
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
+
+	// Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 or 1 means disabled.
+	//+optional
+	Sampling int32 `json:"sampling,omitempty"`
+
+	// CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending
+	//+kubebuilder:validation:Pattern:=^\d+(ns|ms|s|m)?$
+	//+kubebuilder:default:="5s"
+	CacheActiveTimeout string `json:"cacheActiveTimeout,omitempty"`
+
+	// CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:default:=1000
+	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty"`
+
+	// Interfaces contains the interface names from where flows will be collected. If empty, the agent
+	// will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
+	// If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression,
+	// otherwise it will be matched as a case-sensitive string.
+	//+optional
+	Interfaces []string `json:"interfaces,omitempty"`
+
+	// ExcludeInterfaces contains the interface names that will be excluded from flow tracing.
+	// If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression,
+	// otherwise it will be matched as a case-sensitive string.
+	//+kubebuilder:default=lo;
+	ExcludeInterfaces []string `json:"excludeInterfaces,omitempty"`
+
+	// BuffersLength establishes the length of communication channels between the different processing
+	// stages of the Agent. This is an internal performance tuning parameter.
+	//+kubebuilder:default:=50
+	BuffersLength int `json:"buffersLength,omitempty"`
+
+	// Verbose logs mode
+	//+kubebuilder:default:=false
+	Verbose bool `json:"verbose,omitempty"`
 }
 
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector

@@ -1260,6 +1260,44 @@ EBPF contains the settings of an eBPF-based flow reporter. This section should n
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>buffersLength</b></td>
+        <td>integer</td>
+        <td>
+          BuffersLength establishes the length of communication channels between the different processing stages of the Agent. This is an internal performance tuning parameter.<br/>
+          <br/>
+            <i>Default</i>: 50<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>cacheActiveTimeout</b></td>
+        <td>string</td>
+        <td>
+          CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
+          <br/>
+            <i>Default</i>: 5s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>cacheMaxFlows</b></td>
+        <td>integer</td>
+        <td>
+          CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 1000<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>excludeInterfaces</b></td>
+        <td>[]string</td>
+        <td>
+          ExcludeInterfaces contains the interface names that will be excluded from flow tracing. If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
+          <br/>
+            <i>Default</i>: [lo]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>image</b></td>
         <td>string</td>
         <td>
@@ -1279,10 +1317,35 @@ EBPF contains the settings of an eBPF-based flow reporter. This section should n
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>interfaces</b></td>
+        <td>[]string</td>
+        <td>
+          Interfaces contains the interface names from where flows will be collected. If empty, the agent will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecebpfresources">resources</a></b></td>
         <td>object</td>
         <td>
           Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 or 1 means disabled.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>verbose</b></td>
+        <td>boolean</td>
+        <td>
+          Verbose logs mode<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr></tbody>

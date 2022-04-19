@@ -46,7 +46,14 @@ func flowCollectorEBPFSpecs() {
 						Image:           "testimg:latest",
 					},
 					EBPF: &flowsv1alpha1.FlowCollectorEBPF{
-						Image: "netobserv-ebpf-agent:latest",
+						Image:              "netobserv-ebpf-agent:latest",
+						Sampling:           123,
+						CacheActiveTimeout: "15s",
+						CacheMaxFlows:      100,
+						Interfaces:         []string{"veth0", "/^br-/"},
+						ExcludeInterfaces:  []string{"br-3", "lo"},
+						BuffersLength:      100,
+						Verbose:            true,
 					},
 				},
 			}
@@ -66,10 +73,34 @@ func flowCollectorEBPFSpecs() {
 			Expect(len(spec.Containers)).To(Equal(1))
 			Expect(spec.Containers[0].SecurityContext.Privileged).To(Not(BeNil()))
 			Expect(*spec.Containers[0].SecurityContext.Privileged).To(BeTrue())
-			Expect(spec.Containers[0].Env[0].Name).To(Equal("FLOWS_TARGET_HOST"))
-			Expect(spec.Containers[0].Env[0].ValueFrom.FieldRef.FieldPath).To(Equal("status.hostIP"))
-			Expect(spec.Containers[0].Env[1].Name).To(Equal("FLOWS_TARGET_PORT"))
-			Expect(spec.Containers[0].Env[1].Value).To(Equal("9999"))
+			env := spec.Containers[0].Env
+			Expect(len(env)).To(Equal(9))
+			Expect(env[0]).To(Equal(
+				v1.EnvVar{Name: "CACHE_ACTIVE_TIMEOUT", Value: "15s"},
+			))
+			Expect(env[1]).To(Equal(
+				v1.EnvVar{Name: "CACHE_MAX_FLOWS", Value: "100"},
+			))
+			Expect(env[2]).To(Equal(
+				v1.EnvVar{Name: "VERBOSE", Value: "true"},
+			))
+			Expect(env[3]).To(Equal(
+				v1.EnvVar{Name: "INTERFACES", Value: "veth0,/^br-/"},
+			))
+			Expect(env[4]).To(Equal(
+				v1.EnvVar{Name: "EXCLUDE_INTERFACES", Value: "br-3,lo"},
+			))
+			Expect(env[5]).To(Equal(
+				v1.EnvVar{Name: "BUFFERS_LENGTH", Value: "100"},
+			))
+			Expect(env[6]).To(Equal(
+				v1.EnvVar{Name: "SAMPLING", Value: "123"},
+			))
+			Expect(env[7].Name).To(Equal("FLOWS_TARGET_HOST"))
+			Expect(env[7].ValueFrom.FieldRef.FieldPath).To(Equal("status.hostIP"))
+			Expect(env[8]).To(Equal(
+				v1.EnvVar{Name: "FLOWS_TARGET_PORT", Value: "9999"},
+			))
 
 			ns := v1.Namespace{}
 			By("expecting to create the network-observability-privileged namespace")
