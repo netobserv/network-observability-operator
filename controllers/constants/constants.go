@@ -9,7 +9,7 @@ const (
 	DaemonSetKind  = "DaemonSet"
 
 	// EBPFAgentName and other constants for it
-	EBPFAgentName          = "netobserv-agent"
+	EBPFAgentName          = "netobserv-ebpf-agent"
 	EBPFPrivilegedNSSuffix = "-privileged"
 	EBPFServiceAccount     = EBPFAgentName
 	EBPFSecurityContext    = EBPFAgentName

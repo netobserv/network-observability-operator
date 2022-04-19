@@ -79,7 +79,7 @@ type FlowCollectorEBPF struct {
 	// TODO: other parameters when NETOBSERV-201 is implemented
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	//+kubebuilder:default:="quay.io/netobserv/netobserv-agent:main"
+	//+kubebuilder:default:="quay.io/netobserv/netobserv-ebpf-agent:main"
 	// Image is the NetObserv Agent image (including domain and tag)
 	Image string `json:"image,omitempty"`
 

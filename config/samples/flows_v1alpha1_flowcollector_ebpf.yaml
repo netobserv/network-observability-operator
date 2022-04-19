@@ -6,11 +6,8 @@ metadata:
 spec:
   namespace: "network-observability"
   ebpf:
-    image: 'quay.io/netobserv/netobserv-agent:main'
+    image: 'quay.io/netobserv/netobserv-ebpf-agent:main'
     imagePullPolicy: IfNotPresent
-#    resources:
-#      limits:
-#        cpu: "1000m"
   flowlogsPipeline:
     kind: Deployment
     replicas: 1
