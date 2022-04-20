@@ -14,7 +14,7 @@ spec:
     interfaces: []
     excludeInterfaces: ["lo"]
     buffersLength: 50
-    verbose: true
+    logLevel: info
   flowlogsPipeline:
     kind: Deployment
     replicas: 1

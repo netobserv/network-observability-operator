@@ -717,6 +717,19 @@ spec:
                     items:
                       type: string
                     type: array
+                  logLevel:
+                    default: info
+                    description: LogLevel defines the log level for the NetObserv
+                      eBPF Agent
+                    enum:
+                    - trace
+                    - debug
+                    - info
+                    - warn
+                    - error
+                    - fatal
+                    - panic
+                    type: string
                   resources:
                     description: 'Compute Resources required by this container. Cannot
                       be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
@@ -749,10 +762,6 @@ spec:
                       means one flow on 100 is sent. 0 or 1 means disabled.
                     format: int32
                     type: integer
-                  verbose:
-                    default: false
-                    description: Verbose logs mode
-                    type: boolean
                 type: object
               flowlogsPipeline:
                 description: FlowlogsPipeline contains settings related to the flowlogs-pipeline

@@ -1324,6 +1324,16 @@ EBPF contains the settings of an eBPF-based flow reporter. This section should n
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>logLevel</b></td>
+        <td>enum</td>
+        <td>
+          LogLevel defines the log level for the NetObserv eBPF Agent<br/>
+          <br/>
+            <i>Enum</i>: trace, debug, info, warn, error, fatal, panic<br/>
+            <i>Default</i>: info<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecebpfresources">resources</a></b></td>
         <td>object</td>
         <td>
@@ -1337,15 +1347,6 @@ EBPF contains the settings of an eBPF-based flow reporter. This section should n
           Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 or 1 means disabled.<br/>
           <br/>
             <i>Format</i>: int32<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>verbose</b></td>
-        <td>boolean</td>
-        <td>
-          Verbose logs mode<br/>
-          <br/>
-            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr></tbody>

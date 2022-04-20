@@ -53,7 +53,7 @@ func flowCollectorEBPFSpecs() {
 						Interfaces:         []string{"veth0", "/^br-/"},
 						ExcludeInterfaces:  []string{"br-3", "lo"},
 						BuffersLength:      100,
-						Verbose:            true,
+						LogLevel:           "trace",
 					},
 				},
 			}
@@ -82,7 +82,7 @@ func flowCollectorEBPFSpecs() {
 				v1.EnvVar{Name: "CACHE_MAX_FLOWS", Value: "100"},
 			))
 			Expect(env[2]).To(Equal(
-				v1.EnvVar{Name: "VERBOSE", Value: "true"},
+				v1.EnvVar{Name: "LOG_LEVEL", Value: "trace"},
 			))
 			Expect(env[3]).To(Equal(
 				v1.EnvVar{Name: "INTERFACES", Value: "veth0,/^br-/"},
