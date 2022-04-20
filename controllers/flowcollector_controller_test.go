@@ -25,6 +25,7 @@ const interval = 50 * time.Millisecond
 
 // nolint:cyclop
 func flowCollectorControllerSpecs() {
+	const operatorNamespace = "main-namespace"
 	const otherNamespace = "other-namespace"
 	ipResolver.On("LookupIP", constants.FLPName+"."+operatorNamespace).
 		Return([]net.IP{net.IPv4(11, 22, 33, 44)}, nil)
@@ -75,6 +76,7 @@ func flowCollectorControllerSpecs() {
 					Name: crKey.Name,
 				},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
+					Namespace: operatorNamespace,
 					FlowlogsPipeline: flowsv1alpha1.FlowCollectorFLP{
 						Kind:            "Deployment",
 						Port:            9999,
@@ -158,6 +160,17 @@ func flowCollectorControllerSpecs() {
 					svc.Spec.Ports[0].Protocol == v1.ProtocolUDP &&
 					svc.Spec.Ports[0].Port == 9999
 			}), "unexpected service contents", helper.AsyncJSON{Ptr: svc})
+
+			By("Expecting to create the flowlogs-pipeline ServiceAccount")
+			Eventually(func() interface{} {
+				svcAcc := v1.ServiceAccount{}
+				if err := k8sClient.Get(ctx, gfKey1, &svcAcc); err != nil {
+					return err
+				}
+				return svcAcc
+			}, timeout, interval).Should(Satisfy(func(svcAcc v1.ServiceAccount) bool {
+				return svcAcc.Labels != nil && svcAcc.Labels["app"] == constants.FLPName
+			}))
 
 			By("Creating the ovn-flows-configmap with the configuration from the FlowCollector")
 			Eventually(func() interface{} {
@@ -360,103 +373,6 @@ func flowCollectorControllerSpecs() {
 		})
 	})
 
-	Context("Deploying the console plugin", func() {
-		It("Should create successfully", func() {
-			By("Expecting to create the console plugin Deployment")
-			Eventually(func() interface{} {
-				dp := appsv1.Deployment{}
-				if err := k8sClient.Get(ctx, cpKey1, &dp); err != nil {
-					return err
-				}
-				return *dp.Spec.Replicas
-			}, timeout, interval).Should(Equal(int32(1)))
-
-			By("Expecting to create the console plugin Service")
-			Eventually(func() interface{} {
-				svc := v1.Service{}
-				if err := k8sClient.Get(ctx, cpKey1, &svc); err != nil {
-					return err
-				}
-				return svc.Spec.Ports[0].Port
-			}, timeout, interval).Should(Equal(int32(9001)))
-			By("Creating the ovn-flows-configmap with the configuration from the FlowCollector")
-			Eventually(func() interface{} {
-				ofc := v1.ConfigMap{}
-				if err := k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "console-plugin-config",
-					Namespace: operatorNamespace,
-				}, &ofc); err != nil {
-					return err
-				}
-				return ofc.Data
-			}, timeout, interval).Should(Equal(map[string]string{
-				"config.yaml": "portNaming:\n  enable: true\n  portNames:\n    \"3100\": loki\n",
-			}))
-		})
-
-		It("Should update successfully", func() {
-			Eventually(func() error {
-				fc := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
-					return err
-				}
-				fc.Spec.ConsolePlugin.Port = 9099
-				fc.Spec.ConsolePlugin.Replicas = 2
-				fc.Spec.ConsolePlugin.HPA = nil
-				return k8sClient.Update(ctx, &fc)
-			}).Should(Succeed())
-
-			By("Expecting the console plugin Deployment to be scaled up")
-			Eventually(func() interface{} {
-				dp := appsv1.Deployment{}
-				if err := k8sClient.Get(ctx, cpKey1, &dp); err != nil {
-					return err
-				}
-				return *dp.Spec.Replicas
-			}, timeout, interval).Should(Equal(int32(2)))
-
-			By("Expecting the console plugin Service to be updated")
-			Eventually(func() interface{} {
-				svc := v1.Service{}
-				if err := k8sClient.Get(ctx, cpKey1, &svc); err != nil {
-					return err
-				}
-				return svc.Spec.Ports[0].Port
-			}, timeout, interval).Should(Equal(int32(9099)))
-		})
-	})
-
-	Context("Configuring the Loki URL", func() {
-		It("Should be initially configured with default Loki URL", func() {
-			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki"),
-				timeout, interval).Should(Equal("http://loki:3100/"))
-		})
-		It("Should update the Loki URL in the Console Plugin if it changes in the Spec", func() {
-			Expect(func() error {
-				upd := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &upd); err != nil {
-					return err
-				}
-				upd.Spec.Loki.URL = "http://loki.namespace:8888"
-				return k8sClient.Update(ctx, &upd)
-			}()).Should(Succeed())
-			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki"),
-				timeout, interval).Should(Equal("http://loki.namespace:8888"))
-		})
-		It("Should use the Loki Querier URL instead of the Loki URL, if the first is defined", func() {
-			Expect(func() error {
-				upd := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &upd); err != nil {
-					return err
-				}
-				upd.Spec.Loki.QuerierURL = "http://loki-querier:6789"
-				return k8sClient.Update(ctx, &upd)
-			}()).Should(Succeed())
-			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki"),
-				timeout, interval).Should(Equal("http://loki-querier:6789"))
-		})
-	})
-
 	Context("Changing namespace", func() {
 		It("Should update namespace successfully", func() {
 			Eventually(func() error {
@@ -490,6 +406,11 @@ func flowCollectorControllerSpecs() {
 				return k8sClient.Get(ctx, gfKey1, &v1.Service{})
 			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline" not found`))
 
+			By("Expecting service account in previous namespace to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, gfKey1, &v1.ServiceAccount{})
+			}, timeout, interval).Should(MatchError(`serviceaccounts "flowlogs-pipeline" not found`))
+
 			By("Expecting deployment to be created in new namespace")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, gfKey2, &appsv1.Deployment{})
@@ -498,6 +419,11 @@ func flowCollectorControllerSpecs() {
 			By("Expecting service to be created in new namespace")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, gfKey2, &v1.Service{})
+			}, timeout, interval).Should(Succeed())
+
+			By("Expecting service account to be created in new namespace")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, gfKey2, &v1.ServiceAccount{})
 			}, timeout, interval).Should(Succeed())
 		})
 
@@ -527,6 +453,11 @@ func flowCollectorControllerSpecs() {
 				return k8sClient.Get(ctx, cpKey1, &v1.Service{})
 			}, timeout, interval).Should(MatchError(`services "network-observability-plugin" not found`))
 
+			By("Expecting service account in previous namespace to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, cpKey1, &v1.ServiceAccount{})
+			}, timeout, interval).Should(MatchError(`serviceaccounts "network-observability-plugin" not found`))
+
 			By("Expecting deployment to be created in new namespace")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, cpKey2, &appsv1.Deployment{})
@@ -535,6 +466,11 @@ func flowCollectorControllerSpecs() {
 			By("Expecting service to be created in new namespace")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, cpKey2, &v1.Service{})
+			}, timeout, interval).Should(Succeed())
+
+			By("Expecting service account to be created in new namespace")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, cpKey2, &v1.ServiceAccount{})
 			}, timeout, interval).Should(Succeed())
 		})
 	})
@@ -569,6 +505,13 @@ func flowCollectorControllerSpecs() {
 				return &svc
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
 
+			By("Expecting flowlogs-pipeline service account to be garbage collected")
+			Eventually(func() interface{} {
+				svcAcc := v1.ServiceAccount{}
+				_ = k8sClient.Get(ctx, gfKey2, &svcAcc)
+				return &svcAcc
+			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
+
 			By("Expecting console plugin deployment to be garbage collected")
 			Eventually(func() interface{} {
 				d := appsv1.Deployment{}
@@ -581,6 +524,13 @@ func flowCollectorControllerSpecs() {
 				svc := v1.Service{}
 				_ = k8sClient.Get(ctx, cpKey2, &svc)
 				return &svc
+			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
+
+			By("Expecting console plugin service account to be garbage collected")
+			Eventually(func() interface{} {
+				svcAcc := v1.ServiceAccount{}
+				_ = k8sClient.Get(ctx, cpKey2, &svcAcc)
+				return &svcAcc
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
 
 			By("Expecting ovn-flows-configmap to be garbage collected")
@@ -601,36 +551,4 @@ func flowCollectorControllerSpecs() {
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
 		})
 	})
-}
-
-func getContainerArgumentAfter(containerName, argName string) func() interface{} {
-	pluginDeploymentKey := types.NamespacedName{
-		Name:      "network-observability-plugin",
-		Namespace: operatorNamespace,
-	}
-	return func() interface{} {
-		deployment := appsv1.Deployment{}
-		if err := k8sClient.Get(ctx, pluginDeploymentKey, &deployment); err != nil {
-			return err
-		}
-		for i := range deployment.Spec.Template.Spec.Containers {
-			cnt := &deployment.Spec.Template.Spec.Containers[i]
-			if cnt.Name == containerName {
-				args := cnt.Args
-				for len(args) > 0 {
-					if args[0] == argName {
-						if len(args) < 2 {
-							return fmt.Errorf("container %q: arg %v has no value. Actual args: %v",
-								containerName, argName, cnt.Args)
-						}
-						return args[1]
-					}
-					args = args[1:]
-				}
-				return fmt.Errorf("container %q: arg %v not found. Actual args: %v",
-					containerName, argName, cnt.Args)
-			}
-		}
-		return fmt.Errorf("container not found: %v", containerName)
-	}
 }

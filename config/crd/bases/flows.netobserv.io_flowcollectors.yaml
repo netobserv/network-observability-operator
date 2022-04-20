@@ -618,6 +618,14 @@ spec:
                           portNames: {"3100": "loki"}'
                         type: object
                     type: object
+                  register:
+                    default: true
+                    description: 'Automatically register the provided console plugin
+                      with the OpenShift Console operator. When set to false, you
+                      can still register it manually by editing console.operator.openshift.io/cluster.
+                      E.g: oc patch console.operator.openshift.io cluster --type=''json''
+                      -p ''[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'''
+                    type: boolean
                   replicas:
                     default: 1
                     description: Replicas defines the number of replicas (pods) to

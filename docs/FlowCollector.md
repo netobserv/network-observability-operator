@@ -241,6 +241,15 @@ ConsolePlugin contains settings related to the console dynamic plugin
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>register</b></td>
+        <td>boolean</td>
+        <td>
+          Automatically register the provided console plugin with the OpenShift Console operator. When set to false, you can still register it manually by editing console.operator.openshift.io/cluster. E.g: oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>replicas</b></td>
         <td>integer</td>
         <td>

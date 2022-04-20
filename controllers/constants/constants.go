@@ -2,11 +2,12 @@
 package constants
 
 const (
-	FLPName        = "flowlogs-pipeline"
-	FLPPortName    = "flp" // must be <15 chars
-	PluginName     = "network-observability-plugin"
-	DeploymentKind = "Deployment"
-	DaemonSetKind  = "DaemonSet"
+	DefaultOperatorNamespace = "network-observability"
+	FLPName                  = "flowlogs-pipeline"
+	FLPPortName              = "flp" // must be <15 chars
+	PluginName               = "network-observability-plugin"
+	DeploymentKind           = "Deployment"
+	DaemonSetKind            = "DaemonSet"
 
 	// EBPFAgentName and other constants for it
 	EBPFAgentName          = "netobserv-ebpf-agent"

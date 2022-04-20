@@ -13,6 +13,15 @@ func ContainsString(slice []string, s string) bool {
 	return false
 }
 
+func RemoveAllStrings(slice []string, search string) []string {
+	for i, v := range slice {
+		if v == search {
+			return RemoveAllStrings(append(slice[:i], slice[i+1:]...), search)
+		}
+	}
+	return slice
+}
+
 func ExtractVersion(image string) string {
 	parts := strings.Split(image, ":")
 	nparts := len(parts)
