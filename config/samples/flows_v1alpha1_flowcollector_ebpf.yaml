@@ -8,6 +8,13 @@ spec:
   ebpf:
     image: 'quay.io/netobserv/netobserv-ebpf-agent:main'
     imagePullPolicy: IfNotPresent
+    sampling: 0
+    cacheActiveTimeout: 5s
+    cacheMaxFlows: 1000
+    interfaces: []
+    excludeInterfaces: ["lo"]
+    buffersLength: 50
+    verbose: true
   flowlogsPipeline:
     kind: Deployment
     replicas: 1

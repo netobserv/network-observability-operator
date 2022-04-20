@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
@@ -21,8 +22,17 @@ import (
 )
 
 const (
-	flowsTargetHostEnvVar = "FLOWS_TARGET_HOST"
-	flowsTargetPortEnvVar = "FLOWS_TARGET_PORT"
+	envBuffersLength      = "BUFFERS_LENGTH"
+	envCacheActiveTimeout = "CACHE_ACTIVE_TIMEOUT"
+	envCacheMaxFlows      = "CACHE_MAX_FLOWS"
+	envExcludeInterfaces  = "EXCLUDE_INTERFACES"
+	envInterfaces         = "INTERFACES"
+	envFlowsTargetHost    = "FLOWS_TARGET_HOST"
+	envFlowsTargetPort    = "FLOWS_TARGET_PORT"
+	envSampling           = "SAMPLING"
+	envVerbose            = "VERBOSE"
+
+	envListSeparator = ","
 )
 
 type reconcileAction int
@@ -134,7 +144,7 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 						SecurityContext: &corev1.SecurityContext{
 							Privileged: &trueVal,
 						},
-						Env: c.flpEndpoint(coll),
+						Env: c.envConfig(coll),
 					}},
 				},
 			},
@@ -142,30 +152,73 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 	}
 }
 
-func (c *AgentController) flpEndpoint(coll *flowsv1alpha1.FlowCollector) []corev1.EnvVar {
+func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.EnvVar {
+	var config []corev1.EnvVar
+	if coll.Spec.EBPF.CacheActiveTimeout != "" {
+		config = append(config, corev1.EnvVar{
+			Name:  envCacheActiveTimeout,
+			Value: coll.Spec.EBPF.CacheActiveTimeout,
+		})
+	}
+	if coll.Spec.EBPF.CacheMaxFlows != 0 {
+		config = append(config, corev1.EnvVar{
+			Name:  envCacheMaxFlows,
+			Value: strconv.Itoa(int(coll.Spec.EBPF.CacheMaxFlows)),
+		})
+	}
+	if coll.Spec.EBPF.Verbose {
+		config = append(config, corev1.EnvVar{
+			Name:  envVerbose,
+			Value: "true",
+		})
+	}
+	if len(coll.Spec.EBPF.Interfaces) > 0 {
+		config = append(config, corev1.EnvVar{
+			Name:  envInterfaces,
+			Value: strings.Join(coll.Spec.EBPF.Interfaces, envListSeparator),
+		})
+	}
+	if len(coll.Spec.EBPF.ExcludeInterfaces) > 0 {
+		config = append(config, corev1.EnvVar{
+			Name:  envExcludeInterfaces,
+			Value: strings.Join(coll.Spec.EBPF.ExcludeInterfaces, envListSeparator),
+		})
+	}
+	if coll.Spec.EBPF.BuffersLength > 0 {
+		config = append(config, corev1.EnvVar{
+			Name:  envBuffersLength,
+			Value: strconv.Itoa(coll.Spec.EBPF.BuffersLength),
+		})
+	}
+	if coll.Spec.EBPF.Sampling > 1 {
+		config = append(config, corev1.EnvVar{
+			Name:  envSampling,
+			Value: strconv.Itoa(int(coll.Spec.EBPF.Sampling)),
+		})
+	}
 	switch coll.Spec.FlowlogsPipeline.Kind {
 	case constants.DaemonSetKind:
 		// When flowlogs-pipeline is deployed as a daemonset, each agent must send
 		// data to the pod that is deployed in the same host
-		return []corev1.EnvVar{{
-			Name: flowsTargetHostEnvVar,
+		return append(config, corev1.EnvVar{
+			Name: envFlowsTargetHost,
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
 					FieldPath: "status.hostIP",
 				},
 			},
-		}, {
-			Name:  flowsTargetPortEnvVar,
+		}, corev1.EnvVar{
+			Name:  envFlowsTargetPort,
 			Value: strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)),
-		}}
+		})
 	case constants.DeploymentKind:
-		return []corev1.EnvVar{{
-			Name:  flowsTargetHostEnvVar,
+		return append(config, corev1.EnvVar{
+			Name:  envFlowsTargetHost,
 			Value: constants.FLPName + "." + c.baseNamespace,
-		}, {
-			Name:  flowsTargetPortEnvVar,
+		}, corev1.EnvVar{
+			Name:  envFlowsTargetPort,
 			Value: strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)),
-		}}
+		})
 	}
 	return nil
 }
