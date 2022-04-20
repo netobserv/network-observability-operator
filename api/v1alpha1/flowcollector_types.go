@@ -126,9 +126,10 @@ type FlowCollectorEBPF struct {
 	//+kubebuilder:default:=50
 	BuffersLength int `json:"buffersLength,omitempty"`
 
-	// Verbose logs mode
-	//+kubebuilder:default:=false
-	Verbose bool `json:"verbose,omitempty"`
+	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic
+	//+kubebuilder:default:=info
+	// LogLevel defines the log level for the NetObserv eBPF Agent
+	LogLevel string `json:"logLevel,omitempty"`
 }
 
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector

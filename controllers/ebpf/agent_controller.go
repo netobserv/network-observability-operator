@@ -30,7 +30,7 @@ const (
 	envFlowsTargetHost    = "FLOWS_TARGET_HOST"
 	envFlowsTargetPort    = "FLOWS_TARGET_PORT"
 	envSampling           = "SAMPLING"
-	envVerbose            = "VERBOSE"
+	envLogLevel           = "LOG_LEVEL"
 
 	envListSeparator = ","
 )
@@ -166,10 +166,10 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 			Value: strconv.Itoa(int(coll.Spec.EBPF.CacheMaxFlows)),
 		})
 	}
-	if coll.Spec.EBPF.Verbose {
+	if coll.Spec.EBPF.LogLevel != "" {
 		config = append(config, corev1.EnvVar{
-			Name:  envVerbose,
-			Value: "true",
+			Name:  envLogLevel,
+			Value: coll.Spec.EBPF.LogLevel,
 		})
 	}
 	if len(coll.Spec.EBPF.Interfaces) > 0 {
