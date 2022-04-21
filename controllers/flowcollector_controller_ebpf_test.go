@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -73,34 +75,32 @@ func flowCollectorEBPFSpecs() {
 			Expect(len(spec.Containers)).To(Equal(1))
 			Expect(spec.Containers[0].SecurityContext.Privileged).To(Not(BeNil()))
 			Expect(*spec.Containers[0].SecurityContext.Privileged).To(BeTrue())
-			env := spec.Containers[0].Env
-			Expect(len(env)).To(Equal(9))
-			Expect(env[0]).To(Equal(
+			Expect(spec.Containers[0].Env).To(ContainElements(
 				v1.EnvVar{Name: "CACHE_ACTIVE_TIMEOUT", Value: "15s"},
-			))
-			Expect(env[1]).To(Equal(
 				v1.EnvVar{Name: "CACHE_MAX_FLOWS", Value: "100"},
-			))
-			Expect(env[2]).To(Equal(
 				v1.EnvVar{Name: "LOG_LEVEL", Value: "trace"},
-			))
-			Expect(env[3]).To(Equal(
 				v1.EnvVar{Name: "INTERFACES", Value: "veth0,/^br-/"},
-			))
-			Expect(env[4]).To(Equal(
 				v1.EnvVar{Name: "EXCLUDE_INTERFACES", Value: "br-3,lo"},
-			))
-			Expect(env[5]).To(Equal(
 				v1.EnvVar{Name: "BUFFERS_LENGTH", Value: "100"},
-			))
-			Expect(env[6]).To(Equal(
 				v1.EnvVar{Name: "SAMPLING", Value: "123"},
-			))
-			Expect(env[7].Name).To(Equal("FLOWS_TARGET_HOST"))
-			Expect(env[7].ValueFrom.FieldRef.FieldPath).To(Equal("status.hostIP"))
-			Expect(env[8]).To(Equal(
 				v1.EnvVar{Name: "FLOWS_TARGET_PORT", Value: "9999"},
 			))
+			hostFound := false
+			for _, env := range spec.Containers[0].Env {
+				if env.Name == "FLOWS_TARGET_HOST" {
+					if env.ValueFrom == nil ||
+						env.ValueFrom.FieldRef == nil ||
+						env.ValueFrom.FieldRef.FieldPath != "status.hostIP" {
+						Fail(fmt.Sprintf("FLOWS_TARGET_HOST expected to refer to \"status.hostIP\"."+
+							" Got: %+v", env.ValueFrom))
+					} else {
+						hostFound = true
+						break
+					}
+				}
+			}
+			Expect(hostFound).To(BeTrue(),
+				fmt.Sprintf("expected FLOWS_TARGET_HOST env var in %+v", spec.Containers[0].Env))
 
 			ns := v1.Namespace{}
 			By("expecting to create the network-observability-privileged namespace")
@@ -117,7 +117,31 @@ func flowCollectorEBPFSpecs() {
 			Expect(k8sClient.Get(ctx, saKey, &v1.ServiceAccount{})).To(Succeed())
 		})
 
-		It("should undeploy everything when deleted", func() {
+		It("Should update fields that have changed", func() {
+			updated := flowsv1alpha1.FlowCollector{}
+			Expect(k8sClient.Get(ctx, crKey, &updated)).Should(Succeed())
+			Expect(updated.Spec.EBPF.Sampling).To(Equal(int32(123)))
+			updated.Spec.EBPF.Sampling = 4
+			Expect(k8sClient.Update(ctx, &updated)).Should(Succeed())
+
+			By("expecting that the daemonset spec has eventually changed")
+			Eventually(func() interface{} {
+				ds := appsv1.DaemonSet{}
+				if err := k8sClient.Get(ctx, agentKey, &ds); err != nil {
+					return err
+				}
+				expected := v1.EnvVar{Name: "SAMPLING", Value: "4"}
+				for _, env := range ds.Spec.Template.Spec.Containers[0].Env {
+					if env == expected {
+						return nil
+					}
+				}
+				return fmt.Errorf("unexpected env vars: %#v",
+					ds.Spec.Template.Spec.Containers[0].Env)
+			}).WithTimeout(timeout).WithPolling(interval).Should(Succeed())
+		})
+
+		It("Should undeploy everything when deleted", func() {
 			// Retrieve CR to get its UID
 			flowCR := &flowsv1alpha1.FlowCollector{}
 			Eventually(func() error {

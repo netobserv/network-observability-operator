@@ -16,7 +16,7 @@ spec:
     buffersLength: 50
     logLevel: info
   flowlogsPipeline:
-    kind: Deployment
+    kind: DaemonSet
     replicas: 1
     port: 2055
     image: 'quay.io/netobserv/flowlogs-pipeline:latest'
