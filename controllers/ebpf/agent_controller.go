@@ -19,6 +19,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"k8s.io/apimachinery/pkg/api/equality"
 )
 
 const (
@@ -230,13 +231,7 @@ func (c *AgentController) requiredAction(current, desired *v1.DaemonSet) reconci
 	if current == nil && desired != nil {
 		return actionCreate
 	}
-	dspec, cspec := &desired.Spec.Template.Spec, &current.Spec.Template.Spec
-	equal := helper.IsSubSet(current.ObjectMeta.Labels, desired.ObjectMeta.Labels) &&
-		dspec.ServiceAccountName == cspec.ServiceAccountName &&
-		dspec.HostNetwork == cspec.HostNetwork &&
-		dspec.DNSPolicy == cspec.DNSPolicy &&
-		len(dspec.Containers) == len(cspec.Containers)
-	if equal {
+	if equality.Semantic.DeepDerivative(&desired.Spec, current.Spec) {
 		return actionNone
 	}
 	return actionUpdate
