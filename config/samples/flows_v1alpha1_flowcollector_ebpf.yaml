@@ -24,6 +24,7 @@ spec:
     printOutput: false
     enableKubeProbes: false
     healthPort: 8080
+    prometheusPort: 9090
   loki:
     url: 'http://loki:3100/'
     batchWait: 1s

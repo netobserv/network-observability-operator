@@ -166,6 +166,12 @@ type FlowCollectorFLP struct {
 	// HealthPort is a collector HTTP port in the Pod that exposes the health check API
 	HealthPort int32 `json:"healthPort,omitempty"`
 
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=65535
+	//+kubebuilder:default:=9090
+	// PrometheusPort is the prometheus HTTP port: this port exposes prometheus metrics
+	PrometheusPort int32 `json:"prometheusPort,omitempty"`
+
 	//+kubebuilder:default:="quay.io/netobserv/flowlogs-pipeline:main"
 	// Image is the collector image (including domain and tag)
 	Image string `json:"image,omitempty"`

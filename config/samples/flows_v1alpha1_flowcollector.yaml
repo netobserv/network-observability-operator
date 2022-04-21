@@ -18,6 +18,7 @@ spec:
     logLevel: info
     enableKubeProbes: true
     healthPort: 8080
+    prometheusPort: 9090
   loki:
     url: 'http://loki:3100/'
     batchWait: 1s
