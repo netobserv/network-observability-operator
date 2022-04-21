@@ -666,6 +666,8 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
+                required:
+                - register
                 type: object
               ebpf:
                 description: EBPF contains the settings of an eBPF-based flow reporter.

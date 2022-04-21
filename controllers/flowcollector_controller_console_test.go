@@ -76,6 +76,7 @@ func flowCollectorConsolePluginSpecs() {
 						Port:            9001,
 						ImagePullPolicy: "Never",
 						Image:           "testimg:latest",
+						Register:        true,
 						HPA: &flowsv1alpha1.FlowCollectorHPA{
 							MinReplicas: helper.Int32Ptr(1),
 							MaxReplicas: 1,
@@ -216,24 +217,19 @@ func flowCollectorConsolePluginSpecs() {
 
 		It("Should be unregistered", func() {
 			By("Update CR to unregister")
-			Eventually(func() error {
-				fc := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
+			fc := flowsv1alpha1.FlowCollector{}
+			Expect(k8sClient.Get(ctx, crKey, &fc)).Should(Succeed())
+			fc.Spec.ConsolePlugin.Register = false
+			Expect(k8sClient.Update(ctx, &fc)).Should(Succeed())
+
+			By("Expecting the Console CR to not have plugin registered")
+			Eventually(func() interface{} {
+				cr := operatorsv1.Console{}
+				if err := k8sClient.Get(ctx, consoleCRKey, &cr); err != nil {
 					return err
 				}
-				fc.Spec.ConsolePlugin.Register = false
-				return k8sClient.Update(ctx, &fc)
-			}).Should(Succeed())
-
-			// FIXME / investigate: for some reason this test fails .. however it works fine on a running cluster
-			// By("Expecting the Console CR to not have plugin registered")
-			// Eventually(func() interface{} {
-			// 	cr := operatorsv1.Console{}
-			// 	if err := k8sClient.Get(ctx, consoleCRKey, &cr); err != nil {
-			// 		return err
-			// 	}
-			// 	return cr.Spec.Plugins
-			// }, timeout, interval).Should(BeEmpty())
+				return cr.Spec.Plugins
+			}, timeout, interval).Should(BeEmpty())
 		})
 	})
 

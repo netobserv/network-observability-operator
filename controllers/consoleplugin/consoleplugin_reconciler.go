@@ -118,8 +118,6 @@ func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowsv1alpha
 	}
 	registered := helper.ContainsString(console.Spec.Plugins, constants.PluginName)
 	if desired.Spec.ConsolePlugin.Register && !registered {
-		// Equivalent of:
-		// oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'
 		console.Spec.Plugins = append(console.Spec.Plugins, constants.PluginName)
 		return r.Client.Update(ctx, &console)
 	} else if !desired.Spec.ConsolePlugin.Register && registered {
