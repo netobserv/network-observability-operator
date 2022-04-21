@@ -163,11 +163,12 @@ Loki is used to store the flows, however its installation is not managed directl
 
 Once Loki is setup, you may have to update the `flowcollector` CR to update the Loki URL (use an URL that is accessible in-cluster by the `flowlogs-pipeline` pods; default is `http://loki:3100/`).
 
-## Enabling the console plugin
+## OpenShift Console plugin
 
-The operator automatically deploys a console dynamic plugin when used in OpenShift.
+The operator deploys a console dynamic plugin when used in OpenShift, and should register it automatically if `spec.consolePlugin.register` is set to `true` (default).
 
-The plugin then needs to be enabled through the console configuration:
+If it's set to `false`, or if for any reason the registration failed, you can still do it manually by editing
+`console.operator.openshift.io/cluster` to add the plugin reference:
 
 ```yaml
 spec:
@@ -175,13 +176,13 @@ spec:
   - network-observability-plugin
 ```
 
-To do so, you can apply this patch:
+Or simply execute:
 
 ```bash
-oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["network-observability-plugin"]}]'
+oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'
 ```
 
-It provides new views in the OpenShift Console: a new submenu _Network Traffic_ in _Observe_, and new tabs in several details views (Pods, Deployments, Services...).
+The plugin provides new views in the OpenShift Console: a new submenu _Network Traffic_ in _Observe_, and new tabs in several details views (Pods, Deployments, Services...).
 
 ![Main view](./docs/assets/network-traffic-main.png)
 _Main view_ 
