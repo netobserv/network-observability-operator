@@ -3,7 +3,6 @@ package controllers
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -17,9 +16,13 @@ import (
 )
 
 func flowCollectorEBPFSpecs() {
+	// Because the simulated Kube server doesn't manage automatic resource cleanup like an actual Kube would do,
+	// we need either to cleanup all created resources manually, or to use different namespaces between tests
+	// For simplicity, we'll use a different namespace
+	operatorNamespace := "namespace-ebpf-specs"
 	agentKey := types.NamespacedName{
 		Name:      "netobserv-ebpf-agent",
-		Namespace: "network-observability-privileged",
+		Namespace: operatorNamespace + "-privileged",
 	}
 	crKey := types.NamespacedName{Name: "cluster"}
 	flpKey := types.NamespacedName{

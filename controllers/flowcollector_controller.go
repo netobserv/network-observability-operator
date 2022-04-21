@@ -7,8 +7,6 @@ import (
 	"net"
 	"strings"
 
-	"github.com/netobserv/network-observability-operator/controllers/ebpf"
-	"github.com/netobserv/network-observability-operator/pkg/discover"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -25,40 +23,40 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
 	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/discover"
 )
-
-// Make sure it always matches config/default/kustomization.yaml:namespace
-// See also https://github.com/operator-framework/operator-lib/issues/74
-const operatorNamespace = "network-observability"
 
 const ovsFlowsConfigMapName = "ovs-flows-config"
 
 // FlowCollectorReconciler reconciles a FlowCollector object
 type FlowCollectorReconciler struct {
 	client.Client
-	permissions    discover.Permissions
-	Scheme         *runtime.Scheme
-	consoleEnabled bool
-	lookupIP       func(string) ([]net.IP, error)
+	permissions      discover.Permissions
+	Scheme           *runtime.Scheme
+	consoleAvailable bool
+	lookupIP         func(string) ([]net.IP, error)
 }
 
 func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *FlowCollectorReconciler {
 	return &FlowCollectorReconciler{
-		Client:         client,
-		Scheme:         scheme,
-		consoleEnabled: false,
-		lookupIP:       net.LookupIP,
+		Client:           client,
+		Scheme:           scheme,
+		consoleAvailable: false,
+		lookupIP:         net.LookupIP,
 	}
 }
 
 //+kubebuilder:rbac:groups=apps,resources=deployments;daemonsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=namespaces;services;serviceaccounts;configmaps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles,verbs=get;create;delete
-//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;create;delete;update
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;create;delete;update;watch
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;delete;update;patch;list
+//+kubebuilder:rbac:groups=operator.openshift.io,resources=consoles,verbs=get;update;list;update;watch
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors/finalizers,verbs=update
@@ -121,7 +119,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	// Create reconcilers
 	gfReconciler := flowlogspipeline.NewReconciler(clientHelper, ns, previousNamespace)
 	var cpReconciler consoleplugin.CPReconciler
-	if r.consoleEnabled {
+	if r.consoleAvailable {
 		cpReconciler = consoleplugin.NewReconciler(clientHelper, ns, previousNamespace)
 	}
 
@@ -165,8 +163,8 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	// Console plugin
-	if r.consoleEnabled {
-		err := cpReconciler.Reconcile(ctx, &desired.Spec)
+	if r.consoleAvailable {
+		err := cpReconciler.Reconcile(ctx, desired)
 		if err != nil {
 			log.Error(err, "Failed to reconcile console plugin")
 			return ctrl.Result{}, err
@@ -191,7 +189,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 		if err != nil {
 			return err
 		}
-		if r.consoleEnabled {
+		if r.consoleAvailable {
 			err := cpReconciler.InitStaticResources(ctx)
 			if err != nil {
 				return err
@@ -204,7 +202,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 		if err != nil {
 			return err
 		}
-		if r.consoleEnabled {
+		if r.consoleAvailable {
 			err := cpReconciler.PrepareNamespaceChange(ctx)
 			if err != nil {
 				return err
@@ -218,7 +216,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	return r.Status().Update(ctx, desired)
 }
 
-func isConsoleEnabled(mgr ctrl.Manager) (bool, error) {
+func isConsoleAvailable(mgr ctrl.Manager) (bool, error) {
 	discoveryClient, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
 	if err != nil {
 		return false, err
@@ -252,11 +250,11 @@ func (r *FlowCollectorReconciler) SetupWithManager(ctx context.Context, mgr ctrl
 	}
 
 	var err error
-	r.consoleEnabled, err = isConsoleEnabled(mgr)
+	r.consoleAvailable, err = isConsoleAvailable(mgr)
 	if err != nil {
 		return err
 	}
-	if r.consoleEnabled {
+	if r.consoleAvailable {
 		builder = builder.Owns(&osv1alpha1.ConsolePlugin{})
 	}
 	return builder.Complete(r)
@@ -280,7 +278,7 @@ func getNamespaceName(desired *flowsv1alpha1.FlowCollector) string {
 	if desired.Spec.Namespace != "" {
 		return desired.Spec.Namespace
 	}
-	return operatorNamespace
+	return constants.DefaultOperatorNamespace
 }
 
 func (r *FlowCollectorReconciler) namespaceExist(ctx context.Context, nsName string) (bool, error) {

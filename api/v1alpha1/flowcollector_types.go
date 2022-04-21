@@ -257,6 +257,12 @@ type FlowCollectorLoki struct {
 type FlowCollectorConsolePlugin struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
+	//+kubebuilder:default:=true
+	// Automatically register the provided console plugin with the OpenShift Console operator.
+	// When set to false, you can still register it manually by editing console.operator.openshift.io/cluster.
+	// E.g: oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'
+	Register bool `json:"register"`
+
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=1
 	// Replicas defines the number of replicas (pods) to start.

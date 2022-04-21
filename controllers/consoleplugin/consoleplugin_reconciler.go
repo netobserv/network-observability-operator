@@ -5,15 +5,18 @@ import (
 	"reflect"
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
+	operatorsv1 "github.com/openshift/api/operator/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 // Type alias
@@ -65,7 +68,7 @@ func (r *CPReconciler) PrepareNamespaceChange(ctx context.Context) error {
 }
 
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
-func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollectorSpec) error {
+func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
 	ns := r.nobjMngr.Namespace
 	// Retrieve current owned objects
 	err := r.nobjMngr.FetchAll(ctx)
@@ -73,30 +76,54 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 		return err
 	}
 
-	// Create object builder
-	builder := newBuilder(ns, &desired.ConsolePlugin, &desired.Loki)
-
-	if err = r.reconcilePlugin(ctx, builder, desired, ns); err != nil {
+	if err = r.checkAutoPatch(ctx, desired); err != nil {
 		return err
 	}
 
-	cmDigest, err := r.reconcileConfigMap(ctx, builder, desired, ns)
+	// Create object builder
+	builder := newBuilder(ns, &desired.Spec.ConsolePlugin, &desired.Spec.Loki)
+
+	if err = r.reconcilePlugin(ctx, builder, &desired.Spec, ns); err != nil {
+		return err
+	}
+
+	cmDigest, err := r.reconcileConfigMap(ctx, builder, &desired.Spec, ns)
 	if err != nil {
 		return err
 	}
 
-	if err = r.reconcileDeployment(ctx, builder, desired, ns, cmDigest); err != nil {
+	if err = r.reconcileDeployment(ctx, builder, &desired.Spec, ns, cmDigest); err != nil {
 		return err
 	}
 
-	if err = r.reconcileService(ctx, builder, desired, ns); err != nil {
+	if err = r.reconcileService(ctx, builder, &desired.Spec, ns); err != nil {
 		return err
 	}
 
-	if err = r.reconcileHPA(ctx, builder, desired, ns); err != nil {
+	if err = r.reconcileHPA(ctx, builder, &desired.Spec, ns); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+	console := operatorsv1.Console{}
+	if err := r.Client.Get(ctx, types.NamespacedName{Name: "cluster"}, &console); err != nil {
+		// Console operator CR not found => warn but continue execution
+		if desired.Spec.ConsolePlugin.Register {
+			log.FromContext(ctx).Error(err, "Could not get the Console Operator resource for plugin registration. Please register manually.")
+		}
+		return nil
+	}
+	registered := helper.ContainsString(console.Spec.Plugins, constants.PluginName)
+	if desired.Spec.ConsolePlugin.Register && !registered {
+		console.Spec.Plugins = append(console.Spec.Plugins, constants.PluginName)
+		return r.Client.Update(ctx, &console)
+	} else if !desired.Spec.ConsolePlugin.Register && registered {
+		console.Spec.Plugins = helper.RemoveAllStrings(console.Spec.Plugins, constants.PluginName)
+		return r.Client.Update(ctx, &console)
+	}
 	return nil
 }
 

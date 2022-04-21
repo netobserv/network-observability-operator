@@ -37,3 +37,13 @@ func TestIsSubset(t *testing.T) {
 		map[string]string{"a": "b", "c": "d", "e": "f"},
 		map[string]string{"a": "b", "c": "d", "e": "f", "g": "h"}))
 }
+
+func TestRemoveAllStrings(t *testing.T) {
+	assert := assert.New(t)
+
+	s := RemoveAllStrings([]string{"one", "two", "three", "four", "three"}, "three")
+	assert.Equal([]string{"one", "two", "four"}, s)
+
+	s = RemoveAllStrings(s, "five")
+	assert.Equal([]string{"one", "two", "four"}, s)
+}

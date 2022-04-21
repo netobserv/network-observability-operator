@@ -25,6 +25,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
+	operatorsv1 "github.com/openshift/api/operator/v1"
 	"github.com/stretchr/testify/mock"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -66,6 +67,7 @@ func TestAPIs(t *testing.T) {
 // this way we make sure that both test sub-suites are executed serially
 var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
 	flowCollectorControllerSpecs()
+	flowCollectorConsolePluginSpecs()
 	flowCollectorEBPFSpecs()
 })
 
@@ -79,6 +81,7 @@ var _ = BeforeSuite(func() {
 			filepath.Join("..", "config", "crd", "bases"),
 			// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
 			filepath.Join("..", "vendor", "github.com", "openshift", "api", "console", "v1alpha1"),
+			filepath.Join("..", "vendor", "github.com", "openshift", "api", "operator", "v1"),
 		},
 		ErrorIfCRDPathMissing: true,
 	}
@@ -100,6 +103,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	err = ascv2.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = operatorsv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
@@ -134,12 +140,6 @@ var _ = AfterSuite(func() {
 })
 
 func prepareNamespaces() error {
-	if err := k8sClient.Create(ctx, &corev1.Namespace{
-		TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
-		ObjectMeta: metav1.ObjectMeta{Name: operatorNamespace},
-	}); err != nil {
-		return err
-	}
 	return k8sClient.Create(ctx, &corev1.Namespace{
 		TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: testCnoNamespace},

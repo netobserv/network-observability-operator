@@ -94,7 +94,9 @@ github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
 # github.com/openshift/api v0.0.0-20220112145620-704957ce4980
 ## explicit
+github.com/openshift/api/config/v1
 github.com/openshift/api/console/v1alpha1
+github.com/openshift/api/operator/v1
 github.com/openshift/api/security/v1
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
