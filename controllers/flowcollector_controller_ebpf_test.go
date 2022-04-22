@@ -57,8 +57,10 @@ func flowCollectorEBPFSpecs() {
 						CacheMaxFlows:      100,
 						Interfaces:         []string{"veth0", "/^br-/"},
 						ExcludeInterfaces:  []string{"br-3", "lo"},
-						BuffersLength:      100,
 						LogLevel:           "trace",
+						Env: map[string]string{
+							"BUFFERS_LENGTH": "100",
+						},
 					},
 				},
 			}
