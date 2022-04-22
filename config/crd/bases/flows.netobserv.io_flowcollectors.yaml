@@ -674,12 +674,6 @@ spec:
                   This section should not be defined if the ipfix section is already
                   defined
                 properties:
-                  buffersLength:
-                    default: 50
-                    description: BuffersLength establishes the length of communication
-                      channels between the different processing stages of the Agent.
-                      This is an internal performance tuning parameter.
-                    type: integer
                   cacheActiveTimeout:
                     default: 5s
                     description: CacheActiveTimeout is the max period during which
@@ -693,6 +687,15 @@ spec:
                     format: int32
                     minimum: 1
                     type: integer
+                  env:
+                    additionalProperties:
+                      type: string
+                    description: Env allows passing custom environment variables to
+                      the NetObserv Agent. Useful for passing some very concrete performance-tuning
+                      options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed
+                      as part of the FlowCollector descriptor, as they are only useful
+                      in edge debug/support scenarios.
+                    type: object
                   excludeInterfaces:
                     default:
                     - lo

@@ -13,7 +13,6 @@ spec:
     cacheMaxFlows: 1000
     interfaces: []
     excludeInterfaces: ["lo"]
-    buffersLength: 50
     logLevel: info
   flowlogsPipeline:
     kind: DaemonSet

@@ -1269,15 +1269,6 @@ EBPF contains the settings of an eBPF-based flow reporter. This section should n
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>buffersLength</b></td>
-        <td>integer</td>
-        <td>
-          BuffersLength establishes the length of communication channels between the different processing stages of the Agent. This is an internal performance tuning parameter.<br/>
-          <br/>
-            <i>Default</i>: 50<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>cacheActiveTimeout</b></td>
         <td>string</td>
         <td>
@@ -1295,6 +1286,13 @@ EBPF contains the settings of an eBPF-based flow reporter. This section should n
             <i>Format</i>: int32<br/>
             <i>Default</i>: 1000<br/>
             <i>Minimum</i>: 1<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>env</b></td>
+        <td>map[string]string</td>
+        <td>
+          Env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROX) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in very concrete debug/support scenarios.<br/>
         </td>
         <td>false</td>
       </tr><tr>

@@ -121,15 +121,17 @@ type FlowCollectorEBPF struct {
 	//+kubebuilder:default=lo;
 	ExcludeInterfaces []string `json:"excludeInterfaces,omitempty"`
 
-	// BuffersLength establishes the length of communication channels between the different processing
-	// stages of the Agent. This is an internal performance tuning parameter.
-	//+kubebuilder:default:=50
-	BuffersLength int `json:"buffersLength,omitempty"`
-
 	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic
 	//+kubebuilder:default:=info
 	// LogLevel defines the log level for the NetObserv eBPF Agent
 	LogLevel string `json:"logLevel,omitempty"`
+
+	// Env allows passing custom environment variables to the NetObserv Agent. Useful for passing
+	// some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be
+	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
+	// in edge debug/support scenarios.
+	//+optional
+	Env map[string]string `json:"env,omitempty"`
 }
 
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector

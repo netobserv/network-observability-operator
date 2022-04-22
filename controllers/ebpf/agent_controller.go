@@ -23,7 +23,6 @@ import (
 )
 
 const (
-	envBuffersLength      = "BUFFERS_LENGTH"
 	envCacheActiveTimeout = "CACHE_ACTIVE_TIMEOUT"
 	envCacheMaxFlows      = "CACHE_MAX_FLOWS"
 	envExcludeInterfaces  = "EXCLUDE_INTERFACES"
@@ -185,17 +184,14 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 			Value: strings.Join(coll.Spec.EBPF.ExcludeInterfaces, envListSeparator),
 		})
 	}
-	if coll.Spec.EBPF.BuffersLength > 0 {
-		config = append(config, corev1.EnvVar{
-			Name:  envBuffersLength,
-			Value: strconv.Itoa(coll.Spec.EBPF.BuffersLength),
-		})
-	}
 	if coll.Spec.EBPF.Sampling > 1 {
 		config = append(config, corev1.EnvVar{
 			Name:  envSampling,
 			Value: strconv.Itoa(int(coll.Spec.EBPF.Sampling)),
 		})
+	}
+	for k, v := range coll.Spec.EBPF.Env {
+		config = append(config, corev1.EnvVar{Name: k, Value: v})
 	}
 	switch coll.Spec.FlowlogsPipeline.Kind {
 	case constants.DaemonSetKind:
