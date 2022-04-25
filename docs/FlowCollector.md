@@ -1292,7 +1292,7 @@ EBPF contains the settings of an eBPF-based flow reporter. This section should n
         <td><b>env</b></td>
         <td>map[string]string</td>
         <td>
-          Env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROX) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in very concrete debug/support scenarios.<br/>
+          Env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug/support scenarios.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1486,6 +1486,18 @@ FlowlogsPipeline contains settings related to the flowlogs-pipeline component
             <i>Format</i>: int32<br/>
             <i>Default</i>: 2055<br/>
             <i>Minimum</i>: 1025<br/>
+            <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>prometheusPort</b></td>
+        <td>integer</td>
+        <td>
+          PrometheusPort is the prometheus HTTP port: this port exposes prometheus metrics<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 9090<br/>
+            <i>Minimum</i>: 1<br/>
             <i>Maximum</i>: 65535<br/>
         </td>
         <td>false</td>

@@ -67,7 +67,8 @@ func getFLPConfig() flowsv1alpha1.FlowCollectorFLP {
 				},
 			}},
 		},
-		HealthPort: 8080,
+		HealthPort:     8080,
+		PrometheusPort: 9090,
 	}
 }
 
@@ -366,7 +367,7 @@ func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	collector := ingest["collector"].(map[interface{}]interface{})
 	assert.Equal(flp.Port, int32(collector["port"].(int)))
 
-	lokiCfg := parameters[4].(map[interface{}]interface{})["write"].(map[interface{}]interface{})["loki"].(map[interface{}]interface{})
+	lokiCfg := parameters[3].(map[interface{}]interface{})["write"].(map[interface{}]interface{})["loki"].(map[interface{}]interface{})
 	assert.Equal(loki.URL, lokiCfg["url"])
 	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg["batchWait"])
 	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg["minBackoff"])
@@ -375,6 +376,11 @@ func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	assert.EqualValues(loki.BatchSize, lokiCfg["batchSize"])
 	assert.EqualValues([]interface{}{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}, lokiCfg["labels"])
 	assert.Equal(fmt.Sprintf("%v", loki.StaticLabels), fmt.Sprintf("%v", lokiCfg["staticLabels"]))
+
+	encode := parameters[5].(map[interface{}]interface{})["encode"].(map[interface{}]interface{})
+	prom := encode["prom"].(map[interface{}]interface{})
+	assert.Equal(flp.PrometheusPort, int32(prom["port"].(int)))
+
 }
 
 func TestAutoScalerUpdateCheck(t *testing.T) {

@@ -25,6 +25,7 @@ const configFile = "config.yaml"
 
 const (
 	healthServiceName       = "health"
+	prometheusServiceName   = "prometheus"
 	healthTimeoutSeconds    = 5
 	livenessPeriodSeconds   = 10
 	startupFailureThreshold = 5
@@ -114,6 +115,11 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 		ContainerPort: b.desired.HealthPort,
 	})
 
+	ports = append(ports, corev1.ContainerPort{
+		Name:          prometheusServiceName,
+		ContainerPort: b.desired.PrometheusPort,
+	})
+
 	container := corev1.Container{
 		Name:            constants.FLPName,
 		Image:           b.desired.Image,
@@ -178,10 +184,14 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
 func (b *builder) configMap() (*corev1.ConfigMap, string) {
+	var ingest, decoder, enrich, loki, aggregate, prometheus, writeNone map[string]interface{}
+
+	// loki stage (write) configuration
 	lokiWrite := map[string]interface{}{
 		"type":   "loki",
 		"labels": constants.LokiIndexFields,
 	}
+
 	if b.desiredLoki != nil {
 		lokiWrite["batchSize"] = b.desiredLoki.BatchSize
 		lokiWrite["batchWait"] = b.desiredLoki.BatchWait.ToUnstructured()
@@ -194,7 +204,14 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		lokiWrite["timestampLabel"] = b.desiredLoki.TimestampLabel
 	}
 
-	var ingest, decoder map[string]interface{}
+	loki = map[string]interface{}{"name": "loki",
+		"write": map[string]interface{}{
+			"type": "loki",
+			"loki": lokiWrite,
+		},
+	}
+
+	// ingest stage (ingest) configuration
 	if b.portProtocol == corev1.ProtocolUDP {
 		// UDP Port: IPFIX collector with JSON decoder
 		ingest = map[string]interface{}{
@@ -232,6 +249,52 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		}
 	}
 
+	// enrich stage (transform) configuration
+	enrich = map[string]interface{}{"name": "enrich",
+		"transform": map[string]interface{}{
+			"type": "network",
+			"network": map[string]interface{}{
+				"rules": []map[string]interface{}{
+					{
+						"input":  "SrcAddr",
+						"output": "SrcK8S",
+						"type":   "add_kubernetes",
+					},
+					{
+						"input":  "DstAddr",
+						"output": "DstK8S",
+						"type":   "add_kubernetes",
+					},
+				},
+			},
+		},
+	}
+
+	// prometheus stage (encode) configuration
+	prometheus = map[string]interface{}{"name": "prometheus",
+		"encode": map[string]interface{}{
+			"type": "prom",
+			"prom": map[string]interface{}{
+				"port":   b.desired.PrometheusPort,
+				"prefix": "flp_",
+			},
+		},
+	}
+
+	// aggregate stage (extract) configuration
+	aggregate = map[string]interface{}{"name": "aggregate",
+		"extract": map[string]interface{}{
+			"type": "aggregates",
+		},
+	}
+
+	// write_none stage (write) configuration
+	writeNone = map[string]interface{}{"name": "write_none",
+		"write": map[string]interface{}{
+			"type": "none",
+		},
+	}
+
 	config := map[string]interface{}{
 		"log-level": b.desired.LogLevel,
 		"health": map[string]interface{}{
@@ -245,45 +308,21 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 			{"name": "enrich",
 				"follows": "decode",
 			},
-			{"name": "encode",
+			{"name": "loki",
 				"follows": "enrich",
 			},
-			{"name": "loki",
-				"follows": "encode",
+			{"name": "aggregate",
+				"follows": "enrich",
+			},
+			{"name": "prometheus",
+				"follows": "aggregate",
+			},
+			{"name": "write_none",
+				"follows": "prometheus",
 			},
 		},
 		"parameters": []map[string]interface{}{
-			ingest, decoder,
-			{"name": "enrich",
-				"transform": map[string]interface{}{
-					"type": "network",
-					"network": map[string]interface{}{
-						"rules": []map[string]interface{}{
-							{
-								"input":  "SrcAddr",
-								"output": "SrcK8S",
-								"type":   "add_kubernetes",
-							},
-							{
-								"input":  "DstAddr",
-								"output": "DstK8S",
-								"type":   "add_kubernetes",
-							},
-						},
-					},
-				},
-			},
-			{"name": "encode",
-				"encode": map[string]interface{}{
-					"type": "none",
-				},
-			},
-			{"name": "loki",
-				"write": map[string]interface{}{
-					"type": "loki",
-					"loki": lokiWrite,
-				},
-			},
+			ingest, decoder, enrich, loki, aggregate, prometheus, writeNone,
 		},
 	}
 

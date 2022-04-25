@@ -1356,6 +1356,14 @@ spec:
                     maximum: 65535
                     minimum: 1025
                     type: integer
+                  prometheusPort:
+                    default: 9090
+                    description: 'PrometheusPort is the prometheus HTTP port: this
+                      port exposes prometheus metrics'
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
+                    type: integer
                   replicas:
                     default: 1
                     description: Replicas defines the number of replicas (pods) to
