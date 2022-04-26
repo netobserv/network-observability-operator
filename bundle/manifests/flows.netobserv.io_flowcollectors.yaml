@@ -572,7 +572,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc0
+                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc1
                     description: Image is the plugin image (including domain and tag)
                     type: string
                   imagePullPolicy:
@@ -620,6 +620,14 @@ spec:
                           portNames: {"3100": "loki"}'
                         type: object
                     type: object
+                  register:
+                    default: true
+                    description: 'Automatically register the provided console plugin
+                      with the OpenShift Console operator. When set to false, you
+                      can still register it manually by editing console.operator.openshift.io/cluster.
+                      E.g: oc patch console.operator.openshift.io cluster --type=''json''
+                      -p ''[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'''
+                    type: boolean
                   replicas:
                     default: 1
                     description: Replicas defines the number of replicas (pods) to
@@ -660,6 +668,115 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
+                required:
+                - register
+                type: object
+              ebpf:
+                description: EBPF contains the settings of an eBPF-based flow reporter.
+                  This section should not be defined if the ipfix section is already
+                  defined
+                properties:
+                  cacheActiveTimeout:
+                    default: 5s
+                    description: CacheActiveTimeout is the max period during which
+                      the reporter will aggregate flows before sending
+                    pattern: ^\d+(ns|ms|s|m)?$
+                    type: string
+                  cacheMaxFlows:
+                    default: 1000
+                    description: CacheMaxFlows is the max number of flows in an aggregate;
+                      when reached, the reporter sends the flows
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  env:
+                    additionalProperties:
+                      type: string
+                    description: Env allows passing custom environment variables to
+                      the NetObserv Agent. Useful for passing some very concrete performance-tuning
+                      options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed
+                      as part of the FlowCollector descriptor, as they are only useful
+                      in edge debug/support scenarios.
+                    type: object
+                  excludeInterfaces:
+                    default:
+                    - lo
+                    description: ExcludeInterfaces contains the interface names that
+                      will be excluded from flow tracing. If an entry is enclosed
+                      by slashes (e.g. `/br-/`), it will match as regular expression,
+                      otherwise it will be matched as a case-sensitive string.
+                    items:
+                      type: string
+                    type: array
+                  image:
+                    default: quay.io/netobserv/netobserv-ebpf-agent:main
+                    description: Image is the NetObserv Agent image (including domain
+                      and tag)
+                    type: string
+                  imagePullPolicy:
+                    default: IfNotPresent
+                    description: ImagePullPolicy is the Kubernetes pull policy for
+                      the image defined above
+                    enum:
+                    - IfNotPresent
+                    - Always
+                    - Never
+                    type: string
+                  interfaces:
+                    description: Interfaces contains the interface names from where
+                      flows will be collected. If empty, the agent will fetch all
+                      the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
+                      If an entry is enclosed by slashes (e.g. `/br-/`), it will match
+                      as regular expression, otherwise it will be matched as a case-sensitive
+                      string.
+                    items:
+                      type: string
+                    type: array
+                  logLevel:
+                    default: info
+                    description: LogLevel defines the log level for the NetObserv
+                      eBPF Agent
+                    enum:
+                    - trace
+                    - debug
+                    - info
+                    - warn
+                    - error
+                    - fatal
+                    - panic
+                    type: string
+                  resources:
+                    description: 'Compute Resources required by this container. Cannot
+                      be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                    type: object
+                  sampling:
+                    description: Sampling is the sampling rate on the reporter. 100
+                      means one flow on 100 is sent. 0 or 1 means disabled.
+                    format: int32
+                    type: integer
                 type: object
               flowlogsPipeline:
                 description: FlowlogsPipeline contains settings related to the flowlogs-pipeline
@@ -1198,7 +1315,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.1-rc0
+                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.1-rc1
                     description: Image is the collector image (including domain and
                       tag)
                     type: string
@@ -1240,6 +1357,14 @@ spec:
                     format: int32
                     maximum: 65535
                     minimum: 1025
+                    type: integer
+                  prometheusPort:
+                    default: 9090
+                    description: 'PrometheusPort is the prometheus HTTP port: this
+                      port exposes prometheus metrics'
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
                     type: integer
                   replicas:
                     default: 1
@@ -1283,7 +1408,9 @@ spec:
                     type: object
                 type: object
               ipfix:
-                description: IPFIX contains IPFIX-related settings for the flow reporter
+                description: IPFIX contains the settings of an IPFIX-based flow reporter.
+                  This section should not be defined if the ebpf section is already
+                  defined
                 properties:
                   cacheActiveTimeout:
                     default: 10s
