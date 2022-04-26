@@ -11,11 +11,12 @@ metadata:
             "name": "cluster"
           },
           "spec": {
+            "agent": "ipfix",
             "clusterNetworkOperator": {
               "namespace": "openshift-network-operator"
             },
             "consolePlugin": {
-              "image": "quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc0",
+              "image": "quay.io/netobserv/network-observability-console-plugin:v0.1.2",
               "imagePullPolicy": "IfNotPresent",
               "logLevel": "info",
               "port": 9001,
@@ -24,21 +25,35 @@ metadata:
                 "portNames": {
                   "3100": "loki"
                 }
-              }
+              },
+              "register": true
+            },
+            "ebpf": {
+              "cacheActiveTimeout": "5s",
+              "cacheMaxFlows": 1000,
+              "excludeInterfaces": [
+                "lo"
+              ],
+              "image": "quay.io/netobserv/netobserv-ebpf-agent:v0.1.0",
+              "imagePullPolicy": "IfNotPresent",
+              "interfaces": [],
+              "logLevel": "info",
+              "sampling": 0
             },
             "flowlogsPipeline": {
               "enableKubeProbes": true,
               "healthPort": 8080,
-              "image": "quay.io/netobserv/flowlogs-pipeline:v0.1.1-rc0",
+              "image": "quay.io/netobserv/flowlogs-pipeline:v0.1.1",
               "imagePullPolicy": "IfNotPresent",
               "kind": "DaemonSet",
               "logLevel": "info",
-              "port": 2055
+              "port": 2055,
+              "prometheusPort": 9090
             },
             "ipfix": {
               "cacheActiveTimeout": "60s",
-              "cacheMaxFlows": 400,
-              "sampling": 100
+              "cacheMaxFlows": 100,
+              "sampling": 400
             },
             "loki": {
               "batchSize": 102400,
@@ -58,13 +73,13 @@ metadata:
       ]
     capabilities: Basic Install
     categories: Monitoring
-    containerImage: quay.io/netobserv/network-observability-operator:0.1.2-rc0
-    createdAt: "2022-04-07T15:29:10Z"
+    containerImage: quay.io/netobserv/network-observability-operator:0.1.2
+    createdAt: "2022-05-03T09:32:35Z"
     description: A network observability operator based on netflows (IPFIX) for OVN
     operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
-  name: netobserv-operator.v0.1.2-rc0
+  name: netobserv-operator.v0.1.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -122,10 +137,12 @@ spec:
     To turn it off, remove the `OVN_IPFIX_TARGETS` env from `daemonset/ovnkube-node`.
 
     ### OpenShift Console
-    OpenShift 4.10 or above is required to use the Console plugin. It needs to be enabled explicitly, either via the Console itself, or via this command:
+    OpenShift 4.10 or above is required to use the Console plugin. The operator should register this plugin automatically if `spec.consolePlugin.register` is set to `true` (default).
+
+    Otherwise, you can still do it manually, either via the Console itself or via this command:
 
     ```
-    oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["network-observability-plugin"]}]'
+    oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'
     ```
   displayName: NetObserv Operator
   icon:
@@ -135,6 +152,14 @@ spec:
     spec:
       clusterPermissions:
       - rules:
+        - apiGroups:
+          - apiregistration.k8s.io
+          resources:
+          - apiservices
+          verbs:
+          - get
+          - list
+          - watch
         - apiGroups:
           - apps
           resources:
@@ -231,6 +256,15 @@ spec:
           - patch
           - update
         - apiGroups:
+          - operator.openshift.io
+          resources:
+          - consoles
+          verbs:
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
           - rbac.authorization.k8s.io
           resources:
           - clusterrolebindings
@@ -238,7 +272,9 @@ spec:
           - create
           - delete
           - get
+          - list
           - update
+          - watch
         - apiGroups:
           - rbac.authorization.k8s.io
           resources:
@@ -247,6 +283,15 @@ spec:
           - create
           - delete
           - get
+        - apiGroups:
+          - security.openshift.io
+          resources:
+          - securitycontextconstraints
+          verbs:
+          - create
+          - list
+          - update
+          - watch
         - apiGroups:
           - security.openshift.io
           resourceNames:
@@ -276,14 +321,14 @@ spec:
             matchLabels:
               app: network-observability-operator
               control-plane: controller-manager
-              version: 0.1.2-rc0
+              version: 0.1.2
           strategy: {}
           template:
             metadata:
               labels:
                 app: network-observability-operator
                 control-plane: controller-manager
-                version: 0.1.2-rc0
+                version: 0.1.2
             spec:
               containers:
               - args:
@@ -304,7 +349,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/netobserv/network-observability-operator:0.1.2-rc0
+                image: quay.io/netobserv/network-observability-operator:0.1.2
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -403,4 +448,4 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  version: 0.1.2-rc0
+  version: 0.1.2
