@@ -13,7 +13,7 @@ spec:
 #    kind: Deployment
 #    replicas: 1
     port: 2055
-    image: 'quay.io/netobserv/flowlogs-pipeline:v0.1.1-rc0'
+    image: 'quay.io/netobserv/flowlogs-pipeline:v0.1.1-rc1'
     imagePullPolicy: IfNotPresent
     logLevel: info
     enableKubeProbes: true
@@ -30,7 +30,8 @@ spec:
     staticLabels:
       app: netobserv-flowcollector
   consolePlugin:
-    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc0'
+    register: true
+    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc1'
     imagePullPolicy: IfNotPresent
     port: 9001
     logLevel: info
