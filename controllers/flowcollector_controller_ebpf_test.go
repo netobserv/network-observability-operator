@@ -43,6 +43,7 @@ func flowCollectorEBPFSpecs() {
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
 					Namespace: operatorNamespace,
+					Agent:     "ebpf",
 					FlowlogsPipeline: flowsv1alpha1.FlowCollectorFLP{
 						Kind:            "DaemonSet",
 						Port:            9999,
@@ -50,7 +51,7 @@ func flowCollectorEBPFSpecs() {
 						LogLevel:        "error",
 						Image:           "testimg:latest",
 					},
-					EBPF: &flowsv1alpha1.FlowCollectorEBPF{
+					EBPF: flowsv1alpha1.FlowCollectorEBPF{
 						Image:              "netobserv-ebpf-agent:latest",
 						Sampling:           123,
 						CacheActiveTimeout: "15s",

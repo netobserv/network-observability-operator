@@ -98,7 +98,8 @@ func flowCollectorControllerSpecs() {
 							}},
 						},
 					},
-					IPFIX: &flowsv1alpha1.FlowCollectorIPFIX{
+					Agent: "ipfix",
+					IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
 						Sampling: 200,
 					},
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
@@ -183,7 +184,7 @@ func flowCollectorControllerSpecs() {
 				"sampling":           "200",
 				"sharedTarget":       "11.22.33.44:9999",
 				"cacheMaxFlows":      "100",
-				"cacheActiveTimeout": "10s",
+				"cacheActiveTimeout": "60s",
 			}))
 		})
 
@@ -290,7 +291,7 @@ func flowCollectorControllerSpecs() {
 				Image:           "testimg:latest",
 			}
 			fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}
-			fc.Spec.IPFIX = &flowsv1alpha1.FlowCollectorIPFIX{
+			fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
 				Sampling: 200,
 			}
 			// Update
@@ -307,7 +308,7 @@ func flowCollectorControllerSpecs() {
 				"sampling":           "200",
 				"nodePort":           "7891",
 				"cacheMaxFlows":      "100",
-				"cacheActiveTimeout": "10s",
+				"cacheActiveTimeout": "60s",
 			}))
 
 			ds := appsv1.DaemonSet{}
@@ -383,7 +384,7 @@ func flowCollectorControllerSpecs() {
 				fc.Spec.FlowlogsPipeline.Kind = "Deployment"
 				fc.Spec.FlowlogsPipeline.Port = 9999
 				fc.Spec.Namespace = otherNamespace
-				fc.Spec.IPFIX = &flowsv1alpha1.FlowCollectorIPFIX{
+				fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
 					Sampling: 200,
 				}
 				return k8sClient.Update(ctx, &fc)
@@ -438,7 +439,7 @@ func flowCollectorControllerSpecs() {
 				"sampling":           "200",
 				"sharedTarget":       "111.122.133.144:9999",
 				"cacheMaxFlows":      "100",
-				"cacheActiveTimeout": "10s",
+				"cacheActiveTimeout": "60s",
 			}))
 		})
 

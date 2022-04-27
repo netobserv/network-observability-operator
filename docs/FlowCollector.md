@@ -84,6 +84,16 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>agent</b></td>
+        <td>enum</td>
+        <td>
+          Agent selects the flows' tracing agent. Possible values are "ipfix" (default) to use the OpenVSwitch IPFIX collector (only valid if your cluster uses OVN-Kubernetes CNI) or "ebpf" to use NetObserv's eBPF agent.<br/>
+          <br/>
+            <i>Enum</i>: ipfix, ebpf<br/>
+            <i>Default</i>: ipfix<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecclusternetworkoperator">clusterNetworkOperator</a></b></td>
         <td>object</td>
         <td>
@@ -101,7 +111,9 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspecebpf">ebpf</a></b></td>
         <td>object</td>
         <td>
-          EBPF contains the settings of an eBPF-based flow reporter. This section should not be defined if the ipfix section is already defined<br/>
+          EBPF contains the settings of an eBPF-based flow reporter  when the "agent" property is set to "ebpf".<br/>
+          <br/>
+            <i>Default</i>: map[imagePullPolicy:IfNotPresent]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -115,7 +127,9 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspecipfix">ipfix</a></b></td>
         <td>object</td>
         <td>
-          IPFIX contains the settings of an IPFIX-based flow reporter. This section should not be defined if the ebpf section is already defined<br/>
+          IPFIX contains the settings of an IPFIX-based flow reporter when the "agent" property is set to "ipfix". defined if the ebpf section is already defined<br/>
+          <br/>
+            <i>Default</i>: map[sampling:400]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1257,7 +1271,7 @@ Compute Resources required by this container. Cannot be updated. More info: http
 
 
 
-EBPF contains the settings of an eBPF-based flow reporter. This section should not be defined if the ipfix section is already defined
+EBPF contains the settings of an eBPF-based flow reporter  when the "agent" property is set to "ebpf".
 
 <table>
     <thead>
@@ -2473,7 +2487,7 @@ Compute Resources required by this container. Cannot be updated. More info: http
 
 
 
-IPFIX contains the settings of an IPFIX-based flow reporter. This section should not be defined if the ebpf section is already defined
+IPFIX contains the settings of an IPFIX-based flow reporter when the "agent" property is set to "ipfix". defined if the ebpf section is already defined
 
 <table>
     <thead>
@@ -2490,7 +2504,7 @@ IPFIX contains the settings of an IPFIX-based flow reporter. This section should
         <td>
           CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
           <br/>
-            <i>Default</i>: 10s<br/>
+            <i>Default</i>: 60s<br/>
         </td>
         <td>false</td>
       </tr><tr>

@@ -2,11 +2,12 @@ package controllers
 
 import (
 	"context"
-	ierrors "errors"
 	"fmt"
 	"net"
 	"strings"
 
+	"github.com/netobserv/network-observability-operator/controllers/ebpf"
+	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -24,9 +25,7 @@ import (
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
-	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
 )
@@ -138,28 +137,21 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	// OVS config map for CNO
-	if (desired.Spec.IPFIX == nil && desired.Spec.EBPF == nil) ||
-		(desired.Spec.IPFIX != nil && desired.Spec.EBPF != nil) {
-		log.Error(ierrors.New("either ipfix or ebpf sections must be defined, but not both"),
-			"Failed to reconcile flow collectors")
-		return ctrl.Result{}, err
+	ovsConfigController := ovs.NewFlowsConfigController(clientHelper,
+		ns,
+		desired.Spec.ClusterNetworkOperator.Namespace,
+		ovsFlowsConfigMapName,
+		r.lookupIP)
+	if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
+		return ctrl.Result{},
+			fmt.Errorf("failed to reconcile ovs-flows-config ConfigMap: %w", err)
 	}
-	if desired.Spec.IPFIX != nil {
-		ovsConfigController := ovs.NewFlowsConfigController(clientHelper,
-			ns,
-			desired.Spec.ClusterNetworkOperator.Namespace,
-			ovsFlowsConfigMapName,
-			r.lookupIP)
-		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
-			return ctrl.Result{},
-				fmt.Errorf("failed to reconcile ovs-flows-config ConfigMap: %w", err)
-		}
-	} else {
-		ebpfAgentController := ebpf.NewAgentController(clientHelper, ns, &r.permissions)
-		if err := ebpfAgentController.Reconcile(ctx, desired); err != nil {
-			return ctrl.Result{},
-				fmt.Errorf("failed to reconcile eBPF Netobserv Agent: %w", err)
-		}
+
+	// eBPF agent
+	ebpfAgentController := ebpf.NewAgentController(clientHelper, ns, &r.permissions)
+	if err := ebpfAgentController.Reconcile(ctx, desired); err != nil {
+		return ctrl.Result{},
+			fmt.Errorf("failed to reconcile eBPF Netobserv Agent: %w", err)
 	}
 
 	// Console plugin

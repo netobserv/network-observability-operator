@@ -23,6 +23,18 @@ import (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+const (
+	AgentIPFIX = "ipfix"
+	AgentEBPF  = "ebpf"
+)
+
+// Please notice that the FlowCollectorSpec's properties MUST redefine one of the default
+// values to force the definition of the section when it is not provided by the manifest.
+// This will cause that the remaining default fields will be set according to their definition.
+// Otherwise, omitting the sections in the manifest would lead to zero-valued properties.
+// This is a workaround for the related issue:
+// https://github.com/kubernetes-sigs/controller-tools/issues/622
+
 // FlowCollectorSpec defines the desired state of FlowCollector
 type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
@@ -32,13 +44,23 @@ type FlowCollectorSpec struct {
 	// If empty, the namespace of the operator is going to be used
 	Namespace string `json:"namespace,omitempty"`
 
-	// IPFIX contains the settings of an IPFIX-based flow reporter. This section should not be
-	// defined if the ebpf section is already defined
-	IPFIX *FlowCollectorIPFIX `json:"ipfix,omitempty"`
+	//+kubebuilder:validation:Enum=ipfix;ebpf
+	//+kubebuilder:default:=ipfix
+	// Agent selects the flows' tracing agent. Possible values are "ipfix" (default) to use
+	// the OpenVSwitch IPFIX collector (only valid if your cluster uses OVN-Kubernetes CNI) or
+	// "ebpf" to use NetObserv's eBPF agent.
+	Agent string `json:"agent"`
 
-	// EBPF contains the settings of an eBPF-based flow reporter. This section should not be defined
-	// if the ipfix section is already defined
-	EBPF *FlowCollectorEBPF `json:"ebpf,omitempty"`
+	// IPFIX contains the settings of an IPFIX-based flow reporter when the "agent" property is set
+	// to "ipfix".
+	// defined if the ebpf section is already defined
+	// +kubebuilder:default:={sampling:400}
+	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
+
+	// EBPF contains the settings of an eBPF-based flow reporter  when the "agent" property is set
+	// to "ebpf".
+	// +kubebuilder:default={imagePullPolicy:"IfNotPresent"}
+	EBPF FlowCollectorEBPF `json:"ebpf,omitempty"`
 
 	// FlowlogsPipeline contains settings related to the flowlogs-pipeline component
 	FlowlogsPipeline FlowCollectorFLP `json:"flowlogsPipeline,omitempty"`
@@ -59,7 +81,7 @@ type FlowCollectorIPFIX struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:validation:Pattern:=^\d+(ns|ms|s|m)?$
-	//+kubebuilder:default:="10s"
+	//+kubebuilder:default:="60s"
 	// CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending
 	CacheActiveTimeout string `json:"cacheActiveTimeout,omitempty" mapstructure:"cacheActiveTimeout,omitempty"`
 
@@ -76,7 +98,6 @@ type FlowCollectorIPFIX struct {
 
 // FlowCollectorEBPF defines a FlowCollector that uses eBPF to collect the flows information
 type FlowCollectorEBPF struct {
-	// TODO: other parameters when NETOBSERV-201 is implemented
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:="quay.io/netobserv/netobserv-ebpf-agent:main"
