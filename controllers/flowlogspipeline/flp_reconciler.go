@@ -88,7 +88,7 @@ func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Fl
 	}
 	desiredLoki := &desired.Spec.Loki
 	portProtocol := corev1.ProtocolUDP
-	if desired.Spec.EBPF != nil {
+	if desired.Spec.Agent == flowsv1alpha1.AgentEBPF {
 		portProtocol = corev1.ProtocolTCP
 	}
 	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki)

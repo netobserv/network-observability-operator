@@ -47,6 +47,22 @@ func (c *FlowsConfigController) Reconcile(
 	if err != nil {
 		return err
 	}
+	if target.Spec.Agent != flowsv1alpha1.AgentIPFIX {
+		if current == nil {
+			return nil
+		}
+		// If the user has changed the agent type, we need to manually undeploy the configmap
+		if current != nil {
+			return c.client.Delete(ctx, &corev1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      c.ovsConfigMapName,
+					Namespace: c.cnoNamespace,
+				},
+			})
+		}
+		return nil
+	}
+
 	desired, err := c.desired(ctx, target)
 	// compare current and desired
 	if err != nil {
@@ -97,7 +113,7 @@ func (c *FlowsConfigController) current(ctx context.Context) (*flowsConfig, erro
 func (c *FlowsConfigController) desired(
 	ctx context.Context, coll *flowsv1alpha1.FlowCollector) (*flowsConfig, error) {
 
-	conf := flowsConfig{FlowCollectorIPFIX: *coll.Spec.IPFIX}
+	conf := flowsConfig{FlowCollectorIPFIX: coll.Spec.IPFIX}
 
 	// According to the "OVS flow export configuration" RFE:
 	// nodePort be set by the NOO when the collector is deployed as a DaemonSet

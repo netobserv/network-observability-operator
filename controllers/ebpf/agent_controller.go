@@ -69,15 +69,32 @@ func NewAgentController(
 
 func (c *AgentController) Reconcile(
 	ctx context.Context, target *flowsv1alpha1.FlowCollector) error {
-	rlog := log.FromContext(ctx).WithName("AgentController")
+	rlog := log.FromContext(ctx).WithName("ebpf.AgentController")
 	ctx = log.IntoContext(ctx, rlog)
+	current, err := c.current(ctx)
+	if err != nil {
+		return fmt.Errorf("fetching current EBPF Agent: %w", err)
+	}
+	if target.Spec.Agent != flowsv1alpha1.AgentEBPF {
+		if current == nil {
+			rlog.Info("nothing to do, as the requested agent is not eBPF",
+				"currentAgent", target.Spec.Agent)
+			return nil
+		}
+		// If the user has changed the agent type, we need to manually
+		// undeploy the agent
+		rlog.Info("user changed the agent type. Deleting eBPF agent",
+			"currentAgent", target.Spec.Agent)
+		if err := c.client.Delete(ctx, current); err != nil {
+			if errors.IsNotFound(err) {
+				return nil
+			}
+			return fmt.Errorf("deleting eBPF agent: %w", err)
+		}
+	}
 
 	if err := c.permissions.Reconcile(ctx); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
-	}
-	current, err := c.current(ctx)
-	if err != nil {
-		return fmt.Errorf("can't fetch current EBPF Agent: %w", err)
 	}
 	desired := c.desired(target)
 	switch c.requiredAction(current, desired) {
@@ -109,7 +126,7 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 }
 
 func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonSet {
-	if coll == nil || coll.Spec.EBPF == nil {
+	if coll == nil || coll.Spec.Agent != flowsv1alpha1.AgentEBPF {
 		return nil
 	}
 	trueVal := true
