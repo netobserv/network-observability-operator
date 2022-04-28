@@ -110,10 +110,6 @@
       },
       "targets": [
         {
-          "datasource": {
-            "type": "loki",
-            "uid": "yyEYmhxnz"
-          },
           "expr": "sum ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\" }[1m]))",
           "refId": "A"
         }
@@ -192,10 +188,6 @@
       },
       "targets": [
         {
-          "datasource": {
-            "type": "loki",
-            "uid": "yyEYmhxnz"
-          },
           "expr": "sum by(SrcNamespace) ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\" }[1m]))",
           "refId": "A"
         }
@@ -274,10 +266,6 @@
       },
       "targets": [
         {
-          "datasource": {
-            "type": "loki",
-            "uid": "yyEYmhxnz"
-          },
           "expr": "sum by(DstNamespace) ( rate({ app=\"netobserv-flowcollector\",SrcNamespace=~\"$SrcNamespace\",DstNamespace=~\"$DstNamespace\" }[1m]))",
           "refId": "A"
         }
