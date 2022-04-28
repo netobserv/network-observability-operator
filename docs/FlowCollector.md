@@ -87,7 +87,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b>agent</b></td>
         <td>enum</td>
         <td>
-          Agent selects the flows' tracing agent. Possible values are "ipfix" (default) to use the OpenVSwitch IPFIX collector (only valid if your cluster uses OVN-Kubernetes CNI) or "ebpf" to use NetObserv's eBPF agent.<br/>
+          Agent selects the flows' tracing agent. Possible values are "ipfix" (default) to use the OpenVSwitch IPFIX collector (only valid if your cluster uses OVN-Kubernetes CNI) or "ebpf" to use NetObserv's eBPF agent. The eBPF agent is not officially released yet, it is provided as a preview.<br/>
           <br/>
             <i>Enum</i>: ipfix, ebpf<br/>
             <i>Default</i>: ipfix<br/>

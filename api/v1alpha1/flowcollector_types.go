@@ -48,7 +48,8 @@ type FlowCollectorSpec struct {
 	//+kubebuilder:default:=ipfix
 	// Agent selects the flows' tracing agent. Possible values are "ipfix" (default) to use
 	// the OpenVSwitch IPFIX collector (only valid if your cluster uses OVN-Kubernetes CNI) or
-	// "ebpf" to use NetObserv's eBPF agent.
+	// "ebpf" to use NetObserv's eBPF agent. The eBPF agent is not officially released yet, it
+	// is provided as a preview.
 	Agent string `json:"agent"`
 
 	// IPFIX contains the settings of an IPFIX-based flow reporter when the "agent" property is set

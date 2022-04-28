@@ -8,7 +8,8 @@ To release them, a tag in the format "v0.1.2" or "v0.1.2-rc0" must be set on the
 E.g:
 
 ```bash
-git tag -a "v0.1.2-rc0" -m "v0.1.2-rc0"
+version="v0.1.2-rc0"
+git tag -a "$version" -m "$version"
 git push upstream --tags
 ```
 
@@ -23,25 +24,31 @@ Click the "Auto-generate release note" button.
 
 ### Operator
 
-Once all sub-components are released, we can proceed with the operator.
+Once all sub-components are released (or have a release candidate), we can proceed with the operator.
 
 ```bash
-version="1.2.3-rc4" # Set desired operator version - CAREFUL, no leading "v" here
-plgv="v0.1.2-rc0" # Set console plugin released version
-flpv="v0.1.2-rc0" # Set flowlogs-pipeline released version
+# Set desired operator version - CAREFUL, no leading "v" here
+version="0.1.2-rc0"
+# Set console plugin released version
+plgv="v0.1.2-rc0"
+# Set flowlogs-pipeline released version
+flpv="v0.1.1-rc0"
+# Set ebnpf-agent released version
+bpfv="v0.1.0-rc0"
 
 vv=v$version
+test_branch=test-$vv
 
-VERSION="$version" PLG_VERSION="$plgv" FLP_VERSION="$flpv" IMAGE_TAG_BASE="quay.io/netobserv/network-observability-operator" make bundle
+VERSION="$version" PLG_VERSION="$plgv" FLP_VERSION="$flpv" BPF_VERSION="$bpfv" IMAGE_TAG_BASE="quay.io/netobserv/network-observability-operator" make bundle
 
 git commit -a -m "Prepare release $vv"
 # Push to a test branch, and tag for release
-git push upstream HEAD:$vv
-git tag -a "$vv" -m "$vv"
+git push upstream HEAD:$test_branch
+git tag -a "$version" -m "$version"
 git push upstream --tags
 ```
 
-The release script should be triggered (check github actions).
+The release script should be triggered ([check github actions](https://github.com/netobserv/network-observability-operator/actions)).
 
 At this point, you can test the bundle / catalog on your cluster:
 
@@ -49,10 +56,18 @@ At this point, you can test the bundle / catalog on your cluster:
 # Set user to point to your quay account.
 user=your_name
 VERSION="$version" IMAGE_TAG_BASE="quay.io/$user/network-observability-operator" make bundle-build bundle-push catalog-build catalog-push catalog-deploy
+```
 
-# Check everything is ok, then push to main and delete the test branch
+Other users (e.g. QE) can use the same catalog:
+```bash
+VERSION="$version" IMAGE_TAG_BASE="quay.io/$user/network-observability-operator" make catalog-deploy
+```
+
+When everything is ok, push to main and delete the test branch
+
+```bash
 git push upstream HEAD:main
-git push upstream :$vv
+git push upstream :$test_branch
 ```
 
 
