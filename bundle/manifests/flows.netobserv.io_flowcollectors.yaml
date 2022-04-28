@@ -39,6 +39,16 @@ spec:
           spec:
             description: FlowCollectorSpec defines the desired state of FlowCollector
             properties:
+              agent:
+                default: ipfix
+                description: Agent selects the flows' tracing agent. Possible values
+                  are "ipfix" (default) to use the OpenVSwitch IPFIX collector (only
+                  valid if your cluster uses OVN-Kubernetes CNI) or "ebpf" to use
+                  NetObserv's eBPF agent.
+                enum:
+                - ipfix
+                - ebpf
+                type: string
               clusterNetworkOperator:
                 description: ClusterNetworkOperator contains settings related to the
                   cluster network operator
@@ -572,7 +582,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc1
+                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc2
                     description: Image is the plugin image (including domain and tag)
                     type: string
                   imagePullPolicy:
@@ -672,9 +682,10 @@ spec:
                 - register
                 type: object
               ebpf:
-                description: EBPF contains the settings of an eBPF-based flow reporter.
-                  This section should not be defined if the ipfix section is already
-                  defined
+                default:
+                  imagePullPolicy: IfNotPresent
+                description: EBPF contains the settings of an eBPF-based flow reporter  when
+                  the "agent" property is set to "ebpf".
                 properties:
                   cacheActiveTimeout:
                     default: 5s
@@ -1408,12 +1419,14 @@ spec:
                     type: object
                 type: object
               ipfix:
-                description: IPFIX contains the settings of an IPFIX-based flow reporter.
-                  This section should not be defined if the ebpf section is already
-                  defined
+                default:
+                  sampling: 400
+                description: IPFIX contains the settings of an IPFIX-based flow reporter
+                  when the "agent" property is set to "ipfix". defined if the ebpf
+                  section is already defined
                 properties:
                   cacheActiveTimeout:
-                    default: 10s
+                    default: 60s
                     description: CacheActiveTimeout is the max period during which
                       the reporter will aggregate flows before sending
                     pattern: ^\d+(ns|ms|s|m)?$
@@ -1500,6 +1513,8 @@ spec:
                   going to be deployed. If empty, the namespace of the operator is
                   going to be used
                 type: string
+            required:
+            - agent
             type: object
           status:
             description: FlowCollectorStatus defines the observed state of FlowCollector

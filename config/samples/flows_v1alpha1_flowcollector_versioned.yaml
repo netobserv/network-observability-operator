@@ -10,7 +10,7 @@ spec:
     cacheMaxFlows: 100
     sampling: 400
   ebpf:
-    image: 'quay.io/netobserv/netobserv-ebpf-agent:main'
+    image: 'quay.io/netobserv/netobserv-ebpf-agent:v0.1.0-rc0'
     imagePullPolicy: IfNotPresent
     sampling: 0
     cacheActiveTimeout: 5s
@@ -41,7 +41,7 @@ spec:
       app: netobserv-flowcollector
   consolePlugin:
     register: true
-    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc1'
+    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc2'
     imagePullPolicy: IfNotPresent
     port: 9001
     logLevel: info
