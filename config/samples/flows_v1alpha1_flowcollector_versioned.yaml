@@ -41,7 +41,7 @@ spec:
       app: netobserv-flowcollector
   consolePlugin:
     register: true
-    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc2'
+    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc3'
     imagePullPolicy: IfNotPresent
     port: 9001
     logLevel: info
