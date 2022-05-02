@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -22,12 +25,16 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1648485441524,
+  "iteration": 1651162384993,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "collapsed": true,
+      "datasource": {
+        "type": "loki",
+        "uid": "P982945308D3682D1"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -40,6 +47,7 @@
       "type": "row"
     },
     {
+      "datasource": {},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -123,6 +131,7 @@
       "type": "timeseries"
     },
     {
+      "datasource": {},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -206,6 +215,7 @@
       "type": "timeseries"
     },
     {
+      "datasource": {},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -290,6 +300,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "P982945308D3682D1"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -302,6 +316,7 @@
       "type": "row"
     },
     {
+      "datasource": {},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -385,6 +400,7 @@
       "type": "timeseries"
     },
     {
+      "datasource": {},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -468,6 +484,7 @@
       "type": "timeseries"
     },
     {
+      "datasource": {},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -551,6 +568,7 @@
       "type": "timeseries"
     },
     {
+      "datasource": {},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -635,6 +653,10 @@
     },
     {
       "collapsed": true,
+      "datasource": {
+        "type": "loki",
+        "uid": "P982945308D3682D1"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -644,6 +666,10 @@
       "id": 6,
       "panels": [
         {
+          "datasource": {
+            "type": "loki",
+            "uid": "P982945308D3682D1"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -704,6 +730,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "P982945308D3682D1"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -716,6 +746,10 @@
       "type": "row"
     },
     {
+      "datasource": {
+        "type": "loki",
+        "uid": "P982945308D3682D1"
+      },
       "gridPos": {
         "h": 14,
         "w": 24,
@@ -744,7 +778,7 @@
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 35,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -755,6 +789,10 @@
           "selected": false,
           "text": "None",
           "value": ""
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "P982945308D3682D1"
         },
         "definition": " label_values({app=\"netobserv-flowcollector\"}, \"SrcNamespace\")",
         "hide": 0,
