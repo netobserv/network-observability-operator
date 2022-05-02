@@ -35,7 +35,7 @@ spec:
     address: "kafka-cluster-kafka-bootstrap"
     topic: "network-flows"
   loki:
-    url: 'http://loki:3100/'
+    url: 'http://loki.network-observability:3100/'
     batchWait: 1s
     batchSize: 102400
     minBackoff: 1s
