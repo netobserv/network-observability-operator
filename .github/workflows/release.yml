@@ -67,4 +67,5 @@ jobs:
           tags: v${{ steps.validate_tag.outputs.tag }}
           registry: ${{ env.REGISTRY }}
       - name: print images reference
-        run: echo "Images: ${{ steps.push-operator.outputs.registry-paths }}, ${{ steps.push-bundle.outputs.registry-paths }}, ${{ steps.push-catalog.outputs.registry-paths }}"
+        run: |
+          echo "Images: ${{ steps.push-operator.outputs.registry-paths }}, ${{ steps.push-bundle.outputs.registry-paths }}, ${{ steps.push-catalog.outputs.registry-paths }}"
