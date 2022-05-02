@@ -34,7 +34,7 @@ metadata:
               "excludeInterfaces": [
                 "lo"
               ],
-              "image": "quay.io/netobserv/netobserv-ebpf-agent:v0.1.0-rc0",
+              "image": "quay.io/netobserv/netobserv-ebpf-agent:v0.1.0-rc1",
               "imagePullPolicy": "IfNotPresent",
               "interfaces": [],
               "logLevel": "info",
@@ -73,13 +73,13 @@ metadata:
       ]
     capabilities: Basic Install
     categories: Monitoring
-    containerImage: quay.io/netobserv/network-observability-operator:0.1.2-rc3
-    createdAt: "2022-05-02T03:33:44Z"
+    containerImage: quay.io/netobserv/network-observability-operator:0.1.2-rc4
+    createdAt: "2022-05-02T12:32:09Z"
     description: A network observability operator based on netflows (IPFIX) for OVN
     operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
-  name: netobserv-operator.v0.1.2-rc3
+  name: netobserv-operator.v0.1.2-rc4
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -321,14 +321,14 @@ spec:
             matchLabels:
               app: network-observability-operator
               control-plane: controller-manager
-              version: 0.1.2-rc3
+              version: 0.1.2-rc4
           strategy: {}
           template:
             metadata:
               labels:
                 app: network-observability-operator
                 control-plane: controller-manager
-                version: 0.1.2-rc3
+                version: 0.1.2-rc4
             spec:
               containers:
               - args:
@@ -349,7 +349,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/netobserv/network-observability-operator:0.1.2-rc3
+                image: quay.io/netobserv/network-observability-operator:0.1.2-rc4
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -448,4 +448,4 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  version: 0.1.2-rc3
+  version: 0.1.2-rc4

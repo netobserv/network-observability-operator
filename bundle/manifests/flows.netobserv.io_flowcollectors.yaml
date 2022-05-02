@@ -721,7 +721,7 @@ spec:
                       type: string
                     type: array
                   image:
-                    default: quay.io/netobserv/netobserv-ebpf-agent:main
+                    default: quay.io/netobserv/netobserv-ebpf-agent:v0.1.0-rc1
                     description: Image is the NetObserv Agent image (including domain
                       and tag)
                     type: string
