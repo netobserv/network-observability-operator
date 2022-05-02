@@ -38,7 +38,7 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - name: build image
-        run: VERSION=${{ steps.validate_tag.outputs.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make image-build
+        run: VERSION=${{ steps.validate_tag.outputs.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make image-build bundle-build catalog-build
       - name: podman login to quay.io
         uses: redhat-actions/podman-login@v1
         with:
@@ -46,11 +46,25 @@ jobs:
           password: ${{ env.REGISTRY_PASSWORD }}
           registry: quay.io
       - name: push operator to quay.io
-        id: push-to-quay
+        id: push-operator
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ env.IMAGE }}
           tags: ${{ steps.validate_tag.outputs.tag }}
           registry: ${{ env.REGISTRY }}
-      - name: print image url
-        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
+      - name: push bundle to quay.io
+        id: push-bundle
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.IMAGE }}-bundle
+          tags: v${{ steps.validate_tag.outputs.tag }}
+          registry: ${{ env.REGISTRY }}
+      - name: push catalog to quay.io
+        id: push-catalog
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.IMAGE }}-catalog
+          tags: v${{ steps.validate_tag.outputs.tag }}
+          registry: ${{ env.REGISTRY }}
+      - name: print images reference
+        run: echo "Images: ${{ steps.push-operator.outputs.registry-paths }}, ${{ steps.push-bundle.outputs.registry-paths }}, ${{ steps.push-catalog.outputs.registry-paths }}"

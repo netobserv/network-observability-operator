@@ -53,14 +53,7 @@ The release script should be triggered ([check github actions](https://github.co
 At this point, you can test the bundle / catalog on your cluster:
 
 ```bash
-# Set user to point to your quay account.
-user=your_name
-VERSION="$version" IMAGE_TAG_BASE="quay.io/$user/network-observability-operator" make bundle-build bundle-push catalog-build catalog-push catalog-deploy
-```
-
-Other users (e.g. QE) can use the same catalog:
-```bash
-VERSION="$version" IMAGE_TAG_BASE="quay.io/$user/network-observability-operator" make catalog-deploy
+VERSION="$version" IMAGE_TAG_BASE="quay.io/netobserv/network-observability-operator" make catalog-deploy
 ```
 
 When everything is ok, push to main and delete the test branch
