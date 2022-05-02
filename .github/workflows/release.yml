@@ -37,8 +37,8 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
-      - name: build image
-        run: VERSION=${{ steps.validate_tag.outputs.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make image-build bundle-build catalog-build
+      - name: build operator
+        run: VERSION=${{ steps.validate_tag.outputs.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make image-build
       - name: podman login to quay.io
         uses: redhat-actions/podman-login@v1
         with:
@@ -52,6 +52,8 @@ jobs:
           image: ${{ env.IMAGE }}
           tags: ${{ steps.validate_tag.outputs.tag }}
           registry: ${{ env.REGISTRY }}
+      - name: build bundle
+        run: VERSION=${{ steps.validate_tag.outputs.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make bundle-build
       - name: push bundle to quay.io
         id: push-bundle
         uses: redhat-actions/push-to-registry@v2
@@ -59,6 +61,8 @@ jobs:
           image: ${{ env.IMAGE }}-bundle
           tags: v${{ steps.validate_tag.outputs.tag }}
           registry: ${{ env.REGISTRY }}
+      - name: build catalog
+        run: VERSION=${{ steps.validate_tag.outputs.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make catalog-build
       - name: push catalog to quay.io
         id: push-catalog
         uses: redhat-actions/push-to-registry@v2
