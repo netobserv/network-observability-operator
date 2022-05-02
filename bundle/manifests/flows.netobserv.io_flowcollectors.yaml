@@ -44,7 +44,8 @@ spec:
                 description: Agent selects the flows' tracing agent. Possible values
                   are "ipfix" (default) to use the OpenVSwitch IPFIX collector (only
                   valid if your cluster uses OVN-Kubernetes CNI) or "ebpf" to use
-                  NetObserv's eBPF agent.
+                  NetObserv's eBPF agent. The eBPF agent is not officially released
+                  yet, it is provided as a preview.
                 enum:
                 - ipfix
                 - ebpf
@@ -582,7 +583,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc2
+                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc3
                     description: Image is the plugin image (including domain and tag)
                     type: string
                   imagePullPolicy:

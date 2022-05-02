@@ -1,7 +1,7 @@
 # This patch updates the version for default images
 - op: add
   path: /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/consolePlugin/properties/image/default
-  value: "quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc2"
+  value: "quay.io/netobserv/network-observability-console-plugin:v0.1.2-rc3"
 - op: add
   path: /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/flowlogsPipeline/properties/image/default
   value: "quay.io/netobserv/flowlogs-pipeline:v0.1.1-rc1"
