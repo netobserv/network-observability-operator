@@ -26,10 +26,10 @@ type FLPReconciler struct {
 	reconcilers.ClientHelper
 	nobjMngr          *reconcilers.NamespacedObjectManager
 	owned             ownedObjects
-	singleReconcilers []singleFLPReconciler
+	singleReconcilers []singleDeploymentReconciler
 }
 
-type singleFLPReconciler struct {
+type singleDeploymentReconciler struct {
 	reconcilers.ClientHelper
 	nobjMngr *reconcilers.NamespacedObjectManager
 	owned    ownedObjects
@@ -59,7 +59,7 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) FLPReconciler
 	return flpReconciler
 }
 
-func newSingleReconciler(cl reconcilers.ClientHelper, ns string, prevNS string, confKind string) singleFLPReconciler {
+func newSingleReconciler(cl reconcilers.ClientHelper, ns string, prevNS string, confKind string) singleDeploymentReconciler {
 	owned := ownedObjects{
 		deployment:     &appsv1.Deployment{},
 		daemonSet:      &appsv1.DaemonSet{},
@@ -75,7 +75,7 @@ func newSingleReconciler(cl reconcilers.ClientHelper, ns string, prevNS string, 
 	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.hpa)
 	nobjMngr.AddManagedObject(configMapName+FlpConfSuffix[confKind], owned.configMap)
 
-	return singleFLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, confKind: confKind}
+	return singleDeploymentReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, confKind: confKind}
 }
 
 // InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
@@ -136,7 +136,7 @@ func checkDeployNeeded(kafka *flowsv1alpha1.FlowCollectorKafka, confKind string)
 }
 
 // Reconcile is the reconciler entry point to reconcile the current flowlogs-pipeline state with the desired configuration
-func (r *singleFLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
 	desiredFLP := &desired.Spec.FlowlogsPipeline
 	desiredLoki := &desired.Spec.Loki
 	err := validateDesired(desiredFLP)
@@ -186,7 +186,7 @@ func (r *singleFLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alp
 	}
 }
 
-func (r *singleFLPReconciler) reconcileAsDeployment(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
+func (r *singleDeploymentReconciler) reconcileAsDeployment(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
 	// Kind may have changed: try delete DaemonSet and create Deployment+Service
 	ns := r.nobjMngr.Namespace
 	r.nobjMngr.TryDelete(ctx, r.owned.daemonSet)
@@ -224,7 +224,7 @@ func (r *singleFLPReconciler) reconcileAsDeployment(ctx context.Context, desired
 	return nil
 }
 
-func (r *singleFLPReconciler) reconcileAsService(ctx context.Context, desiredFLP *flpSpec, builder *builder) error {
+func (r *singleDeploymentReconciler) reconcileAsService(ctx context.Context, desiredFLP *flpSpec, builder *builder) error {
 	if !r.nobjMngr.Exists(r.owned.service) {
 		newSVC := builder.service(nil)
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
@@ -239,7 +239,7 @@ func (r *singleFLPReconciler) reconcileAsService(ctx context.Context, desiredFLP
 	return nil
 }
 
-func (r *singleFLPReconciler) reconcileAsDaemonSet(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
+func (r *singleDeploymentReconciler) reconcileAsDaemonSet(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
 	// Kind may have changed: try delete Deployment / Service / HPA and create DaemonSet
 	r.nobjMngr.TryDelete(ctx, r.owned.deployment)
 	r.nobjMngr.TryDelete(ctx, r.owned.service)
