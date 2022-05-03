@@ -103,7 +103,7 @@ func validateDesired(desired *flpSpec) error {
 	return nil
 }
 
-func (r *FLPReconciler) GetServiceName(kafka *flowsv1alpha1.FlowCollectorKafka) string {
+func (r *FLPReconciler) GetServiceName(kafka flowsv1alpha1.FlowCollectorKafka) string {
 	if single, _ := checkDeployNeeded(kafka, ConfKafkaIngestor); single {
 		return constants.FLPName + FlpConfSuffix[ConfKafkaIngestor]
 	}
@@ -121,15 +121,15 @@ func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Fl
 }
 
 // Check if a configKind should be deployed
-func checkDeployNeeded(kafka *flowsv1alpha1.FlowCollectorKafka, confKind string) (bool, error) {
+func checkDeployNeeded(kafka flowsv1alpha1.FlowCollectorKafka, confKind string) (bool, error) {
 	switch confKind {
 	case ConfSingle:
-		return kafka == nil, nil
+		return !kafka.Enable, nil
 	case ConfKafkaTransformer:
-		return kafka != nil, nil
+		return kafka.Enable, nil
 	case ConfKafkaIngestor:
 		//TODO should be disabled if ebpf-agent is enabled with kafka
-		return kafka != nil, nil
+		return kafka.Enable, nil
 	default:
 		return false, fmt.Errorf("unknown flowlogs-pipelines config kind")
 	}

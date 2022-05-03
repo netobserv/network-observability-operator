@@ -288,11 +288,7 @@ func (in *FlowCollectorSpec) DeepCopyInto(out *FlowCollectorSpec) {
 	in.EBPF.DeepCopyInto(&out.EBPF)
 	in.FlowlogsPipeline.DeepCopyInto(&out.FlowlogsPipeline)
 	in.Loki.DeepCopyInto(&out.Loki)
-	if in.Kafka != nil {
-		in, out := &in.Kafka, &out.Kafka
-		*out = new(FlowCollectorKafka)
-		**out = **in
-	}
+	out.Kafka = in.Kafka
 	in.ConsolePlugin.DeepCopyInto(&out.ConsolePlugin)
 	out.ClusterNetworkOperator = in.ClusterNetworkOperator
 }

@@ -71,7 +71,7 @@ type FlowCollectorSpec struct {
 
 	// Kafka configurations, if empty the operator will deploy a all-in-one FLP
 	// +optional
-	Kafka *FlowCollectorKafka `json:"kafka,omitempty"`
+	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
 	// ConsolePlugin contains settings related to the console dynamic plugin
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
@@ -169,6 +169,10 @@ type FlowCollectorEBPF struct {
 // FlowCollectorKafka defines the desired Kafka config of FlowCollector
 type FlowCollectorKafka struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
+
+	//+kubebuilder:default:=false
+	// Should this feature be enabled
+	Enable bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:=""
 	// Address of the kafka server

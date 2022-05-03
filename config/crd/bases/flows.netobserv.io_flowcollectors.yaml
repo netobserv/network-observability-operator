@@ -1459,6 +1459,10 @@ spec:
                     default: ""
                     description: Address of the kafka server
                     type: string
+                  enable:
+                    default: false
+                    description: Should this feature be enabled
+                    type: boolean
                   topic:
                     default: ""
                     description: Kafka topic to use

@@ -2581,6 +2581,15 @@ Kafka configurations, if empty the operator will deploy a all-in-one FLP
             <i>Default</i>: <br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Should this feature be enabled<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 

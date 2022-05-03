@@ -442,19 +442,20 @@ func TestLabels(t *testing.T) {
 func TestDeployNeeded(t *testing.T) {
 	assert := assert.New(t)
 
+	kafka := flowsv1alpha1.FlowCollectorKafka{Enable: false, Address: "loaclhost:9092", Topic: "FLP"}
 	// Kafka not configured
-	res, err := checkDeployNeeded(nil, ConfSingle)
+	res, err := checkDeployNeeded(kafka, ConfSingle)
 	assert.True(res)
 	assert.NoError(err)
-	res, err = checkDeployNeeded(nil, ConfKafkaIngestor)
+	res, err = checkDeployNeeded(kafka, ConfKafkaIngestor)
 	assert.False(res)
 	assert.NoError(err)
-	res, err = checkDeployNeeded(nil, ConfKafkaTransformer)
+	res, err = checkDeployNeeded(kafka, ConfKafkaTransformer)
 	assert.False(res)
 	assert.NoError(err)
 
-	// Kafka not configured
-	kafka := &flowsv1alpha1.FlowCollectorKafka{Address: "loaclhost:9092", Topic: "FLP"}
+	// Kafka configured
+	kafka.Enable = true
 	res, err = checkDeployNeeded(kafka, ConfSingle)
 	assert.False(res)
 	assert.NoError(err)
