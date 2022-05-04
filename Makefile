@@ -198,7 +198,6 @@ bundle: manifests kustomize ## Generate bundle manifests and metadata, then vali
 	envsubst < config/crd/patches/version_in_flowcollectors_envtpl.yaml > config/crd/patches/version_in_flowcollectors.yaml
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	cd config/manager && $(KUSTOMIZE) edit set label version:$(VERSION)
 	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 	sed -i 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 	sed -i 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml

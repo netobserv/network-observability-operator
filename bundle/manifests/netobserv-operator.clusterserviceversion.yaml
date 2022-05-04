@@ -74,7 +74,7 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     containerImage: quay.io/netobserv/network-observability-operator:0.1.2
-    createdAt: "2022-05-03T09:32:35Z"
+    createdAt: "2022-05-03T14:43:55Z"
     description: A network observability operator based on netflows (IPFIX) for OVN
     operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
@@ -321,14 +321,12 @@ spec:
             matchLabels:
               app: network-observability-operator
               control-plane: controller-manager
-              version: 0.1.2
           strategy: {}
           template:
             metadata:
               labels:
                 app: network-observability-operator
                 control-plane: controller-manager
-                version: 0.1.2
             spec:
               containers:
               - args:
@@ -448,4 +446,5 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
+  replaces: netobserv-operator.v0.1.1
   version: 0.1.2
