@@ -16,4 +16,3 @@ images:
   newTag: 0.1.2
 commonLabels:
   app: network-observability-operator
-  version: 0.1.2
