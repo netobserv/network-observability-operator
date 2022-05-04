@@ -184,7 +184,7 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
 func (b *builder) configMap() (*corev1.ConfigMap, string) {
-	var ingest, decoder, enrich, loki, aggregate, prometheus, writeNone map[string]interface{}
+	var ingest, decoder, enrich, loki, aggregate, prometheus map[string]interface{}
 
 	// loki stage (write) configuration
 	lokiWrite := map[string]interface{}{
@@ -288,13 +288,6 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		},
 	}
 
-	// write_none stage (write) configuration
-	writeNone = map[string]interface{}{"name": "write_none",
-		"write": map[string]interface{}{
-			"type": "none",
-		},
-	}
-
 	config := map[string]interface{}{
 		"log-level": b.desired.LogLevel,
 		"health": map[string]interface{}{
@@ -317,12 +310,9 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 			{"name": "prometheus",
 				"follows": "aggregate",
 			},
-			{"name": "write_none",
-				"follows": "prometheus",
-			},
 		},
 		"parameters": []map[string]interface{}{
-			ingest, decoder, enrich, loki, aggregate, prometheus, writeNone,
+			ingest, decoder, enrich, loki, aggregate, prometheus,
 		},
 	}
 
