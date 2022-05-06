@@ -58,14 +58,7 @@ spec:
     To turn it off, remove the `exportNetworkFlows` from `networks.operator.openshift.io/cluster`.
 
     #### Generic Kubernetes with ovn-kubernetes
-    You need to explicitly turn on IPFIX export in ovn-kubernetes:
-
-    ```
-    FLP_IP=`kubectl get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $FLP_IP
-    kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPFIX_TARGETS="$FLP_IP:2055"
-    ```
-
-    To turn it off, remove the `OVN_IPFIX_TARGETS` env from `daemonset/ovnkube-node`.
+    No further action is required to enable IPFIX exports. If you want to turn off the exports, remove the `FlowCollector` cluster resource.
 
     ### OpenShift Console
     OpenShift 4.10 or above is required to use the Console plugin. The operator should register this plugin automatically if `spec.consolePlugin.register` is set to `true` (default).

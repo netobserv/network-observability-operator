@@ -6,8 +6,6 @@ import (
 	"net"
 	"strings"
 
-	"github.com/netobserv/network-observability-operator/controllers/ebpf"
-	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -25,7 +23,9 @@ import (
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
+	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
 )
@@ -116,7 +116,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	previousNamespace := desired.Status.Namespace
 
 	// Create reconcilers
-	flpReconciler := flowlogspipeline.NewReconciler(clientHelper, ns, previousNamespace)
+	flpReconciler := flowlogspipeline.NewReconciler(ctx, clientHelper, ns, previousNamespace, &r.permissions)
 	var cpReconciler consoleplugin.CPReconciler
 	if r.consoleAvailable {
 		cpReconciler = consoleplugin.NewReconciler(clientHelper, ns, previousNamespace)
@@ -137,14 +137,22 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	// OVS config map for CNO
-	ovsConfigController := ovs.NewFlowsConfigController(clientHelper,
-		ns,
-		desired.Spec.ClusterNetworkOperator.Namespace,
-		ovsFlowsConfigMapName,
-		r.lookupIP)
-	if err := ovsConfigController.Reconcile(ctx, desired, flpReconciler.GetServiceName(desired.Spec.Kafka)); err != nil {
-		return ctrl.Result{},
-			fmt.Errorf("failed to reconcile ovs-flows-config ConfigMap: %w", err)
+	if desired.Spec.ClusterNetworkOperator.Namespace != "" {
+		ovsConfigController := ovs.NewFlowsConfigCNOController(clientHelper,
+			ns,
+			desired.Spec.ClusterNetworkOperator.Namespace,
+			ovsFlowsConfigMapName,
+			r.lookupIP)
+		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
+			return ctrl.Result{},
+				fmt.Errorf("failed to reconcile ovs-flows-config ConfigMap: %w", err)
+		}
+	} else {
+		ovsConfigController := ovs.NewFlowsConfigOVNKController(clientHelper, ns, r.lookupIP)
+		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
+			return ctrl.Result{},
+				fmt.Errorf("failed to reconcile ovn-kubernetes DaemonSet: %w", err)
+		}
 	}
 
 	// eBPF agent

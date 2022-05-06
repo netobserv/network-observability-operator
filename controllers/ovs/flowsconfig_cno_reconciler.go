@@ -17,7 +17,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 )
 
-type FlowsConfigController struct {
+type FlowsConfigCNOController struct {
 	ovsConfigMapName   string
 	collectorNamespace string
 	cnoNamespace       string
@@ -25,10 +25,10 @@ type FlowsConfigController struct {
 	lookupIP           func(string) ([]net.IP, error)
 }
 
-func NewFlowsConfigController(client reconcilers.ClientHelper,
+func NewFlowsConfigCNOController(client reconcilers.ClientHelper,
 	collectorNamespace, cnoNamespace, ovsConfigMapName string,
-	lookupIP func(string) ([]net.IP, error)) *FlowsConfigController {
-	return &FlowsConfigController{
+	lookupIP func(string) ([]net.IP, error)) *FlowsConfigCNOController {
+	return &FlowsConfigCNOController{
 		client:             client,
 		collectorNamespace: collectorNamespace,
 		cnoNamespace:       cnoNamespace,
@@ -39,9 +39,9 @@ func NewFlowsConfigController(client reconcilers.ClientHelper,
 
 // Reconcile reconciles the status of the ovs-flows-config configmap with
 // the target FlowCollector ipfix section map
-func (c *FlowsConfigController) Reconcile(
-	ctx context.Context, target *flowsv1alpha1.FlowCollector, flpServiceName string) error {
-	rlog := log.FromContext(ctx, "component", "FlowsConfigController")
+func (c *FlowsConfigCNOController) Reconcile(
+	ctx context.Context, target *flowsv1alpha1.FlowCollector) error {
+	rlog := log.FromContext(ctx, "component", "FlowsConfigCNOController")
 
 	current, err := c.current(ctx)
 	if err != nil {
@@ -63,7 +63,7 @@ func (c *FlowsConfigController) Reconcile(
 		return nil
 	}
 
-	desired, err := c.desired(ctx, target, flpServiceName)
+	desired, err := c.desired(ctx, target)
 	// compare current and desired
 	if err != nil {
 		return err
@@ -91,7 +91,7 @@ func (c *FlowsConfigController) Reconcile(
 	return nil
 }
 
-func (c *FlowsConfigController) current(ctx context.Context) (*flowsConfig, error) {
+func (c *FlowsConfigCNOController) current(ctx context.Context) (*flowsConfig, error) {
 	curr := &corev1.ConfigMap{}
 	if err := c.client.Get(ctx, types.NamespacedName{
 		Name:      c.ovsConfigMapName,
@@ -110,8 +110,8 @@ func (c *FlowsConfigController) current(ctx context.Context) (*flowsConfig, erro
 	return configFromMap(curr.Data)
 }
 
-func (c *FlowsConfigController) desired(
-	ctx context.Context, coll *flowsv1alpha1.FlowCollector, flpServiceName string) (*flowsConfig, error) {
+func (c *FlowsConfigCNOController) desired(
+	ctx context.Context, coll *flowsv1alpha1.FlowCollector) (*flowsConfig, error) {
 
 	conf := flowsConfig{FlowCollectorIPFIX: coll.Spec.IPFIX}
 
@@ -126,7 +126,7 @@ func (c *FlowsConfigController) desired(
 		svc := corev1.Service{}
 		if err := c.client.Get(ctx, types.NamespacedName{
 			Namespace: c.collectorNamespace,
-			Name:      flpServiceName,
+			Name:      constants.FLPName,
 		}, &svc); err != nil {
 			return nil, fmt.Errorf("can't get service %s in %s: %w", constants.FLPName, c.collectorNamespace, err)
 		}
@@ -153,7 +153,7 @@ func (c *FlowsConfigController) desired(
 	return nil, fmt.Errorf("unexpected flowlogsPipeline kind: %s", coll.Spec.FlowlogsPipeline.Kind)
 }
 
-func (c *FlowsConfigController) flowsConfigMap(fc *flowsConfig) (*corev1.ConfigMap, error) {
+func (c *FlowsConfigCNOController) flowsConfigMap(fc *flowsConfig) (*corev1.ConfigMap, error) {
 	cm := &corev1.ConfigMap{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "ConfigMap",

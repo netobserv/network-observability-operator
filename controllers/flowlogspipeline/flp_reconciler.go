@@ -15,6 +15,7 @@ import (
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/discover"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -27,13 +28,15 @@ type FLPReconciler struct {
 	nobjMngr          *reconcilers.NamespacedObjectManager
 	owned             ownedObjects
 	singleReconcilers []singleDeploymentReconciler
+	useOpenShiftSCC   bool
 }
 
 type singleDeploymentReconciler struct {
 	reconcilers.ClientHelper
-	nobjMngr *reconcilers.NamespacedObjectManager
-	owned    ownedObjects
-	confKind string
+	nobjMngr        *reconcilers.NamespacedObjectManager
+	owned           ownedObjects
+	confKind        string
+	useOpenShiftSCC bool
 }
 
 type ownedObjects struct {
@@ -47,21 +50,23 @@ type ownedObjects struct {
 	roleBindingTransformer *rbacv1.ClusterRoleBinding
 }
 
-func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) FLPReconciler {
+func NewReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS string, permissionsVendor *discover.Permissions) FLPReconciler {
 	owned := ownedObjects{
 		service: &corev1.Service{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
 	nobjMngr.AddManagedObject(constants.FLPName, owned.service)
 
-	flpReconciler := FLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
-	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfSingle))
-	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfKafkaIngester))
-	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfKafkaTransformer))
+	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
+
+	flpReconciler := FLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, useOpenShiftSCC: openshift}
+	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfSingle, openshift))
+	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfKafkaIngester, openshift))
+	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfKafkaTransformer, openshift))
 	return flpReconciler
 }
 
-func newSingleReconciler(cl reconcilers.ClientHelper, ns string, prevNS string, confKind string) singleDeploymentReconciler {
+func newSingleReconciler(cl reconcilers.ClientHelper, ns, prevNS, confKind string, useOpenShiftSCC bool) singleDeploymentReconciler {
 	owned := ownedObjects{
 		deployment:             &appsv1.Deployment{},
 		daemonSet:              &appsv1.DaemonSet{},
@@ -85,7 +90,7 @@ func newSingleReconciler(cl reconcilers.ClientHelper, ns string, prevNS string, 
 	if confKind == ConfSingle || confKind == ConfKafkaTransformer {
 		nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind]+FlpConfSuffix[ConfKafkaTransformer]+"role", owned.roleBindingIngester)
 	}
-	return singleDeploymentReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, confKind: confKind}
+	return singleDeploymentReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, confKind: confKind, useOpenShiftSCC: useOpenShiftSCC}
 }
 
 // InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
@@ -170,7 +175,7 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 	if desired.Spec.Agent == flowsv1alpha1.AgentEBPF {
 		portProtocol = corev1.ProtocolTCP
 	}
-	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki, r.confKind)
+	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki, r.confKind, r.useOpenShiftSCC)
 	newCM, configDigest := builder.configMap()
 	if !r.nobjMngr.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
@@ -317,10 +322,10 @@ func (r *singleDeploymentReconciler) reconcileAsClusterRoleBinding(ctx context.C
 
 func (r *FLPReconciler) reconcilePermissions(ctx context.Context) error {
 	// Cluster role is only installed once
-	if err := r.reconcileClusterRole(ctx, buildClusterRoleIngester(), constants.FLPName+FlpConfSuffix[ConfKafkaIngester]); err != nil {
+	if err := r.reconcileClusterRole(ctx, buildClusterRoleIngester(r.useOpenShiftSCC), constants.FLPName+FlpConfSuffix[ConfKafkaIngester]); err != nil {
 		return err
 	}
-	if err := r.reconcileClusterRole(ctx, buildClusterRoleTransformer(), constants.FLPName+FlpConfSuffix[ConfKafkaTransformer]); err != nil {
+	if err := r.reconcileClusterRole(ctx, buildClusterRoleTransformer(r.useOpenShiftSCC), constants.FLPName+FlpConfSuffix[ConfKafkaTransformer]); err != nil {
 		return err
 	}
 	return nil

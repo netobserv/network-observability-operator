@@ -49,16 +49,17 @@ var FlpConfSuffix = map[string]string{
 const PodConfigurationDigest = "flows.netobserv.io/" + configMapName
 
 type builder struct {
-	namespace      string
-	labels         map[string]string
-	selector       map[string]string
-	portProtocol   corev1.Protocol
-	desired        *flowsv1alpha1.FlowCollectorFLP
-	desiredLoki    *flowsv1alpha1.FlowCollectorLoki
-	confKindSuffix string
+	namespace       string
+	labels          map[string]string
+	selector        map[string]string
+	portProtocol    corev1.Protocol
+	desired         *flowsv1alpha1.FlowCollectorFLP
+	desiredLoki     *flowsv1alpha1.FlowCollectorLoki
+	confKindSuffix  string
+	useOpenShiftSCC bool
 }
 
-func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, confKind string) builder {
+func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, confKind string, useOpenShiftSCC bool) builder {
 	version := helper.ExtractVersion(desired.Image)
 	return builder{
 		namespace: ns,
@@ -69,10 +70,11 @@ func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.
 		selector: map[string]string{
 			"app": constants.FLPName + FlpConfSuffix[confKind],
 		},
-		desired:        desired,
-		desiredLoki:    desiredLoki,
-		portProtocol:   portProtocol,
-		confKindSuffix: FlpConfSuffix[confKind],
+		desired:         desired,
+		desiredLoki:     desiredLoki,
+		portProtocol:    portProtocol,
+		confKindSuffix:  FlpConfSuffix[confKind],
+		useOpenShiftSCC: useOpenShiftSCC,
 	}
 }
 
@@ -88,7 +90,7 @@ func (b *builder) deployment(configDigest string) *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: b.selector,
 			},
-			Template: b.podTemplate(configDigest),
+			Template: b.podTemplate(false, configDigest),
 		},
 	}
 }
@@ -104,12 +106,12 @@ func (b *builder) daemonSet(configDigest string) *appsv1.DaemonSet {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: b.selector,
 			},
-			Template: b.podTemplate(configDigest),
+			Template: b.podTemplate(!b.useOpenShiftSCC, configDigest),
 		},
 	}
 }
 
-func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
+func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodTemplateSpec {
 	var ports []corev1.ContainerPort
 	var tolerations []corev1.Toleration
 	if b.desired.Kind == constants.DaemonSetKind {
@@ -191,6 +193,8 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 			}},
 			Containers:         []corev1.Container{container},
 			ServiceAccountName: constants.FLPName + b.confKindSuffix,
+			HostNetwork:        hostNetwork,
+			DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
 		},
 	}
 }
@@ -414,8 +418,8 @@ func buildAppLabel(confKind string) map[string]string {
 	}
 }
 
-func buildClusterRoleIngester() *rbacv1.ClusterRole {
-	return &rbacv1.ClusterRole{
+func buildClusterRoleIngester(useOpenShiftSCC bool) *rbacv1.ClusterRole {
+	cr := rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   constants.FLPName + FlpConfSuffix[ConfKafkaIngester],
 			Labels: buildAppLabel(""),
@@ -432,17 +436,21 @@ func buildClusterRoleIngester() *rbacv1.ClusterRole {
 			APIGroups: []string{"autoscaling"},
 			Verbs:     []string{"create", "delete", "patch", "update", "get", "watch", "list"},
 			Resources: []string{"horizontalpodautoscalers"},
-		}, {
+		}},
+	}
+	if useOpenShiftSCC {
+		cr.Rules = append(cr.Rules, rbacv1.PolicyRule{
 			APIGroups:     []string{"security.openshift.io"},
 			Verbs:         []string{"use"},
 			Resources:     []string{"securitycontextconstraints"},
 			ResourceNames: []string{"hostnetwork"},
-		}},
+		})
 	}
+	return &cr
 }
 
-func buildClusterRoleTransformer() *rbacv1.ClusterRole {
-	return &rbacv1.ClusterRole{
+func buildClusterRoleTransformer(useOpenShiftSCC bool) *rbacv1.ClusterRole {
+	cr := rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   constants.FLPName + FlpConfSuffix[ConfKafkaTransformer],
 			Labels: buildAppLabel(""),
@@ -466,6 +474,15 @@ func buildClusterRoleTransformer() *rbacv1.ClusterRole {
 			ResourceNames: []string{"hostnetwork"},
 		}},
 	}
+	if useOpenShiftSCC {
+		cr.Rules = append(cr.Rules, rbacv1.PolicyRule{
+			APIGroups:     []string{"security.openshift.io"},
+			Verbs:         []string{"use"},
+			Resources:     []string{"securitycontextconstraints"},
+			ResourceNames: []string{"hostnetwork"},
+		})
+	}
+	return &cr
 }
 
 func (b *builder) serviceAccount() *corev1.ServiceAccount {
