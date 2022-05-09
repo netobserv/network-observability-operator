@@ -11,10 +11,10 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/pointer"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 // Because the simulated Kube server doesn't manage automatic resource cleanup like an actual Kube would do,
@@ -78,7 +78,7 @@ func flowCollectorConsolePluginSpecs() {
 						Image:           "testimg:latest",
 						Register:        true,
 						HPA: &flowsv1alpha1.FlowCollectorHPA{
-							MinReplicas: helper.Int32Ptr(1),
+							MinReplicas: pointer.Int32(1),
 							MaxReplicas: 1,
 							Metrics: []ascv2.MetricSpec{{
 								Type: ascv2.ResourceMetricSourceType,
@@ -86,7 +86,7 @@ func flowCollectorConsolePluginSpecs() {
 									Name: v1.ResourceCPU,
 									Target: ascv2.MetricTarget{
 										Type:               ascv2.UtilizationMetricType,
-										AverageUtilization: helper.Int32Ptr(90),
+										AverageUtilization: pointer.Int32(90),
 									},
 								},
 							}},

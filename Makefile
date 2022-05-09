@@ -63,10 +63,12 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 # Image building tool (docker / podman)
+ifndef OCI_BIN
 ifeq (,$(shell which podman 2>/dev/null))
 OCI_BIN=docker
 else
 OCI_BIN=podman
+endif
 endif
 
 DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")

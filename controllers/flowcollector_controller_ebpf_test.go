@@ -81,6 +81,8 @@ func flowCollectorEBPFSpecs() {
 			Expect(len(spec.Containers)).To(Equal(1))
 			Expect(spec.Containers[0].SecurityContext.Privileged).To(Not(BeNil()))
 			Expect(*spec.Containers[0].SecurityContext.Privileged).To(BeTrue())
+			Expect(spec.Containers[0].SecurityContext.RunAsUser).To(Not(BeNil()))
+			Expect(*spec.Containers[0].SecurityContext.RunAsUser).To(Equal(int64(0)))
 			Expect(spec.Containers[0].Env).To(ContainElements(
 				v1.EnvVar{Name: "CACHE_ACTIVE_TIMEOUT", Value: "15s"},
 				v1.EnvVar{Name: "CACHE_MAX_FLOWS", Value: "100"},
