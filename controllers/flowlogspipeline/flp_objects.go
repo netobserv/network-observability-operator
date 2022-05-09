@@ -40,8 +40,8 @@ const (
 
 var FlpConfSuffix = map[string]string{
 	ConfSingle:           "",
-	ConfKafkaIngester:    "-kingester",
-	ConfKafkaTransformer: "-ktransform",
+	ConfKafkaIngester:    "-ingester",
+	ConfKafkaTransformer: "-transformer",
 }
 
 // PodConfigurationDigest is an annotation name to facilitate pod restart after

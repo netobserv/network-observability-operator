@@ -409,7 +409,7 @@ func flowCollectorControllerSpecs() {
 			By("Not Expecting transformer service to be created")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, gfKeyKafkaTransformer, &v1.Service{})
-			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline-ktransform" not found`))
+			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline-transformer" not found`))
 		})
 
 		It("Should delete previous flp deployment", func() {
@@ -446,12 +446,12 @@ func flowCollectorControllerSpecs() {
 			By("Expecting ingester daemonset to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, gfKeyKafkaIngester, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline-kingester" not found`))
+			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline-ingester" not found`))
 
 			By("Expecting transformer deployment to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, gfKeyKafkaTransformer, &appsv1.Deployment{})
-			}, timeout, interval).Should(MatchError(`deployments.apps "flowlogs-pipeline-ktransform" not found`))
+			}, timeout, interval).Should(MatchError(`deployments.apps "flowlogs-pipeline-transformer" not found`))
 		})
 
 	})
