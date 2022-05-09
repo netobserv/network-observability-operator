@@ -54,7 +54,7 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) FLPReconciler
 
 	flpReconciler := FLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
 	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfSingle))
-	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfKafkaIngestor))
+	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfKafkaIngester))
 	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfKafkaTransformer))
 	return flpReconciler
 }
@@ -104,8 +104,8 @@ func validateDesired(desired *flpSpec) error {
 }
 
 func (r *FLPReconciler) GetServiceName(kafka flowsv1alpha1.FlowCollectorKafka) string {
-	if single, _ := checkDeployNeeded(kafka, ConfKafkaIngestor); single {
-		return constants.FLPName + FlpConfSuffix[ConfKafkaIngestor]
+	if single, _ := checkDeployNeeded(kafka, ConfKafkaIngester); single {
+		return constants.FLPName + FlpConfSuffix[ConfKafkaIngester]
 	}
 	return constants.FLPName + FlpConfSuffix[ConfSingle]
 }
@@ -127,7 +127,7 @@ func checkDeployNeeded(kafka flowsv1alpha1.FlowCollectorKafka, confKind string) 
 		return !kafka.Enable, nil
 	case ConfKafkaTransformer:
 		return kafka.Enable, nil
-	case ConfKafkaIngestor:
+	case ConfKafkaIngester:
 		//TODO should be disabled if ebpf-agent is enabled with kafka
 		return kafka.Enable, nil
 	default:

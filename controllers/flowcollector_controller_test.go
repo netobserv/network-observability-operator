@@ -47,8 +47,8 @@ func flowCollectorControllerSpecs() {
 		Name:      constants.FLPName,
 		Namespace: otherNamespace,
 	}
-	gfKeyKafkaIngestor := types.NamespacedName{
-		Name:      constants.FLPName + flowlogspipeline.FlpConfSuffix[flowlogspipeline.ConfKafkaIngestor],
+	gfKeyKafkaIngester := types.NamespacedName{
+		Name:      constants.FLPName + flowlogspipeline.FlpConfSuffix[flowlogspipeline.ConfKafkaIngester],
 		Namespace: operatorNamespace,
 	}
 	gfKeyKafkaTransformer := types.NamespacedName{
@@ -395,10 +395,10 @@ func flowCollectorControllerSpecs() {
 			}).Should(Succeed())
 		})
 
-		It("Should deploy kafka ingestor and transformer", func() {
-			By("Expecting ingestor daemonset to be created")
+		It("Should deploy kafka ingester and transformer", func() {
+			By("Expecting ingester daemonset to be created")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKeyKafkaIngestor, &appsv1.DaemonSet{})
+				return k8sClient.Get(ctx, gfKeyKafkaIngester, &appsv1.DaemonSet{})
 			}, timeout, interval).Should(Succeed())
 
 			By("Expecting transformer deployment to be created")
@@ -442,11 +442,11 @@ func flowCollectorControllerSpecs() {
 			}, timeout, interval).Should(Succeed())
 		})
 
-		It("Should delete kafka ingestor and transformer", func() {
-			By("Expecting ingestor daemonset to be deleted")
+		It("Should delete kafka ingester and transformer", func() {
+			By("Expecting ingester daemonset to be deleted")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKeyKafkaIngestor, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline-kingestor" not found`))
+				return k8sClient.Get(ctx, gfKeyKafkaIngester, &appsv1.DaemonSet{})
+			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline-kingester" not found`))
 
 			By("Expecting transformer deployment to be deleted")
 			Eventually(func() interface{} {

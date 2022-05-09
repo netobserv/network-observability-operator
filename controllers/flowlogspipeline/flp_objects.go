@@ -34,13 +34,13 @@ const (
 
 const (
 	ConfSingle           = "allInOne"
-	ConfKafkaIngestor    = "kafkaIngestor"
+	ConfKafkaIngester    = "kafkaIngester"
 	ConfKafkaTransformer = "kafkaTransformer"
 )
 
 var FlpConfSuffix = map[string]string{
 	ConfSingle:           "",
-	ConfKafkaIngestor:    "-kingestor",
+	ConfKafkaIngester:    "-kingester",
 	ConfKafkaTransformer: "-ktransform",
 }
 
