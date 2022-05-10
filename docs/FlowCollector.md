@@ -1355,6 +1355,13 @@ EBPF contains the settings of an eBPF-based flow reporter  when the "agent" prop
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>privileged</b></td>
+        <td>boolean</td>
+        <td>
+          Privileged mode for the eBPF Agent container. If false, the operator will add the following capabilities to the container, to enable its correct operation: BPF, PERFMON, NET_ADMIN, SYS_RESOURCE.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecebpfresources">resources</a></b></td>
         <td>object</td>
         <td>

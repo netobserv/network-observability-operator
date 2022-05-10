@@ -154,6 +154,12 @@ type FlowCollectorEBPF struct {
 	// in edge debug/support scenarios.
 	//+optional
 	Env map[string]string `json:"env,omitempty"`
+
+	// Privileged mode for the eBPF Agent container. If false, the operator will add the following
+	// capabilities to the container, to enable its correct operation:
+	// BPF, PERFMON, NET_ADMIN, SYS_RESOURCE.
+	// +optional
+	Privileged bool `json:"privileged,omitempty"`
 }
 
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector

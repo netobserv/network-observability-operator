@@ -3,19 +3,22 @@ package permissions
 import (
 	"context"
 	"fmt"
-	"reflect"
 
+	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	osv1 "github.com/openshift/api/security/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
+
+var AllowedCapabilities = []v1.Capability{"BPF", "PERFMON", "NET_ADMIN", "SYS_RESOURCE"}
 
 // Reconciler reconciles the different resources to enable the privileged operation of the
 // Netobserv Agent:
@@ -40,7 +43,7 @@ func NewReconciler(
 	}
 }
 
-func (c *Reconciler) Reconcile(ctx context.Context) error {
+func (c *Reconciler) Reconcile(ctx context.Context, desired *v1alpha1.FlowCollectorEBPF) error {
 	log.IntoContext(ctx, log.FromContext(ctx).WithName("permissions"))
 
 	if err := c.reconcileNamespace(ctx); err != nil {
@@ -49,7 +52,7 @@ func (c *Reconciler) Reconcile(ctx context.Context) error {
 	if err := c.reconcileServiceAccount(ctx); err != nil {
 		return fmt.Errorf("reconciling service account: %w", err)
 	}
-	if err := c.reconcileVendorPermissions(ctx); err != nil {
+	if err := c.reconcileVendorPermissions(ctx, desired); err != nil {
 		return fmt.Errorf("reconciling vendor permissions: %w", err)
 	}
 	return nil
@@ -114,23 +117,25 @@ func (c *Reconciler) reconcileServiceAccount(ctx context.Context) error {
 	return nil
 }
 
-func (c *Reconciler) reconcileVendorPermissions(ctx context.Context) error {
+func (c *Reconciler) reconcileVendorPermissions(
+	ctx context.Context, desired *v1alpha1.FlowCollectorEBPF,
+) error {
 	if c.vendor.Vendor(ctx) == discover.VendorOpenShift {
-		return c.reconcileOpenshiftPermissions(ctx)
+		return c.reconcileOpenshiftPermissions(ctx, desired)
 	}
 	return nil
 }
 
-func (c *Reconciler) reconcileOpenshiftPermissions(ctx context.Context) error {
+func (c *Reconciler) reconcileOpenshiftPermissions(
+	ctx context.Context, desired *v1alpha1.FlowCollectorEBPF,
+) error {
 	rlog := log.FromContext(ctx,
 		"securityContextConstraints", constants.EBPFSecurityContext)
 	scc := &osv1.SecurityContextConstraints{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: constants.EBPFSecurityContext,
 		},
-		// TODO: replace by individual capabilities
-		AllowPrivilegedContainer: true,
-		AllowHostNetwork:         true,
+		AllowHostNetwork: true,
 		RunAsUser: osv1.RunAsUserStrategyOptions{
 			Type: osv1.RunAsUserStrategyRunAsAny,
 		},
@@ -140,6 +145,11 @@ func (c *Reconciler) reconcileOpenshiftPermissions(ctx context.Context) error {
 		Users: []string{
 			"system:serviceaccount:" + c.privilegedNamespace + ":" + constants.EBPFServiceAccount,
 		},
+	}
+	if desired.Privileged {
+		scc.AllowPrivilegedContainer = true
+	} else {
+		scc.AllowedCapabilities = AllowedCapabilities
 	}
 	actual := &osv1.SecurityContextConstraints{}
 	if err := c.client.Get(ctx, client.ObjectKeyFromObject(scc), actual); err != nil {
@@ -153,11 +163,7 @@ func (c *Reconciler) reconcileOpenshiftPermissions(ctx context.Context) error {
 		rlog.Info("creating SecurityContextConstraints")
 		return c.client.CreateOwned(ctx, scc)
 	}
-	if scc.AllowPrivilegedContainer != actual.AllowPrivilegedContainer ||
-		scc.AllowHostNetwork != actual.AllowHostNetwork ||
-		scc.RunAsUser != actual.RunAsUser ||
-		scc.SELinuxContext != actual.SELinuxContext ||
-		!reflect.DeepEqual(scc.Users, actual.Users) {
+	if !equality.Semantic.DeepDerivative(&scc, &actual) {
 		rlog.Info("updating SecurityContextConstraints")
 		return c.client.UpdateOwned(ctx, actual, scc)
 	}

@@ -79,8 +79,10 @@ func flowCollectorEBPFSpecs() {
 			Expect(spec.DNSPolicy).To(Equal(v1.DNSClusterFirstWithHostNet))
 			Expect(spec.ServiceAccountName).To(Equal(constants.EBPFServiceAccount))
 			Expect(len(spec.Containers)).To(Equal(1))
-			Expect(spec.Containers[0].SecurityContext.Privileged).To(Not(BeNil()))
-			Expect(*spec.Containers[0].SecurityContext.Privileged).To(BeTrue())
+			Expect(spec.Containers[0].SecurityContext.Privileged).To(BeNil())
+			Expect(spec.Containers[0].SecurityContext.Capabilities.Add).To(ContainElements(
+				[]v1.Capability{"BPF", "PERFMON", "NET_ADMIN", "SYS_RESOURCE"},
+			))
 			Expect(spec.Containers[0].SecurityContext.RunAsUser).To(Not(BeNil()))
 			Expect(*spec.Containers[0].SecurityContext.RunAsUser).To(Equal(int64(0)))
 			Expect(spec.Containers[0].Env).To(ContainElements(
@@ -130,11 +132,12 @@ func flowCollectorEBPFSpecs() {
 			Expect(k8sClient.Get(ctx, crKey, &updated)).Should(Succeed())
 			Expect(updated.Spec.EBPF.Sampling).To(Equal(int32(123)))
 			updated.Spec.EBPF.Sampling = 4
+			updated.Spec.EBPF.Privileged = true
 			Expect(k8sClient.Update(ctx, &updated)).Should(Succeed())
 
+			ds := appsv1.DaemonSet{}
 			By("expecting that the daemonset spec has eventually changed")
 			Eventually(func() interface{} {
-				ds := appsv1.DaemonSet{}
 				if err := k8sClient.Get(ctx, agentKey, &ds); err != nil {
 					return err
 				}
@@ -147,6 +150,11 @@ func flowCollectorEBPFSpecs() {
 				return fmt.Errorf("unexpected env vars: %#v",
 					ds.Spec.Template.Spec.Containers[0].Env)
 			}).WithTimeout(timeout).WithPolling(interval).Should(Succeed())
+
+			container := ds.Spec.Template.Spec.Containers[0]
+			Expect(container.SecurityContext.Privileged).To(Not(BeNil()))
+			Expect(*container.SecurityContext.Privileged).To(BeTrue())
+			Expect(container.SecurityContext.Capabilities).To(BeNil())
 		})
 
 		It("Should undeploy everything when deleted", func() {

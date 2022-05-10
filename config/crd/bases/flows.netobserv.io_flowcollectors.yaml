@@ -755,6 +755,12 @@ spec:
                     - fatal
                     - panic
                     type: string
+                  privileged:
+                    description: 'Privileged mode for the eBPF Agent container. If
+                      false, the operator will add the following capabilities to the
+                      container, to enable its correct operation: BPF, PERFMON, NET_ADMIN,
+                      SYS_RESOURCE.'
+                    type: boolean
                   resources:
                     description: 'Compute Resources required by this container. Cannot
                       be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
