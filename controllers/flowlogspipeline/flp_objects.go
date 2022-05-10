@@ -190,7 +190,7 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 				},
 			}},
 			Containers:         []corev1.Container{container},
-			ServiceAccountName: constants.FLPName,
+			ServiceAccountName: constants.FLPName + b.confKindSuffix,
 		},
 	}
 }
@@ -410,10 +410,10 @@ func buildAppLabel(confKind string) map[string]string {
 	}
 }
 
-func buildClusterRole() *rbacv1.ClusterRole {
+func buildClusterRoleIngester() *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   constants.FLPName,
+			Name:   constants.FLPName + FlpConfSuffix[ConfKafkaIngester],
 			Labels: buildAppLabel(""),
 		},
 		Rules: []rbacv1.PolicyRule{{
@@ -437,31 +437,60 @@ func buildClusterRole() *rbacv1.ClusterRole {
 	}
 }
 
-func buildServiceAccount(ns string) *corev1.ServiceAccount {
+func buildClusterRoleTransformer() *rbacv1.ClusterRole {
+	return &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   constants.FLPName + FlpConfSuffix[ConfKafkaTransformer],
+			Labels: buildAppLabel(""),
+		},
+		Rules: []rbacv1.PolicyRule{{
+			APIGroups: []string{""},
+			Verbs:     []string{"list", "get", "watch"},
+			Resources: []string{"pods", "services", "nodes"},
+		}, {
+			APIGroups: []string{"apps"},
+			Verbs:     []string{"list", "get", "watch"},
+			Resources: []string{"replicasets"},
+		}, {
+			APIGroups: []string{"autoscaling"},
+			Verbs:     []string{"create", "delete", "patch", "update", "get", "watch", "list"},
+			Resources: []string{"horizontalpodautoscalers"},
+		}, {
+			APIGroups:     []string{"security.openshift.io"},
+			Verbs:         []string{"use"},
+			Resources:     []string{"securitycontextconstraints"},
+			ResourceNames: []string{"hostnetwork"},
+		}},
+	}
+}
+
+func (b *builder) serviceAccount() *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.FLPName,
-			Namespace: ns,
+			Name:      constants.FLPName + b.confKindSuffix,
+			Namespace: b.namespace,
 			Labels:    buildAppLabel(""),
 		},
 	}
 }
 
-func buildClusterRoleBinding(ns string) *rbacv1.ClusterRoleBinding {
+func (b *builder) clusterRoleBinding(roleKind string) *rbacv1.ClusterRoleBinding {
+	//Adding role here to disembiguate between the deployment kind and the role binded
+	name := constants.FLPName + b.confKindSuffix + FlpConfSuffix[roleKind] + "role"
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   constants.FLPName,
+			Name:   name,
 			Labels: buildAppLabel(""),
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     constants.FLPName,
+			Name:     constants.FLPName + FlpConfSuffix[roleKind],
 		},
 		Subjects: []rbacv1.Subject{{
 			Kind:      "ServiceAccount",
-			Name:      constants.FLPName,
-			Namespace: ns,
+			Name:      constants.FLPName + b.confKindSuffix,
+			Namespace: b.namespace,
 		}},
 	}
 }
