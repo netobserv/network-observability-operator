@@ -6,8 +6,6 @@ import (
 	"net"
 	"strings"
 
-	"github.com/netobserv/network-observability-operator/controllers/ebpf"
-	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -25,7 +23,10 @@ import (
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
+	"github.com/netobserv/network-observability-operator/controllers/operators"
+	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
 )
@@ -62,6 +63,11 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *F
 //+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,resourceNames=hostnetwork,verbs=use
 //+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=list;create;update;watch
 //+kubebuilder:rbac:groups=apiregistration.k8s.io,resources=apiservices,verbs=list;get;watch
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=catalogsources;operatorgroups;subscriptions,verbs=create;delete;patch;update;get;watch;list
+//+kubebuilder:rbac:groups=loki.grafana.com,resources=lokistacks,verbs=create;delete;patch;update;get;watch;list
+//+kubebuilder:rbac:groups=kafka.strimzi.io,resources=kafkas;kafkatopics,verbs=create;delete;patch;update;get;watch;list
+//+kubebuilder:rbac:groups=integreatly.org,resources=grafanas;grafanadatasources;grafanadashboards,verbs=create;delete;patch;update;get;watch;list
+//+kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses,verbs=create;delete;patch;update;get;watch;list
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -121,6 +127,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if r.consoleAvailable {
 		cpReconciler = consoleplugin.NewReconciler(clientHelper, ns, previousNamespace)
 	}
+	operatorsReconciler := operators.NewReconciler(ctx, clientHelper, ns, &desired.Spec)
 
 	// Check namespace changed
 	if ns != previousNamespace {
@@ -161,6 +168,12 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			log.Error(err, "Failed to reconcile console plugin")
 			return ctrl.Result{}, err
 		}
+	}
+
+	// Operators
+	if err := operatorsReconciler.Reconcile(ctx, desired); err != nil {
+		log.Error(err, "Failed to reconcile required operators")
+		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil

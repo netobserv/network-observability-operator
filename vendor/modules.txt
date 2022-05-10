@@ -523,6 +523,7 @@ k8s.io/kube-aggregator/pkg/apis/apiregistration/v1
 k8s.io/kube-openapi/pkg/schemaconv
 k8s.io/kube-openapi/pkg/util/proto
 # k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
+## explicit
 k8s.io/utils/buffer
 k8s.io/utils/clock
 k8s.io/utils/clock/testing

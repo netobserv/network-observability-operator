@@ -14,6 +14,7 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -101,8 +102,11 @@ func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *f
 	return []string{
 		"-cert", "/var/serving-cert/tls.crt",
 		"-key", "/var/serving-cert/tls.key",
-		"-loki", querierURL(desiredLoki),
+		"-loki", reconcilers.QuerierURL(desiredLoki),
 		"-loki-labels", strings.Join(constants.LokiIndexFields, ","),
+		"-loki-tenant-id", desiredLoki.TenantID,
+		//TODO: add loki tls config https://issues.redhat.com/browse/NETOBSERV-309
+		"-loki-skip-tls", "true",
 		"-loglevel", desired.LogLevel,
 		"-frontend-config", configPath + configFile,
 	}
@@ -132,14 +136,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 						MountPath: configPath,
 						ReadOnly:  true,
 					}},
-				Args: []string{
-					"-cert", "/var/serving-cert/tls.crt",
-					"-key", "/var/serving-cert/tls.key",
-					"-loki", querierURL(b.desiredLoki),
-					"-loki-labels", strings.Join(constants.LokiIndexFields, ","),
-					"-loglevel", b.desired.LogLevel,
-					"-frontend-config", configPath + configFile,
-				},
+				Args: buildArgs(b.desired, b.desiredLoki),
 			}},
 			Volumes: []corev1.Volume{{
 				Name: secretName,

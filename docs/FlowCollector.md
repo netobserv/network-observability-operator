@@ -124,6 +124,13 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafana">grafana</a></b></td>
+        <td>object</td>
+        <td>
+          Grafana contains settings related to the grafana configuration. It will create subscription to install Grafana Operator. This feature is experimental, use it for development only<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecipfix">ipfix</a></b></td>
         <td>object</td>
         <td>
@@ -133,10 +140,17 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspeckafka">kafka</a></b></td>
+        <td>object</td>
+        <td>
+          Kafka contains settings related to the kafka configuration. It will create subscription to install Strimzi Operator. This feature is experimental, use it for development only<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecloki">loki</a></b></td>
         <td>object</td>
         <td>
-          Loki contains settings related to the loki client<br/>
+          Loki contains settings related to the loki configuration. It will create subscription to install Loki Operator. This feature is experimental, use it for development only<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -146,6 +160,13 @@ FlowCollectorSpec defines the desired state of FlowCollector
           Namespace where console plugin and collector pods are going to be deployed. If empty, the namespace of the operator is going to be used<br/>
           <br/>
             <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheus">prometheus</a></b></td>
+        <td>object</td>
+        <td>
+          Prometheus contains settings related to the prometheus configuration<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -2482,6 +2503,2982 @@ Compute Resources required by this container. Cannot be updated. More info: http
 </table>
 
 
+### FlowCollector.spec.grafana
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+Grafana contains settings related to the grafana configuration. It will create subscription to install Grafana Operator. This feature is experimental, use it for development only
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecgrafanadashboardspec">dashboardSpec</a></b></td>
+        <td>object</td>
+        <td>
+          DashboardSpec is the Spec section of Dashboard object will be ignored if instanceSpec is not set<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespec">instanceSpec</a></b></td>
+        <td>object</td>
+        <td>
+          InstanceSpec is the Spec section of Grafana instance<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.dashboardSpec
+<sup><sup>[↩ Parent](#flowcollectorspecgrafana)</sup></sup>
+
+
+
+DashboardSpec is the Spec section of Dashboard object will be ignored if instanceSpec is not set
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecgrafanadashboardspecconfigmapref">configMapRef</a></b></td>
+        <td>object</td>
+        <td>
+          Selects a key from a ConfigMap.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.dashboardSpec.configMapRef
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanadashboardspec)</sup></sup>
+
+
+
+Selects a key from a ConfigMap.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key to select.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>optional</b></td>
+        <td>boolean</td>
+        <td>
+          Specify whether the ConfigMap or its key must be defined<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec
+<sup><sup>[↩ Parent](#flowcollectorspecgrafana)</sup></sup>
+
+
+
+InstanceSpec is the Spec section of Grafana instance
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfig">config</a></b></td>
+        <td>object</td>
+        <td>
+          GrafanaConfig is the configuration for grafana<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Should this feature be enabled<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>ingress</b></td>
+        <td>boolean</td>
+        <td>
+          Ingress is a flag to create grafana route<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespec)</sup></sup>
+
+
+
+GrafanaConfig is the configuration for grafana
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigalerting">alerting</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfiganalytics">analytics</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigauth">auth</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigauthanonymous">auth.anonymous</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigauthazuread">auth.azuread</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigauthbasic">auth.basic</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigauthgeneric_oauth">auth.generic_oauth</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigauthgithub">auth.github</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigauthgitlab">auth.gitlab</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigauthgoogle">auth.google</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigauthldap">auth.ldap</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigauthokta">auth.okta</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigauthproxy">auth.proxy</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigauthsaml">auth.saml</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigdashboards">dashboards</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigdatabase">database</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigdataproxy">dataproxy</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigexternal_image_storage">external_image_storage</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigexternal_image_storageazure_blob">external_image_storage.azure_blob</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigexternal_image_storagegcs">external_image_storage.gcs</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigexternal_image_storages3">external_image_storage.s3</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigexternal_image_storagewebdav">external_image_storage.webdav</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigfeature_toggles">feature_toggles</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfiglive">live</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfiglog">log</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfiglogconsole">log.console</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfiglogfrontend">log.frontend</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigmetrics">metrics</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigmetricsgraphite">metrics.graphite</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigpanels">panels</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigpaths">paths</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigplugins">plugins</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigremote_cache">remote_cache</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigrendering">rendering</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigsecurity">security</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigserver">server</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigsmtp">smtp</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigsnapshots">snapshots</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigunified_alerting">unified_alerting</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecgrafanainstancespecconfigusers">users</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.alerting
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>concurrent_render_limit</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>error_or_timeout</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>evaluation_timeout_seconds</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>execute_alerts</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>max_attempts</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>nodata_or_nullvalues</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>notification_timeout_seconds</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.analytics
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>check_for_updates</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>google_analytics_ua_id</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>reporting_enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.auth
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>disable_login_form</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>disable_signout_menu</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>login_cookie_name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>login_maximum_inactive_lifetime_days</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>login_maximum_inactive_lifetime_duration</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>login_maximum_lifetime_days</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>login_maximum_lifetime_duration</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>oauth_auto_login</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>signout_redirect_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sigv4_auth_enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>token_rotation_interval_minutes</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.auth.anonymous
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>org_name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>org_role</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.auth.azuread
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>allow_sign_up</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allowed_domains</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allowed_groups</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>auth_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_id</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_secret</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>scopes</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>token_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.auth.basic
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.auth.generic_oauth
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>allow_sign_up</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allowed_domains</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>api_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>auth_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_id</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_secret</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>email_attribute_path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>role_attribute_path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>role_attribute_strict</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>scopes</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tls_client_ca</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tls_client_cert</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tls_client_key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tls_skip_verify_insecure</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>token_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.auth.github
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>allow_sign_up</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allowed_organizations</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>api_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>auth_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_id</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_secret</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>scopes</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>team_ids</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>token_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.auth.gitlab
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>allow_sign_up</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allowed_groups</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>api_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>auth_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_id</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_secret</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>scopes</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>token_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.auth.google
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>allow_sign_up</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allowed_domains</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>auth_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_id</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_secret</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>scopes</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>token_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.auth.ldap
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>allow_sign_up</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>config_file</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.auth.okta
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>allow_sign_up</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allowed_domains</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allowed_groups</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>api_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>auth_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_id</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_secret</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>role_attribute_path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>role_attribute_strict</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>scopes</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>token_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.auth.proxy
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>auto_sign_up</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable_login_token</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>header_name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>header_property</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>headers</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>ldap_sync_ttl</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>whitelist</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.auth.saml
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>allow_idp_initiated</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allowed_organizations</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>assertion_attribute_email</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>assertion_attribute_groups</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>assertion_attribute_login</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>assertion_attribute_name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>assertion_attribute_org</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>assertion_attribute_role</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certificate_path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>idp_metadata_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>max_issue_delay</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>metadata_valid_duration</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>org_mapping</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>private_key_path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>relay_state</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>role_values_admin</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>role_values_editor</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>role_values_grafana_admin</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>signature_algorithm</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>single_logout</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.dashboards
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>default_home_dashboard_path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>versions_to_keep</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.database
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>ca_cert_path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>cache_mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_cert_path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>client_key_path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>conn_max_lifetime</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>host</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>log_queries</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>max_idle_conn</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>max_open_conn</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>password</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>server_cert_name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>ssl_mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.dataproxy
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>logging</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>send_user_header</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>timeout</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.external_image_storage
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>provider</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.external_image_storage.azure_blob
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>account_key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>account_name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>container_name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.external_image_storage.gcs
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>bucket</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>key_file</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.external_image_storage.s3
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>access_key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>bucket</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>bucket_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>region</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>secret_key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.external_image_storage.webdav
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>password</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>public_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>username</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.feature_toggles
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.live
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>allowed_origins</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>max_connections</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.log
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>filters</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>level</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mode</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.log.console
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>format</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>level</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.log.frontend
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>custom_endpoint</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>log_endpoint_burst_limit</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>log_endpoint_requests_per_second_limit</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sample_rate</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sentry_dsn</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.metrics
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>basic_auth_password</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>basic_auth_username</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>interval_seconds</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.metrics.graphite
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>address</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>prefix</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.panels
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>disable_sanitize_html</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.paths
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>temp_data_lifetime</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.plugins
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable_alpha</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.remote_cache
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>connstr</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.rendering
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>callback_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>concurrent_render_request_limit</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>server_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.security
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>admin_password</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>admin_user</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allow_embedding</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>cookie_samesite</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>cookie_secure</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>data_source_proxy_whitelist</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>disable_gravatar</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>login_remember_days</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>secret_key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>strict_transport_security</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>strict_transport_security_max_age_seconds</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>strict_transport_security_preload</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>strict_transport_security_subdomains</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>x_content_type_options</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>x_xss_protection</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.server
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>cert_file</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>cert_key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>domain</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable_gzip</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enforce_domain</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>http_addr</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>http_port</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>root_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>router_logging</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>serve_from_sub_path</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>socket</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>static_root_path</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.smtp
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>cert_file</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>ehlo_identity</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>from_address</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>from_name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>host</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>key_file</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>password</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>skip_verify</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>user</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.snapshots
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>external_enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>external_snapshot_name</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>external_snapshot_url</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>snapshot_remove_expired</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.unified_alerting
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>evaluation_timeout</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>execute_alerts</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>max_attempts</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>min_interval</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.grafana.instanceSpec.config.users
+<sup><sup>[↩ Parent](#flowcollectorspecgrafanainstancespecconfig)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>allow_org_create</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>allow_sign_up</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>auto_assign_org</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>auto_assign_org_id</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>auto_assign_org_role</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>default_theme</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>editors_can_admin</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>login_hint</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>password_hint</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>viewers_can_edit</b></td>
+        <td>boolean</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### FlowCollector.spec.ipfix
 <sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
 
@@ -2533,12 +5530,1476 @@ IPFIX contains the settings of an IPFIX-based flow reporter when the "agent" pro
 </table>
 
 
+### FlowCollector.spec.kafka
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+Kafka contains settings related to the kafka configuration. It will create subscription to install Strimzi Operator. This feature is experimental, use it for development only
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespec">instanceSpec</a></b></td>
+        <td>object</td>
+        <td>
+          InstanceSpec is the Spec section of Kafka instance<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>topicName</b></td>
+        <td>string</td>
+        <td>
+          The name of the topic.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkatopicspec">topicSpec</a></b></td>
+        <td>object</td>
+        <td>
+          InstanceSpec is the Spec section of Kafka topic<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec
+<sup><sup>[↩ Parent](#flowcollectorspeckafka)</sup></sup>
+
+
+
+InstanceSpec is the Spec section of Kafka instance
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafka">kafka</a></b></td>
+        <td>object</td>
+        <td>
+          Configuration of the Kafka cluster.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeczookeeper">zookeeper</a></b></td>
+        <td>object</td>
+        <td>
+          Configuration of the ZooKeeper cluster.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Should this feature be enabled<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespec)</sup></sup>
+
+
+
+Configuration of the Kafka cluster.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindex">listeners</a></b></td>
+        <td>[]object</td>
+        <td>
+          Configures listeners of Kafka brokers.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>replicas</b></td>
+        <td>integer</td>
+        <td>
+          The number of pods in the cluster.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkastorage">storage</a></b></td>
+        <td>object</td>
+        <td>
+          Storage configuration (disk). Cannot be updated.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>config</b></td>
+        <td>JSON</td>
+        <td>
+          Kafka broker config properties<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>version</b></td>
+        <td>string</td>
+        <td>
+          The kafka broker version. Defaults to {DefaultKafkaVersion}. Consult the user documentation to understand the process required to upgrade or downgrade the version.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafka)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the listener. The name will be used to identify the listener and the related Kubernetes objects. The name has to be unique within given a Kafka cluster. The name can consist of lowercase characters and numbers and be up to 11 characters long.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>port</b></td>
+        <td>integer</td>
+        <td>
+          Port number used by the listener inside Kafka. The port number has to be unique within a given Kafka cluster. Allowed port numbers are 9092 and higher with the exception of ports 9404 and 9999, which are already used for Prometheus and JMX. Depending on the listener type, the port number might not be the same as the port number that connects Kafka clients.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>tls</b></td>
+        <td>boolean</td>
+        <td>
+          Enables TLS encryption on the listener. This is a required property.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          Type of the listener. Currently the supported types are `internal`, `route`, `loadbalancer`, `nodeport` and `ingress`. 
+ * `internal` type exposes Kafka internally only within the Kubernetes cluster. * `route` type uses OpenShift Routes to expose Kafka. * `loadbalancer` type uses LoadBalancer type services to expose Kafka. * `nodeport` type uses NodePort type services to expose Kafka. * `ingress` type uses Kubernetes Nginx Ingress to expose Kafka.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexauthentication">authentication</a></b></td>
+        <td>object</td>
+        <td>
+          Authentication configuration for this listener.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexconfiguration">configuration</a></b></td>
+        <td>object</td>
+        <td>
+          Additional listener configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexnetworkpolicypeersindex">networkPolicyPeers</a></b></td>
+        <td>[]object</td>
+        <td>
+          List of peers which should be able to connect to this listener. Peers in this list are combined using a logical OR operation. If this field is empty or missing, all connections will be allowed for this listener. If this field is present and contains at least one item, the listener only allows the traffic which matches at least one item in this list.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].authentication
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindex)</sup></sup>
+
+
+
+Authentication configuration for this listener.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          Authentication type. `oauth` type uses SASL OAUTHBEARER Authentication. `scram-sha-512` type uses SASL SCRAM-SHA-512 Authentication. `tls` type uses TLS Client Authentication. `tls` type is supported only on TLS listeners.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>accessTokenIsJwt</b></td>
+        <td>boolean</td>
+        <td>
+          Configure whether the access token is treated as JWT. This must be set to `false` if the authorization server returns opaque tokens. Defaults to `true`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>checkAccessTokenType</b></td>
+        <td>boolean</td>
+        <td>
+          Configure whether the access token type check is performed or not. This should be set to `false` if the authorization server does not include 'typ' claim in JWT token. Defaults to `true`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>checkAudience</b></td>
+        <td>boolean</td>
+        <td>
+          Enable or disable audience checking. Audience checks identify the recipients of tokens. If audience checking is enabled, the OAuth Client ID also has to be configured using the `clientId` property. The Kafka broker will reject tokens that do not have its `clientId` in their `aud` (audience) claim.Default value is `false`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>checkIssuer</b></td>
+        <td>boolean</td>
+        <td>
+          Enable or disable issuer checking. By default issuer is checked using the value configured by `validIssuerUri`. Default value is `true`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>clientAudience</b></td>
+        <td>string</td>
+        <td>
+          The audience to use when making requests to the authorization server's token endpoint. Used for inter-broker authentication and for configuring OAuth 2.0 over PLAIN using the `clientId` and `secret` method.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>clientId</b></td>
+        <td>string</td>
+        <td>
+          OAuth Client ID which the Kafka broker can use to authenticate against the authorization server and use the introspect endpoint URI.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>clientScope</b></td>
+        <td>string</td>
+        <td>
+          The scope to use when making requests to the authorization server's token endpoint. Used for inter-broker authentication and for configuring OAuth 2.0 over PLAIN using the `clientId` and `secret` method.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexauthenticationclientsecret">clientSecret</a></b></td>
+        <td>object</td>
+        <td>
+          Link to Kubernetes Secret containing the OAuth client secret which the Kafka broker can use to authenticate against the authorization server and use the introspect endpoint URI.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>customClaimCheck</b></td>
+        <td>string</td>
+        <td>
+          JsonPath filter query to be applied to the JWT token or to the response of the introspection endpoint for additional token validation. Not set by default.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>disableTlsHostnameVerification</b></td>
+        <td>boolean</td>
+        <td>
+          Enable or disable TLS hostname verification. Default value is `false`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enableECDSA</b></td>
+        <td>boolean</td>
+        <td>
+          Enable or disable ECDSA support by installing BouncyCastle crypto provider. ECDSA support is always enabled. The BouncyCastle libraries are no longer packaged with Strimzi. Value is ignored.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enableOauthBearer</b></td>
+        <td>boolean</td>
+        <td>
+          Enable or disable OAuth authentication over SASL_OAUTHBEARER. Default value is `true`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enablePlain</b></td>
+        <td>boolean</td>
+        <td>
+          Enable or disable OAuth authentication over SASL_PLAIN. There is no re-authentication support when this mechanism is used. Default value is `false`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>fallbackUserNameClaim</b></td>
+        <td>string</td>
+        <td>
+          The fallback username claim to be used for the user id if the claim specified by `userNameClaim` is not present. This is useful when `client_credentials` authentication only results in the client id being provided in another claim. It only takes effect if `userNameClaim` is set.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>fallbackUserNamePrefix</b></td>
+        <td>string</td>
+        <td>
+          The prefix to use with the value of `fallbackUserNameClaim` to construct the user id. This only takes effect if `fallbackUserNameClaim` is true, and the value is present for the claim. Mapping usernames and client ids into the same user id space is useful in preventing name collisions.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>introspectionEndpointUri</b></td>
+        <td>string</td>
+        <td>
+          URI of the token introspection endpoint which can be used to validate opaque non-JWT tokens.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>jwksEndpointUri</b></td>
+        <td>string</td>
+        <td>
+          URI of the JWKS certificate endpoint, which can be used for local JWT validation.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>jwksExpirySeconds</b></td>
+        <td>integer</td>
+        <td>
+          Configures how often are the JWKS certificates considered valid. The expiry interval has to be at least 60 seconds longer then the refresh interval specified in `jwksRefreshSeconds`. Defaults to 360 seconds.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>jwksMinRefreshPauseSeconds</b></td>
+        <td>integer</td>
+        <td>
+          The minimum pause between two consecutive refreshes. When an unknown signing key is encountered the refresh is scheduled immediately, but will always wait for this minimum pause. Defaults to 1 second.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>jwksRefreshSeconds</b></td>
+        <td>integer</td>
+        <td>
+          Configures how often are the JWKS certificates refreshed. The refresh interval has to be at least 60 seconds shorter then the expiry interval specified in `jwksExpirySeconds`. Defaults to 300 seconds.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>maxSecondsWithoutReauthentication</b></td>
+        <td>integer</td>
+        <td>
+          Maximum number of seconds the authenticated session remains valid without re-authentication. This enables Apache Kafka re-authentication feature, and causes sessions to expire when the access token expires. If the access token expires before max time or if max time is reached, the client has to re-authenticate, otherwise the server will drop the connection. Not set by default - the authenticated session does not expire when the access token expires. This option only applies to SASL_OAUTHBEARER authentication mechanism (when `enableOauthBearer` is `true`).<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexauthenticationtlstrustedcertificatesindex">tlsTrustedCertificates</a></b></td>
+        <td>[]object</td>
+        <td>
+          Trusted certificates for TLS connection to the OAuth server.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tokenEndpointUri</b></td>
+        <td>string</td>
+        <td>
+          URI of the Token Endpoint to use with SASL_PLAIN mechanism when the client authenticates with `clientId` and a `secret`. If set, the client can authenticate over SASL_PLAIN by either setting `username` to `clientId`, and setting `password` to client `secret`, or by setting `username` to account username, and `password` to access token prefixed with `$accessToken:`. If this option is not set, the `password` is always interpreted as an access token (without a prefix), and `username` as the account username (a so called 'no-client-credentials' mode).<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>userInfoEndpointUri</b></td>
+        <td>string</td>
+        <td>
+          URI of the User Info Endpoint to use as a fallback to obtaining the user id when the Introspection Endpoint does not return information that can be used for the user id.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>userNameClaim</b></td>
+        <td>string</td>
+        <td>
+          Name of the claim from the JWT authentication token, Introspection Endpoint response or User Info Endpoint response which will be used to extract the user id. Defaults to `sub`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>validIssuerUri</b></td>
+        <td>string</td>
+        <td>
+          URI of the token issuer used for authentication.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>validTokenType</b></td>
+        <td>string</td>
+        <td>
+          Valid value for the `token_type` attribute returned by the Introspection Endpoint. No default value, and not checked by default.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].authentication.clientSecret
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindexauthentication)</sup></sup>
+
+
+
+Link to Kubernetes Secret containing the OAuth client secret which the Kafka broker can use to authenticate against the authorization server and use the introspect endpoint URI.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The key under which the secret value is stored in the Kubernetes Secret.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>secretName</b></td>
+        <td>string</td>
+        <td>
+          The name of the Kubernetes Secret containing the secret value.<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].authentication.tlsTrustedCertificates[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindexauthentication)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certificate</b></td>
+        <td>string</td>
+        <td>
+          The name of the file certificate in the Secret.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>secretName</b></td>
+        <td>string</td>
+        <td>
+          The name of the Secret containing the certificate.<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].configuration
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindex)</sup></sup>
+
+
+
+Additional listener configuration.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexconfigurationbootstrap">bootstrap</a></b></td>
+        <td>object</td>
+        <td>
+          Bootstrap configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexconfigurationbrokercertchainandkey">brokerCertChainAndKey</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the `Secret` which holds the certificate and private key pair which will be used for this listener. The certificate can optionally contain the whole chain. This field can be used only with listeners with enabled TLS encryption.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexconfigurationbrokersindex">brokers</a></b></td>
+        <td>[]object</td>
+        <td>
+          Per-broker configurations.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>class</b></td>
+        <td>string</td>
+        <td>
+          Configures the `Ingress` class that defines which `Ingress` controller will be used. This field can be used only with `ingress` type listener. If not specified, the default Ingress controller will be used.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>externalTrafficPolicy</b></td>
+        <td>string</td>
+        <td>
+          Specifies whether the service routes external traffic to node-local or cluster-wide endpoints. `Cluster` may cause a second hop to another node and obscures the client source IP. `Local` avoids a second hop for LoadBalancer and Nodeport type services and preserves the client source IP (when supported by the infrastructure). If unspecified, Kubernetes will use `Cluster` as the default.This field can be used only with `loadbalancer` or `nodeport` type listener.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>finalizers</b></td>
+        <td>[]string</td>
+        <td>
+          A list of finalizers which will be configured for the `LoadBalancer` type Services created for this listener. If supported by the platform, the finalizer `service.kubernetes.io/load-balancer-cleanup` to make sure that the external load balancer is deleted together with the service.For more information, see https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#garbage-collecting-load-balancers. This field can be used only with `loadbalancer` type listeners.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>ipFamilies</b></td>
+        <td>[]string</td>
+        <td>
+          Specifies the IP Families used by the service. Available options are `IPv4` and `IPv6. If unspecified, Kubernetes will choose the default value based on the `ipFamilyPolicy` setting. Available on Kubernetes 1.20 and newer.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>ipFamilyPolicy</b></td>
+        <td>string</td>
+        <td>
+          Specifies the IP Family Policy used by the service. Available options are `SingleStack`, `PreferDualStack` and `RequireDualStack`. `SingleStack` is for a single IP family. `PreferDualStack` is for two IP families on dual-stack configured clusters or a single IP family on single-stack clusters. `RequireDualStack` fails unless there are two IP families on dual-stack configured clusters. If unspecified, Kubernetes will choose the default value based on the service type. Available on Kubernetes 1.20 and newer.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>loadBalancerSourceRanges</b></td>
+        <td>[]string</td>
+        <td>
+          A list of CIDR ranges (for example `10.0.0.0/8` or `130.211.204.1/32`) from which clients can connect to load balancer type listeners. If supported by the platform, traffic through the loadbalancer is restricted to the specified CIDR ranges. This field is applicable only for loadbalancer type services and is ignored if the cloud provider does not support the feature. For more information, see https://v1-17.docs.kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/. This field can be used only with `loadbalancer` type listener.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>maxConnectionCreationRate</b></td>
+        <td>integer</td>
+        <td>
+          The maximum connection creation rate we allow in this listener at any time. New connections will be throttled if the limit is reached.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>maxConnections</b></td>
+        <td>integer</td>
+        <td>
+          The maximum number of connections we allow for this listener in the broker at any time. New connections are blocked if the limit is reached.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>preferredNodePortAddressType</b></td>
+        <td>string</td>
+        <td>
+          Defines which address type should be used as the node address. Available types are: `ExternalDNS`, `ExternalIP`, `InternalDNS`, `InternalIP` and `Hostname`. By default, the addresses will be used in the following order (the first one found will be used): 
+ * `ExternalDNS` * `ExternalIP` * `InternalDNS` * `InternalIP` * `Hostname` 
+ This field is used to select the preferred address type, which is checked first. If no address is found for this address type, the other types are checked in the default order. This field can only be used with `nodeport` type listener.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>useServiceDnsDomain</b></td>
+        <td>boolean</td>
+        <td>
+          Configures whether the Kubernetes service DNS domain should be used or not. If set to `true`, the generated addresses will contain the service DNS domain suffix (by default `.cluster.local`, can be configured using environment variable `KUBERNETES_SERVICE_DNS_DOMAIN`). Defaults to `false`.This field can be used only with `internal` type listener.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].configuration.bootstrap
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindexconfiguration)</sup></sup>
+
+
+
+Bootstrap configuration.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>alternativeNames</b></td>
+        <td>[]string</td>
+        <td>
+          Additional alternative names for the bootstrap service. The alternative names will be added to the list of subject alternative names of the TLS certificates.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>annotations</b></td>
+        <td>JSON</td>
+        <td>
+          Annotations that will be added to the `Ingress`, `Route`, or `Service` resource. You can use this field to configure DNS providers such as External DNS. This field can be used only with `loadbalancer`, `nodeport`, `route`, or `ingress` type listeners.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>host</b></td>
+        <td>string</td>
+        <td>
+          The bootstrap host. This field will be used in the Ingress resource or in the Route resource to specify the desired hostname. This field can be used only with `route` (optional) or `ingress` (required) type listeners.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>labels</b></td>
+        <td>JSON</td>
+        <td>
+          Labels that will be added to the `Ingress`, `Route`, or `Service` resource. This field can be used only with `loadbalancer`, `nodeport`, `route`, or `ingress` type listeners.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>loadBalancerIP</b></td>
+        <td>string</td>
+        <td>
+          The loadbalancer is requested with the IP address specified in this field. This feature depends on whether the underlying cloud provider supports specifying the `loadBalancerIP` when a load balancer is created. This field is ignored if the cloud provider does not support the feature.This field can be used only with `loadbalancer` type listener.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>nodePort</b></td>
+        <td>integer</td>
+        <td>
+          Node port for the bootstrap service. This field can be used only with `nodeport` type listener.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].configuration.brokerCertChainAndKey
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindexconfiguration)</sup></sup>
+
+
+
+Reference to the `Secret` which holds the certificate and private key pair which will be used for this listener. The certificate can optionally contain the whole chain. This field can be used only with listeners with enabled TLS encryption.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certificate</b></td>
+        <td>string</td>
+        <td>
+          The name of the file certificate in the Secret.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          The name of the private key in the Secret.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>secretName</b></td>
+        <td>string</td>
+        <td>
+          The name of the Secret containing the certificate.<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].configuration.brokers[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindexconfiguration)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>broker</b></td>
+        <td>integer</td>
+        <td>
+          ID of the kafka broker (broker identifier). Broker IDs start from 0 and correspond to the number of broker replicas.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>advertisedHost</b></td>
+        <td>string</td>
+        <td>
+          The host name which will be used in the brokers' `advertised.brokers`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>advertisedPort</b></td>
+        <td>integer</td>
+        <td>
+          The port number which will be used in the brokers' `advertised.brokers`.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>annotations</b></td>
+        <td>JSON</td>
+        <td>
+          Annotations that will be added to the `Ingress` or `Service` resource. You can use this field to configure DNS providers such as External DNS. This field can be used only with `loadbalancer`, `nodeport`, or `ingress` type listeners.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>host</b></td>
+        <td>string</td>
+        <td>
+          The broker host. This field will be used in the Ingress resource or in the Route resource to specify the desired hostname. This field can be used only with `route` (optional) or `ingress` (required) type listeners.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>labels</b></td>
+        <td>JSON</td>
+        <td>
+          Labels that will be added to the `Ingress`, `Route`, or `Service` resource. This field can be used only with `loadbalancer`, `nodeport`, `route`, or `ingress` type listeners.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>loadBalancerIP</b></td>
+        <td>string</td>
+        <td>
+          The loadbalancer is requested with the IP address specified in this field. This feature depends on whether the underlying cloud provider supports specifying the `loadBalancerIP` when a load balancer is created. This field is ignored if the cloud provider does not support the feature.This field can be used only with `loadbalancer` type listener.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>nodePort</b></td>
+        <td>integer</td>
+        <td>
+          Node port for the per-broker service. This field can be used only with `nodeport` type listener.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].networkPolicyPeers[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexnetworkpolicypeersindexipblock">ipBlock</a></b></td>
+        <td>object</td>
+        <td>
+          IpBlock corresponds to the JSON schema field "ipBlock".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexnetworkpolicypeersindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          NamespaceSelector corresponds to the JSON schema field "namespaceSelector".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexnetworkpolicypeersindexpodselector">podSelector</a></b></td>
+        <td>object</td>
+        <td>
+          PodSelector corresponds to the JSON schema field "podSelector".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].networkPolicyPeers[index].ipBlock
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindexnetworkpolicypeersindex)</sup></sup>
+
+
+
+IpBlock corresponds to the JSON schema field "ipBlock".
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>cidr</b></td>
+        <td>string</td>
+        <td>
+          Cidr corresponds to the JSON schema field "cidr".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>except</b></td>
+        <td>[]string</td>
+        <td>
+          Except corresponds to the JSON schema field "except".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].networkPolicyPeers[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindexnetworkpolicypeersindex)</sup></sup>
+
+
+
+NamespaceSelector corresponds to the JSON schema field "namespaceSelector".
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexnetworkpolicypeersindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          MatchExpressions corresponds to the JSON schema field "matchExpressions".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>JSON</td>
+        <td>
+          MatchLabels corresponds to the JSON schema field "matchLabels".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].networkPolicyPeers[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindexnetworkpolicypeersindexnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          Key corresponds to the JSON schema field "key".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          Operator corresponds to the JSON schema field "operator".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          Values corresponds to the JSON schema field "values".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].networkPolicyPeers[index].podSelector
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindexnetworkpolicypeersindex)</sup></sup>
+
+
+
+PodSelector corresponds to the JSON schema field "podSelector".
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkalistenersindexnetworkpolicypeersindexpodselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          MatchExpressions corresponds to the JSON schema field "matchExpressions".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>JSON</td>
+        <td>
+          MatchLabels corresponds to the JSON schema field "matchLabels".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.listeners[index].networkPolicyPeers[index].podSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkalistenersindexnetworkpolicypeersindexpodselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          Key corresponds to the JSON schema field "key".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          Operator corresponds to the JSON schema field "operator".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          Values corresponds to the JSON schema field "values".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.storage
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafka)</sup></sup>
+
+
+
+Storage configuration (disk). Cannot be updated.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          Storage type, must be either 'ephemeral', 'persistent-claim', or 'jbod'.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>class</b></td>
+        <td>string</td>
+        <td>
+          The storage class to use for dynamic volume allocation.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>deleteClaim</b></td>
+        <td>boolean</td>
+        <td>
+          Specifies if the persistent volume claim has to be deleted when the cluster is un-deployed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>id</b></td>
+        <td>integer</td>
+        <td>
+          Storage identification number. It is mandatory only for storage volumes defined in a storage of type 'jbod'.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkastorageoverridesindex">overrides</a></b></td>
+        <td>[]object</td>
+        <td>
+          Overrides for individual brokers. The `overrides` field allows to specify a different configuration for different brokers.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>selector</b></td>
+        <td>JSON</td>
+        <td>
+          Specifies a specific persistent volume to use. It contains key:value pairs representing labels for selecting such a volume.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>size</b></td>
+        <td>string</td>
+        <td>
+          When type=persistent-claim, defines the size of the persistent volume claim (i.e 1Gi). Mandatory when type=persistent-claim.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sizeLimit</b></td>
+        <td>string</td>
+        <td>
+          When type=ephemeral, defines the total amount of local storage required for this EmptyDir volume (for example 1Gi).<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkastoragevolumesindex">volumes</a></b></td>
+        <td>[]object</td>
+        <td>
+          List of volumes as Storage objects representing the JBOD disks array.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.storage.overrides[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkastorage)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>broker</b></td>
+        <td>integer</td>
+        <td>
+          Id of the kafka broker (broker identifier).<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>class</b></td>
+        <td>string</td>
+        <td>
+          The storage class to use for dynamic volume allocation for this broker.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.storage.volumes[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkastorage)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          Storage type, must be either 'ephemeral' or 'persistent-claim'.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>class</b></td>
+        <td>string</td>
+        <td>
+          The storage class to use for dynamic volume allocation.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>deleteClaim</b></td>
+        <td>boolean</td>
+        <td>
+          Specifies if the persistent volume claim has to be deleted when the cluster is un-deployed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>id</b></td>
+        <td>integer</td>
+        <td>
+          Storage identification number. It is mandatory only for storage volumes defined in a storage of type 'jbod'.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeckafkastoragevolumesindexoverridesindex">overrides</a></b></td>
+        <td>[]object</td>
+        <td>
+          Overrides for individual brokers. The `overrides` field allows to specify a different configuration for different brokers.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>selector</b></td>
+        <td>JSON</td>
+        <td>
+          Specifies a specific persistent volume to use. It contains key:value pairs representing labels for selecting such a volume.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>size</b></td>
+        <td>string</td>
+        <td>
+          When type=persistent-claim, defines the size of the persistent volume claim (i.e 1Gi). Mandatory when type=persistent-claim.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sizeLimit</b></td>
+        <td>string</td>
+        <td>
+          When type=ephemeral, defines the total amount of local storage required for this EmptyDir volume (for example 1Gi).<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.kafka.storage.volumes[index].overrides[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeckafkastoragevolumesindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>broker</b></td>
+        <td>integer</td>
+        <td>
+          Id of the kafka broker (broker identifier).<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>class</b></td>
+        <td>string</td>
+        <td>
+          The storage class to use for dynamic volume allocation for this broker.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.zookeeper
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespec)</sup></sup>
+
+
+
+Configuration of the ZooKeeper cluster.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>replicas</b></td>
+        <td>integer</td>
+        <td>
+          The number of pods in the cluster.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeczookeeperstorage">storage</a></b></td>
+        <td>object</td>
+        <td>
+          Storage configuration (disk). Cannot be updated.<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.zookeeper.storage
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeczookeeper)</sup></sup>
+
+
+
+Storage configuration (disk). Cannot be updated.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          Storage type, must be either 'ephemeral' or 'persistent-claim'.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>class</b></td>
+        <td>string</td>
+        <td>
+          The storage class to use for dynamic volume allocation.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>deleteClaim</b></td>
+        <td>boolean</td>
+        <td>
+          Specifies if the persistent volume claim has to be deleted when the cluster is un-deployed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>id</b></td>
+        <td>integer</td>
+        <td>
+          Storage identification number. It is mandatory only for storage volumes defined in a storage of type 'jbod'.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkainstancespeczookeeperstorageoverridesindex">overrides</a></b></td>
+        <td>[]object</td>
+        <td>
+          Overrides for individual brokers. The `overrides` field allows to specify a different configuration for different brokers.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>selector</b></td>
+        <td>JSON</td>
+        <td>
+          Specifies a specific persistent volume to use. It contains key:value pairs representing labels for selecting such a volume.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>size</b></td>
+        <td>string</td>
+        <td>
+          When type=persistent-claim, defines the size of the persistent volume claim (i.e 1Gi). Mandatory when type=persistent-claim.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sizeLimit</b></td>
+        <td>string</td>
+        <td>
+          When type=ephemeral, defines the total amount of local storage required for this EmptyDir volume (for example 1Gi).<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.instanceSpec.zookeeper.storage.overrides[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkainstancespeczookeeperstorage)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>broker</b></td>
+        <td>integer</td>
+        <td>
+          Id of the kafka broker (broker identifier).<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>class</b></td>
+        <td>string</td>
+        <td>
+          The storage class to use for dynamic volume allocation for this broker.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.topicSpec
+<sup><sup>[↩ Parent](#flowcollectorspeckafka)</sup></sup>
+
+
+
+InstanceSpec is the Spec section of Kafka topic
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>config</b></td>
+        <td>JSON</td>
+        <td>
+          The topic configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>partitions</b></td>
+        <td>integer</td>
+        <td>
+          The number of partitions the topic should have. This cannot be decreased after topic creation. It can be increased after topic creation, but it is important to understand the consequences that has, especially for topics with semantic partitioning. When absent this will default to the broker configuration for `num.partitions`.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>replicas</b></td>
+        <td>integer</td>
+        <td>
+          The number of replicas the topic should have. When absent this will default to the broker configuration for `default.replication.factor`.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### FlowCollector.spec.loki
 <sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
 
 
 
-Loki contains settings related to the loki client
+Loki contains settings related to the loki configuration. It will create subscription to install Loki Operator. This feature is experimental, use it for development only
 
 <table>
     <thead>
@@ -2567,6 +7028,13 @@ Loki contains settings related to the loki client
           BatchWait is max time to wait before sending a batch<br/>
           <br/>
             <i>Default</i>: 1s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeclokiinstancespec">instanceSpec</a></b></td>
+        <td>object</td>
+        <td>
+          InstanceSpec is the Spec section of LokiStack instance. Experimental feature. If provided, the Loki operator will be automatically installed. At this moment, the Loki operator itself is experimental and hasn't been officially released by Grafana.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2602,7 +7070,7 @@ Loki contains settings related to the loki client
         <td><b>querierUrl</b></td>
         <td>string</td>
         <td>
-          QuerierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are int he same host).<br/>
+          QuerierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are int he same host). it will be ignored if instanceSpec is specified<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2612,6 +7080,15 @@ Loki contains settings related to the loki client
           StaticLabels is a map of common labels to set on each flow<br/>
           <br/>
             <i>Default</i>: map[app:netobserv-flowcollector]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tenantID</b></td>
+        <td>string</td>
+        <td>
+          TenantID is the Loki X-Scope-OrgID that identifies the tenant for each request. it will be ignored if instanceSpec is specified<br/>
+          <br/>
+            <i>Default</i>: netobserv<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2636,9 +7113,209 @@ Loki contains settings related to the loki client
         <td><b>url</b></td>
         <td>string</td>
         <td>
-          URL is the address of an existing Loki service to push the flows to.<br/>
+          URL is the address of an existing Loki service to push the flows to. it will be ignored if instanceSpec is specified<br/>
           <br/>
             <i>Default</i>: http://loki:3100/<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.instanceSpec
+<sup><sup>[↩ Parent](#flowcollectorspecloki)</sup></sup>
+
+
+
+InstanceSpec is the Spec section of LokiStack instance. Experimental feature. If provided, the Loki operator will be automatically installed. At this moment, the Loki operator itself is experimental and hasn't been officially released by Grafana.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>replicationFactor</b></td>
+        <td>integer</td>
+        <td>
+          ReplicationFactor defines the policy for log stream replication.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>size</b></td>
+        <td>enum</td>
+        <td>
+          Size defines one of the support Loki deployment scale out sizes.<br/>
+          <br/>
+            <i>Enum</i>: 1x.extra-small, 1x.small, 1x.medium<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeclokiinstancespecstorage">storage</a></b></td>
+        <td>object</td>
+        <td>
+          Storage defines the spec for the object storage endpoint to store logs.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>storageClassName</b></td>
+        <td>string</td>
+        <td>
+          Storage class name defines the storage class for ingester/querier PVCs.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Should this feature be enabled<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>managementState</b></td>
+        <td>enum</td>
+        <td>
+          ManagementState defines if the CR should be managed by the operator or not. Default is managed.<br/>
+          <br/>
+            <i>Enum</i>: Managed, Unmanaged<br/>
+            <i>Default</i>: Managed<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.instanceSpec.storage
+<sup><sup>[↩ Parent](#flowcollectorspeclokiinstancespec)</sup></sup>
+
+
+
+Storage defines the spec for the object storage endpoint to store logs.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeclokiinstancespecstoragesecret">secret</a></b></td>
+        <td>object</td>
+        <td>
+          Secret for object storage authentication. Name of a secret in the same namespace as the cluster logging operator.<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.instanceSpec.storage.secret
+<sup><sup>[↩ Parent](#flowcollectorspeclokiinstancespecstorage)</sup></sup>
+
+
+
+Secret for object storage authentication. Name of a secret in the same namespace as the cluster logging operator.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of a secret in the namespace configured for object storage secrets.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type of object storage that should be used<br/>
+          <br/>
+            <i>Enum</i>: azure, gcs, s3, swift<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+Prometheus contains settings related to the prometheus configuration
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprometheusinstancespec">instanceSpec</a></b></td>
+        <td>object</td>
+        <td>
+          InstanceSpec is the Spec section of Prometheus instance<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.instanceSpec
+<sup><sup>[↩ Parent](#flowcollectorspecprometheus)</sup></sup>
+
+
+
+InstanceSpec is the Spec section of Prometheus instance
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Should this feature be enabled<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>replicas</b></td>
+        <td>integer</td>
+        <td>
+          Number of replicas of each shard to deploy for a Prometheus deployment. Number of replicas multiplied by shards is the total number of Pods created.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
         </td>
         <td>false</td>
       </tr></tbody>

@@ -16,8 +16,12 @@ limitations under the License.
 package v1alpha1
 
 import (
+	sv1b2 "github.com/RedHatInsights/strimzi-client-go/apis/kafka.strimzi.io/v1beta2"
+	gv1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	lv1beta1 "github.com/grafana/loki/operator/api/v1beta1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
+	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -66,8 +70,23 @@ type FlowCollectorSpec struct {
 	// FlowlogsPipeline contains settings related to the flowlogs-pipeline component
 	FlowlogsPipeline FlowCollectorFLP `json:"flowlogsPipeline,omitempty"`
 
-	// Loki contains settings related to the loki client
+	// Loki contains settings related to the loki configuration.
+	// It will create subscription to install Loki Operator.
+	// This feature is experimental, use it for development only
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
+
+	// Kafka contains settings related to the kafka configuration.
+	// It will create subscription to install Strimzi Operator.
+	// This feature is experimental, use it for development only
+	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
+
+	// Grafana contains settings related to the grafana configuration.
+	// It will create subscription to install Grafana Operator.
+	// This feature is experimental, use it for development only
+	Grafana FlowCollectorGrafana `json:"grafana,omitempty"`
+
+	// Prometheus contains settings related to the prometheus configuration
+	Prometheus FlowCollectorPrometheus `json:"prometheus,omitempty"`
 
 	// ConsolePlugin contains settings related to the console dynamic plugin
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
@@ -219,7 +238,6 @@ type FlowCollectorFLP struct {
 	// EnableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes
 	EnableKubeProbes bool `json:"enableKubeProbes,omitempty"`
 }
-
 type FlowCollectorHPA struct {
 	// minReplicas is the lower limit for the number of replicas to which the autoscaler
 	// can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the
@@ -235,16 +253,28 @@ type FlowCollectorHPA struct {
 	Metrics []ascv2.MetricSpec `json:"metrics"`
 }
 
-// FlowCollectorLoki defines the desired state for FlowCollector's Loki client
+// FlowCollectorLoki defines the desired state for FlowCollector's Loki configuration
 type FlowCollectorLoki struct {
+	// InstanceSpec is the Spec section of LokiStack instance.
+	// Experimental feature. If provided, the Loki operator will be automatically installed.
+	// At this moment, the Loki operator itself is experimental and hasn't been officially released by Grafana.
+	InstanceSpec *LokiInstanceSpec `json:"instanceSpec,omitempty"`
+
 	//+kubebuilder:default:="http://loki:3100/"
 	// URL is the address of an existing Loki service to push the flows to.
+	// it will be ignored if instanceSpec is specified
 	URL string `json:"url,omitempty"`
+
+	//+kubebuilder:default:="netobserv"
+	// TenantID is the Loki X-Scope-OrgID that identifies the tenant for each request.
+	// it will be ignored if instanceSpec is specified
+	TenantID string `json:"tenantID,omitempty"`
 
 	//+kubebuilder:validation:optional
 	// QuerierURL specifies the address of the Loki querier service, in case it is different from the
 	// Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester
 	// and querier are int he same host).
+	// it will be ignored if instanceSpec is specified
 	QuerierURL string `json:"querierUrl,omitempty"`
 
 	//+kubebuilder:default:="1s"
@@ -281,6 +311,163 @@ type FlowCollectorLoki struct {
 	//+kubebuilder:default:="TimeFlowEnd"
 	// TimestampLabel is the label to use for time indexing in Loki. E.g. "TimeReceived", "TimeFlowStart", "TimeFlowEnd".
 	TimestampLabel string `json:"timestampLabel,omitempty"`
+}
+
+// LokiInstanceSpec defines the desired state for LokiStack instance configuration
+type LokiInstanceSpec struct {
+	//+kubebuilder:default:=false
+	// Should this feature be enabled
+	Enable bool `json:"enable,omitempty"`
+
+	// ManagementState defines if the CR should be managed by the operator or not.
+	// Default is managed.
+	//
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:default:=Managed
+	ManagementState lv1beta1.ManagementStateType `json:"managementState,omitempty"`
+
+	// Size defines one of the support Loki deployment scale out sizes.
+	//
+	// +required
+	// +kubebuilder:validation:Required
+	Size lv1beta1.LokiStackSizeType `json:"size"`
+
+	// Storage defines the spec for the object storage endpoint to store logs.
+	//
+	// +required
+	// +kubebuilder:validation:Required
+	Storage lv1beta1.ObjectStorageSpec `json:"storage"`
+
+	// Storage class name defines the storage class for ingester/querier PVCs.
+	//
+	// +required
+	// +kubebuilder:validation:Required
+	StorageClassName string `json:"storageClassName"`
+
+	// ReplicationFactor defines the policy for log stream replication.
+	//
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum:=1
+	ReplicationFactor int32 `json:"replicationFactor"`
+}
+
+// FlowCollectorKafka defines the desired state for FlowCollector's Kafka configuration
+type FlowCollectorKafka struct {
+	// InstanceSpec is the Spec section of Kafka instance
+	InstanceSpec *KafkaInstanceSpec `json:"instanceSpec,omitempty"`
+
+	// The name of the topic.
+	TopicName string `json:"topicName,omitempty"`
+
+	// InstanceSpec is the Spec section of Kafka topic
+	TopicSpec *KafkaTopicSpec `json:"topicSpec,omitempty"`
+}
+
+// KafkaInstanceSpec defines the desired state for Kafka instance configuration
+type KafkaInstanceSpec struct {
+	//+kubebuilder:default:=false
+	// Should this feature be enabled
+	Enable bool `json:"enable,omitempty"`
+
+	// Configuration of the Kafka cluster.
+	Kafka KafkaConfig `json:"kafka"`
+
+	// Configuration of the ZooKeeper cluster.
+	Zookeeper ZookeeperConfig `json:"zookeeper"`
+}
+
+type KafkaConfig struct {
+	// Kafka broker config properties
+	Config *apiextensions.JSON `json:"config,omitempty"`
+
+	// Configures listeners of Kafka brokers.
+	Listeners []sv1b2.KafkaSpecKafkaListenersElem `json:"listeners"`
+
+	// The number of pods in the cluster.
+	Replicas int32 `json:"replicas"`
+
+	// Storage configuration (disk). Cannot be updated.
+	Storage sv1b2.KafkaSpecKafkaStorage `json:"storage"`
+
+	// The kafka broker version. Defaults to {DefaultKafkaVersion}. Consult the user
+	// documentation to understand the process required to upgrade or downgrade the
+	// version.
+	Version *string `json:"version,omitempty"`
+}
+
+type ZookeeperConfig struct {
+	// The number of pods in the cluster.
+	Replicas int32 `json:"replicas"`
+
+	// Storage configuration (disk). Cannot be updated.
+	Storage sv1b2.KafkaSpecZookeeperStorage `json:"storage"`
+}
+
+// KafkaTopicSpec defines the desired state for Topic configuration
+type KafkaTopicSpec struct {
+	// The topic configuration.
+	Config *apiextensions.JSON `json:"config,omitempty"`
+
+	// The number of partitions the topic should have. This cannot be decreased after
+	// topic creation. It can be increased after topic creation, but it is important
+	// to understand the consequences that has, especially for topics with semantic
+	// partitioning. When absent this will default to the broker configuration for
+	// `num.partitions`.
+	Partitions *int32 `json:"partitions,omitempty"`
+
+	// The number of replicas the topic should have. When absent this will default to
+	// the broker configuration for `default.replication.factor`.
+	Replicas *int32 `json:"replicas,omitempty"`
+}
+
+// FlowCollectorGrafana defines the desired state for FlowCollector's Grafana configuration
+type FlowCollectorGrafana struct {
+	// InstanceSpec is the Spec section of Grafana instance
+	InstanceSpec *GrafanaInstanceSpec `json:"instanceSpec,omitempty"`
+
+	// DashboardSpec is the Spec section of Dashboard object
+	// will be ignored if instanceSpec is not set
+	DashboardSpec *GrafanaDashboardSpec `json:"dashboardSpec,omitempty"`
+}
+
+// GrafanaInstanceSpec defines the desired state for Grafana instance configuration
+type GrafanaInstanceSpec struct {
+	//+kubebuilder:default:=false
+	// Should this feature be enabled
+	Enable bool `json:"enable,omitempty"`
+
+	// GrafanaConfig is the configuration for grafana
+	Config gv1alpha1.GrafanaConfig `json:"config"`
+
+	//+kubebuilder:default:=false
+	// Ingress is a flag to create grafana route
+	Ingress bool `json:"ingress,omitempty"`
+}
+
+// GrafanaDashboardSpec defines the desired state for Dashboard configuration
+type GrafanaDashboardSpec struct {
+	// Selects a key from a ConfigMap.
+	ConfigMapRef *corev1.ConfigMapKeySelector `json:"configMapRef,omitempty"`
+}
+
+// FlowCollectorPrometheus defines the desired state for FlowCollector's Prometheus configuration
+type FlowCollectorPrometheus struct {
+	// InstanceSpec is the Spec section of Prometheus instance
+	InstanceSpec *PrometheusInstanceSpec `json:"instanceSpec,omitempty"`
+}
+
+// PrometheusInstanceSpec defines the desired state for Prometheus instance configuration
+type PrometheusInstanceSpec struct {
+	//+kubebuilder:default:=false
+	// Should this feature be enabled
+	Enable bool `json:"enable,omitempty"`
+
+	// Number of replicas of each shard to deploy for a Prometheus deployment.
+	// Number of replicas multiplied by shards is the total number of Pods
+	// created.
+	Replicas *int32 `json:"replicas,omitempty"`
 }
 
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector
@@ -366,7 +553,6 @@ type FlowCollectorStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster
-
 // FlowCollector is the Schema for the flowcollectors API, which pilots and configures netflow collection.
 type FlowCollector struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -377,7 +563,6 @@ type FlowCollector struct {
 }
 
 //+kubebuilder:object:root=true
-
 // FlowCollectorList contains a list of FlowCollector
 type FlowCollectorList struct {
 	metav1.TypeMeta `json:",inline"`

@@ -234,13 +234,6 @@ func configChanged(tmpl *corev1.PodTemplateSpec, cmDigest string) bool {
 	return tmpl.Annotations == nil || tmpl.Annotations[PodConfigurationDigest] != cmDigest
 }
 
-func querierURL(loki *flowsv1alpha1.FlowCollectorLoki) string {
-	if loki.QuerierURL != "" {
-		return loki.QuerierURL
-	}
-	return loki.URL
-}
-
 func serviceNeedsUpdate(svc *corev1.Service, desired *pluginSpec, ns string) bool {
 	if svc.Namespace != ns {
 		return true

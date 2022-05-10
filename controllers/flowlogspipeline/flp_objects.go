@@ -15,6 +15,7 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -200,8 +201,15 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		lokiWrite["minBackoff"] = b.desiredLoki.MinBackoff.ToUnstructured()
 		lokiWrite["staticLabels"] = b.desiredLoki.StaticLabels
 		lokiWrite["timeout"] = b.desiredLoki.Timeout.ToUnstructured()
-		lokiWrite["url"] = b.desiredLoki.URL
+		lokiWrite["url"] = reconcilers.URL(b.desiredLoki)
 		lokiWrite["timestampLabel"] = b.desiredLoki.TimestampLabel
+		lokiWrite["tenantID"] = b.desiredLoki.TenantID
+		//TODO: set proper tls config https://issues.redhat.com/browse/NETOBSERV-309
+		lokiWrite["clientConfig"] = map[string]interface{}{
+			"tls_config": map[string]interface{}{
+				"insecure_skip_verify": true,
+			},
+		}
 	}
 
 	loki = map[string]interface{}{"name": "loki",

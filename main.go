@@ -24,9 +24,15 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	sv1b2 "github.com/RedHatInsights/strimzi-client-go/apis/kafka.strimzi.io/v1beta2"
+	gv1alpha1 "github.com/grafana-operator/grafana-operator/v4/api/integreatly/v1alpha1"
+	lv1beta1 "github.com/grafana/loki/operator/api/v1beta1"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
 	securityv1 "github.com/openshift/api/security/v1"
+	ov1 "github.com/operator-framework/api/pkg/operators/v1"
+	ov1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	pv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -61,6 +67,12 @@ func init() {
 	utilruntime.Must(apiregv1.AddToScheme(scheme))
 	utilruntime.Must(securityv1.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1.AddToScheme(scheme))
+	utilruntime.Must(sv1b2.AddToScheme(scheme))
+	utilruntime.Must(gv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(ov1.AddToScheme(scheme))
+	utilruntime.Must(ov1alpha1.AddToScheme(scheme))
+	utilruntime.Must(lv1beta1.AddToScheme(scheme))
+	utilruntime.Must(pv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

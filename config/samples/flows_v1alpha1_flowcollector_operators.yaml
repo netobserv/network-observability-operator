@@ -1,0 +1,112 @@
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowCollector
+metadata:
+  name: cluster
+spec:
+  namespace: "network-observability"
+  agent: ipfix
+  ipfix:
+    cacheActiveTimeout: 60s
+    cacheMaxFlows: 100
+    sampling: 400
+  ebpf:
+    image: 'quay.io/netobserv/netobserv-ebpf-agent:main'
+    imagePullPolicy: IfNotPresent
+    sampling: 0
+    cacheActiveTimeout: 5s
+    cacheMaxFlows: 1000
+    interfaces: []
+    excludeInterfaces: ["lo"]
+    logLevel: info
+  flowlogsPipeline:
+    kind: DaemonSet
+    port: 2055
+    image: 'quay.io/netobserv/flowlogs-pipeline:main'
+    imagePullPolicy: IfNotPresent
+    logLevel: info
+    enableKubeProbes: true
+    healthPort: 8080
+    prometheusPort: 9090
+  loki:
+    tenantID: netobserv
+    batchWait: 1s
+    batchSize: 102400
+    minBackoff: 1s
+    maxBackoff: 300s
+    maxRetries: 10
+    timestampLabel: TimeFlowEnd
+    staticLabels:
+      app: netobserv-flowcollector
+    instanceSpec:
+      enable: true
+      size: 1x.small
+      replicationFactor: 1
+      storage:
+        secret:
+          name: test
+          type: s3
+      storageClassName: gp2
+  kafka:
+    instanceSpec:
+      enable: true
+      kafka:
+        config:
+          offsets.topic.replication.factor: 1
+          transaction.state.log.replication.factor: 1
+          transaction.state.log.min.isr: 1
+          default.replication.factor: 1
+          min.insync.replicas: 1
+          inter.broker.protocol.version: "3.1"
+        storage:
+          type: ephemeral
+        listeners:
+          - name: plain
+            port: 9092
+            type: internal
+            tls: false
+          - name: tls
+            port: 9093
+            type: internal
+            tls: true
+        version: 3.1.0
+        replicas: 1
+      zookeeper:
+        storage:
+          type: ephemeral
+        replicas: 1
+    topicSpec:
+      config:
+        retention.ms: 600000
+        segment.bytes: 52428800
+      partitions: 10
+      replicas: 1
+    topicName: netobserv
+  grafana:
+    instanceSpec:
+      enable: true
+      config:
+        security:
+          admin_user: admin
+          admin_password: admin
+      ingress: true
+    dashboardSpec:
+      configMapRef:
+        name: grafana-dashboard
+        key: json
+        optional: true
+  prometheus:
+    instanceSpec:
+      enable: true
+      replicas: 1
+  consolePlugin:
+    register: true
+    image: 'quay.io/netobserv/network-observability-console-plugin:main'
+    imagePullPolicy: IfNotPresent
+    port: 9001
+    logLevel: info
+    portNaming:
+      enable: true
+      portNames:
+        "3100": loki
+  clusterNetworkOperator:
+    namespace: "openshift-network-operator"

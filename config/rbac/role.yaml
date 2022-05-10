@@ -110,12 +110,77 @@ rules:
   - patch
   - update
 - apiGroups:
+  - integreatly.org
+  resources:
+  - grafanadashboards
+  - grafanadatasources
+  - grafanas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kafka.strimzi.io
+  resources:
+  - kafkas
+  - kafkatopics
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - loki.grafana.com
+  resources:
+  - lokistacks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - prometheuses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - operator.openshift.io
   resources:
   - consoles
   verbs:
   - get
   - list
+  - update
+  - watch
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - catalogsources
+  - operatorgroups
+  - subscriptions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
   - update
   - watch
 - apiGroups:
