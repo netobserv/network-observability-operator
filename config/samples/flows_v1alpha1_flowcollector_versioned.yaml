@@ -18,6 +18,7 @@ spec:
     interfaces: []
     excludeInterfaces: ["lo"]
     logLevel: info
+    privileged: false
   flowlogsPipeline:
     kind: DaemonSet
 #    kind: Deployment

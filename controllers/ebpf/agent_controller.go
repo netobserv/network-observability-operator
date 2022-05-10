@@ -94,7 +94,7 @@ func (c *AgentController) Reconcile(
 		}
 	}
 
-	if err := c.permissions.Reconcile(ctx); err != nil {
+	if err := c.permissions.Reconcile(ctx, &target.Spec.EBPF); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
 	desired := c.desired(target)
@@ -157,12 +157,8 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 						Image:           coll.Spec.EBPF.Image,
 						ImagePullPolicy: corev1.PullPolicy(coll.Spec.EBPF.ImagePullPolicy),
 						Resources:       coll.Spec.EBPF.Resources,
-						// TODO: other parameters when NETOBSERV-201 is implemented
-						SecurityContext: &corev1.SecurityContext{
-							Privileged: pointer.Bool(true),
-							RunAsUser:  pointer.Int64(0),
-						},
-						Env: c.envConfig(coll),
+						SecurityContext: c.securityContext(coll),
+						Env:             c.envConfig(coll),
 					}},
 				},
 			},
@@ -249,4 +245,18 @@ func (c *AgentController) requiredAction(current, desired *v1.DaemonSet) reconci
 		return actionNone
 	}
 	return actionUpdate
+}
+
+func (c *AgentController) securityContext(coll *flowsv1alpha1.FlowCollector) *corev1.SecurityContext {
+	sc := corev1.SecurityContext{
+		RunAsUser: pointer.Int64(0),
+	}
+
+	if coll.Spec.EBPF.Privileged {
+		sc.Privileged = &coll.Spec.EBPF.Privileged
+	} else {
+		sc.Capabilities = &corev1.Capabilities{Add: permissions.AllowedCapabilities}
+	}
+
+	return &sc
 }
