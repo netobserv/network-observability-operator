@@ -137,6 +137,8 @@ rules:
   - create
   - delete
   - get
+  - list
+  - watch
 - apiGroups:
   - security.openshift.io
   resources:

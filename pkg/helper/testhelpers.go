@@ -17,7 +17,3 @@ func (am AsyncJSON) String() string {
 	}
 	return string(bytes)
 }
-
-func Int32Ptr(v int32) *int32 {
-	return &v
-}

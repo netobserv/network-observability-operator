@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
@@ -129,7 +130,6 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 	if coll == nil || coll.Spec.Agent != flowsv1alpha1.AgentEBPF {
 		return nil
 	}
-	trueVal := true
 	version := helper.ExtractVersion(coll.Spec.EBPF.Image)
 	return &v1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -159,7 +159,8 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 						Resources:       coll.Spec.EBPF.Resources,
 						// TODO: other parameters when NETOBSERV-201 is implemented
 						SecurityContext: &corev1.SecurityContext{
-							Privileged: &trueVal,
+							Privileged: pointer.Bool(true),
+							RunAsUser:  pointer.Int64(0),
 						},
 						Env: c.envConfig(coll),
 					}},

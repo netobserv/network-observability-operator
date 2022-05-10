@@ -12,6 +12,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/pointer"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -84,7 +85,7 @@ func flowCollectorControllerSpecs() {
 						LogLevel:        "error",
 						Image:           "testimg:latest",
 						HPA: &flowsv1alpha1.FlowCollectorHPA{
-							MinReplicas: helper.Int32Ptr(1),
+							MinReplicas: pointer.Int32(1),
 							MaxReplicas: 1,
 							Metrics: []ascv2.MetricSpec{{
 								Type: ascv2.ResourceMetricSourceType,
@@ -92,7 +93,7 @@ func flowCollectorControllerSpecs() {
 									Name: v1.ResourceCPU,
 									Target: ascv2.MetricTarget{
 										Type:               ascv2.UtilizationMetricType,
-										AverageUtilization: helper.Int32Ptr(90),
+										AverageUtilization: pointer.Int32(90),
 									},
 								},
 							}},
@@ -107,7 +108,7 @@ func flowCollectorControllerSpecs() {
 						ImagePullPolicy: "Never",
 						Image:           "testimg:latest",
 						HPA: &flowsv1alpha1.FlowCollectorHPA{
-							MinReplicas: helper.Int32Ptr(1),
+							MinReplicas: pointer.Int32(1),
 							MaxReplicas: 1,
 							Metrics: []ascv2.MetricSpec{{
 								Type: ascv2.ResourceMetricSourceType,
@@ -115,7 +116,7 @@ func flowCollectorControllerSpecs() {
 									Name: v1.ResourceCPU,
 									Target: ascv2.MetricTarget{
 										Type:               ascv2.UtilizationMetricType,
-										AverageUtilization: helper.Int32Ptr(90),
+										AverageUtilization: pointer.Int32(90),
 									},
 								},
 							}},
@@ -258,7 +259,7 @@ func flowCollectorControllerSpecs() {
 			// update FlowCollector and verify that HPA spec also changed
 			fc := flowsv1alpha1.FlowCollector{}
 			Expect(k8sClient.Get(ctx, crKey, &fc)).To(Succeed())
-			fc.Spec.FlowlogsPipeline.HPA.MinReplicas = helper.Int32Ptr(2)
+			fc.Spec.FlowlogsPipeline.HPA.MinReplicas = pointer.Int32(2)
 			fc.Spec.FlowlogsPipeline.HPA.MaxReplicas = 2
 			Expect(k8sClient.Update(ctx, &fc)).To(Succeed())
 
