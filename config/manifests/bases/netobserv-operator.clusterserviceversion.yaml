@@ -9,6 +9,7 @@ metadata:
     createdAt: ':created-at:'
     description: A network observability operator based on netflows (IPFIX) for OVN
     repository: https://github.com/netobserv/network-observability-operator
+    console.openshift.io/plugins: '["network-observability-plugin"]'
   name: netobserv-operator.v0.0.0
   namespace: placeholder
 spec:
