@@ -68,11 +68,8 @@ data:
 ---
 EOF
   echo -e "\nWaiting for Grafana pod to be ready.\n"
-  kubectl wait --timeout=120s --for=condition=ready pod -l app=grafana
+  kubectl wait --timeout=180s --for=condition=ready pod -l app=grafana
   kubectl get pod -l app=grafana
-  oc expose service grafana
-  grafana_url=$(oc get route grafana -o jsonpath='{.spec.host}');
-	echo -e "\nAccess grafana on OCP using: http://$grafana_url\n"
 }
 
 cleanup() {
