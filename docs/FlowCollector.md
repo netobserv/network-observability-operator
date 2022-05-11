@@ -2631,15 +2631,6 @@ Loki contains settings related to the loki client
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>timestampLabel</b></td>
-        <td>string</td>
-        <td>
-          TimestampLabel is the label to use for time indexing in Loki. E.g. "TimeReceived", "TimeFlowStart", "TimeFlowEnd".<br/>
-          <br/>
-            <i>Default</i>: TimeFlowEnd<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>url</b></td>
         <td>string</td>
         <td>

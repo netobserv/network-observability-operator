@@ -283,10 +283,6 @@ type FlowCollectorLoki struct {
 	//+kubebuilder:default:={"app":"netobserv-flowcollector"}
 	// StaticLabels is a map of common labels to set on each flow
 	StaticLabels map[string]string `json:"staticLabels,omitempty"`
-
-	//+kubebuilder:default:="TimeFlowEnd"
-	// TimestampLabel is the label to use for time indexing in Loki. E.g. "TimeReceived", "TimeFlowStart", "TimeFlowEnd".
-	TimestampLabel string `json:"timestampLabel,omitempty"`
 }
 
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector
