@@ -201,7 +201,8 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		lokiWrite["staticLabels"] = b.desiredLoki.StaticLabels
 		lokiWrite["timeout"] = b.desiredLoki.Timeout.ToUnstructured()
 		lokiWrite["url"] = b.desiredLoki.URL
-		lokiWrite["timestampLabel"] = b.desiredLoki.TimestampLabel
+		lokiWrite["timestampLabel"] = "TimeFlowEndMs"
+		lokiWrite["timestampScale"] = "1ms"
 	}
 
 	loki = map[string]interface{}{"name": "loki",
