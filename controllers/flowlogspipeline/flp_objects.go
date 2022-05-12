@@ -356,7 +356,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 	if old == nil {
 		return &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      constants.FLPName + b.confKindSuffix,
+				Name:      constants.FLPName, //We don't add suffix here so we always use the same service
 				Namespace: b.namespace,
 				Labels:    b.labels,
 			},
@@ -372,10 +372,13 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 	}
 	// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
 	newService := old.DeepCopy()
+	newService.Spec.Selector = b.selector
+	newService.Spec.SessionAffinity = corev1.ServiceAffinityClientIP
 	newService.Spec.Ports = []corev1.ServicePort{{
 		Port:     b.desired.Port,
 		Protocol: b.portProtocol,
 	}}
+	newService.ObjectMeta.Labels = b.labels
 	return newService
 }
 

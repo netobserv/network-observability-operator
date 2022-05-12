@@ -310,11 +310,9 @@ func TestServiceNoChange(t *testing.T) {
 	first := b.service(nil)
 
 	// Check no change
-	flp = getFLPConfig()
-	loki = getLokiConfig()
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
+	newService := first.DeepCopy()
 
-	assert.False(serviceNeedsUpdate(first, &flp))
+	assert.False(serviceNeedsUpdate(first, newService))
 }
 
 func TestServiceChanged(t *testing.T) {
@@ -332,13 +330,14 @@ func TestServiceChanged(t *testing.T) {
 	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	second := b.service(first)
 
-	assert.True(serviceNeedsUpdate(first, &flp))
+	assert.True(serviceNeedsUpdate(first, second))
 
 	// Make sure non-service settings doesn't trigger service update
 	flp.LogLevel = "error"
 	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
+	third := b.service(first)
 
-	assert.False(serviceNeedsUpdate(second, &flp))
+	assert.False(serviceNeedsUpdate(second, third))
 }
 
 func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {

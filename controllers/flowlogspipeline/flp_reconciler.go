@@ -49,10 +49,10 @@ type ownedObjects struct {
 
 func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) FLPReconciler {
 	owned := ownedObjects{
-		serviceAccount: &corev1.ServiceAccount{},
+		service: &corev1.Service{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
-	nobjMngr.AddManagedObject(constants.FLPName, owned.serviceAccount)
+	nobjMngr.AddManagedObject(constants.FLPName, owned.service)
 
 	flpReconciler := FLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
 	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfSingle))
@@ -75,7 +75,6 @@ func newSingleReconciler(cl reconcilers.ClientHelper, ns string, prevNS string, 
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
 	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.deployment)
 	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.daemonSet)
-	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.service)
 	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.hpa)
 	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.serviceAccount)
 	nobjMngr.AddManagedObject(configMapName+FlpConfSuffix[confKind], owned.configMap)
@@ -115,10 +114,7 @@ func validateDesired(desired *flpSpec) error {
 }
 
 func (r *FLPReconciler) GetServiceName(kafka flowsv1alpha1.FlowCollectorKafka) string {
-	if single, _ := checkDeployNeeded(kafka, ConfKafkaIngester); single {
-		return constants.FLPName + FlpConfSuffix[ConfKafkaIngester]
-	}
-	return constants.FLPName + FlpConfSuffix[ConfSingle]
+	return constants.FLPName
 }
 
 func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
@@ -240,14 +236,19 @@ func (r *singleDeploymentReconciler) reconcileAsDeployment(ctx context.Context, 
 }
 
 func (r *singleDeploymentReconciler) reconcileAsService(ctx context.Context, desiredFLP *flpSpec, builder *builder) error {
-	if !r.nobjMngr.Exists(r.owned.service) {
-		newSVC := builder.service(nil)
-		if err := r.CreateOwned(ctx, newSVC); err != nil {
-			return err
+	actual := corev1.Service{}
+	if err := r.Client.Get(ctx,
+		types.NamespacedName{Name: constants.FLPName, Namespace: r.nobjMngr.Namespace},
+		&actual,
+	); err != nil {
+		if errors.IsNotFound(err) {
+			return r.CreateOwned(ctx, builder.service(nil))
 		}
-	} else if serviceNeedsUpdate(r.owned.service, desiredFLP) {
-		newSVC := builder.service(r.owned.service)
-		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
+		return fmt.Errorf("can't reconcile %s Serviceg: %w", constants.FLPName, err)
+	}
+	newSVC := builder.service(&actual)
+	if serviceNeedsUpdate(&actual, newSVC) {
+		if err := r.UpdateOwned(ctx, &actual, newSVC); err != nil {
 			return err
 		}
 	}
@@ -257,8 +258,10 @@ func (r *singleDeploymentReconciler) reconcileAsService(ctx context.Context, des
 func (r *singleDeploymentReconciler) reconcileAsDaemonSet(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
 	// Kind may have changed: try delete Deployment / Service / HPA and create DaemonSet
 	r.nobjMngr.TryDelete(ctx, r.owned.deployment)
-	r.nobjMngr.TryDelete(ctx, r.owned.service)
 	r.nobjMngr.TryDelete(ctx, r.owned.hpa)
+	if err := r.Client.Delete(ctx, builder.service(nil)); !errors.IsNotFound(err) {
+		return err
+	}
 	if !r.nobjMngr.Exists(r.owned.daemonSet) {
 		return r.CreateOwned(ctx, builder.daemonSet(configDigest))
 	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredFLP, configDigest, constants.FLPName+FlpConfSuffix[r.confKind]) {
@@ -357,13 +360,9 @@ func configChanged(tmpl *corev1.PodTemplateSpec, configDigest string) bool {
 	return tmpl.Annotations == nil || tmpl.Annotations[PodConfigurationDigest] != configDigest
 }
 
-func serviceNeedsUpdate(svc *corev1.Service, desired *flpSpec) bool {
-	for _, port := range svc.Spec.Ports {
-		if port.Port == desired.Port && port.Protocol == corev1.ProtocolUDP {
-			return false
-		}
-	}
-	return true
+func serviceNeedsUpdate(actual *corev1.Service, desired *corev1.Service) bool {
+	return !reflect.DeepEqual(actual.ObjectMeta, desired.ObjectMeta) ||
+		!reflect.DeepEqual(actual.Spec, desired.Spec)
 }
 
 func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flpSpec, expectHostPort bool, name string) bool {

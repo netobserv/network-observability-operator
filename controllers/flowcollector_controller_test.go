@@ -417,11 +417,6 @@ func flowCollectorControllerSpecs() {
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, gfKey1, &appsv1.DaemonSet{})
 			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline" not found`))
-
-			By("Expecting service to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKey1, &v1.Service{})
-			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline" not found`))
 		})
 
 		It("Should remove kafka config successfully", func() {
