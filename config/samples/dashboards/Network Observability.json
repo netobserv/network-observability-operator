@@ -785,31 +785,6 @@
     "list": [
       {
         "current": {
-          "isNone": true,
-          "selected": false,
-          "text": "None",
-          "value": ""
-        },
-        "datasource": {
-          "type": "loki",
-          "uid": "P982945308D3682D1"
-        },
-        "definition": " label_values({app=\"netobserv-flowcollector\"}, \"SrcNamespace\")",
-        "hide": 0,
-        "includeAll": false,
-        "label": "(ignored)",
-        "multi": false,
-        "name": "SrcNamespace_doesnt_work",
-        "options": [],
-        "query": " label_values({app=\"netobserv-flowcollector\"}, \"SrcNamespace\")",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "current": {
           "selected": false,
           "text": ".*",
           "value": ".*"
@@ -897,7 +872,6 @@
   "timepicker": {},
   "timezone": "",
   "title": "Network Observability",
-  "uid": "u0RKeXcnz",
   "version": 2,
   "weekStart": ""
 }
