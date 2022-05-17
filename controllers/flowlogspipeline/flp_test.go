@@ -137,17 +137,17 @@ func TestDaemonSetNoChange(t *testing.T) {
 	ns := "namespace"
 	flp := getFLPConfig()
 	loki := getLokiConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest := b.configMap()
 	first := b.daemonSet(digest)
 
 	// Check no change
 	flp = getFLPConfig()
 	loki = getLokiConfig()
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 
-	assert.False(daemonSetNeedsUpdate(first, &flp, digest))
+	assert.False(daemonSetNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
 
 func TestDaemonSetChanged(t *testing.T) {
@@ -157,47 +157,47 @@ func TestDaemonSetChanged(t *testing.T) {
 	ns := "namespace"
 	flp := getFLPConfig()
 	loki := getLokiConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest := b.configMap()
 	first := b.daemonSet(digest)
 
 	// Check probes enabled change
 	flp.EnableKubeProbes = true
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 	second := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(first, &flp, digest))
+	assert.True(daemonSetNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check log level change
 	flp.LogLevel = "info"
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 	third := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(second, &flp, digest))
+	assert.True(daemonSetNeedsUpdate(second, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check resource change
 	flp.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 	fourth := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(third, &flp, digest))
+	assert.True(daemonSetNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check reverting limits
 	flp.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceCPU:    resource.MustParse("1"),
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 
-	assert.True(daemonSetNeedsUpdate(fourth, &flp, digest))
-	assert.False(daemonSetNeedsUpdate(third, &flp, digest))
+	assert.True(daemonSetNeedsUpdate(fourth, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.False(daemonSetNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
 
 func TestDeploymentNoChange(t *testing.T) {
@@ -207,17 +207,17 @@ func TestDeploymentNoChange(t *testing.T) {
 	ns := "namespace"
 	flp := getFLPConfig()
 	loki := getLokiConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest := b.configMap()
 	first := b.deployment(digest)
 
 	// Check no change
 	flp = getFLPConfig()
 	loki = getLokiConfig()
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 
-	assert.False(deploymentNeedsUpdate(first, &flp, digest))
+	assert.False(deploymentNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
 
 func TestDeploymentChanged(t *testing.T) {
@@ -227,56 +227,56 @@ func TestDeploymentChanged(t *testing.T) {
 	ns := "namespace"
 	flp := getFLPConfig()
 	loki := getLokiConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest := b.configMap()
 	first := b.deployment(digest)
 
 	// Check probes enabled change
 	flp.EnableKubeProbes = true
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 	second := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(first, &flp, digest))
+	assert.True(deploymentNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check log level change
 	flp.LogLevel = "info"
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 	third := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(second, &flp, digest))
+	assert.True(deploymentNeedsUpdate(second, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check resource change
 	flp.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 	fourth := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(third, &flp, digest))
+	assert.True(deploymentNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check reverting limits
 	flp.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceCPU:    resource.MustParse("1"),
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest = b.configMap()
 	fifth := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(fourth, &flp, digest))
-	assert.False(deploymentNeedsUpdate(third, &flp, digest))
+	assert.True(deploymentNeedsUpdate(fourth, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.False(deploymentNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 
 	// Check replicas didn't change because HPA is used
 	flp2 := flp
 	flp2.Replicas = 5
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp2, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp2, &loki, ConfSingle)
 	_, digest = b.configMap()
 
-	assert.False(deploymentNeedsUpdate(fifth, &flp2, digest))
+	assert.False(deploymentNeedsUpdate(fifth, &flp2, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
 
 func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
@@ -286,17 +286,17 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	ns := "namespace"
 	flp := getFLPConfigNoHPA()
 	loki := getLokiConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	_, digest := b.configMap()
 	first := b.deployment(digest)
 
 	// Check replicas changed (need to copy flp, as Spec.Replicas stores a pointer)
 	flp2 := flp
 	flp2.Replicas = 5
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp2, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp2, &loki, ConfSingle)
 	_, digest = b.configMap()
 
-	assert.True(deploymentNeedsUpdate(first, &flp2, digest))
+	assert.True(deploymentNeedsUpdate(first, &flp2, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
 
 func TestServiceNoChange(t *testing.T) {
@@ -306,15 +306,13 @@ func TestServiceNoChange(t *testing.T) {
 	ns := "namespace"
 	flp := getFLPConfig()
 	loki := getLokiConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	first := b.service(nil)
 
 	// Check no change
-	flp = getFLPConfig()
-	loki = getLokiConfig()
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	newService := first.DeepCopy()
 
-	assert.False(serviceNeedsUpdate(first, &flp))
+	assert.False(serviceNeedsUpdate(first, newService))
 }
 
 func TestServiceChanged(t *testing.T) {
@@ -324,21 +322,22 @@ func TestServiceChanged(t *testing.T) {
 	ns := "namespace"
 	flp := getFLPConfig()
 	loki := getLokiConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	first := b.service(nil)
 
 	// Check port changed
 	flp.Port = 9999
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	second := b.service(first)
 
-	assert.True(serviceNeedsUpdate(first, &flp))
+	assert.True(serviceNeedsUpdate(first, second))
 
 	// Make sure non-service settings doesn't trigger service update
 	flp.LogLevel = "error"
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
+	third := b.service(first)
 
-	assert.False(serviceNeedsUpdate(second, &flp))
+	assert.False(serviceNeedsUpdate(second, third))
 }
 
 func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
@@ -347,7 +346,7 @@ func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	ns := "namespace"
 	flp := getFLPConfig()
 	loki := getLokiConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki)
+	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, ConfSingle)
 	cm, digest := b.configMap()
 	assert.NotEmpty(t, digest)
 
@@ -415,7 +414,7 @@ func TestLabels(t *testing.T) {
 	assert := assert.New(t)
 
 	gfk := getFLPConfig()
-	builder := newBuilder("ns", corev1.ProtocolUDP, &gfk, nil)
+	builder := newBuilder("ns", corev1.ProtocolUDP, &gfk, nil, ConfSingle)
 
 	// Deployment
 	depl := builder.deployment("digest")
@@ -437,4 +436,33 @@ func TestLabels(t *testing.T) {
 	assert.Equal("flowlogs-pipeline", svc.Spec.Selector["app"])
 	assert.Equal("dev", svc.Labels["version"])
 	assert.Empty(svc.Spec.Selector["version"])
+}
+
+func TestDeployNeeded(t *testing.T) {
+	assert := assert.New(t)
+
+	kafka := flowsv1alpha1.FlowCollectorKafka{Enable: false, Address: "loaclhost:9092", Topic: "FLP"}
+	// Kafka not configured
+	res, err := checkDeployNeeded(kafka, ConfSingle)
+	assert.True(res)
+	assert.NoError(err)
+	res, err = checkDeployNeeded(kafka, ConfKafkaIngester)
+	assert.False(res)
+	assert.NoError(err)
+	res, err = checkDeployNeeded(kafka, ConfKafkaTransformer)
+	assert.False(res)
+	assert.NoError(err)
+
+	// Kafka configured
+	kafka.Enable = true
+	res, err = checkDeployNeeded(kafka, ConfSingle)
+	assert.False(res)
+	assert.NoError(err)
+	res, err = checkDeployNeeded(kafka, ConfKafkaIngester)
+	assert.True(res)
+	assert.NoError(err)
+	res, err = checkDeployNeeded(kafka, ConfKafkaTransformer)
+	assert.True(res)
+	assert.NoError(err)
+
 }

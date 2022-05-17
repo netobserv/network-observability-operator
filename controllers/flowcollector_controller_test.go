@@ -47,6 +47,14 @@ func flowCollectorControllerSpecs() {
 		Name:      constants.FLPName,
 		Namespace: otherNamespace,
 	}
+	gfKeyKafkaIngester := types.NamespacedName{
+		Name:      constants.FLPName + flowlogspipeline.FlpConfSuffix[flowlogspipeline.ConfKafkaIngester],
+		Namespace: operatorNamespace,
+	}
+	gfKeyKafkaTransformer := types.NamespacedName{
+		Name:      constants.FLPName + flowlogspipeline.FlpConfSuffix[flowlogspipeline.ConfKafkaTransformer],
+		Namespace: operatorNamespace,
+	}
 	cpKey1 := types.NamespacedName{
 		Name:      "network-observability-plugin",
 		Namespace: operatorNamespace,
@@ -373,6 +381,74 @@ func flowCollectorControllerSpecs() {
 				return nil
 			}).Should(Succeed())
 		})
+	})
+
+	Context("Changing kafka config", func() {
+		It("Should update kafka config successfully", func() {
+			Eventually(func() error {
+				fc := flowsv1alpha1.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
+					return err
+				}
+				fc.Spec.Kafka = flowsv1alpha1.FlowCollectorKafka{Enable: true, Address: "loaclhost:9092", Topic: "FLP"}
+				return k8sClient.Update(ctx, &fc)
+			}).Should(Succeed())
+		})
+
+		It("Should deploy kafka ingester and transformer", func() {
+			By("Expecting ingester daemonset to be created")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, gfKeyKafkaIngester, &appsv1.DaemonSet{})
+			}, timeout, interval).Should(Succeed())
+
+			By("Expecting transformer deployment to be created")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, gfKeyKafkaTransformer, &appsv1.Deployment{})
+			}, timeout, interval).Should(Succeed())
+
+			By("Not Expecting transformer service to be created")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, gfKeyKafkaTransformer, &v1.Service{})
+			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline-transformer" not found`))
+		})
+
+		It("Should delete previous flp deployment", func() {
+			By("Expecting deployment to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, gfKey1, &appsv1.DaemonSet{})
+			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline" not found`))
+		})
+
+		It("Should remove kafka config successfully", func() {
+			Eventually(func() error {
+				fc := flowsv1alpha1.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
+					return err
+				}
+				fc.Spec.Kafka.Enable = false
+				return k8sClient.Update(ctx, &fc)
+			}).Should(Succeed())
+		})
+
+		It("Should deploy single flp again", func() {
+			By("Expecting daemonset to be created")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, gfKey1, &appsv1.DaemonSet{})
+			}, timeout, interval).Should(Succeed())
+		})
+
+		It("Should delete kafka ingester and transformer", func() {
+			By("Expecting ingester daemonset to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, gfKeyKafkaIngester, &appsv1.DaemonSet{})
+			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline-ingester" not found`))
+
+			By("Expecting transformer deployment to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, gfKeyKafkaTransformer, &appsv1.Deployment{})
+			}, timeout, interval).Should(MatchError(`deployments.apps "flowlogs-pipeline-transformer" not found`))
+		})
+
 	})
 
 	Context("Changing namespace", func() {

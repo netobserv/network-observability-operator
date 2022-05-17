@@ -133,6 +133,13 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspeckafka">kafka</a></b></td>
+        <td>object</td>
+        <td>
+          Kafka configurations, if empty the operator will deploy a all-in-one FLP<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecloki">loki</a></b></td>
         <td>object</td>
         <td>
@@ -2534,6 +2541,53 @@ IPFIX contains the settings of an IPFIX-based flow reporter when the "agent" pro
             <i>Format</i>: int32<br/>
             <i>Default</i>: 400<br/>
             <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+Kafka configurations, if empty the operator will deploy a all-in-one FLP
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>address</b></td>
+        <td>string</td>
+        <td>
+          Address of the kafka server<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>topic</b></td>
+        <td>string</td>
+        <td>
+          Kafka topic to use<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Should this feature be enabled<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr></tbody>

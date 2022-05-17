@@ -69,6 +69,10 @@ type FlowCollectorSpec struct {
 	// Loki contains settings related to the loki client
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
 
+	// Kafka configurations, if empty the operator will deploy a all-in-one FLP
+	// +optional
+	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
+
 	// ConsolePlugin contains settings related to the console dynamic plugin
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
@@ -160,6 +164,23 @@ type FlowCollectorEBPF struct {
 	// BPF, PERFMON, NET_ADMIN, SYS_RESOURCE.
 	// +optional
 	Privileged bool `json:"privileged,omitempty"`
+}
+
+// FlowCollectorKafka defines the desired Kafka config of FlowCollector
+type FlowCollectorKafka struct {
+	// Important: Run "make generate" to regenerate code after modifying this file
+
+	//+kubebuilder:default:=false
+	// Should this feature be enabled
+	Enable bool `json:"enable,omitempty"`
+
+	//+kubebuilder:default:=""
+	// Address of the kafka server
+	Address string `json:"address"`
+
+	//+kubebuilder:default:=""
+	// Kafka topic to use
+	Topic string `json:"topic"`
 }
 
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector

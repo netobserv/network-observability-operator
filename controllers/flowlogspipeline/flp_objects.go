@@ -32,40 +32,54 @@ const (
 	startupPeriodSeconds    = 10
 )
 
+const (
+	ConfSingle           = "allInOne"
+	ConfKafkaIngester    = "kafkaIngester"
+	ConfKafkaTransformer = "kafkaTransformer"
+)
+
+var FlpConfSuffix = map[string]string{
+	ConfSingle:           "",
+	ConfKafkaIngester:    "-ingester",
+	ConfKafkaTransformer: "-transformer",
+}
+
 // PodConfigurationDigest is an annotation name to facilitate pod restart after
 // any external configuration change
 const PodConfigurationDigest = "flows.netobserv.io/" + configMapName
 
 type builder struct {
-	namespace    string
-	labels       map[string]string
-	selector     map[string]string
-	portProtocol corev1.Protocol
-	desired      *flowsv1alpha1.FlowCollectorFLP
-	desiredLoki  *flowsv1alpha1.FlowCollectorLoki
+	namespace      string
+	labels         map[string]string
+	selector       map[string]string
+	portProtocol   corev1.Protocol
+	desired        *flowsv1alpha1.FlowCollectorFLP
+	desiredLoki    *flowsv1alpha1.FlowCollectorLoki
+	confKindSuffix string
 }
 
-func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki) builder {
+func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, confKind string) builder {
 	version := helper.ExtractVersion(desired.Image)
 	return builder{
 		namespace: ns,
 		labels: map[string]string{
-			"app":     constants.FLPName,
+			"app":     constants.FLPName + FlpConfSuffix[confKind],
 			"version": version,
 		},
 		selector: map[string]string{
-			"app": constants.FLPName,
+			"app": constants.FLPName + FlpConfSuffix[confKind],
 		},
-		desired:      desired,
-		desiredLoki:  desiredLoki,
-		portProtocol: portProtocol,
+		desired:        desired,
+		desiredLoki:    desiredLoki,
+		portProtocol:   portProtocol,
+		confKindSuffix: FlpConfSuffix[confKind],
 	}
 }
 
 func (b *builder) deployment(configDigest string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.FLPName,
+			Name:      constants.FLPName + b.confKindSuffix,
 			Namespace: b.namespace,
 			Labels:    b.labels,
 		},
@@ -82,7 +96,7 @@ func (b *builder) deployment(configDigest string) *appsv1.Deployment {
 func (b *builder) daemonSet(configDigest string) *appsv1.DaemonSet {
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.FLPName,
+			Name:      constants.FLPName + b.confKindSuffix,
 			Namespace: b.namespace,
 			Labels:    b.labels,
 		},
@@ -100,7 +114,7 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 	var tolerations []corev1.Toleration
 	if b.desired.Kind == constants.DaemonSetKind {
 		ports = []corev1.ContainerPort{{
-			Name:          constants.FLPPortName,
+			Name:          constants.FLPPortName + b.confKindSuffix,
 			HostPort:      b.desired.Port,
 			ContainerPort: b.desired.Port,
 			Protocol:      b.portProtocol,
@@ -121,7 +135,7 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 	})
 
 	container := corev1.Container{
-		Name:            constants.FLPName,
+		Name:            constants.FLPName + b.confKindSuffix,
 		Image:           b.desired.Image,
 		ImagePullPolicy: corev1.PullPolicy(b.desired.ImagePullPolicy),
 		Args:            []string{fmt.Sprintf(`--config=%s/%s`, configPath, configFile)},
@@ -170,13 +184,13 @@ func (b *builder) podTemplate(configDigest string) corev1.PodTemplateSpec {
 				VolumeSource: corev1.VolumeSource{
 					ConfigMap: &corev1.ConfigMapVolumeSource{
 						LocalObjectReference: corev1.LocalObjectReference{
-							Name: configMapName,
+							Name: configMapName + b.confKindSuffix,
 						},
 					},
 				},
 			}},
 			Containers:         []corev1.Container{container},
-			ServiceAccountName: constants.FLPName,
+			ServiceAccountName: constants.FLPName + b.confKindSuffix,
 		},
 	}
 }
@@ -325,7 +339,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      configMapName,
+			Name:      configMapName + b.confKindSuffix,
 			Namespace: b.namespace,
 			Labels:    b.labels,
 		},
@@ -343,7 +357,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 	if old == nil {
 		return &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      constants.FLPName,
+				Name:      constants.FLPName, //We don't add suffix here so we always use the same service
 				Namespace: b.namespace,
 				Labels:    b.labels,
 			},
@@ -359,24 +373,27 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 	}
 	// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
 	newService := old.DeepCopy()
+	newService.Spec.Selector = b.selector
+	newService.Spec.SessionAffinity = corev1.ServiceAffinityClientIP
 	newService.Spec.Ports = []corev1.ServicePort{{
 		Port:     b.desired.Port,
 		Protocol: b.portProtocol,
 	}}
+	newService.ObjectMeta.Labels = b.labels
 	return newService
 }
 
 func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 	return &ascv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.FLPName,
+			Name:      constants.FLPName + b.confKindSuffix,
 			Namespace: b.namespace,
 			Labels:    b.labels,
 		},
 		Spec: ascv2.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: ascv2.CrossVersionObjectReference{
 				Kind:       constants.DeploymentKind,
-				Name:       constants.FLPName,
+				Name:       constants.FLPName + b.confKindSuffix,
 				APIVersion: "apps/v1",
 			},
 			MinReplicas: b.desired.HPA.MinReplicas,
@@ -391,17 +408,17 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 //+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
 //+kubebuilder:rbac:groups=core,resources=pods;services;nodes,verbs=get;list;watch
 
-func buildAppLabel() map[string]string {
+func buildAppLabel(confKind string) map[string]string {
 	return map[string]string{
-		"app": constants.FLPName,
+		"app": constants.FLPName + FlpConfSuffix[confKind],
 	}
 }
 
-func buildClusterRole() *rbacv1.ClusterRole {
+func buildClusterRoleIngester() *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   constants.FLPName,
-			Labels: buildAppLabel(),
+			Name:   constants.FLPName + FlpConfSuffix[ConfKafkaIngester],
+			Labels: buildAppLabel(""),
 		},
 		Rules: []rbacv1.PolicyRule{{
 			APIGroups: []string{""},
@@ -424,31 +441,60 @@ func buildClusterRole() *rbacv1.ClusterRole {
 	}
 }
 
-func buildServiceAccount(ns string) *corev1.ServiceAccount {
+func buildClusterRoleTransformer() *rbacv1.ClusterRole {
+	return &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   constants.FLPName + FlpConfSuffix[ConfKafkaTransformer],
+			Labels: buildAppLabel(""),
+		},
+		Rules: []rbacv1.PolicyRule{{
+			APIGroups: []string{""},
+			Verbs:     []string{"list", "get", "watch"},
+			Resources: []string{"pods", "services", "nodes"},
+		}, {
+			APIGroups: []string{"apps"},
+			Verbs:     []string{"list", "get", "watch"},
+			Resources: []string{"replicasets"},
+		}, {
+			APIGroups: []string{"autoscaling"},
+			Verbs:     []string{"create", "delete", "patch", "update", "get", "watch", "list"},
+			Resources: []string{"horizontalpodautoscalers"},
+		}, {
+			APIGroups:     []string{"security.openshift.io"},
+			Verbs:         []string{"use"},
+			Resources:     []string{"securitycontextconstraints"},
+			ResourceNames: []string{"hostnetwork"},
+		}},
+	}
+}
+
+func (b *builder) serviceAccount() *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.FLPName,
-			Namespace: ns,
-			Labels:    buildAppLabel(),
+			Name:      constants.FLPName + b.confKindSuffix,
+			Namespace: b.namespace,
+			Labels:    buildAppLabel(""),
 		},
 	}
 }
 
-func buildClusterRoleBinding(ns string) *rbacv1.ClusterRoleBinding {
+func (b *builder) clusterRoleBinding(roleKind string) *rbacv1.ClusterRoleBinding {
+	//Adding role here to disembiguate between the deployment kind and the role binded
+	name := constants.FLPName + b.confKindSuffix + FlpConfSuffix[roleKind] + "role"
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   constants.FLPName,
-			Labels: buildAppLabel(),
+			Name:   name,
+			Labels: buildAppLabel(""),
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     constants.FLPName,
+			Name:     constants.FLPName + FlpConfSuffix[roleKind],
 		},
 		Subjects: []rbacv1.Subject{{
 			Kind:      "ServiceAccount",
-			Name:      constants.FLPName,
-			Namespace: ns,
+			Name:      constants.FLPName + b.confKindSuffix,
+			Namespace: b.namespace,
 		}},
 	}
 }

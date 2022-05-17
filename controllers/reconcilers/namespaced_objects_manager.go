@@ -75,7 +75,7 @@ func (m *NamespacedObjectManager) CleanupNamespace(ctx context.Context) {
 		ref.SetNamespace(namespace)
 		log.Info("Deleting old "+obj.kind, "Namespace", namespace, "Name", obj.name)
 		err := m.client.Delete(ctx, ref)
-		if err != nil {
+		if client.IgnoreNotFound(err) != nil {
 			log.Error(err, "Failed to delete old "+obj.kind, "Namespace", namespace, "Name", obj.name)
 		}
 	}

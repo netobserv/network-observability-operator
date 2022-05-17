@@ -9,7 +9,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/rbac/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -24,37 +24,68 @@ type flpSpec = flowsv1alpha1.FlowCollectorFLP
 // FLPReconciler reconciles the current flowlogs-pipeline state with the desired configuration
 type FLPReconciler struct {
 	reconcilers.ClientHelper
+	nobjMngr          *reconcilers.NamespacedObjectManager
+	owned             ownedObjects
+	singleReconcilers []singleDeploymentReconciler
+}
+
+type singleDeploymentReconciler struct {
+	reconcilers.ClientHelper
 	nobjMngr *reconcilers.NamespacedObjectManager
 	owned    ownedObjects
+	confKind string
 }
 
 type ownedObjects struct {
-	deployment     *appsv1.Deployment
-	daemonSet      *appsv1.DaemonSet
-	service        *corev1.Service
-	hpa            *ascv2.HorizontalPodAutoscaler
-	serviceAccount *corev1.ServiceAccount
-	configMap      *corev1.ConfigMap
+	deployment             *appsv1.Deployment
+	daemonSet              *appsv1.DaemonSet
+	service                *corev1.Service
+	hpa                    *ascv2.HorizontalPodAutoscaler
+	serviceAccount         *corev1.ServiceAccount
+	configMap              *corev1.ConfigMap
+	roleBindingIngester    *rbacv1.ClusterRoleBinding
+	roleBindingTransformer *rbacv1.ClusterRoleBinding
 }
 
 func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) FLPReconciler {
 	owned := ownedObjects{
-		deployment:     &appsv1.Deployment{},
-		daemonSet:      &appsv1.DaemonSet{},
-		service:        &corev1.Service{},
-		hpa:            &ascv2.HorizontalPodAutoscaler{},
-		serviceAccount: &corev1.ServiceAccount{},
-		configMap:      &corev1.ConfigMap{},
+		service: &corev1.Service{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
-	nobjMngr.AddManagedObject(constants.FLPName, owned.deployment)
-	nobjMngr.AddManagedObject(constants.FLPName, owned.daemonSet)
 	nobjMngr.AddManagedObject(constants.FLPName, owned.service)
-	nobjMngr.AddManagedObject(constants.FLPName, owned.hpa)
-	nobjMngr.AddManagedObject(constants.FLPName, owned.serviceAccount)
-	nobjMngr.AddManagedObject(configMapName, owned.configMap)
 
-	return FLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
+	flpReconciler := FLPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
+	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfSingle))
+	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfKafkaIngester))
+	flpReconciler.singleReconcilers = append(flpReconciler.singleReconcilers, newSingleReconciler(cl, ns, prevNS, ConfKafkaTransformer))
+	return flpReconciler
+}
+
+func newSingleReconciler(cl reconcilers.ClientHelper, ns string, prevNS string, confKind string) singleDeploymentReconciler {
+	owned := ownedObjects{
+		deployment:             &appsv1.Deployment{},
+		daemonSet:              &appsv1.DaemonSet{},
+		service:                &corev1.Service{},
+		hpa:                    &ascv2.HorizontalPodAutoscaler{},
+		serviceAccount:         &corev1.ServiceAccount{},
+		configMap:              &corev1.ConfigMap{},
+		roleBindingIngester:    &rbacv1.ClusterRoleBinding{},
+		roleBindingTransformer: &rbacv1.ClusterRoleBinding{},
+	}
+	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
+	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.deployment)
+	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.daemonSet)
+	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.hpa)
+	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.serviceAccount)
+	nobjMngr.AddManagedObject(configMapName+FlpConfSuffix[confKind], owned.configMap)
+
+	if confKind == ConfSingle || confKind == ConfKafkaIngester {
+		nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind]+FlpConfSuffix[ConfKafkaIngester]+"role", owned.roleBindingIngester)
+	}
+	if confKind == ConfSingle || confKind == ConfKafkaTransformer {
+		nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind]+FlpConfSuffix[ConfKafkaTransformer]+"role", owned.roleBindingIngester)
+	}
+	return singleDeploymentReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, confKind: confKind}
 }
 
 // InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
@@ -65,6 +96,9 @@ func (r *FLPReconciler) InitStaticResources(ctx context.Context) error {
 // PrepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
 func (r *FLPReconciler) PrepareNamespaceChange(ctx context.Context) error {
 	// Switching namespace => delete everything in the previous namespace
+	for _, singleFlp := range r.singleReconcilers {
+		singleFlp.nobjMngr.CleanupNamespace(ctx)
+	}
 	r.nobjMngr.CleanupNamespace(ctx)
 	return r.reconcilePermissions(ctx)
 }
@@ -79,19 +113,57 @@ func validateDesired(desired *flpSpec) error {
 	return nil
 }
 
-// Reconcile is the reconciler entry point to reconcile the current flowlogs-pipeline state with the desired configuration
+func (r *FLPReconciler) GetServiceName(kafka flowsv1alpha1.FlowCollectorKafka) string {
+	return constants.FLPName
+}
+
 func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+	for _, singleFlp := range r.singleReconcilers {
+		err := singleFlp.Reconcile(ctx, desired)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Check if a configKind should be deployed
+func checkDeployNeeded(kafka flowsv1alpha1.FlowCollectorKafka, confKind string) (bool, error) {
+	switch confKind {
+	case ConfSingle:
+		return !kafka.Enable, nil
+	case ConfKafkaTransformer:
+		return kafka.Enable, nil
+	case ConfKafkaIngester:
+		//TODO should be disabled if ebpf-agent is enabled with kafka
+		return kafka.Enable, nil
+	default:
+		return false, fmt.Errorf("unknown flowlogs-pipelines config kind")
+	}
+}
+
+// Reconcile is the reconciler entry point to reconcile the current flowlogs-pipeline state with the desired configuration
+func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
 	desiredFLP := &desired.Spec.FlowlogsPipeline
+	desiredLoki := &desired.Spec.Loki
 	err := validateDesired(desiredFLP)
 	if err != nil {
 		return err
 	}
-	desiredLoki := &desired.Spec.Loki
+	shouldDeploy, err := checkDeployNeeded(desired.Spec.Kafka, r.confKind)
+	if err != nil {
+		return err
+	}
+	if !shouldDeploy {
+		r.nobjMngr.CleanupNamespace(ctx)
+		return nil
+	}
+
 	portProtocol := corev1.ProtocolUDP
 	if desired.Spec.Agent == flowsv1alpha1.AgentEBPF {
 		portProtocol = corev1.ProtocolTCP
 	}
-	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki)
+	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki, r.confKind)
 	// Retrieve current owned objects
 	err = r.nobjMngr.FetchAll(ctx)
 	if err != nil {
@@ -108,17 +180,24 @@ func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Fl
 		}
 	}
 
+	if err := r.reconcileAsServiceAccount(ctx, &builder); err != nil {
+		return err
+	}
+
 	switch desiredFLP.Kind {
 	case constants.DeploymentKind:
 		return r.reconcileAsDeployment(ctx, desiredFLP, &builder, configDigest)
 	case constants.DaemonSetKind:
+		if r.confKind == ConfKafkaTransformer {
+			return r.reconcileAsDeployment(ctx, desiredFLP, &builder, configDigest)
+		}
 		return r.reconcileAsDaemonSet(ctx, desiredFLP, &builder, configDigest)
 	default:
 		return fmt.Errorf("could not reconcile collector, invalid kind: %s", desiredFLP.Kind)
 	}
 }
 
-func (r *FLPReconciler) reconcileAsDeployment(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
+func (r *singleDeploymentReconciler) reconcileAsDeployment(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
 	// Kind may have changed: try delete DaemonSet and create Deployment+Service
 	ns := r.nobjMngr.Namespace
 	r.nobjMngr.TryDelete(ctx, r.owned.daemonSet)
@@ -127,19 +206,13 @@ func (r *FLPReconciler) reconcileAsDeployment(ctx context.Context, desiredFLP *f
 		if err := r.CreateOwned(ctx, builder.deployment(configDigest)); err != nil {
 			return err
 		}
-	} else if deploymentNeedsUpdate(r.owned.deployment, desiredFLP, configDigest) {
+	} else if deploymentNeedsUpdate(r.owned.deployment, desiredFLP, configDigest, constants.FLPName+FlpConfSuffix[r.confKind]) {
 		if err := r.UpdateOwned(ctx, r.owned.deployment, builder.deployment(configDigest)); err != nil {
 			return err
 		}
 	}
-	if !r.nobjMngr.Exists(r.owned.service) {
-		newSVC := builder.service(nil)
-		if err := r.CreateOwned(ctx, newSVC); err != nil {
-			return err
-		}
-	} else if serviceNeedsUpdate(r.owned.service, desiredFLP) {
-		newSVC := builder.service(r.owned.service)
-		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
+	if r.confKind != ConfKafkaTransformer {
+		if err := r.reconcileAsService(ctx, desiredFLP, builder); err != nil {
 			return err
 		}
 	}
@@ -162,43 +235,105 @@ func (r *FLPReconciler) reconcileAsDeployment(ctx context.Context, desiredFLP *f
 	return nil
 }
 
-func (r *FLPReconciler) reconcileAsDaemonSet(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
+func (r *singleDeploymentReconciler) reconcileAsService(ctx context.Context, desiredFLP *flpSpec, builder *builder) error {
+	actual := corev1.Service{}
+	if err := r.Client.Get(ctx,
+		types.NamespacedName{Name: constants.FLPName, Namespace: r.nobjMngr.Namespace},
+		&actual,
+	); err != nil {
+		if errors.IsNotFound(err) {
+			return r.CreateOwned(ctx, builder.service(nil))
+		}
+		return fmt.Errorf("can't reconcile %s Serviceg: %w", constants.FLPName, err)
+	}
+	newSVC := builder.service(&actual)
+	if serviceNeedsUpdate(&actual, newSVC) {
+		if err := r.UpdateOwned(ctx, &actual, newSVC); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *singleDeploymentReconciler) reconcileAsDaemonSet(ctx context.Context, desiredFLP *flpSpec, builder *builder, configDigest string) error {
 	// Kind may have changed: try delete Deployment / Service / HPA and create DaemonSet
 	r.nobjMngr.TryDelete(ctx, r.owned.deployment)
-	r.nobjMngr.TryDelete(ctx, r.owned.service)
 	r.nobjMngr.TryDelete(ctx, r.owned.hpa)
+	if err := r.Client.Delete(ctx, builder.service(nil)); !errors.IsNotFound(err) {
+		return err
+	}
 	if !r.nobjMngr.Exists(r.owned.daemonSet) {
 		return r.CreateOwned(ctx, builder.daemonSet(configDigest))
-	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredFLP, configDigest) {
+	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredFLP, configDigest, constants.FLPName+FlpConfSuffix[r.confKind]) {
 		return r.UpdateOwned(ctx, r.owned.daemonSet, builder.daemonSet(configDigest))
 	}
 	return nil
 }
 
-func (r *FLPReconciler) reconcilePermissions(ctx context.Context) error {
-	// Cluster role is only installed once
-	if err := r.reconcileClusterRole(ctx); err != nil {
-		return err
+func (r *singleDeploymentReconciler) reconcileAsServiceAccount(ctx context.Context, builder *builder) error {
+	if !r.nobjMngr.Exists(r.owned.serviceAccount) {
+		return r.CreateOwned(ctx, builder.serviceAccount())
+	} // We only configure name, update is not needed for now
+	if r.confKind == ConfKafkaIngester || r.confKind == ConfSingle {
+		if err := r.reconcileAsClusterRoleBinding(ctx, builder, ConfKafkaIngester); err != nil {
+			return err
+		}
 	}
-	// Service account has to be re-created when namespace changes (it is namespace-scoped)
-	if err := r.CreateOwned(ctx, buildServiceAccount(r.nobjMngr.Namespace)); err != nil {
-		return err
+	if r.confKind == ConfKafkaTransformer || r.confKind == ConfSingle {
+		if err := r.reconcileAsClusterRoleBinding(ctx, builder, ConfKafkaTransformer); err != nil {
+			return err
+		}
 	}
-	// Cluster role binding has to be updated when namespace changes (it is not namespace-scoped)
-	return r.reconcileClusterRoleBinding(ctx)
+	return nil
 }
 
-func (r *FLPReconciler) reconcileClusterRole(ctx context.Context) error {
-	desired := buildClusterRole()
-	actual := v1.ClusterRole{}
+func (r *singleDeploymentReconciler) reconcileAsClusterRoleBinding(ctx context.Context, builder *builder, roleKind string) error {
+	desired := builder.clusterRoleBinding(roleKind)
+	actual := rbacv1.ClusterRoleBinding{}
 	if err := r.Client.Get(ctx,
-		types.NamespacedName{Name: constants.FLPName},
+		types.NamespacedName{Name: desired.ObjectMeta.Name},
 		&actual,
 	); err != nil {
 		if errors.IsNotFound(err) {
 			return r.CreateOwned(ctx, desired)
 		}
-		return fmt.Errorf("can't reconcile %s ClusterRole: %w", constants.FLPName, err)
+		return fmt.Errorf("can't reconcile %s ClusterRoleBinding: %w", constants.FLPName, err)
+	}
+	if helper.IsSubSet(actual.Labels, desired.Labels) &&
+		actual.RoleRef == desired.RoleRef &&
+		reflect.DeepEqual(actual.Subjects, desired.Subjects) {
+		if actual.RoleRef != desired.RoleRef {
+			//Roleref cannot be updated deleting and creating a new rolebinding
+			r.nobjMngr.TryDelete(ctx, &actual)
+			return r.CreateOwned(ctx, desired)
+		}
+		// cluster role binding already reconciled. Exiting
+		return nil
+	}
+	return r.UpdateOwned(ctx, &actual, desired)
+}
+
+func (r *FLPReconciler) reconcilePermissions(ctx context.Context) error {
+	// Cluster role is only installed once
+	if err := r.reconcileClusterRole(ctx, buildClusterRoleIngester(), constants.FLPName+FlpConfSuffix[ConfKafkaIngester]); err != nil {
+		return err
+	}
+	if err := r.reconcileClusterRole(ctx, buildClusterRoleTransformer(), constants.FLPName+FlpConfSuffix[ConfKafkaTransformer]); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *FLPReconciler) reconcileClusterRole(ctx context.Context, desired *rbacv1.ClusterRole, name string) error {
+	actual := rbacv1.ClusterRole{}
+	if err := r.Client.Get(ctx,
+		types.NamespacedName{Name: name},
+		&actual,
+	); err != nil {
+		if errors.IsNotFound(err) {
+			return r.CreateOwned(ctx, desired)
+		}
+		return fmt.Errorf("can't reconcile %s ClusterRole: %w", name, err)
 	}
 
 	if helper.IsSubSet(actual.Labels, desired.Labels) &&
@@ -210,34 +345,13 @@ func (r *FLPReconciler) reconcileClusterRole(ctx context.Context) error {
 	return r.UpdateOwned(ctx, &actual, desired)
 }
 
-func (r *FLPReconciler) reconcileClusterRoleBinding(ctx context.Context) error {
-	desired := buildClusterRoleBinding(r.nobjMngr.Namespace)
-	actual := v1.ClusterRoleBinding{}
-	if err := r.Client.Get(ctx,
-		types.NamespacedName{Name: constants.FLPName},
-		&actual,
-	); err != nil {
-		if errors.IsNotFound(err) {
-			return r.CreateOwned(ctx, desired)
-		}
-		return fmt.Errorf("can't reconcile %s ClusterRoleBinding: %w", constants.FLPName, err)
-	}
-	if helper.IsSubSet(actual.Labels, desired.Labels) &&
-		actual.RoleRef == desired.RoleRef &&
-		reflect.DeepEqual(actual.Subjects, desired.Subjects) {
-		// cluster role binding already reconciled. Exiting
-		return nil
-	}
-	return r.UpdateOwned(ctx, &actual, desired)
-}
-
-func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flpSpec, configDigest string) bool {
-	return containerNeedsUpdate(&ds.Spec.Template.Spec, desired, true) ||
+func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flpSpec, configDigest string, name string) bool {
+	return containerNeedsUpdate(&ds.Spec.Template.Spec, desired, true, name) ||
 		configChanged(&ds.Spec.Template, configDigest)
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, configDigest string) bool {
-	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired, false) ||
+func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, configDigest string, name string) bool {
+	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired, false, name) ||
 		configChanged(&depl.Spec.Template, configDigest) ||
 		(desired.HPA == nil && *depl.Spec.Replicas != desired.Replicas)
 }
@@ -246,19 +360,15 @@ func configChanged(tmpl *corev1.PodTemplateSpec, configDigest string) bool {
 	return tmpl.Annotations == nil || tmpl.Annotations[PodConfigurationDigest] != configDigest
 }
 
-func serviceNeedsUpdate(svc *corev1.Service, desired *flpSpec) bool {
-	for _, port := range svc.Spec.Ports {
-		if port.Port == desired.Port && port.Protocol == corev1.ProtocolUDP {
-			return false
-		}
-	}
-	return true
+func serviceNeedsUpdate(actual *corev1.Service, desired *corev1.Service) bool {
+	return !reflect.DeepEqual(actual.ObjectMeta, desired.ObjectMeta) ||
+		!reflect.DeepEqual(actual.Spec, desired.Spec)
 }
 
-func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flpSpec, expectHostPort bool) bool {
+func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flpSpec, expectHostPort bool, name string) bool {
 	// Note, we don't check for changed port / host port here, because that would change also the configmap,
 	//	which also triggers pod update anyway
-	container := reconcilers.FindContainer(podSpec, constants.FLPName)
+	container := reconcilers.FindContainer(podSpec, name)
 	return container == nil ||
 		desired.Image != container.Image ||
 		desired.ImagePullPolicy != string(container.ImagePullPolicy) ||

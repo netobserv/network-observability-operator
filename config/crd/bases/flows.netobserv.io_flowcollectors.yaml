@@ -1451,6 +1451,26 @@ spec:
                     minimum: 0
                     type: integer
                 type: object
+              kafka:
+                description: Kafka configurations, if empty the operator will deploy
+                  a all-in-one FLP
+                properties:
+                  address:
+                    default: ""
+                    description: Address of the kafka server
+                    type: string
+                  enable:
+                    default: false
+                    description: Should this feature be enabled
+                    type: boolean
+                  topic:
+                    default: ""
+                    description: Kafka topic to use
+                    type: string
+                required:
+                - address
+                - topic
+                type: object
               loki:
                 description: Loki contains settings related to the loki client
                 properties:
