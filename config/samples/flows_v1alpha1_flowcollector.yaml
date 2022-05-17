@@ -31,7 +31,7 @@ spec:
     healthPort: 8080
     prometheusPort: 9090
   loki:
-    url: 'http://loki:3100/'
+    url: 'http://loki.default:3100/'
     batchWait: 1s
     batchSize: 102400
     minBackoff: 1s

@@ -14,6 +14,7 @@ const (
 	EBPFPrivilegedNSSuffix = "-privileged"
 	EBPFServiceAccount     = EBPFAgentName
 	EBPFSecurityContext    = EBPFAgentName
+	FLPSecurityContext     = FLPName
 )
 
 var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}

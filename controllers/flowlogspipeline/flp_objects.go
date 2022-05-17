@@ -432,11 +432,6 @@ func buildClusterRoleIngester() *rbacv1.ClusterRole {
 			APIGroups: []string{"autoscaling"},
 			Verbs:     []string{"create", "delete", "patch", "update", "get", "watch", "list"},
 			Resources: []string{"horizontalpodautoscalers"},
-		}, {
-			APIGroups:     []string{"security.openshift.io"},
-			Verbs:         []string{"use"},
-			Resources:     []string{"securitycontextconstraints"},
-			ResourceNames: []string{"hostnetwork"},
 		}},
 	}
 }
@@ -459,11 +454,6 @@ func buildClusterRoleTransformer() *rbacv1.ClusterRole {
 			APIGroups: []string{"autoscaling"},
 			Verbs:     []string{"create", "delete", "patch", "update", "get", "watch", "list"},
 			Resources: []string{"horizontalpodautoscalers"},
-		}, {
-			APIGroups:     []string{"security.openshift.io"},
-			Verbs:         []string{"use"},
-			Resources:     []string{"securitycontextconstraints"},
-			ResourceNames: []string{"hostnetwork"},
 		}},
 	}
 }
