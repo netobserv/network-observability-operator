@@ -53,7 +53,9 @@ func (m *NamespacedObjectManager) FetchAll(ctx context.Context) error {
 		log.Info("Fetching " + ref.kind)
 		err := m.client.Get(ctx, types.NamespacedName{Name: ref.name, Namespace: m.Namespace}, ref.placeholder)
 		if err != nil {
-			if !errors.IsNotFound(err) {
+			if errors.IsNotFound(err) {
+				log.Info(ref.name + " " + ref.kind + " not found")
+			} else {
 				log.Error(err, "Failed to get "+ref.name+" "+ref.kind)
 				return err
 			}
@@ -65,9 +67,17 @@ func (m *NamespacedObjectManager) FetchAll(ctx context.Context) error {
 	return nil
 }
 
-// CleanupNamespace removes all managed objects (registered using AddManagedObject) from the previous namespace.
-func (m *NamespacedObjectManager) CleanupNamespace(ctx context.Context) {
-	namespace := m.PreviousNamespace
+// CleanupPreviousNamespace removes all managed objects (registered using AddManagedObject) from the previous namespace.
+func (m *NamespacedObjectManager) CleanupPreviousNamespace(ctx context.Context) {
+	m.cleanup(ctx, m.PreviousNamespace)
+}
+
+// CleanupCurrentNamespace removes all managed objects (registered using AddManagedObject) from the current namespace.
+func (m *NamespacedObjectManager) CleanupCurrentNamespace(ctx context.Context) {
+	m.cleanup(ctx, m.Namespace)
+}
+
+func (m *NamespacedObjectManager) cleanup(ctx context.Context, namespace string) {
 	log := log.FromContext(ctx)
 	for _, obj := range m.managedObjects {
 		ref := obj.placeholder.DeepCopyObject().(client.Object)
