@@ -121,8 +121,8 @@ spec:
     You need to explicitly turn on IPFIX export for the `ClusterNetworkOperator`:
 
     ```
-    GF_IP=`oc get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
-    oc patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$GF_IP:2055']}}}}]"
+    FLP_IP=`oc get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $FLP_IP
+    oc patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$FLP_IP:2055']}}}}]"
     ```
     To turn it off, remove the `exportNetworkFlows` from `networks.operator.openshift.io/cluster`.
 
@@ -130,8 +130,8 @@ spec:
     You need to explicitly turn on IPFIX export in ovn-kubernetes:
 
     ```
-    GF_IP=`kubectl get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
-    kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPFIX_TARGETS="$GF_IP:2055"
+    FLP_IP=`kubectl get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $FLP_IP
+    kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPFIX_TARGETS="$FLP_IP:2055"
     ```
 
     To turn it off, remove the `OVN_IPFIX_TARGETS` env from `daemonset/ovnkube-node`.

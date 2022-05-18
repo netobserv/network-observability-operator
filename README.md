@@ -117,8 +117,8 @@ If you use OpenShift 4.10, you don't have anything to do: the operator will conf
 ### With upstream ovn-kubernetes (e.g. using KIND)
 
 ```bash
-GF_IP=`kubectl get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
-kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPFIX_TARGETS="$GF_IP:2055"
+FLP_IP=`kubectl get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $FLP_IP
+kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPFIX_TARGETS="$FLP_IP:2055"
 ```
 
 ### On older OpenShift with OVN-Kubernetes CNI
@@ -126,8 +126,8 @@ kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPF
 In OpenShift, a difference with the upstream `ovn-kubernetes` is that the flows export config is managed by the `ClusterNetworkOperator`.
 
 ```bash
-GF_IP=`oc get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $GF_IP
-oc patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$GF_IP:2055']}}}}]"
+FLP_IP=`oc get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $FLP_IP
+oc patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$FLP_IP:2055']}}}}]"
 ```
 
 ## Installing Loki
@@ -158,7 +158,7 @@ oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", 
 The plugin provides new views in the OpenShift Console: a new submenu _Network Traffic_ in _Observe_, and new tabs in several details views (Pods, Deployments, Services...).
 
 ![Main view](./docs/assets/network-traffic-main.png)
-_Main view_ 
+_Main view_
 
 ![Pod traffic](./docs/assets/network-traffic-pod.png)
 _Pod traffic_

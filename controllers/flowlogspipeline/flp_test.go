@@ -413,8 +413,8 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 func TestLabels(t *testing.T) {
 	assert := assert.New(t)
 
-	gfk := getFLPConfig()
-	builder := newBuilder("ns", corev1.ProtocolUDP, &gfk, nil, ConfSingle)
+	flpk := getFLPConfig()
+	builder := newBuilder("ns", corev1.ProtocolUDP, &flpk, nil, ConfSingle)
 
 	// Deployment
 	depl := builder.deployment("digest")

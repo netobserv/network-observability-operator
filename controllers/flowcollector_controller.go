@@ -116,7 +116,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	previousNamespace := desired.Status.Namespace
 
 	// Create reconcilers
-	gfReconciler := flowlogspipeline.NewReconciler(clientHelper, ns, previousNamespace)
+	flpReconciler := flowlogspipeline.NewReconciler(clientHelper, ns, previousNamespace)
 	var cpReconciler consoleplugin.CPReconciler
 	if r.consoleAvailable {
 		cpReconciler = consoleplugin.NewReconciler(clientHelper, ns, previousNamespace)
@@ -124,14 +124,14 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	// Check namespace changed
 	if ns != previousNamespace {
-		if err := r.handleNamespaceChanged(ctx, previousNamespace, ns, desired, &gfReconciler, &cpReconciler); err != nil {
+		if err := r.handleNamespaceChanged(ctx, previousNamespace, ns, desired, &flpReconciler, &cpReconciler); err != nil {
 			log.Error(err, "Failed to handle namespace change")
 			return ctrl.Result{}, err
 		}
 	}
 
 	// Flowlogs-pipeline
-	if err := gfReconciler.Reconcile(ctx, desired); err != nil {
+	if err := flpReconciler.Reconcile(ctx, desired); err != nil {
 		log.Error(err, "Failed to reconcile flowlogs-pipeline")
 		return ctrl.Result{}, err
 	}
@@ -142,7 +142,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		desired.Spec.ClusterNetworkOperator.Namespace,
 		ovsFlowsConfigMapName,
 		r.lookupIP)
-	if err := ovsConfigController.Reconcile(ctx, desired, gfReconciler.GetServiceName(desired.Spec.Kafka)); err != nil {
+	if err := ovsConfigController.Reconcile(ctx, desired, flpReconciler.GetServiceName(desired.Spec.Kafka)); err != nil {
 		return ctrl.Result{},
 			fmt.Errorf("failed to reconcile ovs-flows-config ConfigMap: %w", err)
 	}
@@ -170,14 +170,14 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	ctx context.Context,
 	oldNS, newNS string,
 	desired *flowsv1alpha1.FlowCollector,
-	gfReconciler *flowlogspipeline.FLPReconciler,
+	flpReconciler *flowlogspipeline.FLPReconciler,
 	cpReconciler *consoleplugin.CPReconciler,
 ) error {
 	log := log.FromContext(ctx)
 	if oldNS == "" {
 		// First install: create one-shot resources
 		log.Info("FlowCollector first install: creating initial resources")
-		err := gfReconciler.InitStaticResources(ctx)
+		err := flpReconciler.InitStaticResources(ctx)
 		if err != nil {
 			return err
 		}
@@ -190,7 +190,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	} else {
 		// Namespace updated, clean up previous namespace
 		log.Info("FlowCollector namespace change detected: cleaning up previous namespace and preparing next one", "old namespace", oldNS, "new namepace", newNS)
-		err := gfReconciler.PrepareNamespaceChange(ctx)
+		err := flpReconciler.PrepareNamespaceChange(ctx)
 		if err != nil {
 			return err
 		}

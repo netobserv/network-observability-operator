@@ -39,19 +39,19 @@ func flowCollectorControllerSpecs() {
 		Name:      "ovs-flows-config",
 		Namespace: "openshift-network-operator",
 	}
-	gfKey1 := types.NamespacedName{
+	flpKey1 := types.NamespacedName{
 		Name:      constants.FLPName,
 		Namespace: operatorNamespace,
 	}
-	gfKey2 := types.NamespacedName{
+	flpKey2 := types.NamespacedName{
 		Name:      constants.FLPName,
 		Namespace: otherNamespace,
 	}
-	gfKeyKafkaIngester := types.NamespacedName{
+	flpKeyKafkaIngester := types.NamespacedName{
 		Name:      constants.FLPName + flowlogspipeline.FlpConfSuffix[flowlogspipeline.ConfKafkaIngester],
 		Namespace: operatorNamespace,
 	}
-	gfKeyKafkaTransformer := types.NamespacedName{
+	flpKeyKafkaTransformer := types.NamespacedName{
 		Name:      constants.FLPName + flowlogspipeline.FlpConfSuffix[flowlogspipeline.ConfKafkaTransformer],
 		Namespace: operatorNamespace,
 	}
@@ -145,7 +145,7 @@ func flowCollectorControllerSpecs() {
 			By("Expecting to create the flowlogs-pipeline Deployment")
 			Eventually(func() interface{} {
 				dp := appsv1.Deployment{}
-				if err := k8sClient.Get(ctx, gfKey1, &dp); err != nil {
+				if err := k8sClient.Get(ctx, flpKey1, &dp); err != nil {
 					return err
 				}
 				oldDigest = dp.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
@@ -159,7 +159,7 @@ func flowCollectorControllerSpecs() {
 			svc := v1.Service{}
 			By("Expecting to create the flowlogs-pipeline Service")
 			Eventually(func() interface{} {
-				if err := k8sClient.Get(ctx, gfKey1, &svc); err != nil {
+				if err := k8sClient.Get(ctx, flpKey1, &svc); err != nil {
 					return err
 				}
 				return svc
@@ -174,7 +174,7 @@ func flowCollectorControllerSpecs() {
 			By("Expecting to create the flowlogs-pipeline ServiceAccount")
 			Eventually(func() interface{} {
 				svcAcc := v1.ServiceAccount{}
-				if err := k8sClient.Get(ctx, gfKey1, &svcAcc); err != nil {
+				if err := k8sClient.Get(ctx, flpKey1, &svcAcc); err != nil {
 					return err
 				}
 				return svcAcc
@@ -212,7 +212,7 @@ func flowCollectorControllerSpecs() {
 			By("Expecting updated flowlogs-pipeline Service port")
 			Eventually(func() interface{} {
 				svc := v1.Service{}
-				if err := k8sClient.Get(ctx, gfKey1, &svc); err != nil {
+				if err := k8sClient.Get(ctx, flpKey1, &svc); err != nil {
 					return err
 				}
 				return svc.Spec.Ports[0].Port
@@ -246,7 +246,7 @@ func flowCollectorControllerSpecs() {
 			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
 			Eventually(func() error {
 				dp := appsv1.Deployment{}
-				if err := k8sClient.Get(ctx, gfKey1, &dp); err != nil {
+				if err := k8sClient.Get(ctx, flpKey1, &dp); err != nil {
 					return err
 				}
 				currentConfigDigest := dp.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
@@ -260,7 +260,7 @@ func flowCollectorControllerSpecs() {
 
 		It("Should autoscale when the HPA options change", func() {
 			hpa := ascv2.HorizontalPodAutoscaler{}
-			Expect(k8sClient.Get(ctx, gfKey1, &hpa)).To(Succeed())
+			Expect(k8sClient.Get(ctx, flpKey1, &hpa)).To(Succeed())
 			Expect(*hpa.Spec.MinReplicas).To(Equal(int32(1)))
 			Expect(hpa.Spec.MaxReplicas).To(Equal(int32(1)))
 			Expect(*hpa.Spec.Metrics[0].Resource.Target.AverageUtilization).To(Equal(int32(90)))
@@ -273,7 +273,7 @@ func flowCollectorControllerSpecs() {
 
 			By("Changing the Horizontal Pod Autoscaler instance")
 			Eventually(func() error {
-				if err := k8sClient.Get(ctx, gfKey1, &hpa); err != nil {
+				if err := k8sClient.Get(ctx, flpKey1, &hpa); err != nil {
 					return err
 				}
 				if *hpa.Spec.MinReplicas != int32(2) || hpa.Spec.MaxReplicas != int32(2) ||
@@ -321,7 +321,7 @@ func flowCollectorControllerSpecs() {
 			}))
 
 			ds := appsv1.DaemonSet{}
-			Expect(k8sClient.Get(ctx, gfKey1, &ds)).To(Succeed())
+			Expect(k8sClient.Get(ctx, flpKey1, &ds)).To(Succeed())
 
 			oldConfigDigest = ds.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
 			Expect(oldConfigDigest).ToNot(BeEmpty())
@@ -370,7 +370,7 @@ func flowCollectorControllerSpecs() {
 			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
 			Eventually(func() error {
 				dp := appsv1.DaemonSet{}
-				if err := k8sClient.Get(ctx, gfKey1, &dp); err != nil {
+				if err := k8sClient.Get(ctx, flpKey1, &dp); err != nil {
 					return err
 				}
 				currentConfigDigest := dp.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
@@ -398,24 +398,24 @@ func flowCollectorControllerSpecs() {
 		It("Should deploy kafka ingester and transformer", func() {
 			By("Expecting ingester daemonset to be created")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKeyKafkaIngester, &appsv1.DaemonSet{})
+				return k8sClient.Get(ctx, flpKeyKafkaIngester, &appsv1.DaemonSet{})
 			}, timeout, interval).Should(Succeed())
 
 			By("Expecting transformer deployment to be created")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKeyKafkaTransformer, &appsv1.Deployment{})
+				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &appsv1.Deployment{})
 			}, timeout, interval).Should(Succeed())
 
 			By("Not Expecting transformer service to be created")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKeyKafkaTransformer, &v1.Service{})
+				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &v1.Service{})
 			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline-transformer" not found`))
 		})
 
 		It("Should delete previous flp deployment", func() {
 			By("Expecting deployment to be deleted")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKey1, &appsv1.DaemonSet{})
+				return k8sClient.Get(ctx, flpKey1, &appsv1.DaemonSet{})
 			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline" not found`))
 		})
 
@@ -433,19 +433,19 @@ func flowCollectorControllerSpecs() {
 		It("Should deploy single flp again", func() {
 			By("Expecting daemonset to be created")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKey1, &appsv1.DaemonSet{})
+				return k8sClient.Get(ctx, flpKey1, &appsv1.DaemonSet{})
 			}, timeout, interval).Should(Succeed())
 		})
 
 		It("Should delete kafka ingester and transformer", func() {
 			By("Expecting ingester daemonset to be deleted")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKeyKafkaIngester, &appsv1.DaemonSet{})
+				return k8sClient.Get(ctx, flpKeyKafkaIngester, &appsv1.DaemonSet{})
 			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline-ingester" not found`))
 
 			By("Expecting transformer deployment to be deleted")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKeyKafkaTransformer, &appsv1.Deployment{})
+				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &appsv1.Deployment{})
 			}, timeout, interval).Should(MatchError(`deployments.apps "flowlogs-pipeline-transformer" not found`))
 		})
 
@@ -471,37 +471,37 @@ func flowCollectorControllerSpecs() {
 		It("Should redeploy goglow-kube in new namespace", func() {
 			By("Expecting daemonset in previous namespace to be deleted")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKey1, &appsv1.DaemonSet{})
+				return k8sClient.Get(ctx, flpKey1, &appsv1.DaemonSet{})
 			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline" not found`))
 
 			By("Expecting deployment in previous namespace to be deleted")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKey1, &appsv1.Deployment{})
+				return k8sClient.Get(ctx, flpKey1, &appsv1.Deployment{})
 			}, timeout, interval).Should(MatchError(`deployments.apps "flowlogs-pipeline" not found`))
 
 			By("Expecting service in previous namespace to be deleted")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKey1, &v1.Service{})
+				return k8sClient.Get(ctx, flpKey1, &v1.Service{})
 			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline" not found`))
 
 			By("Expecting service account in previous namespace to be deleted")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKey1, &v1.ServiceAccount{})
+				return k8sClient.Get(ctx, flpKey1, &v1.ServiceAccount{})
 			}, timeout, interval).Should(MatchError(`serviceaccounts "flowlogs-pipeline" not found`))
 
 			By("Expecting deployment to be created in new namespace")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKey2, &appsv1.Deployment{})
+				return k8sClient.Get(ctx, flpKey2, &appsv1.Deployment{})
 			}, timeout, interval).Should(Succeed())
 
 			By("Expecting service to be created in new namespace")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKey2, &v1.Service{})
+				return k8sClient.Get(ctx, flpKey2, &v1.Service{})
 			}, timeout, interval).Should(Succeed())
 
 			By("Expecting service account to be created in new namespace")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, gfKey2, &v1.ServiceAccount{})
+				return k8sClient.Get(ctx, flpKey2, &v1.ServiceAccount{})
 			}, timeout, interval).Should(Succeed())
 		})
 
@@ -572,21 +572,21 @@ func flowCollectorControllerSpecs() {
 			By("Expecting flowlogs-pipeline deployment to be garbage collected")
 			Eventually(func() interface{} {
 				d := appsv1.Deployment{}
-				_ = k8sClient.Get(ctx, gfKey2, &d)
+				_ = k8sClient.Get(ctx, flpKey2, &d)
 				return &d
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
 
 			By("Expecting flowlogs-pipeline service to be garbage collected")
 			Eventually(func() interface{} {
 				svc := v1.Service{}
-				_ = k8sClient.Get(ctx, gfKey2, &svc)
+				_ = k8sClient.Get(ctx, flpKey2, &svc)
 				return &svc
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
 
 			By("Expecting flowlogs-pipeline service account to be garbage collected")
 			Eventually(func() interface{} {
 				svcAcc := v1.ServiceAccount{}
-				_ = k8sClient.Get(ctx, gfKey2, &svcAcc)
+				_ = k8sClient.Get(ctx, flpKey2, &svcAcc)
 				return &svcAcc
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
 
