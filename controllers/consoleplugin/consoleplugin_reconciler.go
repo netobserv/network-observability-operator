@@ -63,7 +63,7 @@ func (r *CPReconciler) InitStaticResources(ctx context.Context) error {
 // PrepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
 func (r *CPReconciler) PrepareNamespaceChange(ctx context.Context) error {
 	// Switching namespace => delete everything in the previous namespace
-	r.nobjMngr.CleanupNamespace(ctx)
+	r.nobjMngr.CleanupPreviousNamespace(ctx)
 	return r.CreateOwned(ctx, buildServiceAccount(r.nobjMngr.Namespace))
 }
 

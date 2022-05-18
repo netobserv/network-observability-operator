@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/netobserv/network-observability-operator/pkg/helper"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -16,6 +15,7 @@ import (
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 // Type alias
@@ -97,9 +97,9 @@ func (r *FLPReconciler) InitStaticResources(ctx context.Context) error {
 func (r *FLPReconciler) PrepareNamespaceChange(ctx context.Context) error {
 	// Switching namespace => delete everything in the previous namespace
 	for _, singleFlp := range r.singleReconcilers {
-		singleFlp.nobjMngr.CleanupNamespace(ctx)
+		singleFlp.nobjMngr.CleanupPreviousNamespace(ctx)
 	}
-	r.nobjMngr.CleanupNamespace(ctx)
+	r.nobjMngr.CleanupPreviousNamespace(ctx)
 	return r.reconcilePermissions(ctx)
 }
 
@@ -150,13 +150,20 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 	if err != nil {
 		return err
 	}
+
 	shouldDeploy, err := checkDeployNeeded(desired.Spec.Kafka, r.confKind)
 	if err != nil {
 		return err
 	}
 	if !shouldDeploy {
-		r.nobjMngr.CleanupNamespace(ctx)
+		r.nobjMngr.CleanupCurrentNamespace(ctx)
 		return nil
+	}
+
+	// Retrieve current owned objects
+	err = r.nobjMngr.FetchAll(ctx)
+	if err != nil {
+		return err
 	}
 
 	portProtocol := corev1.ProtocolUDP
@@ -164,11 +171,6 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 		portProtocol = corev1.ProtocolTCP
 	}
 	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki, r.confKind)
-	// Retrieve current owned objects
-	err = r.nobjMngr.FetchAll(ctx)
-	if err != nil {
-		return err
-	}
 	newCM, configDigest := builder.configMap()
 	if !r.nobjMngr.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
