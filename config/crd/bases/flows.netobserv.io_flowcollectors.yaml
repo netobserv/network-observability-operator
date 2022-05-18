@@ -1533,6 +1533,25 @@ spec:
                   going to be deployed. If empty, the namespace of the operator is
                   going to be used
                 type: string
+              ovnKubernetes:
+                description: OVNKubernetes contains settings related to ovn-kubernetes.
+                  This configuration is necessary only if OpenShift Cluster Network
+                  Operator is not used / configured.
+                properties:
+                  containerName:
+                    default: ovnkube-node
+                    description: Name of the container to configure for IPFIX.
+                    type: string
+                  daemonSetName:
+                    default: ovnkube-node
+                    description: Name of the DaemonSet controlling the ovn-kubernetes
+                      pods.
+                    type: string
+                  namespace:
+                    default: ovn-kubernetes
+                    description: Namespace where ovn-kubernetes pods are deployed.
+                    type: string
+                type: object
             required:
             - agent
             type: object

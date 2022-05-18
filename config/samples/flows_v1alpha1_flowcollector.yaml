@@ -51,3 +51,7 @@ spec:
         "3100": loki
   clusterNetworkOperator:
     namespace: "openshift-network-operator"
+  ovnKubernetes:
+    namespace: "ovn-kubernetes"
+    daemonSetName: "ovnkube-node"
+    containerName: "ovnkube-node"

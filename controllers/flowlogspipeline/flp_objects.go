@@ -171,6 +171,10 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 			FailureThreshold: startupFailureThreshold,
 		}
 	}
+	dnsPolicy := corev1.DNSClusterFirst
+	if hostNetwork {
+		dnsPolicy = corev1.DNSClusterFirstWithHostNet
+	}
 
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -194,7 +198,7 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 			Containers:         []corev1.Container{container},
 			ServiceAccountName: constants.FLPName + b.confKindSuffix,
 			HostNetwork:        hostNetwork,
-			DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
+			DNSPolicy:          dnsPolicy,
 		},
 	}
 }

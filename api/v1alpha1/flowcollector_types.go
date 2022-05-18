@@ -77,7 +77,10 @@ type FlowCollectorSpec struct {
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
 	// ClusterNetworkOperator contains settings related to the cluster network operator
-	ClusterNetworkOperator ClusterNetworkOperator `json:"clusterNetworkOperator,omitempty"`
+	ClusterNetworkOperator ClusterNetworkOperatorConfig `json:"clusterNetworkOperator,omitempty"`
+
+	// OVNKubernetes contains settings related to ovn-kubernetes. This configuration is necessary only if OpenShift Cluster Network Operator is not used / configured.
+	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty"`
 }
 
 // FlowCollectorIPFIX defines a FlowCollector that uses IPFIX on OVN-Kubernetes to collect the
@@ -369,13 +372,30 @@ type ConsolePluginPortConfig struct {
 	PortNames map[string]string `json:"portNames,omitempty" yaml:"portNames,omitempty"`
 }
 
-// CNO defines the desired configuration related to the Cluster Network Configuration
-type ClusterNetworkOperator struct {
+// ClusterNetworkOperatorConfig defines the desired configuration related to the Cluster Network Configuration
+type ClusterNetworkOperatorConfig struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=openshift-network-operator
 	// Namespace  where the configmap is going to be deployed.
 	Namespace string `json:"namespace,omitempty"`
+}
+
+// OVNKubernetesConfig defines the desired configuration related to the OVNKubernetes network provider, when Cluster Network Operator isn't installed.
+type OVNKubernetesConfig struct {
+	// Important: Run "make generate" to regenerate code after modifying this file
+
+	//+kubebuilder:default:=ovn-kubernetes
+	// Namespace where ovn-kubernetes pods are deployed.
+	Namespace string `json:"namespace,omitempty"`
+
+	//+kubebuilder:default:=ovnkube-node
+	// Name of the DaemonSet controlling the ovn-kubernetes pods.
+	DaemonSetName string `json:"daemonSetName,omitempty"`
+
+	//+kubebuilder:default:=ovnkube-node
+	// Name of the container to configure for IPFIX.
+	ContainerName string `json:"containerName,omitempty"`
 }
 
 // FlowCollectorStatus defines the observed state of FlowCollector

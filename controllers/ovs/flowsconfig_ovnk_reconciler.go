@@ -18,22 +18,18 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 )
 
-const (
-	// Make configurable?
-	ovnkNamespace = "ovn-kubernetes"
-	ovnkDSName    = "ovnkube-node"
-)
-
 type FlowsConfigOVNKController struct {
 	namespace string
+	config    flowsv1alpha1.OVNKubernetesConfig
 	client    reconcilers.ClientHelper
 	lookupIP  func(string) ([]net.IP, error)
 }
 
-func NewFlowsConfigOVNKController(client reconcilers.ClientHelper, namespace string, lookupIP func(string) ([]net.IP, error)) *FlowsConfigOVNKController {
+func NewFlowsConfigOVNKController(client reconcilers.ClientHelper, namespace string, config flowsv1alpha1.OVNKubernetesConfig, lookupIP func(string) ([]net.IP, error)) *FlowsConfigOVNKController {
 	return &FlowsConfigOVNKController{
 		client:    client,
 		namespace: namespace,
+		config:    config,
 		lookupIP:  lookupIP,
 	}
 }
@@ -55,7 +51,7 @@ func (c *FlowsConfigOVNKController) Reconcile(
 		return err
 	}
 
-	ovnkubeNode := reconcilers.FindContainer(&current.Spec.Template.Spec, "ovnkube-node")
+	ovnkubeNode := reconcilers.FindContainer(&current.Spec.Template.Spec, target.Spec.OVNKubernetes.ContainerName)
 	if ovnkubeNode == nil {
 		return errors.New("could not find container ovnkube-node")
 	}
@@ -78,10 +74,10 @@ func (c *FlowsConfigOVNKController) Reconcile(
 func (c *FlowsConfigOVNKController) current(ctx context.Context) (*appsv1.DaemonSet, error) {
 	curr := &appsv1.DaemonSet{}
 	if err := c.client.Get(ctx, types.NamespacedName{
-		Name:      ovnkDSName,
-		Namespace: ovnkNamespace,
+		Name:      c.config.DaemonSetName,
+		Namespace: c.config.Namespace,
 	}, curr); err != nil {
-		return nil, fmt.Errorf("retrieving %s/%s daemonset: %w", ovnkNamespace, ovnkDSName, err)
+		return nil, fmt.Errorf("retrieving %s/%s daemonset: %w", c.config.Namespace, c.config.DaemonSetName, err)
 	}
 	return curr, nil
 }
