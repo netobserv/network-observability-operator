@@ -6,12 +6,17 @@ import (
 	"reflect"
 
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	osv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -321,6 +326,48 @@ func (r *FLPReconciler) reconcilePermissions(ctx context.Context) error {
 	if err := r.reconcileClusterRole(ctx, buildClusterRoleTransformer(), constants.FLPName+FlpConfSuffix[ConfKafkaTransformer]); err != nil {
 		return err
 	}
+	// TODO: detect if you are using openshift and otherwise use a privileged namespace, like for the ebpf agent
+	if err := r.reconcileOpenshiftPermissions(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *FLPReconciler) reconcileOpenshiftPermissions(ctx context.Context) error {
+	rlog := log.FromContext(ctx,
+		"securityContextConstraints", constants.FLPSecurityContext)
+	scc := &osv1.SecurityContextConstraints{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: constants.FLPSecurityContext,
+		},
+		AllowHostPorts: true,
+		RunAsUser: osv1.RunAsUserStrategyOptions{
+			Type: osv1.RunAsUserStrategyRunAsAny,
+		},
+		SELinuxContext: osv1.SELinuxContextStrategyOptions{
+			Type: osv1.SELinuxStrategyRunAsAny,
+		},
+		Users: []string{
+			"system:serviceaccount:" + c.nobjMngr.Namespace + ":" + constants.FLPName, // todo: add confkindsuffix
+		},
+	}
+	actual := &osv1.SecurityContextConstraints{}
+	if err := c.Get(ctx, client.ObjectKeyFromObject(scc), actual); err != nil {
+		if errors.IsNotFound(err) {
+			actual = nil
+		} else {
+			return fmt.Errorf("can't retrieve current namespace: %w", err)
+		}
+	}
+	if actual == nil {
+		rlog.Info("creating SecurityContextConstraints")
+		return c.CreateOwned(ctx, scc)
+	}
+	if !equality.Semantic.DeepDerivative(&scc, &actual) {
+		rlog.Info("updating SecurityContextConstraints")
+		return c.UpdateOwned(ctx, actual, scc)
+	}
+	rlog.Info("SecurityContextConstraints already reconciled. Doing nothing")
 	return nil
 }
 

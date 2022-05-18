@@ -12,7 +12,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: quay.io/netobserv/network-observability-operator
-  newTag: 0.1.2
+  newName: quay.io/mmaciasl/network-observability-operator
+  newTag: "11"
 commonLabels:
   app: network-observability-operator
+  version: main
