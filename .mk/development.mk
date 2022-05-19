@@ -22,6 +22,21 @@ undeploy-loki: ## Undeploy loki.
 	curl -S -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/1-storage.yaml | kubectl --ignore-not-found=true  delete -f - || true
 	-pkill --oldest --full "3100:3100"
 
+.PHONY: deploy-kafka
+deploy-kafka:
+	@echo -e "\n==> Deploy kafka"
+	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
+	kubectl create -f "https://strimzi.io/install/latest?namespace="$(NAMESPACE) -n $(NAMESPACE)
+	kubectl create -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka-cluster.yaml" -n $(NAMESPACE)
+	kubectl create -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka-topic.yaml" -n $(NAMESPACE)
+
+.PHONY: undeploy-kafka
+undeploy-kafka: ## Undeploy loki.
+	@echo -e "\n==> Undeploy kafka"
+	kubectl delete -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka-topic.yaml" -n $(NAMESPACE)
+	kubectl delete -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka-cluster.yaml" -n $(NAMESPACE)
+	kubectl delete -f "https://strimzi.io/install/latest?namespace="$(NAMESPACE) -n $(NAMESPACE)
+
 .PHONY: deploy-grafana
 deploy-grafana: ## Deploy grafana.
 	@echo -e "\n==> Deploy grafana"
@@ -48,4 +63,3 @@ deploy-all: manifests generate fmt lint deploy-loki deploy-grafana install deplo
 
 .PHONY: undeploy-all
 undeploy-all: undeploy-loki undeploy-grafana uninstall undeploy-sample-cr
-
