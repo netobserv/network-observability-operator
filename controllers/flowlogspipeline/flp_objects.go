@@ -224,7 +224,7 @@ func (b *builder) getIngestConfig() ([]map[string]string, []map[string]interface
 				"kafka": map[string]interface{}{
 					"brokers": []string{b.desiredKafka.Address},
 					"topic":   b.desiredKafka.Topic,
-					"groupid": b.confKind, // Without groupis, each message is delivered to each consumers
+					"groupid": b.confKind, // Without groupid, each message is delivered to each consumers
 				},
 			},
 		}
