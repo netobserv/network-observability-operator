@@ -151,6 +151,7 @@ func checkDeployNeeded(kafka flowsv1alpha1.FlowCollectorKafka, confKind string) 
 func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
 	desiredFLP := &desired.Spec.FlowlogsPipeline
 	desiredLoki := &desired.Spec.Loki
+	desiredKafka := &desired.Spec.Kafka
 	err := validateDesired(desiredFLP)
 	if err != nil {
 		return err
@@ -175,7 +176,7 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 	if desired.Spec.Agent == flowsv1alpha1.AgentEBPF {
 		portProtocol = corev1.ProtocolTCP
 	}
-	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki, r.confKind, r.useOpenShiftSCC)
+	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki, desiredKafka, r.confKind, r.useOpenShiftSCC)
 	newCM, configDigest := builder.configMap()
 	if !r.nobjMngr.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
@@ -191,6 +192,9 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 		return err
 	}
 
+	if r.confKind == ConfKafkaTransformer {
+		return r.reconcileAsDeployment(ctx, desiredFLP, &builder, configDigest)
+	}
 	switch desiredFLP.Kind {
 	case constants.DeploymentKind:
 		return r.reconcileAsDeployment(ctx, desiredFLP, &builder, configDigest)
