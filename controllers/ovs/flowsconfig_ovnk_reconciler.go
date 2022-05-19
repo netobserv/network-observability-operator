@@ -38,40 +38,44 @@ func NewFlowsConfigOVNKController(client reconcilers.ClientHelper, namespace str
 // the target FlowCollector ipfix section map
 func (c *FlowsConfigOVNKController) Reconcile(
 	ctx context.Context, target *flowsv1alpha1.FlowCollector) error {
+
+	desiredEnv, err := c.desiredEnv(ctx, target)
+	if err != nil {
+		return err
+	}
+
+	return c.updateEnv(ctx, target, desiredEnv)
+}
+
+func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flowsv1alpha1.FlowCollector, desiredEnv map[string]string) error {
 	rlog := log.FromContext(ctx, "component", "FlowsConfigOVNKController")
 
-	current, err := c.current(ctx)
+	ds, err := c.getDaemonSet(ctx)
 	if err != nil {
 		return err
 	}
 
-	desired, err := c.desired(ctx, target)
-	// compare current and desired
-	if err != nil {
-		return err
-	}
-
-	ovnkubeNode := reconcilers.FindContainer(&current.Spec.Template.Spec, target.Spec.OVNKubernetes.ContainerName)
+	ovnkubeNode := reconcilers.FindContainer(&ds.Spec.Template.Spec, target.Spec.OVNKubernetes.ContainerName)
 	if ovnkubeNode == nil {
 		return errors.New("could not find container ovnkube-node")
 	}
 
 	anyUpdate := false
-	for k, v := range desired {
+	for k, v := range desiredEnv {
 		if checkUpdateEnv(k, v, ovnkubeNode) {
 			anyUpdate = true
 		}
 	}
 	if anyUpdate {
 		rlog.Info("Provided IPFIX configuration differs current configuration. Updating")
-		return c.client.Update(ctx, current)
+		return c.client.Update(ctx, ds)
 	}
 
 	rlog.Info("No changes needed")
 	return nil
 }
 
-func (c *FlowsConfigOVNKController) current(ctx context.Context) (*appsv1.DaemonSet, error) {
+func (c *FlowsConfigOVNKController) getDaemonSet(ctx context.Context) (*appsv1.DaemonSet, error) {
 	curr := &appsv1.DaemonSet{}
 	if err := c.client.Get(ctx, types.NamespacedName{
 		Name:      c.config.DaemonSetName,
@@ -82,7 +86,7 @@ func (c *FlowsConfigOVNKController) current(ctx context.Context) (*appsv1.Daemon
 	return curr, nil
 }
 
-func (c *FlowsConfigOVNKController) desired(ctx context.Context, coll *flowsv1alpha1.FlowCollector) (map[string]string, error) {
+func (c *FlowsConfigOVNKController) desiredEnv(ctx context.Context, coll *flowsv1alpha1.FlowCollector) (map[string]string, error) {
 	cacheTimeout, err := time.ParseDuration(coll.Spec.IPFIX.CacheActiveTimeout)
 	if err != nil {
 		return nil, err
@@ -150,4 +154,16 @@ func checkUpdateEnv(name, value string, container *corev1.Container) bool {
 		Value: value,
 	})
 	return true
+}
+
+// Finalize will remove IPFIX config from ovn pods env
+func (c *FlowsConfigOVNKController) Finalize(ctx context.Context, target *flowsv1alpha1.FlowCollector) error {
+	// Remove all env
+	desiredEnv := map[string]string{
+		"OVN_IPFIX_TARGETS":              "",
+		"OVN_IPFIX_CACHE_ACTIVE_TIMEOUT": "",
+		"OVN_IPFIX_CACHE_MAX_FLOWS":      "",
+		"OVN_IPFIX_SAMPLING":             "",
+	}
+	return c.updateEnv(ctx, target, desiredEnv)
 }

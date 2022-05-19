@@ -17,6 +17,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
@@ -29,7 +30,10 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/discover"
 )
 
-const ovsFlowsConfigMapName = "ovs-flows-config"
+const (
+	ovsFlowsConfigMapName = "ovs-flows-config"
+	flowsFinalizer        = "flows.netobserv.io/finalizer"
+)
 
 // FlowCollectorReconciler reconciles a FlowCollector object
 type FlowCollectorReconciler struct {
@@ -86,9 +90,8 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Info("No need to reconcile status of a FlowCollector that is being deleted. Ignoring")
-		return ctrl.Result{}, nil
+	if ret, err := r.checkFinalizer(ctx, desired); ret {
+		return ctrl.Result{}, err
 	}
 
 	ns := getNamespaceName(desired)
@@ -105,12 +108,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 
-	clientHelper := reconcilers.ClientHelper{
-		Client: r.Client,
-		SetControllerReference: func(obj client.Object) error {
-			return ctrl.SetControllerReference(desired, obj, r.Scheme)
-		},
-	}
+	clientHelper := r.newClientHelper(desired)
 	previousNamespace := desired.Status.Namespace
 
 	// Create reconcilers
@@ -236,6 +234,7 @@ func (r *FlowCollectorReconciler) SetupWithManager(ctx context.Context, mgr ctrl
 }
 
 func (r *FlowCollectorReconciler) setupDiscovery(ctx context.Context, mgr ctrl.Manager, builder *builder.Builder) error {
+	log := log.FromContext(ctx)
 	dc, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
 	if err != nil {
 		return fmt.Errorf("can't instantiate discovery client: %w", err)
@@ -253,6 +252,11 @@ func (r *FlowCollectorReconciler) setupDiscovery(ctx context.Context, mgr ctrl.M
 	r.availableAPIs = apis
 	if apis.HasConsole() {
 		builder.Owns(&osv1alpha1.ConsolePlugin{})
+	} else {
+		log.Info("Console not detected: the console plugin is not available")
+	}
+	if !apis.HasCNO() {
+		log.Info("CNO not detected: using ovnKubernetes config and reconciler")
 	}
 	return nil
 }
@@ -274,4 +278,55 @@ func (r *FlowCollectorReconciler) namespaceExist(ctx context.Context, nsName str
 		return false, err
 	}
 	return true, nil
+}
+
+// checkFinalizer returns true (and/or error) if the calling function needs to return
+func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *flowsv1alpha1.FlowCollector) (bool, error) {
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+		if controllerutil.ContainsFinalizer(desired, flowsFinalizer) {
+			// Run finalization logic
+			if err := r.finalize(ctx, desired); err != nil {
+				return true, err
+			}
+			// Remove finalizer
+			controllerutil.RemoveFinalizer(desired, flowsFinalizer)
+			err := r.Update(ctx, desired)
+			return true, err
+		}
+		return true, nil
+	}
+
+	// Add finalizer for this CR
+	if !controllerutil.ContainsFinalizer(desired, flowsFinalizer) {
+		controllerutil.AddFinalizer(desired, flowsFinalizer)
+		if err := r.Update(ctx, desired); err != nil {
+			return true, err
+		}
+	}
+
+	return false, nil
+}
+
+func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+	if !r.availableAPIs.HasCNO() {
+		ns := getNamespaceName(desired)
+		clientHelper := r.newClientHelper(desired)
+		ovsConfigController := ovs.NewFlowsConfigOVNKController(clientHelper,
+			ns,
+			desired.Spec.OVNKubernetes,
+			r.lookupIP)
+		if err := ovsConfigController.Finalize(ctx, desired); err != nil {
+			return fmt.Errorf("failed to finalize ovn-kubernetes reconciler: %w", err)
+		}
+	}
+	return nil
+}
+
+func (r *FlowCollectorReconciler) newClientHelper(desired *flowsv1alpha1.FlowCollector) reconcilers.ClientHelper {
+	return reconcilers.ClientHelper{
+		Client: r.Client,
+		SetControllerReference: func(obj client.Object) error {
+			return ctrl.SetControllerReference(desired, obj, r.Scheme)
+		},
+	}
 }
