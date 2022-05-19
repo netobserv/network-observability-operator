@@ -4,10 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"strings"
 
-	"github.com/netobserv/network-observability-operator/controllers/ebpf"
-	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -20,33 +17,38 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
+	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
 )
 
-const ovsFlowsConfigMapName = "ovs-flows-config"
+const (
+	ovsFlowsConfigMapName = "ovs-flows-config"
+	flowsFinalizer        = "flows.netobserv.io/finalizer"
+)
 
 // FlowCollectorReconciler reconciles a FlowCollector object
 type FlowCollectorReconciler struct {
 	client.Client
-	permissions      discover.Permissions
-	Scheme           *runtime.Scheme
-	consoleAvailable bool
-	lookupIP         func(string) ([]net.IP, error)
+	permissions   discover.Permissions
+	availableAPIs *discover.AvailableAPIs
+	Scheme        *runtime.Scheme
+	lookupIP      func(string) ([]net.IP, error)
 }
 
 func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *FlowCollectorReconciler {
 	return &FlowCollectorReconciler{
-		Client:           client,
-		Scheme:           scheme,
-		consoleAvailable: false,
-		lookupIP:         net.LookupIP,
+		Client:   client,
+		Scheme:   scheme,
+		lookupIP: net.LookupIP,
 	}
 }
 
@@ -88,9 +90,8 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		log.Info("No need to reconcile status of a FlowCollector that is being deleted. Ignoring")
-		return ctrl.Result{}, nil
+	if ret, err := r.checkFinalizer(ctx, desired); ret {
+		return ctrl.Result{}, err
 	}
 
 	ns := getNamespaceName(desired)
@@ -107,18 +108,13 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 
-	clientHelper := reconcilers.ClientHelper{
-		Client: r.Client,
-		SetControllerReference: func(obj client.Object) error {
-			return ctrl.SetControllerReference(desired, obj, r.Scheme)
-		},
-	}
+	clientHelper := r.newClientHelper(desired)
 	previousNamespace := desired.Status.Namespace
 
 	// Create reconcilers
-	flpReconciler := flowlogspipeline.NewReconciler(clientHelper, ns, previousNamespace)
+	flpReconciler := flowlogspipeline.NewReconciler(ctx, clientHelper, ns, previousNamespace, &r.permissions)
 	var cpReconciler consoleplugin.CPReconciler
-	if r.consoleAvailable {
+	if r.availableAPIs.HasConsole() {
 		cpReconciler = consoleplugin.NewReconciler(clientHelper, ns, previousNamespace)
 	}
 
@@ -137,14 +133,25 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	// OVS config map for CNO
-	ovsConfigController := ovs.NewFlowsConfigController(clientHelper,
-		ns,
-		desired.Spec.ClusterNetworkOperator.Namespace,
-		ovsFlowsConfigMapName,
-		r.lookupIP)
-	if err := ovsConfigController.Reconcile(ctx, desired, flpReconciler.GetServiceName(desired.Spec.Kafka)); err != nil {
-		return ctrl.Result{},
-			fmt.Errorf("failed to reconcile ovs-flows-config ConfigMap: %w", err)
+	if r.availableAPIs.HasCNO() {
+		ovsConfigController := ovs.NewFlowsConfigCNOController(clientHelper,
+			ns,
+			desired.Spec.ClusterNetworkOperator.Namespace,
+			ovsFlowsConfigMapName,
+			r.lookupIP)
+		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
+			return ctrl.Result{},
+				fmt.Errorf("failed to reconcile ovs-flows-config ConfigMap: %w", err)
+		}
+	} else {
+		ovsConfigController := ovs.NewFlowsConfigOVNKController(clientHelper,
+			ns,
+			desired.Spec.OVNKubernetes,
+			r.lookupIP)
+		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
+			return ctrl.Result{},
+				fmt.Errorf("failed to reconcile ovn-kubernetes DaemonSet: %w", err)
+		}
 	}
 
 	// eBPF agent
@@ -155,7 +162,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	// Console plugin
-	if r.consoleAvailable {
+	if r.availableAPIs.HasConsole() {
 		err := cpReconciler.Reconcile(ctx, desired)
 		if err != nil {
 			log.Error(err, "Failed to reconcile console plugin")
@@ -181,7 +188,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 		if err != nil {
 			return err
 		}
-		if r.consoleAvailable {
+		if r.availableAPIs.HasConsole() {
 			err := cpReconciler.InitStaticResources(ctx)
 			if err != nil {
 				return err
@@ -194,7 +201,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 		if err != nil {
 			return err
 		}
-		if r.consoleAvailable {
+		if r.availableAPIs.HasConsole() {
 			err := cpReconciler.PrepareNamespaceChange(ctx)
 			if err != nil {
 				return err
@@ -206,23 +213,6 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	log.Info("Updating status with new namespace " + newNS)
 	desired.Status.Namespace = newNS
 	return r.Status().Update(ctx, desired)
-}
-
-func isConsoleAvailable(mgr ctrl.Manager) (bool, error) {
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
-	if err != nil {
-		return false, err
-	}
-	groupsList, err := discoveryClient.ServerGroups()
-	if err != nil {
-		return false, err
-	}
-	for i := range groupsList.Groups {
-		if strings.HasSuffix(groupsList.Groups[i].Name, osv1alpha1.GroupName) {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -237,22 +227,14 @@ func (r *FlowCollectorReconciler) SetupWithManager(ctx context.Context, mgr ctrl
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ServiceAccount{})
 
-	if err := r.setupOpenshift(ctx, mgr, builder); err != nil {
+	if err := r.setupDiscovery(ctx, mgr, builder); err != nil {
 		return err
-	}
-
-	var err error
-	r.consoleAvailable, err = isConsoleAvailable(mgr)
-	if err != nil {
-		return err
-	}
-	if r.consoleAvailable {
-		builder = builder.Owns(&osv1alpha1.ConsolePlugin{})
 	}
 	return builder.Complete(r)
 }
 
-func (r *FlowCollectorReconciler) setupOpenshift(ctx context.Context, mgr ctrl.Manager, builder *builder.Builder) error {
+func (r *FlowCollectorReconciler) setupDiscovery(ctx context.Context, mgr ctrl.Manager, builder *builder.Builder) error {
+	log := log.FromContext(ctx)
 	dc, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
 	if err != nil {
 		return fmt.Errorf("can't instantiate discovery client: %w", err)
@@ -262,6 +244,19 @@ func (r *FlowCollectorReconciler) setupOpenshift(ctx context.Context, mgr ctrl.M
 	}
 	if r.permissions.Vendor(ctx) == discover.VendorOpenShift {
 		builder.Owns(&securityv1.SecurityContextConstraints{})
+	}
+	apis, err := discover.NewAvailableAPIs(dc)
+	if err != nil {
+		return fmt.Errorf("can't discover available APIs: %w", err)
+	}
+	r.availableAPIs = apis
+	if apis.HasConsole() {
+		builder.Owns(&osv1alpha1.ConsolePlugin{})
+	} else {
+		log.Info("Console not detected: the console plugin is not available")
+	}
+	if !apis.HasCNO() {
+		log.Info("CNO not detected: using ovnKubernetes config and reconciler")
 	}
 	return nil
 }
@@ -283,4 +278,55 @@ func (r *FlowCollectorReconciler) namespaceExist(ctx context.Context, nsName str
 		return false, err
 	}
 	return true, nil
+}
+
+// checkFinalizer returns true (and/or error) if the calling function needs to return
+func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *flowsv1alpha1.FlowCollector) (bool, error) {
+	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
+		if controllerutil.ContainsFinalizer(desired, flowsFinalizer) {
+			// Run finalization logic
+			if err := r.finalize(ctx, desired); err != nil {
+				return true, err
+			}
+			// Remove finalizer
+			controllerutil.RemoveFinalizer(desired, flowsFinalizer)
+			err := r.Update(ctx, desired)
+			return true, err
+		}
+		return true, nil
+	}
+
+	// Add finalizer for this CR
+	if !controllerutil.ContainsFinalizer(desired, flowsFinalizer) {
+		controllerutil.AddFinalizer(desired, flowsFinalizer)
+		if err := r.Update(ctx, desired); err != nil {
+			return true, err
+		}
+	}
+
+	return false, nil
+}
+
+func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+	if !r.availableAPIs.HasCNO() {
+		ns := getNamespaceName(desired)
+		clientHelper := r.newClientHelper(desired)
+		ovsConfigController := ovs.NewFlowsConfigOVNKController(clientHelper,
+			ns,
+			desired.Spec.OVNKubernetes,
+			r.lookupIP)
+		if err := ovsConfigController.Finalize(ctx, desired); err != nil {
+			return fmt.Errorf("failed to finalize ovn-kubernetes reconciler: %w", err)
+		}
+	}
+	return nil
+}
+
+func (r *FlowCollectorReconciler) newClientHelper(desired *flowsv1alpha1.FlowCollector) reconcilers.ClientHelper {
+	return reconcilers.ClientHelper{
+		Client: r.Client,
+		SetControllerReference: func(obj client.Object) error {
+			return ctrl.SetControllerReference(desired, obj, r.Scheme)
+		},
+	}
 }

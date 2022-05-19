@@ -155,6 +155,13 @@ FlowCollectorSpec defines the desired state of FlowCollector
             <i>Default</i>: <br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecovnkubernetes">ovnKubernetes</a></b></td>
+        <td>object</td>
+        <td>
+          OVNKubernetes contains settings related to ovn-kubernetes. This configuration is necessary only if OpenShift Cluster Network Operator is not used / configured.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -2691,6 +2698,53 @@ Loki contains settings related to the loki client
           URL is the address of an existing Loki service to push the flows to.<br/>
           <br/>
             <i>Default</i>: http://loki:3100/<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.ovnKubernetes
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+OVNKubernetes contains settings related to ovn-kubernetes. This configuration is necessary only if OpenShift Cluster Network Operator is not used / configured.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>containerName</b></td>
+        <td>string</td>
+        <td>
+          Name of the container to configure for IPFIX.<br/>
+          <br/>
+            <i>Default</i>: ovnkube-node<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>daemonSetName</b></td>
+        <td>string</td>
+        <td>
+          Name of the DaemonSet controlling the ovn-kubernetes pods.<br/>
+          <br/>
+            <i>Default</i>: ovnkube-node<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace where ovn-kubernetes pods are deployed.<br/>
+          <br/>
+            <i>Default</i>: ovn-kubernetes<br/>
         </td>
         <td>false</td>
       </tr></tbody>

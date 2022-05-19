@@ -7,10 +7,10 @@ An OpenShift / Kubernetes operator for network observability. It deploys a flow 
 A Grafana dashboard is also provided.
 
 It is also possible to use without OpenShift:
-- Using the upstream [ovn-kubernetes](https://github.com/ovn-org/ovn-kubernetes/) with any supported Kubernetes flavour ([see below](#ovnk-config) for enabling IPFIX exports on ovn-kubernetes).
+- Using the upstream [ovn-kubernetes](https://github.com/ovn-org/ovn-kubernetes/) with any supported Kubernetes flavour.
 - If you don't use ovn-kubernetes but still can manage having IPFIX exports by a different mean, you're more on your own, but still should be able to use this operator. You will need to configure the IPFIX export to push flows to the `flowlogs-pipeline` component deployed by this operator. You could also consider using [flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline) directly.
 
-The operator itself is deployed in the namespace "network-observability", whereas managed components are deployed in a namespace configured via a Custom Resource (see [FlowCollector custom resource](#flowcollector-custom-resource) section below).
+Managed components are deployed in a namespace configured via a Custom Resource (see [FlowCollector custom resource](#flowcollector-custom-resource) section below).
 
 ## Deploy an existing image
 
@@ -110,25 +110,16 @@ Note that the `FlowCollector` resource must be unique and must be named `cluster
 
 ## Enabling OVS IPFIX export
 
-If you use OpenShift 4.10, you don't have anything to do: the operator will configure OVS *via* the Cluster Network Operator. Else, some manual steps are still required:
+If you use OpenShift 4.10 or the upstream ovn-kubernetes without OpenShift, you don't have anything to do: the operator will configure OVS *via* OpenShift Cluster Network Operator, or the ovn-kubernetes layer directly.
 
-<a name="ovnk-config"></a>
-
-### With upstream ovn-kubernetes (e.g. using KIND)
-
-```bash
-FLP_IP=`kubectl get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $FLP_IP
-kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPFIX_TARGETS="$FLP_IP:2055"
-```
-
-### On older OpenShift with OVN-Kubernetes CNI
-
-In OpenShift, a difference with the upstream `ovn-kubernetes` is that the flows export config is managed by the `ClusterNetworkOperator`.
+Else if you use OpenShift 4.8 or 4.9, some manual steps are still required
 
 ```bash
 FLP_IP=`oc get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $FLP_IP
 oc patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$FLP_IP:2055']}}}}]"
 ```
+
+OpenShift versions older than 4.8 don't support IPFIX exports.
 
 ## Installing Loki
 
