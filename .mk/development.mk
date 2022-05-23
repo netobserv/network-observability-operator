@@ -31,7 +31,7 @@ deploy-kafka:
 	kubectl create -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka-topic.yaml" -n $(NAMESPACE)
 
 .PHONY: undeploy-kafka
-undeploy-kafka: ## Undeploy loki.
+undeploy-kafka: ## Undeploy kafka.
 	@echo -e "\n==> Undeploy kafka"
 	kubectl delete -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka-topic.yaml" -n $(NAMESPACE)
 	kubectl delete -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka-cluster.yaml" -n $(NAMESPACE)
