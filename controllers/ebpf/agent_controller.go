@@ -149,6 +149,8 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 					Labels: map[string]string{"app": constants.EBPFAgentName},
 				},
 				Spec: corev1.PodSpec{
+					// Allows deploying an instance in the master node
+					Tolerations:        []corev1.Toleration{{Operator: corev1.TolerationOpExists}},
 					ServiceAccountName: constants.EBPFServiceAccount,
 					HostNetwork:        true,
 					DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
