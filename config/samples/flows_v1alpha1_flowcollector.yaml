@@ -33,7 +33,7 @@ spec:
   kafka:
     enable: false
     address: "kafka-cluster-kafka-bootstrap"
-    topic: "flp-topic"
+    topic: "network-flows"
   loki:
     url: 'http://loki:3100/'
     batchWait: 1s
