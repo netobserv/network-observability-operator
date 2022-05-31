@@ -17,11 +17,12 @@ limitations under the License.
 package flowlogspipeline
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
+	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -355,7 +356,7 @@ func TestServiceChanged(t *testing.T) {
 	assert.False(serviceNeedsUpdate(second, third))
 }
 
-func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
+func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert := assert.New(t)
 
 	ns := "namespace"
@@ -371,30 +372,31 @@ func TestConfigMapShouldDeserializeAsYAML(t *testing.T) {
 	data, ok := cm.Data[configFile]
 	assert.True(ok)
 
-	var decoded map[string]interface{}
-	err := yaml.Unmarshal([]byte(data), &decoded)
+	type cfg struct {
+		Parameters []config.StageParam `json:"parameters"`
+		LogLevel   string              `json:"log-level"`
+	}
+	var decoded cfg
+	err := json.Unmarshal([]byte(data), &decoded)
 
 	assert.Nil(err)
-	assert.Equal("trace", decoded["log-level"])
+	assert.Equal("trace", decoded.LogLevel)
 
-	parameters := decoded["parameters"].([]interface{})
-	ingest := parameters[0].(map[interface{}]interface{})["ingest"].(map[interface{}]interface{})
-	collector := ingest["collector"].(map[interface{}]interface{})
-	assert.Equal(flp.Port, int32(collector["port"].(int)))
+	params := decoded.Parameters
+	assert.Len(params, 6)
+	assert.Equal(flp.Port, int32(params[0].Ingest.Collector.Port))
 
-	lokiCfg := parameters[3].(map[interface{}]interface{})["write"].(map[interface{}]interface{})["loki"].(map[interface{}]interface{})
-	assert.Equal(loki.URL, lokiCfg["url"])
-	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg["batchWait"])
-	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg["minBackoff"])
-	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg["maxBackoff"])
-	assert.EqualValues(loki.MaxRetries, lokiCfg["maxRetries"])
-	assert.EqualValues(loki.BatchSize, lokiCfg["batchSize"])
-	assert.EqualValues([]interface{}{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}, lokiCfg["labels"])
-	assert.Equal(fmt.Sprintf("%v", loki.StaticLabels), fmt.Sprintf("%v", lokiCfg["staticLabels"]))
+	lokiCfg := params[3].Write.Loki
+	assert.Equal(loki.URL, lokiCfg.URL)
+	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg.BatchWait)
+	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg.MinBackoff)
+	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
+	assert.EqualValues(loki.MaxRetries, lokiCfg.MaxRetries)
+	assert.EqualValues(loki.BatchSize, lokiCfg.BatchSize)
+	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}, lokiCfg.Labels)
+	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
-	encode := parameters[5].(map[interface{}]interface{})["encode"].(map[interface{}]interface{})
-	prom := encode["prom"].(map[interface{}]interface{})
-	assert.Equal(flp.PrometheusPort, int32(prom["port"].(int)))
+	assert.Equal(flp.PrometheusPort, int32(params[5].Encode.Prom.Port))
 
 }
 
@@ -485,21 +487,20 @@ func TestDeployNeeded(t *testing.T) {
 }
 
 // This function validate that each stage has its matching parameter
-func validatePipelineConfig(stages []map[string]string, parameters []map[string]interface{}) bool {
+func validatePipelineConfig(stages []config.Stage, parameters []config.StageParam) bool {
 	for _, stage := range stages {
-		stageName, exist := stage["name"]
-		if !exist {
+		if stage.Name == "" {
 			return false
 		}
-		exist = false
+		exist := false
 		for _, parameter := range parameters {
-			if stageName == parameter["name"] {
+			if stage.Name == parameter.Name {
 				exist = true
 				break
 			}
 		}
-		if exist == false {
-			return exist
+		if !exist {
+			return false
 		}
 	}
 	return true
@@ -514,18 +515,23 @@ func TestPipelineConfig(t *testing.T) {
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
 	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
-	stages, parameters := b.getPipelinesConfig()
+	stages, parameters := b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
+	jsonStages, _ := json.Marshal(stages)
+	assert.Equal(`[{"name":"ingest"},{"name":"decode","follows":"ingest"},{"name":"enrich","follows":"decode"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
 
 	// Kafka Ingester
 	kafka.Enable = true
 	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfKafkaIngester, true)
-	stages, parameters = b.getPipelinesConfig()
+	stages, parameters = b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
+	jsonStages, _ = json.Marshal(stages)
+	assert.Equal(`[{"name":"ingest"},{"name":"decode","follows":"ingest"},{"name":"kafka","follows":"decode"}]`, string(jsonStages))
 
 	// Kafka Transformer
 	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfKafkaTransformer, true)
-	stages, parameters = b.getPipelinesConfig()
+	stages, parameters = b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
-
+	jsonStages, _ = json.Marshal(stages)
+	assert.Equal(`[{"name":"ingest"},{"name":"decode","follows":"ingest"},{"name":"enrich","follows":"decode"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
 }

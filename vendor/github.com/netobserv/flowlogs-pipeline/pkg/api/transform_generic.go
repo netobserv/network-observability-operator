@@ -23,8 +23,8 @@ type TransformGeneric struct {
 }
 
 type TransformGenericOperationEnum struct {
-	PreserveOriginalKeys string `yaml:"preserve_original_keys" json:"preserveOriginalKeys" doc:"adds new keys in addition to existing keys (default)"`
-	ReplaceKeys          string `yaml:"replace_keys" json:"replaceKeys" doc:"removes all old keys and uses only the new keys"`
+	PreserveOriginalKeys string `yaml:"preserve_original_keys" json:"preserve_original_keys" doc:"adds new keys in addition to existing keys (default)"`
+	ReplaceKeys          string `yaml:"replace_keys" json:"replace_keys" doc:"removes all old keys and uses only the new keys"`
 }
 
 func TransformGenericOperationName(operation string) string {

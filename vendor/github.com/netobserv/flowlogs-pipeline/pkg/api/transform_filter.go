@@ -22,7 +22,7 @@ type TransformFilter struct {
 }
 
 type TransformFilterOperationEnum struct {
-	RemoveField              string `yaml:"remove_field" json:"remove_field field from the entry"`
+	RemoveField              string `yaml:"remove_field" json:"remove_field" doc:"removes the field from the entry"`
 	RemoveEntryIfExists      string `yaml:"remove_entry_if_exists" json:"remove_entry_if_exists" doc:"removes the entry if the field exists"`
 	RemoveEntryIfDoesntExist string `yaml:"remove_entry_if_doesnt_exist" json:"remove_entry_if_doesnt_exist" doc:"removes the entry if the field doesnt exist"`
 }
