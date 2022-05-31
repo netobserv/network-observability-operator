@@ -30,6 +30,10 @@ spec:
     enableKubeProbes: true
     healthPort: 8080
     prometheusPort: 9090
+  kafka:
+    enable: false
+    address: "kafka-cluster-kafka-bootstrap"
+    topic: "network-flows"
   loki:
     url: 'http://loki:3100/'
     batchWait: 1s

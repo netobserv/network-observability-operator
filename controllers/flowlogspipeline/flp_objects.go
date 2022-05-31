@@ -55,11 +55,13 @@ type builder struct {
 	portProtocol    corev1.Protocol
 	desired         *flowsv1alpha1.FlowCollectorFLP
 	desiredLoki     *flowsv1alpha1.FlowCollectorLoki
+	desiredKafka    *flowsv1alpha1.FlowCollectorKafka
+	confKind        string
 	confKindSuffix  string
 	useOpenShiftSCC bool
 }
 
-func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, confKind string, useOpenShiftSCC bool) builder {
+func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, desiredKafka *flowsv1alpha1.FlowCollectorKafka, confKind string, useOpenShiftSCC bool) builder {
 	version := helper.ExtractVersion(desired.Image)
 	return builder{
 		namespace: ns,
@@ -72,7 +74,9 @@ func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.
 		},
 		desired:         desired,
 		desiredLoki:     desiredLoki,
+		desiredKafka:    desiredKafka,
 		portProtocol:    portProtocol,
+		confKind:        confKind,
 		confKindSuffix:  FlpConfSuffix[confKind],
 		useOpenShiftSCC: useOpenShiftSCC,
 	}
@@ -114,7 +118,7 @@ func (b *builder) daemonSet(configDigest string) *appsv1.DaemonSet {
 func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodTemplateSpec {
 	var ports []corev1.ContainerPort
 	var tolerations []corev1.Toleration
-	if b.desired.Kind == constants.DaemonSetKind {
+	if b.desired.Kind == constants.DaemonSetKind && b.confKind != ConfKafkaTransformer {
 		ports = []corev1.ContainerPort{{
 			Name:          constants.FLPPortName + b.confKindSuffix,
 			HostPort:      b.desired.Port,
@@ -203,39 +207,34 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 	}
 }
 
-// returns a configmap with a digest of its configuration contents, which will be used to
-// detect any configuration change
-func (b *builder) configMap() (*corev1.ConfigMap, string) {
-	var ingest, decoder, enrich, loki, aggregate, prometheus map[string]interface{}
-
-	// loki stage (write) configuration
-	lokiWrite := map[string]interface{}{
-		"type":   "loki",
-		"labels": constants.LokiIndexFields,
-	}
-
-	if b.desiredLoki != nil {
-		lokiWrite["batchSize"] = b.desiredLoki.BatchSize
-		lokiWrite["batchWait"] = b.desiredLoki.BatchWait.ToUnstructured()
-		lokiWrite["maxBackoff"] = b.desiredLoki.MaxBackoff.ToUnstructured()
-		lokiWrite["maxRetries"] = b.desiredLoki.MaxRetries
-		lokiWrite["minBackoff"] = b.desiredLoki.MinBackoff.ToUnstructured()
-		lokiWrite["staticLabels"] = b.desiredLoki.StaticLabels
-		lokiWrite["timeout"] = b.desiredLoki.Timeout.ToUnstructured()
-		lokiWrite["url"] = b.desiredLoki.URL
-		lokiWrite["timestampLabel"] = "TimeFlowEndMs"
-		lokiWrite["timestampScale"] = "1ms"
-	}
-
-	loki = map[string]interface{}{"name": "loki",
-		"write": map[string]interface{}{
-			"type": "loki",
-			"loki": lokiWrite,
+func (b *builder) getIngestConfig() ([]map[string]string, []map[string]interface{}) {
+	ingestStages := []map[string]string{
+		{"name": "ingest"},
+		{"name": "decode",
+			"follows": "ingest",
 		},
 	}
+	var ingest, decoder map[string]interface{}
 
-	// ingest stage (ingest) configuration
-	if b.portProtocol == corev1.ProtocolUDP {
+	if b.confKind == ConfKafkaTransformer {
+		ingest = map[string]interface{}{
+			"name": "ingest",
+			"ingest": map[string]interface{}{
+				"type": "kafka",
+				"kafka": map[string]interface{}{
+					"brokers": []string{b.desiredKafka.Address},
+					"topic":   b.desiredKafka.Topic,
+					"groupid": b.confKind, // Without groupid, each message is delivered to each consumers
+				},
+			},
+		}
+		decoder = map[string]interface{}{
+			"name": "decode",
+			"decode": map[string]interface{}{
+				"type": "json",
+			},
+		}
+	} else if b.portProtocol == corev1.ProtocolUDP {
 		// UDP Port: IPFIX collector with JSON decoder
 		ingest = map[string]interface{}{
 			"name": "ingest",
@@ -272,8 +271,55 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		}
 	}
 
+	return ingestStages, []map[string]interface{}{ingest, decoder}
+}
+
+func (b *builder) getTransformConfig() ([]map[string]string, []map[string]interface{}) {
+	transformStages := []map[string]string{
+		{"name": "enrich",
+			"follows": "decode",
+		},
+		{"name": "loki",
+			"follows": "enrich",
+		},
+		{"name": "aggregate",
+			"follows": "enrich",
+		},
+		{"name": "prometheus",
+			"follows": "aggregate",
+		},
+	}
+	var enrich, loki, aggregate, prometheus map[string]interface{}
+
+	// loki stage (write) configuration
+	lokiWrite := map[string]interface{}{
+		"type":   "loki",
+		"labels": constants.LokiIndexFields,
+	}
+
+	if b.desiredLoki != nil {
+		lokiWrite["batchSize"] = b.desiredLoki.BatchSize
+		lokiWrite["batchWait"] = b.desiredLoki.BatchWait.ToUnstructured()
+		lokiWrite["maxBackoff"] = b.desiredLoki.MaxBackoff.ToUnstructured()
+		lokiWrite["maxRetries"] = b.desiredLoki.MaxRetries
+		lokiWrite["minBackoff"] = b.desiredLoki.MinBackoff.ToUnstructured()
+		lokiWrite["staticLabels"] = b.desiredLoki.StaticLabels
+		lokiWrite["timeout"] = b.desiredLoki.Timeout.ToUnstructured()
+		lokiWrite["url"] = b.desiredLoki.URL
+		lokiWrite["timestampLabel"] = "TimeFlowEndMs"
+		lokiWrite["timestampScale"] = "1ms"
+	}
+
+	loki = map[string]interface{}{"name": "loki",
+		"write": map[string]interface{}{
+			"type": "loki",
+			"loki": lokiWrite,
+		},
+	}
+
 	// enrich stage (transform) configuration
-	enrich = map[string]interface{}{"name": "enrich",
+	enrich = map[string]interface{}{
+		"name": "enrich",
 		"transform": map[string]interface{}{
 			"type": "network",
 			"network": map[string]interface{}{
@@ -294,7 +340,8 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 	}
 
 	// prometheus stage (encode) configuration
-	prometheus = map[string]interface{}{"name": "prometheus",
+	prometheus = map[string]interface{}{
+		"name": "prometheus",
 		"encode": map[string]interface{}{
 			"type": "prom",
 			"prom": map[string]interface{}{
@@ -310,33 +357,63 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 			"type": "aggregates",
 		},
 	}
+	return transformStages, []map[string]interface{}{enrich, loki, aggregate, prometheus}
+}
+
+func (b *builder) getKafkaConfig() ([]map[string]string, []map[string]interface{}) {
+	kafkaStages := []map[string]string{
+		{"name": "kafka",
+			"follows": "decode",
+		},
+	}
+	kafka := map[string]interface{}{
+		"name": "kafka",
+		"encode": map[string]interface{}{
+			"type": "kafka",
+			"kafka": map[string]interface{}{
+				"address": b.desiredKafka.Address,
+				"topic":   b.desiredKafka.Topic,
+			},
+		},
+	}
+
+	return kafkaStages, []map[string]interface{}{kafka}
+}
+
+func (b *builder) getPipelinesConfig() ([]map[string]string, []map[string]interface{}) {
+	stages := []map[string]string{}
+	parameters := []map[string]interface{}{}
+
+	ingestStages, ingestParameters := b.getIngestConfig()
+	stages = append(stages, ingestStages...)
+	parameters = append(parameters, ingestParameters...)
+
+	if b.confKind == ConfKafkaIngester {
+		kafkaStages, kafkaParameters := b.getKafkaConfig()
+		stages = append(stages, kafkaStages...)
+		parameters = append(parameters, kafkaParameters...)
+
+	} else {
+		transformStages, transformParameters := b.getTransformConfig()
+		stages = append(stages, transformStages...)
+		parameters = append(parameters, transformParameters...)
+	}
+	return stages, parameters
+}
+
+// returns a configmap with a digest of its configuration contents, which will be used to
+// detect any configuration change
+func (b *builder) configMap() (*corev1.ConfigMap, string) {
+
+	stages, parameters := b.getPipelinesConfig()
 
 	config := map[string]interface{}{
 		"log-level": b.desired.LogLevel,
 		"health": map[string]interface{}{
 			"port": b.desired.HealthPort,
 		},
-		"pipeline": []map[string]string{
-			{"name": "ingest"},
-			{"name": "decode",
-				"follows": "ingest",
-			},
-			{"name": "enrich",
-				"follows": "decode",
-			},
-			{"name": "loki",
-				"follows": "enrich",
-			},
-			{"name": "aggregate",
-				"follows": "enrich",
-			},
-			{"name": "prometheus",
-				"follows": "aggregate",
-			},
-		},
-		"parameters": []map[string]interface{}{
-			ingest, decoder, enrich, loki, aggregate, prometheus,
-		},
+		"pipeline":   stages,
+		"parameters": parameters,
 	}
 
 	configStr := "{}"
