@@ -8,6 +8,9 @@ ocp-expose:
 	oc expose service loki || true
 	@loki_url=$$(oc get route loki -o jsonpath='{.spec.host}'); \
 	echo -e "\nAccess loki on OCP using: http://"$$loki_url"\n"
+	oc expose -n sample-workload service frontend-external || true
+	@sample_workload_url=$$(oc get -n sample-workload route frontend-external -o jsonpath='{.spec.host}'); \
+	echo -e "\nAccess sample workload on OCP using: http://"$$sample_workload_url"\n"
 
 .PHONY: ocp-deploy
 ocp-deploy: deploy-all ocp-expose ## OCP deploy (loki, grafana and example-cr excluding the operator)

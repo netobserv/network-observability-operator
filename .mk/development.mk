@@ -59,7 +59,7 @@ undeploy-grafana: ## Undeploy grafana.
 	-pkill --oldest --full "3000:3000"
 
 .PHONY: deploy-all
-deploy-all: manifests generate fmt lint deploy-loki deploy-grafana install deploy-sample-cr
+deploy-all: manifests generate fmt lint deploy-loki deploy-grafana install deploy-sample-cr deploy-sample-workload
 
 .PHONY: undeploy-all
-undeploy-all: undeploy-loki undeploy-grafana uninstall undeploy-sample-cr
+undeploy-all: undeploy-loki undeploy-grafana uninstall undeploy-sample-cr undeploy-sample-workload
