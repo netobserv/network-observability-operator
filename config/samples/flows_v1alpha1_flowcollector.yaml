@@ -26,7 +26,7 @@ spec:
     port: 2055
     image: 'quay.io/netobserv/flowlogs-pipeline:main'
     imagePullPolicy: IfNotPresent
-    logLevel: info
+    logLevel: error
     enableKubeProbes: true
     healthPort: 8080
     prometheusPort: 9090
