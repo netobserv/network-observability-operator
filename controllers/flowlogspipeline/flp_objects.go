@@ -262,29 +262,27 @@ func (b *builder) addTransformStages(lastStage *config.PipelineBuilderStage) {
 func (b *builder) buildPipelineConfig() ([]config.Stage, []config.StageParam) {
 	var pipeline config.PipelineBuilderStage
 	if b.confKind == ConfKafkaTransformer {
-		pipeline = config.NewKafkaPipeline("ingest", api.IngestKafka{
+		pipeline = config.NewKafkaPipeline("kafka-read", api.IngestKafka{
 			Brokers: []string{b.desiredKafka.Address},
 			Topic:   b.desiredKafka.Topic,
 			GroupId: b.confKind, // Without groupid, each message is delivered to each consumers
+			Decoder: api.Decoder{Type: "json"},
 		})
-		pipeline = pipeline.DecodeJSON("decode")
 	} else if b.portProtocol == corev1.ProtocolUDP {
 		// UDP Port: IPFIX collector with JSON decoder
-		pipeline = config.NewCollectorPipeline("ingest", api.IngestCollector{
+		pipeline = config.NewCollectorPipeline("ipfix", api.IngestCollector{
 			Port:     int(b.desired.Port),
 			HostName: "0.0.0.0",
 		})
-		pipeline = pipeline.DecodeJSON("decode")
 	} else {
 		// TCP Port: GRPC collector (eBPF agent) with Protobuf decoder
-		pipeline = config.NewGRPCPipeline("ingest", api.IngestGRPCProto{
+		pipeline = config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
 			Port: int(b.desired.Port),
 		})
-		pipeline = pipeline.DecodeProtobuf("decode")
 	}
 
 	if b.confKind == ConfKafkaIngester {
-		pipeline = pipeline.EncodeKafka("kafka", api.EncodeKafka{
+		pipeline = pipeline.EncodeKafka("kafka-write", api.EncodeKafka{
 			Address: b.desiredKafka.Address,
 			Topic:   b.desiredKafka.Topic,
 		})

@@ -383,10 +383,10 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.Equal("trace", decoded.LogLevel)
 
 	params := decoded.Parameters
-	assert.Len(params, 7)
+	assert.Len(params, 6)
 	assert.Equal(flp.Port, int32(params[0].Ingest.Collector.Port))
 
-	lokiCfg := params[3].Write.Loki
+	lokiCfg := params[2].Write.Loki
 	assert.Equal(loki.URL, lokiCfg.URL)
 	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg.BatchWait)
 	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg.MinBackoff)
@@ -396,7 +396,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
-	assert.Equal(flp.PrometheusPort, int32(params[6].Encode.Prom.Port))
+	assert.Equal(flp.PrometheusPort, int32(params[5].Encode.Prom.Port))
 
 }
 
@@ -519,7 +519,7 @@ func TestPipelineConfig(t *testing.T) {
 	stages, parameters := b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ingest"},{"name":"decode","follows":"ingest"},{"name":"enrich","follows":"decode"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
 
 	// Kafka Ingester
 	kafka.Enable = true
@@ -527,14 +527,14 @@ func TestPipelineConfig(t *testing.T) {
 	stages, parameters = b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
-	assert.Equal(`[{"name":"ingest"},{"name":"decode","follows":"ingest"},{"name":"kafka","follows":"decode"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"ipfix"},{"name":"kafka-write","follows":"ipfix"}]`, string(jsonStages))
 
 	// Kafka Transformer
 	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfKafkaTransformer, true)
 	stages, parameters = b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
-	assert.Equal(`[{"name":"ingest"},{"name":"decode","follows":"ingest"},{"name":"enrich","follows":"decode"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"kafka-read"},{"name":"enrich","follows":"kafka-read"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
 }
 
 func TestPipelineTraceStage(t *testing.T) {
@@ -546,5 +546,5 @@ func TestPipelineTraceStage(t *testing.T) {
 	stages, parameters := b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ingest"},{"name":"decode","follows":"ingest"},{"name":"enrich","follows":"decode"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
 }
