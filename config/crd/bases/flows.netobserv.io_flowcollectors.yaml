@@ -1347,6 +1347,8 @@ spec:
                   kind:
                     default: DaemonSet
                     description: Kind is the workload kind, either DaemonSet or Deployment
+                      If Kafka is enabled this option will concern the flowlogs-pipeline
+                      ingester deployment.
                     enum:
                     - DaemonSet
                     - Deployment
@@ -1452,8 +1454,8 @@ spec:
                     type: integer
                 type: object
               kafka:
-                description: Kafka configurations, if empty the operator will deploy
-                  a all-in-one FLP
+                description: Kafka configurations, settings related to using kafka
+                  as a broker for flowlogs-pipeline
                 properties:
                   address:
                     default: ""
@@ -1461,7 +1463,13 @@ spec:
                     type: string
                   enable:
                     default: false
-                    description: Should this feature be enabled
+                    description: Should this feature be enabled. If kafka feature
+                      is enabled flow collection will be done in two steps, an ingestion
+                      step and a transformation step. The first step is either done
+                      by a first flowlogs-pipeline deployment or by the ebpf agent.
+                      The second step is done by a second flowlogs-pipeline deployment
+                      Ingestion step use the configured kafka cluster to send flows
+                      to the second flowlogs-pipeline deployment.
                     type: boolean
                   topic:
                     default: ""

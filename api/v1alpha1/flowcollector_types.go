@@ -69,7 +69,7 @@ type FlowCollectorSpec struct {
 	// Loki contains settings related to the loki client
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
 
-	// Kafka configurations, if empty the operator will deploy a all-in-one FLP
+	// Kafka configurations, settings related to using kafka as a broker for flowlogs-pipeline
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
@@ -174,7 +174,11 @@ type FlowCollectorKafka struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=false
-	// Should this feature be enabled
+	// Should this feature be enabled.
+	// If kafka feature is enabled flow collection will be done in two steps, an ingestion step and a transformation step.
+	// The first step is either done by a first flowlogs-pipeline deployment or by the ebpf agent.
+	// The second step is done by a second flowlogs-pipeline deployment
+	// Ingestion step use the configured kafka cluster to send flows to the second flowlogs-pipeline deployment.
 	Enable bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:=""
@@ -193,6 +197,7 @@ type FlowCollectorFLP struct {
 	//+kubebuilder:validation:Enum=DaemonSet;Deployment
 	//+kubebuilder:default:=DaemonSet
 	// Kind is the workload kind, either DaemonSet or Deployment
+	// If Kafka is enabled this option will concern the flowlogs-pipeline ingester deployment.
 	Kind string `json:"kind,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0

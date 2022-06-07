@@ -127,6 +127,16 @@ Loki is used to store the flows, however its installation is not managed directl
 
 Once Loki is setup, you may have to update the `flowcollector` CR to update the Loki URL (use an URL that is accessible in-cluster by the `flowlogs-pipeline` pods; default is `http://loki:3100/`).
 
+## Installing Kafka
+
+Kafka can be used to separate flows ingestion from flows transformation. The operator does not manage kafka deployment and topic creation. If you deployed the NOO from the repository, we provide a quick setup for kafka using the [strimzi operator](https://strimzi.io/).
+
+```bash
+make deploy-kafka
+```
+
+Kafka can then be enabled in the `flowcollector` CR. If Kafka was deployed using the Makefile, switching the kafka.enable flag to true in the sample file should be enough. Otherwise, kafka address and topic name should be configured.
+
 ## OpenShift Console plugin
 
 The operator deploys a console dynamic plugin when used in OpenShift, and should register it automatically if `spec.consolePlugin.register` is set to `true` (default).

@@ -136,7 +136,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspeckafka">kafka</a></b></td>
         <td>object</td>
         <td>
-          Kafka configurations, if empty the operator will deploy a all-in-one FLP<br/>
+          Kafka configurations, settings related to using kafka as a broker for flowlogs-pipeline<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1496,7 +1496,7 @@ FlowlogsPipeline contains settings related to the flowlogs-pipeline component
         <td><b>kind</b></td>
         <td>enum</td>
         <td>
-          Kind is the workload kind, either DaemonSet or Deployment<br/>
+          Kind is the workload kind, either DaemonSet or Deployment If Kafka is enabled this option will concern the flowlogs-pipeline ingester deployment.<br/>
           <br/>
             <i>Enum</i>: DaemonSet, Deployment<br/>
             <i>Default</i>: DaemonSet<br/>
@@ -2559,7 +2559,7 @@ IPFIX contains the settings of an IPFIX-based flow reporter when the "agent" pro
 
 
 
-Kafka configurations, if empty the operator will deploy a all-in-one FLP
+Kafka configurations, settings related to using kafka as a broker for flowlogs-pipeline
 
 <table>
     <thead>
@@ -2592,7 +2592,7 @@ Kafka configurations, if empty the operator will deploy a all-in-one FLP
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Should this feature be enabled<br/>
+          Should this feature be enabled. If kafka feature is enabled flow collection will be done in two steps, an ingestion step and a transformation step. The first step is either done by a first flowlogs-pipeline deployment or by the ebpf agent. The second step is done by a second flowlogs-pipeline deployment Ingestion step use the configured kafka cluster to send flows to the second flowlogs-pipeline deployment.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
