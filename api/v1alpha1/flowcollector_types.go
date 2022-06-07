@@ -194,7 +194,10 @@ type FlowCollectorFLP struct {
 
 	//+kubebuilder:validation:Enum=DaemonSet;Deployment
 	//+kubebuilder:default:=DaemonSet
-	// Kind is the workload kind, either DaemonSet or Deployment
+	// Kind is the workload kind, either DaemonSet or Deployment. When DaemonSet is used, each pod will receive
+	// flows from the node it is running on. When Deployment is used, the flows traffic received from nodes will
+	// be load-balanced. Note that in such a case, the number of replicas should be less or equal to the number of
+	// nodes, as extra-pods would be unused due to session affinity with the node IP.
 	// When using Kafka, this option only affects the flowlogs-pipeline ingester, not the transformer.
 	Kind string `json:"kind,omitempty"`
 
