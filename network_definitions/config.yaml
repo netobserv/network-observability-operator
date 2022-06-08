@@ -1,0 +1,55 @@
+## This is the main configuration file for flowlogs-pipeline. It holds
+## all parameters needed for the creation of the configuration
+##
+description:
+  general configuration for all metrics
+ingest:
+  collector:
+    port: 2055
+    portLegacy: 2056
+    hostName: 0.0.0.0
+transform:
+  generic:
+    rules:
+      - input: SrcAddr
+        output: srcIP
+      - input: SrcPort
+        output: srcPort
+      - input: DstAddr
+        output: dstIP
+      - input: DstPort
+        output: dstPort
+      - input: Proto
+        output: proto
+      - input: Bytes
+        output: bytes
+      - input: TCPFlags
+        output: TCPFlags
+      - input: SrcAS
+        output: srcAS
+      - input: DstAS
+        output: dstAS
+encode:
+  prom:
+    prefix: flp_
+    port: 9102
+write:
+  type: loki
+  loki:
+    url: http://loki.network-observability.svc.cluster.local:3100
+    staticLabels:
+      job: flowlogs-pipeline
+visualization:
+  grafana:
+    dashboards:
+      - name: "totals"
+        title: "Flow-Logs to Metrics - Totals"
+        time_from: "now"
+        tags: "['flp','grafana','dashboard','total']"
+        schemaVersion: "16"
+      - name: "details"
+        title: "Flow-Logs to Metrics - Details"
+        time_from: "now-15m"
+        tags: "['flp','grafana','dashboard','details']"
+        schemaVersion: "16"
+

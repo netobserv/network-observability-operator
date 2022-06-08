@@ -1,0 +1,50 @@
+#flp_confgen
+description:
+  This metric observes the network bandwidth per network service per namespace
+details:
+  Sum bytes for all traffic per network service and namespace
+usage:
+  Evaluate network usage breakdown per network service and namespace
+labels:
+  - bandwidth
+  - graph
+  - rate
+  - network-service
+  - kubernetes
+transform:
+  rules:
+    - input: dstPort
+      output: service
+      type: add_service
+      parameters: proto
+    - input: srcIP
+      output: srcK8S
+      type: add_kubernetes
+      parameters: srcK8S_labels
+extract:
+  aggregates:
+    - name: bandwidth_network_service_namespace
+      by:
+        - service
+        - srcK8S_Namespace
+      operation: sum
+      recordKey: bytes
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: bandwidth_per_network_service_per_namespace
+        type: counter
+        filter: {key: name, value: bandwidth_network_service_namespace}
+        valuekey: recent_op_value
+        labels:
+          - by
+          - aggregate
+visualization:
+  type: grafana
+  grafana:
+    - expr: 'topk(10,rate(flp_bandwidth_per_network_service_per_namespace[1m]))'
+      type: graphPanel
+      dashboard: details
+      title:
+        Bandwidth per network service per namespace

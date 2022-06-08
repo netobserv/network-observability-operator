@@ -1,0 +1,192 @@
+# This file was generated automatically by flowlogs-pipeline confgenerator
+log-level: error
+parameters:
+- ingest:
+    collector:
+      hostname: 0.0.0.0
+      port: 2055
+      portLegacy: 2056
+    type: collector
+  name: ingest_collector
+- decode:
+    type: json
+  name: decode_json
+- name: transform_generic
+  transform:
+    generic:
+      policy: replace_keys
+      rules:
+      - input: SrcAddr
+        output: srcIP
+      - input: SrcPort
+        output: srcPort
+      - input: DstAddr
+        output: dstIP
+      - input: DstPort
+        output: dstPort
+      - input: Proto
+        output: proto
+      - input: Bytes
+        output: bytes
+      - input: TCPFlags
+        output: TCPFlags
+      - input: SrcAS
+        output: srcAS
+      - input: DstAS
+        output: dstAS
+    type: generic
+- name: transform_network
+  transform:
+    network:
+      rules:
+      - input: dstPort
+        output: service
+        type: add_service
+        parameters: proto
+      - input: srcIP
+        output: srcK8S
+        type: add_kubernetes
+        parameters: srcK8S_labels
+    type: network
+- extract:
+    aggregates:
+    - name: bandwidth_network_service
+      by:
+      - service
+      operation: sum
+      recordKey: bytes
+      topK: 0
+    - name: bandwidth_network_service_namespace
+      by:
+      - service
+      - srcK8S_Namespace
+      operation: sum
+      recordKey: bytes
+      topK: 0
+    - name: dest_service_count
+      by:
+      - service
+      operation: count
+      recordKey: ""
+      topK: 0
+    type: aggregates
+  name: extract_aggregate
+- encode:
+    prom:
+      metrics:
+      - name: bandwidth_per_network_service
+        type: counter
+        filter:
+          key: name
+          value: bandwidth_network_service
+        valueKey: recent_op_value
+        labels:
+        - by
+        - aggregate
+        buckets: []
+      - name: bandwidth_per_network_service_per_namespace
+        type: counter
+        filter:
+          key: name
+          value: bandwidth_network_service_namespace
+        valueKey: recent_op_value
+        labels:
+        - by
+        - aggregate
+        buckets: []
+      - name: bandwidth_per_network_service
+        type: counter
+        filter:
+          key: name
+          value: bandwidth_network_service
+        valueKey: recent_op_value
+        labels:
+        - by
+        - aggregate
+        buckets: []
+      - name: bandwidth_per_network_service_per_namespace
+        type: counter
+        filter:
+          key: name
+          value: bandwidth_network_service_namespace
+        valueKey: recent_op_value
+        labels:
+        - by
+        - aggregate
+        buckets: []
+      - name: bandwidth_per_network_service
+        type: counter
+        filter:
+          key: name
+          value: bandwidth_network_service
+        valueKey: recent_op_value
+        labels:
+        - by
+        - aggregate
+        buckets: []
+      - name: bandwidth_per_network_service_per_namespace
+        type: counter
+        filter:
+          key: name
+          value: bandwidth_network_service_namespace
+        valueKey: recent_op_value
+        labels:
+        - by
+        - aggregate
+        buckets: []
+      - name: service_count
+        type: counter
+        filter:
+          key: name
+          value: dest_service_count
+        valueKey: recent_count
+        labels:
+        - by
+        - aggregate
+        buckets: []
+      - name: service_count
+        type: counter
+        filter:
+          key: name
+          value: dest_service_count
+        valueKey: recent_count
+        labels:
+        - by
+        - aggregate
+        buckets: []
+      - name: service_count
+        type: counter
+        filter:
+          key: name
+          value: dest_service_count
+        valueKey: recent_count
+        labels:
+        - by
+        - aggregate
+        buckets: []
+      port: 9102
+      prefix: flp_
+    type: prom
+  name: encode_prom
+- name: write_loki
+  write:
+    loki:
+      url: http://loki.default.svc.cluster.local:3100
+      staticLabels:
+        job: flowlogs-pipeline
+    type: loki
+pipeline:
+- name: ingest_collector
+- follows: ingest_collector
+  name: decode_json
+- follows: decode_json
+  name: transform_generic
+- follows: transform_generic
+  name: transform_network
+- follows: transform_network
+  name: extract_aggregate
+- follows: extract_aggregate
+  name: encode_prom
+- follows: transform_network
+  name: write_loki
+
