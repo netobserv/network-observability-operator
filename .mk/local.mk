@@ -42,8 +42,7 @@ deploy-flp: ## Deploy flp
 	echo "====> $$first_pod exposed as service flowlogs-pipeline-metrics for prometheus"
 	first_pod=$$(kubectl get pods --selector=app=flowlogs-pipeline -o jsonpath='{.items[0].metadata.name}'); \
 	kubectl expose pod $$first_pod --name=flowlogs-pipeline-netflows --protocol=UDP --port=2056 --target-port=2056; \
-	echo "====> Sending simulated logs to pod $$first_pod exposed as service flowlogs-pipeline-netflows"
-	first_pod=$$(kubectl get pods --selector=app=flowlogs-pipeline -o jsonpath='{.items[0].metadata.name}'); \
+	echo "====> $$first_pod exposed as service flowlogs-pipeline-netflows for simulated network flows"
 	@echo "====> Operator process info"
 	@PID=$$(pgrep --oldest --full "main.go"); echo -e "\n===> The operator is running in process $$PID\nTo stop the operator process use: pkill -p $$PID"
 	sed -i 's~flowlogs-pipeline:custom~flowlogs-pipeline:main~' config/samples/flows_v1alpha1_flowcollector.yaml
