@@ -50,25 +50,22 @@ parameters:
     type: network
 - extract:
     aggregates:
-    - name: bandwidth_network_service
-      by:
+    - Name: bandwidth_network_service
+      By:
       - service
-      operation: sum
-      recordKey: bytes
-      topK: 0
-    - name: bandwidth_network_service_namespace
-      by:
+      Operation: sum
+      RecordKey: bytes
+    - Name: bandwidth_network_service_namespace
+      By:
       - service
       - srcK8S_Namespace
-      operation: sum
-      recordKey: bytes
-      topK: 0
-    - name: dest_service_count
-      by:
+      Operation: sum
+      RecordKey: bytes
+    - Name: dest_service_count
+      By:
       - service
-      operation: count
-      recordKey: ""
-      topK: 0
+      Operation: count
+      RecordKey: ""
     type: aggregates
   name: extract_aggregate
 - encode:
@@ -79,7 +76,7 @@ parameters:
         filter:
           key: name
           value: bandwidth_network_service
-        valueKey: recent_op_value
+        valuekey: recent_op_value
         labels:
         - by
         - aggregate
@@ -89,47 +86,7 @@ parameters:
         filter:
           key: name
           value: bandwidth_network_service_namespace
-        valueKey: recent_op_value
-        labels:
-        - by
-        - aggregate
-        buckets: []
-      - name: bandwidth_per_network_service
-        type: counter
-        filter:
-          key: name
-          value: bandwidth_network_service
-        valueKey: recent_op_value
-        labels:
-        - by
-        - aggregate
-        buckets: []
-      - name: bandwidth_per_network_service_per_namespace
-        type: counter
-        filter:
-          key: name
-          value: bandwidth_network_service_namespace
-        valueKey: recent_op_value
-        labels:
-        - by
-        - aggregate
-        buckets: []
-      - name: bandwidth_per_network_service
-        type: counter
-        filter:
-          key: name
-          value: bandwidth_network_service
-        valueKey: recent_op_value
-        labels:
-        - by
-        - aggregate
-        buckets: []
-      - name: bandwidth_per_network_service_per_namespace
-        type: counter
-        filter:
-          key: name
-          value: bandwidth_network_service_namespace
-        valueKey: recent_op_value
+        valuekey: recent_op_value
         labels:
         - by
         - aggregate
@@ -139,27 +96,7 @@ parameters:
         filter:
           key: name
           value: dest_service_count
-        valueKey: recent_count
-        labels:
-        - by
-        - aggregate
-        buckets: []
-      - name: service_count
-        type: counter
-        filter:
-          key: name
-          value: dest_service_count
-        valueKey: recent_count
-        labels:
-        - by
-        - aggregate
-        buckets: []
-      - name: service_count
-        type: counter
-        filter:
-          key: name
-          value: dest_service_count
-        valueKey: recent_count
+        valuekey: recent_count
         labels:
         - by
         - aggregate
@@ -171,7 +108,7 @@ parameters:
 - name: write_loki
   write:
     loki:
-      url: http://loki.default.svc.cluster.local:3100
+      url: http://loki.network-observability.svc.cluster.local:3100
       staticLabels:
         job: flowlogs-pipeline
     type: loki
