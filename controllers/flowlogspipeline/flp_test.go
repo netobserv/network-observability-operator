@@ -383,7 +383,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.Equal("trace", decoded.LogLevel)
 
 	params := decoded.Parameters
-	assert.Len(params, 6)
+	assert.Len(params, 7)
 	assert.Equal(flp.Port, int32(params[0].Ingest.Collector.Port))
 
 	lokiCfg := params[3].Write.Loki
@@ -396,7 +396,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
-	assert.Equal(flp.PrometheusPort, int32(params[5].Encode.Prom.Port))
+	assert.Equal(flp.PrometheusPort, int32(params[6].Encode.Prom.Port))
 
 }
 
@@ -512,6 +512,7 @@ func TestPipelineConfig(t *testing.T) {
 	// Single config
 	ns := "namespace"
 	flp := getFLPConfig()
+	flp.LogLevel = "info"
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
 	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
@@ -534,4 +535,16 @@ func TestPipelineConfig(t *testing.T) {
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
 	assert.Equal(`[{"name":"ingest"},{"name":"decode","follows":"ingest"},{"name":"enrich","follows":"decode"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+}
+
+func TestPipelineTraceStage(t *testing.T) {
+	assert := assert.New(t)
+
+	flp := getFLPConfig()
+
+	b := newBuilder("namespace", corev1.ProtocolUDP, &flp, nil, nil, "", true)
+	stages, parameters := b.buildPipelineConfig()
+	assert.True(validatePipelineConfig(stages, parameters))
+	jsonStages, _ := json.Marshal(stages)
+	assert.Equal(`[{"name":"ingest"},{"name":"decode","follows":"ingest"},{"name":"enrich","follows":"decode"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
 }
