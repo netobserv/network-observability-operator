@@ -10,7 +10,7 @@ delete-kind-cluster: $(KIND) ## Delete kind cluster
 	$(KIND) delete cluster
 
 .PHONY: local-deploy
-local-deploy: create-kind-cluster deploy-all  ## Local deploy (kind, loki, grafana and example-cr excluding the operator)
+local-deploy: create-kind-cluster deploy-all  ## Local deploy (kind, loki, grafana, example-cr and sample-workload excluding the operator)
 
 .PHONY: clean-leftovers
 clean-leftovers:
@@ -18,7 +18,7 @@ clean-leftovers:
 	-kubectl delete namespace network-observability
 
 .PHONY: local-redeploy
-local-redeploy: clean-leftovers undeploy-all deploy-all  ## Local re-deploy (loki, grafana and example-cr excluding the operator)
+local-redeploy: clean-leftovers undeploy-all deploy-all  ## Local re-deploy (loki, grafana, example-cr and sample-workload excluding the operator)
 
 .PHONY: local-undeploy
 local-undeploy: clean-leftovers undeploy-all delete-kind-cluster  ## Local cleanup
