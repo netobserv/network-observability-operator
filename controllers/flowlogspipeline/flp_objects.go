@@ -246,6 +246,11 @@ func (b *builder) addTransformStages(lastStage *config.PipelineBuilderStage) {
 	}
 	enrichedStage.WriteLoki("loki", lokiWrite)
 
+	// write on Stdout if logging trace enabled
+	if b.desired.LogLevel == "trace" {
+		enrichedStage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
+	}
+
 	// prometheus stage (encode) configuration
 	agg := enrichedStage.Aggregate("aggregate", []api.AggregateDefinition{})
 	agg.EncodePrometheus("prometheus", api.PromEncode{
