@@ -1524,6 +1524,12 @@ spec:
                     description: StaticLabels is a map of common labels to set on
                       each flow
                     type: object
+                  tenantID:
+                    default: netobserv
+                    description: TenantID is the Loki X-Scope-OrgID that identifies
+                      the tenant for each request. it will be ignored if instanceSpec
+                      is specified
+                    type: string
                   timeout:
                     default: 10s
                     description: Timeout is the maximum time connection / request

@@ -282,6 +282,11 @@ type FlowCollectorLoki struct {
 	// and querier are int he same host).
 	QuerierURL string `json:"querierUrl,omitempty"`
 
+	//+kubebuilder:default:="netobserv"
+	// TenantID is the Loki X-Scope-OrgID that identifies the tenant for each request.
+	// it will be ignored if instanceSpec is specified
+	TenantID string `json:"tenantID,omitempty"`
+
 	//+kubebuilder:default:="1s"
 	// BatchWait is max time to wait before sending a batch
 	BatchWait metav1.Duration `json:"batchWait,omitempty"`

@@ -22,6 +22,8 @@ var testArgs = []string{
 	"-key", "/var/serving-cert/tls.key",
 	"-loki", "http://loki:3100/",
 	"-loki-labels", "SrcK8S_Namespace,SrcK8S_OwnerName,DstK8S_Namespace,DstK8S_OwnerName,FlowDirection",
+	"-loki-tenant-id", "netobserv",
+	"-loki-skip-tls", "true",
 	"-loglevel", "info",
 	"-frontend-config", "/opt/app-root/config.yaml",
 }
@@ -128,7 +130,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	//equals specs
 	podSpec, containerConfig := getContainerSpecs()
-	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/"}
+	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
 	fmt.Printf("%v\n", buildArgs(&containerConfig, loki))
 	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig, loki), false)
 
@@ -181,7 +183,7 @@ func TestBuiltContainer(t *testing.T) {
 
 	//newly created containers should not need update
 	plugin := getPluginConfig()
-	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234"}
+	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234", TenantID: "netobserv"}
 	builder := newBuilder(testNamespace, &plugin, loki)
 	newContainer := builder.podTemplate("digest")
 	assert.Equal(containerNeedsUpdate(&newContainer.Spec, &plugin, loki), false)
