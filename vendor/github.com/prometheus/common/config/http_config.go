@@ -11,6 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build go1.8
 // +build go1.8
 
 package config
@@ -188,13 +189,13 @@ type HTTPClientConfig struct {
 	// Authorization.CredentialsFile.
 	BearerTokenFile string `yaml:"bearer_token_file,omitempty" json:"bearer_token_file,omitempty"`
 	// HTTP proxy server to use to connect to the targets.
-	ProxyURL URL `yaml:"proxy_url,omitempty" json:"proxy_url,omitempty"`
+	ProxyURL *URL `yaml:"proxy_url,omitempty" json:"proxy_url,omitempty"`
 	// TLSConfig to use to connect to the targets.
 	TLSConfig TLSConfig `yaml:"tls_config,omitempty" json:"tls_config,omitempty"`
 	// FollowRedirects specifies whether the client should follow HTTP 3xx redirects.
 	// The omitempty flag is not set, because it would be hidden from the
 	// marshalled configuration when set to false.
-	FollowRedirects bool `yaml:"follow_redirects" json:"follow_redirects"`
+	FollowRedirects bool `yaml:"follow_redirects,omitempty" json:"follow_redirects,omitempty"`
 }
 
 // SetDirectory joins any relative file paths with dir.
