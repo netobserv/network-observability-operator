@@ -18,7 +18,7 @@
 package api
 
 type TransformFilter struct {
-	Rules []TransformFilterRule `yaml:"rules" json:"rules" doc:"list of filter rules, each includes:"`
+	Rules []TransformFilterRule `yaml:"rules,omitempty" json:"rules,omitempty" doc:"list of filter rules, each includes:"`
 }
 
 type TransformFilterOperationEnum struct {
@@ -32,6 +32,6 @@ func TransformFilterOperationName(operation string) string {
 }
 
 type TransformFilterRule struct {
-	Input string `yaml:"input" json:"input" doc:"entry input field"`
-	Type  string `yaml:"type" json:"type" enum:"TransformFilterOperationEnum" doc:"one of the following:"`
+	Input string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
+	Type  string `yaml:"type,omitempty" json:"type,omitempty" enum:"TransformFilterOperationEnum" doc:"one of the following:"`
 }

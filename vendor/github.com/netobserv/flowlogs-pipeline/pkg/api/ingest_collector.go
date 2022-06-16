@@ -18,8 +18,8 @@
 package api
 
 type IngestCollector struct {
-	HostName    string `yaml:"hostName" json:"hostName" doc:"the hostname to listen on"`
-	Port        int    `yaml:"port" json:"port" doc:"the port number to listen on, for IPFIX/NetFlow v9. Omit or set to 0 to disable IPFIX/NetFlow v9 ingestion"`
-	PortLegacy  int    `yaml:"portLegacy" json:"portLegacy" doc:"the port number to listen on, for legacy NetFlow v5. Omit or set to 0 to disable NetFlow v5 ingestion"`
-	BatchMaxLen int    `yaml:"batchMaxLen" json:"batchMaxLen" doc:"the number of accumulated flows before being forwarded for processing"`
+	HostName    string `yaml:"hostName,omitempty" json:"hostName,omitempty" doc:"the hostname to listen on"`
+	Port        int    `yaml:"port,omitempty" json:"port,omitempty" doc:"the port number to listen on, for IPFIX/NetFlow v9. Omit or set to 0 to disable IPFIX/NetFlow v9 ingestion"`
+	PortLegacy  int    `yaml:"portLegacy,omitempty" json:"portLegacy,omitempty" doc:"the port number to listen on, for legacy NetFlow v5. Omit or set to 0 to disable NetFlow v5 ingestion"`
+	BatchMaxLen int    `yaml:"batchMaxLen,omitempty" json:"batchMaxLen,omitempty" doc:"the number of accumulated flows before being forwarded for processing"`
 }

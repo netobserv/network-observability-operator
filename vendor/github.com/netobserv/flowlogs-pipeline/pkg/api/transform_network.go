@@ -39,9 +39,9 @@ func TransformNetworkOperationName(operation string) string {
 }
 
 type NetworkTransformRule struct {
-	Input      string `yaml:"input" json:"input" doc:"entry input field"`
-	Output     string `yaml:"output" json:"output" doc:"entry output field"`
-	Type       string `yaml:"type" json:"type" enum:"TransformNetworkOperationEnum" doc:"one of the following:"`
+	Input      string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
+	Output     string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
+	Type       string `yaml:"type,omitempty" json:"type,omitempty" enum:"TransformNetworkOperationEnum" doc:"one of the following:"`
 	Parameters string `yaml:"parameters,omitempty" json:"parameters,omitempty" doc:"parameters specific to type"`
 }
 
