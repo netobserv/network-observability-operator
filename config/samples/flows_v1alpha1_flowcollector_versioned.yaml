@@ -30,6 +30,10 @@ spec:
     enableKubeProbes: true
     healthPort: 8080
     prometheusPort: 9090
+  kafka:
+    enable: false
+    address: "kafka-cluster-kafka-bootstrap.network-observability"
+    topic: "network-flows"
   loki:
     url: 'http://loki:3100/'
     batchWait: 1s
@@ -37,7 +41,6 @@ spec:
     minBackoff: 1s
     maxBackoff: 300s
     maxRetries: 10
-    timestampLabel: TimeFlowEnd
     staticLabels:
       app: netobserv-flowcollector
   consolePlugin:
@@ -52,3 +55,7 @@ spec:
         "3100": loki
   clusterNetworkOperator:
     namespace: "openshift-network-operator"
+  ovnKubernetes:
+    namespace: "ovn-kubernetes"
+    daemonSetName: "ovnkube-node"
+    containerName: "ovnkube-node"
