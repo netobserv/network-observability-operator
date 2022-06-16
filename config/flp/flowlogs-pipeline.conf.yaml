@@ -50,22 +50,21 @@ parameters:
     type: network
 - extract:
     aggregates:
-    - Name: bandwidth_network_service
-      By:
+    - name: bandwidth_network_service
+      by:
       - service
-      Operation: sum
-      RecordKey: bytes
-    - Name: bandwidth_network_service_namespace
-      By:
+      operation: sum
+      recordKey: bytes
+    - name: bandwidth_network_service_namespace
+      by:
       - service
       - srcK8S_Namespace
-      Operation: sum
-      RecordKey: bytes
-    - Name: dest_service_count
-      By:
+      operation: sum
+      recordKey: bytes
+    - name: dest_service_count
+      by:
       - service
-      Operation: count
-      RecordKey: ""
+      operation: count
     type: aggregates
   name: extract_aggregate
 - encode:
@@ -76,7 +75,7 @@ parameters:
         filter:
           key: name
           value: bandwidth_network_service
-        valuekey: recent_op_value
+        valueKey: recent_op_value
         labels:
         - by
         - aggregate
@@ -86,7 +85,7 @@ parameters:
         filter:
           key: name
           value: bandwidth_network_service_namespace
-        valuekey: recent_op_value
+        valueKey: recent_op_value
         labels:
         - by
         - aggregate
@@ -96,7 +95,7 @@ parameters:
         filter:
           key: name
           value: dest_service_count
-        valuekey: recent_count
+        valueKey: recent_count
         labels:
         - by
         - aggregate

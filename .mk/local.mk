@@ -33,16 +33,9 @@ deploy-flp: ## Deploy flp
 	# temporarily change flowlogs-pipeline:main to flowlogs-pipeline:custom in config file
 	sed -i 's~flowlogs-pipeline:main~flowlogs-pipeline:custom~' config/samples/flows_v1alpha1_flowcollector.yaml
 	go run ./main.go &
-	@echo "====> Waiting for flowlogs-pipeline pod to be ready"
+	@echo "====> Waiting for flowlogs-pipeline ds to be ready"
 	while : ; do kubectl get ds flowlogs-pipeline && break; sleep 1; done
 	kubectl wait --timeout=180s --for=condition=ready pod -l app=flowlogs-pipeline
-	@echo "====> Getting first pod in the demon-set"
-	first_pod=$$(kubectl get pods --selector=app=flowlogs-pipeline -o jsonpath='{.items[0].metadata.name}'); \
-	kubectl expose pod $$first_pod --name=flowlogs-pipeline-metrics --protocol=TCP --port=9102 --target-port=9102; \
-	echo "====> $$first_pod exposed as service flowlogs-pipeline-metrics for prometheus"
-	first_pod=$$(kubectl get pods --selector=app=flowlogs-pipeline -o jsonpath='{.items[0].metadata.name}'); \
-	kubectl expose pod $$first_pod --name=flowlogs-pipeline-netflows --protocol=UDP --port=2056 --target-port=2056; \
-	echo "====> $$first_pod exposed as service flowlogs-pipeline-netflows for simulated network flows"
 	@echo "====> Operator process info"
 	@PID=$$(pgrep --oldest --full "main.go"); echo -e "\n===> The operator is running in process $$PID\nTo stop the operator process use: pkill -p $$PID"
 	sed -i 's~flowlogs-pipeline:custom~flowlogs-pipeline:main~' config/samples/flows_v1alpha1_flowcollector.yaml
@@ -51,8 +44,6 @@ deploy-flp: ## Deploy flp
 .PHONY: undeploy-flp
 undeploy-flp: ## stop the the operator locally
 	-PID=$$(pgrep --oldest --full "main.go"); pkill -P $$PID; pkill $$PID
-	kubectl delete service flowlogs-pipeline-metrics || true
-	kubectl delete service flowlogs-pipeline-netflows || true
 	kubectl delete ds flowlogs-pipeline || true
 	sed -i 's~flowlogs-pipeline:custom~flowlogs-pipeline:main~' config/samples/flows_v1alpha1_flowcollector.yaml
 

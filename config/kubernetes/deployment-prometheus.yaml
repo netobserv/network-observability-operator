@@ -84,4 +84,4 @@ data:
     scrape_configs:
       - job_name: 'flowlogs-pipeline'
         static_configs:
-          - targets: ['flowlogs-pipeline-metrics.network-observability.svc.cluster.local:9102']
+          - targets: %FLP_TARGETS%

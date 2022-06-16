@@ -63,7 +63,11 @@ undeploy-grafana: ## Undeploy grafana.
 .PHONY: deploy-prometheus
 deploy-prometheus: ## Deploy prometheus.
 	@echo -e "\n==> Deploy prometheus"
-	kubectl apply -f config/kubernetes/deployment-prometheus.yaml
+	@echo -e "\n==> Obtain flp node addr/ports"
+	pod_list=$$(kubectl get pods --selector=app=flowlogs-pipeline -o jsonpath='{.items[*].status.podIP}'); \
+	FLP_TARGET_LIST=$$(echo $$pod_list | sed 's~^~[~; s~ ~:9102,~g; s~$$~:9102]~;') ; \
+	sed "s~%FLP_TARGETS%~$$FLP_TARGET_LIST~" config/kubernetes/deployment-prometheus.yaml >/tmp/deployment-prometheus.yaml
+	kubectl apply -f /tmp/deployment-prometheus.yaml
 	kubectl rollout status "deploy/prometheus" --timeout=600s
 	-pkill --oldest --full "9090:9090"
 	kubectl port-forward --address 0.0.0.0 svc/prometheus 9090:9090 2>&1 >/dev/null &
@@ -76,7 +80,7 @@ undeploy-prometheus: ## Undeploy prometheus.
 	-pkill --oldest --full "9090:9090"
 
 .PHONY: deploy-all
-deploy-all: manifests generate fmt lint deploy-loki deploy-grafana install deploy-sample-cr deploy-prometheus
+deploy-all: manifests generate fmt lint deploy-loki deploy-grafana install deploy-sample-cr
 
 .PHONY: undeploy-all
-undeploy-all: undeploy-loki undeploy-grafana uninstall undeploy-sample-cr undeploy-prometheus
+undeploy-all: undeploy-loki undeploy-grafana uninstall undeploy-sample-cr
