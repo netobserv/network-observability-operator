@@ -58,8 +58,14 @@ undeploy-grafana: ## Undeploy grafana.
 	kubectl delete --ignore-not-found=true configMap grafana-datasources
 	-pkill --oldest --full "3000:3000"
 
+.PHONY: deploy-infra
+deploy-infra: manifests generate fmt lint deploy-loki deploy-grafana install
+
 .PHONY: deploy-all
-deploy-all: manifests generate fmt lint deploy-loki deploy-grafana install deploy-sample-cr
+deploy-all: deploy-infra deploy-sample-cr deploy-sample-workload
+
+.PHONY: undeploy-infra
+undeploy-infra: undeploy-loki undeploy-grafana uninstall
 
 .PHONY: undeploy-all
-undeploy-all: undeploy-loki undeploy-grafana uninstall undeploy-sample-cr
+undeploy-all: undeploy-infra undeploy-sample-cr undeploy-sample-workload
