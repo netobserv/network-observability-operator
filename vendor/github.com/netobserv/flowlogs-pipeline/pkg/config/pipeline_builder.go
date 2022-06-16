@@ -78,21 +78,6 @@ func (b *PipelineBuilderStage) next(name string, param StageParam) PipelineBuild
 	return PipelineBuilderStage{pipeline: b.pipeline, lastStage: name}
 }
 
-// DecodeJSON chains the current stage with a JSON decode stage and returns that new stage
-func (b *PipelineBuilderStage) DecodeJSON(name string) PipelineBuilderStage {
-	return b.next(name, StageParam{Name: name, Decode: &Decode{Type: api.JSONType}})
-}
-
-// DecodeProtobuf chains the current stage with a protobuf decode stage and returns that new stage
-func (b *PipelineBuilderStage) DecodeProtobuf(name string) PipelineBuilderStage {
-	return b.next(name, StageParam{Name: name, Decode: &Decode{Type: api.PBType}})
-}
-
-// DecodeAWS chains the current stage with an AWS decode stage and returns that new stage
-func (b *PipelineBuilderStage) DecodeAWS(name string, aws api.DecodeAws) PipelineBuilderStage {
-	return b.next(name, StageParam{Name: name, Decode: &Decode{Type: api.AWSType, Aws: &aws}})
-}
-
 // Aggregate chains the current stage with an aggregate stage and returns that new stage
 func (b *PipelineBuilderStage) Aggregate(name string, aggs []api.AggregateDefinition) PipelineBuilderStage {
 	return b.next(name, StageParam{Name: name, Extract: &Extract{Type: api.AggregateType, Aggregates: aggs}})

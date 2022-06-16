@@ -20,11 +20,11 @@ package api
 type EncodeKafka struct {
 	Address      string `yaml:"address" json:"address" doc:"address of kafka server"`
 	Topic        string `yaml:"topic" json:"topic" doc:"kafka topic to write to"`
-	Balancer     string `yaml:"balancer" json:"balancer" enum:"KafkaEncodeBalancerEnum" doc:"one of the following:"`
-	WriteTimeout int64  `yaml:"writeTimeout" json:"writeTimeout" doc:"timeout (in seconds) for write operation performed by the Writer"`
-	ReadTimeout  int64  `yaml:"readTimeout" json:"readTimeout" doc:"timeout (in seconds) for read operation performed by the Writer"`
-	BatchBytes   int64  `yaml:"batchBytes" json:"batchBytes" doc:"limit the maximum size of a request in bytes before being sent to a partition"`
-	BatchSize    int    `yaml:"batchSize" json:"batchSize" doc:"limit on how many messages will be buffered before being sent to a partition"`
+	Balancer     string `yaml:"balancer,omitempty" json:"balancer,omitempty" enum:"KafkaEncodeBalancerEnum" doc:"one of the following:"`
+	WriteTimeout int64  `yaml:"writeTimeout,omitempty" json:"writeTimeout,omitempty" doc:"timeout (in seconds) for write operation performed by the Writer"`
+	ReadTimeout  int64  `yaml:"readTimeout,omitempty" json:"readTimeout,omitempty" doc:"timeout (in seconds) for read operation performed by the Writer"`
+	BatchBytes   int64  `yaml:"batchBytes,omitempty" json:"batchBytes,omitempty" doc:"limit the maximum size of a request in bytes before being sent to a partition"`
+	BatchSize    int    `yaml:"batchSize,omitempty" json:"batchSize,omitempty" doc:"limit on how many messages will be buffered before being sent to a partition"`
 }
 
 type KafkaEncodeBalancerEnum struct {

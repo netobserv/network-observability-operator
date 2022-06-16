@@ -24,8 +24,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type GenericMap map[string]interface{}
-
 var (
 	Opt        = Options{}
 	PipeLine   []Stage
@@ -50,7 +48,6 @@ type Stage struct {
 type StageParam struct {
 	Name      string     `json:"name"`
 	Ingest    *Ingest    `json:"ingest,omitempty"`
-	Decode    *Decode    `json:"decode,omitempty"`
 	Transform *Transform `json:"transform,omitempty"`
 	Extract   *Extract   `json:"extract,omitempty"`
 	Encode    *Encode    `json:"encode,omitempty"`
@@ -66,14 +63,10 @@ type Ingest struct {
 }
 
 type File struct {
-	Filename string `json:"filename"`
-	Loop     bool   `json:"loop"`
-	Chunks   int    `json:"chunks"`
-}
-
-type Decode struct {
-	Type string         `json:"type"`
-	Aws  *api.DecodeAws `json:"aws,omitempty"`
+	Filename string      `json:"filename"`
+	Decoder  api.Decoder `json:"decoder"`
+	Loop     bool        `json:"loop"`
+	Chunks   int         `json:"chunks"`
 }
 
 type Transform struct {

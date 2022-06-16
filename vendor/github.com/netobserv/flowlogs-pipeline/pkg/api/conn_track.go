@@ -17,19 +17,33 @@
 
 package api
 
+import "time"
+
 type ConnTrack struct {
-	KeyDefinition     KeyDefinition `yaml:"keyDefinition" doc:"fields that are used to identify the connection"`
-	OutputRecordTypes []string      `yaml:"outputRecordTypes" doc:"output record types to emit"`
-	OutputFields      []OutputField `yaml:"outputFields" doc:"list of output fields"`
+	// TODO: should by a pointer instead?
+	KeyDefinition        KeyDefinition `yaml:"keyDefinition,omitempty" doc:"fields that are used to identify the connection"`
+	OutputRecordTypes    []string      `yaml:"outputRecordTypes,omitempty" enum:"ConnTrackOutputRecordTypeEnum" doc:"output record types to emit"`
+	OutputFields         []OutputField `yaml:"outputFields,omitempty" doc:"list of output fields"`
+	EndConnectionTimeout time.Duration `yaml:"endConnectionTimeout,omitempty" doc:"duration of time to wait from the last flow log to end a connection"`
+}
+
+type ConnTrackOutputRecordTypeEnum struct {
+	NewConnection string `yaml:"newConnection" doc:"New connection"`
+	EndConnection string `yaml:"endConnection" doc:"End connection"`
+	FlowLog       string `yaml:"flowLog" doc:"Flow log"`
+}
+
+func ConnTrackOutputRecordTypeName(operation string) string {
+	return GetEnumName(ConnTrackOutputRecordTypeEnum{}, operation)
 }
 
 type KeyDefinition struct {
-	FieldGroups []FieldGroup  `yaml:"fieldGroups" doc:"list of field group definitions"`
-	Hash        ConnTrackHash `yaml:"hash" doc:"how to build the connection hash"`
+	FieldGroups []FieldGroup  `yaml:"fieldGroups,omitempty" doc:"list of field group definitions"`
+	Hash        ConnTrackHash `yaml:"hash,omitempty" doc:"how to build the connection hash"`
 }
 
 type FieldGroup struct {
-	Name   string   `yaml:"name" doc:"field group name"`
+	Name   string   `yaml:"name,omitempty" doc:"field group name"`
 	Fields []string `yaml:"fields" doc:"list of fields in the group"`
 }
 
@@ -40,14 +54,25 @@ type FieldGroup struct {
 // When they are not set, a different hash will be computed for A->B and B->A,
 // and they are tracked as different connections.
 type ConnTrackHash struct {
-	FieldGroupRefs []string `yaml:"fieldGroupRefs" doc:"list of field group names to build the hash"`
-	FieldGroupARef string   `yaml:"fieldGroupARef" doc:"field group name of endpoint A"`
-	FieldGroupBRef string   `yaml:"fieldGroupBRef" doc:"field group name of endpoint B"`
+	FieldGroupRefs []string `yaml:"fieldGroupRefs,omitempty" doc:"list of field group names to build the hash"`
+	FieldGroupARef string   `yaml:"fieldGroupARef,omitempty" doc:"field group name of endpoint A"`
+	FieldGroupBRef string   `yaml:"fieldGroupBRef,omitempty" doc:"field group name of endpoint B"`
 }
 
 type OutputField struct {
-	Name      string `yaml:"name" doc:"output field name"`
-	Operation string `yaml:"operation" doc:"aggregate operation on the field value"`
-	SplitAB   bool   `yaml:"splitAB" doc:"When true, 2 output fields will be created. One for A->B and one for B->A flows."`
-	Input     string `yaml:"input" doc:"The input field to base the operation on. When omitted, 'name' is used"`
+	Name      string `yaml:"name,omitempty" doc:"output field name"`
+	Operation string `yaml:"operation,omitempty" enum:"ConnTrackOperationEnum" doc:"aggregate operation on the field value"`
+	SplitAB   bool   `yaml:"splitAB,omitempty" doc:"When true, 2 output fields will be created. One for A->B and one for B->A flows."`
+	Input     string `yaml:"input,omitempty" doc:"The input field to base the operation on. When omitted, 'name' is used"`
+}
+
+type ConnTrackOperationEnum struct {
+	Sum   string `yaml:"sum" doc:"sum"`
+	Count string `yaml:"count" doc:"count"`
+	Min   string `yaml:"min" doc:"min"`
+	Max   string `yaml:"max" doc:"max"`
+}
+
+func ConnTrackOperationName(operation string) string {
+	return GetEnumName(ConnTrackOperationEnum{}, operation)
 }

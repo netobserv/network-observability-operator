@@ -18,10 +18,11 @@
 package api
 
 type IngestKafka struct {
-	Brokers          []string `yaml:"brokers" json:"brokers" doc:"list of kafka broker addresses"`
-	Topic            string   `yaml:"topic" json:"topic" doc:"kafka topic to listen on"`
-	GroupId          string   `yaml:"groupid" json:"groupid" doc:"separate groupid for each consumer on specified topic"`
-	GroupBalancers   []string `yaml:"groupBalancers" json:"groupBalancers" doc:"list of balancing strategies (range, roundRobin, rackAffinity)"`
-	StartOffset      string   `yaml:"startOffset" json:"startOffset" doc:"FirstOffset (least recent - default) or LastOffset (most recent) offset available for a partition"`
-	BatchReadTimeout int64    `yaml:"batchReadTimeout" json:"batchReadTimeout" doc:"how often (in milliseconds) to process input"`
+	Brokers          []string `yaml:"brokers,omitempty" json:"brokers,omitempty" doc:"list of kafka broker addresses"`
+	Topic            string   `yaml:"topic,omitempty" json:"topic,omitempty" doc:"kafka topic to listen on"`
+	GroupId          string   `yaml:"groupid,omitempty" json:"groupid,omitempty" doc:"separate groupid for each consumer on specified topic"`
+	GroupBalancers   []string `yaml:"groupBalancers,omitempty" json:"groupBalancers,omitempty" doc:"list of balancing strategies (range, roundRobin, rackAffinity)"`
+	StartOffset      string   `yaml:"startOffset,omitempty" json:"startOffset,omitempty" doc:"FirstOffset (least recent - default) or LastOffset (most recent) offset available for a partition"`
+	BatchReadTimeout int64    `yaml:"batchReadTimeout,omitempty" json:"batchReadTimeout,omitempty" doc:"how often (in milliseconds) to process input"`
+	Decoder          Decoder  `yaml:"decoder,omitempty" json:"decoder" doc:"decoder to use (E.g. json or protobuf)"`
 }

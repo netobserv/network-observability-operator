@@ -18,8 +18,8 @@
 package api
 
 type TransformGeneric struct {
-	Policy string                 `yaml:"policy" json:"policy" enum:"TransformGenericOperationEnum" doc:"key replacement policy; may be one of the following:"`
-	Rules  []GenericTransformRule `yaml:"rules" json:"rules" doc:"list of transform rules, each includes:"`
+	Policy string                 `yaml:"policy,omitempty" json:"policy,omitempty" enum:"TransformGenericOperationEnum" doc:"key replacement policy; may be one of the following:"`
+	Rules  []GenericTransformRule `yaml:"rules,omitempty" json:"rules,omitempty" doc:"list of transform rules, each includes:"`
 }
 
 type TransformGenericOperationEnum struct {
@@ -32,8 +32,8 @@ func TransformGenericOperationName(operation string) string {
 }
 
 type GenericTransformRule struct {
-	Input  string `yaml:"input" json:"input" doc:"entry input field"`
-	Output string `yaml:"output" json:"output" doc:"entry output field"`
+	Input  string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
+	Output string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
 }
 
 type GenericTransform []GenericTransformRule
