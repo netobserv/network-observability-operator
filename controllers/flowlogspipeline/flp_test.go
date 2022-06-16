@@ -460,27 +460,42 @@ func TestLabels(t *testing.T) {
 func TestDeployNeeded(t *testing.T) {
 	assert := assert.New(t)
 
-	kafka := flowsv1alpha1.FlowCollectorKafka{Enable: false, Address: "loaclhost:9092", Topic: "FLP"}
+	spec := flowsv1alpha1.FlowCollectorSpec{
+		Agent: "ipfix",
+		Kafka: flowsv1alpha1.FlowCollectorKafka{Enable: false, Address: "loaclhost:9092", Topic: "FLP"},
+	}
 	// Kafka not configured
-	res, err := checkDeployNeeded(kafka, ConfSingle)
+	res, err := checkDeployNeeded(&spec, ConfSingle)
 	assert.True(res)
 	assert.NoError(err)
-	res, err = checkDeployNeeded(kafka, ConfKafkaIngester)
+	res, err = checkDeployNeeded(&spec, ConfKafkaIngester)
 	assert.False(res)
 	assert.NoError(err)
-	res, err = checkDeployNeeded(kafka, ConfKafkaTransformer)
+	res, err = checkDeployNeeded(&spec, ConfKafkaTransformer)
 	assert.False(res)
 	assert.NoError(err)
 
 	// Kafka configured
-	kafka.Enable = true
-	res, err = checkDeployNeeded(kafka, ConfSingle)
+	spec.Kafka.Enable = true
+	res, err = checkDeployNeeded(&spec, ConfSingle)
 	assert.False(res)
 	assert.NoError(err)
-	res, err = checkDeployNeeded(kafka, ConfKafkaIngester)
+	res, err = checkDeployNeeded(&spec, ConfKafkaIngester)
 	assert.True(res)
 	assert.NoError(err)
-	res, err = checkDeployNeeded(kafka, ConfKafkaTransformer)
+	res, err = checkDeployNeeded(&spec, ConfKafkaTransformer)
+	assert.True(res)
+	assert.NoError(err)
+
+	// Kafka + eBPF agent configured
+	spec.Agent = "ebpf"
+	res, err = checkDeployNeeded(&spec, ConfSingle)
+	assert.False(res)
+	assert.NoError(err)
+	res, err = checkDeployNeeded(&spec, ConfKafkaIngester)
+	assert.False(res)
+	assert.NoError(err)
+	res, err = checkDeployNeeded(&spec, ConfKafkaTransformer)
 	assert.True(res)
 	assert.NoError(err)
 
