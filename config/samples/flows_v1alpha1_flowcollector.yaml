@@ -32,7 +32,7 @@ spec:
     prometheusPort: 9090
   kafka:
     enable: false
-    address: "kafka-cluster-kafka-bootstrap"
+    address: "kafka-cluster-kafka-bootstrap.network-observability"
     topic: "network-flows"
   loki:
     url: 'http://loki:3100/'

@@ -31,9 +31,17 @@ const (
 	envFlowsTargetHost    = "FLOWS_TARGET_HOST"
 	envFlowsTargetPort    = "FLOWS_TARGET_PORT"
 	envSampling           = "SAMPLING"
+	envExport             = "EXPORT"
+	envKafkaBrokers       = "KAFKA_BROKERS"
+	envKafkaTopic         = "KAFKA_TOPIC"
 	envLogLevel           = "LOG_LEVEL"
 
 	envListSeparator = ","
+)
+
+const (
+	exportKafka = "kafka"
+	exportGRPC  = "grpc"
 )
 
 type reconcileAction int
@@ -209,31 +217,40 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 	for k, v := range coll.Spec.EBPF.Env {
 		config = append(config, corev1.EnvVar{Name: k, Value: v})
 	}
-	switch coll.Spec.FlowlogsPipeline.Kind {
-	case constants.DaemonSetKind:
-		// When flowlogs-pipeline is deployed as a daemonset, each agent must send
-		// data to the pod that is deployed in the same host
-		return append(config, corev1.EnvVar{
-			Name: envFlowsTargetHost,
-			ValueFrom: &corev1.EnvVarSource{
-				FieldRef: &corev1.ObjectFieldSelector{
-					FieldPath: "status.hostIP",
+	if coll.Spec.Kafka.Enable {
+		config = append(config,
+			corev1.EnvVar{Name: envExport, Value: exportKafka},
+			corev1.EnvVar{Name: envKafkaBrokers, Value: coll.Spec.Kafka.Address},
+			corev1.EnvVar{Name: envKafkaTopic, Value: coll.Spec.Kafka.Topic},
+		)
+	} else {
+		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
+		switch coll.Spec.FlowlogsPipeline.Kind {
+		case constants.DaemonSetKind:
+			// When flowlogs-pipeline is deployed as a daemonset, each agent must send
+			// data to the pod that is deployed in the same host
+			config = append(config, corev1.EnvVar{
+				Name: envFlowsTargetHost,
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "status.hostIP",
+					},
 				},
-			},
-		}, corev1.EnvVar{
-			Name:  envFlowsTargetPort,
-			Value: strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)),
-		})
-	case constants.DeploymentKind:
-		return append(config, corev1.EnvVar{
-			Name:  envFlowsTargetHost,
-			Value: constants.FLPName + "." + c.baseNamespace,
-		}, corev1.EnvVar{
-			Name:  envFlowsTargetPort,
-			Value: strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)),
-		})
+			}, corev1.EnvVar{
+				Name:  envFlowsTargetPort,
+				Value: strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)),
+			})
+		case constants.DeploymentKind:
+			config = append(config, corev1.EnvVar{
+				Name:  envFlowsTargetHost,
+				Value: constants.FLPName + "." + c.baseNamespace,
+			}, corev1.EnvVar{
+				Name:  envFlowsTargetPort,
+				Value: strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)),
+			})
+		}
 	}
-	return nil
+	return config
 }
 
 func (c *AgentController) requiredAction(current, desired *v1.DaemonSet) reconcileAction {

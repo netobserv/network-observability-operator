@@ -133,15 +133,15 @@ func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Fl
 }
 
 // Check if a configKind should be deployed
-func checkDeployNeeded(kafka flowsv1alpha1.FlowCollectorKafka, confKind string) (bool, error) {
+func checkDeployNeeded(fc *flowsv1alpha1.FlowCollectorSpec, confKind string) (bool, error) {
 	switch confKind {
 	case ConfSingle:
-		return !kafka.Enable, nil
+		return !fc.Kafka.Enable, nil
 	case ConfKafkaTransformer:
-		return kafka.Enable, nil
+		return fc.Kafka.Enable, nil
 	case ConfKafkaIngester:
-		//TODO should be disabled if ebpf-agent is enabled with kafka
-		return kafka.Enable, nil
+		// disabled if ebpf-agent is enabled, as it sends the flows directly to the transformer
+		return fc.Kafka.Enable && fc.Agent == flowsv1alpha1.AgentIPFIX, nil
 	default:
 		return false, fmt.Errorf("unknown flowlogs-pipelines config kind")
 	}
@@ -157,7 +157,7 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 		return err
 	}
 
-	shouldDeploy, err := checkDeployNeeded(desired.Spec.Kafka, r.confKind)
+	shouldDeploy, err := checkDeployNeeded(&desired.Spec, r.confKind)
 	if err != nil {
 		return err
 	}
@@ -199,9 +199,6 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 	case constants.DeploymentKind:
 		return r.reconcileAsDeployment(ctx, desiredFLP, &builder, configDigest)
 	case constants.DaemonSetKind:
-		if r.confKind == ConfKafkaTransformer {
-			return r.reconcileAsDeployment(ctx, desiredFLP, &builder, configDigest)
-		}
 		return r.reconcileAsDaemonSet(ctx, desiredFLP, &builder, configDigest)
 	default:
 		return fmt.Errorf("could not reconcile collector, invalid kind: %s", desiredFLP.Kind)
