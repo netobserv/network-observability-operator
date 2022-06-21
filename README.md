@@ -57,7 +57,7 @@ VERSION=0.1.2 make deploy deploy-loki deploy-grafana
 kubectl apply -f ./config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 ```
 
-Beware that the version of the underlying components, such as flowlogs-pipeline, may be tied to the version of the operator. Breaking this correlation may result in crashes. The versions of the underlying components are defined in the `FlowCollector` resource as image tags.
+Beware that the version of the underlying components, such as flowlogs-pipeline, may be tied to the version of the operator (this is why we recommend switching the git branch). Breaking this correlation may result in crashes. The versions of the underlying components are defined in the `FlowCollector` resource as image tags.
 
 ### OpenShift Console
 
@@ -187,7 +187,7 @@ netobserv-controller-manager-7487d87dc-2ltq2    2/2     Running   0          43m
 network-observability-plugin-7fb8c5477b-drg2z   1/1     Running   0          43m
 ```
 
-Results may slighlty differ depending on the installation method and the `FlowCollector` configuration. At least you should see `flowlogs-pipeline` pods in a `Running` state.
+Results may slightly differ depending on the installation method and the `FlowCollector` configuration. At least you should see `flowlogs-pipeline` pods in a `Running` state.
 
 If you use the eBPF agent in privileged mode (`spec.ebpf.privileged=true`), check also for pods in privileged namespace:
 
@@ -209,7 +209,7 @@ Finally, make sure Loki is correctly deployed, and reachable from pods via the U
 
 ### Everything seems correctly deployed but there isn't any flow showing up
 
-Wait 10 minutes and check again. When `spec.agent` is `ipfix`, there is sometimes a delay, up to 10 minutes, before the flows appear. This is due to the IPFIX protocol requiring exporter and collector to exchange record template definitions as a preliminary step. The eBPF agent doesn't have such delay.
+Wait 10 minutes and check again. When `spec.agent` is `ipfix`, there is sometimes a delay, up to 10 minutes, before the flows appear. This is due to the IPFIX protocol requiring exporter and collector to exchange record template definitions as a preliminary step. The eBPF agent doesn't have such a delay.
 
 ### I've waited 10 minutes: still nothing
 

@@ -16,7 +16,7 @@ A way to test code changes is to build a Docker image from local sources, push i
 IMG="quay.io/youraccount/network-observability-operator:test" make image-build image-push deploy
 ```
 
-After the operator is deployed, you need to setup Loki (the flows store) install a `FlowCollector` custom resource (which stands for the operator configuration), and optionnally install Grafana.
+After the operator is deployed, you need to set up Loki (the flows store), install a `FlowCollector` custom resource (which stands for the operator configuration), and optionally install Grafana.
 
 We provide a quick & easy way to deploy Loki (not for production use), Grafana and a `FlowCollector` with default values:
 
@@ -24,7 +24,7 @@ We provide a quick & easy way to deploy Loki (not for production use), Grafana a
 make deploy-loki deploy-grafana deploy-sample-cr
 ```
 
-It will set up local port-forward to Grafana and Loki. To avoid it, pass `PORT_FWD=false` with the command above.
+It will set up a local port-forward to Grafana and Loki. To avoid it, pass `PORT_FWD=false` with the command above.
 
 Creating a `FlowCollector` triggers the operator deploying the monitoring pipeline:
 
@@ -55,13 +55,13 @@ Beware that, by referring to an old image, you increase chances to hit breaking 
 
 ## Installing Kafka
 
-Kafka can be used to separate flows ingestion from flows transformation. The operator does not manage kafka deployment and topic creation. If you deployed from the repository, we provide a quick setup for Kafka using the [strimzi operator](https://strimzi.io/).
+Kafka can be used to separate flow ingestion from flow transformation. The operator does not manage kafka deployment and topic creation. We provide a quick setup for Kafka using the [strimzi operator](https://strimzi.io/).
 
 ```bash
 make deploy-kafka
 ```
 
-Kafka can then be enabled in the `FlowCollector` CR. If Kafka was deployed using the Makefile, switching the `kafka.enable` flag to `true` in the sample file should be enough. Otherwise, kafka address and topic name should be configured.
+Kafka can then be enabled in the `FlowCollector` CR. If Kafka was deployed using the Makefile, switching the `kafka.enable` flag to `true` in the sample file should be enough. Otherwise, the Kafka address and topic name should be configured.
 
 ## Deploy as bundle
 
