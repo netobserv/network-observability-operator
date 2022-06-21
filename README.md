@@ -113,12 +113,7 @@ A couple of settings deserve special attention:
 
 - Kafka (`spec.kafka`): _experimental_ - when enabled, integrate the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Assumes Kafka is already deployed and a topic is created. For convenience, we provide a quick deployment using [strimzi](https://strimzi.io/): run `make deploy-kafka` from the repository.
 
-
-## Understanding the deployed components
-
-TODO
-
-## Development / contributing
+## Development & building from sources
 
 Please refer to [this documentation](./DEVELOPMENT.md) for everything related to building, deploying or bundling from sources.
 
@@ -138,13 +133,13 @@ It depends on which `agent` you want to use: `ebpf` or `ipfix`, and whether you 
 
 #### To run the eBPF agent
 
-What matters is the version of the Linux kernel.
-TODO: precisions
-Other than that, there are no known restrictions (yet?) on the Kubernetes version.
+What matters is the version of the Linux kernel: 4.18 or more is supported. Earlier versions are not tested.
+
+Other than that, there are no known restrictions yet on the Kubernetes version.
 
 #### To use IPFIX exports
 
-OpenShift 4.10 or above, or upstream OVN-Kubernetes [TODO: upstream version?] are recommended, as the operator will configure OVS for you. Else, you need to configure it manually.
+OpenShift 4.10 or above, or upstream OVN-Kubernetes, are recommended, as the operator will configure OVS for you. Else, you need to configure it manually.
 
 For OpenShift 4.8 or 4.9:
 
@@ -210,12 +205,6 @@ Finally, make sure Loki is correctly deployed, and reachable from pods via the U
 ### Everything seems correctly deployed but there isn't any flow showing up
 
 Wait 10 minutes and check again. When `spec.agent` is `ipfix`, there is sometimes a delay, up to 10 minutes, before the flows appear. This is due to the IPFIX protocol requiring exporter and collector to exchange record template definitions as a preliminary step. The eBPF agent doesn't have such a delay.
-
-### I've waited 10 minutes: still nothing
-
-Make sure there are no errors in `flowlogs-pipeline` pods log.
-(TODO / TO CONTINUE)
-
 
 ### There are no new dashboards in the OpenShift Console
 
