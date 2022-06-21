@@ -2,13 +2,17 @@
 .PHONY: deploy-sample-cr
 deploy-sample-cr:
 	@echo -e "\n==> Deploy sample CR"
-	sed -e 's~:main~:$(VERSION)~' ./config/samples/flows_v1alpha1_flowcollector.yaml | kubectl apply -f - || true
+ifeq (main,$(VERSION))
+	kubectl apply -f ./config/samples/flows_v1alpha1_flowcollector.yaml || true
+else
+	kubectl apply -f ./config/samples/flows_v1alpha1_flowcollector_versioned.yaml || true
+endif
 
 # Undeploy the sample FlowCollector CR
 .PHONY: undeploy-sample-cr
 undeploy-sample-cr:
 	@echo -e "\n==> Undeploy sample CR"
-	sed -e 's~:main~:$(VERSION)~' ./config/samples/flows_v1alpha1_flowcollector.yaml | kubectl --ignore-not-found=true delete -f - || true
+	kubectl --ignore-not-found=true delete flowcollector cluster || true
 
 # Deploy sample workload
 .PHONY: deploy-sample-workload

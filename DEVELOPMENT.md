@@ -51,7 +51,7 @@ VERSION="960766c" make deploy
 VERSION="0.1.2" make deploy
 ```
 
-Beware that, by referring to an old image, you increase chances to hit breaking changes with the other underlying components, such as [Flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline). You can figure out which components version matches operator version by going to the [OperatorHub page](https://operatorhub.io/operator/netobserv-operator), selecting the corresponding operator version and inspecting the provided sample YAML (it contains a reference to the versioned image for each component).
+Beware that, by referring to an old image, you increase chances to hit breaking changes with the other underlying components, such as [Flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline). It is recommended to switch to the corresponding release GIT tag before deploying an old version, to make sure underlying components refer to correct versions.
 
 ## Installing Kafka
 
@@ -85,7 +85,7 @@ Optionally, you might validate the bundle:
 operator-sdk bundle validate $BUNDLE_IMG
 ```
 
-Note: the base64 logo can be generated with: `base64 -w 0 <image file>`
+> Note: the base64 logo can be generated with: `base64 -w 0 <image file>`
 
 ### Deploy as bundle from command line
 
