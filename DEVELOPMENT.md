@@ -1,45 +1,67 @@
-# Development & Contributing
+The NetObserv operator is meant to run in a Kubernetes cluster like OpenShift or KIND (these are the two options most used by the dev team).
 
-## Deploy an existing image
+## Build / format / lint the code, run unit tests
+
+```bash
+make build test
+```
+
+## Build and deploy a Docker image
+
+A way to test code changes is to build a Docker image from local sources, push it to your own Docker repository and deploy it to an existing cluster:
+
+(replace `quay.io/youraccount` with your own registry and account)
+
+```bash
+IMG="quay.io/youraccount/network-observability-operator:test" make image-build image-push deploy
+```
+
+After the operator is deployed, you need to setup Loki (the flows store) install a `FlowCollector` custom resource (which stands for the operator configuration), and optionnally install Grafana.
+
+We provide a quick & easy way to deploy Loki (not for production use), Grafana and a `FlowCollector` with default values:
+
+```bash
+make deploy-loki deploy-grafana deploy-sample-cr
+```
+
+It will set up local port-forward to Grafana and Loki. To avoid it, pass `PORT_FWD=false` with the command above.
+
+Creating a `FlowCollector` triggers the operator deploying the monitoring pipeline:
+
+- Configures IPFIX exports
+- Deploys the flow collector pods, `flowlogs-pipeline`
+- Deploys the `network-observability-plugin` for OpenShift console (when used in OpenShift)
+
+You should shortly see flows coming in Grafana or the OpenShift Console ([if not, wait at least 10 minutes](./README.md#faq--troubleshooting)).
+
+### Test another one's pull request
+
+To test a pull request opened by someone else, you just need to pull it locally. Using [GitHub CLI](https://cli.github.com/) is an easy way to do it. Then repeat the steps mentioned above to build, push an image, then deploy the operator and its custom resource.
+
+## Deploy a specific image
 
 Images are built and pushed through CI to [quay.io](https://quay.io/repository/netobserv/network-observability-operator?tab=tags).
 
-The operator isn't yet bundled for OLM or Openshift Operator Hub, so you need to clone this repo and deploy from there at the moment.
-
-To refer to the latest version of the `main` branch, use `IMG=quay.io/netobserv/network-observability-operator:main` or simply `VERSION=main`. To refer to older versions, use the commit short-SHA as the image tag. By default, `main` will be used.
-
-E.g. to deploy the latest build:
+You can refer to existing commits using their short-SHA as the image tag, or refer to existing releases. E.g:
 
 ```bash
-make deploy
+# By commit SHA
+VERSION="960766c" make deploy
+# By release
+VERSION="0.1.2" make deploy
 ```
 
-You must then install the custom resource, e.g.:
+Beware that, by referring to an old image, you increase chances to hit breaking changes with the other underlying components, such as [Flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline). You can figure out which components version matches operator version by going to the [OperatorHub page](https://operatorhub.io/operator/netobserv-operator), selecting the corresponding operator version and inspecting the provided sample YAML (it contains a reference to the versioned image for each component).
+
+## Installing Kafka
+
+Kafka can be used to separate flows ingestion from flows transformation. The operator does not manage kafka deployment and topic creation. If you deployed from the repository, we provide a quick setup for Kafka using the [strimzi operator](https://strimzi.io/).
 
 ```bash
-kubectl apply -f ./config/samples/flows_v1alpha1_flowcollector.yaml
+make deploy-kafka
 ```
 
-## Build / push / deploy
-
-The repository `quay.io/netobserv/network-observability-operator` is only writable by the CI, so you need to use another repository (such as your own one) if you want to use your own build.
-
-For instance, to build from a pull-request, checkout that PR (e.g. using github CLI or `git fetch upstream pull/99/head:pr-99 && git checkout pr-99` (replace `99` with the PR ID)), then run:
-
-```bash
-IMG="quay.io/youraccount/network-observability-operator:v0.0.1" make image-build image-push deploy
-```
-
-Note, the default image pull policy is `IfNotPresent`, so if you previously deployed the operator on a cluster and then create another build with the same image name/tag, it won't be pulled in the cluster registry. So you need either to provide a different image name/tag for every build, or modify [manager.yaml](./config/manager/manager.yaml) to set `imagePullPolicy: Always`, then re-deploy.
-
-Then, you can deploy a custom resource, e.g.:
-
-```bash
-kubectl apply -f ./config/samples/flows_v1alpha1_flowcollector.yaml
-
-# or using make
-make deploy-sample-cr
-```
+Kafka can then be enabled in the `FlowCollector` CR. If Kafka was deployed using the Makefile, switching the `kafka.enable` flag to `true` in the sample file should be enough. Otherwise, kafka address and topic name should be configured.
 
 ## Deploy as bundle
 
@@ -48,7 +70,7 @@ For more details, refer to the [Operator Lifecycle Manager (OLM) bundle quicksta
 This task should be automatically done by the CI/CD pipeline. However, if you want to deploy as
 bundle for local testing, you should execute the following commands:
 
-```
+```bash
 export USER=<container-registry-username>
 export VERSION=0.0.1
 export IMG=quay.io/$USER/network-observability-operator:v$VERSION
@@ -58,7 +80,8 @@ make bundle bundle-build bundle-push
 ```
 
 Optionally, you might validate the bundle:
-```
+
+```bash
 operator-sdk bundle validate $BUNDLE_IMG
 ```
 
@@ -68,7 +91,7 @@ Note: the base64 logo can be generated with: `base64 -w 0 <image file>`
 
 This mode is recommended to quickly test the operator during its development:
 
-```
+```bash
 operator-sdk run bundle $BUNDLE_IMG
 ```
 
@@ -79,7 +102,7 @@ operators' catalog and installing/configuring it manually through the UI.
 
 First, create and push a catalog image:
 
-```
+```bash
 export CATALOG_IMG=quay.io/$USER/network-observability-operator-catalog:v$VERSION
 make catalog-build catalog-push catalog-deploy
 ```
@@ -89,60 +112,3 @@ The NetObserv Operator is available in OperatorHub: https://operatorhub.io/opera
 ## Publish on central OperatorHub
 
 See [RELEASE.md](./RELEASE.md#publishing-on-operatorhub).
-
-## FlowCollector custom resource
-
-The `FlowCollector` custom resource is used to configure the operator and its managed components. You can read its [full documentation](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md) and check this [sample file](./config/samples/flows_v1alpha1_flowcollector.yaml) that you can copy, edit and install.
-
-Note that the `FlowCollector` resource must be unique and must be named `cluster`. It applies to the whole cluster.
-
-## Installing Loki
-
-Loki is used to store the flows, however its installation is not managed directly by the operator. There are several options to install Loki, like using the `loki-operator` or the helm charts. Get some help about it on [this page](https://github.com/netobserv/documents/blob/main/hack_loki.md).
-
-Once Loki is setup, you may have to update the `flowcollector` CR to update the Loki URL (use an URL that is accessible in-cluster by the `flowlogs-pipeline` pods; default is `http://loki:3100/`).
-
-## Installing Kafka
-
-Kafka can be used to separate flows ingestion from flows transformation. The operator does not manage kafka deployment and topic creation. If you deployed the NOO from the repository, we provide a quick setup for kafka using the [strimzi operator](https://strimzi.io/).
-
-```bash
-make deploy-kafka
-```
-
-Kafka can then be enabled in the `flowcollector` CR. If Kafka was deployed using the Makefile, switching the kafka.enable flag to true in the sample file should be enough. Otherwise, kafka address and topic name should be configured.
-
-## OpenShift Console plugin
-
-The operator deploys a console dynamic plugin when used in OpenShift, and should register it automatically if `spec.consolePlugin.register` is set to `true` (default).
-
-If it's set to `false`, or if for any reason the registration failed, you can still do it manually by editing
-`console.operator.openshift.io/cluster` to add the plugin reference:
-
-```yaml
-spec:
-  plugins:
-  - network-observability-plugin
-```
-
-Or simply execute:
-
-```bash
-oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'
-```
-
-The plugin provides new views in the OpenShift Console: a new submenu _Network Traffic_ in _Observe_, and new tabs in several details views (Pods, Deployments, Services...).
-
-![Main view](./docs/assets/network-traffic-main.png)
-_Main view_
-
-![Pod traffic](./docs/assets/network-traffic-pod.png)
-_Pod traffic_
-
-### Grafana dashboard
-
-Grafana can be used to retrieve and show the collected flows from Loki. You can [find here](https://github.com/netobserv/documents/blob/main/hack_loki.md#grafana) some help to install Grafana if needed.
-
-Then import [this dashboard](./config/samples/dashboards/Network%20Observability.json) in Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
-
-![Grafana dashboard](./docs/assets/netobserv-grafana-dashboard.png)

@@ -243,7 +243,6 @@ This project is licensed under [Apache 2.0](./LICENSE) and accepts contributions
 - The [eBPF agent](https://github.com/netobserv/netobserv-ebpf-agent)
 - The [OpenShift Console plugin](https://github.com/netobserv/network-observability-console-plugin)
 
-
 External contributions are welcome and can take various forms:
 
 - Providing feedback, by starting [discussions](https://github.com/netobserv/network-observability-operator/discussions) or opening [issues](https://github.com/netobserv/network-observability-operator/issues).
