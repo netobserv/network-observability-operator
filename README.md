@@ -1,6 +1,8 @@
 # NetObserv Operator
 
-A Kubernetes / OpenShift operator for network observability. It deploys a flow monitoring pipeline based on an [eBPF agent](https://github.com/netobserv/netobserv-ebpf-agent/) or [IPFIX](https://en.wikipedia.org/wiki/IP_Flow_Information_Export) exports. It provides dashboards, metrics, and keeps flows accessible in a queryable log store: [Grafana Loki](https://grafana.com/oss/loki/). When used in OpenShift, new dashboards are available in the Console.
+NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a flow monitoring pipeline to collect network flows exported by an eBPF agent or by a device such as an [Open vSwitch](https://www.openvswitch.org/) (OVS), in IPFIX format.
+
+It provides dashboards, metrics, and keeps flows accessible in a queryable log store: [Grafana Loki](https://grafana.com/oss/loki/). When used in OpenShift, new dashboards are available in the Console.
 
 ## Getting Started
 
@@ -8,7 +10,7 @@ You can install NetObserv Operator using [OLM](https://olm.operatorframework.io/
 
 ### Install with OLM
 
-NetObserv Operator is available in [OperatorHub](https://operatorhub.io/operator/netobserv-operator), just follow the guided steps. It is also available in the OperatorHub catalog directly in the OpenShift Console.
+NetObserv Operator is available in [OperatorHub](https://operatorhub.io/operator/netobserv-operator) with guided steps on how to install this. It is also available in the OperatorHub catalog directly in the OpenShift Console.
 
 ![OpenShift OperatorHub search](./docs/assets/operatorhub-search.png)
 
@@ -16,7 +18,9 @@ After the operator is installed, create a `FlowCollector` resource:
 
 ![OpenShift OperatorHub FlowCollector](./docs/assets/operatorhub-flowcollector.png)
 
-> Note: if you are not using [OVN-Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) CNI, we recommend using `ebpf` as the `agent`, rather than `ipfix` (unless you know what you do). NetObserv will automatically configure OVN-Kubernetes for IPFIX exports, but cannot do such with other CNIs.
+> Note: by default, NetObserv configures [OVN-Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) for IPFIX exports. If you are not using OVN-Kubernetes as your CNI, then configure `FlowCollector` to use the eBPF agent instead, unless you have a device such as an OVS in your network that you want to export IPFIX flows. To use the eBPF agent, set `Agent` to `ebpf`.
+
+Refer to the [Configuration section](#configuration) of this document.
 
 ### Install from repository
 
@@ -29,7 +33,7 @@ make deploy deploy-loki deploy-grafana
 
 It will deploy the operator in its latest version, with port-forwarded Loki and Grafana.
 
-> Note: the `loki-deploy` script is provided as a quick install path, it is not suitable for production. Please refer to [the official documentation](https://grafana.com/docs/loki/latest/) for a clean install.
+> Note: the `loki-deploy` script is provided as a quick install path and is not suitable for production. Please refer to [the official documentation](https://grafana.com/docs/loki/latest/) for a clean install.
 
 To deploy the monitoring pipeline, this `make` target installs a `FlowCollector` with default values:
 
@@ -39,13 +43,15 @@ make deploy-sample-cr
 
 Alternatively, you can [grab and edit](./config/samples/flows_v1alpha1_flowcollector.yaml) this config before installing it.
 
-> Note: if you are not using [OVN-Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) CNI, we recommend using `ebpf` as `spec.agent`, rather than `ipfix` (unless you know what you do). NetObserv will automatically configure OVN-Kubernetes for IPFIX exports, but cannot do such with other CNIs.
+> Note: by default, NetObserv configures [OVN-Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) for IPFIX exports. If you are not using OVN-Kubernetes as your CNI, then configure `FlowCollector` to use the eBPF agent instead, unless you have a device such as an OVS in your network that you want to export IPFIX flows. To use the eBPF agent, set `spec.agent` to `ebpf`.
 
 You can still edit the `FlowCollector` after it's installed: the operator will take care about reconciling everything with the updated configuration:
 
 ```bash
 kubectl edit flowcollector cluster
 ```
+
+Refer to the [Configuration section](#configuration) of this document.
 
 #### Install older versions
 
@@ -63,7 +69,7 @@ Beware that the version of the underlying components, such as flowlogs-pipeline,
 
 _Pre-requisite: OpenShift 4.10 or above_
 
-If the OpenShift Console is detected in the cluster, a console plugin is deployed when a `FlowCollector` is installed. It adds new dashboards to the console:
+If the OpenShift Console is detected in the cluster, a console plugin is deployed when a `FlowCollector` is installed. It adds new views to the console:
 
 - A flow table, with powerful filtering and display options
 
@@ -73,7 +79,7 @@ If the OpenShift Console is detected in the cluster, a console plugin is deploye
 
 ![Topology](./docs/assets/topology-main.png)
 
-These dashboards are accessible directly from the main menu, and also as contextual tabs for any Pod, Deployment, Service (etc.) in their details page.
+These views are accessible directly from the main menu, and also as contextual tabs for any Pod, Deployment, Service (etc.) in their details page.
 
 ![Contextual topology](./docs/assets/topology-deployment.png)
 
@@ -83,11 +89,9 @@ _Coming soon_
 
 ### Grafana
 
-Grafana can be used to retrieve and show the collected flows from Loki. If you used the `make` commands provided above to install NetObserv from the repository, you should already have Grafana installed and configured.
+Grafana can be used to retrieve and show the collected flows from Loki. If you used the `make` commands provided above to install NetObserv from the repository, you should already have Grafana installed and configured with Loki data source. Otherwise, you can install Grafana by following the instructions [here](https://github.com/netobserv/documents/blob/main/hack_loki.md#grafana), and add a new Loki data source that matches your setup. If you used the provided quick install path for Loki, its access URL is `http://loki:3100`.
 
-Else you can [find here](https://github.com/netobserv/documents/blob/main/hack_loki.md#grafana) some help to install Grafana if needed.
-
-Then import [this dashboard](./config/samples/dashboards/Network%20Observability.json) in Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
+To get dashboards, import [this file](./config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
 
 ![Grafana dashboard](./docs/assets/netobserv-grafana-dashboard.png)
 
@@ -101,13 +105,13 @@ To edit configuration in cluster, run:
 kubectl edit flowcollector cluster
 ```
 
-As it operates cluster-wide, only a single `FlowCollector` is needed and possible, and it has to be named `cluster`.
+As it operates cluster-wide, only a single `FlowCollector` is allowed, and it has to be named `cluster`.
 
 A couple of settings deserve special attention:
 
-- Agent (`spec.agent`) can be `ipfix` or `ebpf`. As mentioned above, the IPFIX option is fully functional when using OVN-Kubernetes CNI (other CNIs are not supported, but you may still be able to configure them manually if they allow IPFIX exports) whereas eBPF is expected to work regardless the running CNI.
+- Agent (`spec.agent`) can be `ipfix` or `ebpf`. As mentioned above, the IPFIX option is fully functional when using OVN-Kubernetes CNI.  Other CNIs are not supported, but you may still be able to configure them manually if they allow IPFIX exports, whereas eBPF is expected to work regardless of the running CNI.
 
-- Sampling (`spec.ipfix.sampling` and `spec.ebpf.sampling`): 24/7 unsampled flow collection may consume a non-negligible amount of resources. While we are doing our best to make it a viable option in production, it is still often necessary to mitigate by setting a sampling ratio. A value of `100` means: one flow every 100 is sampled. `1` means no sampling. The lower it is, the more accurate are flows and derived metrics.
+- Sampling (`spec.ipfix.sampling` and `spec.ebpf.sampling`): 24/7 unsampled flow collection may consume a non-negligible amount of resources. While we are doing our best to make it a viable option in production, it is still often necessary to mitigate by setting a sampling ratio. A value of `100` means: one flow every 100 is sampled. `1` means no sampling. The lower it is, the more accurate are flows and derived metrics. By default, sampling is set to 400 for IPFIX, and is disabled for eBPF.
 
 - Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned in the _Getting Started_ section, but you may have to configure differently if you used another installation method.
 
@@ -139,7 +143,7 @@ Other than that, there are no known restrictions yet on the Kubernetes version.
 
 #### To use IPFIX exports
 
-OpenShift 4.10 or above, or upstream OVN-Kubernetes, are recommended, as the operator will configure OVS for you. Else, you need to configure it manually.
+OpenShift 4.10 or above, or upstream OVN-Kubernetes, are recommended, as the operator will configure OVS for you. Otherwise, you need to configure it manually.
 
 For OpenShift 4.8 or 4.9:
 
@@ -206,7 +210,7 @@ Finally, make sure Loki is correctly deployed, and reachable from pods via the U
 
 Wait 10 minutes and check again. When `spec.agent` is `ipfix`, there is sometimes a delay, up to 10 minutes, before the flows appear. This is due to the IPFIX protocol requiring exporter and collector to exchange record template definitions as a preliminary step. The eBPF agent doesn't have such a delay.
 
-### There are no new dashboards in the OpenShift Console
+### There is no Network Traffic menu entry in OpenShift Console
 
 Make sure your cluster version is at least OpenShift 4.10: prior versions have no (or incompatible) console plugin SDK.
 
@@ -238,7 +242,7 @@ kubectl logs -n network-observability -l app=network-observability-plugin
 This project is licensed under [Apache 2.0](./LICENSE) and accepts contributions via GitHub pull requests. Other related `netobserv` projects follow the same rules:
 - [Flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline)
 - The [eBPF agent](https://github.com/netobserv/netobserv-ebpf-agent)
-- The [OpenShift Console plugin](https://github.com/netobserv/network-observability-console-plugin)
+- [OpenShift Console plugin](https://github.com/netobserv/network-observability-console-plugin)
 
 External contributions are welcome and can take various forms:
 

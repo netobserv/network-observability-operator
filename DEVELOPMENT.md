@@ -1,4 +1,4 @@
-The NetObserv operator is meant to run in a Kubernetes cluster like OpenShift or KIND (these are the two options most used by the dev team).
+The NetObserv Operator is meant to run in a Kubernetes cluster like OpenShift or [Kind](https://kind.sigs.k8s.io/). These are the two options most used by the development team.
 
 ## Build / format / lint the code, run unit tests
 
@@ -8,31 +8,29 @@ make build test
 
 ## Build and deploy a Docker image
 
-A way to test code changes is to build a Docker image from local sources, push it to your own Docker repository and deploy it to an existing cluster:
-
-(replace `quay.io/youraccount` with your own registry and account)
+A way to test code changes is to build a Docker image from local sources, push it to your own Docker repository, and deploy it to an existing cluster. Do the following, but replace IMG value with your own registry and account:
 
 ```bash
 IMG="quay.io/youraccount/network-observability-operator:test" make image-build image-push deploy
 ```
 
-After the operator is deployed, you need to set up Loki (the flows store), install a `FlowCollector` custom resource (which stands for the operator configuration), and optionally install Grafana.
+After the operator is deployed, set up Loki, which is used to store flows, install a `FlowCollector` custom resource to collect network flows, and optionally install Grafana to provide a user interface and dashboards.
 
-We provide a quick & easy way to deploy Loki (not for production use), Grafana and a `FlowCollector` with default values:
+This provides a quick and easy way to deploy Loki, Grafana and a `FlowCollector` with default values. Note this Loki setup is not for production use.
 
 ```bash
 make deploy-loki deploy-grafana deploy-sample-cr
 ```
 
-It will set up a local port-forward to Grafana and Loki. To avoid it, pass `PORT_FWD=false` with the command above.
+It will run Loki and Grafana locally, and set up a local port-forward to them. To avoid this, add `PORT_FWD=false` to the command above.
 
 Creating a `FlowCollector` triggers the operator deploying the monitoring pipeline:
 
 - Configures IPFIX exports
 - Deploys the flow collector pods, `flowlogs-pipeline`
-- Deploys the `network-observability-plugin` for OpenShift console (when used in OpenShift)
+- Deploys the `network-observability-plugin` if using OpenShift Console
 
-You should shortly see flows coming in Grafana or the OpenShift Console ([if not, wait at least 10 minutes](./README.md#faq--troubleshooting)).
+You should be able to see flows in OpenShift Console and Grafana. If not, wait up to 10 minutes. See the [FAQ on troubleshooting](./README.md#faq--troubleshooting) for more information.
 
 ### Test another one's pull request
 
@@ -51,7 +49,7 @@ VERSION="960766c" make deploy
 VERSION="0.1.2" make deploy
 ```
 
-Beware that, by referring to an old image, you increase chances to hit breaking changes with the other underlying components, such as [Flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline). It is recommended to switch to the corresponding release GIT tag before deploying an old version, to make sure underlying components refer to correct versions.
+It is recommended to switch to the corresponding release Git tag before deploying an old version to make sure the underlying components refer to the correct versions.
 
 ## Installing Kafka
 
@@ -61,7 +59,7 @@ Kafka can be used to separate flow ingestion from flow transformation. The opera
 make deploy-kafka
 ```
 
-Kafka can then be enabled in the `FlowCollector` CR. If Kafka was deployed using the Makefile, switching the `kafka.enable` flag to `true` in the sample file should be enough. Otherwise, the Kafka address and topic name should be configured.
+Kafka can then be enabled in the `FlowCollector` resource by setting `spec.kafka.enable` flag to `true`. If you use your own Kafka setup, make sure to configure `spec.kafka.address` and `spec.kafka.topic` accordingly.
 
 ## Deploy as bundle
 
@@ -85,7 +83,7 @@ Optionally, you might validate the bundle:
 operator-sdk bundle validate $BUNDLE_IMG
 ```
 
-> Note: the base64 logo can be generated with: `base64 -w 0 <image file>`
+> Note: the base64 logo can be generated with: `base64 -w 0 <image file>`, then manually pasted in the [CSV manifest file](./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml) under `spec.icon`.
 
 ### Deploy as bundle from command line
 
