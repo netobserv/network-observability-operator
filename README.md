@@ -69,17 +69,17 @@ Beware that the version of the underlying components, such as flowlogs-pipeline,
 
 _Pre-requisite: OpenShift 4.10 or above_
 
-If the OpenShift Console is detected in the cluster, a console plugin is deployed when a `FlowCollector` is installed. It adds new views to the console:
+If the OpenShift Console is detected in the cluster, a console plugin is deployed when a `FlowCollector` is installed. It adds new pages and tabs to the console:
 
 - A flow table, with powerful filtering and display options
 
 ![Flow table](./docs/assets/network-traffic-main.png)
 
-- A topology view, with the same filtering options and several levels of aggregations (nodes, namespaces, owner controllers, pods). A side panel provides contextual insight and metrics.
+- A network topology, with the same filtering options and several levels of aggregations (nodes, namespaces, owner controllers, pods). A side panel provides contextual insight and metrics.
 
 ![Topology](./docs/assets/topology-main.png)
 
-These views are accessible directly from the main menu, and also as contextual tabs for any Pod, Deployment, Service (etc.) in their details page.
+These components are accessible directly from the main menu, and also as contextual tabs for any Pod, Deployment, Service (etc.) in their details page.
 
 ![Contextual topology](./docs/assets/topology-deployment.png)
 
@@ -241,7 +241,7 @@ kubectl logs -n network-observability -l app=network-observability-plugin
 
 This project is licensed under [Apache 2.0](./LICENSE) and accepts contributions via GitHub pull requests. Other related `netobserv` projects follow the same rules:
 - [Flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline)
-- The [eBPF agent](https://github.com/netobserv/netobserv-ebpf-agent)
+- [eBPF agent](https://github.com/netobserv/netobserv-ebpf-agent)
 - [OpenShift Console plugin](https://github.com/netobserv/network-observability-console-plugin)
 
 External contributions are welcome and can take various forms:
