@@ -3,6 +3,9 @@
 ### Sub-components
 
 All components deployed by this operator can be released separatly, at their own pace.
+
+Before releasing, it's a good opportunity to check for image upgrades: [go-toolset](https://catalog.redhat.com/software/containers/ubi8/go-toolset/5ce8713aac3db925c03774d1), [node.js](https://catalog.redhat.com/software/containers/ubi8/nodejs-14/5ed7887dd70cc50e69c2fabb) and [ubi8-minimal](https://catalog.redhat.com/software/containers/ubi8-minimal/5c64772edd19c77a158ea216).
+
 To release them, a tag in the format "v0.1.2" or "v0.1.2-rc0" must be set on the desired clean HEAD state (generally, up-to-date `main` branch), then pushed. It applies to [the console plugin](https://github.com/netobserv/network-observability-console-plugin/), [flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline) and [netobserv-ebpf-agent](https://github.com/netobserv/netobserv-ebpf-agent).
 
 E.g:
@@ -28,13 +31,13 @@ Once all sub-components are released (or have a release candidate), we can proce
 
 ```bash
 # Set desired operator version - CAREFUL, no leading "v" here
-version="0.1.2"
+version="0.1.3-rc0"
 # Set console plugin released version
-plgv="v0.1.2"
+plgv="v0.1.3-rc1"
 # Set flowlogs-pipeline released version
-flpv="v0.1.1"
+flpv="v0.1.2-rc1"
 # Set ebnpf-agent released version
-bpfv="v0.1.0"
+bpfv="v0.1.1-rc0"
 
 vv=v$version
 test_branch=test-$vv

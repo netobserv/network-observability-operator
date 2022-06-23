@@ -87,7 +87,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b>agent</b></td>
         <td>enum</td>
         <td>
-          Agent selects the flows' tracing agent. Possible values are "ipfix" (default) to use the OpenVSwitch IPFIX collector (only valid if your cluster uses OVN-Kubernetes CNI) or "ebpf" to use NetObserv's eBPF agent. The eBPF agent is not officially released yet, it is provided as a preview.<br/>
+          Select the flows tracing agent. Possible values are "ipfix" (default) to use the IPFIX collector, or "ebpf" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could work but necessitate manual configuration.<br/>
           <br/>
             <i>Enum</i>: ipfix, ebpf<br/>
             <i>Default</i>: ipfix<br/>
@@ -97,21 +97,21 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspecclusternetworkoperator">clusterNetworkOperator</a></b></td>
         <td>object</td>
         <td>
-          ClusterNetworkOperator contains settings related to the cluster network operator<br/>
+          Settings related to the OpenShift Cluster Network Operator, when available.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsoleplugin">consolePlugin</a></b></td>
         <td>object</td>
         <td>
-          ConsolePlugin contains settings related to the console dynamic plugin<br/>
+          Settings related to the OpenShift Console plugin, when available.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecebpf">ebpf</a></b></td>
         <td>object</td>
         <td>
-          EBPF contains the settings of an eBPF-based flow reporter  when the "agent" property is set to "ebpf".<br/>
+          Settings related to eBPF-based flow reporter when the "agent" property is set to "ebpf".<br/>
           <br/>
             <i>Default</i>: map[imagePullPolicy:IfNotPresent]<br/>
         </td>
@@ -120,14 +120,14 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspecflowlogspipeline">flowlogsPipeline</a></b></td>
         <td>object</td>
         <td>
-          FlowlogsPipeline contains settings related to the flowlogs-pipeline component<br/>
+          Settings related to the flowlogs-pipeline component, which collects and enriches the flows, and produces metrics.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecipfix">ipfix</a></b></td>
         <td>object</td>
         <td>
-          IPFIX contains the settings of an IPFIX-based flow reporter when the "agent" property is set to "ipfix". defined if the ebpf section is already defined<br/>
+          Settings related to IPFIX-based flow reporter when the "agent" property is set to "ipfix".<br/>
           <br/>
             <i>Default</i>: map[sampling:400]<br/>
         </td>
@@ -136,21 +136,21 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspeckafka">kafka</a></b></td>
         <td>object</td>
         <td>
-          Kafka configurations, settings related to using kafka as a broker for flowlogs-pipeline<br/>
+          Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. This is a new and experimental feature, not yet recommended to use in production.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecloki">loki</a></b></td>
         <td>object</td>
         <td>
-          Loki contains settings related to the loki client<br/>
+          Settings related to the Loki client, used as a flow store.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where console plugin and collector pods are going to be deployed. If empty, the namespace of the operator is going to be used<br/>
+          Namespace where NetObserv pods are deployed. If empty, the namespace of the operator is going to be used.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -159,7 +159,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspecovnkubernetes">ovnKubernetes</a></b></td>
         <td>object</td>
         <td>
-          OVNKubernetes contains settings related to ovn-kubernetes. This configuration is necessary only if OpenShift Cluster Network Operator is not used / configured.<br/>
+          Settings related to OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -171,7 +171,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
 
 
 
-ClusterNetworkOperator contains settings related to the cluster network operator
+Settings related to the OpenShift Cluster Network Operator, when available.
 
 <table>
     <thead>
@@ -200,7 +200,7 @@ ClusterNetworkOperator contains settings related to the cluster network operator
 
 
 
-ConsolePlugin contains settings related to the console dynamic plugin
+Settings related to the OpenShift Console plugin, when available.
 
 <table>
     <thead>
@@ -1285,7 +1285,7 @@ Compute Resources required by this container. Cannot be updated. More info: http
 
 
 
-EBPF contains the settings of an eBPF-based flow reporter  when the "agent" property is set to "ebpf".
+Settings related to eBPF-based flow reporter when the "agent" property is set to "ebpf".
 
 <table>
     <thead>
@@ -1434,7 +1434,7 @@ Compute Resources required by this container. Cannot be updated. More info: http
 
 
 
-FlowlogsPipeline contains settings related to the flowlogs-pipeline component
+Settings related to the flowlogs-pipeline component, which collects and enriches the flows, and produces metrics.
 
 <table>
     <thead>
@@ -1496,7 +1496,7 @@ FlowlogsPipeline contains settings related to the flowlogs-pipeline component
         <td><b>kind</b></td>
         <td>enum</td>
         <td>
-          Kind is the workload kind, either DaemonSet or Deployment If Kafka is enabled this option will concern the flowlogs-pipeline ingester deployment.<br/>
+          Kind is the workload kind, either DaemonSet or Deployment When using Kafka, this option only affects the flowlogs-pipeline ingester, not the transformer.<br/>
           <br/>
             <i>Enum</i>: DaemonSet, Deployment<br/>
             <i>Default</i>: DaemonSet<br/>
@@ -2508,7 +2508,7 @@ Compute Resources required by this container. Cannot be updated. More info: http
 
 
 
-IPFIX contains the settings of an IPFIX-based flow reporter when the "agent" property is set to "ipfix". defined if the ebpf section is already defined
+Settings related to IPFIX-based flow reporter when the "agent" property is set to "ipfix".
 
 <table>
     <thead>
@@ -2559,7 +2559,7 @@ IPFIX contains the settings of an IPFIX-based flow reporter when the "agent" pro
 
 
 
-Kafka configurations, settings related to using kafka as a broker for flowlogs-pipeline
+Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. This is a new and experimental feature, not yet recommended to use in production.
 
 <table>
     <thead>
@@ -2574,7 +2574,7 @@ Kafka configurations, settings related to using kafka as a broker for flowlogs-p
         <td><b>address</b></td>
         <td>string</td>
         <td>
-          Address of the kafka server<br/>
+          Address of the Kafka server<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -2583,7 +2583,7 @@ Kafka configurations, settings related to using kafka as a broker for flowlogs-p
         <td><b>topic</b></td>
         <td>string</td>
         <td>
-          Kafka topic to use<br/>
+          Kafka topic to use. It must exist, NetObserv will not create it.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -2592,7 +2592,7 @@ Kafka configurations, settings related to using kafka as a broker for flowlogs-p
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Should this feature be enabled. If kafka feature is enabled flow collection will be done in two steps, an ingestion step and a transformation step. The first step is either done by a first flowlogs-pipeline deployment or by the ebpf agent. The second step is done by a second flowlogs-pipeline deployment Ingestion step use the configured kafka cluster to send flows to the second flowlogs-pipeline deployment.<br/>
+          Set true to use Kafka as part of the flow collection pipeline. When enabled, the pipeline is split in two parts: ingestion and transformation, connected by Kafka. The ingestion is either done by a specific flowlogs-pipeline workload, or by the eBPF agent, depending on the value of `spec.agent`. The transformation is done by a new flowlogs-pipeline deployment.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -2606,7 +2606,7 @@ Kafka configurations, settings related to using kafka as a broker for flowlogs-p
 
 
 
-Loki contains settings related to the loki client
+Settings related to the Loki client, used as a flow store.
 
 <table>
     <thead>
@@ -2709,7 +2709,7 @@ Loki contains settings related to the loki client
 
 
 
-OVNKubernetes contains settings related to ovn-kubernetes. This configuration is necessary only if OpenShift Cluster Network Operator is not used / configured.
+Settings related to OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
 
 <table>
     <thead>
@@ -2733,7 +2733,7 @@ OVNKubernetes contains settings related to ovn-kubernetes. This configuration is
         <td><b>daemonSetName</b></td>
         <td>string</td>
         <td>
-          Name of the DaemonSet controlling the ovn-kubernetes pods.<br/>
+          Name of the DaemonSet controlling the OVN-Kubernetes pods.<br/>
           <br/>
             <i>Default</i>: ovnkube-node<br/>
         </td>
@@ -2742,7 +2742,7 @@ OVNKubernetes contains settings related to ovn-kubernetes. This configuration is
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where ovn-kubernetes pods are deployed.<br/>
+          Namespace where OVN-Kubernetes pods are deployed.<br/>
           <br/>
             <i>Default</i>: ovn-kubernetes<br/>
         </td>
