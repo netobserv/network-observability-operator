@@ -206,7 +206,7 @@ bundle: manifests kustomize ## Generate bundle manifests and metadata, then vali
 	sed -i 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 	sed -i 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 	sed -i 's~ebpf-agent:main~ebpf-agent:$(BPF_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	sed -i 's~blob/v[0-9]\+\.[0-9]\+\.[0-9]\+/~blob/v$(VERSION)/~' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	sed -i 's~blob/[0-9]\+\.[0-9]\+\.[0-9]\+\(-rc[0-9]\+\)\?/~blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
 	$(KUSTOMIZE) build config/manifests | sed -e 's~:container-image:~$(IMG)~' | sed -e 's~:created-at:~$(DATE)~' | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 

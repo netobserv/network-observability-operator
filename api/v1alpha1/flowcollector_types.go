@@ -40,46 +40,46 @@ type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=""
-	// Namespace where console plugin and collector pods are going to be deployed.
-	// If empty, the namespace of the operator is going to be used
+	// Namespace where NetObserv pods are deployed.
+	// If empty, the namespace of the operator is going to be used.
 	Namespace string `json:"namespace,omitempty"`
 
 	//+kubebuilder:validation:Enum=ipfix;ebpf
 	//+kubebuilder:default:=ipfix
-	// Agent selects the flows' tracing agent. Possible values are "ipfix" (default) to use
-	// the OpenVSwitch IPFIX collector (only valid if your cluster uses OVN-Kubernetes CNI) or
-	// "ebpf" to use NetObserv's eBPF agent. The eBPF agent is not officially released yet, it
-	// is provided as a preview.
+	// Select the flows tracing agent. Possible values are "ipfix" (default) to use
+	// the IPFIX collector, or "ebpf" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes
+	// CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could
+	// work but necessitate manual configuration.
 	Agent string `json:"agent"`
 
-	// IPFIX contains the settings of an IPFIX-based flow reporter when the "agent" property is set
+	// Settings related to IPFIX-based flow reporter when the "agent" property is set
 	// to "ipfix".
-	// defined if the ebpf section is already defined
 	// +kubebuilder:default:={sampling:400}
 	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
 
-	// EBPF contains the settings of an eBPF-based flow reporter  when the "agent" property is set
+	// Settings related to eBPF-based flow reporter when the "agent" property is set
 	// to "ebpf".
 	// +kubebuilder:default={imagePullPolicy:"IfNotPresent"}
 	EBPF FlowCollectorEBPF `json:"ebpf,omitempty"`
 
-	// FlowlogsPipeline contains settings related to the flowlogs-pipeline component
+	// Settings related to the flowlogs-pipeline component, which collects and enriches the flows, and produces metrics.
 	FlowlogsPipeline FlowCollectorFLP `json:"flowlogsPipeline,omitempty"`
 
-	// Loki contains settings related to the loki client
+	// Settings related to the Loki client, used as a flow store.
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
 
-	// Kafka configurations, settings related to using kafka as a broker for flowlogs-pipeline
+	// Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline.
+	// This is a new and experimental feature, not yet recommended to use in production.
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
-	// ConsolePlugin contains settings related to the console dynamic plugin
+	// Settings related to the OpenShift Console plugin, when available.
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
-	// ClusterNetworkOperator contains settings related to the cluster network operator
+	// Settings related to the OpenShift Cluster Network Operator, when available.
 	ClusterNetworkOperator ClusterNetworkOperatorConfig `json:"clusterNetworkOperator,omitempty"`
 
-	// OVNKubernetes contains settings related to ovn-kubernetes. This configuration is necessary only if OpenShift Cluster Network Operator is not used / configured.
+	// Settings related to OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
 	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty"`
 }
 
@@ -174,19 +174,17 @@ type FlowCollectorKafka struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=false
-	// Should this feature be enabled.
-	// If kafka feature is enabled flow collection will be done in two steps, an ingestion step and a transformation step.
-	// The first step is either done by a first flowlogs-pipeline deployment or by the ebpf agent.
-	// The second step is done by a second flowlogs-pipeline deployment
-	// Ingestion step use the configured kafka cluster to send flows to the second flowlogs-pipeline deployment.
+	// Set true to use Kafka as part of the flow collection pipeline. When enabled, the pipeline is split in two parts: ingestion and transformation, connected by Kafka.
+	// The ingestion is either done by a specific flowlogs-pipeline workload, or by the eBPF agent, depending on the value of `spec.agent`.
+	// The transformation is done by a new flowlogs-pipeline deployment.
 	Enable bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:=""
-	// Address of the kafka server
+	// Address of the Kafka server
 	Address string `json:"address"`
 
 	//+kubebuilder:default:=""
-	// Kafka topic to use
+	// Kafka topic to use. It must exist, NetObserv will not create it.
 	Topic string `json:"topic"`
 }
 
@@ -197,7 +195,7 @@ type FlowCollectorFLP struct {
 	//+kubebuilder:validation:Enum=DaemonSet;Deployment
 	//+kubebuilder:default:=DaemonSet
 	// Kind is the workload kind, either DaemonSet or Deployment
-	// If Kafka is enabled this option will concern the flowlogs-pipeline ingester deployment.
+	// When using Kafka, this option only affects the flowlogs-pipeline ingester, not the transformer.
 	Kind string `json:"kind,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
@@ -386,16 +384,16 @@ type ClusterNetworkOperatorConfig struct {
 	Namespace string `json:"namespace,omitempty"`
 }
 
-// OVNKubernetesConfig defines the desired configuration related to the OVNKubernetes network provider, when Cluster Network Operator isn't installed.
+// OVNKubernetesConfig defines the desired configuration related to the OVN-Kubernetes network provider, when Cluster Network Operator isn't installed.
 type OVNKubernetesConfig struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=ovn-kubernetes
-	// Namespace where ovn-kubernetes pods are deployed.
+	// Namespace where OVN-Kubernetes pods are deployed.
 	Namespace string `json:"namespace,omitempty"`
 
 	//+kubebuilder:default:=ovnkube-node
-	// Name of the DaemonSet controlling the ovn-kubernetes pods.
+	// Name of the DaemonSet controlling the OVN-Kubernetes pods.
 	DaemonSetName string `json:"daemonSetName,omitempty"`
 
 	//+kubebuilder:default:=ovnkube-node

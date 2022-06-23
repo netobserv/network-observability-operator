@@ -5,11 +5,11 @@ metadata:
     alm-examples: '[]'
     capabilities: Basic Install
     categories: Monitoring
+    console.openshift.io/plugins: '["network-observability-plugin"]'
     containerImage: ':container-image:'
     createdAt: ':created-at:'
-    description: A network observability operator based on netflows (IPFIX) for OVN
+    description: Network flows collector and monitoring solution
     repository: https://github.com/netobserv/network-observability-operator
-    console.openshift.io/plugins: '["network-observability-plugin"]'
   name: netobserv-operator.v0.0.0
   namespace: placeholder
 spec:
@@ -23,14 +23,13 @@ spec:
       name: flowcollectors.flows.netobserv.io
       version: v1alpha1
   description: |-
-    This is an OpenShift / Kubernetes operator for network observability. It deploys an IPFIX network flow collector, a console plugin, and configures OVS for IPFIX exports.
-    This is an early release ("dev preview") and is not considered production-ready yet.
+    NetObserv Operator is an OpenShift / Kubernetes operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by a provided eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
+
+    The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When used in OpenShift, new dashboards are available in the Console.
 
     ## Pre-requisite
 
-    - Your CNI should be [ovn-kubernetes](https://github.com/ovn-org/ovn-kubernetes/). Other [OvS](https://www.openvswitch.org/)-based CNIs might work if they can export IPFIX flows, but would necessitate manual configuration and they haven't been tested. Future releases will include CNI independent features.
-
-    - [Loki](https://grafana.com/oss/loki/) installed: all collected flows are stored via Loki. Several installation options are [available here](https://grafana.com/docs/loki/latest/installation/). For a quick install, you can simply run:
+    - [Loki](https://grafana.com/oss/loki/) must be installed. All collected flows are stored via Loki. Several installation options are [described here](https://grafana.com/docs/loki/latest/installation/). For a quick install, but not suitable for production, you can simply run:
 
     ```
     kubectl create namespace network-observability
@@ -38,36 +37,49 @@ spec:
     kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/2-loki.yaml) -n network-observability
     ```
 
-    - [Grafana](https://grafana.com/oss/grafana/) installed (optional): [a dashboard](https://github.com/netobserv/network-observability-operator/blob/v0.1.2-rc0/config/samples/dashboards/Network%20Observability.json) can be imported to show flow logs and metrics.
+    - [Grafana](https://grafana.com/oss/grafana/) can optionally be installed for custom dashboards and query capabilities.
 
-    ## Post-installation
-    Because the installed workloads operate cluster-wide, there is only one `FlowCollector` that can be installed, named `cluster`. The custom resource is [documented here](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md). Make sure that Loki is reachable and its URL is properly configured in the operand resource.
+    ## Configuration
 
-    ### Enabling IPFIX export
+    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/0.1.3-rc0/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/0.1.3-rc0/config/samples/flows_v1alpha1_flowcollector.yaml).
 
-    #### OpenShift 4.10 and above
-    No further action is required to enable IPFIX exports. Do not configure manually the flowlogs-pipeline IP in OVS, as it would conflict with the operator action (you can, however, set an additional target IP if you run another flow collector). If you want to turn off the exports, remove the `FlowCollector` cluster resource.
+    As it operates cluster-wide, only a single `FlowCollector` is allowed, and it has to be named `cluster`.
 
-    #### OpenShift 4.8 or 4.9
-    You need to explicitly turn on IPFIX export for the `ClusterNetworkOperator`:
+    A couple of settings deserve special attention:
 
-    ```
-    FLP_IP=`oc get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $FLP_IP
-    oc patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$FLP_IP:2055']}}}}]"
-    ```
-    To turn it off, remove the `exportNetworkFlows` from `networks.operator.openshift.io/cluster`.
+    - Agent (`spec.agent`) can be `ipfix` or `ebpf`. The IPFIX option is fully functional when using [OVN-Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) CNI. Other CNIs are not supported, but you may still be able to configure them manually if they allow IPFIX exports, whereas eBPF is expected to work regardless of the running CNI.
 
-    #### Generic Kubernetes with ovn-kubernetes
-    No further action is required to enable IPFIX exports. If you want to turn off the exports, remove the `FlowCollector` cluster resource.
+    - Sampling (`spec.ipfix.sampling` and `spec.ebpf.sampling`): 24/7 unsampled flow collection may consume a non-negligible amount of resources. While we are doing our best to make it a viable option in production, it is still often necessary to mitigate by setting a sampling ratio. A value of `100` means: one flow every 100 is sampled. `1` means no sampling. The lower it is, the more accurate are flows and derived metrics. By default, sampling is set to 400 for IPFIX, and is disabled for eBPF.
+
+    - Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned above, but you may have to configure differently if you used another installation method.
+
+    - Kafka (`spec.kafka`): _experimental_ - when enabled, integrate the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Assumes Kafka is already deployed and a topic is created.
+
+    ## Overview
 
     ### OpenShift Console
-    OpenShift 4.10 or above is required to use the Console plugin. The operator should register this plugin automatically if `spec.consolePlugin.register` is set to `true` (default).
 
-    Otherwise, you can still do it manually, either via the Console itself or via this command:
+    _Pre-requisite: OpenShift 4.10 or above_
 
-    ```
-    oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'
-    ```
+    If the OpenShift Console is detected in the cluster, a console plugin is deployed when `FlowCollector` is installed. It adds new pages and tabs to the console:
+
+    - A flow table, with powerful filtering and display options
+
+    - A network topology, with the same filtering options and several levels of aggregations (nodes, namespaces, owner controllers, pods). A side panel provides contextual insight and metrics.
+
+    These components are accessible directly from the main menu, and also as contextual tabs for any Pod, Deployment, Service (etc.) in their details page.
+
+    ### Grafana
+
+    Grafana can be used to retrieve and show the collected flows from Loki. In Grafana, add a new Loki data source that matches your setup. If you used the quick install commands provided above to install Loki, its access URL is `http://loki:3100`.
+
+    To get dashboards, import [this file](https://github.com/netobserv/network-observability-operator/blob/0.1.3-rc0/config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
+
+    See more info and screenshots on [GitHub's readme](https://github.com/netobserv/network-observability-operator/blob/0.1.3-rc0/README.md)
+
+    ## F.A.Q / Troubleshooting
+
+    See [the F.A.Q on GitHub](https://github.com/netobserv/network-observability-operator#faq--troubleshooting)
   displayName: NetObserv Operator
   icon:
   - base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI2LjAuMiwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMDAgMTAwOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6dXJsKCNTVkdJRF8xXyk7fQoJLnN0MXtmaWxsOiNGRkZGRkY7fQoJLnN0MntvcGFjaXR5OjAuNjt9Cgkuc3Qze29wYWNpdHk6MC41O30KCS5zdDR7b3BhY2l0eTowLjQ7fQo8L3N0eWxlPgo8Zz4KCTxnPgoJCTxnPgoJCQk8cmFkaWFsR3JhZGllbnQgaWQ9IlNWR0lEXzFfIiBjeD0iMTQuNzc1OCIgY3k9Ii0yLjk3NzEiIHI9IjkxLjYyNyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgoJCQkJPHN0b3AgIG9mZnNldD0iMCIgc3R5bGU9InN0b3AtY29sb3I6IzNDM0ZBNiIvPgoJCQkJPHN0b3AgIG9mZnNldD0iMSIgc3R5bGU9InN0b3AtY29sb3I6IzNCMDM0MCIvPgoJCQk8L3JhZGlhbEdyYWRpZW50PgoJCQk8cGF0aCBjbGFzcz0ic3QwIiBkPSJNNTAsOTljLTEzLjMsMC0yNS40LTUuMy0zNC4yLTEzLjlDNi43LDc2LjIsMSw2My43LDEsNTBDMSwyMi45LDIyLjksMSw1MCwxYzEzLjcsMCwyNi4yLDUuNywzNS4xLDE0LjgKCQkJCUM5My43LDI0LjYsOTksMzYuNyw5OSw1MEM5OSw3Ny4xLDc3LjEsOTksNTAsOTl6Ii8+CgkJPC9nPgoJCTxnPgoJCQk8Y2lyY2xlIGNsYXNzPSJzdDEiIGN4PSIzNy41IiBjeT0iODEuOSIgcj0iNSIvPgoJCTwvZz4KCQk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNNDguNiw5MS45bDE4LjgtNDMuM2MtMi41LTAuMS01LTAuNy03LjItMkwzMy4yLDY4LjJsMS40LTEuOGwyMC0yNS4xYy0xLjUtMi40LTIuMy01LjEtMi4zLTcuOUw5LDUyLjIKCQkJbDQ3LjYtMjkuOWwwLDBjMC4xLTAuMSwwLjItMC4yLDAuMi0wLjJjNi4xLTYuMSwxNS45LTYuMSwyMiwwbDAuMSwwLjFjNiw2LjEsNiwxNS45LTAuMSwyMS45Yy0wLjEsMC4xLTAuMiwwLjItMC4yLDAuMmwwLDAKCQkJTDQ4LjYsOTEuOXoiLz4KCQk8ZyBjbGFzcz0ic3QyIj4KCQkJPGNpcmNsZSBjbGFzcz0ic3QxIiBjeD0iNTAuMyIgY3k9IjE0LjciIHI9IjMuMSIvPgoJCTwvZz4KCQk8ZyBjbGFzcz0ic3QzIj4KCQkJPGNpcmNsZSBjbGFzcz0ic3QxIiBjeD0iMjcuNyIgY3k9IjU4IiByPSIxLjciLz4KCQk8L2c+CgkJPGc+CgkJCTxjaXJjbGUgY2xhc3M9InN0MSIgY3g9Ijc3LjQiIGN5PSI2OS4zIiByPSIxLjciLz4KCQk8L2c+CgkJPGc+CgkJCTxjaXJjbGUgY2xhc3M9InN0MSIgY3g9IjE2LjMiIGN5PSIzNi42IiByPSIxLjciLz4KCQk8L2c+CgkJPGcgY2xhc3M9InN0NCI+CgkJCTxjaXJjbGUgY2xhc3M9InN0MSIgY3g9IjYzLjciIGN5PSI4NS45IiByPSIyLjIiLz4KCQk8L2c+CgkJPGc+CgkJCTxjaXJjbGUgY2xhc3M9InN0MSIgY3g9IjI5LjQiIGN5PSIxOS42IiByPSI0LjgiLz4KCQk8L2c+CgkJPGcgY2xhc3M9InN0MyI+CgkJCTxjaXJjbGUgY2xhc3M9InN0MSIgY3g9Ijg4IiBjeT0iNTAiIHI9IjQuOCIvPgoJCTwvZz4KCTwvZz4KPC9nPgo8L3N2Zz4K
@@ -87,9 +99,11 @@ spec:
     type: AllNamespaces
   keywords:
   - network observability
+  - ebpf
   - ipfix
   - flow tracing
   - flows
+  - topology
   - network
   - observability
   links:
