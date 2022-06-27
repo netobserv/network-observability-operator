@@ -1333,7 +1333,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.2-rc1
+                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.2-rc2
                     description: Image is the collector image (including domain and
                       tag)
                     type: string

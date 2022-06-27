@@ -35,7 +35,7 @@ version="0.1.3-rc0"
 # Set console plugin released version
 plgv="v0.1.3-rc1"
 # Set flowlogs-pipeline released version
-flpv="v0.1.2-rc1"
+flpv="v0.1.2-rc2"
 # Set ebnpf-agent released version
 bpfv="v0.1.1-rc0"
 
@@ -56,7 +56,7 @@ The release script should be triggered ([check github actions](https://github.co
 At this point, you can test the bundle / catalog on your cluster:
 
 ```bash
-VERSION="$version" IMAGE_TAG_BASE="quay.io/netobserv/network-observability-operator" make catalog-deploy
+VERSION="$version" make catalog-deploy
 ```
 
 When everything is ok, push to main and delete the test branch

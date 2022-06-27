@@ -24,7 +24,7 @@ spec:
 #    kind: Deployment
 #    replicas: 1
     port: 2055
-    image: 'quay.io/netobserv/flowlogs-pipeline:v0.1.2-rc1'
+    image: 'quay.io/netobserv/flowlogs-pipeline:v0.1.2-rc2'
     imagePullPolicy: IfNotPresent
     logLevel: info
     enableKubeProbes: true
