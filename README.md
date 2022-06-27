@@ -1,8 +1,8 @@
 # NetObserv Operator
 
-NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a flow monitoring pipeline to collect network flows exported by an eBPF agent or by a device such as an [Open vSwitch](https://www.openvswitch.org/) (OVS), in IPFIX format.
+NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by a provided eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
 
-It provides dashboards, metrics, and keeps flows accessible in a queryable log store: [Grafana Loki](https://grafana.com/oss/loki/). When used in OpenShift, new dashboards are available in the Console.
+The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When used in OpenShift, new dashboards are available in the Console.
 
 ## Getting Started
 

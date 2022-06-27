@@ -44,7 +44,7 @@ metadata:
             "flowlogsPipeline": {
               "enableKubeProbes": true,
               "healthPort": 8080,
-              "image": "quay.io/netobserv/flowlogs-pipeline:v0.1.2-rc1",
+              "image": "quay.io/netobserv/flowlogs-pipeline:v0.1.2-rc2",
               "imagePullPolicy": "IfNotPresent",
               "kind": "DaemonSet",
               "logLevel": "info",
@@ -84,13 +84,13 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     console.openshift.io/plugins: '["network-observability-plugin"]'
-    containerImage: quay.io/netobserv/network-observability-operator:0.1.3-rc0
-    createdAt: "2022-06-23T09:46:44Z"
+    containerImage: quay.io/netobserv/network-observability-operator:0.1.3-rc1
+    createdAt: "2022-06-27T13:42:57Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
-  name: netobserv-operator.v0.1.3-rc0
+  name: netobserv-operator.v0.1.3-rc1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -107,21 +107,23 @@ spec:
 
     The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When used in OpenShift, new dashboards are available in the Console.
 
-    ## Pre-requisite
+    The operator is still in an early development stage.
 
-    - [Loki](https://grafana.com/oss/loki/) must be installed. All collected flows are stored via Loki. Several installation options are [described here](https://grafana.com/docs/loki/latest/installation/). For a quick install, but not suitable for production, you can simply run:
+    ## Dependencies
+
+    - [Loki](https://grafana.com/oss/loki/) is required, it is used as a store for all collected flows. Several installation options are [described here](https://grafana.com/docs/loki/latest/installation/). For a quick install, but not suitable for production, you can simply run:
 
     ```
     kubectl create namespace network-observability
-    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/1-storage.yaml) -n network-observability
-    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/2-loki.yaml) -n network-observability
+    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/c2c85826bfe23b8e8b2559b383a9e6f341560b00/examples/zero-click-loki/1-storage.yaml) -n network-observability
+    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/c2c85826bfe23b8e8b2559b383a9e6f341560b00/examples/zero-click-loki/2-loki.yaml) -n network-observability
     ```
 
     - [Grafana](https://grafana.com/oss/grafana/) can optionally be installed for custom dashboards and query capabilities.
 
     ## Configuration
 
-    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/0.1.3-rc0/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/0.1.3-rc0/config/samples/flows_v1alpha1_flowcollector.yaml).
+    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/0.1.3-rc1/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/0.1.3-rc1/config/samples/flows_v1alpha1_flowcollector.yaml).
 
     As it operates cluster-wide, only a single `FlowCollector` is allowed, and it has to be named `cluster`.
 
@@ -153,9 +155,9 @@ spec:
 
     Grafana can be used to retrieve and show the collected flows from Loki. In Grafana, add a new Loki data source that matches your setup. If you used the quick install commands provided above to install Loki, its access URL is `http://loki:3100`.
 
-    To get dashboards, import [this file](https://github.com/netobserv/network-observability-operator/blob/0.1.3-rc0/config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
+    To get dashboards, import [this file](https://github.com/netobserv/network-observability-operator/blob/0.1.3-rc1/config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
 
-    See more info and screenshots on [GitHub's readme](https://github.com/netobserv/network-observability-operator/blob/0.1.3-rc0/README.md)
+    See more info and screenshots on [GitHub's readme](https://github.com/netobserv/network-observability-operator/blob/0.1.3-rc1/README.md)
 
     ## F.A.Q / Troubleshooting
 
@@ -365,7 +367,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/netobserv/network-observability-operator:0.1.3-rc0
+                image: quay.io/netobserv/network-observability-operator:0.1.3-rc1
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -467,4 +469,4 @@ spec:
     name: Red Hat
     url: https://www.redhat.com
   replaces: netobserv-operator.v0.1.1
-  version: 0.1.3-rc0
+  version: 0.1.3-rc1
