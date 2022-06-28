@@ -1,8 +1,8 @@
 # NetObserv Operator
 
-NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a flow monitoring pipeline to collect network flows exported by an eBPF agent or by a device such as an [Open vSwitch](https://www.openvswitch.org/) (OVS), in IPFIX format.
+NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by a provided eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
 
-It provides dashboards, metrics, and keeps flows accessible in a queryable log store: [Grafana Loki](https://grafana.com/oss/loki/). When used in OpenShift, new dashboards are available in the Console.
+The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When used in OpenShift, new dashboards are available in the Console.
 
 ## Getting Started
 
@@ -33,7 +33,7 @@ make deploy deploy-loki deploy-grafana
 
 It will deploy the operator in its latest version, with port-forwarded Loki and Grafana.
 
-> Note: the `loki-deploy` script is provided as a quick install path and is not suitable for production. Please refer to [the official documentation](https://grafana.com/docs/loki/latest/) for a clean install.
+> Note: the `loki-deploy` script is provided as a quick install path and is not suitable for production. It deploys a single pod, configures a 1GB storage PVC, with 24 hours of retention. For a scalable deployment, please refer to [our distributed Loki guide](https://github.com/netobserv/documents/blob/main/loki_distributed.md) or [Grafana's official documentation](https://grafana.com/docs/loki/latest/).
 
 To deploy the monitoring pipeline, this `make` target installs a `FlowCollector` with default values:
 
