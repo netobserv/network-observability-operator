@@ -31,18 +31,18 @@ Once all sub-components are released (or have a release candidate), we can proce
 
 ```bash
 # Set desired operator version - CAREFUL, no leading "v" here
-version="0.1.3-rc0"
+version="0.1.3-rc2"
 # Set console plugin released version
 plgv="v0.1.3-rc1"
 # Set flowlogs-pipeline released version
 flpv="v0.1.2-rc2"
-# Set ebnpf-agent released version
+# Set ebpf-agent released version
 bpfv="v0.1.1-rc0"
 
 vv=v$version
 test_branch=test-$vv
 
-VERSION="$version" PLG_VERSION="$plgv" FLP_VERSION="$flpv" BPF_VERSION="$bpfv" IMAGE_TAG_BASE="quay.io/netobserv/network-observability-operator" make bundle
+VERSION="$version" PLG_VERSION="$plgv" FLP_VERSION="$flpv" BPF_VERSION="$bpfv" make bundle
 
 git commit -a -m "Prepare release $vv"
 # Push to a test branch, and tag for release
