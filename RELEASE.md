@@ -71,6 +71,18 @@ When the last release candidate is accepted and the final release tag is pushed 
 
 Click the "Auto-generate release note" button.
 
+Add links to sub-component release notes, e.g:
+
+```md
+## Sub-component release notes:
+
+* eBPF Agent: https://github.com/netobserv/netobserv-ebpf-agent/releases/tag/v0.1.1
+* Flowlogs-pipeline: https://github.com/netobserv/flowlogs-pipeline/releases/tag/v0.1.2
+* Console plugin: https://github.com/netobserv/network-observability-console-plugin/releases/tag/v0.1.3
+```
+
+Check also the "Create a discussion for this release" option, in category "Announcements".
+
 ### Publishing on OperatorHub
 
 First, do some manual cleanup. Ideally these steps should be included in the `make bundle` process (TODO).
@@ -88,7 +100,7 @@ After having cloned or updated these repo, copy the bundle content:
 # Here, set correct paths and new version
 path_k8s="../community-operators"
 path_okd="../community-operators-prod"
-version="0.1.2"
+version="0.1.3"
 
 mkdir -p $path_k8s/operators/netobserv-operator/$version
 mkdir -p $path_okd/operators/netobserv-operator/$version
@@ -106,15 +118,15 @@ making sure there's nothing unexpected.
 Then commit and push (commits must be signed):
 
 ```bash
-  cd $path_k8s
-  git add -A
-  git commit -s -m "operators netobserv-operator ($version)"
-  git push origin HEAD:bump-$version
+cd $path_k8s
+git add -A
+git commit -s -m "operators netobserv-operator ($version)"
+git push origin HEAD:bump-$version
 
-  cd $path_okd
-  git add -A
-  git commit -s -m "operators netobserv-operator ($version)"
-  git push origin HEAD:bump-$version
+cd $path_okd
+git add -A
+git commit -s -m "operators netobserv-operator ($version)"
+git push origin HEAD:bump-$version
 ```
 
 Open PRs in GitHub. A bunch of tests will be triggered, if passed the merge should be automatic.
