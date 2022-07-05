@@ -24,17 +24,22 @@ import (
 )
 
 const (
-	envCacheActiveTimeout = "CACHE_ACTIVE_TIMEOUT"
-	envCacheMaxFlows      = "CACHE_MAX_FLOWS"
-	envExcludeInterfaces  = "EXCLUDE_INTERFACES"
-	envInterfaces         = "INTERFACES"
-	envFlowsTargetHost    = "FLOWS_TARGET_HOST"
-	envFlowsTargetPort    = "FLOWS_TARGET_PORT"
-	envSampling           = "SAMPLING"
-	envExport             = "EXPORT"
-	envKafkaBrokers       = "KAFKA_BROKERS"
-	envKafkaTopic         = "KAFKA_TOPIC"
-	envLogLevel           = "LOG_LEVEL"
+	envCacheActiveTimeout         = "CACHE_ACTIVE_TIMEOUT"
+	envCacheMaxFlows              = "CACHE_MAX_FLOWS"
+	envExcludeInterfaces          = "EXCLUDE_INTERFACES"
+	envInterfaces                 = "INTERFACES"
+	envFlowsTargetHost            = "FLOWS_TARGET_HOST"
+	envFlowsTargetPort            = "FLOWS_TARGET_PORT"
+	envSampling                   = "SAMPLING"
+	envExport                     = "EXPORT"
+	envKafkaBrokers               = "KAFKA_BROKERS"
+	envKafkaTopic                 = "KAFKA_TOPIC"
+	envKafkaEnableTLS             = "KAFKA_ENABLE_TLS"
+	envKafkaTLSInsecureSkipVerify = "KAFKA_TLS_INSECURE_SKIP_VERIFY"
+	envKafkaTLSCACertPath         = "KAFKA_TLS_CA_CERT_PATH"
+	envKafkaTLSUserCertPath       = "KAFKA_TLS_USER_CERT_PATH"
+	envKafkaTLSUserKeyPath        = "KAFKA_TLS_USER_KEY_PATH"
+	envLogLevel                   = "LOG_LEVEL"
 
 	envListSeparator = ","
 )
@@ -43,6 +48,8 @@ const (
 	exportKafka = "kafka"
 	exportGRPC  = "grpc"
 )
+
+const kafkaCerts = "kafka-certs"
 
 type reconcileAction int
 
@@ -139,6 +146,13 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 		return nil
 	}
 	version := helper.ExtractVersion(coll.Spec.EBPF.Image)
+	volumeMounts := []corev1.VolumeMount{}
+	volumes := []corev1.Volume{}
+	if coll.Spec.Kafka.Enable && coll.Spec.Kafka.TLS.Enable {
+		// NOTE: secrets need to be copied from the base network-observability namespace to the privileged one.
+		// This operation must currently be performed manually (run "make fix-ebpf-kafka-tls"). It could be automated here.
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &coll.Spec.Kafka.TLS, kafkaCerts)
+	}
 	return &v1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFAgentName,
@@ -162,6 +176,7 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 					ServiceAccountName: constants.EBPFServiceAccount,
 					HostNetwork:        true,
 					DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
+					Volumes:            volumes,
 					Containers: []corev1.Container{{
 						Name:            constants.EBPFAgentName,
 						Image:           coll.Spec.EBPF.Image,
@@ -169,6 +184,7 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 						Resources:       coll.Spec.EBPF.Resources,
 						SecurityContext: c.securityContext(coll),
 						Env:             c.envConfig(coll),
+						VolumeMounts:    volumeMounts,
 					}},
 				},
 			},
@@ -223,6 +239,15 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 			corev1.EnvVar{Name: envKafkaBrokers, Value: coll.Spec.Kafka.Address},
 			corev1.EnvVar{Name: envKafkaTopic, Value: coll.Spec.Kafka.Topic},
 		)
+		if coll.Spec.Kafka.TLS.Enable {
+			config = append(config,
+				corev1.EnvVar{Name: envKafkaEnableTLS, Value: "true"},
+				corev1.EnvVar{Name: envKafkaTLSInsecureSkipVerify, Value: strconv.FormatBool(coll.Spec.Kafka.TLS.InsecureSkipVerify)},
+				corev1.EnvVar{Name: envKafkaTLSCACertPath, Value: helper.GetCACertPath(&coll.Spec.Kafka.TLS, kafkaCerts)},
+				corev1.EnvVar{Name: envKafkaTLSUserCertPath, Value: helper.GetUserCertPath(&coll.Spec.Kafka.TLS, kafkaCerts)},
+				corev1.EnvVar{Name: envKafkaTLSUserKeyPath, Value: helper.GetUserKeyPath(&coll.Spec.Kafka.TLS, kafkaCerts)},
+			)
+		}
 	} else {
 		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
 		switch coll.Spec.FlowlogsPipeline.Kind {

@@ -34,6 +34,17 @@ spec:
     enable: false
     address: "kafka-cluster-kafka-bootstrap.network-observability"
     topic: "network-flows"
+    tls:
+      enable: false
+      caCert:
+        type: secret
+        name: kafka-cluster-cluster-ca-cert
+        certFile: ca.crt
+      userCert:
+        type: secret
+        name: flp-kafka
+        certFile: user.crt
+        certKey: user.key
   loki:
     url: 'http://loki:3100/'
     batchWait: 1s

@@ -1475,6 +1475,62 @@ spec:
                       by the eBPF agent, depending on the value of `spec.agent`. The
                       transformation is done by a new flowlogs-pipeline deployment.'
                     type: boolean
+                  tls:
+                    description: TLS client configuration.
+                    properties:
+                      caCert:
+                        description: CA certificate reference
+                        properties:
+                          certFile:
+                            description: Certificate file name within the ConfigMap
+                              / Secret
+                            type: string
+                          certKey:
+                            description: Certificate private key file name within
+                              the ConfigMap / Secret. Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: Name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'Reference type: configmap or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      enable:
+                        default: false
+                        description: Enable TLS
+                        type: boolean
+                      insecureSkipVerify:
+                        default: false
+                        description: Skip client-side verification of the server certificate
+                        type: boolean
+                      userCert:
+                        description: User certificate reference
+                        properties:
+                          certFile:
+                            description: Certificate file name within the ConfigMap
+                              / Secret
+                            type: string
+                          certKey:
+                            description: Certificate private key file name within
+                              the ConfigMap / Secret. Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: Name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'Reference type: configmap or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                    type: object
                   topic:
                     default: ""
                     description: Kafka topic to use. It must exist, NetObserv will

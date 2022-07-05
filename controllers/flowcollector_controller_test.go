@@ -390,7 +390,18 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.Kafka = flowsv1alpha1.FlowCollectorKafka{Enable: true, Address: "loaclhost:9092", Topic: "FLP"}
+				fc.Spec.Kafka = flowsv1alpha1.FlowCollectorKafka{
+					Enable:  true,
+					Address: "localhost:9092",
+					Topic:   "FLP",
+					TLS: flowsv1alpha1.ClientTLS{
+						CACert: flowsv1alpha1.CertificateReference{
+							Type:     "secret",
+							Name:     "some-secret",
+							CertFile: "ca.crt",
+						},
+					},
+				}
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 		})
