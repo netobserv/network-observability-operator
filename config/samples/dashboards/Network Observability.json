@@ -652,7 +652,7 @@
       "type": "timeseries"
     },
     {
-      "collapsed": true,
+      "collapsed": false,
       "datasource": {
         "type": "loki",
         "uid": "P982945308D3682D1"
@@ -663,98 +663,18 @@
         "x": 0,
         "y": 34
       },
-      "id": 6,
-      "panels": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "P982945308D3682D1"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "custom": {
-                "align": "auto",
-                "displayMode": "json-view",
-                "filterable": false
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 19
-          },
-          "id": 8,
-          "options": {
-            "footer": {
-              "fields": "",
-              "reducer": [
-                "sum"
-              ],
-              "show": false
-            },
-            "frameIndex": 118,
-            "showHeader": true
-          },
-          "pluginVersion": "8.3.3",
-          "targets": [
-            {
-              "expr": "{app=\"netobserv-flowcollector\"}",
-              "refId": "A"
-            }
-          ],
-          "title": "Logs table",
-          "type": "table"
-        }
-      ],
-      "title": "Row title",
-      "type": "row"
-    },
-    {
-      "collapsed": false,
-      "datasource": {
-        "type": "loki",
-        "uid": "P982945308D3682D1"
-      },
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 35
-      },
       "id": 4,
       "panels": [],
       "title": "IPFIX logs",
       "type": "row"
     },
     {
-      "datasource": {
-        "type": "loki",
-        "uid": "P982945308D3682D1"
-      },
+      "datasource": {},
       "gridPos": {
         "h": 14,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 35
       },
       "id": 2,
       "options": {
@@ -769,6 +689,10 @@
       },
       "targets": [
         {
+          "datasource": {
+            "type": "loki",
+            "uid": "hohdVVr7k"
+          },
           "expr": "{app=\"netobserv-flowcollector\"}",
           "refId": "A"
         }
