@@ -91,12 +91,14 @@ func (c *FlowsConfigOVNKController) desiredEnv(ctx context.Context, coll *flowsv
 	if err != nil {
 		return nil, err
 	}
+	// Adapt sampling if necessary. See https://bugzilla.redhat.com/show_bug.cgi?id=2103136 , https://bugzilla.redhat.com/show_bug.cgi?id=2104943
+	sampling := correctSampling(ctx, &coll.Spec.IPFIX)
 
 	envs := map[string]string{
 		"OVN_IPFIX_TARGETS":              "",
 		"OVN_IPFIX_CACHE_ACTIVE_TIMEOUT": strconv.Itoa(int(cacheTimeout.Seconds())),
 		"OVN_IPFIX_CACHE_MAX_FLOWS":      strconv.Itoa(int(coll.Spec.IPFIX.CacheMaxFlows)),
-		"OVN_IPFIX_SAMPLING":             strconv.Itoa(int(coll.Spec.IPFIX.Sampling)),
+		"OVN_IPFIX_SAMPLING":             strconv.Itoa(int(sampling)),
 	}
 
 	if coll.Spec.Agent != flowsv1alpha1.AgentIPFIX {

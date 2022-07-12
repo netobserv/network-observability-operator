@@ -89,19 +89,27 @@ type FlowCollectorIPFIX struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:validation:Pattern:=^\d+(ns|ms|s|m)?$
-	//+kubebuilder:default:="60s"
+	//+kubebuilder:default:="20s"
 	// CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending
 	CacheActiveTimeout string `json:"cacheActiveTimeout,omitempty" mapstructure:"cacheActiveTimeout,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
-	//+kubebuilder:default:=100
+	//+kubebuilder:default:=400
 	// CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows
 	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty" mapstructure:"cacheMaxFlows,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=400
-	// Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 means disabled.
+	// Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent.
+	// To ensure cluster stability, it is not possible to sample every packets by setting 0 or 1: in that case,
+	// the value will be raised to 2. If you really want to sample every packet, which may put cluster stability at risk,
+	// set "forceAllowSamplingAll" to "true". Alternatively, you can use the eBPF Agent instead of IPFIX.
 	Sampling int32 `json:"sampling,omitempty" mapstructure:"sampling,omitempty"`
+
+	//+kubebuilder:default:=false
+	// It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability.
+	// If you REALLY want to do that, set this flag to true. Use at your own risks.
+	ForceAllowSamplingAll bool `json:"forceAllowSamplingAll,omitempty" mapstructure:"-"`
 }
 
 // FlowCollectorEBPF defines a FlowCollector that uses eBPF to collect the flows information

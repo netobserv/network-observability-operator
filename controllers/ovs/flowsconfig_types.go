@@ -1,10 +1,12 @@
 package ovs
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
 	"github.com/mitchellh/mapstructure"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 )
@@ -34,4 +36,13 @@ func (fc *flowsConfig) asStringMap() map[string]string {
 		stringVals[k] = fmt.Sprint(v)
 	}
 	return stringVals
+}
+
+func correctSampling(ctx context.Context, cfg *v1alpha1.FlowCollectorIPFIX) int32 {
+	rlog := log.FromContext(ctx)
+	if !cfg.ForceAllowSamplingAll && cfg.Sampling < 2 {
+		rlog.Info("Sampling auto-correction triggered (to avoid this auto-correction, configure flag 'forceAllowSamplingAll' in Spec)", "old value", cfg.Sampling, "new value", 2)
+		return 2
+	}
+	return cfg.Sampling
 }

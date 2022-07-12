@@ -2525,7 +2525,7 @@ Settings related to IPFIX-based flow reporter when the "agent" property is set t
         <td>
           CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
           <br/>
-            <i>Default</i>: 60s<br/>
+            <i>Default</i>: 20s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2535,15 +2535,24 @@ Settings related to IPFIX-based flow reporter when the "agent" property is set t
           CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 100<br/>
+            <i>Default</i>: 400<br/>
             <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>forceAllowSamplingAll</b></td>
+        <td>boolean</td>
+        <td>
+          It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risks.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 means disabled.<br/>
+          Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to sample every packets by setting 0 or 1: in that case, the value will be raised to 2. If you really want to sample every packet, which may put cluster stability at risk, set "forceAllowSamplingAll" to "true". Alternatively, you can use the eBPF Agent instead of IPFIX.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 400<br/>

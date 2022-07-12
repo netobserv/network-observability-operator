@@ -192,8 +192,8 @@ func flowCollectorControllerSpecs() {
 			}, timeout, interval).Should(Equal(map[string]string{
 				"sampling":           "200",
 				"sharedTarget":       "11.22.33.44:9999",
-				"cacheMaxFlows":      "100",
-				"cacheActiveTimeout": "60s",
+				"cacheMaxFlows":      "400",
+				"cacheActiveTimeout": "20s",
 			}))
 		})
 
@@ -228,9 +228,48 @@ func flowCollectorControllerSpecs() {
 			}, timeout, interval).Should(Equal(map[string]string{
 				"sampling":           "1234",
 				"sharedTarget":       "11.22.33.44:1999",
-				"cacheMaxFlows":      "100",
+				"cacheMaxFlows":      "400",
 				"cacheActiveTimeout": "30s",
 			}))
+		})
+
+		It("Should prevent undesired sampling-everything", func() {
+			Eventually(func() error {
+				fc := flowsv1alpha1.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
+					return err
+				}
+				fc.Spec.IPFIX.Sampling = 1
+				return k8sClient.Update(ctx, &fc)
+			}).Should(Succeed())
+
+			By("Expecting that ovn-flows-configmap is updated with sampling=2")
+			Eventually(func() interface{} {
+				ofc := v1.ConfigMap{}
+				if err := k8sClient.Get(ctx, ovsConfigMapKey, &ofc); err != nil {
+					return err
+				}
+				return ofc.Data["sampling"]
+			}, timeout, interval).Should(Equal("2"))
+
+			Eventually(func() error {
+				fc := flowsv1alpha1.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
+					return err
+				}
+				fc.Spec.IPFIX.Sampling = 1
+				fc.Spec.IPFIX.ForceAllowSamplingAll = true
+				return k8sClient.Update(ctx, &fc)
+			}).Should(Succeed())
+
+			By("Expecting that ovn-flows-configmap is updated with sampling=1")
+			Eventually(func() interface{} {
+				ofc := v1.ConfigMap{}
+				if err := k8sClient.Get(ctx, ovsConfigMapKey, &ofc); err != nil {
+					return err
+				}
+				return ofc.Data["sampling"]
+			}, timeout, interval).Should(Equal("1"))
 		})
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
@@ -316,8 +355,8 @@ func flowCollectorControllerSpecs() {
 			}, timeout, interval).Should(Equal(map[string]string{
 				"sampling":           "200",
 				"nodePort":           "7891",
-				"cacheMaxFlows":      "100",
-				"cacheActiveTimeout": "60s",
+				"cacheMaxFlows":      "400",
+				"cacheActiveTimeout": "20s",
 			}))
 
 			ds := appsv1.DaemonSet{}
@@ -515,8 +554,8 @@ func flowCollectorControllerSpecs() {
 			}, timeout, interval).Should(Equal(map[string]string{
 				"sampling":           "200",
 				"sharedTarget":       "111.122.133.144:9999",
-				"cacheMaxFlows":      "100",
-				"cacheActiveTimeout": "60s",
+				"cacheMaxFlows":      "400",
+				"cacheActiveTimeout": "20s",
 			}))
 		})
 
