@@ -1444,23 +1444,23 @@ spec:
                     format: int32
                     minimum: 0
                     type: integer
-                  forceAllowSamplingAll:
+                  forceSampleAll:
                     default: false
                     description: It is not recommended to sample all the traffic with
                       IPFIX, as it may generate cluster instability. If you REALLY
                       want to do that, set this flag to true. Use at your own risks.
+                      When it is set to true, the value of "sampling" is ignored.
                     type: boolean
                   sampling:
                     default: 400
-                    description: 'Sampling is the sampling rate on the reporter. 100
+                    description: Sampling is the sampling rate on the reporter. 100
                       means one flow on 100 is sent. To ensure cluster stability,
-                      it is not possible to sample every packets by setting 0 or 1:
-                      in that case, the value will be raised to 2. If you really want
-                      to sample every packet, which may put cluster stability at risk,
-                      set "forceAllowSamplingAll" to "true". Alternatively, you can
-                      use the eBPF Agent instead of IPFIX.'
+                      it is not possible to set a value below 2. If you really want
+                      to sample every packet, which may impact the cluster stability,
+                      refer to "forceSampleAll". Alternatively, you can use the eBPF
+                      Agent instead of IPFIX.
                     format: int32
-                    minimum: 0
+                    minimum: 2
                     type: integer
                 type: object
               kafka:

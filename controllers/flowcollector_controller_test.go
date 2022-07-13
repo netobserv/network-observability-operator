@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -241,24 +242,17 @@ func flowCollectorControllerSpecs() {
 				}
 				fc.Spec.IPFIX.Sampling = 1
 				return k8sClient.Update(ctx, &fc)
-			}).Should(Succeed())
-
-			By("Expecting that ovn-flows-configmap is updated with sampling=2")
-			Eventually(func() interface{} {
-				ofc := v1.ConfigMap{}
-				if err := k8sClient.Get(ctx, ovsConfigMapKey, &ofc); err != nil {
-					return err
-				}
-				return ofc.Data["sampling"]
-			}, timeout, interval).Should(Equal("2"))
+			}).Should(Satisfy(func(err error) bool {
+				return err != nil && strings.Contains(err.Error(), "spec.ipfix.sampling: Invalid value: 1")
+			}), "Error expected for invalid sampling value")
 
 			Eventually(func() error {
 				fc := flowsv1alpha1.FlowCollector{}
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.IPFIX.Sampling = 1
-				fc.Spec.IPFIX.ForceAllowSamplingAll = true
+				fc.Spec.IPFIX.Sampling = 10
+				fc.Spec.IPFIX.ForceSampleAll = true
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 

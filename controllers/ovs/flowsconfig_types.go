@@ -38,11 +38,14 @@ func (fc *flowsConfig) asStringMap() map[string]string {
 	return stringVals
 }
 
-func correctSampling(ctx context.Context, cfg *v1alpha1.FlowCollectorIPFIX) int32 {
+// getSampling returns the configured sampling, or 1 if ipfix.forceSampleAll is true
+// Note that configured sampling has a minimum value of 2.
+// See also https://bugzilla.redhat.com/show_bug.cgi?id=2103136 , https://bugzilla.redhat.com/show_bug.cgi?id=2104943
+func getSampling(ctx context.Context, cfg *v1alpha1.FlowCollectorIPFIX) int32 {
 	rlog := log.FromContext(ctx)
-	if !cfg.ForceAllowSamplingAll && cfg.Sampling < 2 {
-		rlog.Info("Sampling auto-correction triggered (to avoid this auto-correction, configure flag 'forceAllowSamplingAll' in Spec)", "old value", cfg.Sampling, "new value", 2)
-		return 2
+	if cfg.ForceSampleAll {
+		rlog.Info("Warning, sampling is set to 1. This may put cluster stability at risk.")
+		return 1
 	}
 	return cfg.Sampling
 }

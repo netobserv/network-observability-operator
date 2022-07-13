@@ -113,9 +113,8 @@ func (c *FlowsConfigCNOController) current(ctx context.Context) (*flowsConfig, e
 func (c *FlowsConfigCNOController) desired(
 	ctx context.Context, coll *flowsv1alpha1.FlowCollector) (*flowsConfig, error) {
 
-	// Adapt sampling if necessary. See https://bugzilla.redhat.com/show_bug.cgi?id=2103136 , https://bugzilla.redhat.com/show_bug.cgi?id=2104943
 	corrected := coll.Spec.IPFIX.DeepCopy()
-	corrected.Sampling = correctSampling(ctx, corrected)
+	corrected.Sampling = getSampling(ctx, corrected)
 
 	conf := flowsConfig{FlowCollectorIPFIX: *corrected}
 

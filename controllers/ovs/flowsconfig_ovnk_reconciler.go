@@ -91,8 +91,7 @@ func (c *FlowsConfigOVNKController) desiredEnv(ctx context.Context, coll *flowsv
 	if err != nil {
 		return nil, err
 	}
-	// Adapt sampling if necessary. See https://bugzilla.redhat.com/show_bug.cgi?id=2103136 , https://bugzilla.redhat.com/show_bug.cgi?id=2104943
-	sampling := correctSampling(ctx, &coll.Spec.IPFIX)
+	sampling := getSampling(ctx, &coll.Spec.IPFIX)
 
 	envs := map[string]string{
 		"OVN_IPFIX_TARGETS":              "",
