@@ -105,11 +105,11 @@ help: ## Display this help.
 
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	GOFLAGS="" go install fybrik.io/crdoc@v0.5.2
+	crdoc --resources config/crd/bases/flows.netobserv.io_flowcollectors.yaml --output docs/FlowCollector.md
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-	GOFLAGS="" go install fybrik.io/crdoc@v0.5.2
-	crdoc --resources config/crd/bases/flows.netobserv.io_flowcollectors.yaml --output docs/FlowCollector.md
 
 .PHONY: prereqs
 prereqs:
