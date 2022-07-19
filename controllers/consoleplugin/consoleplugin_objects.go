@@ -200,6 +200,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 				Ports: []corev1.ServicePort{{
 					Port:     b.desired.Port,
 					Protocol: "TCP",
+					Name:     "main",
 				}},
 			},
 		}
