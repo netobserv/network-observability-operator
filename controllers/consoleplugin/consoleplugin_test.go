@@ -1,6 +1,7 @@
 package consoleplugin
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -12,6 +13,8 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+
+	promConfig "github.com/prometheus/common/config"
 )
 
 const testImage = "quay.io/netobserv/network-observability-console-plugin:dev"
@@ -247,4 +250,21 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	autoScalerSpec, plugin = getAutoScalerSpecs()
 	autoScalerSpec.Namespace = "NewNamespace"
 	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), true)
+}
+
+//ensure HTTPClientConfig Marshal / Unmarshal works as expected for ProxyURL *URL
+//ProxyURL should not be set when only TLSConfig.InsecureSkipVerify is specified
+func TestHTTPClientConfig(t *testing.T) {
+	config := promConfig.HTTPClientConfig{
+		TLSConfig: promConfig.TLSConfig{
+			InsecureSkipVerify: true,
+		},
+	}
+	bs, _ := json.Marshal(config)
+	assert.Equal(t, string(bs), `{"tls_config":{"insecure_skip_verify":true}}`)
+
+	config2 := promConfig.HTTPClientConfig{}
+	json.Unmarshal(bs, &config2)
+	assert.Equal(t, config2.TLSConfig.InsecureSkipVerify, true)
+	assert.Nil(t, config2.ProxyURL)
 }
