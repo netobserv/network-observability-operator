@@ -31,3 +31,7 @@ ocp-run: ocp-undeploy ocp-deploy   ## OCP-deploy + run the operator locally
 	@echo "====> Running the operator locally"
 	go run ./main.go
 
+.PHONY: ocp-refresh-ovs
+ocp-refresh-ovs:
+	@echo "====> Re-applying OVS configuration to speed-up templates sync"
+	./hack/refresh-ovs.sh
