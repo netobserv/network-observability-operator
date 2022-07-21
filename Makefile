@@ -105,11 +105,14 @@ help: ## Display this help.
 
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	GOFLAGS="" go install fybrik.io/crdoc@v0.5.2
-	crdoc --resources config/crd/bases/flows.netobserv.io_flowcollectors.yaml --output docs/FlowCollector.md
 
-generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+gencode: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+doc: crdoc ## Generate 
+	$(CRDOC) --resources config/crd/bases/flows.netobserv.io_flowcollectors.yaml --output docs/FlowCollector.md
+
+generate: gencode manifests doc
 
 .PHONY: prereqs
 prereqs:
@@ -129,7 +132,7 @@ lint: prereqs
 	@echo "### Linting code"
 	golangci-lint run ./...
 
-test: manifests generate envtest ## Run tests.
+test: generate envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverpkg=./... -coverprofile cover.out
 
 coverage-report:
@@ -154,13 +157,13 @@ image-push: ## Push OCI image with the manager.
 
 ##@ Deployment
 
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+install: generate kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
-uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
+uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl --ignore-not-found=true delete -f - || true
 
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: generate kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	cd config/manager && $(KUSTOMIZE) edit set label version:$(VERSION)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
@@ -168,7 +171,7 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl --ignore-not-found=true delete -f - || true
 
-run: manifests generate fmt lint ## Run a controller from your host.
+run: generate fmt lint ## Run a controller from your host.
 	go run ./main.go
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
@@ -182,6 +185,10 @@ kustomize: ## Download kustomize locally if necessary.
 ENVTEST = $(shell pwd)/bin/setup-envtest
 envtest: ## Download envtest-setup locally if necessary.
 	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
+
+CRDOC = $(shell pwd)/bin/crdoc
+crdoc: ## Download crdoc locally if necessary.
+	$(call go-get-tool,$(CRDOC),fybrik.io/crdoc@v0.5.2)
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(firstword $(MAKEFILE_LIST))))
@@ -198,7 +205,7 @@ rm -rf $$TMP_DIR ;\
 endef
 
 .PHONY: bundle
-bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
+bundle: generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	envsubst < config/crd/patches/version_in_flowcollectors_envtpl.yaml > config/crd/patches/version_in_flowcollectors.yaml
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
