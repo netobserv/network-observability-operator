@@ -260,11 +260,20 @@ func TestHTTPClientConfig(t *testing.T) {
 			InsecureSkipVerify: true,
 		},
 	}
+	err := config.Validate()
+	assert.Nil(t, err)
+
 	bs, _ := json.Marshal(config)
-	assert.Equal(t, string(bs), `{"tls_config":{"insecure_skip_verify":true}}`)
+	assert.Equal(t, string(bs), `{"proxy_url":null,"tls_config":{"insecure_skip_verify":true},"follow_redirects":false}`)
 
 	config2 := promConfig.HTTPClientConfig{}
-	json.Unmarshal(bs, &config2)
+	err = json.Unmarshal(bs, &config2)
+	assert.Nil(t, err)
 	assert.Equal(t, config2.TLSConfig.InsecureSkipVerify, true)
-	assert.Nil(t, config2.ProxyURL)
+	assert.Equal(t, config2.ProxyURL, promConfig.URL{})
+
+	err = config2.Validate()
+	assert.Nil(t, err)
+	assert.Equal(t, config2.TLSConfig.InsecureSkipVerify, true)
+	assert.Nil(t, config2.ProxyURL.URL, nil)
 }

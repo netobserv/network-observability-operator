@@ -11,7 +11,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build go1.8
 // +build go1.8
 
 package config
@@ -160,9 +159,6 @@ type OAuth2 struct {
 	Scopes           []string          `yaml:"scopes,omitempty" json:"scopes,omitempty"`
 	TokenURL         string            `yaml:"token_url" json:"token_url"`
 	EndpointParams   map[string]string `yaml:"endpoint_params,omitempty" json:"endpoint_params,omitempty"`
-
-	// TLSConfig is used to connect to the token URL.
-	TLSConfig TLSConfig `yaml:"tls_config,omitempty"`
 }
 
 // SetDirectory joins any relative file paths with dir.
@@ -171,7 +167,6 @@ func (a *OAuth2) SetDirectory(dir string) {
 		return
 	}
 	a.ClientSecretFile = JoinDir(dir, a.ClientSecretFile)
-	a.TLSConfig.SetDirectory(dir)
 }
 
 // HTTPClientConfig configures an HTTP client.
@@ -189,13 +184,13 @@ type HTTPClientConfig struct {
 	// Authorization.CredentialsFile.
 	BearerTokenFile string `yaml:"bearer_token_file,omitempty" json:"bearer_token_file,omitempty"`
 	// HTTP proxy server to use to connect to the targets.
-	ProxyURL *URL `yaml:"proxy_url,omitempty" json:"proxy_url,omitempty"`
+	ProxyURL URL `yaml:"proxy_url,omitempty" json:"proxy_url,omitempty"`
 	// TLSConfig to use to connect to the targets.
 	TLSConfig TLSConfig `yaml:"tls_config,omitempty" json:"tls_config,omitempty"`
 	// FollowRedirects specifies whether the client should follow HTTP 3xx redirects.
 	// The omitempty flag is not set, because it would be hidden from the
 	// marshalled configuration when set to false.
-	FollowRedirects bool `yaml:"follow_redirects,omitempty" json:"follow_redirects,omitempty"`
+	FollowRedirects bool `yaml:"follow_redirects" json:"follow_redirects"`
 }
 
 // SetDirectory joins any relative file paths with dir.
@@ -268,6 +263,10 @@ func (c *HTTPClientConfig) Validate() error {
 		if len(c.OAuth2.ClientSecret) > 0 && len(c.OAuth2.ClientSecretFile) > 0 {
 			return fmt.Errorf("at most one of oauth2 client_secret & client_secret_file must be configured")
 		}
+	}
+	// Change empty URL to nil to avoid connection errors
+	if c.ProxyURL.URL != nil && *c.ProxyURL.URL == (url.URL{}) {
+		c.ProxyURL.URL = nil
 	}
 	return nil
 }
@@ -599,25 +598,7 @@ func (rt *oauth2RoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 			EndpointParams: mapToValues(rt.config.EndpointParams),
 		}
 
-		tlsConfig, err := NewTLSConfig(&rt.config.TLSConfig)
-		if err != nil {
-			return nil, err
-		}
-
-		var t http.RoundTripper
-		if len(rt.config.TLSConfig.CAFile) == 0 {
-			t = &http.Transport{TLSClientConfig: tlsConfig}
-		} else {
-			t, err = NewTLSRoundTripper(tlsConfig, rt.config.TLSConfig.CAFile, func(tls *tls.Config) (http.RoundTripper, error) {
-				return &http.Transport{TLSClientConfig: tls}, nil
-			})
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		ctx := context.WithValue(context.Background(), oauth2.HTTPClient, &http.Client{Transport: t})
-		tokenSource := config.TokenSource(ctx)
+		tokenSource := config.TokenSource(context.Background())
 
 		rt.mtx.Lock()
 		rt.secret = secret
@@ -786,6 +767,7 @@ func NewTLSRoundTripper(
 		return nil, err
 	}
 	t.rt = rt
+
 	_, t.hashCAFile, err = t.getCAWithHash()
 	if err != nil {
 		return nil, err
