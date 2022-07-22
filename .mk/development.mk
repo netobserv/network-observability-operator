@@ -30,6 +30,7 @@ deploy-kafka:
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/metrics-config.yaml" -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/default.yaml" -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/topic.yaml" -n $(NAMESPACE)
+	kubectl wait --timeout=180s --for=condition=ready kafkatopic network-flows -n $(NAMESPACE)
 
 .PHONY: deploy-kafka-tls
 deploy-kafka-tls:
