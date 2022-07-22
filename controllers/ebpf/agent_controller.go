@@ -122,6 +122,7 @@ func (c *AgentController) Reconcile(
 		return c.client.UpdateOwned(ctx, current, desired)
 	default:
 		rlog.Info("action: nonthing to do")
+		c.client.CheckDaemonSetInProgress(current)
 		return nil
 	}
 }

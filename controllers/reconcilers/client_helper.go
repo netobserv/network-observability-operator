@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -13,11 +14,14 @@ import (
 type ClientHelper struct {
 	client.Client
 	SetControllerReference func(client.Object) error
+	changed                bool
+	deplInProgress         bool
 }
 
 // CreateOwned is an helper function that creates an object, sets owner reference and writes info & errors logs
 func (c *ClientHelper) CreateOwned(ctx context.Context, obj client.Object) error {
 	log := log.FromContext(ctx)
+	c.changed = true
 	err := c.SetControllerReference(obj)
 	if err != nil {
 		log.Error(err, "Failed to set controller reference")
@@ -36,6 +40,7 @@ func (c *ClientHelper) CreateOwned(ctx context.Context, obj client.Object) error
 // UpdateOwned is an helper function that updates an object, sets owner reference and writes info & errors logs
 func (c *ClientHelper) UpdateOwned(ctx context.Context, old, obj client.Object) error {
 	log := log.FromContext(ctx)
+	c.changed = true
 	if old != nil {
 		obj.SetResourceVersion(old.GetResourceVersion())
 	}
@@ -52,6 +57,26 @@ func (c *ClientHelper) UpdateOwned(ctx context.Context, old, obj client.Object) 
 		return err
 	}
 	return nil
+}
+
+func (c *ClientHelper) DidChange() bool {
+	return c.changed
+}
+
+func (c *ClientHelper) IsInProgress() bool {
+	return c.deplInProgress
+}
+
+func (c *ClientHelper) CheckDeploymentInProgress(d *appsv1.Deployment) {
+	if d.Status.AvailableReplicas < d.Status.Replicas {
+		c.deplInProgress = true
+	}
+}
+
+func (c *ClientHelper) CheckDaemonSetInProgress(ds *appsv1.DaemonSet) {
+	if ds.Status.NumberAvailable < ds.Status.DesiredNumberScheduled {
+		c.deplInProgress = true
+	}
 }
 
 // FindContainer searches in pod containers one that matches the provided name

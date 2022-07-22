@@ -178,6 +178,8 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder,
 		if err := r.UpdateOwned(ctx, r.owned.deployment, newDepl); err != nil {
 			return err
 		}
+	} else {
+		r.CheckDeploymentInProgress(r.owned.deployment)
 	}
 	return nil
 }
