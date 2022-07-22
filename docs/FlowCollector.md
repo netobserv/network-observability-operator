@@ -2683,6 +2683,15 @@ Settings related to the Loki client, used as a flow store.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>tenantID</b></td>
+        <td>string</td>
+        <td>
+          TenantID is the Loki X-Scope-OrgID that identifies the tenant for each request. it will be ignored if instanceSpec is specified<br/>
+          <br/>
+            <i>Default</i>: netobserv<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>timeout</b></td>
         <td>string</td>
         <td>

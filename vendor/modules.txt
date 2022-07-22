@@ -139,7 +139,7 @@ github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.2.0
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.32.1
+# github.com/prometheus/common v0.32.1 => github.com/netobserv/prometheus-common v0.31.2-0.20220720134304-43e74fd22881
 ## explicit
 github.com/prometheus/common/config
 github.com/prometheus/common/expfmt

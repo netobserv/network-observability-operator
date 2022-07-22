@@ -16,6 +16,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	promConfig "github.com/prometheus/common/config"
+
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -243,6 +245,13 @@ func (b *builder) addTransformStages(lastStage *config.PipelineBuilderStage) {
 		lokiWrite.URL = b.desiredLoki.URL
 		lokiWrite.TimestampLabel = "TimeFlowEndMs"
 		lokiWrite.TimestampScale = "1ms"
+		lokiWrite.TenantID = b.desiredLoki.TenantID
+		//TODO: set proper tls config https://issues.redhat.com/browse/NETOBSERV-309
+		lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+			TLSConfig: promConfig.TLSConfig{
+				InsecureSkipVerify: true,
+			},
+		}
 	}
 	enrichedStage.WriteLoki("loki", lokiWrite)
 

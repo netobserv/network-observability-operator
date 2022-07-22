@@ -1,6 +1,7 @@
 package consoleplugin
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -12,6 +13,8 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+
+	promConfig "github.com/prometheus/common/config"
 )
 
 const testImage = "quay.io/netobserv/network-observability-console-plugin:dev"
@@ -22,6 +25,8 @@ var testArgs = []string{
 	"-key", "/var/serving-cert/tls.key",
 	"-loki", "http://loki:3100/",
 	"-loki-labels", "SrcK8S_Namespace,SrcK8S_OwnerName,DstK8S_Namespace,DstK8S_OwnerName,FlowDirection",
+	"-loki-tenant-id", "netobserv",
+	"-loki-skip-tls", "true",
 	"-loglevel", "info",
 	"-frontend-config", "/opt/app-root/config.yaml",
 }
@@ -128,7 +133,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	//equals specs
 	podSpec, containerConfig := getContainerSpecs()
-	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/"}
+	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
 	fmt.Printf("%v\n", buildArgs(&containerConfig, loki))
 	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig, loki), false)
 
@@ -181,7 +186,7 @@ func TestBuiltContainer(t *testing.T) {
 
 	//newly created containers should not need update
 	plugin := getPluginConfig()
-	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234"}
+	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234", TenantID: "netobserv"}
 	builder := newBuilder(testNamespace, &plugin, loki)
 	newContainer := builder.podTemplate("digest")
 	assert.Equal(containerNeedsUpdate(&newContainer.Spec, &plugin, loki), false)
@@ -245,4 +250,30 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	autoScalerSpec, plugin = getAutoScalerSpecs()
 	autoScalerSpec.Namespace = "NewNamespace"
 	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), true)
+}
+
+//ensure HTTPClientConfig Marshal / Unmarshal works as expected for ProxyURL *URL
+//ProxyURL should not be set when only TLSConfig.InsecureSkipVerify is specified
+func TestHTTPClientConfig(t *testing.T) {
+	config := promConfig.HTTPClientConfig{
+		TLSConfig: promConfig.TLSConfig{
+			InsecureSkipVerify: true,
+		},
+	}
+	err := config.Validate()
+	assert.Nil(t, err)
+
+	bs, _ := json.Marshal(config)
+	assert.Equal(t, string(bs), `{"proxy_url":null,"tls_config":{"insecure_skip_verify":true},"follow_redirects":false}`)
+
+	config2 := promConfig.HTTPClientConfig{}
+	err = json.Unmarshal(bs, &config2)
+	assert.Nil(t, err)
+	assert.Equal(t, config2.TLSConfig.InsecureSkipVerify, true)
+	assert.Equal(t, config2.ProxyURL, promConfig.URL{})
+
+	err = config2.Validate()
+	assert.Nil(t, err)
+	assert.Equal(t, config2.TLSConfig.InsecureSkipVerify, true)
+	assert.Nil(t, config2.ProxyURL.URL, nil)
 }
