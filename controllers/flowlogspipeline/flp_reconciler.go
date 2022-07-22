@@ -118,7 +118,7 @@ func validateDesired(desired *flpSpec) error {
 	return nil
 }
 
-func (r *FLPReconciler) GetServiceName(kafka flowsv1alpha1.FlowCollectorKafka) string {
+func (r *FLPReconciler) GetServiceName(kafka *flowsv1alpha1.FlowCollectorKafka) string {
 	return constants.FLPName
 }
 

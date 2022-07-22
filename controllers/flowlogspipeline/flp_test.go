@@ -433,7 +433,8 @@ func TestLabels(t *testing.T) {
 
 	flpk := getFLPConfig()
 	kafka := getKafkaConfig()
-	builder := newBuilder("ns", corev1.ProtocolUDP, &flpk, nil, &kafka, ConfSingle, true)
+	loki := getLokiConfig()
+	builder := newBuilder("ns", corev1.ProtocolUDP, &flpk, &loki, &kafka, ConfSingle, true)
 
 	// Deployment
 	depl := builder.deployment("digest")

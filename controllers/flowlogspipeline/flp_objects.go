@@ -28,6 +28,8 @@ const configVolume = "config-volume"
 const configPath = "/etc/flowlogs-pipeline"
 const configFile = "config.json"
 
+const kafkaCerts = "kafka-certs"
+
 const (
 	healthServiceName       = "health"
 	prometheusServiceName   = "prometheus"
@@ -145,17 +147,33 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 		ContainerPort: b.desired.PrometheusPort,
 	})
 
+	volumeMounts := []corev1.VolumeMount{{
+		MountPath: configPath,
+		Name:      configVolume,
+	}}
+	volumes := []corev1.Volume{{
+		Name: configVolume,
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: configMapName + b.confKindSuffix,
+				},
+			},
+		},
+	}}
+
+	if b.desiredKafka != nil && b.desiredKafka.Enable && b.desiredKafka.TLS.Enable {
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredKafka.TLS, kafkaCerts)
+	}
+
 	container := corev1.Container{
 		Name:            constants.FLPName + b.confKindSuffix,
 		Image:           b.desired.Image,
 		ImagePullPolicy: corev1.PullPolicy(b.desired.ImagePullPolicy),
 		Args:            []string{fmt.Sprintf(`--config=%s/%s`, configPath, configFile)},
 		Resources:       *b.desired.Resources.DeepCopy(),
-		VolumeMounts: []corev1.VolumeMount{{
-			MountPath: configPath,
-			Name:      configVolume,
-		}},
-		Ports: ports,
+		VolumeMounts:    volumeMounts,
+		Ports:           ports,
 	}
 	if b.desired.EnableKubeProbes {
 		container.LivenessProbe = &corev1.Probe{
@@ -193,17 +211,8 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 			},
 		},
 		Spec: corev1.PodSpec{
-			Tolerations: tolerations,
-			Volumes: []corev1.Volume{{
-				Name: configVolume,
-				VolumeSource: corev1.VolumeSource{
-					ConfigMap: &corev1.ConfigMapVolumeSource{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: configMapName + b.confKindSuffix,
-						},
-					},
-				},
-			}},
+			Tolerations:        tolerations,
+			Volumes:            volumes,
 			Containers:         []corev1.Container{container},
 			ServiceAccountName: constants.FLPName + b.confKindSuffix,
 			HostNetwork:        hostNetwork,
@@ -268,6 +277,18 @@ func (b *builder) addTransformStages(lastStage *config.PipelineBuilderStage) {
 	})
 }
 
+func (b *builder) getKafkaTLS() *api.ClientTLS {
+	if b.desiredKafka.TLS.Enable {
+		return &api.ClientTLS{
+			InsecureSkipVerify: b.desiredKafka.TLS.InsecureSkipVerify,
+			CACertPath:         helper.GetCACertPath(&b.desiredKafka.TLS, kafkaCerts),
+			UserCertPath:       helper.GetUserCertPath(&b.desiredKafka.TLS, kafkaCerts),
+			UserKeyPath:        helper.GetUserKeyPath(&b.desiredKafka.TLS, kafkaCerts),
+		}
+	}
+	return nil
+}
+
 func (b *builder) buildPipelineConfig() ([]config.Stage, []config.StageParam) {
 	var pipeline config.PipelineBuilderStage
 	if b.confKind == ConfKafkaTransformer {
@@ -276,6 +297,7 @@ func (b *builder) buildPipelineConfig() ([]config.Stage, []config.StageParam) {
 			Topic:   b.desiredKafka.Topic,
 			GroupId: b.confKind, // Without groupid, each message is delivered to each consumers
 			Decoder: api.Decoder{Type: "json"},
+			TLS:     b.getKafkaTLS(),
 		})
 	} else if b.portProtocol == corev1.ProtocolUDP {
 		// UDP Port: IPFIX collector with JSON decoder
@@ -294,6 +316,7 @@ func (b *builder) buildPipelineConfig() ([]config.Stage, []config.StageParam) {
 		pipeline = pipeline.EncodeKafka("kafka-write", api.EncodeKafka{
 			Address: b.desiredKafka.Address,
 			Topic:   b.desiredKafka.Topic,
+			TLS:     b.getKafkaTLS(),
 		})
 	} else {
 		b.addTransformStages(&pipeline)

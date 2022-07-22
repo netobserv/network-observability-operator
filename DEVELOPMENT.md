@@ -61,6 +61,20 @@ make deploy-kafka
 
 Kafka can then be enabled in the `FlowCollector` resource by setting `spec.kafka.enable` flag to `true`. If you use your own Kafka setup, make sure to configure `spec.kafka.address` and `spec.kafka.topic` accordingly.
 
+## Linking with API changes in flowlogs-pipeline
+
+Add this at the bottom of `go.mod`:
+
+```
+replace github.com/netobserv/flowlogs-pipeline => ../flowlogs-pipeline
+```
+
+Then run:
+
+```bash
+make vendors
+```
+
 ## Deploy as bundle
 
 For more details, refer to the [Operator Lifecycle Manager (OLM) bundle quickstart documentation](https://sdk.operatorframework.io/docs/olm-integration/quickstart-bundle/).
