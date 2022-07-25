@@ -1,6 +1,7 @@
 package flowlogspipeline
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
@@ -12,7 +13,6 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/confgen"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
-	"github.com/netobserv/network-observability-operator/config/flp"
 	"github.com/prometheus/common/model"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
@@ -228,6 +228,10 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 	}
 }
 
+//go:embed metrics_definitions
+var FlpMetricsConfig embed.FS
+
+var FlpMetricsConfigDir = "metrics_definitions"
 var generateStages = []string{"extract_aggregate", "encode_prom"}
 var tmpMetricsDefinitionsDir = "/tmp/tmp_metrics_definitions_dir"
 
@@ -238,16 +242,16 @@ func (b *builder) obtainMetricsConfiguration() ([]api.AggregateDefinition, api.P
 		log.Printf("failed to create tmpMetricsDefinitionsDir %s, %s\n", tmpMetricsDefinitionsDir, err)
 		return nil, nil
 	}
-	entries, err := flp.FlpMetricsConfig.ReadDir(flp.FlpMetricsConfigDir)
+	entries, err := FlpMetricsConfig.ReadDir(FlpMetricsConfigDir)
 	if err != nil {
 		log.Printf("failed to access metrics_definitions directory: %v\n", err)
 		return nil, nil
 	}
 	for _, entry := range entries {
 		fileName := entry.Name()
-		srcPath := flp.FlpMetricsConfigDir + "/" + fileName
+		srcPath := FlpMetricsConfigDir + "/" + fileName
 		destPath := tmpMetricsDefinitionsDir + "/" + fileName
-		input, err := flp.FlpMetricsConfig.ReadFile(srcPath)
+		input, err := FlpMetricsConfig.ReadFile(srcPath)
 		if err != nil {
 			fmt.Printf("error reading metrics file %s; %v\n", srcPath, err)
 			return nil, nil
