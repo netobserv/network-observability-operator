@@ -10,17 +10,11 @@ tags:
   - graph
   - rate
   - subnet
-transform:
-  rules:
-    - input: SrcAddr
-      output: srcSubnet
-      type: add_subnet
-      parameters: /16
 extract:
   aggregates:
     - name: bandwidth_source_subnet
       by:
-        - srcSubnet
+        - SrcSubnet
       operation: sum
       recordKey: Bytes
 encode:

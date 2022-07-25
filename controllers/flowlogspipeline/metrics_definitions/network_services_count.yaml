@@ -10,18 +10,12 @@ tags:
   - network-services
   - destination-port
   - destination-protocol
-transform:
-  rules:
-    - input: DstPort
-      output: service
-      type: add_service
-      parameters: Proto
 extract:
   type: aggregates
   aggregates:
     - name: dest_service_count
       by:
-        - service
+        - Service
       operation: count
 encode:
   type: prom

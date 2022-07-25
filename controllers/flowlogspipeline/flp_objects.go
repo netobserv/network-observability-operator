@@ -306,12 +306,13 @@ func (b *builder) addTransformStages(lastStage *config.PipelineBuilderStage) {
 			Output: "DstK8S",
 			Type:   api.AddKubernetesRuleType,
 		}, {
-			Input:  "DstPort",
-			Output: "service",
-			Type:   api.AddServiceRuleType,
+			Input:      "DstPort",
+			Output:     "Service",
+			Type:       api.AddServiceRuleType,
+			Parameters: "Proto",
 		}, {
 			Input:      "SrcAddr",
-			Output:     "srcSubnet",
+			Output:     "SrcSubnet",
 			Type:       api.AddSubnetRuleType,
 			Parameters: "/16",
 		}},

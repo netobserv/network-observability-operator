@@ -11,21 +11,11 @@ tags:
   - rate
   - network-service
   - kubernetes
-transform:
-  rules:
-    - input: DstPort
-      output: service
-      type: add_service
-      parameters: Proto
-    - input: SrcAddr
-      output: srcK8S
-      type: add_kubernetes
-      parameters: srcK8S_labels
 extract:
   aggregates:
     - name: bandwidth_network_service_namespace
       by:
-        - service
+        - Service
         - srcK8S_Namespace
       operation: sum
       recordKey: Bytes
