@@ -27,6 +27,7 @@ const configFile = "config.yaml"
 const configVolume = "config-volume"
 const configPath = "/opt/app-root/"
 const lokiCerts = "loki-certs"
+const tokensPath = "/var/run/secrets/tokens/"
 
 // PodConfigurationDigest is an annotation name to facilitate pod restart after
 // any external configuration change
@@ -99,6 +100,13 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 	}
 }
 
+func tokenPath(desiredLoki *flowsv1alpha1.FlowCollectorLoki) string {
+	if desiredLoki.SendAuthToken {
+		return tokensPath + constants.PluginName
+	}
+	return ""
+}
+
 func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki) []string {
 	args := []string{
 		"-cert", "/var/serving-cert/tls.crt",
@@ -115,6 +123,9 @@ func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *f
 		} else {
 			args = append(args, "--loki-ca-path", helper.GetCACertPath(&desiredLoki.TLS, lokiCerts))
 		}
+	}
+	if desiredLoki.SendAuthToken {
+		args = append(args, "-loki-token-path", tokenPath(desiredLoki))
 	}
 	return args
 }
@@ -143,16 +154,20 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 		Name:      secretName,
 		MountPath: "/var/serving-cert",
 		ReadOnly:  true,
+	}, {
+		Name:      configVolume,
+		MountPath: configPath,
+		ReadOnly:  true,
 	},
-		{
-			Name:      configVolume,
-			MountPath: configPath,
-			ReadOnly:  true,
-		}}
+	}
 
 	args := buildArgs(b.desired, b.desiredLoki)
 	if b.desiredLoki != nil && b.desiredLoki.TLS.Enable && !b.desiredLoki.TLS.InsecureSkipVerify {
-		helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts)
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts)
+	}
+
+	if b.desiredLoki.SendAuthToken {
+		volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, constants.PluginName, constants.PluginName)
 	}
 
 	return &corev1.PodTemplateSpec{

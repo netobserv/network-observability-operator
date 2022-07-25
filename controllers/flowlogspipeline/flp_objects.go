@@ -181,6 +181,10 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts)
 	}
 
+	if b.desiredLoki.SendAuthToken {
+		volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, constants.FLPName+b.confKindSuffix, constants.FLPName)
+	}
+
 	container := corev1.Container{
 		Name:            constants.FLPName + b.confKindSuffix,
 		Image:           b.desired.Image,
@@ -333,19 +337,34 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		lokiWrite.TimestampLabel = "TimeFlowEndMs"
 		lokiWrite.TimestampScale = "1ms"
 		lokiWrite.TenantID = b.desiredLoki.TenantID
+
+		var authorization *promConfig.Authorization
+		if b.desiredLoki.SendAuthToken {
+			authorization = &promConfig.Authorization{
+				Type:            "Bearer",
+				CredentialsFile: helper.TokensPath + constants.FLPName,
+			}
+		}
+
 		if b.desiredLoki != nil && b.desiredLoki.TLS.Enable {
 			if b.desiredLoki.TLS.InsecureSkipVerify {
 				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+					Authorization: authorization,
 					TLSConfig: promConfig.TLSConfig{
 						InsecureSkipVerify: true,
 					},
 				}
 			} else {
 				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+					Authorization: authorization,
 					TLSConfig: promConfig.TLSConfig{
 						CAFile: helper.GetCACertPath(&b.desiredLoki.TLS, lokiCerts),
 					},
 				}
+			}
+		} else {
+			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+				Authorization: authorization,
 			}
 		}
 	}

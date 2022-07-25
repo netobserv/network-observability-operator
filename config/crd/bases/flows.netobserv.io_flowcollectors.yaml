@@ -1609,6 +1609,12 @@ spec:
                       If empty, the URL value will be used (assuming that the Loki
                       ingester and querier are int he same host).
                     type: string
+                  sendAuthToken:
+                    default: false
+                    description: SendAuthToken is a flag to enable or disable Authorization
+                      header from service account secret It allows authentication
+                      to loki operator gateway
+                    type: boolean
                   staticLabels:
                     additionalProperties:
                       type: string
