@@ -17,6 +17,7 @@ limitations under the License.
 package flowlogspipeline
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -563,4 +564,45 @@ func TestPipelineTraceStage(t *testing.T) {
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+}
+
+//go:embed test_metrics_definitions
+var TestFlpMetricsConfig embed.FS
+
+func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
+	assert := assert.New(t)
+
+	flp := getFLPConfig()
+	FlpMetricsConfigDir = "test_metrics_definitions"
+	FlpMetricsConfig = TestFlpMetricsConfig
+
+	b := newBuilder("namespace", corev1.ProtocolUDP, &flp, nil, nil, "", true)
+	stages, parameters := b.buildPipelineConfig()
+	assert.True(validatePipelineConfig(stages, parameters))
+	jsonStages, _ := json.Marshal(stages)
+	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+	assert.Equal("bandwidth_network_service_namespace", parameters[4].Extract.Aggregates[0].Name)
+	assert.Equal(3, len(parameters[5].Encode.Prom.Metrics))
+	assert.Equal("bandwidth_per_network_service_per_namespace", parameters[5].Encode.Prom.Metrics[0].Name)
+	assert.Equal("bandwidth_per_source_subnet", parameters[5].Encode.Prom.Metrics[1].Name)
+	assert.Equal("network_service_count", parameters[5].Encode.Prom.Metrics[2].Name)
+	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
+}
+func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
+	assert := assert.New(t)
+
+	flp := getFLPConfig()
+	FlpMetricsConfigDir = "test_metrics_definitions"
+	flp.IgnoreMetrics = []string{"subnet"}
+
+	b := newBuilder("namespace", corev1.ProtocolUDP, &flp, nil, nil, "", true)
+	stages, parameters := b.buildPipelineConfig()
+	assert.True(validatePipelineConfig(stages, parameters))
+	jsonStages, _ := json.Marshal(stages)
+	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+	assert.Equal("bandwidth_network_service_namespace", parameters[4].Extract.Aggregates[0].Name)
+	assert.Equal(2, len(parameters[5].Encode.Prom.Metrics))
+	assert.Equal("bandwidth_per_network_service_per_namespace", parameters[5].Encode.Prom.Metrics[0].Name)
+	assert.Equal("network_service_count", parameters[5].Encode.Prom.Metrics[1].Name)
+	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
 }

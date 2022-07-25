@@ -1,0 +1,30 @@
+#flp_confgen
+description:
+  This metric observes network services rate (total)
+details:
+  Counts the number of connections per network service based on destination port number and protocol
+usage:
+  Evaluate network services
+tags:
+  - rate
+  - network-services
+  - destination-port
+  - destination-protocol
+extract:
+  type: aggregates
+  aggregates:
+    - name: dest_service_count
+      by:
+        - Service
+      operation: count
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: network_service_count
+        type: counter
+        filter: { key: name, value: dest_service_count }
+        valuekey: recent_count
+        labels:
+          - by
+          - aggregate
