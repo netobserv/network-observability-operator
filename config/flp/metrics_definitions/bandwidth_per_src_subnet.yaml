@@ -1,0 +1,36 @@
+#flp_confgen
+description:
+  This metric observes the network bandwidth per source subnet
+details:
+  Sum bytes for all traffic per source subnet
+usage:
+  Evaluate network usage breakdown per source subnet
+tags:
+  - bandwidth
+  - graph
+  - rate
+  - subnet
+transform:
+  rules:
+    - input: SrcAddr
+      output: srcSubnet
+      type: add_subnet
+      parameters: /16
+extract:
+  aggregates:
+    - name: bandwidth_source_subnet
+      by:
+        - srcSubnet
+      operation: sum
+      recordKey: Bytes
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: bandwidth_per_source_subnet
+        type: counter
+        filter: {key: name, value: bandwidth_source_subnet}
+        valueKey: recent_op_value
+        labels:
+          - by
+          - aggregate

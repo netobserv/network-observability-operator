@@ -774,6 +774,8 @@ github.com/netobserv/flowlogs-pipeline v0.1.2-0.20220616154151-f71171409f0b h1:K
 github.com/netobserv/flowlogs-pipeline v0.1.2-0.20220616154151-f71171409f0b/go.mod h1:K6d9rkvz/peanr5oF0DL0E9vEdyIs1eb2aCRXSFM2Nk=
 github.com/netobserv/flowlogs-pipeline v0.1.3-rc0.0.20220720151725-3dbc423808e6 h1:CSAsmWsG+/kSqG+Nmh6v4OXMzImC3GSJaBNzfSNATAM=
 github.com/netobserv/flowlogs-pipeline v0.1.3-rc0.0.20220720151725-3dbc423808e6/go.mod h1:K6d9rkvz/peanr5oF0DL0E9vEdyIs1eb2aCRXSFM2Nk=
+github.com/netobserv/flowlogs-pipeline v0.1.3-rc1 h1:MSeEqU+1yq92q6rcoiZGCFyw270Ua4adqvmV6pfQLK0=
+github.com/netobserv/flowlogs-pipeline v0.1.3-rc1/go.mod h1:TiuGzBmOft4B9aumfHGTx7j2R3w06M/ZY0YU7pM9T68=
 github.com/netobserv/gopipes v0.1.1/go.mod h1:eGoHZW1ON8Dx/zmDXUhsbVNqatPjtpdO0UZBmGZGmVI=
 github.com/netobserv/loki-client-go v0.0.0-20211018150932-cb17208397a9/go.mod h1:LHXpc5tjKvsfZn0pwLKrvlgEhZcCaw3Di9mUEZGAI4E=
 github.com/netobserv/netobserv-ebpf-agent v0.1.1-0.20220608092850-3fd4695b7cc2/go.mod h1:996FEHp8Xj+AKCkiN4eH3dl/yF2DzuYM0kchWZOrapM=

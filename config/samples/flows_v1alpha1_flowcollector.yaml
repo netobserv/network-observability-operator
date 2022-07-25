@@ -29,7 +29,8 @@ spec:
     logLevel: info
     enableKubeProbes: true
     healthPort: 8080
-    prometheusPort: 9090
+    prometheusPort: 9102
+    ignoreMetrics: []
   kafka:
     enable: false
     address: "kafka-cluster-kafka-bootstrap.network-observability"

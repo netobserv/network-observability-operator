@@ -40,57 +40,63 @@ type Health struct {
 	Port string
 }
 
+type ConfigFileStruct struct {
+	LogLevel   string       `yaml:"log-level,omitempty" json:"log-level,omitempty"`
+	Pipeline   []Stage      `yaml:"pipeline,omitempty" json:"pipeline,omitempty"`
+	Parameters []StageParam `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+}
+
 type Stage struct {
-	Name    string `json:"name"`
-	Follows string `json:"follows,omitempty"`
+	Name    string `yaml:"name" json:"name"`
+	Follows string `yaml:"follows,omitempty" json:"follows,omitempty"`
 }
 
 type StageParam struct {
-	Name      string     `json:"name"`
-	Ingest    *Ingest    `json:"ingest,omitempty"`
-	Transform *Transform `json:"transform,omitempty"`
-	Extract   *Extract   `json:"extract,omitempty"`
-	Encode    *Encode    `json:"encode,omitempty"`
-	Write     *Write     `json:"write,omitempty"`
+	Name      string     `yaml:"name" json:"name"`
+	Ingest    *Ingest    `yaml:"ingest,omitempty" json:"ingest,omitempty"`
+	Transform *Transform `yaml:"transform,omitempty" json:"transform,omitempty"`
+	Extract   *Extract   `yaml:"extract,omitempty" json:"extract,omitempty"`
+	Encode    *Encode    `yaml:"encode,omitempty" json:"encode,omitempty"`
+	Write     *Write     `yaml:"write,omitempty" json:"write,omitempty"`
 }
 
 type Ingest struct {
-	Type      string               `json:"type"`
-	File      *File                `json:"file,omitempty"`
-	Collector *api.IngestCollector `json:"collector,omitempty"`
-	Kafka     *api.IngestKafka     `json:"kafka,omitempty"`
-	GRPC      *api.IngestGRPCProto `json:"grpc,omitempty"`
+	Type      string               `yaml:"type" json:"type"`
+	File      *File                `yaml:"file,omitempty" json:"file,omitempty"`
+	Collector *api.IngestCollector `yaml:"collector,omitempty" json:"collector,omitempty"`
+	Kafka     *api.IngestKafka     `yaml:"kafka,omitempty" json:"kafka,omitempty"`
+	GRPC      *api.IngestGRPCProto `yaml:"grpc,omitempty" json:"grpc,omitempty"`
 }
 
 type File struct {
-	Filename string      `json:"filename"`
-	Decoder  api.Decoder `json:"decoder"`
-	Loop     bool        `json:"loop"`
-	Chunks   int         `json:"chunks"`
+	Filename string      `yaml:"filename" json:"filename"`
+	Decoder  api.Decoder `yaml:"decoder" json:"decoder"`
+	Loop     bool        `yaml:"loop" json:"loop"`
+	Chunks   int         `yaml:"chunks" json:"chunks"`
 }
 
 type Transform struct {
-	Type    string                `json:"type"`
-	Generic *api.TransformGeneric `json:"generic,omitempty"`
-	Filter  *api.TransformFilter  `json:"filter,omitempty"`
-	Network *api.TransformNetwork `json:"network,omitempty"`
+	Type    string                `yaml:"type" json:"type"`
+	Generic *api.TransformGeneric `yaml:"generic,omitempty" json:"generic,omitempty"`
+	Filter  *api.TransformFilter  `yaml:"filter,omitempty" json:"filter,omitempty"`
+	Network *api.TransformNetwork `yaml:"network,omitempty" json:"network,omitempty"`
 }
 
 type Extract struct {
-	Type       string                    `json:"type"`
-	Aggregates []api.AggregateDefinition `json:"aggregates,omitempty"`
+	Type       string                    `yaml:"type" json:"type"`
+	Aggregates []api.AggregateDefinition `yaml:"aggregates,omitempty" json:"aggregates,omitempty"`
 }
 
 type Encode struct {
-	Type  string           `json:"type"`
-	Prom  *api.PromEncode  `json:"prom,omitempty"`
-	Kafka *api.EncodeKafka `json:"kafka,omitempty"`
+	Type  string           `yaml:"type" json:"type"`
+	Prom  *api.PromEncode  `yaml:"prom,omitempty" json:"prom,omitempty"`
+	Kafka *api.EncodeKafka `yaml:"kafka,omitempty" json:"kafka,omitempty"`
 }
 
 type Write struct {
-	Type   string           `json:"type"`
-	Loki   *api.WriteLoki   `json:"loki,omitempty"`
-	Stdout *api.WriteStdout `json:"stdout,omitempty"`
+	Type   string           `yaml:"type" json:"type"`
+	Loki   *api.WriteLoki   `yaml:"loki,omitempty" json:"loki,omitempty"`
+	Stdout *api.WriteStdout `yaml:"stdout,omitempty" json:"stdout,omitempty"`
 }
 
 // ParseConfig creates the internal unmarshalled representation from the Pipeline and Parameters json
