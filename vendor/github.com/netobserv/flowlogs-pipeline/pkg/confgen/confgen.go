@@ -29,7 +29,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var (
+const (
 	definitionExt    = ".yaml"
 	definitionHeader = "#flp_confgen"
 	configFileName   = "config.yaml"
@@ -50,6 +50,7 @@ type Definition struct {
 type Definitions []Definition
 
 type ConfGen struct {
+	opts                 *Options
 	config               *Config
 	transformRules       api.NetworkTransformRules
 	aggregateDefinitions aggregate.Definitions
@@ -71,26 +72,31 @@ type DefFile struct {
 
 func (cg *ConfGen) Run() error {
 	var err error
-	cg.config, err = cg.ParseConfigFile(Opt.SrcFolder + "/" + configFileName)
+	cg.config, err = cg.ParseConfigFile(cg.opts.SrcFolder + "/" + configFileName)
 	if err != nil {
 		log.Debugf("cg.ParseConfigFile err: %v ", err)
 		return err
 	}
 
-	definitionFiles := cg.GetDefinitionFiles(Opt.SrcFolder)
+	definitionFiles := getDefinitionFiles(cg.opts.SrcFolder)
 	for _, definitionFile := range definitionFiles {
-		err := cg.parseFile(definitionFile)
+		b, err := ioutil.ReadFile(definitionFile)
 		if err != nil {
-			log.Debugf("cg.parseFile err: %v ", err)
+			log.Debugf("ioutil.ReadFile err: %v ", err)
+			continue
+		}
+		err = cg.ParseDefinition(definitionFile, b)
+		if err != nil {
+			log.Debugf("cg.parseDefinition err: %v ", err)
 			continue
 		}
 	}
 
-	cg.Dedupe()
+	cg.dedupe()
 
-	if len(Opt.GenerateStages) != 0 {
-		config := cg.GenerateTruncatedConfig(Opt.GenerateStages)
-		err = cg.writeConfigFile(Opt.DestConfFile, config)
+	if len(cg.opts.GenerateStages) != 0 {
+		cfg := cg.GenerateTruncatedConfig()
+		err = cg.writeConfigFile(cg.opts.DestConfFile, cfg)
 		if err != nil {
 			log.Debugf("cg.GenerateTruncatedConfig err: %v ", err)
 			return err
@@ -98,20 +104,20 @@ func (cg *ConfGen) Run() error {
 		return nil
 	} else {
 		config := cg.GenerateFlowlogs2PipelineConfig()
-		err = cg.writeConfigFile(Opt.DestConfFile, config)
+		err = cg.writeConfigFile(cg.opts.DestConfFile, config)
 		if err != nil {
 			log.Debugf("cg.GenerateFlowlogs2PipelineConfig err: %v ", err)
 			return err
 		}
 	}
 
-	err = cg.generateDoc(Opt.DestDocFile)
+	err = cg.generateDoc(cg.opts.DestDocFile)
 	if err != nil {
 		log.Debugf("cg.generateDoc err: %v ", err)
 		return err
 	}
 
-	err = cg.generateGrafanaJsonnet(Opt.DestGrafanaJsonnetFolder)
+	err = cg.generateGrafanaJsonnet(cg.opts.DestGrafanaJsonnetFolder)
 	if err != nil {
 		log.Debugf("cg.generateGrafanaJsonnet err: %v ", err)
 		return err
@@ -120,62 +126,44 @@ func (cg *ConfGen) Run() error {
 	return nil
 }
 
-func (cg *ConfGen) checkHeader(fileName string) error {
-	// check header
-	f, err := os.OpenFile(fileName, os.O_RDONLY, 0644)
-	if err != nil {
-		log.Debugf("os.OpenFile error: %v ", err)
-		return err
-	}
+func checkHeader(bytes []byte) error {
 	header := make([]byte, len(definitionHeader))
-	_, err = f.Read(header)
-	if err != nil || string(header) != definitionHeader {
-		log.Debugf("Wrong header file: %s ", fileName)
+	copy(header, bytes)
+	if string(header) != definitionHeader {
 		return fmt.Errorf("wrong header")
 	}
-	err = f.Close()
-	if err != nil {
-		log.Debugf("f.Close err: %v ", err)
-		return err
-	}
-
 	return nil
 }
 
-func (cg *ConfGen) parseFile(fileName string) error {
-
+func (cg *ConfGen) ParseDefinition(name string, bytes []byte) error {
 	// check header
-	err := cg.checkHeader(fileName)
+	err := checkHeader(bytes)
 	if err != nil {
-		log.Debugf("cg.checkHeader err: %v ", err)
+		log.Debugf("%s cg.checkHeader err: %v ", name, err)
 		return err
 	}
 
 	// parse yaml
 	var defFile DefFile
-	yamlFile, err := ioutil.ReadFile(fileName)
+	err = yaml.Unmarshal(bytes, &defFile)
 	if err != nil {
-		log.Debugf("ioutil.ReadFile err: %v ", err)
-		return err
-	}
-	err = yaml.Unmarshal(yamlFile, &defFile)
-	if err != nil {
-		log.Debugf("yaml.Unmarshal err: %v ", err)
+		log.Debugf("%s yaml.Unmarshal err: %v ", name, err)
 		return err
 	}
 
 	//skip if their skip tag match
-	for _, skipTag := range Opt.SkipWithTags {
+	for _, skipTag := range cg.opts.SkipWithTags {
 		for _, tag := range defFile.Tags {
 			if skipTag == tag {
-				return fmt.Errorf("skipping definition %s due to skip tag %s", fileName, tag)
+				log.Infof("skipping definition %s due to skip tag %s", name, tag)
+				return nil
 			}
 		}
 	}
 
 	// parse definition
 	definition := Definition{
-		FileName:    fileName,
+		FileName:    name,
 		Description: defFile.Description,
 		Details:     defFile.Details,
 		Usage:       defFile.Usage,
@@ -215,7 +203,7 @@ func (cg *ConfGen) parseFile(fileName string) error {
 	return nil
 }
 
-func (*ConfGen) GetDefinitionFiles(rootPath string) []string {
+func getDefinitionFiles(rootPath string) []string {
 
 	var files []string
 
@@ -235,11 +223,12 @@ func (*ConfGen) GetDefinitionFiles(rootPath string) []string {
 	return files
 }
 
-func NewConfGen() (*ConfGen, error) {
+func NewConfGen(opts *Options) *ConfGen {
 	return &ConfGen{
+		opts:                 opts,
 		transformRules:       api.NetworkTransformRules{},
 		aggregateDefinitions: aggregate.Definitions{},
 		definitions:          Definitions{},
 		visualizations:       Visualizations{},
-	}, nil
+	}
 }

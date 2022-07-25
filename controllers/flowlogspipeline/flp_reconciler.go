@@ -173,7 +173,10 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 	}
 
 	builder := newBuilder(r.nobjMngr.Namespace, desired.Spec.Agent, desiredFLP, desiredLoki, desiredKafka, r.confKind, r.useOpenShiftSCC)
-	newCM, configDigest := builder.configMap()
+	newCM, configDigest, err := builder.configMap()
+	if err != nil {
+		return err
+	}
 	if !r.nobjMngr.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
 			return err
