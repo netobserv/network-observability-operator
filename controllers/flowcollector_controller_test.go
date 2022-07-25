@@ -10,6 +10,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
@@ -638,6 +639,13 @@ func flowCollectorControllerSpecs() {
 				}, &cm)
 				return &cm
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
+		})
+
+		It("Should not get CR", func() {
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, crKey, &flowCR)
+				return errors.IsNotFound(err)
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 }
