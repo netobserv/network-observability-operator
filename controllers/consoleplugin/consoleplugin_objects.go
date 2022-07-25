@@ -25,6 +25,7 @@ const configMapName = "console-plugin-config"
 const configFile = "config.yaml"
 const configVolume = "config-volume"
 const configPath = "/opt/app-root/"
+const tokensPath = "/var/run/secrets/tokens/"
 
 // PodConfigurationDigest is an annotation name to facilitate pod restart after
 // any external configuration change
@@ -97,21 +98,69 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 	}
 }
 
+func tokenPath(desiredLoki *flowsv1alpha1.FlowCollectorLoki) string {
+	if desiredLoki.SendAuthToken {
+		return tokensPath + constants.PluginName
+	}
+	return ""
+}
+
 func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki) []string {
-	return []string{
+	args := []string{
 		"-cert", "/var/serving-cert/tls.crt",
 		"-key", "/var/serving-cert/tls.key",
 		"-loki", querierURL(desiredLoki),
 		"-loki-labels", strings.Join(constants.LokiIndexFields, ","),
 		"-loki-tenant-id", desiredLoki.TenantID,
+		"-loki-token-path", tokenPath(desiredLoki),
 		//TODO: add loki tls config https://issues.redhat.com/browse/NETOBSERV-309
 		"-loki-skip-tls", "true",
 		"-loglevel", desired.LogLevel,
 		"-frontend-config", configPath + configFile,
 	}
+
+	return args
 }
 
 func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
+	volumes := []corev1.Volume{
+		{
+			Name: secretName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: secretName,
+				},
+			},
+		},
+		{
+			Name: configVolume,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: configMapName,
+					},
+				},
+			},
+		},
+	}
+
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      secretName,
+			MountPath: "/var/serving-cert",
+			ReadOnly:  true,
+		},
+		{
+			Name:      configVolume,
+			MountPath: configPath,
+			ReadOnly:  true,
+		},
+	}
+
+	if b.desiredLoki.SendAuthToken {
+		volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, constants.PluginName, constants.PluginName)
+	}
+
 	return &corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: b.labels,
@@ -125,46 +174,10 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 				Image:           b.desired.Image,
 				ImagePullPolicy: corev1.PullPolicy(b.desired.ImagePullPolicy),
 				Resources:       *b.desired.Resources.DeepCopy(),
-				VolumeMounts: []corev1.VolumeMount{{
-					Name:      secretName,
-					MountPath: "/var/serving-cert",
-					ReadOnly:  true,
-				},
-					{
-						Name:      configVolume,
-						MountPath: configPath,
-						ReadOnly:  true,
-					}},
-				Args: []string{
-					"-cert", "/var/serving-cert/tls.crt",
-					"-key", "/var/serving-cert/tls.key",
-					"-loki", querierURL(b.desiredLoki),
-					"-loki-labels", strings.Join(constants.LokiIndexFields, ","),
-					"-loki-tenant-id", b.desiredLoki.TenantID,
-					//TODO: add loki tls config https://issues.redhat.com/browse/NETOBSERV-309
-					"-loki-skip-tls", "true",
-					"-loglevel", b.desired.LogLevel,
-					"-frontend-config", configPath + configFile,
-				},
+				VolumeMounts:    volumeMounts,
+				Args:            buildArgs(b.desired, b.desiredLoki),
 			}},
-			Volumes: []corev1.Volume{{
-				Name: secretName,
-				VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{
-						SecretName: secretName,
-					},
-				},
-			}, {
-				Name: configVolume,
-				VolumeSource: corev1.VolumeSource{
-					ConfigMap: &corev1.ConfigMapVolumeSource{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: configMapName,
-						},
-					},
-				},
-			},
-			},
+			Volumes:            volumes,
 			ServiceAccountName: constants.PluginName,
 		},
 	}

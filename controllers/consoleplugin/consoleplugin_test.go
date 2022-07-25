@@ -26,6 +26,7 @@ var testArgs = []string{
 	"-loki", "http://loki:3100/",
 	"-loki-labels", "SrcK8S_Namespace,SrcK8S_OwnerName,DstK8S_Namespace,DstK8S_OwnerName,FlowDirection",
 	"-loki-tenant-id", "netobserv",
+	"-loki-token-path", "",
 	"-loki-skip-tls", "true",
 	"-loglevel", "info",
 	"-frontend-config", "/opt/app-root/config.yaml",
