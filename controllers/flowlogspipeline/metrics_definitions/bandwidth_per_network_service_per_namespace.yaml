@@ -16,7 +16,7 @@ extract:
     - name: bandwidth_network_service_namespace
       by:
         - Service
-        - srcK8S_Namespace
+        - SrcK8S_Namespace
       operation: sum
       recordKey: Bytes
 encode:
