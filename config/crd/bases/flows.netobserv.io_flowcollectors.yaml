@@ -1330,6 +1330,14 @@ spec:
                     required:
                     - maxReplicas
                     type: object
+                  ignoreMetrics:
+                    default:
+                    - lo
+                    description: IgnoreMetrics is a list of tags to specify which
+                      metrics to ignore
+                    items:
+                      type: string
+                    type: array
                   image:
                     default: quay.io/netobserv/flowlogs-pipeline:main
                     description: Image is the collector image (including domain and

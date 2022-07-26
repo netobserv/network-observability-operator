@@ -23,7 +23,10 @@ local-redeploy: clean-leftovers undeploy-all deploy-all  ## Local re-deploy (lok
 .PHONY: local-undeploy
 local-undeploy: clean-leftovers undeploy-all delete-kind-cluster  ## Local cleanup
 
-local-run: create-kind-cluster local-redeploy ## local-redeploy + run the operator locally
+local-run: create-kind-cluster local-redeploy local-deploy-operator ## local-redeploy + run the operator locally
+
+.PHONY: local-deploy-operator
+local-deploy-operator:
 # TODO: restore traffic generator, but using IPFIX instead of NFv5 (could be inspired from https://github.com/netobserv/flowlogs-pipeline/blob/main/pkg/test/ipfix.go)
 	@echo "====> Running the operator locally (in background process)"
 	go run ./main.go &

@@ -91,3 +91,21 @@ undeploy-infra: undeploy-loki undeploy-grafana uninstall
 
 .PHONY: undeploy-all
 undeploy-all: undeploy-infra undeploy-sample-cr undeploy-sample-workload
+
+.PHONY: deploy-prometheus
+deploy-prometheus: ## Deploy prometheus.
+	@echo -e "\n==> Deploy prometheus"
+	kubectl apply -f config/kubernetes/deployment-prometheus.yaml
+	kubectl rollout status "deploy/prometheus" --timeout=600s
+	-pkill --oldest --full "9090:9090"
+ifeq (true, $(PORT_FWD))
+	kubectl port-forward --address 0.0.0.0 svc/prometheus 9090:9090 2>&1 >/dev/null &
+	@echo -e "\n===> prometheus ui is available on http://localhost:9090\n"
+endif
+
+.PHONY: undeploy-prometheus
+undeploy-prometheus: ## Undeploy prometheus.
+	@echo -e "\n==> Undeploy prometheus"
+	kubectl --ignore-not-found=true delete -f config/kubernetes/deployment-prometheus.yaml || true
+	-pkill --oldest --full "9090:9090"
+

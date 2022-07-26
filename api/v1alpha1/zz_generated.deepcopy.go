@@ -185,6 +185,11 @@ func (in *FlowCollectorFLP) DeepCopyInto(out *FlowCollectorFLP) {
 		*out = new(FlowCollectorHPA)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.IgnoreMetrics != nil {
+		in, out := &in.IgnoreMetrics, &out.IgnoreMetrics
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	in.Resources.DeepCopyInto(&out.Resources)
 }
 

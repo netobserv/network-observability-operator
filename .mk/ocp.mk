@@ -25,11 +25,19 @@ ocp-deploy: deploy-all ocp-expose-all ## OCP deploy (loki, grafana, example-cr a
 ocp-undeploy: undeploy-all  ## OCP cleanup
 
 .PHONY: ocp-run
-ocp-run: ocp-undeploy ocp-deploy   ## OCP-deploy + run the operator locally
+ocp-run: ocp-undeploy ocp-deploy ocp-deploy-operator  ## OCP-deploy + run the operator locally
+
+.PHONY: ocp-deploy-operator
+ocp-deploy-operator: ## run flp from the operator
 	@echo "====> Enable network-observability-plugin in OCP console"
 	oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["network-observability-plugin"]}]'
 	@echo "====> Running the operator locally"
 	go run ./main.go
+
+.PHONY: undeploy-operator
+undeploy-operator: ## stop the operator locally
+	-PID=$$(pgrep --oldest --full "main.go"); pkill -P $$PID; pkill $$PID
+	kubectl delete ds flowlogs-pipeline || true
 
 .PHONY: ocp-refresh-ovs
 ocp-refresh-ovs:

@@ -238,6 +238,10 @@ type FlowCollectorFLP struct {
 	// Image is the collector image (including domain and tag)
 	Image string `json:"image,omitempty"`
 
+	//+kubebuilder:default=lo;
+	// IgnoreMetrics is a list of tags to specify which metrics to ignore
+	IgnoreMetrics []string `json:"ignoreMetrics,omitempty"`
+
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
 	// ImagePullPolicy is the Kubernetes pull policy for the image defined above

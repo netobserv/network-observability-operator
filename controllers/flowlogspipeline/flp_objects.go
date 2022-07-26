@@ -1,12 +1,17 @@
 package flowlogspipeline
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
+	"io/ioutil"
+	"log"
+	"os"
 	"strconv"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
+	"github.com/netobserv/flowlogs-pipeline/pkg/confgen"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	"github.com/prometheus/common/model"
 	appsv1 "k8s.io/api/apps/v1"
@@ -207,7 +212,9 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: b.labels,
 			Annotations: map[string]string{
-				PodConfigurationDigest: configDigest,
+				PodConfigurationDigest:      configDigest,
+				"prometheus.io/scrape":      "true",
+				"prometheus.io/scrape_port": fmt.Sprint(b.desired.PrometheusPort),
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -221,6 +228,72 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 	}
 }
 
+//go:embed metrics_definitions
+var FlpMetricsConfig embed.FS
+
+var FlpMetricsConfigDir = "metrics_definitions"
+var generateStages = []string{"extract_aggregate", "encode_prom"}
+var tmpMetricsDefinitionsDir = "/tmp/tmp_metrics_definitions_dir"
+
+func (b *builder) obtainMetricsConfiguration() ([]api.AggregateDefinition, api.PromMetricsItems) {
+	// copy metrics_definitions from embed to /tmp and pass to confgenerator
+	os.RemoveAll(tmpMetricsDefinitionsDir)
+	if err := os.Mkdir(tmpMetricsDefinitionsDir, os.ModePerm); err != nil {
+		log.Printf("failed to create tmpMetricsDefinitionsDir %s, %s\n", tmpMetricsDefinitionsDir, err)
+		return nil, nil
+	}
+	entries, err := FlpMetricsConfig.ReadDir(FlpMetricsConfigDir)
+	if err != nil {
+		log.Printf("failed to access metrics_definitions directory: %v\n", err)
+		return nil, nil
+	}
+	for _, entry := range entries {
+		fileName := entry.Name()
+		srcPath := FlpMetricsConfigDir + "/" + fileName
+		destPath := tmpMetricsDefinitionsDir + "/" + fileName
+		input, err := FlpMetricsConfig.ReadFile(srcPath)
+		if err != nil {
+			fmt.Printf("error reading metrics file %s; %v\n", srcPath, err)
+			return nil, nil
+		}
+
+		err = ioutil.WriteFile(destPath, input, 0644)
+		if err != nil {
+			fmt.Printf("Error creating %s; %v\n", destPath, err)
+			return nil, nil
+		}
+	}
+	// set confgen.Opt.SrcFolder, etc
+	confgen.Opt.SrcFolder = tmpMetricsDefinitionsDir
+	confgen.Opt.DestConfFile = "/dev/null"
+	confgen.Opt.SkipWithTags = b.desired.IgnoreMetrics
+	confgen.Opt.GenerateStages = generateStages
+
+	// run the confgenerator to produce the proper flp configuration for metrics from metrics_definitions
+	cg, _ := confgen.NewConfGen()
+	err = cg.Run()
+	if err != nil {
+		log.Printf("failed to run NewConfGen %s", err)
+		return nil, nil
+	}
+
+	truncatedConfig := cg.GenerateTruncatedConfig(generateStages)
+
+	// obtain pointers to various parameters structures:
+	var aggregates []api.AggregateDefinition
+	var promMetrics api.PromMetricsItems
+
+	for _, p := range truncatedConfig.Parameters {
+		if p.Extract != nil && p.Extract.Aggregates != nil {
+			aggregates = p.Extract.Aggregates
+		}
+		if p.Encode != nil && p.Encode.Prom != nil {
+			promMetrics = p.Encode.Prom.Metrics
+		}
+	}
+	return aggregates, promMetrics
+}
+
 func (b *builder) addTransformStages(lastStage *config.PipelineBuilderStage) {
 	// enrich stage (transform) configuration
 	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
@@ -232,6 +305,16 @@ func (b *builder) addTransformStages(lastStage *config.PipelineBuilderStage) {
 			Input:  "DstAddr",
 			Output: "DstK8S",
 			Type:   api.AddKubernetesRuleType,
+		}, {
+			Input:      "DstPort",
+			Output:     "Service",
+			Type:       api.AddServiceRuleType,
+			Parameters: "Proto",
+		}, {
+			Input:      "SrcAddr",
+			Output:     "SrcSubnet",
+			Type:       api.AddSubnetRuleType,
+			Parameters: "/16",
 		}},
 	})
 
@@ -269,11 +352,14 @@ func (b *builder) addTransformStages(lastStage *config.PipelineBuilderStage) {
 		enrichedStage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
 	}
 
+	// obtain extract_aggregate and encode_prometheus stages from metrics_definitions
+	aggregates, promMetrics := b.obtainMetricsConfiguration()
 	// prometheus stage (encode) configuration
-	agg := enrichedStage.Aggregate("aggregate", []api.AggregateDefinition{})
+	agg := enrichedStage.Aggregate("aggregate", aggregates)
 	agg.EncodePrometheus("prometheus", api.PromEncode{
-		Port:   int(b.desired.PrometheusPort),
-		Prefix: "flp_",
+		Port:    int(b.desired.PrometheusPort),
+		Prefix:  "netobserv_",
+		Metrics: promMetrics,
 	})
 }
 
