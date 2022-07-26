@@ -165,8 +165,8 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	} else {
 		status = conditions.Ready()
 	}
-	err = r.updateCondition(ctx, status, desired)
-	return ctrl.Result{}, err
+	r.updateCondition(ctx, status, desired)
+	return ctrl.Result{}, nil
 }
 
 func (r *FlowCollectorReconciler) getFlowCollector(ctx context.Context, req ctrl.Request) (*flowsv1alpha1.FlowCollector, error) {
@@ -229,7 +229,8 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	// Update namespace in status
 	log.Info("Updating status with new namespace " + newNS)
 	desired.Status.Namespace = newNS
-	return r.updateCondition(ctx, conditions.Updating(), desired)
+	r.updateCondition(ctx, conditions.Updating(), desired)
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -354,16 +355,15 @@ func (r *FlowCollectorReconciler) failure(ctx context.Context, errcond *conditio
 	meta.SetStatusCondition(&fc.Status.Conditions, errcond.Condition)
 	if errUpdate := r.Status().Update(ctx, fc); errUpdate != nil {
 		log.Error(errUpdate, "Set conditions failed")
-		return errUpdate
 	}
 	return errcond.Error
 }
 
-func (r *FlowCollectorReconciler) updateCondition(ctx context.Context, cond *metav1.Condition, fc *flowsv1alpha1.FlowCollector) error {
+func (r *FlowCollectorReconciler) updateCondition(ctx context.Context, cond *metav1.Condition, fc *flowsv1alpha1.FlowCollector) {
 	meta.SetStatusCondition(&fc.Status.Conditions, *cond)
 	if err := r.Status().Update(ctx, fc); err != nil {
 		log.FromContext(ctx).Error(err, "Set conditions failed")
-		return err
+		// Do not propagate this update failure: if update failed it's generally because it was modified concurrently:
+		// in that case, it will anyway trigger new reconcile loops so the conditions will be updated soon.
 	}
-	return nil
 }
