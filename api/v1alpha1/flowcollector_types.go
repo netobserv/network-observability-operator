@@ -262,6 +262,10 @@ type FlowCollectorFLP struct {
 	//+kubebuilder:default:=true
 	// EnableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes
 	EnableKubeProbes bool `json:"enableKubeProbes,omitempty"`
+
+	//+kubebuilder:default:=true
+	// Set true to drop fields that are known to be unused by OVS, in order to save storage space.
+	DropUnusedFields bool `json:"dropUnusedFields,omitempty"`
 }
 
 type FlowCollectorHPA struct {
