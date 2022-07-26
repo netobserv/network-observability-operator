@@ -34,6 +34,7 @@ const configPath = "/etc/flowlogs-pipeline"
 const configFile = "config.json"
 
 const kafkaCerts = "kafka-certs"
+const lokiCerts = "loki-certs"
 
 const (
 	healthServiceName       = "health"
@@ -169,6 +170,10 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 
 	if b.desiredKafka != nil && b.desiredKafka.Enable && b.desiredKafka.TLS.Enable {
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredKafka.TLS, kafkaCerts)
+	}
+
+	if b.desiredLoki != nil && b.desiredLoki.TLS.Enable {
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts)
 	}
 
 	container := corev1.Container{
@@ -338,11 +343,20 @@ func (b *builder) addTransformStages(lastStage *config.PipelineBuilderStage) {
 		lokiWrite.TimestampLabel = "TimeFlowEndMs"
 		lokiWrite.TimestampScale = "1ms"
 		lokiWrite.TenantID = b.desiredLoki.TenantID
-		//TODO: set proper tls config https://issues.redhat.com/browse/NETOBSERV-309
-		lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-			TLSConfig: promConfig.TLSConfig{
-				InsecureSkipVerify: true,
-			},
+		if b.desiredLoki != nil && b.desiredLoki.TLS.Enable {
+			if b.desiredLoki.TLS.InsecureSkipVerify {
+				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+					TLSConfig: promConfig.TLSConfig{
+						InsecureSkipVerify: true,
+					},
+				}
+			} else {
+				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+					TLSConfig: promConfig.TLSConfig{
+						CAFile: helper.GetCACertPath(&b.desiredLoki.TLS, lokiCerts),
+					},
+				}
+			}
 		}
 	}
 	enrichedStage.WriteLoki("loki", lokiWrite)
