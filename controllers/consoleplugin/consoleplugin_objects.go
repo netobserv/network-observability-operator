@@ -25,7 +25,7 @@ const configMapName = "console-plugin-config"
 const configFile = "config.yaml"
 const configVolume = "config-volume"
 const configPath = "/opt/app-root/"
-const lokiCerts = "kafka-certs"
+const lokiCerts = "loki-certs"
 
 // PodConfigurationDigest is an annotation name to facilitate pod restart after
 // any external configuration change
