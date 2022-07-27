@@ -455,6 +455,9 @@ type ClientTLS struct {
 type FlowCollectorStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
+	// Conditions represent the latest available observations of an object's state
+	Conditions []metav1.Condition `json:"conditions"`
+
 	// Namespace where console plugin and flowlogs-pipeline have been deployed.
 	Namespace string `json:"namespace,omitempty"`
 }
@@ -462,6 +465,9 @@ type FlowCollectorStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster
+//+kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.spec.agent`
+//+kubebuilder:printcolumn:name="Kafka",type="boolean",JSONPath=`.spec.kafka.enable`
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
 
 // FlowCollector is the Schema for the flowcollectors API, which pilots and configures netflow collection.
 type FlowCollector struct {

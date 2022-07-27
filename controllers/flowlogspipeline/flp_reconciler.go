@@ -188,7 +188,7 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 		}
 	}
 
-	if err := r.reconcileAsServiceAccount(ctx, &builder); err != nil {
+	if err := r.reconcileServiceAccount(ctx, &builder); err != nil {
 		return err
 	}
 
@@ -218,9 +218,12 @@ func (r *singleDeploymentReconciler) reconcileAsDeployment(ctx context.Context, 
 		if err := r.UpdateOwned(ctx, r.owned.deployment, builder.deployment(configDigest)); err != nil {
 			return err
 		}
+	} else {
+		// Deployment up to date, check if it's ready
+		r.CheckDeploymentInProgress(r.owned.deployment)
 	}
 	if r.confKind != ConfKafkaTransformer {
-		if err := r.reconcileAsService(ctx, desiredFLP, builder); err != nil {
+		if err := r.reconcileService(ctx, desiredFLP, builder); err != nil {
 			return err
 		}
 	}
@@ -243,7 +246,7 @@ func (r *singleDeploymentReconciler) reconcileAsDeployment(ctx context.Context, 
 	return nil
 }
 
-func (r *singleDeploymentReconciler) reconcileAsService(ctx context.Context, desiredFLP *flpSpec, builder *builder) error {
+func (r *singleDeploymentReconciler) reconcileService(ctx context.Context, desiredFLP *flpSpec, builder *builder) error {
 	actual := corev1.Service{}
 	if err := r.Client.Get(ctx,
 		types.NamespacedName{Name: constants.FLPName, Namespace: r.nobjMngr.Namespace},
@@ -274,28 +277,31 @@ func (r *singleDeploymentReconciler) reconcileAsDaemonSet(ctx context.Context, d
 		return r.CreateOwned(ctx, builder.daemonSet(configDigest))
 	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredFLP, configDigest, constants.FLPName+FlpConfSuffix[r.confKind]) {
 		return r.UpdateOwned(ctx, r.owned.daemonSet, builder.daemonSet(configDigest))
+	} else {
+		// DaemonSet up to date, check if it's ready
+		r.CheckDaemonSetInProgress(r.owned.daemonSet)
 	}
 	return nil
 }
 
-func (r *singleDeploymentReconciler) reconcileAsServiceAccount(ctx context.Context, builder *builder) error {
+func (r *singleDeploymentReconciler) reconcileServiceAccount(ctx context.Context, builder *builder) error {
 	if !r.nobjMngr.Exists(r.owned.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 	if r.confKind == ConfKafkaIngester || r.confKind == ConfSingle {
-		if err := r.reconcileAsClusterRoleBinding(ctx, builder, ConfKafkaIngester); err != nil {
+		if err := r.reconcileClusterRoleBinding(ctx, builder, ConfKafkaIngester); err != nil {
 			return err
 		}
 	}
 	if r.confKind == ConfKafkaTransformer || r.confKind == ConfSingle {
-		if err := r.reconcileAsClusterRoleBinding(ctx, builder, ConfKafkaTransformer); err != nil {
+		if err := r.reconcileClusterRoleBinding(ctx, builder, ConfKafkaTransformer); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (r *singleDeploymentReconciler) reconcileAsClusterRoleBinding(ctx context.Context, builder *builder, roleKind string) error {
+func (r *singleDeploymentReconciler) reconcileClusterRoleBinding(ctx context.Context, builder *builder, roleKind string) error {
 	desired := builder.clusterRoleBinding(roleKind)
 	actual := rbacv1.ClusterRoleBinding{}
 	if err := r.Client.Get(ctx,

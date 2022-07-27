@@ -322,7 +322,7 @@ func flowCollectorControllerSpecs() {
 			}))
 
 			ds := appsv1.DaemonSet{}
-			Expect(k8sClient.Get(ctx, flpKey1, &ds)).To(Succeed())
+			Eventually(func() error { return k8sClient.Get(ctx, flpKey1, &ds) }).Should(Succeed())
 
 			oldConfigDigest = ds.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
 			Expect(oldConfigDigest).ToNot(BeEmpty())
