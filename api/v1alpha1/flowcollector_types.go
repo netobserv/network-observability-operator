@@ -23,10 +23,38 @@ import (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-const (
-	AgentIPFIX = "ipfix"
-	AgentEBPF  = "ebpf"
+// AgentType selects the Agent technology that is used to trace the system flows.
+// +kubebuilder:validation:Enum:=IPFIX;EBPF
+type AgentType string
+
+var (
+	AgentIPFIX AgentType = "IPFIX"
+	AgentEBPF  AgentType = "EBPF"
 )
+
+// AgentConfig is a discriminated union that allows to select either ipfix or ebpf, but does not
+// allow defining both fields.
+// +union
+type AgentConfig struct {
+	// Select the flows tracing agent. Possible values are "IPFIX" (default) to use
+	// the IPFIX collector, or "EBPF" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes
+	// CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could
+	// work but require manual configuration.
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="IPFIX";"EBPF"
+	// +kubebuilder:validation:Required
+	Type AgentType `json:"type"`
+
+	// Settings related to IPFIX-based flow reporter when the "agent" property is set
+	// to "ipfix".
+	// +optional
+	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
+
+	// Settings related to eBPF-based flow reporter when the "agent" property is set
+	// to "ebpf".
+	// +optional
+	EBPF FlowCollectorEBPF `json:"ebpf,omitempty"`
+}
 
 // Please notice that the FlowCollectorSpec's properties MUST redefine one of the default
 // values to force the definition of the section when it is not provided by the manifest.
@@ -39,28 +67,13 @@ const (
 type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	//+kubebuilder:default:=""
 	// Namespace where NetObserv pods are deployed.
 	// If empty, the namespace of the operator is going to be used.
+	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
-	//+kubebuilder:validation:Enum=ipfix;ebpf
-	//+kubebuilder:default:=ipfix
-	// Select the flows tracing agent. Possible values are "ipfix" (default) to use
-	// the IPFIX collector, or "ebpf" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes
-	// CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could
-	// work but necessitate manual configuration.
-	Agent string `json:"agent"`
-
-	// Settings related to IPFIX-based flow reporter when the "agent" property is set
-	// to "ipfix".
-	// +kubebuilder:default:={sampling:400}
-	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
-
-	// Settings related to eBPF-based flow reporter when the "agent" property is set
-	// to "ebpf".
-	// +kubebuilder:default={imagePullPolicy:"IfNotPresent"}
-	EBPF FlowCollectorEBPF `json:"ebpf,omitempty"`
+	// +kubebuilder:default:={type:"IPFIX"}
+	Agent AgentConfig `json:"agent,omitempty"`
 
 	// Settings related to the flowlogs-pipeline component, which collects and enriches the flows, and produces metrics.
 	FlowlogsPipeline FlowCollectorFLP `json:"flowlogsPipeline,omitempty"`
@@ -108,8 +121,8 @@ type FlowCollectorIPFIX struct {
 type FlowCollectorEBPF struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	//+kubebuilder:default:="quay.io/netobserv/netobserv-ebpf-agent:main"
 	// Image is the NetObserv Agent image (including domain and tag)
+	// +kubebuilder:default:="quay.io/netobserv/netobserv-ebpf-agent:main"
 	Image string `json:"image,omitempty"`
 
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
@@ -465,7 +478,7 @@ type FlowCollectorStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster
-//+kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.spec.agent`
+//+kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.spec.agent.type`
 //+kubebuilder:printcolumn:name="Kafka",type="boolean",JSONPath=`.spec.kafka.enable`
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
 

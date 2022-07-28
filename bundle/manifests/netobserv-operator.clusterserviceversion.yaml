@@ -11,7 +11,7 @@ metadata:
             "name": "cluster"
           },
           "spec": {
-            "agent": "ipfix",
+          "agent": "ipfix",
             "clusterNetworkOperator": {
               "namespace": "openshift-network-operator"
             },

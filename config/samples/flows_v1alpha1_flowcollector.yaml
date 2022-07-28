@@ -4,21 +4,22 @@ metadata:
   name: cluster
 spec:
   namespace: "network-observability"
-  agent: ipfix
-  ipfix:
-    cacheActiveTimeout: 60s
-    cacheMaxFlows: 100
-    sampling: 400
-  ebpf:
-    image: 'quay.io/netobserv/netobserv-ebpf-agent:main'
-    imagePullPolicy: IfNotPresent
-    sampling: 0
-    cacheActiveTimeout: 5s
-    cacheMaxFlows: 1000
-    interfaces: []
-    excludeInterfaces: ["lo"]
-    logLevel: info
-    privileged: false
+  agent:
+    type: IPFIX
+    ipfix:
+      cacheActiveTimeout: 60s
+      cacheMaxFlows: 100
+      sampling: 400
+    ebpf:
+      image: 'quay.io/netobserv/netobserv-ebpf-agent:main'
+      imagePullPolicy: IfNotPresent
+      sampling: 0
+      cacheActiveTimeout: 5s
+      cacheMaxFlows: 1000
+      interfaces: []
+      excludeInterfaces: ["lo"]
+      logLevel: info
+      privileged: false
   flowlogsPipeline:
     kind: DaemonSet
 #    kind: Deployment
@@ -47,7 +48,7 @@ spec:
         certFile: user.crt
         certKey: user.key
   loki:
-    url: 'http://loki:3100/'
+    url: 'http://loki.default:3100/'
     batchWait: 1s
     batchSize: 102400
     minBackoff: 1s

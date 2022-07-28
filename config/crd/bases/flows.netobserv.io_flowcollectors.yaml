@@ -17,7 +17,7 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.agent
+    - jsonPath: .spec.agent.type
       name: Agent
       type: string
     - jsonPath: .spec.kafka.enable
@@ -48,16 +48,168 @@ spec:
             description: FlowCollectorSpec defines the desired state of FlowCollector
             properties:
               agent:
-                default: ipfix
-                description: Select the flows tracing agent. Possible values are "ipfix"
-                  (default) to use the IPFIX collector, or "ebpf" to use NetObserv
-                  eBPF agent. When using IPFIX with OVN-Kubernetes CNI, NetObserv
-                  will configure OVN's IPFIX exporter. Other CNIs are not supported,
-                  they could work but necessitate manual configuration.
-                enum:
-                - ipfix
-                - ebpf
-                type: string
+                default:
+                  type: IPFIX
+                description: AgentConfig is a discriminated union that allows to select
+                  either ipfix or ebpf, but does not allow defining both fields.
+                properties:
+                  ebpf:
+                    description: Settings related to eBPF-based flow reporter when
+                      the "agent" property is set to "ebpf".
+                    properties:
+                      cacheActiveTimeout:
+                        default: 5s
+                        description: CacheActiveTimeout is the max period during which
+                          the reporter will aggregate flows before sending
+                        pattern: ^\d+(ns|ms|s|m)?$
+                        type: string
+                      cacheMaxFlows:
+                        default: 1000
+                        description: CacheMaxFlows is the max number of flows in an
+                          aggregate; when reached, the reporter sends the flows
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      env:
+                        additionalProperties:
+                          type: string
+                        description: Env allows passing custom environment variables
+                          to the NetObserv Agent. Useful for passing some very concrete
+                          performance-tuning options (e.g. GOGC, GOMAXPROCS) that
+                          shouldn't be publicly exposed as part of the FlowCollector
+                          descriptor, as they are only useful in edge debug/support
+                          scenarios.
+                        type: object
+                      excludeInterfaces:
+                        default:
+                        - lo
+                        description: ExcludeInterfaces contains the interface names
+                          that will be excluded from flow tracing. If an entry is
+                          enclosed by slashes (e.g. `/br-/`), it will match as regular
+                          expression, otherwise it will be matched as a case-sensitive
+                          string.
+                        items:
+                          type: string
+                        type: array
+                      image:
+                        default: quay.io/netobserv/netobserv-ebpf-agent:main
+                        description: Image is the NetObserv Agent image (including
+                          domain and tag)
+                        type: string
+                      imagePullPolicy:
+                        default: IfNotPresent
+                        description: ImagePullPolicy is the Kubernetes pull policy
+                          for the image defined above
+                        enum:
+                        - IfNotPresent
+                        - Always
+                        - Never
+                        type: string
+                      interfaces:
+                        description: Interfaces contains the interface names from
+                          where flows will be collected. If empty, the agent will
+                          fetch all the interfaces in the system, excepting the ones
+                          listed in ExcludeInterfaces. If an entry is enclosed by
+                          slashes (e.g. `/br-/`), it will match as regular expression,
+                          otherwise it will be matched as a case-sensitive string.
+                        items:
+                          type: string
+                        type: array
+                      logLevel:
+                        default: info
+                        description: LogLevel defines the log level for the NetObserv
+                          eBPF Agent
+                        enum:
+                        - trace
+                        - debug
+                        - info
+                        - warn
+                        - error
+                        - fatal
+                        - panic
+                        type: string
+                      privileged:
+                        description: 'Privileged mode for the eBPF Agent container.
+                          If false, the operator will add the following capabilities
+                          to the container, to enable its correct operation: BPF,
+                          PERFMON, NET_ADMIN, SYS_RESOURCE.'
+                        type: boolean
+                      resources:
+                        description: 'Compute Resources required by this container.
+                          Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        properties:
+                          limits:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Limits describes the maximum amount of compute
+                              resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                            type: object
+                          requests:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Requests describes the minimum amount of
+                              compute resources required. If Requests is omitted for
+                              a container, it defaults to Limits if that is explicitly
+                              specified, otherwise to an implementation-defined value.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                            type: object
+                        type: object
+                      sampling:
+                        description: Sampling is the sampling rate on the reporter.
+                          100 means one flow on 100 is sent. 0 or 1 means disabled.
+                        format: int32
+                        type: integer
+                    type: object
+                  ipfix:
+                    description: Settings related to IPFIX-based flow reporter when
+                      the "agent" property is set to "ipfix".
+                    properties:
+                      cacheActiveTimeout:
+                        default: 60s
+                        description: CacheActiveTimeout is the max period during which
+                          the reporter will aggregate flows before sending
+                        pattern: ^\d+(ns|ms|s|m)?$
+                        type: string
+                      cacheMaxFlows:
+                        default: 100
+                        description: CacheMaxFlows is the max number of flows in an
+                          aggregate; when reached, the reporter sends the flows
+                        format: int32
+                        minimum: 0
+                        type: integer
+                      sampling:
+                        default: 400
+                        description: Sampling is the sampling rate on the reporter.
+                          100 means one flow on 100 is sent. 0 means disabled.
+                        format: int32
+                        minimum: 0
+                        type: integer
+                    type: object
+                  type:
+                    allOf:
+                    - enum:
+                      - IPFIX
+                      - EBPF
+                    - enum:
+                      - IPFIX
+                      - EBPF
+                    description: Select the flows tracing agent. Possible values are
+                      "IPFIX" (default) to use the IPFIX collector, or "EBPF" to use
+                      NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes CNI,
+                      NetObserv will configure OVN's IPFIX exporter. Other CNIs are
+                      not supported, they could work but require manual configuration.
+                    type: string
+                required:
+                - type
+                type: object
               clusterNetworkOperator:
                 description: Settings related to the OpenShift Cluster Network Operator,
                   when available.
@@ -689,120 +841,6 @@ spec:
                     type: object
                 required:
                 - register
-                type: object
-              ebpf:
-                default:
-                  imagePullPolicy: IfNotPresent
-                description: Settings related to eBPF-based flow reporter when the
-                  "agent" property is set to "ebpf".
-                properties:
-                  cacheActiveTimeout:
-                    default: 5s
-                    description: CacheActiveTimeout is the max period during which
-                      the reporter will aggregate flows before sending
-                    pattern: ^\d+(ns|ms|s|m)?$
-                    type: string
-                  cacheMaxFlows:
-                    default: 1000
-                    description: CacheMaxFlows is the max number of flows in an aggregate;
-                      when reached, the reporter sends the flows
-                    format: int32
-                    minimum: 1
-                    type: integer
-                  env:
-                    additionalProperties:
-                      type: string
-                    description: Env allows passing custom environment variables to
-                      the NetObserv Agent. Useful for passing some very concrete performance-tuning
-                      options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed
-                      as part of the FlowCollector descriptor, as they are only useful
-                      in edge debug/support scenarios.
-                    type: object
-                  excludeInterfaces:
-                    default:
-                    - lo
-                    description: ExcludeInterfaces contains the interface names that
-                      will be excluded from flow tracing. If an entry is enclosed
-                      by slashes (e.g. `/br-/`), it will match as regular expression,
-                      otherwise it will be matched as a case-sensitive string.
-                    items:
-                      type: string
-                    type: array
-                  image:
-                    default: quay.io/netobserv/netobserv-ebpf-agent:main
-                    description: Image is the NetObserv Agent image (including domain
-                      and tag)
-                    type: string
-                  imagePullPolicy:
-                    default: IfNotPresent
-                    description: ImagePullPolicy is the Kubernetes pull policy for
-                      the image defined above
-                    enum:
-                    - IfNotPresent
-                    - Always
-                    - Never
-                    type: string
-                  interfaces:
-                    description: Interfaces contains the interface names from where
-                      flows will be collected. If empty, the agent will fetch all
-                      the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
-                      If an entry is enclosed by slashes (e.g. `/br-/`), it will match
-                      as regular expression, otherwise it will be matched as a case-sensitive
-                      string.
-                    items:
-                      type: string
-                    type: array
-                  logLevel:
-                    default: info
-                    description: LogLevel defines the log level for the NetObserv
-                      eBPF Agent
-                    enum:
-                    - trace
-                    - debug
-                    - info
-                    - warn
-                    - error
-                    - fatal
-                    - panic
-                    type: string
-                  privileged:
-                    description: 'Privileged mode for the eBPF Agent container. If
-                      false, the operator will add the following capabilities to the
-                      container, to enable its correct operation: BPF, PERFMON, NET_ADMIN,
-                      SYS_RESOURCE.'
-                    type: boolean
-                  resources:
-                    description: 'Compute Resources required by this container. Cannot
-                      be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                    properties:
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: 'Limits describes the maximum amount of compute
-                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: 'Requests describes the minimum amount of compute
-                          resources required. If Requests is omitted for a container,
-                          it defaults to Limits if that is explicitly specified, otherwise
-                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                        type: object
-                    type: object
-                  sampling:
-                    description: Sampling is the sampling rate on the reporter. 100
-                      means one flow on 100 is sent. 0 or 1 means disabled.
-                    format: int32
-                    type: integer
                 type: object
               flowlogsPipeline:
                 description: Settings related to the flowlogs-pipeline component,
@@ -1448,33 +1486,6 @@ spec:
                         type: object
                     type: object
                 type: object
-              ipfix:
-                default:
-                  sampling: 400
-                description: Settings related to IPFIX-based flow reporter when the
-                  "agent" property is set to "ipfix".
-                properties:
-                  cacheActiveTimeout:
-                    default: 60s
-                    description: CacheActiveTimeout is the max period during which
-                      the reporter will aggregate flows before sending
-                    pattern: ^\d+(ns|ms|s|m)?$
-                    type: string
-                  cacheMaxFlows:
-                    default: 100
-                    description: CacheMaxFlows is the max number of flows in an aggregate;
-                      when reached, the reporter sends the flows
-                    format: int32
-                    minimum: 0
-                    type: integer
-                  sampling:
-                    default: 400
-                    description: Sampling is the sampling rate on the reporter. 100
-                      means one flow on 100 is sent. 0 means disabled.
-                    format: int32
-                    minimum: 0
-                    type: integer
-                type: object
               kafka:
                 description: Kafka configuration, allowing to use Kafka as a broker
                   as part of the flow collection pipeline. This is a new and experimental
@@ -1621,7 +1632,6 @@ spec:
                     type: string
                 type: object
               namespace:
-                default: ""
                 description: Namespace where NetObserv pods are deployed. If empty,
                   the namespace of the operator is going to be used.
                 type: string
@@ -1645,8 +1655,6 @@ spec:
                     description: Namespace where OVN-Kubernetes pods are deployed.
                     type: string
                 type: object
-            required:
-            - agent
             type: object
           status:
             description: FlowCollectorStatus defines the observed state of FlowCollector

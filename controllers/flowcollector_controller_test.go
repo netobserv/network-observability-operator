@@ -108,9 +108,11 @@ func flowCollectorControllerSpecs() {
 							}},
 						},
 					},
-					Agent: "ipfix",
-					IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
-						Sampling: 200,
+					Agent: flowsv1alpha1.AgentConfig{
+						Type: "IPFIX",
+						IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
+							Sampling: 200,
+						},
 					},
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
 						Port:            9001,
@@ -204,8 +206,8 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.IPFIX.CacheActiveTimeout = "30s"
-				fc.Spec.IPFIX.Sampling = 1234
+				fc.Spec.Agent.IPFIX.CacheActiveTimeout = "30s"
+				fc.Spec.Agent.IPFIX.Sampling = 1234
 				fc.Spec.FlowlogsPipeline.Port = 1999
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
@@ -301,8 +303,11 @@ func flowCollectorControllerSpecs() {
 				Image:           "testimg:latest",
 			}
 			fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}
-			fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
-				Sampling: 200,
+			fc.Spec.Agent = flowsv1alpha1.AgentConfig{
+				Type: "IPFIX",
+				IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
+					Sampling: 200,
+				},
 			}
 			// Update
 			Expect(k8sClient.Update(ctx, &fc)).Should(Succeed())
@@ -473,8 +478,11 @@ func flowCollectorControllerSpecs() {
 				fc.Spec.FlowlogsPipeline.Kind = "Deployment"
 				fc.Spec.FlowlogsPipeline.Port = 9999
 				fc.Spec.Namespace = otherNamespace
-				fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
-					Sampling: 200,
+				fc.Spec.Agent = flowsv1alpha1.AgentConfig{
+					Type: "IPFIX",
+					IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
+						Sampling: 200,
+					},
 				}
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())

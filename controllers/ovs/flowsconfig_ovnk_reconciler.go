@@ -87,7 +87,7 @@ func (c *FlowsConfigOVNKController) getDaemonSet(ctx context.Context) (*appsv1.D
 }
 
 func (c *FlowsConfigOVNKController) desiredEnv(ctx context.Context, coll *flowsv1alpha1.FlowCollector) (map[string]string, error) {
-	cacheTimeout, err := time.ParseDuration(coll.Spec.IPFIX.CacheActiveTimeout)
+	cacheTimeout, err := time.ParseDuration(coll.Spec.Agent.IPFIX.CacheActiveTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -95,11 +95,11 @@ func (c *FlowsConfigOVNKController) desiredEnv(ctx context.Context, coll *flowsv
 	envs := map[string]string{
 		"OVN_IPFIX_TARGETS":              "",
 		"OVN_IPFIX_CACHE_ACTIVE_TIMEOUT": strconv.Itoa(int(cacheTimeout.Seconds())),
-		"OVN_IPFIX_CACHE_MAX_FLOWS":      strconv.Itoa(int(coll.Spec.IPFIX.CacheMaxFlows)),
-		"OVN_IPFIX_SAMPLING":             strconv.Itoa(int(coll.Spec.IPFIX.Sampling)),
+		"OVN_IPFIX_CACHE_MAX_FLOWS":      strconv.Itoa(int(coll.Spec.Agent.IPFIX.CacheMaxFlows)),
+		"OVN_IPFIX_SAMPLING":             strconv.Itoa(int(coll.Spec.Agent.IPFIX.Sampling)),
 	}
 
-	if coll.Spec.Agent != flowsv1alpha1.AgentIPFIX {
+	if coll.Spec.Agent.Type != flowsv1alpha1.AgentIPFIX {
 		// No IPFIX => leave target empty and return
 		return envs, nil
 	}

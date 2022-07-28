@@ -43,7 +43,6 @@ func flowCollectorEBPFSpecs() {
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
 					Namespace: operatorNamespace,
-					Agent:     "ebpf",
 					FlowlogsPipeline: flowsv1alpha1.FlowCollectorFLP{
 						Kind:            "DaemonSet",
 						Port:            9999,
@@ -51,16 +50,19 @@ func flowCollectorEBPFSpecs() {
 						LogLevel:        "error",
 						Image:           "testimg:latest",
 					},
-					EBPF: flowsv1alpha1.FlowCollectorEBPF{
-						Image:              "netobserv-ebpf-agent:latest",
-						Sampling:           123,
-						CacheActiveTimeout: "15s",
-						CacheMaxFlows:      100,
-						Interfaces:         []string{"veth0", "/^br-/"},
-						ExcludeInterfaces:  []string{"br-3", "lo"},
-						LogLevel:           "trace",
-						Env: map[string]string{
-							"BUFFERS_LENGTH": "100",
+					Agent: flowsv1alpha1.AgentConfig{
+						Type: "EBPF",
+						EBPF: flowsv1alpha1.FlowCollectorEBPF{
+							Image:              "netobserv-ebpf-agent:latest",
+							Sampling:           123,
+							CacheActiveTimeout: "15s",
+							CacheMaxFlows:      100,
+							Interfaces:         []string{"veth0", "/^br-/"},
+							ExcludeInterfaces:  []string{"br-3", "lo"},
+							LogLevel:           "trace",
+							Env: map[string]string{
+								"BUFFERS_LENGTH": "100",
+							},
 						},
 					},
 				},
@@ -131,9 +133,9 @@ func flowCollectorEBPFSpecs() {
 		It("Should update fields that have changed", func() {
 			updated := flowsv1alpha1.FlowCollector{}
 			Expect(k8sClient.Get(ctx, crKey, &updated)).Should(Succeed())
-			Expect(updated.Spec.EBPF.Sampling).To(Equal(int32(123)))
-			updated.Spec.EBPF.Sampling = 4
-			updated.Spec.EBPF.Privileged = true
+			Expect(updated.Spec.Agent.EBPF.Sampling).To(Equal(int32(123)))
+			updated.Spec.Agent.EBPF.Sampling = 4
+			updated.Spec.Agent.EBPF.Privileged = true
 			Expect(k8sClient.Update(ctx, &updated)).Should(Succeed())
 
 			ds := appsv1.DaemonSet{}
@@ -238,7 +240,9 @@ func flowCollectorEBPFKafkaSpecs() {
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
 					Namespace: operatorNamespace,
-					Agent:     "ebpf",
+					Agent: flowsv1alpha1.AgentConfig{
+						Type: "EBPF",
+					},
 					Kafka: flowsv1alpha1.FlowCollectorKafka{
 						Enable:  true,
 						Address: "kafka-cluster-kafka-bootstrap",

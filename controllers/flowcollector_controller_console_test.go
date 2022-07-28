@@ -71,7 +71,9 @@ func flowCollectorConsolePluginSpecs() {
 				},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
 					Namespace: cpNamespace,
-					Agent:     "ipfix",
+					Agent: flowsv1alpha1.AgentConfig{
+						Type: "IPFIX",
+					},
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
 						Port:            9001,
 						ImagePullPolicy: "Never",
