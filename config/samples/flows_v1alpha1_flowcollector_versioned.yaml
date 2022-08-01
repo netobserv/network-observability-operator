@@ -30,7 +30,7 @@ spec:
     logLevel: info
     enableKubeProbes: true
     healthPort: 8080
-    prometheusPort: 9102
+    prometheusPort: 9090
     ignoreMetrics: []
   kafka:
     enable: false

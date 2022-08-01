@@ -57,7 +57,7 @@ metadata:
               "kind": "DaemonSet",
               "logLevel": "info",
               "port": 2055,
-              "prometheusPort": 9102
+              "prometheusPort": 9090
             },
             "kafka": {
               "address": "kafka-cluster-kafka-bootstrap.network-observability",
