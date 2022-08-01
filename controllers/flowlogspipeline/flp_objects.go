@@ -171,6 +171,10 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredKafka.TLS, kafkaCerts)
 	}
 
+	if b.desiredLoki.SendAuthToken {
+		volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, constants.FLPName+b.confKindSuffix, constants.FLPName)
+	}
+
 	container := corev1.Container{
 		Name:            constants.FLPName + b.confKindSuffix,
 		Image:           b.desired.Image,
@@ -338,8 +342,16 @@ func (b *builder) addTransformStages(lastStage *config.PipelineBuilderStage) {
 		lokiWrite.TimestampLabel = "TimeFlowEndMs"
 		lokiWrite.TimestampScale = "1ms"
 		lokiWrite.TenantID = b.desiredLoki.TenantID
+		var authorization *promConfig.Authorization
+		if b.desiredLoki.SendAuthToken {
+			authorization = &promConfig.Authorization{
+				Type:            "Bearer",
+				CredentialsFile: helper.TokensPath + constants.FLPName,
+			}
+		}
 		//TODO: set proper tls config https://issues.redhat.com/browse/NETOBSERV-309
 		lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+			Authorization: authorization,
 			TLSConfig: promConfig.TLSConfig{
 				InsecureSkipVerify: true,
 			},
