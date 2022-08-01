@@ -14,6 +14,8 @@ NetObserv Operator is available in [OperatorHub](https://operatorhub.io/operator
 
 ![OpenShift OperatorHub search](./docs/assets/operatorhub-search.png)
 
+Please read the operator description. You will need to install Loki, some instructions are provided there.
+
 After the operator is installed, create a `FlowCollector` resource:
 
 ![OpenShift OperatorHub FlowCollector](./docs/assets/operatorhub-flowcollector.png)
