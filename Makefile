@@ -199,7 +199,7 @@ TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go install $(2) ;\
+GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
@@ -210,11 +210,11 @@ bundle: generate kustomize ## Generate bundle manifests and metadata, then valid
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	gsed -i 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	gsed -i 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	gsed -i 's~ebpf-agent:main~ebpf-agent:$(BPF_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	gsed -i 's~blob/[0-9]\+\.[0-9]\+\.[0-9]\+\(-rc[0-9]\+\)\?/~blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
-	$(KUSTOMIZE) build config/manifests | gsed -e 's~:container-image:~$(IMG)~' | gsed -e 's~:created-at:~$(DATE)~' | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	sed -i 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
+	sed -i 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
+	sed -i 's~ebpf-agent:main~ebpf-agent:$(BPF_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
+	sed -i 's~blob/[0-9]\+\.[0-9]\+\.[0-9]\+\(-rc[0-9]\+\)\?/~blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	$(KUSTOMIZE) build config/manifests | sed -e 's~:container-image:~$(IMG)~' | sed -e 's~:created-at:~$(DATE)~' | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 
 .PHONY: bundle-build
@@ -269,7 +269,7 @@ catalog-push: ## Push a catalog image.
 # Deploy the catalog.
 .PHONY: catalog-deploy
 catalog-deploy:
-	gsed -e 's~<IMG>~$(CATALOG_IMG)~' ./config/samples/catalog/catalog.yaml | kubectl apply -f -
+	sed -e 's~<IMG>~$(CATALOG_IMG)~' ./config/samples/catalog/catalog.yaml | kubectl apply -f -
 
 include .mk/sample.mk
 include .mk/development.mk
