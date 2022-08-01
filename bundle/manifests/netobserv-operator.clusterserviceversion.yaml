@@ -11,7 +11,27 @@ metadata:
             "name": "cluster"
           },
           "spec": {
-          "agent": "ipfix",
+            "agent": {
+              "ebpf": {
+                "cacheActiveTimeout": "5s",
+                "cacheMaxFlows": 1000,
+                "excludeInterfaces": [
+                  "lo"
+                ],
+                "image": "quay.io/netobserv/netobserv-ebpf-agent:v0.1.3",
+                "imagePullPolicy": "IfNotPresent",
+                "interfaces": [],
+                "logLevel": "info",
+                "privileged": false,
+                "sampling": 0
+              },
+              "ipfix": {
+                "cacheActiveTimeout": "60s",
+                "cacheMaxFlows": 100,
+                "sampling": 400
+              },
+              "type": "IPFIX"
+            },
             "clusterNetworkOperator": {
               "namespace": "openshift-network-operator"
             },
@@ -28,37 +48,34 @@ metadata:
               },
               "register": true
             },
-            "ebpf": {
-              "cacheActiveTimeout": "5s",
-              "cacheMaxFlows": 1000,
-              "excludeInterfaces": [
-                "lo"
-              ],
-              "image": "quay.io/netobserv/netobserv-ebpf-agent:v0.1.1",
-              "imagePullPolicy": "IfNotPresent",
-              "interfaces": [],
-              "logLevel": "info",
-              "privileged": false,
-              "sampling": 0
-            },
             "flowlogsPipeline": {
               "enableKubeProbes": true,
               "healthPort": 8080,
+              "ignoreMetrics": [],
               "image": "quay.io/netobserv/flowlogs-pipeline:v0.1.2",
               "imagePullPolicy": "IfNotPresent",
               "kind": "DaemonSet",
               "logLevel": "info",
               "port": 2055,
-              "prometheusPort": 9090
-            },
-            "ipfix": {
-              "cacheActiveTimeout": "60s",
-              "cacheMaxFlows": 100,
-              "sampling": 400
+              "prometheusPort": 9102
             },
             "kafka": {
               "address": "kafka-cluster-kafka-bootstrap.network-observability",
               "enable": false,
+              "tls": {
+                "caCert": {
+                  "certFile": "ca.crt",
+                  "name": "kafka-cluster-cluster-ca-cert",
+                  "type": "secret"
+                },
+                "enable": false,
+                "userCert": {
+                  "certFile": "user.crt",
+                  "certKey": "user.key",
+                  "name": "flp-kafka",
+                  "type": "secret"
+                }
+              },
               "topic": "network-flows"
             },
             "loki": {
@@ -103,7 +120,7 @@ spec:
       name: flowcollectors.flows.netobserv.io
       version: v1alpha1
   description: |-
-    NetObserv Operator is an OpenShift / Kubernetes operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by a provided eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
+    NetObserv Operator is an OpenShift / Kubernetes operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by the NetObserv eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
 
     The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When used in OpenShift, new dashboards are available in the Console.
 
@@ -125,7 +142,7 @@ spec:
 
     ## Configuration
 
-    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/0.1.3/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/0.1.3/config/samples/flows_v1alpha1_flowcollector.yaml).
+    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/main/config/samples/flows_v1alpha1_flowcollector.yaml).
 
     As it operates cluster-wide, only a single `FlowCollector` is allowed, and it has to be named `cluster`.
 
@@ -157,9 +174,9 @@ spec:
 
     Grafana can be used to retrieve and show the collected flows from Loki. In Grafana, add a new Loki data source that matches your setup. If you used the quick install commands provided above to install Loki, its access URL is `http://loki:3100`.
 
-    To get dashboards, import [this file](https://github.com/netobserv/network-observability-operator/blob/0.1.3/config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
+    To get dashboards, import [this file](https://github.com/netobserv/network-observability-operator/blob/main/config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
 
-    See more info and screenshots on [GitHub's readme](https://github.com/netobserv/network-observability-operator/blob/0.1.3/README.md)
+    See more info and screenshots on [GitHub's readme](https://github.com/netobserv/network-observability-operator/blob/main/README.md)
 
     ## F.A.Q / Troubleshooting
 
@@ -336,7 +353,10 @@ spec:
           - create
         serviceAccountName: netobserv-controller-manager
       deployments:
-      - name: netobserv-controller-manager
+      - label:
+          app: network-observability-operator
+          control-plane: controller-manager
+        name: netobserv-controller-manager
         spec:
           replicas: 1
           selector:
