@@ -406,7 +406,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.Equal("trace", decoded.LogLevel)
 
 	params := decoded.Parameters
-	assert.Len(params, 6)
+	assert.Len(params, 5)
 	assert.Equal(flp.Port, int32(params[0].Ingest.Collector.Port))
 
 	lokiCfg := params[2].Write.Loki
@@ -419,7 +419,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
-	assert.Equal(flp.Prometheus.Port, int32(params[5].Encode.Prom.Port))
+	assert.Equal(flp.Prometheus.Port, int32(params[4].Encode.Prom.Port))
 
 }
 
@@ -559,7 +559,7 @@ func TestPipelineConfig(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 
 	// Kafka Ingester
 	kafka.Enable = true
@@ -576,7 +576,7 @@ func TestPipelineConfig(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
-	assert.Equal(`[{"name":"kafka-read"},{"name":"enrich","follows":"kafka-read"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"kafka-read"},{"name":"enrich","follows":"kafka-read"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 }
 
 func TestPipelineConfigDropUnused(t *testing.T) {
@@ -594,7 +594,7 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"filter","follows":"ipfix"},{"name":"enrich","follows":"filter"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"ipfix"},{"name":"filter","follows":"ipfix"},{"name":"enrich","follows":"filter"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 
 	jsonParams, _ := json.Marshal(parameters[1].Transform.Filter)
 	assert.Contains(string(jsonParams), `{"input":"CustomBytes1","type":"remove_field"}`)
@@ -612,7 +612,7 @@ func TestPipelineTraceStage(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 }
 
 func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
@@ -625,13 +625,12 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
-	assert.Equal("bandwidth_network_service_namespace", parameters[4].Extract.Aggregates[0].Name)
-	assert.Equal(3, len(parameters[5].Encode.Prom.Metrics))
-	assert.Equal("bandwidth_per_network_service_per_namespace", parameters[5].Encode.Prom.Metrics[0].Name)
-	assert.Equal("bandwidth_per_source_subnet", parameters[5].Encode.Prom.Metrics[1].Name)
-	assert.Equal("network_service_count", parameters[5].Encode.Prom.Metrics[2].Name)
-	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
+	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	assert.Len(parameters[4].Encode.Prom.Metrics, 3)
+	assert.Equal("bandwidth_per_network_service_per_namespace", parameters[4].Encode.Prom.Metrics[0].Name)
+	assert.Equal("bandwidth_per_source_subnet", parameters[4].Encode.Prom.Metrics[1].Name)
+	assert.Equal("network_service_total", parameters[4].Encode.Prom.Metrics[2].Name)
+	assert.Equal("netobserv_", parameters[4].Encode.Prom.Prefix)
 }
 
 func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
@@ -645,10 +644,9 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
-	assert.Equal("bandwidth_network_service_namespace", parameters[4].Extract.Aggregates[0].Name)
-	assert.Equal(2, len(parameters[5].Encode.Prom.Metrics))
-	assert.Equal("bandwidth_per_network_service_per_namespace", parameters[5].Encode.Prom.Metrics[0].Name)
-	assert.Equal("network_service_count", parameters[5].Encode.Prom.Metrics[1].Name)
-	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
+	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	assert.Equal(2, len(parameters[4].Encode.Prom.Metrics))
+	assert.Equal("bandwidth_per_network_service_per_namespace", parameters[4].Encode.Prom.Metrics[0].Name)
+	assert.Equal("network_service_total", parameters[4].Encode.Prom.Metrics[1].Name)
+	assert.Equal("netobserv_", parameters[4].Encode.Prom.Prefix)
 }

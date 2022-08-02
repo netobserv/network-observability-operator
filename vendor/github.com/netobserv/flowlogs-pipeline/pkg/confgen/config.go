@@ -44,6 +44,7 @@ type Config struct {
 	Description   string              `yaml:"description"`
 	Ingest        config.Ingest       `yaml:"ingest"`
 	Transform     config.Transform    `yaml:"transform"`
+	Extract       config.Extract      `yaml:"extract"`
 	Write         config.Write        `yaml:"write"`
 	Encode        config.Encode       `yaml:"encode"`
 	Visualization ConfigVisualization `yaml:"visualization"`

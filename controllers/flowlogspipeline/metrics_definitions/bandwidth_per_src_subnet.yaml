@@ -10,20 +10,12 @@ tags:
   - graph
   - rate
   - subnet
-extract:
-  aggregates:
-    - name: bandwidth_source_subnet
-      by:
-        - SrcSubnet
-      operation: sum
-      recordKey: Bytes
 encode:
   type: prom
   prom:
     metrics:
       - name: bandwidth_per_source_subnet
         type: counter
-        filter: {key: name, value: bandwidth_source_subnet}
-        valueKey: recent_op_value
+        valueKey: Bytes
         labels:
           - SrcSubnet

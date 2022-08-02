@@ -1,0 +1,20 @@
+#flp_confgen
+description:
+  This metric observes network services flow (total)
+details:
+  Counts the number of flows per network service based on destination port number and protocol
+usage:
+  Evaluate network services
+tags:
+  - rate
+  - network-services
+  - destination-port
+  - destination-protocol
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: network_service_total
+        type: counter
+        labels:
+          - Service

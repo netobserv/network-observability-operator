@@ -185,7 +185,7 @@ func (cg *ConfGen) ParseDefinition(name string, bytes []byte) error {
 	}
 
 	// parse encode
-	definition.PromEncode, err = cg.parseEncode(&defFile.Encode)
+	definition.PromEncode, err = cg.parseEncode(&defFile.Encode, len(*definition.AggregateDefinitions) > 0)
 	if err != nil {
 		log.Debugf("parseEncode err: %v ", err)
 		return err

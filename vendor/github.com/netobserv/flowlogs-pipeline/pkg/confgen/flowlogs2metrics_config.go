@@ -29,29 +29,35 @@ import (
 
 func (cg *ConfGen) GenerateFlowlogs2PipelineConfig() *config.ConfigFileStruct {
 	pipeline, _ := config.NewPipeline("ingest_collector", &cg.config.Ingest)
-	next := pipeline
+	forkedNode := pipeline
 	if cg.config.Transform.Generic != nil {
 		gen := *cg.config.Transform.Generic
 		if len(gen.Policy) == 0 {
 			gen.Policy = "replace_keys"
 		}
-		next = next.TransformGeneric("transform_generic", gen)
+		forkedNode = forkedNode.TransformGeneric("transform_generic", gen)
 	}
 	if len(cg.transformRules) > 0 {
-		next = next.TransformNetwork("transform_network", api.TransformNetwork{
+		forkedNode = forkedNode.TransformNetwork("transform_network", api.TransformNetwork{
 			Rules: cg.transformRules,
 		})
 	}
+	if cg.config.Extract.ConnTrack != nil {
+		forkedNode = forkedNode.ConnTrack("extract_conntrack", *cg.config.Extract.ConnTrack)
+	}
+	metricsNode := forkedNode
 	if len(cg.aggregateDefinitions) > 0 {
-		agg := next.Aggregate("extract_aggregate", cg.aggregateDefinitions)
-		agg.EncodePrometheus("encode_prom", api.PromEncode{
+		metricsNode = metricsNode.Aggregate("extract_aggregate", cg.aggregateDefinitions)
+	}
+	if len(cg.promMetrics) > 0 {
+		metricsNode.EncodePrometheus("encode_prom", api.PromEncode{
 			Port:    cg.config.Encode.Prom.Port,
 			Prefix:  cg.config.Encode.Prom.Prefix,
 			Metrics: cg.promMetrics,
 		})
 	}
 	if cg.config.Write.Loki != nil {
-		next.WriteLoki("write_loki", *cg.config.Write.Loki)
+		forkedNode.WriteLoki("write_loki", *cg.config.Write.Loki)
 	}
 	return &config.ConfigFileStruct{
 		LogLevel:   "error",

@@ -266,14 +266,14 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 //go:embed metrics_definitions
 var metricsConfigEmbed embed.FS
 
-func (b *builder) obtainMetricsConfiguration() ([]api.AggregateDefinition, api.PromMetricsItems, error) {
+func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, error) {
 	entries, err := metricsConfigEmbed.ReadDir(metricsConfigDir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to access metrics_definitions directory: %w", err)
+		return nil, fmt.Errorf("failed to access metrics_definitions directory: %w", err)
 	}
 
 	cg := confgen.NewConfGen(&confgen.Options{
-		GenerateStages: []string{"extract_aggregate", "encode_prom"},
+		GenerateStages: []string{"encode_prom"},
 		SkipWithTags:   b.desired.IgnoreMetrics,
 	})
 
@@ -283,25 +283,22 @@ func (b *builder) obtainMetricsConfiguration() ([]api.AggregateDefinition, api.P
 
 		input, err := metricsConfigEmbed.ReadFile(srcPath)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error reading metrics file %s; %w", srcPath, err)
+			return nil, fmt.Errorf("error reading metrics file %s; %w", srcPath, err)
 		}
 		err = cg.ParseDefinition(fileName, input)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error parsing metrics file %s; %w", srcPath, err)
+			return nil, fmt.Errorf("error parsing metrics file %s; %w", srcPath, err)
 		}
 	}
 
 	stages := cg.GenerateTruncatedConfig()
-	if len(stages) != 2 {
-		return nil, nil, fmt.Errorf("error generating truncated config, 2 stages expected in %v", stages)
+	if len(stages) != 1 {
+		return nil, fmt.Errorf("error generating truncated config, 1 stage expected in %v", stages)
 	}
-	if stages[0].Extract == nil {
-		return nil, nil, fmt.Errorf("error generating truncated config, Extract expected in %v", stages)
+	if stages[0].Encode == nil || stages[0].Encode.Prom == nil {
+		return nil, fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
 	}
-	if stages[1].Encode == nil || stages[1].Encode.Prom == nil {
-		return nil, nil, fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
-	}
-	return stages[0].Extract.Aggregates, stages[1].Encode.Prom.Metrics, nil
+	return stages[0].Encode.Prom.Metrics, nil
 }
 
 func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
@@ -397,7 +394,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	}
 
 	// obtain extract_aggregate and encode_prometheus stages from metrics_definitions
-	aggregates, promMetrics, err := b.obtainMetricsConfiguration()
+	promMetrics, err := b.obtainMetricsConfiguration()
 	if err != nil {
 		return err
 	}
@@ -416,8 +413,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		}
 	}
 
-	agg := enrichedStage.Aggregate("aggregate", aggregates)
-	agg.EncodePrometheus("prometheus", promEncode)
+	enrichedStage.EncodePrometheus("prometheus", promEncode)
 	return nil
 }
 

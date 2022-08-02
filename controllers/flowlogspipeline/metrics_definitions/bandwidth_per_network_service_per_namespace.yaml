@@ -11,22 +11,13 @@ tags:
   - rate
   - network-service
   - kubernetes
-extract:
-  aggregates:
-    - name: bandwidth_network_service_namespace
-      by:
-        - Service
-        - SrcK8S_Namespace
-      operation: sum
-      recordKey: Bytes
 encode:
   type: prom
   prom:
     metrics:
       - name: bandwidth_per_network_service_per_namespace
         type: counter
-        filter: {key: name, value: bandwidth_network_service_namespace}
-        valuekey: recent_op_value
+        valuekey: Bytes
         labels:
           - Service
           - SrcK8S_Namespace

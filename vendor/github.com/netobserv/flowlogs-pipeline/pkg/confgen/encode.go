@@ -24,7 +24,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (cg *ConfGen) parseEncode(encode *map[string]interface{}) (*api.PromEncode, error) {
+func (cg *ConfGen) parseEncode(encode *map[string]interface{}, followAggregate bool) (*api.PromEncode, error) {
 	var jsoniterJson = jsoniter.ConfigCompatibleWithStandardLibrary
 	promEncode := (*encode)["prom"]
 	b, err := jsoniterJson.Marshal(promEncode)
@@ -38,6 +38,15 @@ func (cg *ConfGen) parseEncode(encode *map[string]interface{}) (*api.PromEncode,
 	if err != nil {
 		log.Debugf("Unmarshal aggregate.Definitions err: %v ", err)
 		return nil, err
+	}
+
+	// Histograms built from Aggregate need to be flagged as they are handled in a different way in PromEncode
+	if followAggregate {
+		for i := range prom.Metrics {
+			if prom.Metrics[i].Type == "histogram" {
+				prom.Metrics[i].Type = "agg_histogram"
+			}
+		}
 	}
 
 	cg.promMetrics = append(cg.promMetrics, prom.Metrics...)

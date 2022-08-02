@@ -36,5 +36,5 @@ func TransformFilterOperationName(operation string) string {
 type TransformFilterRule struct {
 	Input string      `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
 	Type  string      `yaml:"type,omitempty" json:"type,omitempty" enum:"TransformFilterOperationEnum" doc:"one of the following:"`
-	Value interface{} `yaml:"value,omitempty" json:"value,omitempty" enum:"TransformFilterOperationEnum" doc:"specified value of input field:"`
+	Value interface{} `yaml:"value,omitempty" json:"value,omitempty" doc:"specified value of input field:"`
 }
