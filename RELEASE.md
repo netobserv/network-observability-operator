@@ -31,13 +31,13 @@ Once all sub-components are released (or have a release candidate), we can proce
 
 ```bash
 # Set desired operator version - CAREFUL, no leading "v" here
-version="0.1.3"
+version="0.1.4-rc0"
 # Set console plugin released version
-plgv="v0.1.3"
+plgv="v0.1.4-rc0"
 # Set flowlogs-pipeline released version
-flpv="v0.1.2"
+flpv="v0.1.3-rc2"
 # Set ebpf-agent released version
-bpfv="v0.1.1"
+bpfv="v0.1.2-rc0"
 
 vv=v$version
 test_branch=test-$vv
