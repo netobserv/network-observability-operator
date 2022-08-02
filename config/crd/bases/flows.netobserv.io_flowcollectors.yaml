@@ -1460,24 +1460,35 @@ spec:
                   "agent" property is set to "ipfix".
                 properties:
                   cacheActiveTimeout:
-                    default: 60s
+                    default: 20s
                     description: CacheActiveTimeout is the max period during which
                       the reporter will aggregate flows before sending
                     pattern: ^\d+(ns|ms|s|m)?$
                     type: string
                   cacheMaxFlows:
-                    default: 100
+                    default: 400
                     description: CacheMaxFlows is the max number of flows in an aggregate;
                       when reached, the reporter sends the flows
                     format: int32
                     minimum: 0
                     type: integer
+                  forceSampleAll:
+                    default: false
+                    description: It is not recommended to sample all the traffic with
+                      IPFIX, as it may generate cluster instability. If you REALLY
+                      want to do that, set this flag to true. Use at your own risks.
+                      When it is set to true, the value of "sampling" is ignored.
+                    type: boolean
                   sampling:
                     default: 400
                     description: Sampling is the sampling rate on the reporter. 100
-                      means one flow on 100 is sent. 0 means disabled.
+                      means one flow on 100 is sent. To ensure cluster stability,
+                      it is not possible to set a value below 2. If you really want
+                      to sample every packet, which may impact the cluster stability,
+                      refer to "forceSampleAll". Alternatively, you can use the eBPF
+                      Agent instead of IPFIX.
                     format: int32
-                    minimum: 0
+                    minimum: 2
                     type: integer
                 type: object
               kafka:

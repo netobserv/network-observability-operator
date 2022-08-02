@@ -1,10 +1,12 @@
 package ovs
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
 	"github.com/mitchellh/mapstructure"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 )
@@ -34,4 +36,16 @@ func (fc *flowsConfig) asStringMap() map[string]string {
 		stringVals[k] = fmt.Sprint(v)
 	}
 	return stringVals
+}
+
+// getSampling returns the configured sampling, or 1 if ipfix.forceSampleAll is true
+// Note that configured sampling has a minimum value of 2.
+// See also https://bugzilla.redhat.com/show_bug.cgi?id=2103136 , https://bugzilla.redhat.com/show_bug.cgi?id=2104943
+func getSampling(ctx context.Context, cfg *v1alpha1.FlowCollectorIPFIX) int32 {
+	rlog := log.FromContext(ctx)
+	if cfg.ForceSampleAll {
+		rlog.Info("Warning, sampling is set to 1. This may put cluster stability at risk.")
+		return 1
+	}
+	return cfg.Sampling
 }

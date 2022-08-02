@@ -113,7 +113,10 @@ func (c *FlowsConfigCNOController) current(ctx context.Context) (*flowsConfig, e
 func (c *FlowsConfigCNOController) desired(
 	ctx context.Context, coll *flowsv1alpha1.FlowCollector) (*flowsConfig, error) {
 
-	conf := flowsConfig{FlowCollectorIPFIX: coll.Spec.IPFIX}
+	corrected := coll.Spec.IPFIX.DeepCopy()
+	corrected.Sampling = getSampling(ctx, corrected)
+
+	conf := flowsConfig{FlowCollectorIPFIX: *corrected}
 
 	// According to the "OVS flow export configuration" RFE:
 	// nodePort be set by the NOO when the collector is deployed as a DaemonSet
