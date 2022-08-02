@@ -14,7 +14,17 @@ spec:
     singular: flowcollector
   scope: Cluster
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.agent
+      name: Agent
+      type: string
+    - jsonPath: .spec.kafka.enable
+      name: Kafka
+      type: boolean
+    - jsonPath: .status.conditions[*].reason
+      name: Status
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: FlowCollector is the Schema for the flowcollectors API, which
@@ -583,7 +593,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.3
+                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.4-rc0
                     description: Image is the plugin image (including domain and tag)
                     type: string
                   imagePullPolicy:
@@ -721,7 +731,7 @@ spec:
                       type: string
                     type: array
                   image:
-                    default: quay.io/netobserv/netobserv-ebpf-agent:v0.1.1
+                    default: quay.io/netobserv/netobserv-ebpf-agent:v0.1.2-rc0
                     description: Image is the NetObserv Agent image (including domain
                       and tag)
                     type: string
@@ -800,6 +810,11 @@ spec:
                 description: Settings related to the flowlogs-pipeline component,
                   which collects and enriches the flows, and produces metrics.
                 properties:
+                  dropUnusedFields:
+                    default: true
+                    description: Set true to drop fields that are known to be unused
+                      by OVS, in order to save storage space.
+                    type: boolean
                   enableKubeProbes:
                     default: true
                     description: EnableKubeProbes is a flag to enable or disable Kubernetes
@@ -1332,8 +1347,14 @@ spec:
                     required:
                     - maxReplicas
                     type: object
+                  ignoreMetrics:
+                    description: IgnoreMetrics is a list of tags to specify which
+                      metrics to ignore
+                    items:
+                      type: string
+                    type: array
                   image:
-                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.2
+                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.3-rc2
                     description: Image is the collector image (including domain and
                       tag)
                     type: string
@@ -1348,9 +1369,14 @@ spec:
                     type: string
                   kind:
                     default: DaemonSet
-                    description: Kind is the workload kind, either DaemonSet or Deployment
-                      When using Kafka, this option only affects the flowlogs-pipeline
-                      ingester, not the transformer.
+                    description: Kind is the workload kind, either DaemonSet or Deployment.
+                      When DaemonSet is used, each pod will receive flows from the
+                      node it is running on. When Deployment is used, the flows traffic
+                      received from nodes will be load-balanced. Note that in such
+                      a case, the number of replicas should be less or equal to the
+                      number of nodes, as extra-pods would be unused due to session
+                      affinity with the node IP. When using Kafka, this option only
+                      affects the flowlogs-pipeline ingester, not the transformer.
                     enum:
                     - DaemonSet
                     - Deployment
@@ -1472,6 +1498,62 @@ spec:
                       by the eBPF agent, depending on the value of `spec.agent`. The
                       transformation is done by a new flowlogs-pipeline deployment.'
                     type: boolean
+                  tls:
+                    description: TLS client configuration.
+                    properties:
+                      caCert:
+                        description: CA certificate reference
+                        properties:
+                          certFile:
+                            description: Certificate file name within the ConfigMap
+                              / Secret
+                            type: string
+                          certKey:
+                            description: Certificate private key file name within
+                              the ConfigMap / Secret. Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: Name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'Reference type: configmap or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      enable:
+                        default: false
+                        description: Enable TLS
+                        type: boolean
+                      insecureSkipVerify:
+                        default: false
+                        description: Skip client-side verification of the server certificate
+                        type: boolean
+                      userCert:
+                        description: User certificate reference
+                        properties:
+                          certFile:
+                            description: Certificate file name within the ConfigMap
+                              / Secret
+                            type: string
+                          certKey:
+                            description: Certificate private key file name within
+                              the ConfigMap / Secret. Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: Name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'Reference type: configmap or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                    type: object
                   topic:
                     default: ""
                     description: Kafka topic to use. It must exist, NetObserv will
@@ -1526,6 +1608,12 @@ spec:
                     description: StaticLabels is a map of common labels to set on
                       each flow
                     type: object
+                  tenantID:
+                    default: netobserv
+                    description: TenantID is the Loki X-Scope-OrgID that identifies
+                      the tenant for each request. it will be ignored if instanceSpec
+                      is specified
+                    type: string
                   timeout:
                     default: 10s
                     description: Timeout is the maximum time connection / request
@@ -1568,10 +1656,83 @@ spec:
           status:
             description: FlowCollectorStatus defines the observed state of FlowCollector
             properties:
+              conditions:
+                description: Conditions represent the latest available observations
+                  of an object's state
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource. --- This struct is intended for direct
+                    use as an array at the field path .status.conditions.  For example,
+                    type FooStatus struct{     // Represents the observations of a
+                    foo's current state.     // Known .status.conditions.type are:
+                    \"Available\", \"Progressing\", and \"Degraded\"     // +patchMergeKey=type
+                    \    // +patchStrategy=merge     // +listType=map     // +listMapKey=type
+                    \    Conditions []metav1.Condition `json:\"conditions,omitempty\"
+                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`
+                    \n     // other fields }"
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition
+                        transitioned from one status to another. This should be when
+                        the underlying condition changed.  If that is not known, then
+                        using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating
+                        details about the transition. This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.generation
+                        that the condition was set based upon. For instance, if .metadata.generation
+                        is currently 12, but the .status.conditions[x].observedGeneration
+                        is 9, the condition is out of date with respect to the current
+                        state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating
+                        the reason for the condition's last transition. Producers
+                        of specific condition types may define expected values and
+                        meanings for this field, and whether the values are considered
+                        a guaranteed API. The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                        --- Many .condition.type values are consistent across resources
+                        like Available, but because arbitrary conditions can be useful
+                        (see .node.status.conditions), the ability to deconflict is
+                        important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
               namespace:
                 description: Namespace where console plugin and flowlogs-pipeline
                   have been deployed.
                 type: string
+            required:
+            - conditions
             type: object
         type: object
     served: true

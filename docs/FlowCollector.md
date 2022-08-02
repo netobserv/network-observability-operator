@@ -1487,8 +1487,6 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         <td>[]string</td>
         <td>
           IgnoreMetrics is a list of tags to specify which metrics to ignore<br/>
-          <br/>
-            <i>Default</i>: [lo]<br/>
         </td>
         <td>false</td>
       </tr><tr>

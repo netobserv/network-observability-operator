@@ -10,7 +10,7 @@ spec:
     cacheMaxFlows: 100
     sampling: 400
   ebpf:
-    image: 'quay.io/netobserv/netobserv-ebpf-agent:v0.1.1'
+    image: 'quay.io/netobserv/netobserv-ebpf-agent:v0.1.2-rc0'
     imagePullPolicy: IfNotPresent
     sampling: 0
     cacheActiveTimeout: 5s
@@ -24,16 +24,29 @@ spec:
 #    kind: Deployment
 #    replicas: 1
     port: 2055
-    image: 'quay.io/netobserv/flowlogs-pipeline:v0.1.2'
+    image: 'quay.io/netobserv/flowlogs-pipeline:v0.1.3-rc2'
     imagePullPolicy: IfNotPresent
     logLevel: info
     enableKubeProbes: true
     healthPort: 8080
-    prometheusPort: 9090
+    prometheusPort: 9102
+    ignoreMetrics: []
+    dropUnusedFields: true
   kafka:
     enable: false
     address: "kafka-cluster-kafka-bootstrap.network-observability"
     topic: "network-flows"
+    tls:
+      enable: false
+      caCert:
+        type: secret
+        name: kafka-cluster-cluster-ca-cert
+        certFile: ca.crt
+      userCert:
+        type: secret
+        name: flp-kafka
+        certFile: user.crt
+        certKey: user.key
   loki:
     url: 'http://loki:3100/'
     batchWait: 1s
@@ -45,7 +58,7 @@ spec:
       app: netobserv-flowcollector
   consolePlugin:
     register: true
-    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.3'
+    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.4-rc0'
     imagePullPolicy: IfNotPresent
     port: 9001
     logLevel: info

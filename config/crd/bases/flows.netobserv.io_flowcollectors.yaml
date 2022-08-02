@@ -1346,8 +1346,6 @@ spec:
                     - maxReplicas
                     type: object
                   ignoreMetrics:
-                    default:
-                    - lo
                     description: IgnoreMetrics is a list of tags to specify which
                       metrics to ignore
                     items:

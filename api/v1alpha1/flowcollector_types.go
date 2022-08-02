@@ -247,7 +247,6 @@ type FlowCollectorFLP struct {
 	// Image is the collector image (including domain and tag)
 	Image string `json:"image,omitempty"`
 
-	//+kubebuilder:default=lo;
 	// IgnoreMetrics is a list of tags to specify which metrics to ignore
 	IgnoreMetrics []string `json:"ignoreMetrics,omitempty"`
 
