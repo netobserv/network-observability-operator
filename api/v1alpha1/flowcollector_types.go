@@ -339,6 +339,10 @@ type FlowCollectorLoki struct {
 	//+kubebuilder:default:={"app":"netobserv-flowcollector"}
 	// StaticLabels is a map of common labels to set on each flow
 	StaticLabels map[string]string `json:"staticLabels,omitempty"`
+
+	// TLS client configuration.
+	// +optional
+	TLS ClientTLS `json:"tls"`
 }
 
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector
