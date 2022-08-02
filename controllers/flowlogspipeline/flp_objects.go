@@ -65,7 +65,7 @@ type builder struct {
 	namespace       string
 	labels          map[string]string
 	selector        map[string]string
-	agent           string
+	agent           flowsv1alpha1.AgentType
 	desired         *flowsv1alpha1.FlowCollectorFLP
 	desiredLoki     *flowsv1alpha1.FlowCollectorLoki
 	desiredKafka    *flowsv1alpha1.FlowCollectorKafka
@@ -74,7 +74,7 @@ type builder struct {
 	useOpenShiftSCC bool
 }
 
-func newBuilder(ns, agent string, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, desiredKafka *flowsv1alpha1.FlowCollectorKafka, confKind string, useOpenShiftSCC bool) builder {
+func newBuilder(ns string, agent flowsv1alpha1.AgentType, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, desiredKafka *flowsv1alpha1.FlowCollectorKafka, confKind string, useOpenShiftSCC bool) builder {
 	version := helper.ExtractVersion(desired.Image)
 	return builder{
 		namespace: ns,

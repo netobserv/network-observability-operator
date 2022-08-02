@@ -49,6 +49,7 @@ metadata:
               "register": true
             },
             "flowlogsPipeline": {
+              "dropUnusedFields": true,
               "enableKubeProbes": true,
               "healthPort": 8080,
               "ignoreMetrics": [],
@@ -102,9 +103,9 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["network-observability-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:0.1.3
-    createdAt: "2022-06-29T07:07:05Z"
+    createdAt: "2022-08-02T12:48:17Z"
     description: Network flows collector and monitoring solution
-    operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.22.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
   name: netobserv-operator.v0.1.3

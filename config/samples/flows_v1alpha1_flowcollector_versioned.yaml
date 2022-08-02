@@ -32,6 +32,7 @@ spec:
     healthPort: 8080
     prometheusPort: 9090
     ignoreMetrics: []
+    dropUnusedFields: true
   kafka:
     enable: false
     address: "kafka-cluster-kafka-bootstrap.network-observability"
