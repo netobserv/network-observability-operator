@@ -4,21 +4,22 @@ metadata:
   name: cluster
 spec:
   namespace: "network-observability"
-  agent: ipfix
-  ipfix:
-    cacheActiveTimeout: 60s
-    cacheMaxFlows: 100
-    sampling: 400
-  ebpf:
-    image: 'quay.io/netobserv/netobserv-ebpf-agent:v0.1.1'
-    imagePullPolicy: IfNotPresent
-    sampling: 0
-    cacheActiveTimeout: 5s
-    cacheMaxFlows: 1000
-    interfaces: []
-    excludeInterfaces: ["lo"]
-    logLevel: info
-    privileged: false
+  agent:
+    type: IPFIX
+    ipfix:
+      cacheActiveTimeout: 60s
+      cacheMaxFlows: 100
+      sampling: 400
+    ebpf:
+      image: 'quay.io/netobserv/netobserv-ebpf-agent:v0.1.3'
+      imagePullPolicy: IfNotPresent
+      sampling: 0
+      cacheActiveTimeout: 5s
+      cacheMaxFlows: 1000
+      interfaces: []
+      excludeInterfaces: ["lo"]
+      logLevel: info
+      privileged: false
   flowlogsPipeline:
     kind: DaemonSet
 #    kind: Deployment
@@ -30,10 +31,23 @@ spec:
     enableKubeProbes: true
     healthPort: 8080
     prometheusPort: 9090
+    ignoreMetrics: []
+    dropUnusedFields: true
   kafka:
     enable: false
     address: "kafka-cluster-kafka-bootstrap.network-observability"
     topic: "network-flows"
+    tls:
+      enable: false
+      caCert:
+        type: secret
+        name: kafka-cluster-cluster-ca-cert
+        certFile: ca.crt
+      userCert:
+        type: secret
+        name: flp-kafka
+        certFile: user.crt
+        certKey: user.key
   loki:
     url: 'http://loki:3100/'
     batchWait: 1s

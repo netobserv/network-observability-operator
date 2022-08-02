@@ -463,7 +463,7 @@ func TestDeployNeeded(t *testing.T) {
 	assert := assert.New(t)
 
 	spec := flowsv1alpha1.FlowCollectorSpec{
-		Agent: "ipfix",
+		Agent: flowsv1alpha1.AgentConfig{Type: "IPFIX"},
 		Kafka: flowsv1alpha1.FlowCollectorKafka{Enable: false, Address: "loaclhost:9092", Topic: "FLP"},
 	}
 	// Kafka not configured
@@ -490,7 +490,7 @@ func TestDeployNeeded(t *testing.T) {
 	assert.NoError(err)
 
 	// Kafka + eBPF agent configured
-	spec.Agent = "ebpf"
+	spec.Agent = flowsv1alpha1.AgentConfig{Type: "EBPF"}
 	res, err = checkDeployNeeded(&spec, ConfSingle)
 	assert.False(res)
 	assert.NoError(err)
