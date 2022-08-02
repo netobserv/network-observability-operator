@@ -172,11 +172,7 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 		return err
 	}
 
-	portProtocol := corev1.ProtocolUDP
-	if desired.Spec.Agent.Type == flowsv1alpha1.AgentEBPF {
-		portProtocol = corev1.ProtocolTCP
-	}
-	builder := newBuilder(r.nobjMngr.Namespace, portProtocol, desiredFLP, desiredLoki, desiredKafka, r.confKind, r.useOpenShiftSCC)
+	builder := newBuilder(r.nobjMngr.Namespace, desired.Spec.Agent.Type, desiredFLP, desiredLoki, desiredKafka, r.confKind, r.useOpenShiftSCC)
 	newCM, configDigest := builder.configMap()
 	if !r.nobjMngr.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {

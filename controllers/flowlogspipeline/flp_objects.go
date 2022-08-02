@@ -25,6 +25,7 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -64,7 +65,7 @@ type builder struct {
 	namespace       string
 	labels          map[string]string
 	selector        map[string]string
-	portProtocol    corev1.Protocol
+	agent           string
 	desired         *flowsv1alpha1.FlowCollectorFLP
 	desiredLoki     *flowsv1alpha1.FlowCollectorLoki
 	desiredKafka    *flowsv1alpha1.FlowCollectorKafka
@@ -73,7 +74,7 @@ type builder struct {
 	useOpenShiftSCC bool
 }
 
-func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, desiredKafka *flowsv1alpha1.FlowCollectorKafka, confKind string, useOpenShiftSCC bool) builder {
+func newBuilder(ns, agent string, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, desiredKafka *flowsv1alpha1.FlowCollectorKafka, confKind string, useOpenShiftSCC bool) builder {
 	version := helper.ExtractVersion(desired.Image)
 	return builder{
 		namespace: ns,
@@ -87,7 +88,7 @@ func newBuilder(ns string, portProtocol corev1.Protocol, desired *flowsv1alpha1.
 		desired:         desired,
 		desiredLoki:     desiredLoki,
 		desiredKafka:    desiredKafka,
-		portProtocol:    portProtocol,
+		agent:           agent,
 		confKind:        confKind,
 		confKindSuffix:  FlpConfSuffix[confKind],
 		useOpenShiftSCC: useOpenShiftSCC,
@@ -127,6 +128,13 @@ func (b *builder) daemonSet(configDigest string) *appsv1.DaemonSet {
 	}
 }
 
+func (b *builder) portProtocol() corev1.Protocol {
+	if b.agent == flowsv1alpha1.AgentEBPF {
+		return corev1.ProtocolTCP
+	}
+	return corev1.ProtocolUDP
+}
+
 func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodTemplateSpec {
 	var ports []corev1.ContainerPort
 	var tolerations []corev1.Toleration
@@ -135,7 +143,7 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 			Name:          constants.FLPPortName + b.confKindSuffix,
 			HostPort:      b.desired.Port,
 			ContainerPort: b.desired.Port,
-			Protocol:      b.portProtocol,
+			Protocol:      b.portProtocol(),
 		}}
 		// This allows deploying an instance in the master node, the same technique used in the
 		// companion ovnkube-node daemonset definition
@@ -294,7 +302,17 @@ func (b *builder) obtainMetricsConfiguration() ([]api.AggregateDefinition, api.P
 	return aggregates, promMetrics
 }
 
-func (b *builder) addTransformStages(lastStage *config.PipelineBuilderStage) {
+func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) {
+	lastStage := *stage
+	// Filter-out unused fields?
+	if b.desired.DropUnusedFields {
+		if b.agent == flowsv1alpha1.AgentIPFIX {
+			lastStage = lastStage.TransformFilter("filter", api.TransformFilter{
+				Rules: filters.GetOVSGoflowUnusedRules(),
+			})
+		}
+		// Else: nothing for eBPF at the moment
+	}
 	// enrich stage (transform) configuration
 	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
 		Rules: api.NetworkTransformRules{{
@@ -385,14 +403,14 @@ func (b *builder) buildPipelineConfig() ([]config.Stage, []config.StageParam) {
 			Decoder: api.Decoder{Type: "json"},
 			TLS:     b.getKafkaTLS(),
 		})
-	} else if b.portProtocol == corev1.ProtocolUDP {
-		// UDP Port: IPFIX collector with JSON decoder
+	} else if b.agent == flowsv1alpha1.AgentIPFIX {
+		// IPFIX collector
 		pipeline = config.NewCollectorPipeline("ipfix", api.IngestCollector{
 			Port:     int(b.desired.Port),
 			HostName: "0.0.0.0",
 		})
 	} else {
-		// TCP Port: GRPC collector (eBPF agent) with Protobuf decoder
+		// GRPC collector (eBPF agent)
 		pipeline = config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
 			Port: int(b.desired.Port),
 		})
@@ -459,7 +477,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 				SessionAffinity: corev1.ServiceAffinityClientIP,
 				Ports: []corev1.ServicePort{{
 					Port:     b.desired.Port,
-					Protocol: b.portProtocol,
+					Protocol: b.portProtocol(),
 				}},
 			},
 		}
@@ -470,7 +488,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 	newService.Spec.SessionAffinity = corev1.ServiceAffinityClientIP
 	newService.Spec.Ports = []corev1.ServicePort{{
 		Port:     b.desired.Port,
-		Protocol: b.portProtocol,
+		Protocol: b.portProtocol(),
 	}}
 	newService.ObjectMeta.Labels = b.labels
 	return newService

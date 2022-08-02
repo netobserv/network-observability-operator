@@ -1517,6 +1517,15 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>dropUnusedFields</b></td>
+        <td>boolean</td>
+        <td>
+          Set true to drop fields that are known to be unused by OVS, in order to save storage space.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>enableKubeProbes</b></td>
         <td>boolean</td>
         <td>

@@ -148,14 +148,14 @@ func TestDaemonSetNoChange(t *testing.T) {
 	flp := getFLPConfig()
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest := b.configMap()
 	first := b.daemonSet(digest)
 
 	// Check no change
 	flp = getFLPConfig()
 	loki = getLokiConfig()
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest = b.configMap()
 
 	assert.False(daemonSetNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -169,13 +169,13 @@ func TestDaemonSetChanged(t *testing.T) {
 	flp := getFLPConfig()
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest := b.configMap()
 	first := b.daemonSet(digest)
 
 	// Check probes enabled change
 	flp.EnableKubeProbes = true
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest = b.configMap()
 	second := b.daemonSet(digest)
 
@@ -183,7 +183,7 @@ func TestDaemonSetChanged(t *testing.T) {
 
 	// Check log level change
 	flp.LogLevel = "info"
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest = b.configMap()
 	third := b.daemonSet(digest)
 
@@ -194,7 +194,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest = b.configMap()
 	fourth := b.daemonSet(digest)
 
@@ -205,7 +205,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		corev1.ResourceCPU:    resource.MustParse("1"),
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest = b.configMap()
 
 	assert.True(daemonSetNeedsUpdate(fourth, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -220,14 +220,14 @@ func TestDeploymentNoChange(t *testing.T) {
 	flp := getFLPConfig()
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest := b.configMap()
 	first := b.deployment(digest)
 
 	// Check no change
 	flp = getFLPConfig()
 	loki = getLokiConfig()
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest = b.configMap()
 
 	assert.False(deploymentNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -241,13 +241,13 @@ func TestDeploymentChanged(t *testing.T) {
 	flp := getFLPConfig()
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest := b.configMap()
 	first := b.deployment(digest)
 
 	// Check probes enabled change
 	flp.EnableKubeProbes = true
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest = b.configMap()
 	second := b.deployment(digest)
 
@@ -255,7 +255,7 @@ func TestDeploymentChanged(t *testing.T) {
 
 	// Check log level change
 	flp.LogLevel = "info"
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest = b.configMap()
 	third := b.deployment(digest)
 
@@ -266,7 +266,7 @@ func TestDeploymentChanged(t *testing.T) {
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest = b.configMap()
 	fourth := b.deployment(digest)
 
@@ -277,7 +277,7 @@ func TestDeploymentChanged(t *testing.T) {
 		corev1.ResourceCPU:    resource.MustParse("1"),
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest = b.configMap()
 	fifth := b.deployment(digest)
 
@@ -287,7 +287,7 @@ func TestDeploymentChanged(t *testing.T) {
 	// Check replicas didn't change because HPA is used
 	flp2 := flp
 	flp2.Replicas = 5
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp2, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp2, &loki, &kafka, ConfSingle, true)
 	_, digest = b.configMap()
 
 	assert.False(deploymentNeedsUpdate(fifth, &flp2, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -301,14 +301,14 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	flp := getFLPConfigNoHPA()
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	_, digest := b.configMap()
 	first := b.deployment(digest)
 
 	// Check replicas changed (need to copy flp, as Spec.Replicas stores a pointer)
 	flp2 := flp
 	flp2.Replicas = 5
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp2, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp2, &loki, &kafka, ConfSingle, true)
 	_, digest = b.configMap()
 
 	assert.True(deploymentNeedsUpdate(first, &flp2, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -322,7 +322,7 @@ func TestServiceNoChange(t *testing.T) {
 	flp := getFLPConfig()
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	first := b.service(nil)
 
 	// Check no change
@@ -339,19 +339,19 @@ func TestServiceChanged(t *testing.T) {
 	flp := getFLPConfig()
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	first := b.service(nil)
 
 	// Check port changed
 	flp.Port = 9999
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	second := b.service(first)
 
 	assert.True(serviceNeedsUpdate(first, second))
 
 	// Make sure non-service settings doesn't trigger service update
 	flp.LogLevel = "error"
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	third := b.service(first)
 
 	assert.False(serviceNeedsUpdate(second, third))
@@ -364,7 +364,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	flp := getFLPConfig()
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	cm, digest := b.configMap()
 	assert.NotEmpty(t, digest)
 
@@ -435,7 +435,7 @@ func TestLabels(t *testing.T) {
 	flpk := getFLPConfig()
 	kafka := getKafkaConfig()
 	loki := getLokiConfig()
-	builder := newBuilder("ns", corev1.ProtocolUDP, &flpk, &loki, &kafka, ConfSingle, true)
+	builder := newBuilder("ns", flowsv1alpha1.AgentIPFIX, &flpk, &loki, &kafka, ConfSingle, true)
 
 	// Deployment
 	depl := builder.deployment("digest")
@@ -532,7 +532,7 @@ func TestPipelineConfig(t *testing.T) {
 	flp.LogLevel = "info"
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
-	b := newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfSingle, true)
+	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
 	stages, parameters := b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
@@ -540,18 +540,40 @@ func TestPipelineConfig(t *testing.T) {
 
 	// Kafka Ingester
 	kafka.Enable = true
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfKafkaIngester, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfKafkaIngester, true)
 	stages, parameters = b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"kafka-write","follows":"ipfix"}]`, string(jsonStages))
 
 	// Kafka Transformer
-	b = newBuilder(ns, corev1.ProtocolUDP, &flp, &loki, &kafka, ConfKafkaTransformer, true)
+	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfKafkaTransformer, true)
 	stages, parameters = b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
 	assert.Equal(`[{"name":"kafka-read"},{"name":"enrich","follows":"kafka-read"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+}
+
+func TestPipelineConfigDropUnused(t *testing.T) {
+	assert := assert.New(t)
+
+	// Single config
+	ns := "namespace"
+	flp := getFLPConfig()
+	flp.LogLevel = "info"
+	flp.DropUnusedFields = true
+	loki := getLokiConfig()
+	kafka := getKafkaConfig()
+	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	stages, parameters := b.buildPipelineConfig()
+	assert.True(validatePipelineConfig(stages, parameters))
+	jsonStages, _ := json.Marshal(stages)
+	assert.Equal(`[{"name":"ipfix"},{"name":"filter","follows":"ipfix"},{"name":"enrich","follows":"filter"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
+
+	jsonParams, _ := json.Marshal(parameters[1].Transform.Filter)
+	assert.Contains(string(jsonParams), `{"input":"CustomBytes1","type":"remove_field"}`)
+	assert.Contains(string(jsonParams), `{"input":"CustomInteger5","type":"remove_field"}`)
+	assert.Contains(string(jsonParams), `{"input":"MPLS1Label","type":"remove_field"}`)
 }
 
 func TestPipelineTraceStage(t *testing.T) {
@@ -559,7 +581,7 @@ func TestPipelineTraceStage(t *testing.T) {
 
 	flp := getFLPConfig()
 
-	b := newBuilder("namespace", corev1.ProtocolUDP, &flp, nil, nil, "", true)
+	b := newBuilder("namespace", flowsv1alpha1.AgentIPFIX, &flp, nil, nil, "", true)
 	stages, parameters := b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
@@ -576,7 +598,7 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	FlpMetricsConfigDir = "test_metrics_definitions"
 	FlpMetricsConfig = TestFlpMetricsConfig
 
-	b := newBuilder("namespace", corev1.ProtocolUDP, &flp, nil, nil, "", true)
+	b := newBuilder("namespace", flowsv1alpha1.AgentIPFIX, &flp, nil, nil, "", true)
 	stages, parameters := b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
@@ -595,7 +617,7 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	FlpMetricsConfigDir = "test_metrics_definitions"
 	flp.IgnoreMetrics = []string{"subnet"}
 
-	b := newBuilder("namespace", corev1.ProtocolUDP, &flp, nil, nil, "", true)
+	b := newBuilder("namespace", flowsv1alpha1.AgentIPFIX, &flp, nil, nil, "", true)
 	stages, parameters := b.buildPipelineConfig()
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)

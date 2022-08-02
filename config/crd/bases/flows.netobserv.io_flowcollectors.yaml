@@ -846,6 +846,11 @@ spec:
                 description: Settings related to the flowlogs-pipeline component,
                   which collects and enriches the flows, and produces metrics.
                 properties:
+                  dropUnusedFields:
+                    default: true
+                    description: Set true to drop fields that are known to be unused
+                      by OVS, in order to save storage space.
+                    type: boolean
                   enableKubeProbes:
                     default: true
                     description: EnableKubeProbes is a flag to enable or disable Kubernetes
