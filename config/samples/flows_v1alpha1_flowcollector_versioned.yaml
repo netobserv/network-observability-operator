@@ -6,8 +6,8 @@ spec:
   namespace: "network-observability"
   agent: ipfix
   ipfix:
-    cacheActiveTimeout: 60s
-    cacheMaxFlows: 100
+    cacheActiveTimeout: 20s
+    cacheMaxFlows: 400
     sampling: 400
   ebpf:
     image: 'quay.io/netobserv/netobserv-ebpf-agent:v0.1.2-rc0'
@@ -24,7 +24,7 @@ spec:
 #    kind: Deployment
 #    replicas: 1
     port: 2055
-    image: 'quay.io/netobserv/flowlogs-pipeline:v0.1.3-rc2'
+    image: 'quay.io/netobserv/flowlogs-pipeline:v0.1.3-rc3'
     imagePullPolicy: IfNotPresent
     logLevel: info
     enableKubeProbes: true
@@ -48,7 +48,7 @@ spec:
         certFile: user.crt
         certKey: user.key
   loki:
-    url: 'http://loki:3100/'
+    url: 'http://loki.network-observability.svc:3100/'
     batchWait: 1s
     batchSize: 102400
     minBackoff: 1s
@@ -56,6 +56,12 @@ spec:
     maxRetries: 10
     staticLabels:
       app: netobserv-flowcollector
+    tls:
+      enable: false
+      caCert:
+        type: configmap
+        name: loki
+        certFile: service-ca.crt
   consolePlugin:
     register: true
     image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.4-rc0'
