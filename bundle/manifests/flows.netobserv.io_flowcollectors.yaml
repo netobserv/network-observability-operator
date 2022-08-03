@@ -1354,7 +1354,7 @@ spec:
                       type: string
                     type: array
                   image:
-                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.3-rc2
+                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.3-rc3
                     description: Image is the collector image (including domain and
                       tag)
                     type: string
@@ -1460,24 +1460,35 @@ spec:
                   "agent" property is set to "ipfix".
                 properties:
                   cacheActiveTimeout:
-                    default: 60s
+                    default: 20s
                     description: CacheActiveTimeout is the max period during which
                       the reporter will aggregate flows before sending
                     pattern: ^\d+(ns|ms|s|m)?$
                     type: string
                   cacheMaxFlows:
-                    default: 100
+                    default: 400
                     description: CacheMaxFlows is the max number of flows in an aggregate;
                       when reached, the reporter sends the flows
                     format: int32
                     minimum: 0
                     type: integer
+                  forceSampleAll:
+                    default: false
+                    description: It is not recommended to sample all the traffic with
+                      IPFIX, as it may generate cluster instability. If you REALLY
+                      want to do that, set this flag to true. Use at your own risks.
+                      When it is set to true, the value of "sampling" is ignored.
+                    type: boolean
                   sampling:
                     default: 400
                     description: Sampling is the sampling rate on the reporter. 100
-                      means one flow on 100 is sent. 0 means disabled.
+                      means one flow on 100 is sent. To ensure cluster stability,
+                      it is not possible to set a value below 2. If you really want
+                      to sample every packet, which may impact the cluster stability,
+                      refer to "forceSampleAll". Alternatively, you can use the eBPF
+                      Agent instead of IPFIX.
                     format: int32
-                    minimum: 0
+                    minimum: 2
                     type: integer
                 type: object
               kafka:
@@ -1619,6 +1630,62 @@ spec:
                     description: Timeout is the maximum time connection / request
                       limit A Timeout of zero means no timeout.
                     type: string
+                  tls:
+                    description: TLS client configuration.
+                    properties:
+                      caCert:
+                        description: CA certificate reference
+                        properties:
+                          certFile:
+                            description: Certificate file name within the ConfigMap
+                              / Secret
+                            type: string
+                          certKey:
+                            description: Certificate private key file name within
+                              the ConfigMap / Secret. Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: Name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'Reference type: configmap or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      enable:
+                        default: false
+                        description: Enable TLS
+                        type: boolean
+                      insecureSkipVerify:
+                        default: false
+                        description: Skip client-side verification of the server certificate
+                        type: boolean
+                      userCert:
+                        description: User certificate reference
+                        properties:
+                          certFile:
+                            description: Certificate file name within the ConfigMap
+                              / Secret
+                            type: string
+                          certKey:
+                            description: Certificate private key file name within
+                              the ConfigMap / Secret. Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: Name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'Reference type: configmap or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                    type: object
                   url:
                     default: http://loki:3100/
                     description: URL is the address of an existing Loki service to
