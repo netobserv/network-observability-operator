@@ -271,6 +271,11 @@ catalog-push: ## Push a catalog image.
 catalog-deploy:
 	sed -e 's~<IMG>~$(CATALOG_IMG)~' ./config/samples/catalog/catalog.yaml | kubectl apply -f -
 
+# Undeploy the catalog.
+.PHONY: catalog-undeploy
+catalog-undeploy:
+	kubectl delete -f ./config/samples/catalog/catalog.yaml
+
 include .mk/sample.mk
 include .mk/development.mk
 include .mk/local.mk
