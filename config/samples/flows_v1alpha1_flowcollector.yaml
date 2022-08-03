@@ -4,21 +4,22 @@ metadata:
   name: cluster
 spec:
   namespace: "network-observability"
-  agent: ipfix
-  ipfix:
-    cacheActiveTimeout: 20s
-    cacheMaxFlows: 400
-    sampling: 400
-  ebpf:
-    image: 'quay.io/netobserv/netobserv-ebpf-agent:main'
-    imagePullPolicy: IfNotPresent
-    sampling: 0
-    cacheActiveTimeout: 5s
-    cacheMaxFlows: 1000
-    interfaces: []
-    excludeInterfaces: ["lo"]
-    logLevel: info
-    privileged: false
+  agent:
+    type: IPFIX
+    ipfix:
+      cacheActiveTimeout: 20s
+      cacheMaxFlows: 400
+      sampling: 400
+    ebpf:
+      image: 'quay.io/netobserv/netobserv-ebpf-agent:main'
+      imagePullPolicy: IfNotPresent
+      sampling: 0
+      cacheActiveTimeout: 5s
+      cacheMaxFlows: 1000
+      interfaces: []
+      excludeInterfaces: ["lo"]
+      logLevel: info
+      privileged: false
   flowlogsPipeline:
     kind: DaemonSet
 #    kind: Deployment
@@ -29,7 +30,7 @@ spec:
     logLevel: info
     enableKubeProbes: true
     healthPort: 8080
-    prometheusPort: 9102
+    prometheusPort: 9090
     ignoreMetrics: []
     dropUnusedFields: true
   kafka:

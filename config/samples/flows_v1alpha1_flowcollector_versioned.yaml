@@ -7,8 +7,8 @@ spec:
   agent:
     type: IPFIX
     ipfix:
-      cacheActiveTimeout: 60s
-      cacheMaxFlows: 100
+      cacheActiveTimeout: 20s
+      cacheMaxFlows: 400
       sampling: 400
     ebpf:
       image: 'quay.io/netobserv/netobserv-ebpf-agent:v0.1.3'

@@ -243,10 +243,10 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.IPFIX.Sampling = 1
+				fc.Spec.Agent.IPFIX.Sampling = 1
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Satisfy(func(err error) bool {
-				return err != nil && strings.Contains(err.Error(), "spec.ipfix.sampling: Invalid value: 1")
+				return err != nil && strings.Contains(err.Error(), "spec.agent.ipfix.sampling: Invalid value: 1")
 			}), "Error expected for invalid sampling value")
 
 			Eventually(func() error {
@@ -254,8 +254,8 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.IPFIX.Sampling = 10
-				fc.Spec.IPFIX.ForceSampleAll = true
+				fc.Spec.Agent.IPFIX.Sampling = 10
+				fc.Spec.Agent.IPFIX.ForceSampleAll = true
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 
