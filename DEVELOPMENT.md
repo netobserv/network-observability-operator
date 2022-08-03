@@ -63,7 +63,13 @@ Kafka can then be enabled in the `FlowCollector` resource by setting `spec.kafka
 
 ## Linking with API changes in flowlogs-pipeline
 
-Add this at the bottom of `go.mod`:
+To link with merged changes (but unreleased), update the FLP version by running (replacing "LONG_COMMIT_SHA"):
+
+```bash
+go get github.com/netobserv/flowlogs-pipeline@LONG_COMMIT_SHA
+```
+
+To link with unmerged changes, add this at the bottom of `go.mod`:
 
 ```
 replace github.com/netobserv/flowlogs-pipeline => ../flowlogs-pipeline

@@ -14,6 +14,28 @@ ifeq (true, $(PORT_FWD))
 	@echo -e "\n===> loki endpoint is available on http://localhost:3100\n"
 endif
 
+.PHONY: undeploy-loki-tls
+undeploy-loki-tls:
+	@echo -e "\n==> Undeploy tls loki"
+	kubectl config set-context --current --namespace=$(NAMESPACE)
+	curl -S -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/2-loki-tls.yaml	 | kubectl --ignore-not-found=true  delete -f - || true
+	curl -S -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/1-storage.yaml | kubectl --ignore-not-found=true  delete -f - || true
+	-pkill --oldest --full "3100:3100"
+
+.PHONY: deploy-loki-tls
+deploy-loki-tls:
+	@echo -e "\n==> Deploy tls loki"
+	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
+	kubectl config set-context --current --namespace=$(NAMESPACE)
+	curl -S -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/1-storage.yaml | kubectl create -f - || true
+	curl -S -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/2-loki-tls.yaml	 | kubectl create -f - || true
+	kubectl wait --timeout=180s --for=condition=ready pod -l app=loki
+	-pkill --oldest --full "3100:3100"
+ifeq (true, $(PORT_FWD))
+	-kubectl port-forward --address 0.0.0.0 svc/loki 3100:3100 2>&1 >/dev/null &
+	@echo -e "\n===> loki endpoint is available on http://localhost:3100\n"
+endif
+
 .PHONY: undeploy-loki
 undeploy-loki: ## Undeploy loki.
 	@echo -e "\n==> Undeploy loki"

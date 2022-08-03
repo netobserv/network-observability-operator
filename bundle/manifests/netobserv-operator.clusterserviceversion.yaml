@@ -18,7 +18,7 @@ metadata:
                 "excludeInterfaces": [
                   "lo"
                 ],
-                "image": "quay.io/netobserv/netobserv-ebpf-agent:v0.1.3",
+                "image": "quay.io/netobserv/netobserv-ebpf-agent:v0.1.1",
                 "imagePullPolicy": "IfNotPresent",
                 "interfaces": [],
                 "logLevel": "info",
@@ -26,8 +26,8 @@ metadata:
                 "sampling": 0
               },
               "ipfix": {
-                "cacheActiveTimeout": "60s",
-                "cacheMaxFlows": 100,
+                "cacheActiveTimeout": "20s",
+                "cacheMaxFlows": 400,
                 "sampling": 400
               },
               "type": "IPFIX"
@@ -88,7 +88,15 @@ metadata:
               "staticLabels": {
                 "app": "netobserv-flowcollector"
               },
-              "url": "http://loki:3100/"
+              "tls": {
+                "caCert": {
+                  "certFile": "service-ca.crt",
+                  "name": "loki",
+                  "type": "configmap"
+                },
+                "enable": false
+              },
+              "url": "http://loki.network-observability.svc:3100/"
             },
             "namespace": "network-observability",
             "ovnKubernetes": {
@@ -103,7 +111,7 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["network-observability-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:0.1.3
-    createdAt: "2022-08-02T13:32:50Z"
+    createdAt: "2022-08-03T12:44:04Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.22.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
@@ -143,7 +151,7 @@ spec:
 
     ## Configuration
 
-    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/0.1.3/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/0.1.3/config/samples/flows_v1alpha1_flowcollector.yaml).
+    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/main/config/samples/flows_v1alpha1_flowcollector.yaml).
 
     As it operates cluster-wide, only a single `FlowCollector` is allowed, and it has to be named `cluster`.
 
@@ -175,9 +183,9 @@ spec:
 
     Grafana can be used to retrieve and show the collected flows from Loki. In Grafana, add a new Loki data source that matches your setup. If you used the quick install commands provided above to install Loki, its access URL is `http://loki:3100`.
 
-    To get dashboards, import [this file](https://github.com/netobserv/network-observability-operator/blob/0.1.3/config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
+    To get dashboards, import [this file](https://github.com/netobserv/network-observability-operator/blob/main/config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
 
-    See more info and screenshots on [GitHub's readme](https://github.com/netobserv/network-observability-operator/blob/0.1.3/README.md)
+    See more info and screenshots on [GitHub's readme](https://github.com/netobserv/network-observability-operator/blob/main/README.md)
 
     ## F.A.Q / Troubleshooting
 
@@ -491,5 +499,5 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  replaces: netobserv-operator.v0.1.2
+  replaces: netobserv-operator.v0.1.1
   version: 0.1.3

@@ -94,7 +94,7 @@ spec:
                           type: string
                         type: array
                       image:
-                        default: 'quay.io/netobserv/netobserv-ebpf-agent:v0.1.3'
+                        default: quay.io/netobserv/netobserv-ebpf-agent:v0.1.1
                         description: Image is the NetObserv Agent image (including
                           domain and tag)
                         type: string
@@ -1644,6 +1644,62 @@ spec:
                     description: Timeout is the maximum time connection / request
                       limit A Timeout of zero means no timeout.
                     type: string
+                  tls:
+                    description: TLS client configuration.
+                    properties:
+                      caCert:
+                        description: CA certificate reference
+                        properties:
+                          certFile:
+                            description: Certificate file name within the ConfigMap
+                              / Secret
+                            type: string
+                          certKey:
+                            description: Certificate private key file name within
+                              the ConfigMap / Secret. Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: Name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'Reference type: configmap or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      enable:
+                        default: false
+                        description: Enable TLS
+                        type: boolean
+                      insecureSkipVerify:
+                        default: false
+                        description: Skip client-side verification of the server certificate
+                        type: boolean
+                      userCert:
+                        description: User certificate reference
+                        properties:
+                          certFile:
+                            description: Certificate file name within the ConfigMap
+                              / Secret
+                            type: string
+                          certKey:
+                            description: Certificate private key file name within
+                              the ConfigMap / Secret. Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: Name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'Reference type: configmap or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                    type: object
                   url:
                     default: http://loki:3100/
                     description: URL is the address of an existing Loki service to

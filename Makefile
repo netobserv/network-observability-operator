@@ -14,7 +14,7 @@ PLG_VERSION ?= v0.1.3
 # flowlogs-pipeline
 FLP_VERSION ?= v0.1.2
 # eBPF agent
-BPF_VERSION ?= v0.1.3
+BPF_VERSION ?= v0.1.1
 
 # Port-forward (for loki/grafana deployments)
 PORT_FWD ?= true

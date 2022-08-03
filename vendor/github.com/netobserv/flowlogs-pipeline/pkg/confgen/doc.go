@@ -109,7 +109,7 @@ and the transformation to generate the exported metric.
   
   
 
-	`, Opt.SrcFolder)
+	`, cg.opts.SrcFolder)
 	data := fmt.Sprintf("%s\n%s\n", header, doc)
 	err := ioutil.WriteFile(fileName, []byte(data), 0664)
 	if err != nil {

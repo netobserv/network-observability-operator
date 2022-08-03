@@ -25,7 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (cg *ConfGen) Dedupe() {
+func (cg *ConfGen) dedupe() {
 	cg.transformRules = dedupeNetworkTransformRules(cg.transformRules)
 	cg.aggregateDefinitions = dedupeAggregateDefinitions(cg.aggregateDefinitions)
 }

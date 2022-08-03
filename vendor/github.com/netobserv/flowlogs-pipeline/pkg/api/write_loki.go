@@ -46,18 +46,30 @@ type WriteLoki struct {
 	TimestampScale string `yaml:"timestampScale,omitempty" json:"timestampScale,omitempty" doc:"timestamp units scale (e.g. for UNIX = 1s)"`
 }
 
-func GetWriteLokiDefaults() WriteLoki {
-	return WriteLoki{
-		URL:            "http://loki:3100/",
-		BatchWait:      "1s",
-		BatchSize:      100 * 1024,
-		Timeout:        "10s",
-		MinBackoff:     "1s",
-		MaxBackoff:     "5m",
-		MaxRetries:     10,
-		StaticLabels:   model.LabelSet{},
-		TimestampLabel: "TimeReceived",
-		TimestampScale: "1s",
+func (w *WriteLoki) SetDefaults() {
+	if w.BatchWait == "" {
+		w.BatchWait = "1s"
+	}
+	if w.BatchSize == 0 {
+		w.BatchSize = 100 * 1024
+	}
+	if w.Timeout == "" {
+		w.Timeout = "10s"
+	}
+	if w.MinBackoff == "" {
+		w.MinBackoff = "1s"
+	}
+	if w.MaxBackoff == "" {
+		w.MaxBackoff = "1s"
+	}
+	if w.MaxRetries == 0 {
+		w.MaxRetries = 10
+	}
+	if w.TimestampLabel == "" {
+		w.TimestampLabel = "TimeReceived"
+	}
+	if w.TimestampScale == "" {
+		w.TimestampScale = "1s"
 	}
 }
 
