@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
+	"path/filepath"
 	"strconv"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
@@ -253,7 +254,7 @@ func (b *builder) obtainMetricsConfiguration() ([]api.AggregateDefinition, api.P
 
 	for _, entry := range entries {
 		fileName := entry.Name()
-		srcPath := metricsConfigDir + "/" + fileName
+		srcPath := filepath.Join(metricsConfigDir, fileName)
 
 		input, err := metricsConfigEmbed.ReadFile(srcPath)
 		if err != nil {
