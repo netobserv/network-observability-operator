@@ -17,7 +17,6 @@ limitations under the License.
 package flowlogspipeline
 
 import (
-	"embed"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -149,14 +148,16 @@ func TestDaemonSetNoChange(t *testing.T) {
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
 	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest := b.configMap()
+	_, digest, err := b.configMap()
+	assert.NoError(err)
 	first := b.daemonSet(digest)
 
 	// Check no change
 	flp = getFLPConfig()
 	loki = getLokiConfig()
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest = b.configMap()
+	_, digest, err = b.configMap()
+	assert.NoError(err)
 
 	assert.False(daemonSetNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
@@ -170,13 +171,15 @@ func TestDaemonSetChanged(t *testing.T) {
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
 	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest := b.configMap()
+	_, digest, err := b.configMap()
+	assert.NoError(err)
 	first := b.daemonSet(digest)
 
 	// Check probes enabled change
 	flp.EnableKubeProbes = true
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest = b.configMap()
+	_, digest, err = b.configMap()
+	assert.NoError(err)
 	second := b.daemonSet(digest)
 
 	assert.True(daemonSetNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -184,7 +187,8 @@ func TestDaemonSetChanged(t *testing.T) {
 	// Check log level change
 	flp.LogLevel = "info"
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest = b.configMap()
+	_, digest, err = b.configMap()
+	assert.NoError(err)
 	third := b.daemonSet(digest)
 
 	assert.True(daemonSetNeedsUpdate(second, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -195,7 +199,8 @@ func TestDaemonSetChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest = b.configMap()
+	_, digest, err = b.configMap()
+	assert.NoError(err)
 	fourth := b.daemonSet(digest)
 
 	assert.True(daemonSetNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -206,7 +211,8 @@ func TestDaemonSetChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest = b.configMap()
+	_, digest, err = b.configMap()
+	assert.NoError(err)
 
 	assert.True(daemonSetNeedsUpdate(fourth, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 	assert.False(daemonSetNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -221,14 +227,16 @@ func TestDeploymentNoChange(t *testing.T) {
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
 	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest := b.configMap()
+	_, digest, err := b.configMap()
+	assert.NoError(err)
 	first := b.deployment(digest)
 
 	// Check no change
 	flp = getFLPConfig()
 	loki = getLokiConfig()
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest = b.configMap()
+	_, digest, err = b.configMap()
+	assert.NoError(err)
 
 	assert.False(deploymentNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
@@ -242,13 +250,15 @@ func TestDeploymentChanged(t *testing.T) {
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
 	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest := b.configMap()
+	_, digest, err := b.configMap()
+	assert.NoError(err)
 	first := b.deployment(digest)
 
 	// Check probes enabled change
 	flp.EnableKubeProbes = true
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest = b.configMap()
+	_, digest, err = b.configMap()
+	assert.NoError(err)
 	second := b.deployment(digest)
 
 	assert.True(deploymentNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -256,7 +266,8 @@ func TestDeploymentChanged(t *testing.T) {
 	// Check log level change
 	flp.LogLevel = "info"
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest = b.configMap()
+	_, digest, err = b.configMap()
+	assert.NoError(err)
 	third := b.deployment(digest)
 
 	assert.True(deploymentNeedsUpdate(second, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -267,7 +278,8 @@ func TestDeploymentChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest = b.configMap()
+	_, digest, err = b.configMap()
+	assert.NoError(err)
 	fourth := b.deployment(digest)
 
 	assert.True(deploymentNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -278,7 +290,8 @@ func TestDeploymentChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest = b.configMap()
+	_, digest, err = b.configMap()
+	assert.NoError(err)
 	fifth := b.deployment(digest)
 
 	assert.True(deploymentNeedsUpdate(fourth, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
@@ -288,7 +301,8 @@ func TestDeploymentChanged(t *testing.T) {
 	flp2 := flp
 	flp2.Replicas = 5
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp2, &loki, &kafka, ConfSingle, true)
-	_, digest = b.configMap()
+	_, digest, err = b.configMap()
+	assert.NoError(err)
 
 	assert.False(deploymentNeedsUpdate(fifth, &flp2, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
@@ -302,14 +316,16 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
 	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	_, digest := b.configMap()
+	_, digest, err := b.configMap()
+	assert.NoError(err)
 	first := b.deployment(digest)
 
 	// Check replicas changed (need to copy flp, as Spec.Replicas stores a pointer)
 	flp2 := flp
 	flp2.Replicas = 5
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp2, &loki, &kafka, ConfSingle, true)
-	_, digest = b.configMap()
+	_, digest, err = b.configMap()
+	assert.NoError(err)
 
 	assert.True(deploymentNeedsUpdate(first, &flp2, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
 }
@@ -365,7 +381,8 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
 	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	cm, digest := b.configMap()
+	cm, digest, err := b.configMap()
+	assert.NoError(err)
 	assert.NotEmpty(t, digest)
 
 	assert.Equal("dev", cm.Labels["version"])
@@ -378,7 +395,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 		LogLevel   string              `json:"log-level"`
 	}
 	var decoded cfg
-	err := json.Unmarshal([]byte(data), &decoded)
+	err = json.Unmarshal([]byte(data), &decoded)
 
 	assert.Nil(err)
 	assert.Equal("trace", decoded.LogLevel)
@@ -533,7 +550,8 @@ func TestPipelineConfig(t *testing.T) {
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
 	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	stages, parameters := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
+	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
@@ -541,14 +559,16 @@ func TestPipelineConfig(t *testing.T) {
 	// Kafka Ingester
 	kafka.Enable = true
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfKafkaIngester, true)
-	stages, parameters = b.buildPipelineConfig()
+	stages, parameters, err = b.buildPipelineConfig()
+	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"kafka-write","follows":"ipfix"}]`, string(jsonStages))
 
 	// Kafka Transformer
 	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfKafkaTransformer, true)
-	stages, parameters = b.buildPipelineConfig()
+	stages, parameters, err = b.buildPipelineConfig()
+	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
 	assert.Equal(`[{"name":"kafka-read"},{"name":"enrich","follows":"kafka-read"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
@@ -565,7 +585,8 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 	loki := getLokiConfig()
 	kafka := getKafkaConfig()
 	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	stages, parameters := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
+	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"filter","follows":"ipfix"},{"name":"enrich","follows":"filter"},{"name":"loki","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
@@ -582,24 +603,21 @@ func TestPipelineTraceStage(t *testing.T) {
 	flp := getFLPConfig()
 
 	b := newBuilder("namespace", flowsv1alpha1.AgentIPFIX, &flp, nil, nil, "", true)
-	stages, parameters := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
+	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
 }
 
-//go:embed test_metrics_definitions
-var TestFlpMetricsConfig embed.FS
-
 func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	assert := assert.New(t)
 
 	flp := getFLPConfig()
-	FlpMetricsConfigDir = "test_metrics_definitions"
-	FlpMetricsConfig = TestFlpMetricsConfig
 
 	b := newBuilder("namespace", flowsv1alpha1.AgentIPFIX, &flp, nil, nil, "", true)
-	stages, parameters := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
+	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))
@@ -610,15 +628,16 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	assert.Equal("network_service_count", parameters[5].Encode.Prom.Metrics[2].Name)
 	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
 }
+
 func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	assert := assert.New(t)
 
 	flp := getFLPConfig()
-	FlpMetricsConfigDir = "test_metrics_definitions"
 	flp.IgnoreMetrics = []string{"subnet"}
 
 	b := newBuilder("namespace", flowsv1alpha1.AgentIPFIX, &flp, nil, nil, "", true)
-	stages, parameters := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
+	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"aggregate","follows":"enrich"},{"name":"prometheus","follows":"aggregate"}]`, string(jsonStages))

@@ -21,7 +21,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/netobserv/flowlogs-pipeline/pkg/api"
+	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -36,37 +36,16 @@ type Options struct {
 	GenerateStages           []string
 }
 
-var (
-	Opt = Options{}
-)
-
-type ConfigIngest struct {
-	Collector api.IngestCollector `yaml:"collector"`
-}
-
-type ConfigTransform struct {
-	Generic api.TransformGeneric `yaml:"generic"`
-}
-
-type ConfigEncode struct {
-	Prom api.PromEncode `yaml:"prom"`
-}
-
-type ConfigWrite struct {
-	Loki api.WriteLoki `yaml:"loki"`
-	Type string        `yaml:"type"`
-}
-
 type ConfigVisualization struct {
 	Grafana ConfigVisualizationGrafana `yaml:"grafana"`
 }
 
 type Config struct {
 	Description   string              `yaml:"description"`
-	Ingest        ConfigIngest        `yaml:"ingest"`
-	Transform     ConfigTransform     `yaml:"transform"`
-	Write         ConfigWrite         `yaml:"write"`
-	Encode        ConfigEncode        `yaml:"encode"`
+	Ingest        config.Ingest       `yaml:"ingest"`
+	Transform     config.Transform    `yaml:"transform"`
+	Write         config.Write        `yaml:"write"`
+	Encode        config.Encode       `yaml:"encode"`
 	Visualization ConfigVisualization `yaml:"visualization"`
 }
 
@@ -75,7 +54,7 @@ func (cg *ConfGen) ParseConfigFile(fileName string) (*Config, error) {
 	// provide a minimal config for when config file is missing (as for Netobserv Openshift Operator)
 	var config Config
 	if _, err := os.Stat(fileName); errors.Is(err, os.ErrNotExist) {
-		if len(Opt.GenerateStages) == 0 {
+		if len(cg.opts.GenerateStages) == 0 {
 			log.Errorf("config file %s does not exist", fileName)
 			return nil, err
 		}

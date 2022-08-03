@@ -20,6 +20,7 @@ package confgen
 import (
 	"bytes"
 	"os"
+	"path/filepath"
 	"text/template"
 
 	log "github.com/sirupsen/logrus"
@@ -165,7 +166,6 @@ type Dashboard struct {
 }
 
 func (cg *ConfGen) generateGrafanaJsonnet(folderName string) error {
-
 	// generate dashboards
 	dashboards, err := cg.generateGrafanaJsonnetDashboards()
 	if err != nil {
@@ -180,13 +180,19 @@ func (cg *ConfGen) generateGrafanaJsonnet(folderName string) error {
 		return err
 	}
 
+	err = os.MkdirAll(folderName, 0755)
+	if err != nil {
+		log.Debugf("os.MkdirAll err: %v ", err)
+		return err
+	}
+
 	// write to destination files
 	for _, dashboard := range dashboards {
 		output := []byte(jsonNetHeaderTemplate)
 		output = append(output, dashboard.Header...)
 		output = append(output, dashboard.Panels...)
 
-		fileName := folderName + "dashboard_" + dashboard.Name + ".jsonnet"
+		fileName := filepath.Join(folderName, "dashboard_"+dashboard.Name+".jsonnet")
 		err = os.WriteFile(fileName, output, 0644)
 		if err != nil {
 			log.Debugf("os.WriteFile to file %s err: %v ", fileName, err)

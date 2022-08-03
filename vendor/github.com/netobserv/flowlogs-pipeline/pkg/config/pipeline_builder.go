@@ -18,6 +18,8 @@
 package config
 
 import (
+	"errors"
+
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 )
 
@@ -45,11 +47,25 @@ type PipelineBuilderStage struct {
 	pipeline  *pipeline
 }
 
+// NewPipeline creates a new pipeline from an existing ingest
+func NewPipeline(name string, ingest *Ingest) (PipelineBuilderStage, error) {
+	if ingest.Collector != nil {
+		return NewCollectorPipeline(name, *ingest.Collector), nil
+	}
+	if ingest.GRPC != nil {
+		return NewGRPCPipeline(name, *ingest.GRPC), nil
+	}
+	if ingest.Kafka != nil {
+		return NewKafkaPipeline(name, *ingest.Kafka), nil
+	}
+	return PipelineBuilderStage{}, errors.New("Missing ingest params")
+}
+
 // NewCollectorPipeline creates a new pipeline from an `IngestCollector` initial stage (listening for NetFlows / IPFIX)
 func NewCollectorPipeline(name string, ingest api.IngestCollector) PipelineBuilderStage {
 	p := pipeline{
 		stages: []Stage{{Name: name}},
-		config: []StageParam{{Name: name, Ingest: &Ingest{Type: api.CollectorType, Collector: &ingest}}},
+		config: []StageParam{NewCollectorParams(name, ingest)},
 	}
 	return PipelineBuilderStage{pipeline: &p, lastStage: name}
 }
@@ -58,7 +74,7 @@ func NewCollectorPipeline(name string, ingest api.IngestCollector) PipelineBuild
 func NewGRPCPipeline(name string, ingest api.IngestGRPCProto) PipelineBuilderStage {
 	p := pipeline{
 		stages: []Stage{{Name: name}},
-		config: []StageParam{{Name: name, Ingest: &Ingest{Type: api.GRPCType, GRPC: &ingest}}},
+		config: []StageParam{NewGRPCParams(name, ingest)},
 	}
 	return PipelineBuilderStage{pipeline: &p, lastStage: name}
 }
@@ -67,7 +83,7 @@ func NewGRPCPipeline(name string, ingest api.IngestGRPCProto) PipelineBuilderSta
 func NewKafkaPipeline(name string, ingest api.IngestKafka) PipelineBuilderStage {
 	p := pipeline{
 		stages: []Stage{{Name: name}},
-		config: []StageParam{{Name: name, Ingest: &Ingest{Type: api.KafkaType, Kafka: &ingest}}},
+		config: []StageParam{NewKafkaParams(name, ingest)},
 	}
 	return PipelineBuilderStage{pipeline: &p, lastStage: name}
 }
@@ -80,42 +96,47 @@ func (b *PipelineBuilderStage) next(name string, param StageParam) PipelineBuild
 
 // Aggregate chains the current stage with an aggregate stage and returns that new stage
 func (b *PipelineBuilderStage) Aggregate(name string, aggs []api.AggregateDefinition) PipelineBuilderStage {
-	return b.next(name, StageParam{Name: name, Extract: &Extract{Type: api.AggregateType, Aggregates: aggs}})
+	return b.next(name, NewAggregateParams(name, aggs))
 }
 
 // TransformGeneric chains the current stage with a TransformGeneric stage and returns that new stage
 func (b *PipelineBuilderStage) TransformGeneric(name string, gen api.TransformGeneric) PipelineBuilderStage {
-	return b.next(name, StageParam{Name: name, Transform: &Transform{Type: api.GenericType, Generic: &gen}})
+	return b.next(name, NewTransformGenericParams(name, gen))
 }
 
 // TransformFilter chains the current stage with a TransformFilter stage and returns that new stage
 func (b *PipelineBuilderStage) TransformFilter(name string, filter api.TransformFilter) PipelineBuilderStage {
-	return b.next(name, StageParam{Name: name, Transform: &Transform{Type: api.FilterType, Filter: &filter}})
+	return b.next(name, NewTransformFilterParams(name, filter))
 }
 
 // TransformNetwork chains the current stage with a TransformNetwork stage and returns that new stage
 func (b *PipelineBuilderStage) TransformNetwork(name string, nw api.TransformNetwork) PipelineBuilderStage {
-	return b.next(name, StageParam{Name: name, Transform: &Transform{Type: api.NetworkType, Network: &nw}})
+	return b.next(name, NewTransformNetworkParams(name, nw))
+}
+
+// ConnTrack chains the current stage with a ConnTrack stage and returns that new stage
+func (b *PipelineBuilderStage) ConnTrack(name string, ct api.ConnTrack) PipelineBuilderStage {
+	return b.next(name, NewConnTrackParams(name, ct))
 }
 
 // EncodePrometheus chains the current stage with a PromEncode stage (to expose metrics in Prometheus format) and returns that new stage
 func (b *PipelineBuilderStage) EncodePrometheus(name string, prom api.PromEncode) PipelineBuilderStage {
-	return b.next(name, StageParam{Name: name, Encode: &Encode{Type: api.PromType, Prom: &prom}})
+	return b.next(name, NewEncodePrometheusParams(name, prom))
 }
 
 // EncodeKafka chains the current stage with an EncodeKafka stage (writing to a Kafka topic) and returns that new stage
 func (b *PipelineBuilderStage) EncodeKafka(name string, kafka api.EncodeKafka) PipelineBuilderStage {
-	return b.next(name, StageParam{Name: name, Encode: &Encode{Type: api.KafkaType, Kafka: &kafka}})
+	return b.next(name, NewEncodeKafkaParams(name, kafka))
 }
 
 // WriteStdout chains the current stage with a WriteStdout stage and returns that new stage
 func (b *PipelineBuilderStage) WriteStdout(name string, stdout api.WriteStdout) PipelineBuilderStage {
-	return b.next(name, StageParam{Name: name, Write: &Write{Type: api.StdoutType, Stdout: &stdout}})
+	return b.next(name, NewWriteStdoutParams(name, stdout))
 }
 
 // WriteLoki chains the current stage with a WriteLoki stage and returns that new stage
 func (b *PipelineBuilderStage) WriteLoki(name string, loki api.WriteLoki) PipelineBuilderStage {
-	return b.next(name, StageParam{Name: name, Write: &Write{Type: api.LokiType, Loki: &loki}})
+	return b.next(name, NewWriteLokiParams(name, loki))
 }
 
 // GetStages returns the current pipeline stages. It can be called from any of the stages, they share the same pipeline reference.
