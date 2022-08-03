@@ -179,26 +179,16 @@ func flowCollectorConsolePluginSpecs() {
 				timeout, interval).Should(Equal("http://loki:3100/"))
 		})
 		It("Should update the Loki URL in the Console Plugin if it changes in the Spec", func() {
-			Expect(func() error {
-				upd := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &upd); err != nil {
-					return err
-				}
-				upd.Spec.Loki.URL = "http://loki.namespace:8888"
-				return k8sClient.Update(ctx, &upd)
-			}()).Should(Succeed())
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+				fc.Spec.Loki.URL = "http://loki.namespace:8888"
+			})
 			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki", cpKey),
 				timeout, interval).Should(Equal("http://loki.namespace:8888"))
 		})
 		It("Should use the Loki Querier URL instead of the Loki URL, if the first is defined", func() {
-			Expect(func() error {
-				upd := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &upd); err != nil {
-					return err
-				}
-				upd.Spec.Loki.QuerierURL = "http://loki-querier:6789"
-				return k8sClient.Update(ctx, &upd)
-			}()).Should(Succeed())
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+				fc.Spec.Loki.QuerierURL = "http://loki-querier:6789"
+			})
 			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki", cpKey),
 				timeout, interval).Should(Equal("http://loki-querier:6789"))
 		})
@@ -217,10 +207,9 @@ func flowCollectorConsolePluginSpecs() {
 
 		It("Should be unregistered", func() {
 			By("Update CR to unregister")
-			fc := flowsv1alpha1.FlowCollector{}
-			Expect(k8sClient.Get(ctx, crKey, &fc)).Should(Succeed())
-			fc.Spec.ConsolePlugin.Register = false
-			Expect(k8sClient.Update(ctx, &fc)).Should(Succeed())
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+				fc.Spec.ConsolePlugin.Register = false
+			})
 
 			By("Expecting the Console CR to not have plugin registered")
 			Eventually(func() interface{} {

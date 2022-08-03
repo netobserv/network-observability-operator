@@ -12,6 +12,7 @@ import (
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
@@ -20,6 +21,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
+	"github.com/netobserv/network-observability-operator/pkg/conditions"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -200,16 +202,11 @@ func flowCollectorControllerSpecs() {
 		})
 
 		It("Should update successfully", func() {
-			Eventually(func() error {
-				fc := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
-					return err
-				}
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
 				fc.Spec.IPFIX.CacheActiveTimeout = "30s"
 				fc.Spec.IPFIX.Sampling = 1234
 				fc.Spec.FlowlogsPipeline.Port = 1999
-				return k8sClient.Update(ctx, &fc)
-			}).Should(Succeed())
+			})
 
 			By("Expecting updated flowlogs-pipeline Service port")
 			Eventually(func() interface{} {
@@ -268,14 +265,9 @@ func flowCollectorControllerSpecs() {
 		})
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
-			Eventually(func() error {
-				fc := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
-					return err
-				}
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
 				fc.Spec.Loki.MaxRetries = 7
-				return k8sClient.Update(ctx, &fc)
-			}).Should(Succeed())
+			})
 
 			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
 			Eventually(func() error {
@@ -299,11 +291,10 @@ func flowCollectorControllerSpecs() {
 			Expect(hpa.Spec.MaxReplicas).To(Equal(int32(1)))
 			Expect(*hpa.Spec.Metrics[0].Resource.Target.AverageUtilization).To(Equal(int32(90)))
 			// update FlowCollector and verify that HPA spec also changed
-			fc := flowsv1alpha1.FlowCollector{}
-			Expect(k8sClient.Get(ctx, crKey, &fc)).To(Succeed())
-			fc.Spec.FlowlogsPipeline.HPA.MinReplicas = pointer.Int32(2)
-			fc.Spec.FlowlogsPipeline.HPA.MaxReplicas = 2
-			Expect(k8sClient.Update(ctx, &fc)).To(Succeed())
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+				fc.Spec.FlowlogsPipeline.HPA.MinReplicas = pointer.Int32(2)
+				fc.Spec.FlowlogsPipeline.HPA.MaxReplicas = 2
+			})
 
 			By("Changing the Horizontal Pod Autoscaler instance")
 			Eventually(func() error {
@@ -324,21 +315,19 @@ func flowCollectorControllerSpecs() {
 	Context("Deploying as DaemonSet", func() {
 		var oldConfigDigest string
 		It("Should update successfully", func() {
-			fc := flowsv1alpha1.FlowCollector{}
-			Expect(k8sClient.Get(ctx, crKey, &fc)).Should(Succeed())
-			fc.Spec.FlowlogsPipeline = flowsv1alpha1.FlowCollectorFLP{
-				Kind:            "DaemonSet",
-				Port:            7891,
-				ImagePullPolicy: "Never",
-				LogLevel:        "error",
-				Image:           "testimg:latest",
-			}
-			fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}
-			fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
-				Sampling: 200,
-			}
-			// Update
-			Expect(k8sClient.Update(ctx, &fc)).Should(Succeed())
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+				fc.Spec.FlowlogsPipeline = flowsv1alpha1.FlowCollectorFLP{
+					Kind:            "DaemonSet",
+					Port:            7891,
+					ImagePullPolicy: "Never",
+					LogLevel:        "error",
+					Image:           "testimg:latest",
+				}
+				fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}
+				fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
+					Sampling: 200,
+				}
+			})
 
 			By("Expecting to create the ovn-flows-configmap with the configuration from the FlowCollector")
 			Eventually(func() interface{} {
@@ -392,14 +381,9 @@ func flowCollectorControllerSpecs() {
 			})
 		})
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
-			Eventually(func() error {
-				fc := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
-					return err
-				}
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
 				fc.Spec.Loki.MaxRetries = 7
-				return k8sClient.Update(ctx, &fc)
-			}).Should(Succeed())
+			})
 
 			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
 			Eventually(func() error {
@@ -419,11 +403,7 @@ func flowCollectorControllerSpecs() {
 
 	Context("Changing kafka config", func() {
 		It("Should update kafka config successfully", func() {
-			Eventually(func() error {
-				fc := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
-					return err
-				}
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
 				fc.Spec.Kafka = flowsv1alpha1.FlowCollectorKafka{
 					Enable:  true,
 					Address: "localhost:9092",
@@ -436,8 +416,7 @@ func flowCollectorControllerSpecs() {
 						},
 					},
 				}
-				return k8sClient.Update(ctx, &fc)
-			}).Should(Succeed())
+			})
 		})
 
 		It("Should deploy kafka ingester and transformer", func() {
@@ -465,14 +444,9 @@ func flowCollectorControllerSpecs() {
 		})
 
 		It("Should remove kafka config successfully", func() {
-			Eventually(func() error {
-				fc := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
-					return err
-				}
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
 				fc.Spec.Kafka.Enable = false
-				return k8sClient.Update(ctx, &fc)
-			}).Should(Succeed())
+			})
 		})
 
 		It("Should deploy single flp again", func() {
@@ -498,19 +472,14 @@ func flowCollectorControllerSpecs() {
 
 	Context("Changing namespace", func() {
 		It("Should update namespace successfully", func() {
-			Eventually(func() error {
-				fc := flowsv1alpha1.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
-					return err
-				}
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
 				fc.Spec.FlowlogsPipeline.Kind = "Deployment"
 				fc.Spec.FlowlogsPipeline.Port = 9999
 				fc.Spec.Namespace = otherNamespace
 				fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
 					Sampling: 200,
 				}
-				return k8sClient.Update(ctx, &fc)
-			}).Should(Succeed())
+			})
 		})
 
 		It("Should redeploy goglow-kube in new namespace", func() {
@@ -681,4 +650,28 @@ func flowCollectorControllerSpecs() {
 			}, timeout, interval).Should(BeTrue())
 		})
 	})
+}
+
+func GetReadyCR(key types.NamespacedName) *flowsv1alpha1.FlowCollector {
+	cr := flowsv1alpha1.FlowCollector{}
+	Eventually(func() error {
+		err := k8sClient.Get(ctx, key, &cr)
+		if err != nil {
+			return err
+		}
+		cond := meta.FindStatusCondition(cr.Status.Conditions, conditions.TypeReady)
+		if cond.Status == metav1.ConditionFalse {
+			return fmt.Errorf("CR is not ready: %s - %v", cond.Reason, cond.Message)
+		}
+		return nil
+	}).Should(Succeed())
+	return &cr
+}
+
+func UpdateCR(key types.NamespacedName, updater func(*flowsv1alpha1.FlowCollector)) {
+	cr := GetReadyCR(key)
+	Eventually(func() error {
+		updater(cr)
+		return k8sClient.Update(ctx, cr)
+	}).Should(Succeed())
 }

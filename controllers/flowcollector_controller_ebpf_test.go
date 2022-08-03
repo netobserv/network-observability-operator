@@ -129,12 +129,11 @@ func flowCollectorEBPFSpecs() {
 		})
 
 		It("Should update fields that have changed", func() {
-			updated := flowsv1alpha1.FlowCollector{}
-			Expect(k8sClient.Get(ctx, crKey, &updated)).Should(Succeed())
-			Expect(updated.Spec.EBPF.Sampling).To(Equal(int32(123)))
-			updated.Spec.EBPF.Sampling = 4
-			updated.Spec.EBPF.Privileged = true
-			Expect(k8sClient.Update(ctx, &updated)).Should(Succeed())
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+				Expect(fc.Spec.EBPF.Sampling).To(Equal(int32(123)))
+				fc.Spec.EBPF.Sampling = 4
+				fc.Spec.EBPF.Privileged = true
+			})
 
 			ds := appsv1.DaemonSet{}
 			By("expecting that the daemonset spec has eventually changed")
