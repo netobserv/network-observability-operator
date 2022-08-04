@@ -2,6 +2,7 @@ package consoleplugin
 
 import (
 	"hash/fnv"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -99,17 +100,23 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 }
 
 func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki) []string {
-	return []string{
+	args := []string{
 		"-cert", "/var/serving-cert/tls.crt",
 		"-key", "/var/serving-cert/tls.key",
 		"-loki", querierURL(desiredLoki),
 		"-loki-labels", strings.Join(constants.LokiIndexFields, ","),
 		"-loki-tenant-id", desiredLoki.TenantID,
-		//TODO: add loki tls config https://issues.redhat.com/browse/NETOBSERV-309
-		"-loki-skip-tls", "true",
 		"-loglevel", desired.LogLevel,
-		"-frontend-config", configPath + configFile,
+		"-frontend-config", filepath.Join(configPath, configFile),
 	}
+	if desiredLoki.TLS.Enable {
+		if desiredLoki.TLS.InsecureSkipVerify {
+			args = append(args, "-loki-skip-tls")
+		} else {
+			args = append(args, "--loki-ca-path", helper.GetCACertPath(&desiredLoki.TLS, lokiCerts))
+		}
+	}
+	return args
 }
 
 func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
@@ -143,23 +150,9 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 			ReadOnly:  true,
 		}}
 
-	args := []string{
-		"-cert", "/var/serving-cert/tls.crt",
-		"-key", "/var/serving-cert/tls.key",
-		"-loki", querierURL(b.desiredLoki),
-		"-loki-labels", strings.Join(constants.LokiIndexFields, ","),
-		"-loki-tenant-id", b.desiredLoki.TenantID,
-		"-loki-skip-tls", "true",
-		"-loglevel", b.desired.LogLevel,
-		"-frontend-config", configPath + configFile}
-
-	if b.desiredLoki != nil && b.desiredLoki.TLS.Enable {
-		if b.desiredLoki.TLS.InsecureSkipVerify {
-			args = append(args, "-loki-skip-tls", "true")
-		} else {
-			helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts)
-			args = append(args, "--loki-ca-path", helper.GetCACertPath(&b.desiredLoki.TLS, lokiCerts))
-		}
+	args := buildArgs(b.desired, b.desiredLoki)
+	if b.desiredLoki != nil && b.desiredLoki.TLS.Enable && !b.desiredLoki.TLS.InsecureSkipVerify {
+		helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts)
 	}
 
 	return &corev1.PodTemplateSpec{
