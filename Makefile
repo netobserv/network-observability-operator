@@ -190,8 +190,7 @@ CRDOC = $(shell pwd)/bin/crdoc
 crdoc: ## Download crdoc locally if necessary.
 	$(call go-install-tool,$(CRDOC),fybrik.io/crdoc@v0.5.2)
 
-# go-install-tool will update dependencies, download any package $2 and
-# install it to $1.
+# go-install-tool will 'go install' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(firstword $(MAKEFILE_LIST))))
 define go-install-tool
 @[ -f $(1) ] || { \
@@ -200,9 +199,7 @@ TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
-export GOBIN=$(PROJECT_DIR)/bin; \
-go get $(2); \
-go install $(2); \
+GOBIN=$(PROJECT_DIR)/bin GOFLAGS="-mod=mod" go install $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
