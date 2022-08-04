@@ -45,7 +45,7 @@ spec:
 
     ## Configuration
 
-    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc1/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc1/config/samples/flows_v1alpha1_flowcollector.yaml).
+    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc2/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc2/config/samples/flows_v1alpha1_flowcollector.yaml).
 
     As it operates cluster-wide, only a single `FlowCollector` is allowed, and it has to be named `cluster`.
 
@@ -77,9 +77,9 @@ spec:
 
     Grafana can be used to retrieve and show the collected flows from Loki. In Grafana, add a new Loki data source that matches your setup. If you used the quick install commands provided above to install Loki, its access URL is `http://loki:3100`.
 
-    To get dashboards, import [this file](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc1/config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
+    To get dashboards, import [this file](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc2/config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
 
-    See more info and screenshots on [GitHub's readme](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc1/README.md)
+    See more info and screenshots on [GitHub's readme](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc2/README.md)
 
     ## F.A.Q / Troubleshooting
 
