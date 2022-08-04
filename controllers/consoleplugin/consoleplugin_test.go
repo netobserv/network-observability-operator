@@ -26,7 +26,6 @@ var testArgs = []string{
 	"-loki", "http://loki:3100/",
 	"-loki-labels", "SrcK8S_Namespace,SrcK8S_OwnerName,DstK8S_Namespace,DstK8S_OwnerName,FlowDirection",
 	"-loki-tenant-id", "netobserv",
-	"-loki-skip-tls", "true",
 	"-loglevel", "info",
 	"-frontend-config", "/opt/app-root/config.yaml",
 }
@@ -135,7 +134,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	podSpec, containerConfig := getContainerSpecs()
 	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
 	fmt.Printf("%v\n", buildArgs(&containerConfig, loki))
-	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig, loki), false)
+	assert.False(containerNeedsUpdate(&podSpec, &containerConfig, loki))
 
 	//wrong resources
 	podSpec, containerConfig = getContainerSpecs()
@@ -143,7 +142,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
-	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
+	assert.True(containerNeedsUpdate(&podSpec, &containerConfig, loki))
 
 	//new image
 	podSpec, containerConfig = getContainerSpecs()
