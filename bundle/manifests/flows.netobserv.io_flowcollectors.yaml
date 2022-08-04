@@ -1354,7 +1354,7 @@ spec:
                       type: string
                     type: array
                   image:
-                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.3-rc3
+                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.3-rc4
                     description: Image is the collector image (including domain and
                       tag)
                     type: string

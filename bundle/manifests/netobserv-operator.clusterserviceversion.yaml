@@ -46,7 +46,7 @@ metadata:
               "enableKubeProbes": true,
               "healthPort": 8080,
               "ignoreMetrics": [],
-              "image": "quay.io/netobserv/flowlogs-pipeline:v0.1.3-rc3",
+              "image": "quay.io/netobserv/flowlogs-pipeline:v0.1.3-rc4",
               "imagePullPolicy": "IfNotPresent",
               "kind": "DaemonSet",
               "logLevel": "info",
@@ -108,13 +108,13 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     console.openshift.io/plugins: '["network-observability-plugin"]'
-    containerImage: quay.io/netobserv/network-observability-operator:0.1.4-rc1
-    createdAt: "2022-08-03T12:05:11Z"
+    containerImage: quay.io/netobserv/network-observability-operator:0.1.4-rc2
+    createdAt: "2022-08-04T15:23:27Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
-  name: netobserv-operator.v0.1.4-rc1
+  name: netobserv-operator.v0.1.4-rc2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -149,7 +149,7 @@ spec:
 
     ## Configuration
 
-    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc1/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc1/config/samples/flows_v1alpha1_flowcollector.yaml).
+    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc2/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc2/config/samples/flows_v1alpha1_flowcollector.yaml).
 
     As it operates cluster-wide, only a single `FlowCollector` is allowed, and it has to be named `cluster`.
 
@@ -181,9 +181,9 @@ spec:
 
     Grafana can be used to retrieve and show the collected flows from Loki. In Grafana, add a new Loki data source that matches your setup. If you used the quick install commands provided above to install Loki, its access URL is `http://loki:3100`.
 
-    To get dashboards, import [this file](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc1/config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
+    To get dashboards, import [this file](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc2/config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
 
-    See more info and screenshots on [GitHub's readme](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc1/README.md)
+    See more info and screenshots on [GitHub's readme](https://github.com/netobserv/network-observability-operator/blob/0.1.4-rc2/README.md)
 
     ## F.A.Q / Troubleshooting
 
@@ -393,7 +393,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/netobserv/network-observability-operator:0.1.4-rc1
+                image: quay.io/netobserv/network-observability-operator:0.1.4-rc2
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -495,4 +495,4 @@ spec:
     name: Red Hat
     url: https://www.redhat.com
   replaces: netobserv-operator.v0.1.3
-  version: 0.1.4-rc1
+  version: 0.1.4-rc2
