@@ -1549,7 +1549,7 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
           PrometheusPort is the prometheus HTTP port: this port exposes prometheus metrics<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 9090<br/>
+            <i>Default</i>: 9102<br/>
             <i>Minimum</i>: 1<br/>
             <i>Maximum</i>: 65535<br/>
         </td>

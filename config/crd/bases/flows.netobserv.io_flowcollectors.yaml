@@ -1405,7 +1405,7 @@ spec:
                     minimum: 1025
                     type: integer
                   prometheusPort:
-                    default: 9090
+                    default: 9102
                     description: 'PrometheusPort is the prometheus HTTP port: this
                       port exposes prometheus metrics'
                     format: int32

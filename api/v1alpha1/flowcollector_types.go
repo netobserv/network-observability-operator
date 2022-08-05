@@ -239,7 +239,7 @@ type FlowCollectorFLP struct {
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
-	//+kubebuilder:default:=9090
+	//+kubebuilder:default:=9102
 	// PrometheusPort is the prometheus HTTP port: this port exposes prometheus metrics
 	PrometheusPort int32 `json:"prometheusPort,omitempty"`
 
