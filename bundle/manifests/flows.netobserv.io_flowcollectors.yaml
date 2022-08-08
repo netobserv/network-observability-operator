@@ -593,7 +593,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.4-rc0
+                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.4
                     description: Image is the plugin image (including domain and tag)
                     type: string
                   imagePullPolicy:
@@ -731,7 +731,7 @@ spec:
                       type: string
                     type: array
                   image:
-                    default: quay.io/netobserv/netobserv-ebpf-agent:v0.1.2-rc0
+                    default: quay.io/netobserv/netobserv-ebpf-agent:v0.1.2
                     description: Image is the NetObserv Agent image (including domain
                       and tag)
                     type: string
@@ -1354,7 +1354,7 @@ spec:
                       type: string
                     type: array
                   image:
-                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.3-rc4
+                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.3
                     description: Image is the collector image (including domain and
                       tag)
                     type: string
@@ -1405,7 +1405,7 @@ spec:
                     minimum: 1025
                     type: integer
                   prometheusPort:
-                    default: 9090
+                    default: 9102
                     description: 'PrometheusPort is the prometheus HTTP port: this
                       port exposes prometheus metrics'
                     format: int32
