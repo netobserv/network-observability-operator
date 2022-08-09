@@ -1541,15 +1541,10 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>prometheusPort</b></td>
-        <td>integer</td>
+        <td><b><a href="#flowcollectorspecflowlogspipelineprometheus">prometheus</a></b></td>
+        <td>object</td>
         <td>
-          PrometheusPort is the prometheus HTTP port: this port exposes prometheus metrics<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 9102<br/>
-            <i>Minimum</i>: 1<br/>
-            <i>Maximum</i>: 65535<br/>
+          Prometheus endpoint configuration<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2479,6 +2474,207 @@ target specifies the target value for the given metric
         <td>int or string</td>
         <td>
           value is the target value of the metric (as a quantity).<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.flowlogsPipeline.prometheus
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipeline)</sup></sup>
+
+
+
+Prometheus endpoint configuration
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecflowlogspipelineprometheusmanualtls">manualTls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>port</b></td>
+        <td>integer</td>
+        <td>
+          the prometheus HTTP port<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 9102<br/>
+            <i>Minimum</i>: 1<br/>
+            <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tlsType</b></td>
+        <td>enum</td>
+        <td>
+          Select the type of TLS configuration "DISABLED" (default) to not configure TLS for the endpoint, "MANUAL" to manually provide cert file and a key file, and "AUTO" to use Openshift auto generated certificate using annotations<br/>
+          <br/>
+            <i>Enum</i>: DISABLED, MANUAL, AUTO<br/>
+            <i>Default</i>: DISABLED<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.flowlogsPipeline.prometheus.manualTls
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelineprometheus)</sup></sup>
+
+
+
+TLS configuration.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecflowlogspipelineprometheusmanualtlscacert">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          CA certificate reference<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          Skip client-side verification of the server certificate<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecflowlogspipelineprometheusmanualtlsusercert">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          User certificate reference<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.flowlogsPipeline.prometheus.manualTls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelineprometheusmanualtls)</sup></sup>
+
+
+
+CA certificate reference
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          Certificate file name within the ConfigMap / Secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          Certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the ConfigMap or Secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Reference type: configmap or secret<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.flowlogsPipeline.prometheus.manualTls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelineprometheusmanualtls)</sup></sup>
+
+
+
+User certificate reference
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          Certificate file name within the ConfigMap / Secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          Certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the ConfigMap or Secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Reference type: configmap or secret<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>

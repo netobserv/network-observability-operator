@@ -43,6 +43,7 @@ type ownedObjects struct {
 	deployment             *appsv1.Deployment
 	daemonSet              *appsv1.DaemonSet
 	service                *corev1.Service
+	promService            *corev1.Service
 	hpa                    *ascv2.HorizontalPodAutoscaler
 	serviceAccount         *corev1.ServiceAccount
 	configMap              *corev1.ConfigMap
@@ -71,6 +72,7 @@ func newSingleReconciler(cl reconcilers.ClientHelper, ns, prevNS, confKind strin
 		deployment:             &appsv1.Deployment{},
 		daemonSet:              &appsv1.DaemonSet{},
 		service:                &corev1.Service{},
+		promService:            &corev1.Service{},
 		hpa:                    &ascv2.HorizontalPodAutoscaler{},
 		serviceAccount:         &corev1.ServiceAccount{},
 		configMap:              &corev1.ConfigMap{},
@@ -82,6 +84,7 @@ func newSingleReconciler(cl reconcilers.ClientHelper, ns, prevNS, confKind strin
 	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.daemonSet)
 	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.hpa)
 	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.serviceAccount)
+	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind]+PromServiceSuffix, owned.promService)
 	nobjMngr.AddManagedObject(configMapName+FlpConfSuffix[confKind], owned.configMap)
 
 	if confKind == ConfSingle || confKind == ConfKafkaIngester {
@@ -191,6 +194,11 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 		return err
 	}
 
+	err = r.reconcilePrometheusService(ctx, &builder)
+	if err != nil {
+		return err
+	}
+
 	if r.confKind == ConfKafkaTransformer {
 		return r.reconcileAsDeployment(ctx, desiredFLP, &builder, configDigest)
 	}
@@ -259,6 +267,19 @@ func (r *singleDeploymentReconciler) reconcileService(ctx context.Context, desir
 	newSVC := builder.service(&actual)
 	if serviceNeedsUpdate(&actual, newSVC) {
 		if err := r.UpdateOwned(ctx, &actual, newSVC); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *singleDeploymentReconciler) reconcilePrometheusService(ctx context.Context, builder *builder) error {
+	if !r.nobjMngr.Exists(r.owned.promService) {
+		return r.CreateOwned(ctx, builder.promService(nil))
+	}
+	newSVC := builder.promService(r.owned.promService)
+	if serviceNeedsUpdate(r.owned.promService, newSVC) {
+		if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
 			return err
 		}
 	}

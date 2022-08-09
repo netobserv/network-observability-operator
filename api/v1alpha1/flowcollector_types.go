@@ -201,6 +201,37 @@ type FlowCollectorKafka struct {
 	TLS ClientTLS `json:"tls"`
 }
 
+const (
+	PrometheusTLSDiasbled = "DISABLED"
+	PrometheusTLSManual   = "MANUAL"
+	PrometheusTLSAuto     = "AUTO"
+)
+
+type PrometheusTLSConfigType string
+
+// PrometheusConfig define the prometheus endpoint configuration
+type PrometheusConfig struct {
+
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=65535
+	//+kubebuilder:default:=9102
+	// the prometheus HTTP port
+	Port int32 `json:"port,omitempty"`
+
+	// Select the type of TLS configuration
+	// "DISABLED" (default) to not configure TLS for the endpoint, "MANUAL" to manually provide cert file and a key file,
+	// and "AUTO" to use Openshift auto generated certificate using annotations
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="DISABLED";"MANUAL";"AUTO"
+	// +kubebuilder:validation:Required
+	//+kubebuilder:default:="DISABLED"
+	TLSType PrometheusTLSConfigType `json:"tlsType,omitempty"`
+
+	// TLS configuration.
+	// +optional
+	ManualTLS ClientTLS `json:"manualTls"`
+}
+
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector
 type FlowCollectorFLP struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
@@ -231,17 +262,15 @@ type FlowCollectorFLP struct {
 	// 4789,6081,500, and 4500
 	Port int32 `json:"port,omitempty"`
 
+	// Prometheus endpoint configuration
+	// +optional
+	Prometheus PrometheusConfig `json:"prometheus,omitempty"`
+
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=8080
 	// HealthPort is a collector HTTP port in the Pod that exposes the health check API
 	HealthPort int32 `json:"healthPort,omitempty"`
-
-	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:validation:Maximum=65535
-	//+kubebuilder:default:=9102
-	// PrometheusPort is the prometheus HTTP port: this port exposes prometheus metrics
-	PrometheusPort int32 `json:"prometheusPort,omitempty"`
 
 	//+kubebuilder:default:="quay.io/netobserv/flowlogs-pipeline:main"
 	// Image is the collector image (including domain and tag)
