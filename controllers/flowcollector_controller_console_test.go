@@ -102,7 +102,9 @@ func flowCollectorConsolePluginSpecs() {
 			}
 
 			// Create
-			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
+			Eventually(func() interface{} {
+				return k8sClient.Create(ctx, created)
+			}, timeout, interval).Should(Succeed())
 		})
 	})
 
