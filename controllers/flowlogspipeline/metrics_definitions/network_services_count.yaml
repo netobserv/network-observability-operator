@@ -26,5 +26,4 @@ encode:
         filter: { key: name, value: dest_service_count }
         valuekey: recent_count
         labels:
-          - by
-          - aggregate
+          - Service

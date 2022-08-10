@@ -26,5 +26,4 @@ encode:
         filter: {key: name, value: bandwidth_source_subnet}
         valueKey: recent_op_value
         labels:
-          - by
-          - aggregate
+          - SrcSubnet

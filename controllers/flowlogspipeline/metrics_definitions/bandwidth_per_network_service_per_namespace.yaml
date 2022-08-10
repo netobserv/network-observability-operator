@@ -28,5 +28,5 @@ encode:
         filter: {key: name, value: bandwidth_network_service_namespace}
         valuekey: recent_op_value
         labels:
-          - by
-          - aggregate
+          - Service
+          - SrcK8S_Namespace
