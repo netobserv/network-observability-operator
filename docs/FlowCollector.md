@@ -2858,6 +2858,15 @@ Settings related to the Loki client, used as a flow store.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>sendAuthToken</b></td>
+        <td>boolean</td>
+        <td>
+          SendAuthToken is a flag to enable or disable Authorization header from service account secret It allows authentication to loki operator gateway<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>staticLabels</b></td>
         <td>map[string]string</td>
         <td>

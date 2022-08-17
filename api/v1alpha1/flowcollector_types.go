@@ -308,6 +308,11 @@ type FlowCollectorLoki struct {
 	// it will be ignored if instanceSpec is specified
 	TenantID string `json:"tenantID,omitempty"`
 
+	//+kubebuilder:default:=false
+	// SendAuthToken is a flag to enable or disable Authorization header from service account secret
+	// It allows authentication to loki operator gateway
+	SendAuthToken bool `json:"sendAuthToken,omitempty"`
+
 	//+kubebuilder:default:="1s"
 	// BatchWait is max time to wait before sending a batch
 	BatchWait metav1.Duration `json:"batchWait,omitempty"`
