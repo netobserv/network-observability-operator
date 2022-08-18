@@ -300,8 +300,14 @@ type FlowCollectorLoki struct {
 	//+kubebuilder:validation:optional
 	// QuerierURL specifies the address of the Loki querier service, in case it is different from the
 	// Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester
-	// and querier are int he same host).
+	// and querier are in the same host).
 	QuerierURL string `json:"querierUrl,omitempty"`
+
+	//+kubebuilder:validation:optional
+	// StatusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the
+	// Loki querier URL. If empty, the QuerierURL value will be used.
+	// This is usefull to show error messages and some context in the frontend
+	StatusURL string `json:"statusUrl,omitempty"`
 
 	//+kubebuilder:default:="netobserv"
 	// TenantID is the Loki X-Scope-OrgID that identifies the tenant for each request.
