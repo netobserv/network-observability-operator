@@ -289,6 +289,8 @@ Settings related to eBPF-based flow reporter when the "agent.type" property is s
         <td>object</td>
         <td>
           Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          <br/>
+            <i>Default</i>: map[limits:map[memory:100Mi] requests:map[cpu:100m memory:50Mi]]<br/>
         </td>
         <td>false</td>
       </tr><tr>
