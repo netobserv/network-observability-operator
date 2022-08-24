@@ -4,9 +4,9 @@ on:
     tags: ['*']
 
 env:
-  REGISTRY_USER: rhn_support_memodi
+  REGISTRY_USER: netobserv+github_ci
   REGISTRY_PASSWORD: ${{ secrets.QUAY_SECRET }}
-  REGISTRY: quay.io/rhn_support_memodi
+  REGISTRY: quay.io/netobserv
   IMAGE: network-observability-operator
 
 jobs:
