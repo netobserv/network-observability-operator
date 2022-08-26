@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/mitchellh/mapstructure v1.4.3
-	github.com/netobserv/flowlogs-pipeline v0.1.3-rc1.0.20220729090746-bfbd89bd6d0d
+	github.com/netobserv/flowlogs-pipeline v0.1.4-0.20220810080836-01e94cfaf89e
 	github.com/onsi/ginkgo/v2 v2.1.3
 	github.com/onsi/gomega v1.19.0
 	github.com/openshift/api v0.0.0-20220112145620-704957ce4980

@@ -18,10 +18,9 @@
 package confgen
 
 import (
-	"encoding/json"
-
 	jsoniter "github.com/json-iterator/go"
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
+	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -34,7 +33,7 @@ func (cg *ConfGen) parseTransport(transform *map[string]interface{}) (*api.Trans
 	}
 
 	var jsonNetworkTransform api.TransformNetwork
-	err = json.Unmarshal(b, &jsonNetworkTransform)
+	err = config.JsonUnmarshalStrict(b, &jsonNetworkTransform)
 	if err != nil {
 		log.Debugf("Unmarshal transform.TransformNetwork err: %v ", err)
 		return nil, err
