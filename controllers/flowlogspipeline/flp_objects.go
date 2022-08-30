@@ -412,9 +412,10 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	}
 
 	if b.desired.Prometheus.TLSType != flowsv1alpha1.PrometheusTLSDiasbled {
-		promEncode.TLS.Enable = true
-		promEncode.TLS.CertFile = helper.GetUserCertPath(b.promTLS, promCerts)
-		promEncode.TLS.KeyFile = helper.GetUserKeyPath(b.promTLS, promCerts)
+		promEncode.TLS = &api.PromTLSConf{
+			CertPath: helper.GetUserCertPath(b.promTLS, promCerts),
+			KeyPath:  helper.GetUserKeyPath(b.promTLS, promCerts),
+		}
 	}
 
 	agg := enrichedStage.Aggregate("aggregate", aggregates)
