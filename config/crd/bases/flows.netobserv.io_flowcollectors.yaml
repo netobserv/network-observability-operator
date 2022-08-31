@@ -1608,7 +1608,7 @@ spec:
                     description: QuerierURL specifies the address of the Loki querier
                       service, in case it is different from the Loki ingester URL.
                       If empty, the URL value will be used (assuming that the Loki
-                      ingester and querier are int he same host).
+                      ingester and querier are in the same server).
                     type: string
                   sendAuthToken:
                     default: false
@@ -1624,6 +1624,13 @@ spec:
                     description: StaticLabels is a map of common labels to set on
                       each flow
                     type: object
+                  statusUrl:
+                    description: StatusURL specifies the address of the Loki /ready
+                      /metrics /config endpoints, in case it is different from the
+                      Loki querier URL. If empty, the QuerierURL value will be used.
+                      This is useful to show error messages and some context in the
+                      frontend
+                    type: string
                   tenantID:
                     default: netobserv
                     description: TenantID is the Loki X-Scope-OrgID that identifies

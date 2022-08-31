@@ -108,15 +108,23 @@ func tokenPath(desiredLoki *flowsv1alpha1.FlowCollectorLoki) string {
 }
 
 func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki) []string {
+	querierURL := querierURL(desiredLoki)
+	statusURL := statusURL(desiredLoki)
+
 	args := []string{
 		"-cert", "/var/serving-cert/tls.crt",
 		"-key", "/var/serving-cert/tls.key",
-		"-loki", querierURL(desiredLoki),
+		"-loki", querierURL,
 		"-loki-labels", strings.Join(constants.LokiIndexFields, ","),
 		"-loki-tenant-id", desiredLoki.TenantID,
 		"-loglevel", desired.LogLevel,
 		"-frontend-config", filepath.Join(configPath, configFile),
 	}
+
+	if querierURL != statusURL {
+		args = append(args, "-loki-status", statusURL)
+	}
+
 	if desiredLoki.TLS.Enable {
 		if desiredLoki.TLS.InsecureSkipVerify {
 			args = append(args, "-loki-skip-tls")
