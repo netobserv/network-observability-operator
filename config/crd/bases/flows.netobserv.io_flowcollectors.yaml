@@ -1491,8 +1491,9 @@ spec:
                 type: object
               kafka:
                 description: Kafka configuration, allowing to use Kafka as a broker
-                  as part of the flow collection pipeline. This is a new and experimental
-                  feature, not yet recommended to use in production.
+                  as part of the flow collection pipeline. Kafka can provide better
+                  scalability, resiliency and high availability (for more details,
+                  see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
                 properties:
                   address:
                     default: ""
