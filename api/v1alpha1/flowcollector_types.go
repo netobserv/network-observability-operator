@@ -69,7 +69,7 @@ type FlowCollectorSpec struct {
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
 
 	// Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline.
-	// This is a new and experimental feature, not yet recommended to use in production.
+	// Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 

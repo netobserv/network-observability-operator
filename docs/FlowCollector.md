@@ -136,7 +136,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspeckafka">kafka</a></b></td>
         <td>object</td>
         <td>
-          Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. This is a new and experimental feature, not yet recommended to use in production.<br/>
+          Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2584,7 +2584,7 @@ Settings related to IPFIX-based flow reporter when the "agent" property is set t
 
 
 
-Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. This is a new and experimental feature, not yet recommended to use in production.
+Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
 
 <table>
     <thead>
