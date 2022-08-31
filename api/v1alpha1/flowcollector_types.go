@@ -229,7 +229,7 @@ type PrometheusConfig struct {
 
 	// TLS configuration.
 	// +optional
-	ManualTLS ClientTLS `json:"manualTls"`
+	ManualTLS CertificateReference `json:"manualTls"`
 }
 
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector

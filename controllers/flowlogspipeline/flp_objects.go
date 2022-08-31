@@ -70,7 +70,7 @@ type builder struct {
 	desired         *flowsv1alpha1.FlowCollectorFLP
 	desiredLoki     *flowsv1alpha1.FlowCollectorLoki
 	desiredKafka    *flowsv1alpha1.FlowCollectorKafka
-	promTLS         *flowsv1alpha1.ClientTLS
+	promTLS         *flowsv1alpha1.CertificateReference
 	confKind        string
 	confKindSuffix  string
 	useOpenShiftSCC bool
@@ -78,18 +78,16 @@ type builder struct {
 
 func newBuilder(ns, agent string, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, desiredKafka *flowsv1alpha1.FlowCollectorKafka, confKind string, useOpenShiftSCC bool) builder {
 	version := helper.ExtractVersion(desired.Image)
-	var promTLS flowsv1alpha1.ClientTLS
+	var promTLS flowsv1alpha1.CertificateReference
 	switch desired.Prometheus.TLSType {
 	case flowsv1alpha1.PrometheusTLSManual:
 		promTLS = desired.Prometheus.ManualTLS
 	case flowsv1alpha1.PrometheusTLSAuto:
-		promTLS = flowsv1alpha1.ClientTLS{
-			UserCert: flowsv1alpha1.CertificateReference{
-				Type:     "secret",
-				Name:     constants.FLPName + FlpConfSuffix[confKind] + PromServiceSuffix,
-				CertFile: "tls.crt",
-				CertKey:  "tls.key",
-			},
+		promTLS = flowsv1alpha1.CertificateReference{
+			Type:     "secret",
+			Name:     constants.FLPName + FlpConfSuffix[confKind] + PromServiceSuffix,
+			CertFile: "tls.crt",
+			CertKey:  "tls.key",
 		}
 	}
 	return builder{
@@ -205,7 +203,7 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 	}
 
 	if b.desired.Prometheus.TLSType != flowsv1alpha1.PrometheusTLSDiasbled {
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, b.promTLS, promCerts)
+		volumes, volumeMounts = helper.AppendSingleCertVolumes(volumes, volumeMounts, b.promTLS, promCerts)
 	}
 
 	container := corev1.Container{
@@ -413,8 +411,8 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 
 	if b.desired.Prometheus.TLSType != flowsv1alpha1.PrometheusTLSDiasbled {
 		promEncode.TLS = &api.PromTLSConf{
-			CertPath: helper.GetUserCertPath(b.promTLS, promCerts),
-			KeyPath:  helper.GetUserKeyPath(b.promTLS, promCerts),
+			CertPath: helper.GetSingleCertPath(b.promTLS, promCerts),
+			KeyPath:  helper.GetSingleKeyPath(b.promTLS, promCerts),
 		}
 	}
 
