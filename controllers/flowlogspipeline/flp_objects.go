@@ -202,7 +202,7 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 		volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, constants.FLPName+b.confKindSuffix, constants.FLPName)
 	}
 
-	if b.desired.Prometheus.TLSType != flowsv1alpha1.PrometheusTLSDiasbled {
+	if b.desired.Prometheus.TLSType != flowsv1alpha1.PrometheusTLSDisabled {
 		volumes, volumeMounts = helper.AppendSingleCertVolumes(volumes, volumeMounts, b.promTLS, promCerts)
 	}
 
@@ -409,7 +409,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		Metrics: promMetrics,
 	}
 
-	if b.desired.Prometheus.TLSType != flowsv1alpha1.PrometheusTLSDiasbled {
+	if b.desired.Prometheus.TLSType != flowsv1alpha1.PrometheusTLSDisabled {
 		promEncode.TLS = &api.PromTLSConf{
 			CertPath: helper.GetSingleCertPath(b.promTLS, promCerts),
 			KeyPath:  helper.GetSingleKeyPath(b.promTLS, promCerts),

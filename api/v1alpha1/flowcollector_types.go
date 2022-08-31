@@ -202,7 +202,7 @@ type FlowCollectorKafka struct {
 }
 
 const (
-	PrometheusTLSDiasbled = "DISABLED"
+	PrometheusTLSDisabled = "DISABLED"
 	PrometheusTLSManual   = "MANUAL"
 	PrometheusTLSAuto     = "AUTO"
 )
