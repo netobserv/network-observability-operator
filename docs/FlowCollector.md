@@ -2854,7 +2854,7 @@ Settings related to the Loki client, used as a flow store.
         <td><b>querierUrl</b></td>
         <td>string</td>
         <td>
-          QuerierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same host).<br/>
+          QuerierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2879,7 +2879,7 @@ Settings related to the Loki client, used as a flow store.
         <td><b>statusUrl</b></td>
         <td>string</td>
         <td>
-          StatusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is usefull to show error messages and some context in the frontend<br/>
+          StatusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend<br/>
         </td>
         <td>false</td>
       </tr><tr>
