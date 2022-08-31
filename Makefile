@@ -204,8 +204,8 @@ rm -rf $$TMP_DIR ;\
 }
 endef
 
-.PHONY: bundle
-bundle: generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
+.PHONY: bundle-prepare
+bundle-prepare: generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	envsubst < config/crd/patches/version_in_flowcollectors_envtpl.yaml > config/crd/patches/version_in_flowcollectors.yaml
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
@@ -214,7 +214,15 @@ bundle: generate kustomize ## Generate bundle manifests and metadata, then valid
 	sed -i 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 	sed -i 's~ebpf-agent:main~ebpf-agent:$(BPF_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 	sed -i 's~blob/[0-9]\+\.[0-9]\+\.[0-9]\+\(-rc[0-9]\+\)\?/~blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+
+.PHONY: bundle
+bundle: bundle-prepare
 	$(KUSTOMIZE) build config/manifests | sed -e 's~:container-image:~$(IMG)~' | sed -e 's~:created-at:~$(DATE)~' | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	operator-sdk bundle validate ./bundle
+
+.PHONY: bundle-for-test
+bundle-for-test: bundle-prepare
+	$(KUSTOMIZE) build config/manifests | sed -e 's~:container-image:~$(IMG)~' | sed -e 's~:created-at:~$(DATE)~' | operator-sdk generate bundle -q --overwrite --version 0.0.0-$(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 
 .PHONY: bundle-build
