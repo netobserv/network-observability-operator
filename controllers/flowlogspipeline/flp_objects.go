@@ -79,9 +79,9 @@ type builder struct {
 func newBuilder(ns, agent string, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, desiredKafka *flowsv1alpha1.FlowCollectorKafka, confKind string, useOpenShiftSCC bool) builder {
 	version := helper.ExtractVersion(desired.Image)
 	var promTLS flowsv1alpha1.CertificateReference
-	switch desired.Prometheus.TLSType {
+	switch desired.Prometheus.TLS.Type {
 	case flowsv1alpha1.PrometheusTLSManual:
-		promTLS = desired.Prometheus.ManualTLS
+		promTLS = *desired.Prometheus.TLS.Manual
 	case flowsv1alpha1.PrometheusTLSAuto:
 		promTLS = flowsv1alpha1.CertificateReference{
 			Type:     "secret",
@@ -202,7 +202,7 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 		volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, constants.FLPName+b.confKindSuffix, constants.FLPName)
 	}
 
-	if b.desired.Prometheus.TLSType != flowsv1alpha1.PrometheusTLSDisabled {
+	if b.desired.Prometheus.TLS.Type != flowsv1alpha1.PrometheusTLSDisabled {
 		volumes, volumeMounts = helper.AppendSingleCertVolumes(volumes, volumeMounts, b.promTLS, promCerts)
 	}
 
@@ -409,7 +409,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		Metrics: promMetrics,
 	}
 
-	if b.desired.Prometheus.TLSType != flowsv1alpha1.PrometheusTLSDisabled {
+	if b.desired.Prometheus.TLS.Type != flowsv1alpha1.PrometheusTLSDisabled {
 		promEncode.TLS = &api.PromTLSConf{
 			CertPath: helper.GetSingleCertPath(b.promTLS, promCerts),
 			KeyPath:  helper.GetSingleKeyPath(b.promTLS, promCerts),
@@ -557,7 +557,7 @@ func (b *builder) promService(old *corev1.Service) *corev1.Service {
 				}},
 			},
 		}
-		if b.desired.Prometheus.TLSType == flowsv1alpha1.PrometheusTLSAuto {
+		if b.desired.Prometheus.TLS.Type == flowsv1alpha1.PrometheusTLSAuto {
 			service.ObjectMeta.Annotations = map[string]string{
 				"service.alpha.openshift.io/serving-cert-secret-name": constants.FLPName + b.confKindSuffix + PromServiceSuffix,
 			}
@@ -573,7 +573,7 @@ func (b *builder) promService(old *corev1.Service) *corev1.Service {
 		Protocol: corev1.ProtocolTCP,
 	}}
 	newService.ObjectMeta.Labels = b.labels
-	if b.desired.Prometheus.TLSType == flowsv1alpha1.PrometheusTLSAuto {
+	if b.desired.Prometheus.TLS.Type == flowsv1alpha1.PrometheusTLSAuto {
 		if newService.ObjectMeta.Annotations == nil {
 			newService.ObjectMeta.Annotations = map[string]string{}
 		}

@@ -70,8 +70,10 @@ func getFLPConfig() flowsv1alpha1.FlowCollectorFLP {
 		},
 		HealthPort: 8080,
 		Prometheus: flowsv1alpha1.PrometheusConfig{
-			Port:    9090,
-			TLSType: flowsv1alpha1.PrometheusTLSDisabled,
+			Port: 9090,
+			TLS: flowsv1alpha1.PrometheusTLS{
+				Type: flowsv1alpha1.PrometheusTLSDisabled,
+			},
 		},
 	}
 }

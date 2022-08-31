@@ -209,6 +209,22 @@ const (
 
 type PrometheusTLSConfigType string
 
+// PrometheusTLS define the TLS configuration of Prometheus
+type PrometheusTLS struct {
+	// Select the type of TLS configuration
+	// "DISABLED" (default) to not configure TLS for the endpoint, "MANUAL" to manually provide cert file and a key file,
+	// and "AUTO" to use Openshift auto generated certificate using annotations
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="DISABLED";"MANUAL";"AUTO"
+	// +kubebuilder:validation:Required
+	//+kubebuilder:default:="DISABLED"
+	Type PrometheusTLSConfigType `json:"type,omitempty"`
+
+	// TLS configuration.
+	// +optional
+	Manual *CertificateReference `json:"manual"`
+}
+
 // PrometheusConfig define the prometheus endpoint configuration
 type PrometheusConfig struct {
 
@@ -218,18 +234,9 @@ type PrometheusConfig struct {
 	// the prometheus HTTP port
 	Port int32 `json:"port,omitempty"`
 
-	// Select the type of TLS configuration
-	// "DISABLED" (default) to not configure TLS for the endpoint, "MANUAL" to manually provide cert file and a key file,
-	// and "AUTO" to use Openshift auto generated certificate using annotations
-	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="DISABLED";"MANUAL";"AUTO"
-	// +kubebuilder:validation:Required
-	//+kubebuilder:default:="DISABLED"
-	TLSType PrometheusTLSConfigType `json:"tlsType,omitempty"`
-
 	// TLS configuration.
 	// +optional
-	ManualTLS CertificateReference `json:"manualTls"`
+	TLS PrometheusTLS `json:"tls"`
 }
 
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector

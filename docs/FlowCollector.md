@@ -2497,13 +2497,6 @@ Prometheus endpoint configuration
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelineprometheusmanualtls">manualTls</a></b></td>
-        <td>object</td>
-        <td>
-          TLS configuration.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>port</b></td>
         <td>integer</td>
         <td>
@@ -2516,7 +2509,41 @@ Prometheus endpoint configuration
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>tlsType</b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelineprometheustls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.flowlogsPipeline.prometheus.tls
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelineprometheus)</sup></sup>
+
+
+
+TLS configuration.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecflowlogspipelineprometheustlsmanual">manual</a></b></td>
+        <td>object</td>
+        <td>
+          TLS configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
         <td>enum</td>
         <td>
           Select the type of TLS configuration "DISABLED" (default) to not configure TLS for the endpoint, "MANUAL" to manually provide cert file and a key file, and "AUTO" to use Openshift auto generated certificate using annotations<br/>
@@ -2529,8 +2556,8 @@ Prometheus endpoint configuration
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.prometheus.manualTls
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelineprometheus)</sup></sup>
+### FlowCollector.spec.flowlogsPipeline.prometheus.tls.manual
+<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelineprometheustls)</sup></sup>
 
 
 
