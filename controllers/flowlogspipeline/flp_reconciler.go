@@ -104,7 +104,7 @@ func (r *FLPReconciler) InitStaticResources(ctx context.Context) error {
 // PrepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
 func (r *FLPReconciler) PrepareNamespaceChange(ctx context.Context) error {
 	// Switching namespace => delete everything in the previous namespace
-	for i := 0; i < len(r.singleReconcilers); i++ {
+	for i := range r.singleReconcilers {
 		r.singleReconcilers[i].nobjMngr.CleanupPreviousNamespace(ctx)
 	}
 	r.nobjMngr.CleanupPreviousNamespace(ctx)
@@ -126,7 +126,7 @@ func (r *FLPReconciler) GetServiceName(kafka *flowsv1alpha1.FlowCollectorKafka) 
 }
 
 func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
-	for i := 0; i < len(r.singleReconcilers); i++ {
+	for i := range r.singleReconcilers {
 		err := r.singleReconcilers[i].Reconcile(ctx, desired)
 		if err != nil {
 			return err
