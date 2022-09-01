@@ -204,10 +204,28 @@ rm -rf $$TMP_DIR ;\
 }
 endef
 
+.PHONY: operator-sdk
+OPSDK = ./bin/operator-sdk
+OPSDK: ## Download opm locally if necessary.
+ifeq (,$(wildcard $(OPSDK)))
+ifeq (,$(shell which operator-sdk 2>/dev/null))
+	@{ \
+	echo "### Downloading operator-sdk"; \
+	set -e ;\
+	mkdir -p $(dir $(OPSDK)) ;\
+	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(OPSDK) https://github.com/operator-framework/operator-sdk/releases/download/v1.22.1/operator-sdk_$${OS}_$${ARCH} ;\
+	chmod +x $(OPSDK) ;\
+	}
+else
+OPSDK = $(shell which operator-sdk)
+endif
+endif
+
 .PHONY: bundle-prepare
-bundle-prepare: generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
+bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	envsubst < config/crd/patches/version_in_flowcollectors_envtpl.yaml > config/crd/patches/version_in_flowcollectors.yaml
-	operator-sdk generate kustomize manifests -q
+	$(OPSDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 	sed -i 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
@@ -217,13 +235,13 @@ bundle-prepare: generate kustomize ## Generate bundle manifests and metadata, th
 
 .PHONY: bundle
 bundle: bundle-prepare
-	$(KUSTOMIZE) build config/manifests | sed -e 's~:container-image:~$(IMG)~' | sed -e 's~:created-at:~$(DATE)~' | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	operator-sdk bundle validate ./bundle
+	$(KUSTOMIZE) build config/manifests | sed -e 's~:container-image:~$(IMG)~' | sed -e 's~:created-at:~$(DATE)~' | $(OPSDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(OPSDK) bundle validate ./bundle
 
 .PHONY: bundle-for-test
 bundle-for-test: bundle-prepare
-	$(KUSTOMIZE) build config/manifests | sed -e 's~:container-image:~$(IMG)~' | sed -e 's~:created-at:~$(DATE)~' | operator-sdk generate bundle -q --overwrite --version 0.0.0-$(VERSION) $(BUNDLE_METADATA_OPTS)
-	operator-sdk bundle validate ./bundle
+	$(KUSTOMIZE) build config/manifests | sed -e 's~:container-image:~$(IMG)~' | sed -e 's~:created-at:~$(DATE)~' | $(OPSDK) generate bundle -q --overwrite --version 0.0.0-$(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(OPSDK) bundle validate ./bundle
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
