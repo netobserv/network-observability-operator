@@ -80,8 +80,8 @@ func newBuilder(ns, agent string, desired *flowsv1alpha1.FlowCollectorFLP, desir
 	version := helper.ExtractVersion(desired.Image)
 	var promTLS flowsv1alpha1.CertificateReference
 	switch desired.Prometheus.TLS.Type {
-	case flowsv1alpha1.PrometheusTLSManual:
-		promTLS = *desired.Prometheus.TLS.Manual
+	case flowsv1alpha1.PrometheusTLSProvided:
+		promTLS = *desired.Prometheus.TLS.Provided
 	case flowsv1alpha1.PrometheusTLSAuto:
 		promTLS = flowsv1alpha1.CertificateReference{
 			Type:     "secret",

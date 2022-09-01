@@ -1415,7 +1415,7 @@ spec:
                       tls:
                         description: TLS configuration.
                         properties:
-                          manual:
+                          provided:
                             description: TLS configuration.
                             properties:
                               certFile:
@@ -1441,12 +1441,12 @@ spec:
                           type:
                             default: DISABLED
                             description: Select the type of TLS configuration "DISABLED"
-                              (default) to not configure TLS for the endpoint, "MANUAL"
+                              (default) to not configure TLS for the endpoint, "PROVIDED"
                               to manually provide cert file and a key file, and "AUTO"
                               to use Openshift auto generated certificate using annotations
                             enum:
                             - DISABLED
-                            - MANUAL
+                            - PROVIDED
                             - AUTO
                             type: string
                         type: object

@@ -203,7 +203,7 @@ type FlowCollectorKafka struct {
 
 const (
 	PrometheusTLSDisabled = "DISABLED"
-	PrometheusTLSManual   = "MANUAL"
+	PrometheusTLSProvided = "PROVIDED"
 	PrometheusTLSAuto     = "AUTO"
 )
 
@@ -212,17 +212,17 @@ type PrometheusTLSConfigType string
 // PrometheusTLS define the TLS configuration of Prometheus
 type PrometheusTLS struct {
 	// Select the type of TLS configuration
-	// "DISABLED" (default) to not configure TLS for the endpoint, "MANUAL" to manually provide cert file and a key file,
+	// "DISABLED" (default) to not configure TLS for the endpoint, "PROVIDED" to manually provide cert file and a key file,
 	// and "AUTO" to use Openshift auto generated certificate using annotations
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="DISABLED";"MANUAL";"AUTO"
+	// +kubebuilder:validation:Enum:="DISABLED";"PROVIDED";"AUTO"
 	// +kubebuilder:validation:Required
 	//+kubebuilder:default:="DISABLED"
 	Type PrometheusTLSConfigType `json:"type,omitempty"`
 
 	// TLS configuration.
 	// +optional
-	Manual *CertificateReference `json:"manual"`
+	Provided *CertificateReference `json:"provided"`
 }
 
 // PrometheusConfig define the prometheus endpoint configuration

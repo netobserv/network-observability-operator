@@ -2536,7 +2536,7 @@ TLS configuration.
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelineprometheustlsmanual">manual</a></b></td>
+        <td><b><a href="#flowcollectorspecflowlogspipelineprometheustlsprovided">provided</a></b></td>
         <td>object</td>
         <td>
           TLS configuration.<br/>
@@ -2546,9 +2546,9 @@ TLS configuration.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Select the type of TLS configuration "DISABLED" (default) to not configure TLS for the endpoint, "MANUAL" to manually provide cert file and a key file, and "AUTO" to use Openshift auto generated certificate using annotations<br/>
+          Select the type of TLS configuration "DISABLED" (default) to not configure TLS for the endpoint, "PROVIDED" to manually provide cert file and a key file, and "AUTO" to use Openshift auto generated certificate using annotations<br/>
           <br/>
-            <i>Enum</i>: DISABLED, MANUAL, AUTO<br/>
+            <i>Enum</i>: DISABLED, PROVIDED, AUTO<br/>
             <i>Default</i>: DISABLED<br/>
         </td>
         <td>false</td>
@@ -2556,7 +2556,7 @@ TLS configuration.
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.prometheus.tls.manual
+### FlowCollector.spec.flowlogsPipeline.prometheus.tls.provided
 <sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelineprometheustls)</sup></sup>
 
 
