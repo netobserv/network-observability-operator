@@ -393,7 +393,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		enrichedStage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
 	}
 
-	// obtain extract_aggregate and encode_prometheus stages from metrics_definitions
+	// obtain encode_prometheus stage from metrics_definitions
 	promMetrics, err := b.obtainMetricsConfiguration()
 	if err != nil {
 		return err
