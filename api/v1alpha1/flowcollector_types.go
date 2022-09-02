@@ -45,11 +45,12 @@ type FlowCollectorSpec struct {
 	Namespace string `json:"namespace,omitempty"`
 
 	//+kubebuilder:validation:Enum=ipfix;ebpf
-	//+kubebuilder:default:=ipfix
-	// Select the flows tracing agent. Possible values are "ipfix" (default) to use
-	// the IPFIX collector, or "ebpf" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes
-	// CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could
-	// work but necessitate manual configuration.
+	//+kubebuilder:default:=ebpf
+	// Select the flows tracing agent. Possible values are "ipfix" to use
+	// the IPFIX collector, or "ebpf" (default) to use NetObserv eBPF agent.
+	// eBPF is recommended, as it should work in more situations and offers better performances.
+	// When using IPFIX with OVN-Kubernetes CNI, NetObserv will configure OVN's IPFIX exporter.
+	// Other CNIs are not supported, they could work but necessitate manual configuration.
 	Agent string `json:"agent"`
 
 	// Settings related to IPFIX-based flow reporter when the "agent" property is set
@@ -132,7 +133,9 @@ type FlowCollectorEBPF struct {
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
-	// Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 or 1 means disabled.
+	// Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=50
 	//+optional
 	Sampling int32 `json:"sampling,omitempty"`
 
