@@ -34,6 +34,12 @@ spec:
       port: 9102
     ignoreMetrics: []
     dropUnusedFields: true
+    resources:
+      requests:
+        memory: 100Mi
+        cpu: 100m
+      limits:
+        memory: 300Mi
   kafka:
     enable: false
     address: "kafka-cluster-kafka-bootstrap.network-observability"
