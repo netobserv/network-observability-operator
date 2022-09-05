@@ -11,9 +11,9 @@ ovnns=openshift-ovn-kubernetes
 
 ovspods=`kubectl get pods -n $ovnns -l app=ovnkube-node --no-headers -o custom-columns=":metadata.name"`
 
-cacheActiveTimeout=`kubectl get flowcollector cluster -o yaml | yq -e .spec.ipfix.cacheActiveTimeout`
-cacheMaxFlows=`kubectl get flowcollector cluster -o yaml | yq -e .spec.ipfix.cacheMaxFlows`
-sampling=`kubectl get flowcollector cluster -o yaml | yq -e .spec.ipfix.sampling`
+cacheActiveTimeout=`kubectl get flowcollector cluster -o yaml | yq -e .spec.agent.ipfix.cacheActiveTimeout`
+cacheMaxFlows=`kubectl get flowcollector cluster -o yaml | yq -e .spec.agent.ipfix.cacheMaxFlows`
+sampling=`kubectl get flowcollector cluster -o yaml | yq -e .spec.agent.ipfix.sampling`
 config="cache_active_timeout=${cacheActiveTimeout::-1} cache_max_flows=$cacheMaxFlows sampling=$sampling"
 
 echo "Storing config: $config"
