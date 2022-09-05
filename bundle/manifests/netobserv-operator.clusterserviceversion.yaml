@@ -11,7 +11,27 @@ metadata:
             "name": "cluster"
           },
           "spec": {
-            "agent": "ipfix",
+            "agent": {
+              "ebpf": {
+                "cacheActiveTimeout": "5s",
+                "cacheMaxFlows": 1000,
+                "excludeInterfaces": [
+                  "lo"
+                ],
+                "image": "quay.io/netobserv/netobserv-ebpf-agent:v0.1.2",
+                "imagePullPolicy": "IfNotPresent",
+                "interfaces": [],
+                "logLevel": "info",
+                "privileged": false,
+                "sampling": 50
+              },
+              "ipfix": {
+                "cacheActiveTimeout": "20s",
+                "cacheMaxFlows": 400,
+                "sampling": 400
+              },
+              "type": "EBPF"
+            },
             "clusterNetworkOperator": {
               "namespace": "openshift-network-operator"
             },
@@ -28,19 +48,6 @@ metadata:
               },
               "register": true
             },
-            "ebpf": {
-              "cacheActiveTimeout": "5s",
-              "cacheMaxFlows": 1000,
-              "excludeInterfaces": [
-                "lo"
-              ],
-              "image": "quay.io/netobserv/netobserv-ebpf-agent:v0.1.2",
-              "imagePullPolicy": "IfNotPresent",
-              "interfaces": [],
-              "logLevel": "info",
-              "privileged": false,
-              "sampling": 0
-            },
             "flowlogsPipeline": {
               "dropUnusedFields": true,
               "enableKubeProbes": true,
@@ -52,11 +59,6 @@ metadata:
               "logLevel": "info",
               "port": 2055,
               "prometheusPort": 9102
-            },
-            "ipfix": {
-              "cacheActiveTimeout": "20s",
-              "cacheMaxFlows": 400,
-              "sampling": 400
             },
             "kafka": {
               "address": "kafka-cluster-kafka-bootstrap.network-observability",
@@ -111,7 +113,7 @@ metadata:
     containerImage: quay.io/netobserv/network-observability-operator:0.1.4
     createdAt: "2022-08-08T16:02:25Z"
     description: Network flows collector and monitoring solution
-    operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.23.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
   name: netobserv-operator.v0.1.4
@@ -130,8 +132,6 @@ spec:
     NetObserv Operator is an OpenShift / Kubernetes operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by the NetObserv eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
 
     The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When used in OpenShift, new dashboards are available in the Console.
-
-    This is an early release, we would be grateful if you could inform us of any issues.
 
     ## Dependencies
 
@@ -155,13 +155,13 @@ spec:
 
     A couple of settings deserve special attention:
 
-    - Agent (`spec.agent`) can be `ipfix` or `ebpf`. The IPFIX option is fully functional when using [OVN-Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) CNI. Other CNIs are not supported, but you may still be able to configure them manually if they allow IPFIX exports, whereas eBPF is expected to work regardless of the running CNI.
+    - Agent (`spec.agent`) can be `EBPF` or `IPFIX`. eBPF is recommended, as it should work in more situations and offers better performances. If you can't, or don't want to use eBPF, note that the IPFIX option is fully functional only when using [OVN-Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) CNI. Other CNIs are not officially supported, but you may still be able to configure them manually if they allow IPFIX exports.
 
-    - Sampling (`spec.ipfix.sampling` and `spec.ebpf.sampling`): 24/7 unsampled flow collection may consume a non-negligible amount of resources. While we are doing our best to make it a viable option in production, it is still often necessary to mitigate by setting a sampling ratio. A value of `100` means: one flow every 100 is sampled. `1` means no sampling. The lower it is, the more accurate are flows and derived metrics. By default, sampling is set to 400 for IPFIX, and is disabled for eBPF.
+    - Sampling (`spec.ebpf.sampling` and `spec.ipfix.sampling`): 24/7, 1:1 sampled flow collection may consume a non-negligible amount of resources. While we are doing our best to make it a viable option in production, it is still sometimes necessary to mitigate by setting a sampling ratio. A value of `100` means: one flow every 100 is sampled. `1` means all flows are sampled. The lower it is, the more flows you get, and the more accurate are derived metrics. By default, sampling is set to 50 (ie. 1:50) for eBPF and 400 (1:400) for IPFIX. Note that more sampled flows also means more storage needed. We recommend to start with default values and refine empirically, to figure out which setting your cluster can manage.
 
     - Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned above, but you may have to configure differently if you used another installation method.
 
-    - Kafka (`spec.kafka`): _experimental_ - when enabled, integrate the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Assumes Kafka is already deployed and a topic is created.
+    - Kafka (`spec.kafka`): when enabled, integrate the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created.
 
     ## Overview
 
@@ -360,7 +360,10 @@ spec:
           - create
         serviceAccountName: netobserv-controller-manager
       deployments:
-      - name: netobserv-controller-manager
+      - label:
+          app: network-observability-operator
+          control-plane: controller-manager
+        name: netobserv-controller-manager
         spec:
           replicas: 1
           selector:

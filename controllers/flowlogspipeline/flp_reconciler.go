@@ -141,7 +141,7 @@ func checkDeployNeeded(fc *flowsv1alpha1.FlowCollectorSpec, confKind string) (bo
 		return fc.Kafka.Enable, nil
 	case ConfKafkaIngester:
 		// disabled if ebpf-agent is enabled, as it sends the flows directly to the transformer
-		return fc.Kafka.Enable && fc.Agent == flowsv1alpha1.AgentIPFIX, nil
+		return fc.Kafka.Enable && fc.Agent.Type == flowsv1alpha1.AgentIPFIX, nil
 	default:
 		return false, fmt.Errorf("unknown flowlogs-pipelines config kind")
 	}
@@ -172,7 +172,7 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 		return err
 	}
 
-	builder := newBuilder(r.nobjMngr.Namespace, desired.Spec.Agent, desiredFLP, desiredLoki, desiredKafka, r.confKind, r.useOpenShiftSCC)
+	builder := newBuilder(r.nobjMngr.Namespace, desired.Spec.Agent.Type, desiredFLP, desiredLoki, desiredKafka, r.confKind, r.useOpenShiftSCC)
 	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err

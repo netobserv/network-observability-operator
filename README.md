@@ -107,7 +107,7 @@ As it operates cluster-wide, only a single `FlowCollector` is allowed, and it ha
 
 A couple of settings deserve special attention:
 
-- Agent (`spec.agent`) can be `ebpf` (default) or `ipfix`. eBPF is recommended, as it should work in more situations and offers better performances. If you can't, or don't want to use eBPF, note that the IPFIX option is fully functional only when using OVN-Kubernetes CNI. Other CNIs are not officially supported, but you may still be able to configure them manually if they allow IPFIX exports.
+- Agent (`spec.agent`) can be `EBPF` (default) or `IPFIX`. eBPF is recommended, as it should work in more situations and offers better performances. If you can't, or don't want to use eBPF, note that the IPFIX option is fully functional only when using OVN-Kubernetes CNI. Other CNIs are not officially supported, but you may still be able to configure them manually if they allow IPFIX exports.
 
 - Sampling (`spec.ebpf.sampling` and `spec.ipfix.sampling`): 24/7, 1:1 sampled flow collection may consume a non-negligible amount of resources. While we are doing our best to make it a viable option in production, it is still sometimes necessary to mitigate by setting a sampling ratio. A value of `100` means: one flow every 100 is sampled. `1` means all flows are sampled. The lower it is, the more flows you get, and the more accurate are derived metrics. By default, sampling is set to 50 (ie. 1:50) for eBPF and 400 (1:400) for IPFIX. Note that more sampled flows also means more storage needed. We recommend to start with default values and refine empirically, to figure out which setting your cluster can manage.
 
