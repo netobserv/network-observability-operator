@@ -4,7 +4,7 @@ metadata:
   name: cluster
 spec:
   namespace: "network-observability"
-  agent: ipfix
+  agent: ebpf
   ipfix:
     cacheActiveTimeout: 20s
     cacheMaxFlows: 400
@@ -12,7 +12,7 @@ spec:
   ebpf:
     image: 'quay.io/netobserv/netobserv-ebpf-agent:main'
     imagePullPolicy: IfNotPresent
-    sampling: 0
+    sampling: 50
     cacheActiveTimeout: 5s
     cacheMaxFlows: 1000
     interfaces: []
