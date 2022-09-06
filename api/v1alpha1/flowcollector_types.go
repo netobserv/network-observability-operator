@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,8 +24,8 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 const (
-	AgentIPFIX = "ipfix"
-	AgentEBPF  = "ebpf"
+	AgentIPFIX = "IPFIX"
+	AgentEBPF  = "EBPF"
 )
 
 // Please notice that the FlowCollectorSpec's properties MUST redefine one of the default
@@ -39,29 +39,13 @@ const (
 type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	//+kubebuilder:default:=""
 	// Namespace where NetObserv pods are deployed.
 	// If empty, the namespace of the operator is going to be used.
+	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
-	//+kubebuilder:validation:Enum=ipfix;ebpf
-	//+kubebuilder:default:=ebpf
-	// Select the flows tracing agent. Possible values are "ipfix" to use
-	// the IPFIX collector, or "ebpf" (default) to use NetObserv eBPF agent.
-	// eBPF is recommended, as it should work in more situations and offers better performances.
-	// When using IPFIX with OVN-Kubernetes CNI, NetObserv will configure OVN's IPFIX exporter.
-	// Other CNIs are not supported, they could work but necessitate manual configuration.
-	Agent string `json:"agent"`
-
-	// Settings related to IPFIX-based flow reporter when the "agent" property is set
-	// to "ipfix".
-	// +kubebuilder:default:={sampling:400}
-	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
-
-	// Settings related to eBPF-based flow reporter when the "agent" property is set
-	// to "ebpf".
-	// +kubebuilder:default={imagePullPolicy:"IfNotPresent"}
-	EBPF FlowCollectorEBPF `json:"ebpf,omitempty"`
+	// +kubebuilder:default:={type:"EBPF"}
+	Agent FlowCollectorAgent `json:"agent"`
 
 	// Settings related to the flowlogs-pipeline component, which collects and enriches the flows, and produces metrics.
 	FlowlogsPipeline FlowCollectorFLP `json:"flowlogsPipeline,omitempty"`
@@ -82,6 +66,31 @@ type FlowCollectorSpec struct {
 
 	// Settings related to OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
 	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty"`
+}
+
+// FlowCollectorAgent is a discriminated union that allows to select either ipfix or ebpf, but does not
+// allow defining both fields.
+// +union
+type FlowCollectorAgent struct {
+	// Select the flows tracing agent. Possible values are "IPFIX" (default) to use
+	// the IPFIX collector, or "EBPF" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes
+	// CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could
+	// work but require manual configuration.
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="IPFIX";"EBPF"
+	// +kubebuilder:validation:Required
+	// +kubebuilder:default:=EBPF
+	Type string `json:"type"`
+
+	// Settings related to IPFIX-based flow reporter when the "agent.type" property is set
+	// to "IPFIX".
+	// +optional
+	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
+
+	// Settings related to eBPF-based flow reporter when the "agent.type" property is set
+	// to "EBPF".
+	// +optional
+	EBPF FlowCollectorEBPF `json:"ebpf,omitempty"`
 }
 
 // FlowCollectorIPFIX defines a FlowCollector that uses IPFIX on OVN-Kubernetes to collect the
@@ -495,7 +504,7 @@ type FlowCollectorStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster
-//+kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.spec.agent`
+//+kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.spec.agent.type`
 //+kubebuilder:printcolumn:name="Kafka",type="boolean",JSONPath=`.spec.kafka.enable`
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
 

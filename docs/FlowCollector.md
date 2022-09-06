@@ -84,13 +84,12 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>agent</b></td>
-        <td>enum</td>
+        <td><b><a href="#flowcollectorspecagent">agent</a></b></td>
+        <td>object</td>
         <td>
-          Select the flows tracing agent. Possible values are "ipfix" to use the IPFIX collector, or "ebpf" (default) to use NetObserv eBPF agent. eBPF is recommended, as it should work in more situations and offers better performances. When using IPFIX with OVN-Kubernetes CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could work but necessitate manual configuration.<br/>
+          FlowCollectorAgent is a discriminated union that allows to select either ipfix or ebpf, but does not allow defining both fields.<br/>
           <br/>
-            <i>Enum</i>: ipfix, ebpf<br/>
-            <i>Default</i>: ebpf<br/>
+            <i>Default</i>: map[type:EBPF]<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -108,28 +107,10 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecebpf">ebpf</a></b></td>
-        <td>object</td>
-        <td>
-          Settings related to eBPF-based flow reporter when the "agent" property is set to "ebpf".<br/>
-          <br/>
-            <i>Default</i>: map[imagePullPolicy:IfNotPresent]<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b><a href="#flowcollectorspecflowlogspipeline">flowlogsPipeline</a></b></td>
         <td>object</td>
         <td>
           Settings related to the flowlogs-pipeline component, which collects and enriches the flows, and produces metrics.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecipfix">ipfix</a></b></td>
-        <td>object</td>
-        <td>
-          Settings related to IPFIX-based flow reporter when the "agent" property is set to "ipfix".<br/>
-          <br/>
-            <i>Default</i>: map[sampling:400]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -151,8 +132,6 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td>string</td>
         <td>
           Namespace where NetObserv pods are deployed. If empty, the namespace of the operator is going to be used.<br/>
-          <br/>
-            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -160,6 +139,261 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td>object</td>
         <td>
           Settings related to OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+FlowCollectorAgent is a discriminated union that allows to select either ipfix or ebpf, but does not allow defining both fields.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Select the flows tracing agent. Possible values are "IPFIX" (default) to use the IPFIX collector, or "EBPF" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could work but require manual configuration.<br/>
+          <br/>
+            <i>Enum</i>: IPFIX, EBPF<br/>
+            <i>Default</i>: EBPF<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpf">ebpf</a></b></td>
+        <td>object</td>
+        <td>
+          Settings related to eBPF-based flow reporter when the "agent.type" property is set to "EBPF".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentipfix">ipfix</a></b></td>
+        <td>object</td>
+        <td>
+          Settings related to IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf
+<sup><sup>[↩ Parent](#flowcollectorspecagent)</sup></sup>
+
+
+
+Settings related to eBPF-based flow reporter when the "agent.type" property is set to "EBPF".
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>cacheActiveTimeout</b></td>
+        <td>string</td>
+        <td>
+          CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
+          <br/>
+            <i>Default</i>: 5s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>cacheMaxFlows</b></td>
+        <td>integer</td>
+        <td>
+          CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 1000<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>env</b></td>
+        <td>map[string]string</td>
+        <td>
+          Env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug/support scenarios.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>excludeInterfaces</b></td>
+        <td>[]string</td>
+        <td>
+          ExcludeInterfaces contains the interface names that will be excluded from flow tracing. If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
+          <br/>
+            <i>Default</i>: [lo]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>image</b></td>
+        <td>string</td>
+        <td>
+          Image is the NetObserv Agent image (including domain and tag)<br/>
+          <br/>
+            <i>Default</i>: quay.io/netobserv/netobserv-ebpf-agent:main<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>imagePullPolicy</b></td>
+        <td>enum</td>
+        <td>
+          ImagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
+          <br/>
+            <i>Enum</i>: IfNotPresent, Always, Never<br/>
+            <i>Default</i>: IfNotPresent<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>interfaces</b></td>
+        <td>[]string</td>
+        <td>
+          Interfaces contains the interface names from where flows will be collected. If empty, the agent will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>logLevel</b></td>
+        <td>enum</td>
+        <td>
+          LogLevel defines the log level for the NetObserv eBPF Agent<br/>
+          <br/>
+            <i>Enum</i>: trace, debug, info, warn, error, fatal, panic<br/>
+            <i>Default</i>: info<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>privileged</b></td>
+        <td>boolean</td>
+        <td>
+          Privileged mode for the eBPF Agent container. If false, the operator will add the following capabilities to the container, to enable its correct operation: BPF, PERFMON, NET_ADMIN, SYS_RESOURCE.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfresources">resources</a></b></td>
+        <td>object</td>
+        <td>
+          Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 50<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.resources
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpf)</sup></sup>
+
+
+
+Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>limits</b></td>
+        <td>map[string]int or string</td>
+        <td>
+          Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>requests</b></td>
+        <td>map[string]int or string</td>
+        <td>
+          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ipfix
+<sup><sup>[↩ Parent](#flowcollectorspecagent)</sup></sup>
+
+
+
+Settings related to IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>cacheActiveTimeout</b></td>
+        <td>string</td>
+        <td>
+          CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
+          <br/>
+            <i>Default</i>: 20s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>cacheMaxFlows</b></td>
+        <td>integer</td>
+        <td>
+          CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 400<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>forceSampleAll</b></td>
+        <td>boolean</td>
+        <td>
+          It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risks. When it is set to true, the value of "sampling" is ignored.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which may impact the cluster stability, refer to "forceSampleAll". Alternatively, you can use the eBPF Agent instead of IPFIX.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 400<br/>
+            <i>Minimum</i>: 2<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1280,157 +1514,6 @@ Compute Resources required by this container. Cannot be updated. More info: http
 </table>
 
 
-### FlowCollector.spec.ebpf
-<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
-
-
-
-Settings related to eBPF-based flow reporter when the "agent" property is set to "ebpf".
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>cacheActiveTimeout</b></td>
-        <td>string</td>
-        <td>
-          CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
-          <br/>
-            <i>Default</i>: 5s<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>cacheMaxFlows</b></td>
-        <td>integer</td>
-        <td>
-          CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 1000<br/>
-            <i>Minimum</i>: 1<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>env</b></td>
-        <td>map[string]string</td>
-        <td>
-          Env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug/support scenarios.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>excludeInterfaces</b></td>
-        <td>[]string</td>
-        <td>
-          ExcludeInterfaces contains the interface names that will be excluded from flow tracing. If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
-          <br/>
-            <i>Default</i>: [lo]<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>image</b></td>
-        <td>string</td>
-        <td>
-          Image is the NetObserv Agent image (including domain and tag)<br/>
-          <br/>
-            <i>Default</i>: quay.io/netobserv/netobserv-ebpf-agent:main<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>imagePullPolicy</b></td>
-        <td>enum</td>
-        <td>
-          ImagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
-          <br/>
-            <i>Enum</i>: IfNotPresent, Always, Never<br/>
-            <i>Default</i>: IfNotPresent<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>interfaces</b></td>
-        <td>[]string</td>
-        <td>
-          Interfaces contains the interface names from where flows will be collected. If empty, the agent will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>logLevel</b></td>
-        <td>enum</td>
-        <td>
-          LogLevel defines the log level for the NetObserv eBPF Agent<br/>
-          <br/>
-            <i>Enum</i>: trace, debug, info, warn, error, fatal, panic<br/>
-            <i>Default</i>: info<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>privileged</b></td>
-        <td>boolean</td>
-        <td>
-          Privileged mode for the eBPF Agent container. If false, the operator will add the following capabilities to the container, to enable its correct operation: BPF, PERFMON, NET_ADMIN, SYS_RESOURCE.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecebpfresources">resources</a></b></td>
-        <td>object</td>
-        <td>
-          Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>sampling</b></td>
-        <td>integer</td>
-        <td>
-          Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 50<br/>
-            <i>Minimum</i>: 0<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.ebpf.resources
-<sup><sup>[↩ Parent](#flowcollectorspecebpf)</sup></sup>
-
-
-
-Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>limits</b></td>
-        <td>map[string]int or string</td>
-        <td>
-          Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>requests</b></td>
-        <td>map[string]int or string</td>
-        <td>
-          Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
 ### FlowCollector.spec.flowlogsPipeline
 <sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
 
@@ -2515,66 +2598,6 @@ Compute Resources required by this container. Cannot be updated. More info: http
         <td>map[string]int or string</td>
         <td>
           Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.ipfix
-<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
-
-
-
-Settings related to IPFIX-based flow reporter when the "agent" property is set to "ipfix".
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>cacheActiveTimeout</b></td>
-        <td>string</td>
-        <td>
-          CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
-          <br/>
-            <i>Default</i>: 20s<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>cacheMaxFlows</b></td>
-        <td>integer</td>
-        <td>
-          CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 400<br/>
-            <i>Minimum</i>: 0<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>forceSampleAll</b></td>
-        <td>boolean</td>
-        <td>
-          It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risks. When it is set to true, the value of "sampling" is ignored.<br/>
-          <br/>
-            <i>Default</i>: false<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>sampling</b></td>
-        <td>integer</td>
-        <td>
-          Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which may impact the cluster stability, refer to "forceSampleAll". Alternatively, you can use the eBPF Agent instead of IPFIX.<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 400<br/>
-            <i>Minimum</i>: 2<br/>
         </td>
         <td>false</td>
       </tr></tbody>

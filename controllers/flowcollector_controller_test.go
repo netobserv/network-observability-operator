@@ -111,9 +111,11 @@ func flowCollectorControllerSpecs() {
 							}},
 						},
 					},
-					Agent: "ipfix",
-					IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
-						Sampling: 200,
+					Agent: flowsv1alpha1.FlowCollectorAgent{
+						Type: "IPFIX",
+						IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
+							Sampling: 200,
+						},
 					},
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
 						Port:            9001,
@@ -203,8 +205,8 @@ func flowCollectorControllerSpecs() {
 
 		It("Should update successfully", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.IPFIX.CacheActiveTimeout = "30s"
-				fc.Spec.IPFIX.Sampling = 1234
+				fc.Spec.Agent.IPFIX.CacheActiveTimeout = "30s"
+				fc.Spec.Agent.IPFIX.Sampling = 1234
 				fc.Spec.FlowlogsPipeline.Port = 1999
 			})
 
@@ -238,10 +240,10 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.IPFIX.Sampling = 1
+				fc.Spec.Agent.IPFIX.Sampling = 1
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Satisfy(func(err error) bool {
-				return err != nil && strings.Contains(err.Error(), "spec.ipfix.sampling: Invalid value: 1")
+				return err != nil && strings.Contains(err.Error(), "spec.agent.ipfix.sampling: Invalid value: 1")
 			}), "Error expected for invalid sampling value")
 
 			Eventually(func() error {
@@ -249,8 +251,8 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.IPFIX.Sampling = 10
-				fc.Spec.IPFIX.ForceSampleAll = true
+				fc.Spec.Agent.IPFIX.Sampling = 10
+				fc.Spec.Agent.IPFIX.ForceSampleAll = true
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 
@@ -324,7 +326,7 @@ func flowCollectorControllerSpecs() {
 					Image:           "testimg:latest",
 				}
 				fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}
-				fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
+				fc.Spec.Agent.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
 					Sampling: 200,
 				}
 			})
@@ -476,7 +478,7 @@ func flowCollectorControllerSpecs() {
 				fc.Spec.FlowlogsPipeline.Kind = "Deployment"
 				fc.Spec.FlowlogsPipeline.Port = 9999
 				fc.Spec.Namespace = otherNamespace
-				fc.Spec.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
+				fc.Spec.Agent.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
 					Sampling: 200,
 				}
 			})
