@@ -145,9 +145,9 @@ func (cg *ConfGen) ParseDefinition(name string, bytes []byte) error {
 
 	// parse yaml
 	var defFile DefFile
-	err = yaml.Unmarshal(bytes, &defFile)
+	err = yaml.UnmarshalStrict(bytes, &defFile)
 	if err != nil {
-		log.Debugf("%s yaml.Unmarshal err: %v ", name, err)
+		log.Debugf("%s yaml.UnmarshalStrict err: %v ", name, err)
 		return err
 	}
 

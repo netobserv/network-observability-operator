@@ -68,8 +68,13 @@ func getFLPConfig() flowsv1alpha1.FlowCollectorFLP {
 				},
 			}},
 		},
-		HealthPort:     8080,
-		PrometheusPort: 9090,
+		HealthPort: 8080,
+		Prometheus: flowsv1alpha1.PrometheusConfig{
+			Port: 9090,
+			TLS: flowsv1alpha1.PrometheusTLS{
+				Type: flowsv1alpha1.PrometheusTLSDisabled,
+			},
+		},
 	}
 }
 
@@ -414,7 +419,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
-	assert.Equal(flp.PrometheusPort, int32(params[5].Encode.Prom.Port))
+	assert.Equal(flp.Prometheus.Port, int32(params[5].Encode.Prom.Port))
 
 }
 

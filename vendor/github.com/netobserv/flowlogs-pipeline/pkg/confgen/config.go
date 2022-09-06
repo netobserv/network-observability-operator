@@ -65,7 +65,7 @@ func (cg *ConfGen) ParseConfigFile(fileName string) (*Config, error) {
 		log.Debugf("ioutil.ReadFile err: %v ", err)
 		return nil, err
 	}
-	err = yaml.Unmarshal(yamlFile, &config)
+	err = yaml.UnmarshalStrict(yamlFile, &config)
 	if err != nil {
 		log.Debugf("Unmarshal err: %v ", err)
 		return nil, err

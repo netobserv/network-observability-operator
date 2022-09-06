@@ -18,6 +18,7 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
@@ -99,18 +100,27 @@ func ParseConfig(opts Options) (ConfigFileStruct, error) {
 	out := ConfigFileStruct{}
 
 	logrus.Debugf("opts.PipeLine = %v ", opts.PipeLine)
-	err := json.Unmarshal([]byte(opts.PipeLine), &out.Pipeline)
+	err := JsonUnmarshalStrict([]byte(opts.PipeLine), &out.Pipeline)
 	if err != nil {
 		logrus.Errorf("error when reading config file: %v", err)
 		return out, err
 	}
 	logrus.Debugf("stages = %v ", out.Pipeline)
 
-	err = json.Unmarshal([]byte(opts.Parameters), &out.Parameters)
+	err = JsonUnmarshalStrict([]byte(opts.Parameters), &out.Parameters)
 	if err != nil {
 		logrus.Errorf("error when reading config file: %v", err)
 		return out, err
 	}
 	logrus.Debugf("params = %v ", out.Parameters)
 	return out, nil
+}
+
+// JsonUnmarshalStrict is like Unmarshal except that any fields that are found
+// in the data that do not have corresponding struct members, or mapping
+// keys that are duplicates, will result in an error.
+func JsonUnmarshalStrict(data []byte, v interface{}) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	return dec.Decode(v)
 }
