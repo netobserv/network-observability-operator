@@ -30,6 +30,8 @@ Click the "Auto-generate release note" button.
 Once all sub-components are released (or have a release candidate), we can proceed with the operator.
 
 ```bash
+# Previous operator version
+previous="v0.1.3"
 # Set desired operator version - CAREFUL, no leading "v" here
 version="0.1.4"
 # Set console plugin released version
@@ -42,7 +44,7 @@ bpfv="v0.1.2"
 vv=v$version
 test_branch=test-$vv
 
-VERSION="$version" PLG_VERSION="$plgv" FLP_VERSION="$flpv" BPF_VERSION="$bpfv" make bundle
+VERSION="$version" PLG_VERSION="$plgv" FLP_VERSION="$flpv" BPF_VERSION="$bpfv" PREVIOUS_VERSION="$previous" make bundle
 
 git commit -a -m "Prepare release $vv"
 # Push to a test branch, and tag for release
@@ -76,19 +78,37 @@ Add links to sub-component release notes, e.g:
 ```md
 ## Sub-component release notes:
 
-* eBPF Agent: https://github.com/netobserv/netobserv-ebpf-agent/releases/tag/v0.1.1
-* Flowlogs-pipeline: https://github.com/netobserv/flowlogs-pipeline/releases/tag/v0.1.2
-* Console plugin: https://github.com/netobserv/network-observability-console-plugin/releases/tag/v0.1.3
+* eBPF Agent: https://github.com/netobserv/netobserv-ebpf-agent/releases/tag/v0.1.2
+* Flowlogs-pipeline: https://github.com/netobserv/flowlogs-pipeline/releases/tag/v0.1.3
+* Console plugin: https://github.com/netobserv/network-observability-console-plugin/releases/tag/v0.1.4
 ```
 
 Check also the "Create a discussion for this release" option, in category "Announcements".
 
+### Testing the upgrade path
+
+Before publishing, we should check that upgrading the operator from a previous version isn't broken. We can use `operator-sdk` for that:
+
+```bash
+# NOTE: on my last try, I needed to pass an index-image that corresponds to the operator-sdk version. This is likely due to a bug and should be eventually removed (cf https://github.com/operator-framework/operator-sdk/issues/5980)
+operator-sdk run bundle quay.io/netobserv/network-observability-operator-bundle:$previous --index-image quay.io/operator-framework/opm:v1.22
+operator-sdk run bundle-upgrade quay.io/netobserv/network-observability-operator-bundle:$vv
+```
+
+Note: currently, [seamless upgrade](https://sdk.operatorframework.io/docs/overview/operator-capabilities/#level-2---seamless-upgrades) is not fully supported because an existing custom resource needs first to be deleted before the operator is upgraded. See also: https://issues.redhat.com/browse/NETOBSERV-521.
+
+If you need to repeat the operation several times, make sure to cleanup between attempts:
+
+```bash
+operator-sdk cleanup netobserv-operator
+```
+
+
 ### Publishing on OperatorHub
 
 First, do some manual cleanup. Ideally these steps should be included in the `make bundle` process (TODO).
-- In `bundle.Dockerfile`, remove the two "Labels for testing" and the `scorecard` reference.
-- In `bundle/metadata/annotations.yaml`, remove the two annotations for testing.
-- In the CSV file, bump the `replaces` field so that it points to the previous version.
+- In [bundle.Dockerfile](./bundle.Dockerfile), remove the two "Labels for testing" and the `scorecard` reference.
+- In [bundled annotations.yaml](./bundle/metadata/annotations.yaml), remove the two annotations for testing.
 
 There's a cross-publication on two repos:
 - For non-OpenShift: https://github.com/k8s-operatorhub/community-operators
@@ -100,7 +120,7 @@ After having cloned or updated these repo, copy the bundle content:
 # Here, set correct paths and new version
 path_k8s="../community-operators"
 path_okd="../community-operators-prod"
-version="0.1.3"
+version="0.1.4"
 
 mkdir -p $path_k8s/operators/netobserv-operator/$version
 mkdir -p $path_okd/operators/netobserv-operator/$version

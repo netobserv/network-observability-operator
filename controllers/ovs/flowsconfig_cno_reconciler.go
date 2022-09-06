@@ -47,7 +47,7 @@ func (c *FlowsConfigCNOController) Reconcile(
 	if err != nil {
 		return err
 	}
-	if target.Spec.Agent != flowsv1alpha1.AgentIPFIX {
+	if target.Spec.Agent.Type != flowsv1alpha1.AgentIPFIX {
 		if current == nil {
 			return nil
 		}
@@ -113,7 +113,7 @@ func (c *FlowsConfigCNOController) current(ctx context.Context) (*flowsConfig, e
 func (c *FlowsConfigCNOController) desired(
 	ctx context.Context, coll *flowsv1alpha1.FlowCollector) (*flowsConfig, error) {
 
-	corrected := coll.Spec.IPFIX.DeepCopy()
+	corrected := coll.Spec.Agent.IPFIX.DeepCopy()
 	corrected.Sampling = getSampling(ctx, corrected)
 
 	conf := flowsConfig{FlowCollectorIPFIX: *corrected}

@@ -243,6 +243,13 @@ func querierURL(loki *flowsv1alpha1.FlowCollectorLoki) string {
 	return loki.URL
 }
 
+func statusURL(loki *flowsv1alpha1.FlowCollectorLoki) string {
+	if loki.StatusURL != "" {
+		return loki.StatusURL
+	}
+	return querierURL(loki)
+}
+
 func serviceNeedsUpdate(svc *corev1.Service, desired *pluginSpec, ns string) bool {
 	if svc.Namespace != ns {
 		return true

@@ -20,8 +20,6 @@ After the operator is installed, create a `FlowCollector` resource:
 
 ![OpenShift OperatorHub FlowCollector](./docs/assets/operatorhub-flowcollector.png)
 
-> Note: by default, NetObserv configures [OVN-Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) for IPFIX exports. If you are not using OVN-Kubernetes as your CNI, then configure `FlowCollector` to use the eBPF agent instead, unless you have a device such as an OVS in your network that you want to export IPFIX flows. To use the eBPF agent, set `Agent` to `ebpf`.
-
 Refer to the [Configuration section](#configuration) of this document.
 
 ### Install from repository
@@ -44,8 +42,6 @@ make deploy-sample-cr
 ```
 
 Alternatively, you can [grab and edit](./config/samples/flows_v1alpha1_flowcollector.yaml) this config before installing it.
-
-> Note: by default, NetObserv configures [OVN-Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) for IPFIX exports. If you are not using OVN-Kubernetes as your CNI, then configure `FlowCollector` to use the eBPF agent instead, unless you have a device such as an OVS in your network that you want to export IPFIX flows. To use the eBPF agent, set `spec.agent` to `ebpf`.
 
 You can still edit the `FlowCollector` after it's installed: the operator will take care about reconciling everything with the updated configuration:
 
@@ -111,13 +107,13 @@ As it operates cluster-wide, only a single `FlowCollector` is allowed, and it ha
 
 A couple of settings deserve special attention:
 
-- Agent (`spec.agent`) can be `ipfix` or `ebpf`. As mentioned above, the IPFIX option is fully functional when using OVN-Kubernetes CNI.  Other CNIs are not supported, but you may still be able to configure them manually if they allow IPFIX exports, whereas eBPF is expected to work regardless of the running CNI.
+- Agent (`spec.agent.type`) can be `EBPF` (default) or `IPFIX`. eBPF is recommended, as it should work in more situations and offers better performances. If you can't, or don't want to use eBPF, note that the IPFIX option is fully functional only when using OVN-Kubernetes CNI. Other CNIs are not officially supported, but you may still be able to configure them manually if they allow IPFIX exports.
 
-- Sampling (`spec.ipfix.sampling` and `spec.ebpf.sampling`): 24/7 unsampled flow collection may consume a non-negligible amount of resources. While we are doing our best to make it a viable option in production, it is still often necessary to mitigate by setting a sampling ratio. A value of `100` means: one flow every 100 is sampled. `1` means no sampling. The lower it is, the more accurate are flows and derived metrics. By default, sampling is set to 400 for IPFIX, and is disabled for eBPF.
+- Sampling (`spec.agent.ebpf.sampling` and `spec.agent.ipfix.sampling`): 24/7, 1:1 sampled flow collection may consume a non-negligible amount of resources. While we are doing our best to make it a viable option in production, it is still sometimes necessary to mitigate by setting a sampling ratio. A value of `100` means: one flow every 100 is sampled. `1` means all flows are sampled. The lower it is, the more flows you get, and the more accurate are derived metrics. By default, sampling is set to 50 (ie. 1:50) for eBPF and 400 (1:400) for IPFIX. Note that more sampled flows also means more storage needed. We recommend to start with default values and refine empirically, to figure out which setting your cluster can manage.
 
 - Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned in the _Getting Started_ section, but you may have to configure differently if you used another installation method.
 
-- Kafka (`spec.kafka`): _experimental_ - when enabled, integrate the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Assumes Kafka is already deployed and a topic is created. For convenience, we provide a quick deployment using [strimzi](https://strimzi.io/): run `make deploy-kafka` from the repository.
+- Kafka (`spec.kafka`): when enabled, integrate the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created. For convenience, we provide a quick deployment using [strimzi](https://strimzi.io/): run `make deploy-kafka` from the repository.
 
 ## Development & building from sources
 
@@ -141,23 +137,11 @@ It depends on which `agent` you want to use: `ebpf` or `ipfix`, and whether you 
 
 What matters is the version of the Linux kernel: 4.18 or more is supported. Earlier versions are not tested.
 
-Other than that, there are no known restrictions yet on the Kubernetes version.
+Other than that, there are no known restrictions on the Kubernetes version.
 
 #### To use IPFIX exports
 
-OpenShift 4.10 or above, or upstream OVN-Kubernetes, are recommended, as the operator will configure OVS for you. Otherwise, you need to configure it manually.
-
-For OpenShift 4.8 or 4.9:
-
-* Configure `spec.flowlogsPipeline.kind` to be `Deployment`
-* Run the following:
-
-```bash
-FLP_IP=`kubectl get svc flowlogs-pipeline -n network-observability -ojsonpath='{.spec.clusterIP}'` && echo $FLP_IP
-kubectl patch networks.operator.openshift.io cluster --type='json' -p "[{'op': 'add', 'path': '/spec', 'value': {'exportNetworkFlows': {'ipfix': { 'collectors': ['$FLP_IP:2055']}}}}]"
-```
-
-OpenShift versions older than 4.8 don't support IPFIX exports.
+OpenShift 4.10 or above, or upstream OVN-Kubernetes, are recommended, as the operator will configure OVS for you.
 
 For other CNIs, you need to find out if they can export IPFIX, and configure them accordingly.
 
@@ -190,7 +174,7 @@ network-observability-plugin-7fb8c5477b-drg2z   1/1     Running   0          43m
 
 Results may slightly differ depending on the installation method and the `FlowCollector` configuration. At least you should see `flowlogs-pipeline` pods in a `Running` state.
 
-If you use the eBPF agent in privileged mode (`spec.ebpf.privileged=true`), check also for pods in privileged namespace:
+If you use the eBPF agent, check also for pods in privileged namespace:
 
 ```bash
 # Assuming configured namespace is network-observability (default)
@@ -206,11 +190,25 @@ netobserv-ebpf-agent-ldj66   1/1     Running   0          7s
 
 ```
 
-Finally, make sure Loki is correctly deployed, and reachable from pods via the URL defined in `spec.loki.url`.
+Finally, make sure Loki is correctly deployed, and reachable from pods via the URL defined in `spec.loki.url`. You can for instance check using this command:
+
+```bash
+kubectl exec $(kubectl get pod -l "app=flowlogs-pipeline" -o name)  -- curl  -G -s "`kubectl get flowcollector cluster -o=jsonpath={.spec.loki.url}`loki/api/v1/query" --data-urlencode 'query={app="netobserv-flowcollector"}' --data-urlencode 'limit=1'
+```
+
+It should return some json in this form:
+
+```
+{"status":"success","data":{"resultType":"streams","result":[...],"stats":{...}}}
+```
 
 ### Everything seems correctly deployed but there isn't any flow showing up
 
-Wait 10 minutes and check again. When `spec.agent` is `ipfix`, there is sometimes a delay, up to 10 minutes, before the flows appear. This is due to the IPFIX protocol requiring exporter and collector to exchange record template definitions as a preliminary step. The eBPF agent doesn't have such a delay.
+If using IPFIX (ie. `spec.agent.type` is `IPFIX` in FlowCollector), wait 10 minutes and check again. There is sometimes a delay, up to 10 minutes, before the flows appear. This is due to the IPFIX protocol requiring exporter and collector to exchange record template definitions as a preliminary step. The eBPF agent doesn't have such a delay.
+
+Else, check for any suspicious error in logs, especially in the `flowlogs-pipeline` pods and the eBPF agent pods. You may also take a look at prometheus metrics prefixed with `netobserv_`: they can give you clues if flows are processed, if errors are reported, etc.
+
+Finally, don't hesitate to [open an issue](https://github.com/netobserv/network-observability-operator/issues).
 
 ### There is no Network Traffic menu entry in OpenShift Console
 

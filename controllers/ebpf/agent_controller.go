@@ -91,7 +91,7 @@ func (c *AgentController) Reconcile(
 	if err != nil {
 		return fmt.Errorf("fetching current EBPF Agent: %w", err)
 	}
-	if target.Spec.Agent != flowsv1alpha1.AgentEBPF {
+	if target.Spec.Agent.Type != flowsv1alpha1.AgentEBPF {
 		if current == nil {
 			rlog.Info("nothing to do, as the requested agent is not eBPF",
 				"currentAgent", target.Spec.Agent)
@@ -109,7 +109,7 @@ func (c *AgentController) Reconcile(
 		}
 	}
 
-	if err := c.permissions.Reconcile(ctx, &target.Spec.EBPF); err != nil {
+	if err := c.permissions.Reconcile(ctx, &target.Spec.Agent.EBPF); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
 	desired := c.desired(target)
@@ -143,10 +143,10 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 }
 
 func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonSet {
-	if coll == nil || coll.Spec.Agent != flowsv1alpha1.AgentEBPF {
+	if coll == nil || coll.Spec.Agent.Type != flowsv1alpha1.AgentEBPF {
 		return nil
 	}
-	version := helper.ExtractVersion(coll.Spec.EBPF.Image)
+	version := helper.ExtractVersion(coll.Spec.Agent.EBPF.Image)
 	volumeMounts := []corev1.VolumeMount{}
 	volumes := []corev1.Volume{}
 	if coll.Spec.Kafka.Enable && coll.Spec.Kafka.TLS.Enable {
@@ -180,9 +180,9 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 					Volumes:            volumes,
 					Containers: []corev1.Container{{
 						Name:            constants.EBPFAgentName,
-						Image:           coll.Spec.EBPF.Image,
-						ImagePullPolicy: corev1.PullPolicy(coll.Spec.EBPF.ImagePullPolicy),
-						Resources:       coll.Spec.EBPF.Resources,
+						Image:           coll.Spec.Agent.EBPF.Image,
+						ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.ImagePullPolicy),
+						Resources:       coll.Spec.Agent.EBPF.Resources,
 						SecurityContext: c.securityContext(coll),
 						Env:             c.envConfig(coll),
 						VolumeMounts:    volumeMounts,
@@ -195,43 +195,43 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 
 func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.EnvVar {
 	var config []corev1.EnvVar
-	if coll.Spec.EBPF.CacheActiveTimeout != "" {
+	if coll.Spec.Agent.EBPF.CacheActiveTimeout != "" {
 		config = append(config, corev1.EnvVar{
 			Name:  envCacheActiveTimeout,
-			Value: coll.Spec.EBPF.CacheActiveTimeout,
+			Value: coll.Spec.Agent.EBPF.CacheActiveTimeout,
 		})
 	}
-	if coll.Spec.EBPF.CacheMaxFlows != 0 {
+	if coll.Spec.Agent.EBPF.CacheMaxFlows != 0 {
 		config = append(config, corev1.EnvVar{
 			Name:  envCacheMaxFlows,
-			Value: strconv.Itoa(int(coll.Spec.EBPF.CacheMaxFlows)),
+			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.CacheMaxFlows)),
 		})
 	}
-	if coll.Spec.EBPF.LogLevel != "" {
+	if coll.Spec.Agent.EBPF.LogLevel != "" {
 		config = append(config, corev1.EnvVar{
 			Name:  envLogLevel,
-			Value: coll.Spec.EBPF.LogLevel,
+			Value: coll.Spec.Agent.EBPF.LogLevel,
 		})
 	}
-	if len(coll.Spec.EBPF.Interfaces) > 0 {
+	if len(coll.Spec.Agent.EBPF.Interfaces) > 0 {
 		config = append(config, corev1.EnvVar{
 			Name:  envInterfaces,
-			Value: strings.Join(coll.Spec.EBPF.Interfaces, envListSeparator),
+			Value: strings.Join(coll.Spec.Agent.EBPF.Interfaces, envListSeparator),
 		})
 	}
-	if len(coll.Spec.EBPF.ExcludeInterfaces) > 0 {
+	if len(coll.Spec.Agent.EBPF.ExcludeInterfaces) > 0 {
 		config = append(config, corev1.EnvVar{
 			Name:  envExcludeInterfaces,
-			Value: strings.Join(coll.Spec.EBPF.ExcludeInterfaces, envListSeparator),
+			Value: strings.Join(coll.Spec.Agent.EBPF.ExcludeInterfaces, envListSeparator),
 		})
 	}
-	if coll.Spec.EBPF.Sampling > 1 {
+	if coll.Spec.Agent.EBPF.Sampling > 1 {
 		config = append(config, corev1.EnvVar{
 			Name:  envSampling,
-			Value: strconv.Itoa(int(coll.Spec.EBPF.Sampling)),
+			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.Sampling)),
 		})
 	}
-	for k, v := range coll.Spec.EBPF.Env {
+	for k, v := range coll.Spec.Agent.EBPF.Env {
 		config = append(config, corev1.EnvVar{Name: k, Value: v})
 	}
 	if coll.Spec.Kafka.Enable {
@@ -297,8 +297,8 @@ func (c *AgentController) securityContext(coll *flowsv1alpha1.FlowCollector) *co
 		RunAsUser: pointer.Int64(0),
 	}
 
-	if coll.Spec.EBPF.Privileged {
-		sc.Privileged = &coll.Spec.EBPF.Privileged
+	if coll.Spec.Agent.EBPF.Privileged {
+		sc.Privileged = &coll.Spec.Agent.EBPF.Privileged
 	} else {
 		sc.Capabilities = &corev1.Capabilities{Add: permissions.AllowedCapabilities}
 	}

@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,8 +24,8 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 const (
-	AgentIPFIX = "ipfix"
-	AgentEBPF  = "ebpf"
+	AgentIPFIX = "IPFIX"
+	AgentEBPF  = "EBPF"
 )
 
 // Please notice that the FlowCollectorSpec's properties MUST redefine one of the default
@@ -39,28 +39,13 @@ const (
 type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	//+kubebuilder:default:=""
 	// Namespace where NetObserv pods are deployed.
 	// If empty, the namespace of the operator is going to be used.
+	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
-	//+kubebuilder:validation:Enum=ipfix;ebpf
-	//+kubebuilder:default:=ipfix
-	// Select the flows tracing agent. Possible values are "ipfix" (default) to use
-	// the IPFIX collector, or "ebpf" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes
-	// CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could
-	// work but necessitate manual configuration.
-	Agent string `json:"agent"`
-
-	// Settings related to IPFIX-based flow reporter when the "agent" property is set
-	// to "ipfix".
-	// +kubebuilder:default:={sampling:400}
-	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
-
-	// Settings related to eBPF-based flow reporter when the "agent" property is set
-	// to "ebpf".
-	// +kubebuilder:default={imagePullPolicy:"IfNotPresent"}
-	EBPF FlowCollectorEBPF `json:"ebpf,omitempty"`
+	// +kubebuilder:default:={type:"EBPF"}
+	Agent FlowCollectorAgent `json:"agent"`
 
 	// Settings related to the flowlogs-pipeline component, which collects and enriches the flows, and produces metrics.
 	FlowlogsPipeline FlowCollectorFLP `json:"flowlogsPipeline,omitempty"`
@@ -69,7 +54,7 @@ type FlowCollectorSpec struct {
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
 
 	// Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline.
-	// This is a new and experimental feature, not yet recommended to use in production.
+	// Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
@@ -81,6 +66,31 @@ type FlowCollectorSpec struct {
 
 	// Settings related to OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
 	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty"`
+}
+
+// FlowCollectorAgent is a discriminated union that allows to select either ipfix or ebpf, but does not
+// allow defining both fields.
+// +union
+type FlowCollectorAgent struct {
+	// Select the flows tracing agent. Possible values are "IPFIX" (default) to use
+	// the IPFIX collector, or "EBPF" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes
+	// CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could
+	// work but require manual configuration.
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="IPFIX";"EBPF"
+	// +kubebuilder:validation:Required
+	// +kubebuilder:default:=EBPF
+	Type string `json:"type"`
+
+	// Settings related to IPFIX-based flow reporter when the "agent.type" property is set
+	// to "IPFIX".
+	// +optional
+	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
+
+	// Settings related to eBPF-based flow reporter when the "agent.type" property is set
+	// to "EBPF".
+	// +optional
+	EBPF FlowCollectorEBPF `json:"ebpf,omitempty"`
 }
 
 // FlowCollectorIPFIX defines a FlowCollector that uses IPFIX on OVN-Kubernetes to collect the
@@ -132,7 +142,9 @@ type FlowCollectorEBPF struct {
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
-	// Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 or 1 means disabled.
+	// Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=50
 	//+optional
 	Sampling int32 `json:"sampling,omitempty"`
 
@@ -300,8 +312,14 @@ type FlowCollectorLoki struct {
 	//+kubebuilder:validation:optional
 	// QuerierURL specifies the address of the Loki querier service, in case it is different from the
 	// Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester
-	// and querier are int he same host).
+	// and querier are in the same server).
 	QuerierURL string `json:"querierUrl,omitempty"`
+
+	//+kubebuilder:validation:optional
+	// StatusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the
+	// Loki querier URL. If empty, the QuerierURL value will be used.
+	// This is useful to show error messages and some context in the frontend
+	StatusURL string `json:"statusUrl,omitempty"`
 
 	//+kubebuilder:default:="netobserv"
 	// TenantID is the Loki X-Scope-OrgID that identifies the tenant for each request.
@@ -486,7 +504,7 @@ type FlowCollectorStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster
-//+kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.spec.agent`
+//+kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.spec.agent.type`
 //+kubebuilder:printcolumn:name="Kafka",type="boolean",JSONPath=`.spec.kafka.enable`
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
 

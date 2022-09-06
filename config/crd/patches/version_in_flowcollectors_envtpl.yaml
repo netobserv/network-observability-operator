@@ -6,5 +6,5 @@
   path: /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/flowlogsPipeline/properties/image/default
   value: "quay.io/netobserv/flowlogs-pipeline:$FLP_VERSION"
 - op: add
-  path: /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/ebpf/properties/image/default
+  path: /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/agent/properties/ebpf/properties/image/default
   value: "quay.io/netobserv/netobserv-ebpf-agent:$BPF_VERSION"

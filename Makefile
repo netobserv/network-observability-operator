@@ -9,9 +9,13 @@ BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
 BUILD_SHA := $(shell git rev-parse --short HEAD)
 
 # Other component versions when building bundle / release
-PLG_VERSION ?= v0.1.0	# console plugin
-FLP_VERSION ?= v0.1.0 # flowlogs-pipeline
-BPF_VERSION ?= v0.1.0 # eBPF agent
+PREVIOUS_VERSION ?= tochange
+PLG_VERSION ?= v0.1.4 # console plugin
+FLP_VERSION ?= v0.1.3 # flowlogs-pipeline
+BPF_VERSION ?= v0.1.2 # eBPF agent
+
+# Allows building bundles in Mac replacing BSD 'sed' command by GNU-compatible 'gsed'
+SED ?= sed
 
 # Port-forward (for loki/grafana deployments)
 PORT_FWD ?= true
@@ -228,19 +232,20 @@ bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metada
 	$(OPSDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	sed -i 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	sed -i 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	sed -i 's~ebpf-agent:main~ebpf-agent:$(BPF_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	sed -i 's~blob/[0-9]\+\.[0-9]\+\.[0-9]\+\(-rc[0-9]\+\)\?/~blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	$(SED) -i -r 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
+	$(SED) -i -r 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
+	$(SED) -i -r 's~ebpf-agent:main~ebpf-agent:$(BPF_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
+	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)\?/~blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	$(SED) -i -r 's~replaces: netobserv-operator\.v.*~replaces: netobserv-operator\.$(PREVIOUS_VERSION)~' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
 
 .PHONY: bundle
 bundle: bundle-prepare
-	$(KUSTOMIZE) build config/manifests | sed -e 's~:container-image:~$(IMG)~' | sed -e 's~:created-at:~$(DATE)~' | $(OPSDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(KUSTOMIZE) build config/manifests | $(SED) -e 's~:container-image:~$(IMG)~' | $(SED) -e 's~:created-at:~$(DATE)~' | $(OPSDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	$(OPSDK) bundle validate ./bundle
 
 .PHONY: bundle-for-test
 bundle-for-test: bundle-prepare
-	$(KUSTOMIZE) build config/manifests | sed -e 's~:container-image:~$(IMG)~' | sed -e 's~:created-at:~$(DATE)~' | $(OPSDK) generate bundle -q --overwrite --version 0.0.0-$(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(KUSTOMIZE) build config/manifests | $(SED) -e 's~:container-image:~$(IMG)~' | $(SED) -e 's~:created-at:~$(DATE)~' | $(OPSDK) generate bundle -q --overwrite --version 0.0.0-$(VERSION) $(BUNDLE_METADATA_OPTS)
 	$(OPSDK) bundle validate ./bundle
 
 .PHONY: bundle-build
@@ -295,7 +300,7 @@ catalog-push: ## Push a catalog image.
 # Deploy the catalog.
 .PHONY: catalog-deploy
 catalog-deploy:
-	sed -e 's~<IMG>~$(CATALOG_IMG)~' ./config/samples/catalog/catalog.yaml | kubectl apply -f -
+	$(SED) -e 's~<IMG>~$(CATALOG_IMG)~' ./config/samples/catalog/catalog.yaml | kubectl apply -f -
 
 # Undeploy the catalog.
 .PHONY: catalog-undeploy
