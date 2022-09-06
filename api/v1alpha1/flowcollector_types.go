@@ -39,32 +39,34 @@ const (
 type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	// Namespace where NetObserv pods are deployed.
+	// namespace where NetObserv pods are deployed.
 	// If empty, the namespace of the operator is going to be used.
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
+	// agent for flows' extraction.
 	// +kubebuilder:default:={type:"EBPF"}
 	Agent FlowCollectorAgent `json:"agent"`
 
-	// Settings related to the flowlogs-pipeline component, which collects and enriches the flows, and produces metrics.
+	// flowlogsPipeline settings. It which receives the metrics from the agent, enriches the flows,
+	// and produces metrics.
 	FlowlogsPipeline FlowCollectorFLP `json:"flowlogsPipeline,omitempty"`
 
-	// Settings related to the Loki client, used as a flow store.
+	// loki, the flow store, client settings.
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
 
-	// Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline.
+	// kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline.
 	// Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
-	// Settings related to the OpenShift Console plugin, when available.
+	// consolePlugin define the settings related to the OpenShift Console plugin, when available.
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
-	// Settings related to the OpenShift Cluster Network Operator, when available.
+	// clusterNetworkOperator define the settings related to the OpenShift Cluster Network Operator, when available.
 	ClusterNetworkOperator ClusterNetworkOperatorConfig `json:"clusterNetworkOperator,omitempty"`
 
-	// Settings related to OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
+	// ovnKubernetes define the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
 	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty"`
 }
 
@@ -72,7 +74,7 @@ type FlowCollectorSpec struct {
 // allow defining both fields.
 // +union
 type FlowCollectorAgent struct {
-	// Select the flows tracing agent. Possible values are "IPFIX" (default) to use
+	// type selects the flows tracing agent. Possible values are "IPFIX" (default) to use
 	// the IPFIX collector, or "EBPF" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes
 	// CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could
 	// work but require manual configuration.
@@ -82,13 +84,13 @@ type FlowCollectorAgent struct {
 	// +kubebuilder:default:=EBPF
 	Type string `json:"type"`
 
-	// Settings related to IPFIX-based flow reporter when the "agent.type" property is set
-	// to "IPFIX".
+	// ipfix describes the settings related to the IPFIX-based flow reporter when the "agent.type"
+	// property is set to "IPFIX".
 	// +optional
 	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
 
-	// Settings related to eBPF-based flow reporter when the "agent.type" property is set
-	// to "EBPF".
+	// ebpf describes the settings related to the eBPF-based flow reporter when the "agent.type"
+	// property is set to "EBPF".
 	// +optional
 	EBPF FlowCollectorEBPF `json:"ebpf,omitempty"`
 }
@@ -100,23 +102,24 @@ type FlowCollectorIPFIX struct {
 
 	//+kubebuilder:validation:Pattern:=^\d+(ns|ms|s|m)?$
 	//+kubebuilder:default:="20s"
-	// CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending
+	// cacheActiveTimeout is the max period during which the reporter will aggregate flows before sending
 	CacheActiveTimeout string `json:"cacheActiveTimeout,omitempty" mapstructure:"cacheActiveTimeout,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=400
-	// CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows
+	// cacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows
 	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty" mapstructure:"cacheMaxFlows,omitempty"`
 
 	//+kubebuilder:validation:Minimum=2
 	//+kubebuilder:default:=400
-	// Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent.
+	// sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent.
 	// To ensure cluster stability, it is not possible to set a value below 2.
 	// If you really want to sample every packet, which may impact the cluster stability,
 	// refer to "forceSampleAll". Alternatively, you can use the eBPF Agent instead of IPFIX.
 	Sampling int32 `json:"sampling,omitempty" mapstructure:"sampling,omitempty"`
 
 	//+kubebuilder:default:=false
+	// forceSampleAll allows disabling sampling in the IPFIX-based flow reporter.
 	// It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability.
 	// If you REALLY want to do that, set this flag to true. Use at your own risks.
 	// When it is set to true, the value of "sampling" is ignored.
@@ -128,44 +131,44 @@ type FlowCollectorEBPF struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:="quay.io/netobserv/netobserv-ebpf-agent:main"
-	// Image is the NetObserv Agent image (including domain and tag)
+	// image is the NetObserv Agent image (including domain and tag)
 	Image string `json:"image,omitempty"`
 
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
-	// ImagePullPolicy is the Kubernetes pull policy for the image defined above
+	// imagePullPolicy is the Kubernetes pull policy for the image defined above
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 
-	// Compute Resources required by this container.
+	// resources are the compute resources required by this container.
 	// Cannot be updated.
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
-	// Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.
+	// sampling rate of the flow reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=50
 	//+optional
 	Sampling int32 `json:"sampling,omitempty"`
 
-	// CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending
+	// cacheActiveTimeout is the max period during which the reporter will aggregate flows before sending
 	//+kubebuilder:validation:Pattern:=^\d+(ns|ms|s|m)?$
 	//+kubebuilder:default:="5s"
 	CacheActiveTimeout string `json:"cacheActiveTimeout,omitempty"`
 
-	// CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows
+	// cacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows
 	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:default:=1000
+	//+kubebuilder:default:=5000
 	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty"`
 
-	// Interfaces contains the interface names from where flows will be collected. If empty, the agent
+	// interfaces contains the interface names from where flows will be collected. If empty, the agent
 	// will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
 	// If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression,
 	// otherwise it will be matched as a case-sensitive string.
 	//+optional
 	Interfaces []string `json:"interfaces,omitempty"`
 
-	// ExcludeInterfaces contains the interface names that will be excluded from flow tracing.
+	// excludeInterfaces contains the interface names that will be excluded from flow tracing.
 	// If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression,
 	// otherwise it will be matched as a case-sensitive string.
 	//+kubebuilder:default=lo;
@@ -173,17 +176,17 @@ type FlowCollectorEBPF struct {
 
 	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic
 	//+kubebuilder:default:=info
-	// LogLevel defines the log level for the NetObserv eBPF Agent
+	// logLevel defines the log level for the NetObserv eBPF Agent
 	LogLevel string `json:"logLevel,omitempty"`
 
-	// Env allows passing custom environment variables to the NetObserv Agent. Useful for passing
+	// env allows passing custom environment variables to the NetObserv Agent. Useful for passing
 	// some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be
 	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
 	// in edge debug/support scenarios.
 	//+optional
 	Env map[string]string `json:"env,omitempty"`
 
-	// Privileged mode for the eBPF Agent container. If false, the operator will add the following
+	// privileged mode for the eBPF Agent container. If false, the operator will add the following
 	// capabilities to the container, to enable its correct operation:
 	// BPF, PERFMON, NET_ADMIN, SYS_RESOURCE.
 	// +optional
@@ -195,20 +198,20 @@ type FlowCollectorKafka struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=false
-	// Set true to use Kafka as part of the flow collection pipeline. When enabled, the pipeline is split in two parts: ingestion and transformation, connected by Kafka.
+	// enable Kafka. Set it to true to use Kafka as part of the flow collection pipeline. When enabled, the pipeline is split in two parts: ingestion and transformation, connected by Kafka.
 	// The ingestion is either done by a specific flowlogs-pipeline workload, or by the eBPF agent, depending on the value of `spec.agent`.
 	// The transformation is done by a new flowlogs-pipeline deployment.
 	Enable bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:=""
-	// Address of the Kafka server
+	// address of the Kafka server
 	Address string `json:"address"`
 
 	//+kubebuilder:default:=""
-	// Kafka topic to use. It must exist, NetObserv will not create it.
+	// kafka topic to use. It must exist, NetObserv will not create it.
 	Topic string `json:"topic"`
 
-	// TLS client configuration.
+	// tls client configuration.
 	// +optional
 	TLS ClientTLS `json:"tls"`
 }
@@ -219,7 +222,7 @@ type FlowCollectorFLP struct {
 
 	//+kubebuilder:validation:Enum=DaemonSet;Deployment
 	//+kubebuilder:default:=DaemonSet
-	// Kind is the workload kind, either DaemonSet or Deployment. When DaemonSet is used, each pod will receive
+	// kind of the workload, either DaemonSet or Deployment. When DaemonSet is used, each pod will receive
 	// flows from the node it is running on. When Deployment is used, the flows traffic received from nodes will
 	// be load-balanced. Note that in such a case, the number of replicas should be less or equal to the number of
 	// nodes, as extra-pods would be unused due to session affinity with the node IP.
@@ -228,17 +231,17 @@ type FlowCollectorFLP struct {
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=1
-	// Replicas defines the number of replicas (pods) to start for Deployment kind. Ignored for DaemonSet.
+	// replicas defines the number of replicas (pods) to start for Deployment kind. Ignored for DaemonSet.
 	Replicas int32 `json:"replicas,omitempty"`
 
-	// HPA spec of an horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.
+	// hpa spec of a horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.
 	// +optional
 	HPA *FlowCollectorHPA `json:"hpa,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1025
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=2055
-	// Port is the collector port: either a service port for Deployment kind, or host port for DaemonSet kind
+	// port of the flow collector: either a service port for Deployment kind, or host port for DaemonSet kind
 	// By conventions, some value are not authorized port must not be below 1024 and must not equal this values:
 	// 4789,6081,500, and 4500
 	Port int32 `json:"port,omitempty"`
@@ -246,45 +249,45 @@ type FlowCollectorFLP struct {
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=8080
-	// HealthPort is a collector HTTP port in the Pod that exposes the health check API
+	// healthPort is a collector HTTP port in the Pod that exposes the health check API
 	HealthPort int32 `json:"healthPort,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=9102
-	// PrometheusPort is the prometheus HTTP port: this port exposes prometheus metrics
+	// prometheusPort is the prometheus HTTP port: this port exposes prometheus metrics
 	PrometheusPort int32 `json:"prometheusPort,omitempty"`
 
 	//+kubebuilder:default:="quay.io/netobserv/flowlogs-pipeline:main"
-	// Image is the collector image (including domain and tag)
+	// image of the collector container (including domain and tag)
 	Image string `json:"image,omitempty"`
 
-	// IgnoreMetrics is a list of tags to specify which metrics to ignore
+	// ignoreMetrics is a list of tags to specify which metrics to ignore
 	IgnoreMetrics []string `json:"ignoreMetrics,omitempty"`
 
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
-	// ImagePullPolicy is the Kubernetes pull policy for the image defined above
+	// imagePullPolicy is the Kubernetes pull policy for the image defined above
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 
 	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic
 	//+kubebuilder:default:=info
-	// LogLevel defines the log level for the collector runtime
+	// logLevel of the collector runtime
 	LogLevel string `json:"logLevel,omitempty"`
 
 	//+kubebuilder:default:={requests:{memory:"100Mi",cpu:"100m"},limits:{memory:"300Mi"}}
-	// Compute Resources required by this container.
+	// resources are the compute resources required by this container.
 	// Cannot be updated.
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
 	//+kubebuilder:default:=true
-	// EnableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes
+	// enableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes
 	EnableKubeProbes bool `json:"enableKubeProbes,omitempty"`
 
 	//+kubebuilder:default:=true
-	// Set true to drop fields that are known to be unused by OVS, in order to save storage space.
+	// dropUnusedFields allows, when set to true, to drop fields that are known to be unused by OVS, in order to save storage space.
 	DropUnusedFields bool `json:"dropUnusedFields,omitempty"`
 }
 
@@ -296,9 +299,9 @@ type FlowCollectorHPA struct {
 	// available.
 	// +optional
 	MinReplicas *int32 `json:"minReplicas,omitempty" protobuf:"varint,2,opt,name=minReplicas"`
-	// upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.
+	// maxReplicas is the upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.
 	MaxReplicas int32 `json:"maxReplicas" protobuf:"varint,3,opt,name=maxReplicas"`
-	// Metrics used by the pod autoscaler
+	// metrics used by the pod autoscaler
 	// +optional
 	Metrics []ascv2.MetricSpec `json:"metrics"`
 }
@@ -306,63 +309,63 @@ type FlowCollectorHPA struct {
 // FlowCollectorLoki defines the desired state for FlowCollector's Loki client
 type FlowCollectorLoki struct {
 	//+kubebuilder:default:="http://loki:3100/"
-	// URL is the address of an existing Loki service to push the flows to.
+	// url is the address of an existing Loki service to push the flows to.
 	URL string `json:"url,omitempty"`
 
 	//+kubebuilder:validation:optional
-	// QuerierURL specifies the address of the Loki querier service, in case it is different from the
+	// querierURL specifies the address of the Loki querier service, in case it is different from the
 	// Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester
 	// and querier are in the same server).
 	QuerierURL string `json:"querierUrl,omitempty"`
 
 	//+kubebuilder:validation:optional
-	// StatusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the
+	// statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the
 	// Loki querier URL. If empty, the QuerierURL value will be used.
 	// This is useful to show error messages and some context in the frontend
 	StatusURL string `json:"statusUrl,omitempty"`
 
 	//+kubebuilder:default:="netobserv"
-	// TenantID is the Loki X-Scope-OrgID that identifies the tenant for each request.
+	// tenantID is the Loki X-Scope-OrgID that identifies the tenant for each request.
 	// it will be ignored if instanceSpec is specified
 	TenantID string `json:"tenantID,omitempty"`
 
 	//+kubebuilder:default:=false
-	// SendAuthToken is a flag to enable or disable Authorization header from service account secret
+	// sendAuthToken is a flag to enable or disable Authorization header from service account secret
 	// It allows authentication to loki operator gateway
 	SendAuthToken bool `json:"sendAuthToken,omitempty"`
 
 	//+kubebuilder:default:="1s"
-	// BatchWait is max time to wait before sending a batch
+	// batchWait is max time to wait before sending a batch
 	BatchWait metav1.Duration `json:"batchWait,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=102400
-	// BatchSize is max batch size (in bytes) of logs to accumulate before sending
+	// batchSize is max batch size (in bytes) of logs to accumulate before sending
 	BatchSize int64 `json:"batchSize,omitempty"`
 
 	//+kubebuilder:default:="10s"
-	// Timeout is the maximum time connection / request limit
+	// timeout is the maximum time connection / request limit
 	// A Timeout of zero means no timeout.
 	Timeout metav1.Duration `json:"timeout,omitempty"`
 
 	//+kubebuilder:default:="1s"
-	// MinBackoff is the initial backoff time for client connection between retries
+	// minBackoff is the initial backoff time for client connection between retries
 	MinBackoff metav1.Duration `json:"minBackoff,omitempty"`
 
 	//+kubebuilder:default:="300s"
-	// MaxBackoff is the maximum backoff time for client connection between retries
+	// maxBackoff is the maximum backoff time for client connection between retries
 	MaxBackoff metav1.Duration `json:"maxBackoff,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=10
-	// MaxRetries is the maximum number of retries for client connections
+	// maxRetries is the maximum number of retries for client connections
 	MaxRetries int32 `json:"maxRetries,omitempty"`
 
 	//+kubebuilder:default:={"app":"netobserv-flowcollector"}
-	// StaticLabels is a map of common labels to set on each flow
+	// staticLabels is a map of common labels to set on each flow
 	StaticLabels map[string]string `json:"staticLabels,omitempty"`
 
-	// TLS client configuration.
+	// tls client configuration.
 	// +optional
 	TLS ClientTLS `json:"tls"`
 }
@@ -372,33 +375,33 @@ type FlowCollectorConsolePlugin struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=true
-	// Automatically register the provided console plugin with the OpenShift Console operator.
+	// register allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator.
 	// When set to false, you can still register it manually by editing console.operator.openshift.io/cluster.
 	// E.g: oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'
 	Register bool `json:"register"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=1
-	// Replicas defines the number of replicas (pods) to start.
+	// replicas defines the number of replicas (pods) to start.
 	Replicas int32 `json:"replicas,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=9001
-	// Port is the plugin service port
+	// port is the plugin service port
 	Port int32 `json:"port,omitempty"`
 
 	//+kubebuilder:default:="quay.io/netobserv/network-observability-console-plugin:main"
-	// Image is the plugin image (including domain and tag)
+	// image is the plugin image (including domain and tag)
 	Image string `json:"image,omitempty"`
 
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
-	// ImagePullPolicy is the Kubernetes pull policy for the image defined above
+	// imagePullPolicy is the Kubernetes pull policy for the image defined above
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 
 	//+kubebuilder:default:={requests:{memory:"50Mi",cpu:"100m"},limits:{memory:"100Mi"}}
-	// Compute Resources required by this container.
+	// resources, in terms of compute resources, required by this container.
 	// Cannot be updated.
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
@@ -406,25 +409,25 @@ type FlowCollectorConsolePlugin struct {
 
 	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic
 	//+kubebuilder:default:=info
-	// LogLevel defines the log level for the console plugin backend
+	// logLevel for the console plugin backend
 	LogLevel string `json:"logLevel,omitempty"`
 
-	// HPA spec of an horizontal pod autoscaler to set up for the plugin Deployment.
+	// hpa spec of a horizontal pod autoscaler to set up for the plugin Deployment.
 	// +optional
 	HPA *FlowCollectorHPA `json:"hpa,omitempty"`
 
 	//+kubebuilder:default:={enable:true}
-	// Configuration of the port to service name translation
+	// portNaming defines the configuration of the port-to-service name translation
 	PortNaming ConsolePluginPortConfig `json:"portNaming,omitempty"`
 }
 
 // Configuration of the port to service name translation feature of the console plugin
 type ConsolePluginPortConfig struct {
 	//+kubebuilder:default:=true
-	// Should this feature be enabled
+	// enable the console plugin port-to-service name translation
 	Enable bool `json:"enable,omitempty"`
 
-	// Additional port name to use in the console
+	// portNames defines additional port names to use in the console
 	// E.g. portNames: {"3100": "loki"}
 	// +optional
 	PortNames map[string]string `json:"portNames,omitempty" yaml:"portNames,omitempty"`
@@ -435,7 +438,7 @@ type ClusterNetworkOperatorConfig struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=openshift-network-operator
-	// Namespace  where the configmap is going to be deployed.
+	// namespace  where the configmap is going to be deployed.
 	Namespace string `json:"namespace,omitempty"`
 }
 
@@ -444,30 +447,30 @@ type OVNKubernetesConfig struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=ovn-kubernetes
-	// Namespace where OVN-Kubernetes pods are deployed.
+	// namespace where OVN-Kubernetes pods are deployed.
 	Namespace string `json:"namespace,omitempty"`
 
 	//+kubebuilder:default:=ovnkube-node
-	// Name of the DaemonSet controlling the OVN-Kubernetes pods.
+	// daemonSetName defines the name of the DaemonSet controlling the OVN-Kubernetes pods.
 	DaemonSetName string `json:"daemonSetName,omitempty"`
 
 	//+kubebuilder:default:=ovnkube-node
-	// Name of the container to configure for IPFIX.
+	// containerName defines the name of the container to configure for IPFIX.
 	ContainerName string `json:"containerName,omitempty"`
 }
 
 type CertificateReference struct {
 	//+kubebuilder:validation:Enum=configmap;secret
-	// Reference type: configmap or secret
+	// type for the certificate reference: configmap or secret
 	Type string `json:"type,omitempty"`
 
-	// Name of the ConfigMap or Secret containing certificates
+	// name of the ConfigMap or Secret containing certificates
 	Name string `json:"name,omitempty"`
 
-	// Certificate file name within the ConfigMap / Secret
+	// certFile defines the path to the certificate file name within the ConfigMap / Secret
 	CertFile string `json:"certFile,omitempty"`
 
-	// Certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.
+	// certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.
 	// +optional
 	CertKey string `json:"certKey,omitempty"`
 }
@@ -475,17 +478,17 @@ type CertificateReference struct {
 // ClientTLS defines TLS client configuration
 type ClientTLS struct {
 	//+kubebuilder:default:=false
-	// Enable TLS
+	// enable TLS
 	Enable bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:=false
-	// Skip client-side verification of the server certificate
+	// insecureSkipVerify allows skipping client-side verification of the server certificate
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
-	// CA certificate reference
+	// caCert defines the reference of the certificate for the Certificate Authority
 	CACert CertificateReference `json:"caCert,omitempty"`
 
-	// User certificate reference
+	// userCert defines the user certificate reference
 	// +optional
 	UserCert CertificateReference `json:"userCert,omitempty"`
 }
@@ -494,10 +497,10 @@ type ClientTLS struct {
 type FlowCollectorStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Conditions represent the latest available observations of an object's state
+	// conditions represent the latest available observations of an object's state
 	Conditions []metav1.Condition `json:"conditions"`
 
-	// Namespace where console plugin and flowlogs-pipeline have been deployed.
+	// namespace where console plugin and flowlogs-pipeline have been deployed.
 	Namespace string `json:"namespace,omitempty"`
 }
 
