@@ -48,9 +48,9 @@ type FlowCollectorSpec struct {
 	// +kubebuilder:default:={type:"EBPF"}
 	Agent FlowCollectorAgent `json:"agent"`
 
-	// flowlogsPipeline settings. It which receives the metrics from the agent, enriches the flows,
-	// and produces metrics.
-	FlowlogsPipeline FlowCollectorFLP `json:"flowlogsPipeline,omitempty"`
+	// processor defines the settings of the component that receives the flows from the agent,
+	// enriches them, and forwards them to the Loki persistence layer.
+	Processor FlowCollectorFLP `json:"processor,omitempty"`
 
 	// loki, the flow store, client settings.
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
@@ -60,13 +60,13 @@ type FlowCollectorSpec struct {
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
-	// consolePlugin define the settings related to the OpenShift Console plugin, when available.
+	// consolePlugin defines the settings related to the OpenShift Console plugin, when available.
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
-	// clusterNetworkOperator define the settings related to the OpenShift Cluster Network Operator, when available.
+	// clusterNetworkOperator defines the settings related to the OpenShift Cluster Network Operator, when available.
 	ClusterNetworkOperator ClusterNetworkOperatorConfig `json:"clusterNetworkOperator,omitempty"`
 
-	// ovnKubernetes define the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
+	// ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
 	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty"`
 }
 

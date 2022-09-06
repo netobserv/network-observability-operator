@@ -52,23 +52,21 @@ spec:
               agent:
                 default:
                   type: EBPF
-                description: FlowCollectorAgent is a discriminated union that allows
-                  to select either ipfix or ebpf, but does not allow defining both
-                  fields.
+                description: agent for flows' extraction.
                 properties:
                   ebpf:
-                    description: Settings related to eBPF-based flow reporter when
-                      the "agent.type" property is set to "EBPF".
+                    description: ebpf describes the settings related to the eBPF-based
+                      flow reporter when the "agent.type" property is set to "EBPF".
                     properties:
                       cacheActiveTimeout:
                         default: 5s
-                        description: CacheActiveTimeout is the max period during which
+                        description: cacheActiveTimeout is the max period during which
                           the reporter will aggregate flows before sending
                         pattern: ^\d+(ns|ms|s|m)?$
                         type: string
                       cacheMaxFlows:
-                        default: 1000
-                        description: CacheMaxFlows is the max number of flows in an
+                        default: 5000
+                        description: cacheMaxFlows is the max number of flows in an
                           aggregate; when reached, the reporter sends the flows
                         format: int32
                         minimum: 1
@@ -76,7 +74,7 @@ spec:
                       env:
                         additionalProperties:
                           type: string
-                        description: Env allows passing custom environment variables
+                        description: env allows passing custom environment variables
                           to the NetObserv Agent. Useful for passing some very concrete
                           performance-tuning options (e.g. GOGC, GOMAXPROCS) that
                           shouldn't be publicly exposed as part of the FlowCollector
@@ -86,7 +84,7 @@ spec:
                       excludeInterfaces:
                         default:
                         - lo
-                        description: ExcludeInterfaces contains the interface names
+                        description: excludeInterfaces contains the interface names
                           that will be excluded from flow tracing. If an entry is
                           enclosed by slashes (e.g. `/br-/`), it will match as regular
                           expression, otherwise it will be matched as a case-sensitive
@@ -96,12 +94,12 @@ spec:
                         type: array
                       image:
                         default: 'quay.io/netobserv/netobserv-ebpf-agent:'
-                        description: Image is the NetObserv Agent image (including
+                        description: image is the NetObserv Agent image (including
                           domain and tag)
                         type: string
                       imagePullPolicy:
                         default: IfNotPresent
-                        description: ImagePullPolicy is the Kubernetes pull policy
+                        description: imagePullPolicy is the Kubernetes pull policy
                           for the image defined above
                         enum:
                         - IfNotPresent
@@ -109,7 +107,7 @@ spec:
                         - Never
                         type: string
                       interfaces:
-                        description: Interfaces contains the interface names from
+                        description: interfaces contains the interface names from
                           where flows will be collected. If empty, the agent will
                           fetch all the interfaces in the system, excepting the ones
                           listed in ExcludeInterfaces. If an entry is enclosed by
@@ -120,7 +118,7 @@ spec:
                         type: array
                       logLevel:
                         default: info
-                        description: LogLevel defines the log level for the NetObserv
+                        description: logLevel defines the log level for the NetObserv
                           eBPF Agent
                         enum:
                         - trace
@@ -132,14 +130,14 @@ spec:
                         - panic
                         type: string
                       privileged:
-                        description: 'Privileged mode for the eBPF Agent container.
+                        description: 'privileged mode for the eBPF Agent container.
                           If false, the operator will add the following capabilities
                           to the container, to enable its correct operation: BPF,
                           PERFMON, NET_ADMIN, SYS_RESOURCE.'
                         type: boolean
                       resources:
-                        description: 'Compute Resources required by this container.
-                          Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        description: 'resources are the compute resources required
+                          by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         properties:
                           limits:
                             additionalProperties:
@@ -167,41 +165,41 @@ spec:
                         type: object
                       sampling:
                         default: 50
-                        description: Sampling is the sampling rate on the reporter.
-                          100 means one flow on 100 is sent. 0 or 1 means all flows
-                          are sampled.
+                        description: sampling rate of the flow reporter. 100 means
+                          one flow on 100 is sent. 0 or 1 means all flows are sampled.
                         format: int32
                         minimum: 0
                         type: integer
                     type: object
                   ipfix:
-                    description: Settings related to IPFIX-based flow reporter when
-                      the "agent.type" property is set to "IPFIX".
+                    description: ipfix describes the settings related to the IPFIX-based
+                      flow reporter when the "agent.type" property is set to "IPFIX".
                     properties:
                       cacheActiveTimeout:
                         default: 20s
-                        description: CacheActiveTimeout is the max period during which
+                        description: cacheActiveTimeout is the max period during which
                           the reporter will aggregate flows before sending
                         pattern: ^\d+(ns|ms|s|m)?$
                         type: string
                       cacheMaxFlows:
                         default: 400
-                        description: CacheMaxFlows is the max number of flows in an
+                        description: cacheMaxFlows is the max number of flows in an
                           aggregate; when reached, the reporter sends the flows
                         format: int32
                         minimum: 0
                         type: integer
                       forceSampleAll:
                         default: false
-                        description: It is not recommended to sample all the traffic
-                          with IPFIX, as it may generate cluster instability. If you
-                          REALLY want to do that, set this flag to true. Use at your
-                          own risks. When it is set to true, the value of "sampling"
-                          is ignored.
+                        description: forceSampleAll allows disabling sampling in the
+                          IPFIX-based flow reporter. It is not recommended to sample
+                          all the traffic with IPFIX, as it may generate cluster instability.
+                          If you REALLY want to do that, set this flag to true. Use
+                          at your own risks. When it is set to true, the value of
+                          "sampling" is ignored.
                         type: boolean
                       sampling:
                         default: 400
-                        description: Sampling is the sampling rate on the reporter.
+                        description: sampling is the sampling rate on the reporter.
                           100 means one flow on 100 is sent. To ensure cluster stability,
                           it is not possible to set a value below 2. If you really
                           want to sample every packet, which may impact the cluster
@@ -213,11 +211,11 @@ spec:
                     type: object
                   type:
                     default: EBPF
-                    description: Select the flows tracing agent. Possible values are
-                      "IPFIX" (default) to use the IPFIX collector, or "EBPF" to use
-                      NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes CNI,
-                      NetObserv will configure OVN's IPFIX exporter. Other CNIs are
-                      not supported, they could work but require manual configuration.
+                    description: type selects the flows tracing agent. Possible values
+                      are "IPFIX" (default) to use the IPFIX collector, or "EBPF"
+                      to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes
+                      CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs
+                      are not supported, they could work but require manual configuration.
                     enum:
                     - IPFIX
                     - EBPF
@@ -226,29 +224,30 @@ spec:
                 - type
                 type: object
               clusterNetworkOperator:
-                description: Settings related to the OpenShift Cluster Network Operator,
-                  when available.
+                description: clusterNetworkOperator defines the settings related to
+                  the OpenShift Cluster Network Operator, when available.
                 properties:
                   namespace:
                     default: openshift-network-operator
-                    description: Namespace  where the configmap is going to be deployed.
+                    description: namespace  where the configmap is going to be deployed.
                     type: string
                 type: object
               consolePlugin:
-                description: Settings related to the OpenShift Console plugin, when
-                  available.
+                description: consolePlugin defines the settings related to the OpenShift
+                  Console plugin, when available.
                 properties:
                   hpa:
-                    description: HPA spec of an horizontal pod autoscaler to set up
+                    description: hpa spec of a horizontal pod autoscaler to set up
                       for the plugin Deployment.
                     properties:
                       maxReplicas:
-                        description: upper limit for the number of pods that can be
-                          set by the autoscaler; cannot be smaller than MinReplicas.
+                        description: maxReplicas is the upper limit for the number
+                          of pods that can be set by the autoscaler; cannot be smaller
+                          than MinReplicas.
                         format: int32
                         type: integer
                       metrics:
-                        description: Metrics used by the pod autoscaler
+                        description: metrics used by the pod autoscaler
                         items:
                           description: MetricSpec specifies how to scale based on
                             a single metric (only `type` and one other matching field
@@ -758,12 +757,12 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.4
-                    description: Image is the plugin image (including domain and tag)
+                    default: 'quay.io/netobserv/network-observability-console-plugin:v0.1.4'
+                    description: image is the plugin image (including domain and tag)
                     type: string
                   imagePullPolicy:
                     default: IfNotPresent
-                    description: ImagePullPolicy is the Kubernetes pull policy for
+                    description: imagePullPolicy is the Kubernetes pull policy for
                       the image defined above
                     enum:
                     - IfNotPresent
@@ -772,8 +771,7 @@ spec:
                     type: string
                   logLevel:
                     default: info
-                    description: LogLevel defines the log level for the console plugin
-                      backend
+                    description: logLevel for the console plugin backend
                     enum:
                     - trace
                     - debug
@@ -785,7 +783,7 @@ spec:
                     type: string
                   port:
                     default: 9001
-                    description: Port is the plugin service port
+                    description: port is the plugin service port
                     format: int32
                     maximum: 65535
                     minimum: 1
@@ -793,30 +791,33 @@ spec:
                   portNaming:
                     default:
                       enable: true
-                    description: Configuration of the port to service name translation
+                    description: portNaming defines the configuration of the port-to-service
+                      name translation
                     properties:
                       enable:
                         default: true
-                        description: Should this feature be enabled
+                        description: enable the console plugin port-to-service name
+                          translation
                         type: boolean
                       portNames:
                         additionalProperties:
                           type: string
-                        description: 'Additional port name to use in the console E.g.
-                          portNames: {"3100": "loki"}'
+                        description: 'portNames defines additional port names to use
+                          in the console E.g. portNames: {"3100": "loki"}'
                         type: object
                     type: object
                   register:
                     default: true
-                    description: 'Automatically register the provided console plugin
-                      with the OpenShift Console operator. When set to false, you
-                      can still register it manually by editing console.operator.openshift.io/cluster.
-                      E.g: oc patch console.operator.openshift.io cluster --type=''json''
-                      -p ''[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'''
+                    description: 'register allows, when set to true, to automatically
+                      register the provided console plugin with the OpenShift Console
+                      operator. When set to false, you can still register it manually
+                      by editing console.operator.openshift.io/cluster. E.g: oc patch
+                      console.operator.openshift.io cluster --type=''json'' -p ''[{"op":
+                      "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'''
                     type: boolean
                   replicas:
                     default: 1
-                    description: Replicas defines the number of replicas (pods) to
+                    description: replicas defines the number of replicas (pods) to
                       start.
                     format: int32
                     minimum: 0
@@ -828,8 +829,8 @@ spec:
                       requests:
                         cpu: 100m
                         memory: 50Mi
-                    description: 'Compute Resources required by this container. Cannot
-                      be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    description: 'resources, in terms of compute resources, required
+                      by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                     properties:
                       limits:
                         additionalProperties:
@@ -857,39 +858,294 @@ spec:
                 required:
                 - register
                 type: object
-              flowlogsPipeline:
-                description: Settings related to the flowlogs-pipeline component,
-                  which collects and enriches the flows, and produces metrics.
+              kafka:
+                description: kafka configuration, allowing to use Kafka as a broker
+                  as part of the flow collection pipeline. Kafka can provide better
+                  scalability, resiliency and high availability (for more details,
+                  see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
+                properties:
+                  address:
+                    default: ""
+                    description: address of the Kafka server
+                    type: string
+                  enable:
+                    default: false
+                    description: 'enable Kafka. Set it to true to use Kafka as part
+                      of the flow collection pipeline. When enabled, the pipeline
+                      is split in two parts: ingestion and transformation, connected
+                      by Kafka. The ingestion is either done by a specific flowlogs-pipeline
+                      workload, or by the eBPF agent, depending on the value of `spec.agent`.
+                      The transformation is done by a new flowlogs-pipeline deployment.'
+                    type: boolean
+                  tls:
+                    description: tls client configuration.
+                    properties:
+                      caCert:
+                        description: caCert defines the reference of the certificate
+                          for the Certificate Authority
+                        properties:
+                          certFile:
+                            description: certFile defines the path to the certificate
+                              file name within the ConfigMap / Secret
+                            type: string
+                          certKey:
+                            description: certKey defines the path to the certificate
+                              private key file name within the ConfigMap / Secret.
+                              Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'type for the certificate reference: configmap
+                              or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      enable:
+                        default: false
+                        description: enable TLS
+                        type: boolean
+                      insecureSkipVerify:
+                        default: false
+                        description: insecureSkipVerify allows skipping client-side
+                          verification of the server certificate
+                        type: boolean
+                      userCert:
+                        description: userCert defines the user certificate reference
+                        properties:
+                          certFile:
+                            description: certFile defines the path to the certificate
+                              file name within the ConfigMap / Secret
+                            type: string
+                          certKey:
+                            description: certKey defines the path to the certificate
+                              private key file name within the ConfigMap / Secret.
+                              Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'type for the certificate reference: configmap
+                              or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                    type: object
+                  topic:
+                    default: ""
+                    description: kafka topic to use. It must exist, NetObserv will
+                      not create it.
+                    type: string
+                required:
+                - address
+                - topic
+                type: object
+              loki:
+                description: loki, the flow store, client settings.
+                properties:
+                  batchSize:
+                    default: 102400
+                    description: batchSize is max batch size (in bytes) of logs to
+                      accumulate before sending
+                    format: int64
+                    minimum: 1
+                    type: integer
+                  batchWait:
+                    default: 1s
+                    description: batchWait is max time to wait before sending a batch
+                    type: string
+                  maxBackoff:
+                    default: 300s
+                    description: maxBackoff is the maximum backoff time for client
+                      connection between retries
+                    type: string
+                  maxRetries:
+                    default: 10
+                    description: maxRetries is the maximum number of retries for client
+                      connections
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  minBackoff:
+                    default: 1s
+                    description: minBackoff is the initial backoff time for client
+                      connection between retries
+                    type: string
+                  querierUrl:
+                    description: querierURL specifies the address of the Loki querier
+                      service, in case it is different from the Loki ingester URL.
+                      If empty, the URL value will be used (assuming that the Loki
+                      ingester and querier are in the same server).
+                    type: string
+                  sendAuthToken:
+                    default: false
+                    description: sendAuthToken is a flag to enable or disable Authorization
+                      header from service account secret It allows authentication
+                      to loki operator gateway
+                    type: boolean
+                  staticLabels:
+                    additionalProperties:
+                      type: string
+                    default:
+                      app: netobserv-flowcollector
+                    description: staticLabels is a map of common labels to set on
+                      each flow
+                    type: object
+                  statusUrl:
+                    description: statusURL specifies the address of the Loki /ready
+                      /metrics /config endpoints, in case it is different from the
+                      Loki querier URL. If empty, the QuerierURL value will be used.
+                      This is useful to show error messages and some context in the
+                      frontend
+                    type: string
+                  tenantID:
+                    default: netobserv
+                    description: tenantID is the Loki X-Scope-OrgID that identifies
+                      the tenant for each request. it will be ignored if instanceSpec
+                      is specified
+                    type: string
+                  timeout:
+                    default: 10s
+                    description: timeout is the maximum time connection / request
+                      limit A Timeout of zero means no timeout.
+                    type: string
+                  tls:
+                    description: tls client configuration.
+                    properties:
+                      caCert:
+                        description: caCert defines the reference of the certificate
+                          for the Certificate Authority
+                        properties:
+                          certFile:
+                            description: certFile defines the path to the certificate
+                              file name within the ConfigMap / Secret
+                            type: string
+                          certKey:
+                            description: certKey defines the path to the certificate
+                              private key file name within the ConfigMap / Secret.
+                              Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'type for the certificate reference: configmap
+                              or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      enable:
+                        default: false
+                        description: enable TLS
+                        type: boolean
+                      insecureSkipVerify:
+                        default: false
+                        description: insecureSkipVerify allows skipping client-side
+                          verification of the server certificate
+                        type: boolean
+                      userCert:
+                        description: userCert defines the user certificate reference
+                        properties:
+                          certFile:
+                            description: certFile defines the path to the certificate
+                              file name within the ConfigMap / Secret
+                            type: string
+                          certKey:
+                            description: certKey defines the path to the certificate
+                              private key file name within the ConfigMap / Secret.
+                              Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'type for the certificate reference: configmap
+                              or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                    type: object
+                  url:
+                    default: http://loki:3100/
+                    description: url is the address of an existing Loki service to
+                      push the flows to.
+                    type: string
+                type: object
+              namespace:
+                description: namespace where NetObserv pods are deployed. If empty,
+                  the namespace of the operator is going to be used.
+                type: string
+              ovnKubernetes:
+                description: ovnKubernetes defines the settings of the OVN-Kubernetes
+                  CNI, when available. This configuration is used when using OVN's
+                  IPFIX exports, without OpenShift. When using OpenShift, refer to
+                  the `clusterNetworkOperator` property instead.
+                properties:
+                  containerName:
+                    default: ovnkube-node
+                    description: containerName defines the name of the container to
+                      configure for IPFIX.
+                    type: string
+                  daemonSetName:
+                    default: ovnkube-node
+                    description: daemonSetName defines the name of the DaemonSet controlling
+                      the OVN-Kubernetes pods.
+                    type: string
+                  namespace:
+                    default: ovn-kubernetes
+                    description: namespace where OVN-Kubernetes pods are deployed.
+                    type: string
+                type: object
+              processor:
+                description: processor defines the settings of the component that
+                  receives the flows from the agent, enriches them, and forwards them
+                  to the Loki persistence layer.
                 properties:
                   dropUnusedFields:
                     default: true
-                    description: Set true to drop fields that are known to be unused
-                      by OVS, in order to save storage space.
+                    description: dropUnusedFields allows, when set to true, to drop
+                      fields that are known to be unused by OVS, in order to save
+                      storage space.
                     type: boolean
                   enableKubeProbes:
                     default: true
-                    description: EnableKubeProbes is a flag to enable or disable Kubernetes
+                    description: enableKubeProbes is a flag to enable or disable Kubernetes
                       liveness/readiness probes
                     type: boolean
                   healthPort:
                     default: 8080
-                    description: HealthPort is a collector HTTP port in the Pod that
+                    description: healthPort is a collector HTTP port in the Pod that
                       exposes the health check API
                     format: int32
                     maximum: 65535
                     minimum: 1
                     type: integer
                   hpa:
-                    description: HPA spec of an horizontal pod autoscaler to set up
+                    description: hpa spec of a horizontal pod autoscaler to set up
                       for the collector Deployment. Ignored for DaemonSet.
                     properties:
                       maxReplicas:
-                        description: upper limit for the number of pods that can be
-                          set by the autoscaler; cannot be smaller than MinReplicas.
+                        description: maxReplicas is the upper limit for the number
+                          of pods that can be set by the autoscaler; cannot be smaller
+                          than MinReplicas.
                         format: int32
                         type: integer
                       metrics:
-                        description: Metrics used by the pod autoscaler
+                        description: metrics used by the pod autoscaler
                         items:
                           description: MetricSpec specifies how to scale based on
                             a single metric (only `type` and one other matching field
@@ -1399,19 +1655,19 @@ spec:
                     - maxReplicas
                     type: object
                   ignoreMetrics:
-                    description: IgnoreMetrics is a list of tags to specify which
+                    description: ignoreMetrics is a list of tags to specify which
                       metrics to ignore
                     items:
                       type: string
                     type: array
                   image:
-                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.3
-                    description: Image is the collector image (including domain and
-                      tag)
+                    default: 'quay.io/netobserv/flowlogs-pipeline:v0.1.3'
+                    description: image of the collector container (including domain
+                      and tag)
                     type: string
                   imagePullPolicy:
                     default: IfNotPresent
-                    description: ImagePullPolicy is the Kubernetes pull policy for
+                    description: imagePullPolicy is the Kubernetes pull policy for
                       the image defined above
                     enum:
                     - IfNotPresent
@@ -1420,7 +1676,7 @@ spec:
                     type: string
                   kind:
                     default: DaemonSet
-                    description: Kind is the workload kind, either DaemonSet or Deployment.
+                    description: kind of the workload, either DaemonSet or Deployment.
                       When DaemonSet is used, each pod will receive flows from the
                       node it is running on. When Deployment is used, the flows traffic
                       received from nodes will be load-balanced. Note that in such
@@ -1434,8 +1690,7 @@ spec:
                     type: string
                   logLevel:
                     default: info
-                    description: LogLevel defines the log level for the collector
-                      runtime
+                    description: logLevel of the collector runtime
                     enum:
                     - trace
                     - debug
@@ -1447,7 +1702,7 @@ spec:
                     type: string
                   port:
                     default: 2055
-                    description: 'Port is the collector port: either a service port
+                    description: 'port of the flow collector: either a service port
                       for Deployment kind, or host port for DaemonSet kind By conventions,
                       some value are not authorized port must not be below 1024 and
                       must not equal this values: 4789,6081,500, and 4500'
@@ -1457,7 +1712,7 @@ spec:
                     type: integer
                   prometheusPort:
                     default: 9102
-                    description: 'PrometheusPort is the prometheus HTTP port: this
+                    description: 'prometheusPort is the prometheus HTTP port: this
                       port exposes prometheus metrics'
                     format: int32
                     maximum: 65535
@@ -1465,7 +1720,7 @@ spec:
                     type: integer
                   replicas:
                     default: 1
-                    description: Replicas defines the number of replicas (pods) to
+                    description: replicas defines the number of replicas (pods) to
                       start for Deployment kind. Ignored for DaemonSet.
                     format: int32
                     minimum: 0
@@ -1477,8 +1732,8 @@ spec:
                       requests:
                         cpu: 100m
                         memory: 100Mi
-                    description: 'Compute Resources required by this container. Cannot
-                      be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    description: 'resources are the compute resources required by
+                      this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                     properties:
                       limits:
                         additionalProperties:
@@ -1504,245 +1759,6 @@ spec:
                         type: object
                     type: object
                 type: object
-              kafka:
-                description: Kafka configuration, allowing to use Kafka as a broker
-                  as part of the flow collection pipeline. Kafka can provide better
-                  scalability, resiliency and high availability (for more details,
-                  see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
-                properties:
-                  address:
-                    default: ""
-                    description: Address of the Kafka server
-                    type: string
-                  enable:
-                    default: false
-                    description: 'Set true to use Kafka as part of the flow collection
-                      pipeline. When enabled, the pipeline is split in two parts:
-                      ingestion and transformation, connected by Kafka. The ingestion
-                      is either done by a specific flowlogs-pipeline workload, or
-                      by the eBPF agent, depending on the value of `spec.agent`. The
-                      transformation is done by a new flowlogs-pipeline deployment.'
-                    type: boolean
-                  tls:
-                    description: TLS client configuration.
-                    properties:
-                      caCert:
-                        description: CA certificate reference
-                        properties:
-                          certFile:
-                            description: Certificate file name within the ConfigMap
-                              / Secret
-                            type: string
-                          certKey:
-                            description: Certificate private key file name within
-                              the ConfigMap / Secret. Omit when the key is not necessary.
-                            type: string
-                          name:
-                            description: Name of the ConfigMap or Secret containing
-                              certificates
-                            type: string
-                          type:
-                            description: 'Reference type: configmap or secret'
-                            enum:
-                            - configmap
-                            - secret
-                            type: string
-                        type: object
-                      enable:
-                        default: false
-                        description: Enable TLS
-                        type: boolean
-                      insecureSkipVerify:
-                        default: false
-                        description: Skip client-side verification of the server certificate
-                        type: boolean
-                      userCert:
-                        description: User certificate reference
-                        properties:
-                          certFile:
-                            description: Certificate file name within the ConfigMap
-                              / Secret
-                            type: string
-                          certKey:
-                            description: Certificate private key file name within
-                              the ConfigMap / Secret. Omit when the key is not necessary.
-                            type: string
-                          name:
-                            description: Name of the ConfigMap or Secret containing
-                              certificates
-                            type: string
-                          type:
-                            description: 'Reference type: configmap or secret'
-                            enum:
-                            - configmap
-                            - secret
-                            type: string
-                        type: object
-                    type: object
-                  topic:
-                    default: ""
-                    description: Kafka topic to use. It must exist, NetObserv will
-                      not create it.
-                    type: string
-                required:
-                - address
-                - topic
-                type: object
-              loki:
-                description: Settings related to the Loki client, used as a flow store.
-                properties:
-                  batchSize:
-                    default: 102400
-                    description: BatchSize is max batch size (in bytes) of logs to
-                      accumulate before sending
-                    format: int64
-                    minimum: 1
-                    type: integer
-                  batchWait:
-                    default: 1s
-                    description: BatchWait is max time to wait before sending a batch
-                    type: string
-                  maxBackoff:
-                    default: 300s
-                    description: MaxBackoff is the maximum backoff time for client
-                      connection between retries
-                    type: string
-                  maxRetries:
-                    default: 10
-                    description: MaxRetries is the maximum number of retries for client
-                      connections
-                    format: int32
-                    minimum: 0
-                    type: integer
-                  minBackoff:
-                    default: 1s
-                    description: MinBackoff is the initial backoff time for client
-                      connection between retries
-                    type: string
-                  querierUrl:
-                    description: QuerierURL specifies the address of the Loki querier
-                      service, in case it is different from the Loki ingester URL.
-                      If empty, the URL value will be used (assuming that the Loki
-                      ingester and querier are in the same server).
-                    type: string
-                  sendAuthToken:
-                    default: false
-                    description: SendAuthToken is a flag to enable or disable Authorization
-                      header from service account secret It allows authentication
-                      to loki operator gateway
-                    type: boolean
-                  staticLabels:
-                    additionalProperties:
-                      type: string
-                    default:
-                      app: netobserv-flowcollector
-                    description: StaticLabels is a map of common labels to set on
-                      each flow
-                    type: object
-                  statusUrl:
-                    description: StatusURL specifies the address of the Loki /ready
-                      /metrics /config endpoints, in case it is different from the
-                      Loki querier URL. If empty, the QuerierURL value will be used.
-                      This is useful to show error messages and some context in the
-                      frontend
-                    type: string
-                  tenantID:
-                    default: netobserv
-                    description: TenantID is the Loki X-Scope-OrgID that identifies
-                      the tenant for each request. it will be ignored if instanceSpec
-                      is specified
-                    type: string
-                  timeout:
-                    default: 10s
-                    description: Timeout is the maximum time connection / request
-                      limit A Timeout of zero means no timeout.
-                    type: string
-                  tls:
-                    description: TLS client configuration.
-                    properties:
-                      caCert:
-                        description: CA certificate reference
-                        properties:
-                          certFile:
-                            description: Certificate file name within the ConfigMap
-                              / Secret
-                            type: string
-                          certKey:
-                            description: Certificate private key file name within
-                              the ConfigMap / Secret. Omit when the key is not necessary.
-                            type: string
-                          name:
-                            description: Name of the ConfigMap or Secret containing
-                              certificates
-                            type: string
-                          type:
-                            description: 'Reference type: configmap or secret'
-                            enum:
-                            - configmap
-                            - secret
-                            type: string
-                        type: object
-                      enable:
-                        default: false
-                        description: Enable TLS
-                        type: boolean
-                      insecureSkipVerify:
-                        default: false
-                        description: Skip client-side verification of the server certificate
-                        type: boolean
-                      userCert:
-                        description: User certificate reference
-                        properties:
-                          certFile:
-                            description: Certificate file name within the ConfigMap
-                              / Secret
-                            type: string
-                          certKey:
-                            description: Certificate private key file name within
-                              the ConfigMap / Secret. Omit when the key is not necessary.
-                            type: string
-                          name:
-                            description: Name of the ConfigMap or Secret containing
-                              certificates
-                            type: string
-                          type:
-                            description: 'Reference type: configmap or secret'
-                            enum:
-                            - configmap
-                            - secret
-                            type: string
-                        type: object
-                    type: object
-                  url:
-                    default: http://loki:3100/
-                    description: URL is the address of an existing Loki service to
-                      push the flows to.
-                    type: string
-                type: object
-              namespace:
-                description: Namespace where NetObserv pods are deployed. If empty,
-                  the namespace of the operator is going to be used.
-                type: string
-              ovnKubernetes:
-                description: Settings related to OVN-Kubernetes CNI, when available.
-                  This configuration is used when using OVN's IPFIX exports, without
-                  OpenShift. When using OpenShift, refer to the `clusterNetworkOperator`
-                  property instead.
-                properties:
-                  containerName:
-                    default: ovnkube-node
-                    description: Name of the container to configure for IPFIX.
-                    type: string
-                  daemonSetName:
-                    default: ovnkube-node
-                    description: Name of the DaemonSet controlling the OVN-Kubernetes
-                      pods.
-                    type: string
-                  namespace:
-                    default: ovn-kubernetes
-                    description: Namespace where OVN-Kubernetes pods are deployed.
-                    type: string
-                type: object
             required:
             - agent
             type: object
@@ -1750,7 +1766,7 @@ spec:
             description: FlowCollectorStatus defines the observed state of FlowCollector
             properties:
               conditions:
-                description: Conditions represent the latest available observations
+                description: conditions represent the latest available observations
                   of an object's state
                 items:
                   description: "Condition contains details for one aspect of the current
@@ -1821,7 +1837,7 @@ spec:
                   type: object
                 type: array
               namespace:
-                description: Namespace where console plugin and flowlogs-pipeline
+                description: namespace where console plugin and flowlogs-pipeline
                   have been deployed.
                 type: string
             required:

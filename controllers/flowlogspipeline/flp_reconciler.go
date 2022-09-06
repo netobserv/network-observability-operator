@@ -149,7 +149,7 @@ func checkDeployNeeded(fc *flowsv1alpha1.FlowCollectorSpec, confKind string) (bo
 
 // Reconcile is the reconciler entry point to reconcile the current flowlogs-pipeline state with the desired configuration
 func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
-	desiredFLP := &desired.Spec.FlowlogsPipeline
+	desiredFLP := &desired.Spec.Processor
 	desiredLoki := &desired.Spec.Loki
 	desiredKafka := &desired.Spec.Kafka
 	err := validateDesired(desiredFLP)

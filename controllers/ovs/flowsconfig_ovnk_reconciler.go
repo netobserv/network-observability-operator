@@ -108,9 +108,9 @@ func (c *FlowsConfigOVNKController) desiredEnv(ctx context.Context, coll *flowsv
 	// According to the "OVS flow export configuration" RFE:
 	// nodePort be set by the NOO when the collector is deployed as a DaemonSet
 	// sharedTarget set when deployed as Deployment + Service
-	switch coll.Spec.FlowlogsPipeline.Kind {
+	switch coll.Spec.Processor.Kind {
 	case constants.DaemonSetKind:
-		envs["OVN_IPFIX_TARGETS"] = fmt.Sprintf(":%d", coll.Spec.FlowlogsPipeline.Port)
+		envs["OVN_IPFIX_TARGETS"] = fmt.Sprintf(":%d", coll.Spec.Processor.Port)
 	case constants.DeploymentKind:
 		svc := corev1.Service{}
 		if err := c.client.Get(ctx, types.NamespacedName{
@@ -135,7 +135,7 @@ func (c *FlowsConfigOVNKController) desiredEnv(ctx context.Context, coll *flowsv
 		if ip == "" {
 			return nil, fmt.Errorf("can't find any suitable IP for host %s", svcHost)
 		}
-		envs["OVN_IPFIX_TARGETS"] = net.JoinHostPort(ip, strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)))
+		envs["OVN_IPFIX_TARGETS"] = net.JoinHostPort(ip, strconv.Itoa(int(coll.Spec.Processor.Port)))
 	}
 	return envs, nil
 }

@@ -20,7 +20,7 @@ spec:
       excludeInterfaces: [ "lo" ]
       logLevel: info
       privileged: false
-  flowlogsPipeline:
+  processor:
     kind: DaemonSet
 #    kind: Deployment
 #    replicas: 1

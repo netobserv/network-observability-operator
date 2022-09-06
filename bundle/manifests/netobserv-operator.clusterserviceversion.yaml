@@ -111,7 +111,7 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["network-observability-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:0.1.4
-    createdAt: "2022-08-08T16:02:25Z"
+    createdAt: "2022-09-06T10:56:04Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.23.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
