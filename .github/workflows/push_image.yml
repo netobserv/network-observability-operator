@@ -46,3 +46,26 @@ jobs:
           registry: ${{ env.REGISTRY }}
       - name: print image url
         run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
+      - name: generate test bundle
+        run: VERSION=${{ env.TAGS }} PLG_VERSION=${{ env.TAGS }} FLP_VERSION=${{ env.TAGS }} BPF_VERSION=${{ env.TAGS }} make bundle-for-test
+      - name: build bundle
+        run: VERSION=${{ env.TAGS }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make bundle-build
+      - name: push bundle to quay.io
+        id: push-bundle
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.IMAGE }}-bundle
+          tags: v${{ env.TAGS }}
+          registry: ${{ env.REGISTRY }}
+      - name: build catalog
+        run: VERSION=${{ env.TAGS }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make catalog-build
+      - name: push catalog to quay.io
+        id: push-catalog
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.IMAGE }}-catalog
+          tags: v${{ env.TAGS }}
+          registry: ${{ env.REGISTRY }}
+      - name: print images reference
+        run: |
+          echo "Images: ${{ steps.push-to-quay.outputs.registry-paths }}, ${{ steps.push-bundle.outputs.registry-paths }}, ${{ steps.push-catalog.outputs.registry-paths }}"
