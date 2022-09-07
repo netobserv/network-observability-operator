@@ -35,6 +35,7 @@ const (
 	metricsConfigDir        = "metrics_definitions"
 	kafkaCerts              = "kafka-certs"
 	lokiCerts               = "loki-certs"
+	promCerts               = "prom-certs"
 	healthServiceName       = "health"
 	prometheusServiceName   = "prometheus"
 	healthTimeoutSeconds    = 5
@@ -48,6 +49,8 @@ const (
 	ConfKafkaIngester    = "kafkaIngester"
 	ConfKafkaTransformer = "kafkaTransformer"
 )
+
+const PromServiceSuffix = "-prom"
 
 var FlpConfSuffix = map[string]string{
 	ConfSingle:           "",
@@ -67,6 +70,7 @@ type builder struct {
 	desired         *flowsv1alpha1.FlowCollectorFLP
 	desiredLoki     *flowsv1alpha1.FlowCollectorLoki
 	desiredKafka    *flowsv1alpha1.FlowCollectorKafka
+	promTLS         *flowsv1alpha1.CertificateReference
 	confKind        string
 	confKindSuffix  string
 	useOpenShiftSCC bool
@@ -74,6 +78,18 @@ type builder struct {
 
 func newBuilder(ns, agent string, desired *flowsv1alpha1.FlowCollectorFLP, desiredLoki *flowsv1alpha1.FlowCollectorLoki, desiredKafka *flowsv1alpha1.FlowCollectorKafka, confKind string, useOpenShiftSCC bool) builder {
 	version := helper.ExtractVersion(desired.Image)
+	var promTLS flowsv1alpha1.CertificateReference
+	switch desired.Prometheus.TLS.Type {
+	case flowsv1alpha1.PrometheusTLSProvided:
+		promTLS = *desired.Prometheus.TLS.Provided
+	case flowsv1alpha1.PrometheusTLSAuto:
+		promTLS = flowsv1alpha1.CertificateReference{
+			Type:     "secret",
+			Name:     constants.FLPName + FlpConfSuffix[confKind] + PromServiceSuffix,
+			CertFile: "tls.crt",
+			CertKey:  "tls.key",
+		}
+	}
 	return builder{
 		namespace: ns,
 		labels: map[string]string{
@@ -90,6 +106,7 @@ func newBuilder(ns, agent string, desired *flowsv1alpha1.FlowCollectorFLP, desir
 		confKind:        confKind,
 		confKindSuffix:  FlpConfSuffix[confKind],
 		useOpenShiftSCC: useOpenShiftSCC,
+		promTLS:         &promTLS,
 	}
 }
 
@@ -155,7 +172,7 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 
 	ports = append(ports, corev1.ContainerPort{
 		Name:          prometheusServiceName,
-		ContainerPort: b.desired.PrometheusPort,
+		ContainerPort: b.desired.Prometheus.Port,
 	})
 
 	volumeMounts := []corev1.VolumeMount{{
@@ -183,6 +200,10 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 
 	if b.desiredLoki.SendAuthToken {
 		volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, constants.FLPName+b.confKindSuffix, constants.FLPName)
+	}
+
+	if b.desired.Prometheus.TLS.Type != flowsv1alpha1.PrometheusTLSDisabled {
+		volumes, volumeMounts = helper.AppendSingleCertVolumes(volumes, volumeMounts, b.promTLS, promCerts)
 	}
 
 	container := corev1.Container{
@@ -228,7 +249,7 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 			Annotations: map[string]string{
 				PodConfigurationDigest:      configDigest,
 				"prometheus.io/scrape":      "true",
-				"prometheus.io/scrape_port": fmt.Sprint(b.desired.PrometheusPort),
+				"prometheus.io/scrape_port": fmt.Sprint(b.desired.Prometheus.Port),
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -382,12 +403,21 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	}
 
 	// prometheus stage (encode) configuration
-	agg := enrichedStage.Aggregate("aggregate", aggregates)
-	agg.EncodePrometheus("prometheus", api.PromEncode{
-		Port:    int(b.desired.PrometheusPort),
+	promEncode := api.PromEncode{
+		Port:    int(b.desired.Prometheus.Port),
 		Prefix:  "netobserv_",
 		Metrics: promMetrics,
-	})
+	}
+
+	if b.desired.Prometheus.TLS.Type != flowsv1alpha1.PrometheusTLSDisabled {
+		promEncode.TLS = &api.PromTLSConf{
+			CertPath: helper.GetSingleCertPath(b.promTLS, promCerts),
+			KeyPath:  helper.GetSingleKeyPath(b.promTLS, promCerts),
+		}
+	}
+
+	agg := enrichedStage.Aggregate("aggregate", aggregates)
+	agg.EncodePrometheus("prometheus", promEncode)
 	return nil
 }
 
@@ -507,6 +537,48 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 		Protocol: b.portProtocol(),
 	}}
 	newService.ObjectMeta.Labels = b.labels
+	return newService
+}
+
+func (b *builder) promService(old *corev1.Service) *corev1.Service {
+	if old == nil {
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      constants.FLPName + b.confKindSuffix + PromServiceSuffix,
+				Namespace: b.namespace,
+				Labels:    b.labels,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: b.selector,
+				Ports: []corev1.ServicePort{{
+					Name:     prometheusServiceName,
+					Port:     b.desired.Prometheus.Port,
+					Protocol: corev1.ProtocolTCP,
+				}},
+			},
+		}
+		if b.desired.Prometheus.TLS.Type == flowsv1alpha1.PrometheusTLSAuto {
+			service.ObjectMeta.Annotations = map[string]string{
+				"service.alpha.openshift.io/serving-cert-secret-name": constants.FLPName + b.confKindSuffix + PromServiceSuffix,
+			}
+		}
+		return &service
+	}
+	// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
+	newService := old.DeepCopy()
+	newService.Spec.Selector = b.selector
+	newService.Spec.Ports = []corev1.ServicePort{{
+		Name:     prometheusServiceName,
+		Port:     b.desired.Prometheus.Port,
+		Protocol: corev1.ProtocolTCP,
+	}}
+	newService.ObjectMeta.Labels = b.labels
+	if b.desired.Prometheus.TLS.Type == flowsv1alpha1.PrometheusTLSAuto {
+		if newService.ObjectMeta.Annotations == nil {
+			newService.ObjectMeta.Annotations = map[string]string{}
+		}
+		newService.ObjectMeta.Annotations["service.alpha.openshift.io/serving-cert-secret-name"] = constants.FLPName + b.confKindSuffix + PromServiceSuffix
+	}
 	return newService
 }
 

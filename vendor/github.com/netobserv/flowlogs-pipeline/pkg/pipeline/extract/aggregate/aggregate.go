@@ -53,6 +53,7 @@ type Aggregate struct {
 
 type GroupState struct {
 	normalizedValues NormalizedValues
+	labels           Labels
 	recentRawValues  []float64
 	recentOpValue    float64
 	recentCount      int
@@ -95,14 +96,14 @@ func (labels Labels) getNormalizedValues() NormalizedValues {
 	return NormalizedValues(normalizedAsString)
 }
 
-func (aggregate Aggregate) FilterEntry(entry config.GenericMap) (error, NormalizedValues) {
+func (aggregate Aggregate) FilterEntry(entry config.GenericMap) (error, NormalizedValues, Labels) {
 	labels, allLabelsFound := aggregate.LabelsFromEntry(entry)
 	if !allLabelsFound {
-		return fmt.Errorf("missing keys in entry"), ""
+		return fmt.Errorf("missing keys in entry"), "", nil
 	}
 
 	normalizedValues := labels.getNormalizedValues()
-	return nil, normalizedValues
+	return nil, normalizedValues, labels
 }
 
 func getInitValue(operation string) float64 {
@@ -120,7 +121,7 @@ func getInitValue(operation string) float64 {
 	}
 }
 
-func (aggregate Aggregate) UpdateByEntry(entry config.GenericMap, normalizedValues NormalizedValues) error {
+func (aggregate Aggregate) UpdateByEntry(entry config.GenericMap, normalizedValues NormalizedValues, labels Labels) error {
 
 	aggregate.mutex.Lock()
 	defer aggregate.mutex.Unlock()
@@ -128,7 +129,7 @@ func (aggregate Aggregate) UpdateByEntry(entry config.GenericMap, normalizedValu
 	var groupState *GroupState
 	oldEntry, ok := aggregate.cache.GetCacheEntry(string(normalizedValues))
 	if !ok {
-		groupState = &GroupState{normalizedValues: normalizedValues}
+		groupState = &GroupState{normalizedValues: normalizedValues, labels: labels}
 		initVal := getInitValue(string(aggregate.Definition.Operation))
 		groupState.totalValue = initVal
 		groupState.recentOpValue = initVal
@@ -183,13 +184,13 @@ func (aggregate Aggregate) UpdateByEntry(entry config.GenericMap, normalizedValu
 func (aggregate Aggregate) Evaluate(entries []config.GenericMap) error {
 	for _, entry := range entries {
 		// filter entries matching labels with aggregates
-		err, normalizedValues := aggregate.FilterEntry(entry)
+		err, normalizedValues, labels := aggregate.FilterEntry(entry)
 		if err != nil {
 			continue
 		}
 
 		// update aggregate group by entry
-		err = aggregate.UpdateByEntry(entry, normalizedValues)
+		err = aggregate.UpdateByEntry(entry, normalizedValues, labels)
 		if err != nil {
 			log.Debugf("UpdateByEntry error %v", err)
 			continue
@@ -208,7 +209,7 @@ func (aggregate Aggregate) GetMetrics() []config.GenericMap {
 	// iterate over the items in the cache
 	aggregate.cache.Iterate(func(key string, value interface{}) {
 		group := value.(*GroupState)
-		metrics = append(metrics, config.GenericMap{
+		newEntry := config.GenericMap{
 			"name":              aggregate.Definition.Name,
 			"operation":         aggregate.Definition.Operation,
 			"record_key":        aggregate.Definition.RecordKey,
@@ -220,7 +221,12 @@ func (aggregate Aggregate) GetMetrics() []config.GenericMap {
 			"recent_op_value":   group.recentOpValue,
 			"recent_count":      group.recentCount,
 			strings.Join(aggregate.Definition.By, "_"): string(group.normalizedValues),
-		})
+		}
+		// add the items in aggregate.Definition.By individually to the entry
+		for _, key := range aggregate.Definition.By {
+			newEntry[key] = group.labels[key]
+		}
+		metrics = append(metrics, newEntry)
 		// Once reported, we reset the recentXXX fields
 		if aggregate.Definition.Operation == OperationRawValues {
 			group.recentRawValues = make([]float64, 0)

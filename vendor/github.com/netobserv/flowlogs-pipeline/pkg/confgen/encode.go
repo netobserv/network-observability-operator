@@ -18,10 +18,9 @@
 package confgen
 
 import (
-	"encoding/json"
-
 	jsoniter "github.com/json-iterator/go"
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
+	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -35,7 +34,7 @@ func (cg *ConfGen) parseEncode(encode *map[string]interface{}) (*api.PromEncode,
 	}
 
 	var prom api.PromEncode
-	err = json.Unmarshal(b, &prom)
+	err = config.JsonUnmarshalStrict(b, &prom)
 	if err != nil {
 		log.Debugf("Unmarshal aggregate.Definitions err: %v ", err)
 		return nil, err

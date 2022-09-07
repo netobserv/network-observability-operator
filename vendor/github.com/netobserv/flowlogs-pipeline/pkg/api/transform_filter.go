@@ -25,6 +25,8 @@ type TransformFilterOperationEnum struct {
 	RemoveField              string `yaml:"remove_field" json:"remove_field" doc:"removes the field from the entry"`
 	RemoveEntryIfExists      string `yaml:"remove_entry_if_exists" json:"remove_entry_if_exists" doc:"removes the entry if the field exists"`
 	RemoveEntryIfDoesntExist string `yaml:"remove_entry_if_doesnt_exist" json:"remove_entry_if_doesnt_exist" doc:"removes the entry if the field doesnt exist"`
+	RemoveEntryIfEqual       string `yaml:"remove_entry_if_equal" json:"remove_entry_if_equal" doc:"removes the entry if the field value equals specified value"`
+	RemoveEntryIfNotEqual    string `yaml:"remove_entry_if_not_equal" json:"remove_entry_if_not_equal" doc:"removes the entry if the field value does not equal specified value"`
 }
 
 func TransformFilterOperationName(operation string) string {
@@ -32,6 +34,7 @@ func TransformFilterOperationName(operation string) string {
 }
 
 type TransformFilterRule struct {
-	Input string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
-	Type  string `yaml:"type,omitempty" json:"type,omitempty" enum:"TransformFilterOperationEnum" doc:"one of the following:"`
+	Input string      `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
+	Type  string      `yaml:"type,omitempty" json:"type,omitempty" enum:"TransformFilterOperationEnum" doc:"one of the following:"`
+	Value interface{} `yaml:"value,omitempty" json:"value,omitempty" enum:"TransformFilterOperationEnum" doc:"specified value of input field:"`
 }

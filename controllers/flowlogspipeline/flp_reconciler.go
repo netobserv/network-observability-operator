@@ -43,6 +43,7 @@ type ownedObjects struct {
 	deployment             *appsv1.Deployment
 	daemonSet              *appsv1.DaemonSet
 	service                *corev1.Service
+	promService            *corev1.Service
 	hpa                    *ascv2.HorizontalPodAutoscaler
 	serviceAccount         *corev1.ServiceAccount
 	configMap              *corev1.ConfigMap
@@ -71,6 +72,7 @@ func newSingleReconciler(cl reconcilers.ClientHelper, ns, prevNS, confKind strin
 		deployment:             &appsv1.Deployment{},
 		daemonSet:              &appsv1.DaemonSet{},
 		service:                &corev1.Service{},
+		promService:            &corev1.Service{},
 		hpa:                    &ascv2.HorizontalPodAutoscaler{},
 		serviceAccount:         &corev1.ServiceAccount{},
 		configMap:              &corev1.ConfigMap{},
@@ -82,6 +84,7 @@ func newSingleReconciler(cl reconcilers.ClientHelper, ns, prevNS, confKind strin
 	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.daemonSet)
 	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.hpa)
 	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind], owned.serviceAccount)
+	nobjMngr.AddManagedObject(constants.FLPName+FlpConfSuffix[confKind]+PromServiceSuffix, owned.promService)
 	nobjMngr.AddManagedObject(configMapName+FlpConfSuffix[confKind], owned.configMap)
 
 	if confKind == ConfSingle || confKind == ConfKafkaIngester {
@@ -101,8 +104,8 @@ func (r *FLPReconciler) InitStaticResources(ctx context.Context) error {
 // PrepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
 func (r *FLPReconciler) PrepareNamespaceChange(ctx context.Context) error {
 	// Switching namespace => delete everything in the previous namespace
-	for _, singleFlp := range r.singleReconcilers {
-		singleFlp.nobjMngr.CleanupPreviousNamespace(ctx)
+	for i := range r.singleReconcilers {
+		r.singleReconcilers[i].nobjMngr.CleanupPreviousNamespace(ctx)
 	}
 	r.nobjMngr.CleanupPreviousNamespace(ctx)
 	return r.reconcilePermissions(ctx)
@@ -123,8 +126,8 @@ func (r *FLPReconciler) GetServiceName(kafka *flowsv1alpha1.FlowCollectorKafka) 
 }
 
 func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
-	for _, singleFlp := range r.singleReconcilers {
-		err := singleFlp.Reconcile(ctx, desired)
+	for i := range r.singleReconcilers {
+		err := r.singleReconcilers[i].Reconcile(ctx, desired)
 		if err != nil {
 			return err
 		}
@@ -188,6 +191,11 @@ func (r *singleDeploymentReconciler) Reconcile(ctx context.Context, desired *flo
 	}
 
 	if err := r.reconcileServiceAccount(ctx, &builder); err != nil {
+		return err
+	}
+
+	err = r.reconcilePrometheusService(ctx, &builder)
+	if err != nil {
 		return err
 	}
 
@@ -259,6 +267,19 @@ func (r *singleDeploymentReconciler) reconcileService(ctx context.Context, desir
 	newSVC := builder.service(&actual)
 	if serviceNeedsUpdate(&actual, newSVC) {
 		if err := r.UpdateOwned(ctx, &actual, newSVC); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *singleDeploymentReconciler) reconcilePrometheusService(ctx context.Context, builder *builder) error {
+	if !r.nobjMngr.Exists(r.owned.promService) {
+		return r.CreateOwned(ctx, builder.promService(nil))
+	}
+	newSVC := builder.promService(r.owned.promService)
+	if serviceNeedsUpdate(r.owned.promService, newSVC) {
+		if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
 			return err
 		}
 	}

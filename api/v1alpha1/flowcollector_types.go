@@ -139,6 +139,7 @@ type FlowCollectorEBPF struct {
 	// imagePullPolicy is the Kubernetes pull policy for the image defined above
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 
+	//+kubebuilder:default:={requests:{memory:"50Mi",cpu:"100m"},limits:{memory:"100Mi"}}
 	// resources are the compute resources required by this container.
 	// Cannot be updated.
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -216,6 +217,44 @@ type FlowCollectorKafka struct {
 	TLS ClientTLS `json:"tls"`
 }
 
+const (
+	PrometheusTLSDisabled = "DISABLED"
+	PrometheusTLSProvided = "PROVIDED"
+	PrometheusTLSAuto     = "AUTO"
+)
+
+type PrometheusTLSConfigType string
+
+// PrometheusTLS define the TLS configuration of Prometheus
+type PrometheusTLS struct {
+	// Select the type of TLS configuration
+	// "DISABLED" (default) to not configure TLS for the endpoint, "PROVIDED" to manually provide cert file and a key file,
+	// and "AUTO" to use Openshift auto generated certificate using annotations
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="DISABLED";"PROVIDED";"AUTO"
+	// +kubebuilder:validation:Required
+	//+kubebuilder:default:="DISABLED"
+	Type PrometheusTLSConfigType `json:"type,omitempty"`
+
+	// TLS configuration.
+	// +optional
+	Provided *CertificateReference `json:"provided"`
+}
+
+// PrometheusConfig define the prometheus endpoint configuration
+type PrometheusConfig struct {
+
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=65535
+	//+kubebuilder:default:=9102
+	// the prometheus HTTP port
+	Port int32 `json:"port,omitempty"`
+
+	// TLS configuration.
+	// +optional
+	TLS PrometheusTLS `json:"tls"`
+}
+
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector
 type FlowCollectorFLP struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
@@ -246,17 +285,15 @@ type FlowCollectorFLP struct {
 	// 4789,6081,500, and 4500
 	Port int32 `json:"port,omitempty"`
 
+	// Prometheus endpoint configuration
+	// +optional
+	Prometheus PrometheusConfig `json:"prometheus,omitempty"`
+
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=8080
 	// healthPort is a collector HTTP port in the Pod that exposes the health check API
 	HealthPort int32 `json:"healthPort,omitempty"`
-
-	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:validation:Maximum=65535
-	//+kubebuilder:default:=9102
-	// prometheusPort is the prometheus HTTP port: this port exposes prometheus metrics
-	PrometheusPort int32 `json:"prometheusPort,omitempty"`
 
 	//+kubebuilder:default:="quay.io/netobserv/flowlogs-pipeline:main"
 	// image of the collector container (including domain and tag)

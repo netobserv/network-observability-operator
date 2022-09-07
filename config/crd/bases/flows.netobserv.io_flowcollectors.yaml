@@ -134,6 +134,12 @@ spec:
                           PERFMON, NET_ADMIN, SYS_RESOURCE.'
                         type: boolean
                       resources:
+                        default:
+                          limits:
+                            memory: 100Mi
+                          requests:
+                            cpu: 100m
+                            memory: 50Mi
                         description: 'resources are the compute resources required
                           by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         properties:
@@ -1708,14 +1714,55 @@ spec:
                     maximum: 65535
                     minimum: 1025
                     type: integer
-                  prometheusPort:
-                    default: 9102
-                    description: 'prometheusPort is the prometheus HTTP port: this
-                      port exposes prometheus metrics'
-                    format: int32
-                    maximum: 65535
-                    minimum: 1
-                    type: integer
+                  prometheus:
+                    description: Prometheus endpoint configuration
+                    properties:
+                      port:
+                        default: 9102
+                        description: the prometheus HTTP port
+                        format: int32
+                        maximum: 65535
+                        minimum: 1
+                        type: integer
+                      tls:
+                        description: TLS configuration.
+                        properties:
+                          provided:
+                            description: TLS configuration.
+                            properties:
+                              certFile:
+                                description: Certificate file name within the ConfigMap
+                                  / Secret
+                                type: string
+                              certKey:
+                                description: Certificate private key file name within
+                                  the ConfigMap / Secret. Omit when the key is not
+                                  necessary.
+                                type: string
+                              name:
+                                description: Name of the ConfigMap or Secret containing
+                                  certificates
+                                type: string
+                              type:
+                                description: 'Reference type: configmap or secret'
+                                enum:
+                                - configmap
+                                - secret
+                                type: string
+                            type: object
+                          type:
+                            default: DISABLED
+                            description: Select the type of TLS configuration "DISABLED"
+                              (default) to not configure TLS for the endpoint, "PROVIDED"
+                              to manually provide cert file and a key file, and "AUTO"
+                              to use Openshift auto generated certificate using annotations
+                            enum:
+                            - DISABLED
+                            - PROVIDED
+                            - AUTO
+                            type: string
+                        type: object
+                    type: object
                   replicas:
                     default: 1
                     description: replicas defines the number of replicas (pods) to

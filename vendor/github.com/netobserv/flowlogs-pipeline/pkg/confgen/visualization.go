@@ -18,9 +18,8 @@
 package confgen
 
 import (
-	"encoding/json"
-
 	jsoniter "github.com/json-iterator/go"
+	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -62,7 +61,7 @@ func (cg *ConfGen) parseVisualization(visualization *Visualization) (*Visualizat
 	}
 
 	var jsonVisualization Visualization
-	err = json.Unmarshal(b, &jsonVisualization)
+	err = config.JsonUnmarshalStrict(b, &jsonVisualization)
 	if err != nil {
 		log.Debugf("Unmarshal aggregate.Definitions err: %v ", err)
 		return nil, err

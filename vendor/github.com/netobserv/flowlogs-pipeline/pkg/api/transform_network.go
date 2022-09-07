@@ -43,6 +43,7 @@ type NetworkTransformRule struct {
 	Output     string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
 	Type       string `yaml:"type,omitempty" json:"type,omitempty" enum:"TransformNetworkOperationEnum" doc:"one of the following:"`
 	Parameters string `yaml:"parameters,omitempty" json:"parameters,omitempty" doc:"parameters specific to type"`
+	Assignee   string `yaml:"assignee,omitempty" json:"assignee,omitempty" doc:"value needs to assign to output field"`
 }
 
 type NetworkTransformRules []NetworkTransformRule

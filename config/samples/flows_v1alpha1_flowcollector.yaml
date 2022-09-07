@@ -20,6 +20,12 @@ spec:
       excludeInterfaces: [ "lo" ]
       logLevel: info
       privileged: false
+      resources:
+        requests:
+          memory: 50Mi
+          cpu: 100m
+        limits:
+          memory: 100Mi
   processor:
     kind: DaemonSet
 #    kind: Deployment
@@ -30,9 +36,16 @@ spec:
     logLevel: info
     enableKubeProbes: true
     healthPort: 8080
-    prometheusPort: 9102
+    prometheus:
+      port: 9102
     ignoreMetrics: []
     dropUnusedFields: true
+    resources:
+      requests:
+        memory: 100Mi
+        cpu: 100m
+      limits:
+        memory: 300Mi
   kafka:
     enable: false
     address: "kafka-cluster-kafka-bootstrap.network-observability"
