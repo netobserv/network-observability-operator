@@ -50,7 +50,7 @@ spec:
               agent:
                 default:
                   type: EBPF
-                description: agent for flows' extraction.
+                description: agent for flows extraction.
                 properties:
                   ebpf:
                     description: ebpf describes the settings related to the eBPF-based

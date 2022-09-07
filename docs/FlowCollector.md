@@ -87,7 +87,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspecagent">agent</a></b></td>
         <td>object</td>
         <td>
-          agent for flows' extraction.<br/>
+          agent for flows extraction.<br/>
           <br/>
             <i>Default</i>: map[type:EBPF]<br/>
         </td>
@@ -150,7 +150,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
 
 
 
-agent for flows' extraction.
+agent for flows extraction.
 
 <table>
     <thead>

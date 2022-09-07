@@ -44,7 +44,7 @@ type FlowCollectorSpec struct {
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
-	// agent for flows' extraction.
+	// agent for flows extraction.
 	// +kubebuilder:default:={type:"EBPF"}
 	Agent FlowCollectorAgent `json:"agent"`
 
