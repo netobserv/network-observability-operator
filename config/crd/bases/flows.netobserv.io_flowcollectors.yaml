@@ -136,6 +136,12 @@ spec:
                           PERFMON, NET_ADMIN, SYS_RESOURCE.'
                         type: boolean
                       resources:
+                        default:
+                          limits:
+                            memory: 100Mi
+                          requests:
+                            cpu: 100m
+                            memory: 50Mi
                         description: 'Compute Resources required by this container.
                           Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         properties:
