@@ -20,6 +20,12 @@ spec:
       excludeInterfaces: [ "lo" ]
       logLevel: info
       privileged: false
+      resources:
+        requests:
+          memory: 50Mi
+          cpu: 100m
+        limits:
+          memory: 100Mi
   flowlogsPipeline:
     kind: DaemonSet
 #    kind: Deployment
