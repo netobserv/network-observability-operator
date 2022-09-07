@@ -121,9 +121,9 @@ func (c *FlowsConfigCNOController) desired(
 	// According to the "OVS flow export configuration" RFE:
 	// nodePort be set by the NOO when the collector is deployed as a DaemonSet
 	// sharedTarget set when deployed as Deployment + Service
-	switch coll.Spec.FlowlogsPipeline.Kind {
+	switch coll.Spec.Processor.Kind {
 	case constants.DaemonSetKind:
-		conf.NodePort = coll.Spec.FlowlogsPipeline.Port
+		conf.NodePort = coll.Spec.Processor.Port
 		return &conf, nil
 	case constants.DeploymentKind:
 		svc := corev1.Service{}
@@ -150,10 +150,10 @@ func (c *FlowsConfigCNOController) desired(
 			return nil, fmt.Errorf("can't find any suitable IP for host %s", svcHost)
 		}
 		// TODO: if spec/flowlogsPipeline is empty or port is empty, fetch first UDP port in the service spec
-		conf.SharedTarget = net.JoinHostPort(ip, strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)))
+		conf.SharedTarget = net.JoinHostPort(ip, strconv.Itoa(int(coll.Spec.Processor.Port)))
 		return &conf, nil
 	}
-	return nil, fmt.Errorf("unexpected flowlogsPipeline kind: %s", coll.Spec.FlowlogsPipeline.Kind)
+	return nil, fmt.Errorf("unexpected processor kind: %s", coll.Spec.Processor.Kind)
 }
 
 func (c *FlowsConfigCNOController) flowsConfigMap(fc *flowsConfig) (*corev1.ConfigMap, error) {

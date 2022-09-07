@@ -343,7 +343,7 @@ func (in *FlowCollectorLoki) DeepCopy() *FlowCollectorLoki {
 func (in *FlowCollectorSpec) DeepCopyInto(out *FlowCollectorSpec) {
 	*out = *in
 	in.Agent.DeepCopyInto(&out.Agent)
-	in.FlowlogsPipeline.DeepCopyInto(&out.FlowlogsPipeline)
+	in.Processor.DeepCopyInto(&out.Processor)
 	in.Loki.DeepCopyInto(&out.Loki)
 	out.Kafka = in.Kafka
 	in.ConsolePlugin.DeepCopyInto(&out.ConsolePlugin)

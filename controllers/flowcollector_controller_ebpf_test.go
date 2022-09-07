@@ -43,7 +43,7 @@ func flowCollectorEBPFSpecs() {
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
 					Namespace: operatorNamespace,
-					FlowlogsPipeline: flowsv1alpha1.FlowCollectorFLP{
+					Processor: flowsv1alpha1.FlowCollectorFLP{
 						Kind:            "DaemonSet",
 						Port:            9999,
 						ImagePullPolicy: "Never",

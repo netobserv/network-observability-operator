@@ -87,7 +87,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspecagent">agent</a></b></td>
         <td>object</td>
         <td>
-          FlowCollectorAgent is a discriminated union that allows to select either ipfix or ebpf, but does not allow defining both fields.<br/>
+          agent for flows extraction.<br/>
           <br/>
             <i>Default</i>: map[type:EBPF]<br/>
         </td>
@@ -96,49 +96,49 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspecclusternetworkoperator">clusterNetworkOperator</a></b></td>
         <td>object</td>
         <td>
-          Settings related to the OpenShift Cluster Network Operator, when available.<br/>
+          clusterNetworkOperator defines the settings related to the OpenShift Cluster Network Operator, when available.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsoleplugin">consolePlugin</a></b></td>
         <td>object</td>
         <td>
-          Settings related to the OpenShift Console plugin, when available.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipeline">flowlogsPipeline</a></b></td>
-        <td>object</td>
-        <td>
-          Settings related to the flowlogs-pipeline component, which collects and enriches the flows, and produces metrics.<br/>
+          consolePlugin defines the settings related to the OpenShift Console plugin, when available.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspeckafka">kafka</a></b></td>
         <td>object</td>
         <td>
-          Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
+          kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecloki">loki</a></b></td>
         <td>object</td>
         <td>
-          Settings related to the Loki client, used as a flow store.<br/>
+          loki, the flow store, client settings.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where NetObserv pods are deployed. If empty, the namespace of the operator is going to be used.<br/>
+          namespace where NetObserv pods are deployed. If empty, the namespace of the operator is going to be used.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecovnkubernetes">ovnKubernetes</a></b></td>
         <td>object</td>
         <td>
-          Settings related to OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.<br/>
+          ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessor">processor</a></b></td>
+        <td>object</td>
+        <td>
+          processor defines the settings of the component that receives the flows from the agent, enriches them, and forwards them to the Loki persistence layer.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -150,7 +150,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
 
 
 
-FlowCollectorAgent is a discriminated union that allows to select either ipfix or ebpf, but does not allow defining both fields.
+agent for flows extraction.
 
 <table>
     <thead>
@@ -165,7 +165,7 @@ FlowCollectorAgent is a discriminated union that allows to select either ipfix o
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Select the flows tracing agent. Possible values are "IPFIX" (default) to use the IPFIX collector, or "EBPF" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could work but require manual configuration.<br/>
+          type selects the flows tracing agent. Possible values are "IPFIX" (default) to use the IPFIX collector, or "EBPF" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could work but require manual configuration.<br/>
           <br/>
             <i>Enum</i>: IPFIX, EBPF<br/>
             <i>Default</i>: EBPF<br/>
@@ -175,14 +175,14 @@ FlowCollectorAgent is a discriminated union that allows to select either ipfix o
         <td><b><a href="#flowcollectorspecagentebpf">ebpf</a></b></td>
         <td>object</td>
         <td>
-          Settings related to eBPF-based flow reporter when the "agent.type" property is set to "EBPF".<br/>
+          ebpf describes the settings related to the eBPF-based flow reporter when the "agent.type" property is set to "EBPF".<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentipfix">ipfix</a></b></td>
         <td>object</td>
         <td>
-          Settings related to IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".<br/>
+          ipfix describes the settings related to the IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -194,7 +194,7 @@ FlowCollectorAgent is a discriminated union that allows to select either ipfix o
 
 
 
-Settings related to eBPF-based flow reporter when the "agent.type" property is set to "EBPF".
+ebpf describes the settings related to the eBPF-based flow reporter when the "agent.type" property is set to "EBPF".
 
 <table>
     <thead>
@@ -209,7 +209,7 @@ Settings related to eBPF-based flow reporter when the "agent.type" property is s
         <td><b>cacheActiveTimeout</b></td>
         <td>string</td>
         <td>
-          CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
+          cacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
           <br/>
             <i>Default</i>: 5s<br/>
         </td>
@@ -218,10 +218,10 @@ Settings related to eBPF-based flow reporter when the "agent.type" property is s
         <td><b>cacheMaxFlows</b></td>
         <td>integer</td>
         <td>
-          CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
+          cacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 1000<br/>
+            <i>Default</i>: 5000<br/>
             <i>Minimum</i>: 1<br/>
         </td>
         <td>false</td>
@@ -229,14 +229,14 @@ Settings related to eBPF-based flow reporter when the "agent.type" property is s
         <td><b>env</b></td>
         <td>map[string]string</td>
         <td>
-          Env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug/support scenarios.<br/>
+          env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug/support scenarios.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>excludeInterfaces</b></td>
         <td>[]string</td>
         <td>
-          ExcludeInterfaces contains the interface names that will be excluded from flow tracing. If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
+          excludeInterfaces contains the interface names that will be excluded from flow tracing. If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
           <br/>
             <i>Default</i>: [lo]<br/>
         </td>
@@ -245,7 +245,7 @@ Settings related to eBPF-based flow reporter when the "agent.type" property is s
         <td><b>image</b></td>
         <td>string</td>
         <td>
-          Image is the NetObserv Agent image (including domain and tag)<br/>
+          image is the NetObserv Agent image (including domain and tag)<br/>
           <br/>
             <i>Default</i>: quay.io/netobserv/netobserv-ebpf-agent:main<br/>
         </td>
@@ -254,7 +254,7 @@ Settings related to eBPF-based flow reporter when the "agent.type" property is s
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
-          ImagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
+          imagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
           <br/>
             <i>Enum</i>: IfNotPresent, Always, Never<br/>
             <i>Default</i>: IfNotPresent<br/>
@@ -264,14 +264,14 @@ Settings related to eBPF-based flow reporter when the "agent.type" property is s
         <td><b>interfaces</b></td>
         <td>[]string</td>
         <td>
-          Interfaces contains the interface names from where flows will be collected. If empty, the agent will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
+          interfaces contains the interface names from where flows will be collected. If empty, the agent will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>logLevel</b></td>
         <td>enum</td>
         <td>
-          LogLevel defines the log level for the NetObserv eBPF Agent<br/>
+          logLevel defines the log level for the NetObserv eBPF Agent<br/>
           <br/>
             <i>Enum</i>: trace, debug, info, warn, error, fatal, panic<br/>
             <i>Default</i>: info<br/>
@@ -281,14 +281,14 @@ Settings related to eBPF-based flow reporter when the "agent.type" property is s
         <td><b>privileged</b></td>
         <td>boolean</td>
         <td>
-          Privileged mode for the eBPF Agent container. If false, the operator will add the following capabilities to the container, to enable its correct operation: BPF, PERFMON, NET_ADMIN, SYS_RESOURCE.<br/>
+          privileged mode for the eBPF Agent container. If false, the operator will add the following capabilities to the container, to enable its correct operation: BPF, PERFMON, NET_ADMIN, SYS_RESOURCE.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfresources">resources</a></b></td>
         <td>object</td>
         <td>
-          Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          resources are the compute resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:100Mi] requests:map[cpu:100m memory:50Mi]]<br/>
         </td>
@@ -297,7 +297,7 @@ Settings related to eBPF-based flow reporter when the "agent.type" property is s
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.<br/>
+          sampling rate of the flow reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 50<br/>
@@ -313,7 +313,7 @@ Settings related to eBPF-based flow reporter when the "agent.type" property is s
 
 
 
-Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+resources are the compute resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 <table>
     <thead>
@@ -347,7 +347,7 @@ Compute Resources required by this container. Cannot be updated. More info: http
 
 
 
-Settings related to IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".
+ipfix describes the settings related to the IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".
 
 <table>
     <thead>
@@ -362,7 +362,7 @@ Settings related to IPFIX-based flow reporter when the "agent.type" property is 
         <td><b>cacheActiveTimeout</b></td>
         <td>string</td>
         <td>
-          CacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
+          cacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
           <br/>
             <i>Default</i>: 20s<br/>
         </td>
@@ -371,7 +371,7 @@ Settings related to IPFIX-based flow reporter when the "agent.type" property is 
         <td><b>cacheMaxFlows</b></td>
         <td>integer</td>
         <td>
-          CacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
+          cacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 400<br/>
@@ -382,7 +382,7 @@ Settings related to IPFIX-based flow reporter when the "agent.type" property is 
         <td><b>forceSampleAll</b></td>
         <td>boolean</td>
         <td>
-          It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risks. When it is set to true, the value of "sampling" is ignored.<br/>
+          forceSampleAll allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risks. When it is set to true, the value of "sampling" is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -391,7 +391,7 @@ Settings related to IPFIX-based flow reporter when the "agent.type" property is 
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          Sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which may impact the cluster stability, refer to "forceSampleAll". Alternatively, you can use the eBPF Agent instead of IPFIX.<br/>
+          sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which may impact the cluster stability, refer to "forceSampleAll". Alternatively, you can use the eBPF Agent instead of IPFIX.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 400<br/>
@@ -407,7 +407,7 @@ Settings related to IPFIX-based flow reporter when the "agent.type" property is 
 
 
 
-Settings related to the OpenShift Cluster Network Operator, when available.
+clusterNetworkOperator defines the settings related to the OpenShift Cluster Network Operator, when available.
 
 <table>
     <thead>
@@ -422,7 +422,7 @@ Settings related to the OpenShift Cluster Network Operator, when available.
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace  where the configmap is going to be deployed.<br/>
+          namespace  where the configmap is going to be deployed.<br/>
           <br/>
             <i>Default</i>: openshift-network-operator<br/>
         </td>
@@ -436,7 +436,7 @@ Settings related to the OpenShift Cluster Network Operator, when available.
 
 
 
-Settings related to the OpenShift Console plugin, when available.
+consolePlugin defines the settings related to the OpenShift Console plugin, when available.
 
 <table>
     <thead>
@@ -451,7 +451,7 @@ Settings related to the OpenShift Console plugin, when available.
         <td><b>register</b></td>
         <td>boolean</td>
         <td>
-          Automatically register the provided console plugin with the OpenShift Console operator. When set to false, you can still register it manually by editing console.operator.openshift.io/cluster. E.g: oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'<br/>
+          register allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator. When set to false, you can still register it manually by editing console.operator.openshift.io/cluster. E.g: oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -460,14 +460,14 @@ Settings related to the OpenShift Console plugin, when available.
         <td><b><a href="#flowcollectorspecconsolepluginhpa">hpa</a></b></td>
         <td>object</td>
         <td>
-          HPA spec of an horizontal pod autoscaler to set up for the plugin Deployment.<br/>
+          hpa spec of a horizontal pod autoscaler to set up for the plugin Deployment.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>image</b></td>
         <td>string</td>
         <td>
-          Image is the plugin image (including domain and tag)<br/>
+          image is the plugin image (including domain and tag)<br/>
           <br/>
             <i>Default</i>: quay.io/netobserv/network-observability-console-plugin:main<br/>
         </td>
@@ -476,7 +476,7 @@ Settings related to the OpenShift Console plugin, when available.
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
-          ImagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
+          imagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
           <br/>
             <i>Enum</i>: IfNotPresent, Always, Never<br/>
             <i>Default</i>: IfNotPresent<br/>
@@ -486,7 +486,7 @@ Settings related to the OpenShift Console plugin, when available.
         <td><b>logLevel</b></td>
         <td>enum</td>
         <td>
-          LogLevel defines the log level for the console plugin backend<br/>
+          logLevel for the console plugin backend<br/>
           <br/>
             <i>Enum</i>: trace, debug, info, warn, error, fatal, panic<br/>
             <i>Default</i>: info<br/>
@@ -496,7 +496,7 @@ Settings related to the OpenShift Console plugin, when available.
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          Port is the plugin service port<br/>
+          port is the plugin service port<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 9001<br/>
@@ -508,7 +508,7 @@ Settings related to the OpenShift Console plugin, when available.
         <td><b><a href="#flowcollectorspecconsolepluginportnaming">portNaming</a></b></td>
         <td>object</td>
         <td>
-          Configuration of the port to service name translation<br/>
+          portNaming defines the configuration of the port-to-service name translation<br/>
           <br/>
             <i>Default</i>: map[enable:true]<br/>
         </td>
@@ -517,7 +517,7 @@ Settings related to the OpenShift Console plugin, when available.
         <td><b>replicas</b></td>
         <td>integer</td>
         <td>
-          Replicas defines the number of replicas (pods) to start.<br/>
+          replicas defines the number of replicas (pods) to start.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 1<br/>
@@ -528,7 +528,7 @@ Settings related to the OpenShift Console plugin, when available.
         <td><b><a href="#flowcollectorspecconsolepluginresources">resources</a></b></td>
         <td>object</td>
         <td>
-          Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          resources, in terms of compute resources, required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:100Mi] requests:map[cpu:100m memory:50Mi]]<br/>
         </td>
@@ -542,7 +542,7 @@ Settings related to the OpenShift Console plugin, when available.
 
 
 
-HPA spec of an horizontal pod autoscaler to set up for the plugin Deployment.
+hpa spec of a horizontal pod autoscaler to set up for the plugin Deployment.
 
 <table>
     <thead>
@@ -557,7 +557,7 @@ HPA spec of an horizontal pod autoscaler to set up for the plugin Deployment.
         <td><b>maxReplicas</b></td>
         <td>integer</td>
         <td>
-          upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
+          maxReplicas is the upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -566,7 +566,7 @@ HPA spec of an horizontal pod autoscaler to set up for the plugin Deployment.
         <td><b><a href="#flowcollectorspecconsolepluginhpametricsindex">metrics</a></b></td>
         <td>[]object</td>
         <td>
-          Metrics used by the pod autoscaler<br/>
+          metrics used by the pod autoscaler<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1451,7 +1451,7 @@ target specifies the target value for the given metric
 
 
 
-Configuration of the port to service name translation
+portNaming defines the configuration of the port-to-service name translation
 
 <table>
     <thead>
@@ -1466,7 +1466,7 @@ Configuration of the port to service name translation
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Should this feature be enabled<br/>
+          enable the console plugin port-to-service name translation<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -1475,7 +1475,7 @@ Configuration of the port to service name translation
         <td><b>portNames</b></td>
         <td>map[string]string</td>
         <td>
-          Additional port name to use in the console E.g. portNames: {"3100": "loki"}<br/>
+          portNames defines additional port names to use in the console E.g. portNames: {"3100": "loki"}<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1487,7 +1487,7 @@ Configuration of the port to service name translation
 
 
 
-Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+resources, in terms of compute resources, required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 <table>
     <thead>
@@ -1516,12 +1516,552 @@ Compute Resources required by this container. Cannot be updated. More info: http
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline
+### FlowCollector.spec.kafka
 <sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
 
 
 
-Settings related to the flowlogs-pipeline component, which collects and enriches the flows, and produces metrics.
+kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>address</b></td>
+        <td>string</td>
+        <td>
+          address of the Kafka server<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>topic</b></td>
+        <td>string</td>
+        <td>
+          kafka topic to use. It must exist, NetObserv will not create it.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          enable Kafka. Set it to true to use Kafka as part of the flow collection pipeline. When enabled, the pipeline is split in two parts: ingestion and transformation, connected by Kafka. The ingestion is either done by a specific flowlogs-pipeline workload, or by the eBPF agent, depending on the value of `spec.agent`. The transformation is done by a new flowlogs-pipeline deployment.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkatls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          tls client configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.tls
+<sup><sup>[↩ Parent](#flowcollectorspeckafka)</sup></sup>
+
+
+
+tls client configuration.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkatlscacert">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          caCert defines the reference of the certificate for the Certificate Authority<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          insecureSkipVerify allows skipping client-side verification of the server certificate<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkatlsusercert">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          userCert defines the user certificate reference<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.tls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspeckafkatls)</sup></sup>
+
+
+
+caCert defines the reference of the certificate for the Certificate Authority
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the ConfigMap or Secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type for the certificate reference: configmap or secret<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.tls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspeckafkatls)</sup></sup>
+
+
+
+userCert defines the user certificate reference
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the ConfigMap or Secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type for the certificate reference: configmap or secret<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+loki, the flow store, client settings.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>batchSize</b></td>
+        <td>integer</td>
+        <td>
+          batchSize is max batch size (in bytes) of logs to accumulate before sending<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Default</i>: 102400<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>batchWait</b></td>
+        <td>string</td>
+        <td>
+          batchWait is max time to wait before sending a batch<br/>
+          <br/>
+            <i>Default</i>: 1s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>maxBackoff</b></td>
+        <td>string</td>
+        <td>
+          maxBackoff is the maximum backoff time for client connection between retries<br/>
+          <br/>
+            <i>Default</i>: 300s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>maxRetries</b></td>
+        <td>integer</td>
+        <td>
+          maxRetries is the maximum number of retries for client connections<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 10<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>minBackoff</b></td>
+        <td>string</td>
+        <td>
+          minBackoff is the initial backoff time for client connection between retries<br/>
+          <br/>
+            <i>Default</i>: 1s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>querierUrl</b></td>
+        <td>string</td>
+        <td>
+          querierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server).<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sendAuthToken</b></td>
+        <td>boolean</td>
+        <td>
+          sendAuthToken is a flag to enable or disable Authorization header from service account secret It allows authentication to loki operator gateway<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>staticLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          staticLabels is a map of common labels to set on each flow<br/>
+          <br/>
+            <i>Default</i>: map[app:netobserv-flowcollector]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>statusUrl</b></td>
+        <td>string</td>
+        <td>
+          statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tenantID</b></td>
+        <td>string</td>
+        <td>
+          tenantID is the Loki X-Scope-OrgID that identifies the tenant for each request. it will be ignored if instanceSpec is specified<br/>
+          <br/>
+            <i>Default</i>: netobserv<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>timeout</b></td>
+        <td>string</td>
+        <td>
+          timeout is the maximum time connection / request limit A Timeout of zero means no timeout.<br/>
+          <br/>
+            <i>Default</i>: 10s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeclokitls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          tls client configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          url is the address of an existing Loki service to push the flows to.<br/>
+          <br/>
+            <i>Default</i>: http://loki:3100/<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.tls
+<sup><sup>[↩ Parent](#flowcollectorspecloki)</sup></sup>
+
+
+
+tls client configuration.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeclokitlscacert">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          caCert defines the reference of the certificate for the Certificate Authority<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          insecureSkipVerify allows skipping client-side verification of the server certificate<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeclokitlsusercert">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          userCert defines the user certificate reference<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.tls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspeclokitls)</sup></sup>
+
+
+
+caCert defines the reference of the certificate for the Certificate Authority
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the ConfigMap or Secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type for the certificate reference: configmap or secret<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.tls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspeclokitls)</sup></sup>
+
+
+
+userCert defines the user certificate reference
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the ConfigMap or Secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type for the certificate reference: configmap or secret<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.ovnKubernetes
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>containerName</b></td>
+        <td>string</td>
+        <td>
+          containerName defines the name of the container to configure for IPFIX.<br/>
+          <br/>
+            <i>Default</i>: ovnkube-node<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>daemonSetName</b></td>
+        <td>string</td>
+        <td>
+          daemonSetName defines the name of the DaemonSet controlling the OVN-Kubernetes pods.<br/>
+          <br/>
+            <i>Default</i>: ovnkube-node<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace where OVN-Kubernetes pods are deployed.<br/>
+          <br/>
+            <i>Default</i>: ovn-kubernetes<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+processor defines the settings of the component that receives the flows from the agent, enriches them, and forwards them to the Loki persistence layer.
 
 <table>
     <thead>
@@ -1536,7 +2076,7 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         <td><b>dropUnusedFields</b></td>
         <td>boolean</td>
         <td>
-          Set true to drop fields that are known to be unused by OVS, in order to save storage space.<br/>
+          dropUnusedFields allows, when set to true, to drop fields that are known to be unused by OVS, in order to save storage space.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -1545,7 +2085,7 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         <td><b>enableKubeProbes</b></td>
         <td>boolean</td>
         <td>
-          EnableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes<br/>
+          enableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -1554,7 +2094,7 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         <td><b>healthPort</b></td>
         <td>integer</td>
         <td>
-          HealthPort is a collector HTTP port in the Pod that exposes the health check API<br/>
+          healthPort is a collector HTTP port in the Pod that exposes the health check API<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 8080<br/>
@@ -1563,24 +2103,24 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpa">hpa</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpa">hpa</a></b></td>
         <td>object</td>
         <td>
-          HPA spec of an horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.<br/>
+          hpa spec of a horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>ignoreMetrics</b></td>
         <td>[]string</td>
         <td>
-          IgnoreMetrics is a list of tags to specify which metrics to ignore<br/>
+          ignoreMetrics is a list of tags to specify which metrics to ignore<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>image</b></td>
         <td>string</td>
         <td>
-          Image is the collector image (including domain and tag)<br/>
+          image of the collector container (including domain and tag)<br/>
           <br/>
             <i>Default</i>: quay.io/netobserv/flowlogs-pipeline:main<br/>
         </td>
@@ -1589,7 +2129,7 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
-          ImagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
+          imagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
           <br/>
             <i>Enum</i>: IfNotPresent, Always, Never<br/>
             <i>Default</i>: IfNotPresent<br/>
@@ -1599,7 +2139,7 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         <td><b>kind</b></td>
         <td>enum</td>
         <td>
-          Kind is the workload kind, either DaemonSet or Deployment. When DaemonSet is used, each pod will receive flows from the node it is running on. When Deployment is used, the flows traffic received from nodes will be load-balanced. Note that in such a case, the number of replicas should be less or equal to the number of nodes, as extra-pods would be unused due to session affinity with the node IP. When using Kafka, this option only affects the flowlogs-pipeline ingester, not the transformer.<br/>
+          kind of the workload, either DaemonSet or Deployment. When DaemonSet is used, each pod will receive flows from the node it is running on. When Deployment is used, the flows traffic received from nodes will be load-balanced. Note that in such a case, the number of replicas should be less or equal to the number of nodes, as extra-pods would be unused due to session affinity with the node IP. When using Kafka, this option only affects the flowlogs-pipeline ingester, not the transformer.<br/>
           <br/>
             <i>Enum</i>: DaemonSet, Deployment<br/>
             <i>Default</i>: DaemonSet<br/>
@@ -1609,7 +2149,7 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         <td><b>logLevel</b></td>
         <td>enum</td>
         <td>
-          LogLevel defines the log level for the collector runtime<br/>
+          logLevel of the collector runtime<br/>
           <br/>
             <i>Enum</i>: trace, debug, info, warn, error, fatal, panic<br/>
             <i>Default</i>: info<br/>
@@ -1619,7 +2159,7 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          Port is the collector port: either a service port for Deployment kind, or host port for DaemonSet kind By conventions, some value are not authorized port must not be below 1024 and must not equal this values: 4789,6081,500, and 4500<br/>
+          port of the flow collector: either a service port for Deployment kind, or host port for DaemonSet kind By conventions, some value are not authorized port must not be below 1024 and must not equal this values: 4789,6081,500, and 4500<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 2055<br/>
@@ -1638,7 +2178,7 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         <td><b>replicas</b></td>
         <td>integer</td>
         <td>
-          Replicas defines the number of replicas (pods) to start for Deployment kind. Ignored for DaemonSet.<br/>
+          replicas defines the number of replicas (pods) to start for Deployment kind. Ignored for DaemonSet.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 1<br/>
@@ -1646,10 +2186,10 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelineresources">resources</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorresources">resources</a></b></td>
         <td>object</td>
         <td>
-          Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          resources are the compute resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:300Mi] requests:map[cpu:100m memory:100Mi]]<br/>
         </td>
@@ -1658,12 +2198,12 @@ Settings related to the flowlogs-pipeline component, which collects and enriches
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipeline)</sup></sup>
+### FlowCollector.spec.processor.hpa
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
 
 
 
-HPA spec of an horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.
+hpa spec of a horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.
 
 <table>
     <thead>
@@ -1678,16 +2218,16 @@ HPA spec of an horizontal pod autoscaler to set up for the collector Deployment.
         <td><b>maxReplicas</b></td>
         <td>integer</td>
         <td>
-          upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
+          maxReplicas is the upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindex">metrics</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindex">metrics</a></b></td>
         <td>[]object</td>
         <td>
-          Metrics used by the pod autoscaler<br/>
+          metrics used by the pod autoscaler<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1703,8 +2243,8 @@ HPA spec of an horizontal pod autoscaler to set up for the collector Deployment.
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index]
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpa)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpa)</sup></sup>
 
 
 
@@ -1727,35 +2267,35 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexcontainerresource">containerResource</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexcontainerresource">containerResource</a></b></td>
         <td>object</td>
         <td>
           container resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexexternal">external</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexexternal">external</a></b></td>
         <td>object</td>
         <td>
           external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexobject">object</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexobject">object</a></b></td>
         <td>object</td>
         <td>
           object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexpods">pods</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexpods">pods</a></b></td>
         <td>object</td>
         <td>
           pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexresource">resource</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexresource">resource</a></b></td>
         <td>object</td>
         <td>
           resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
@@ -1765,8 +2305,8 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].containerResource
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindex)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].containerResource
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindex)</sup></sup>
 
 
 
@@ -1796,7 +2336,7 @@ container resource refers to a resource metric (such as those specified in reque
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexcontainerresourcetarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexcontainerresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -1806,8 +2346,8 @@ container resource refers to a resource metric (such as those specified in reque
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].containerResource.target
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexcontainerresource)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].containerResource.target
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexcontainerresource)</sup></sup>
 
 
 
@@ -1856,8 +2396,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].external
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindex)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].external
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindex)</sup></sup>
 
 
 
@@ -1873,14 +2413,14 @@ external refers to a global metric that is not associated with any Kubernetes ob
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexexternalmetric">metric</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexexternalmetric">metric</a></b></td>
         <td>object</td>
         <td>
           metric identifies the target metric by name and selector<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexexternaltarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexexternaltarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -1890,8 +2430,8 @@ external refers to a global metric that is not associated with any Kubernetes ob
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].external.metric
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexexternal)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].external.metric
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexexternal)</sup></sup>
 
 
 
@@ -1914,7 +2454,7 @@ metric identifies the target metric by name and selector
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexexternalmetricselector">selector</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexexternalmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
           selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
@@ -1924,8 +2464,8 @@ metric identifies the target metric by name and selector
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].external.metric.selector
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexexternalmetric)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].external.metric.selector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexexternalmetric)</sup></sup>
 
 
 
@@ -1941,7 +2481,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexexternalmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexexternalmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
           matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
@@ -1958,8 +2498,8 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].external.metric.selector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexexternalmetricselector)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].external.metric.selector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexexternalmetricselector)</sup></sup>
 
 
 
@@ -1999,8 +2539,8 @@ A label selector requirement is a selector that contains values, a key, and an o
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].external.target
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexexternal)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].external.target
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexexternal)</sup></sup>
 
 
 
@@ -2049,8 +2589,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].object
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindex)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].object
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindex)</sup></sup>
 
 
 
@@ -2066,21 +2606,21 @@ object refers to a metric describing a single kubernetes object (for example, hi
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexobjectdescribedobject">describedObject</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexobjectdescribedobject">describedObject</a></b></td>
         <td>object</td>
         <td>
           CrossVersionObjectReference contains enough information to let you identify the referred resource.<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexobjectmetric">metric</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexobjectmetric">metric</a></b></td>
         <td>object</td>
         <td>
           metric identifies the target metric by name and selector<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexobjecttarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexobjecttarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -2090,8 +2630,8 @@ object refers to a metric describing a single kubernetes object (for example, hi
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].object.describedObject
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexobject)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].object.describedObject
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexobject)</sup></sup>
 
 
 
@@ -2131,8 +2671,8 @@ CrossVersionObjectReference contains enough information to let you identify the 
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].object.metric
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexobject)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].object.metric
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexobject)</sup></sup>
 
 
 
@@ -2155,7 +2695,7 @@ metric identifies the target metric by name and selector
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexobjectmetricselector">selector</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexobjectmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
           selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
@@ -2165,8 +2705,8 @@ metric identifies the target metric by name and selector
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].object.metric.selector
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexobjectmetric)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].object.metric.selector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexobjectmetric)</sup></sup>
 
 
 
@@ -2182,7 +2722,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexobjectmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexobjectmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
           matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
@@ -2199,8 +2739,8 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].object.metric.selector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexobjectmetricselector)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].object.metric.selector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexobjectmetricselector)</sup></sup>
 
 
 
@@ -2240,8 +2780,8 @@ A label selector requirement is a selector that contains values, a key, and an o
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].object.target
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexobject)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].object.target
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexobject)</sup></sup>
 
 
 
@@ -2290,8 +2830,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].pods
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindex)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].pods
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindex)</sup></sup>
 
 
 
@@ -2307,14 +2847,14 @@ pods refers to a metric describing each pod in the current scale target (for exa
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexpodsmetric">metric</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexpodsmetric">metric</a></b></td>
         <td>object</td>
         <td>
           metric identifies the target metric by name and selector<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexpodstarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexpodstarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -2324,8 +2864,8 @@ pods refers to a metric describing each pod in the current scale target (for exa
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].pods.metric
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexpods)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].pods.metric
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexpods)</sup></sup>
 
 
 
@@ -2348,7 +2888,7 @@ metric identifies the target metric by name and selector
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexpodsmetricselector">selector</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexpodsmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
           selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
@@ -2358,8 +2898,8 @@ metric identifies the target metric by name and selector
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].pods.metric.selector
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexpodsmetric)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].pods.metric.selector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexpodsmetric)</sup></sup>
 
 
 
@@ -2375,7 +2915,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexpodsmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexpodsmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
           matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
@@ -2392,8 +2932,8 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].pods.metric.selector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexpodsmetricselector)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].pods.metric.selector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexpodsmetricselector)</sup></sup>
 
 
 
@@ -2433,8 +2973,8 @@ A label selector requirement is a selector that contains values, a key, and an o
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].pods.target
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexpods)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].pods.target
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexpods)</sup></sup>
 
 
 
@@ -2483,8 +3023,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].resource
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindex)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].resource
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindex)</sup></sup>
 
 
 
@@ -2507,7 +3047,7 @@ resource refers to a resource metric (such as those specified in requests and li
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelinehpametricsindexresourcetarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorhpametricsindexresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -2517,8 +3057,8 @@ resource refers to a resource metric (such as those specified in requests and li
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.hpa.metrics[index].resource.target
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelinehpametricsindexresource)</sup></sup>
+### FlowCollector.spec.processor.hpa.metrics[index].resource.target
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexresource)</sup></sup>
 
 
 
@@ -2693,12 +3233,12 @@ TLS configuration.
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.resources
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipeline)</sup></sup>
+### FlowCollector.spec.processor.resources
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
 
 
 
-Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+resources are the compute resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 <table>
     <thead>
@@ -2727,546 +3267,6 @@ Compute Resources required by this container. Cannot be updated. More info: http
 </table>
 
 
-### FlowCollector.spec.kafka
-<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
-
-
-
-Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>address</b></td>
-        <td>string</td>
-        <td>
-          Address of the Kafka server<br/>
-          <br/>
-            <i>Default</i>: <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>topic</b></td>
-        <td>string</td>
-        <td>
-          Kafka topic to use. It must exist, NetObserv will not create it.<br/>
-          <br/>
-            <i>Default</i>: <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>enable</b></td>
-        <td>boolean</td>
-        <td>
-          Set true to use Kafka as part of the flow collection pipeline. When enabled, the pipeline is split in two parts: ingestion and transformation, connected by Kafka. The ingestion is either done by a specific flowlogs-pipeline workload, or by the eBPF agent, depending on the value of `spec.agent`. The transformation is done by a new flowlogs-pipeline deployment.<br/>
-          <br/>
-            <i>Default</i>: false<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspeckafkatls">tls</a></b></td>
-        <td>object</td>
-        <td>
-          TLS client configuration.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.kafka.tls
-<sup><sup>[↩ Parent](#flowcollectorspeckafka)</sup></sup>
-
-
-
-TLS client configuration.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspeckafkatlscacert">caCert</a></b></td>
-        <td>object</td>
-        <td>
-          CA certificate reference<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>enable</b></td>
-        <td>boolean</td>
-        <td>
-          Enable TLS<br/>
-          <br/>
-            <i>Default</i>: false<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>insecureSkipVerify</b></td>
-        <td>boolean</td>
-        <td>
-          Skip client-side verification of the server certificate<br/>
-          <br/>
-            <i>Default</i>: false<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspeckafkatlsusercert">userCert</a></b></td>
-        <td>object</td>
-        <td>
-          User certificate reference<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.kafka.tls.caCert
-<sup><sup>[↩ Parent](#flowcollectorspeckafkatls)</sup></sup>
-
-
-
-CA certificate reference
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>certFile</b></td>
-        <td>string</td>
-        <td>
-          Certificate file name within the ConfigMap / Secret<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>certKey</b></td>
-        <td>string</td>
-        <td>
-          Certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          Name of the ConfigMap or Secret containing certificates<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          Reference type: configmap or secret<br/>
-          <br/>
-            <i>Enum</i>: configmap, secret<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.kafka.tls.userCert
-<sup><sup>[↩ Parent](#flowcollectorspeckafkatls)</sup></sup>
-
-
-
-User certificate reference
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>certFile</b></td>
-        <td>string</td>
-        <td>
-          Certificate file name within the ConfigMap / Secret<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>certKey</b></td>
-        <td>string</td>
-        <td>
-          Certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          Name of the ConfigMap or Secret containing certificates<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          Reference type: configmap or secret<br/>
-          <br/>
-            <i>Enum</i>: configmap, secret<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.loki
-<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
-
-
-
-Settings related to the Loki client, used as a flow store.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>batchSize</b></td>
-        <td>integer</td>
-        <td>
-          BatchSize is max batch size (in bytes) of logs to accumulate before sending<br/>
-          <br/>
-            <i>Format</i>: int64<br/>
-            <i>Default</i>: 102400<br/>
-            <i>Minimum</i>: 1<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>batchWait</b></td>
-        <td>string</td>
-        <td>
-          BatchWait is max time to wait before sending a batch<br/>
-          <br/>
-            <i>Default</i>: 1s<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>maxBackoff</b></td>
-        <td>string</td>
-        <td>
-          MaxBackoff is the maximum backoff time for client connection between retries<br/>
-          <br/>
-            <i>Default</i>: 300s<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>maxRetries</b></td>
-        <td>integer</td>
-        <td>
-          MaxRetries is the maximum number of retries for client connections<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 10<br/>
-            <i>Minimum</i>: 0<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>minBackoff</b></td>
-        <td>string</td>
-        <td>
-          MinBackoff is the initial backoff time for client connection between retries<br/>
-          <br/>
-            <i>Default</i>: 1s<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>querierUrl</b></td>
-        <td>string</td>
-        <td>
-          QuerierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server).<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>sendAuthToken</b></td>
-        <td>boolean</td>
-        <td>
-          SendAuthToken is a flag to enable or disable Authorization header from service account secret It allows authentication to loki operator gateway<br/>
-          <br/>
-            <i>Default</i>: false<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>staticLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          StaticLabels is a map of common labels to set on each flow<br/>
-          <br/>
-            <i>Default</i>: map[app:netobserv-flowcollector]<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>statusUrl</b></td>
-        <td>string</td>
-        <td>
-          StatusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>tenantID</b></td>
-        <td>string</td>
-        <td>
-          TenantID is the Loki X-Scope-OrgID that identifies the tenant for each request. it will be ignored if instanceSpec is specified<br/>
-          <br/>
-            <i>Default</i>: netobserv<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>timeout</b></td>
-        <td>string</td>
-        <td>
-          Timeout is the maximum time connection / request limit A Timeout of zero means no timeout.<br/>
-          <br/>
-            <i>Default</i>: 10s<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspeclokitls">tls</a></b></td>
-        <td>object</td>
-        <td>
-          TLS client configuration.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>url</b></td>
-        <td>string</td>
-        <td>
-          URL is the address of an existing Loki service to push the flows to.<br/>
-          <br/>
-            <i>Default</i>: http://loki:3100/<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.loki.tls
-<sup><sup>[↩ Parent](#flowcollectorspecloki)</sup></sup>
-
-
-
-TLS client configuration.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspeclokitlscacert">caCert</a></b></td>
-        <td>object</td>
-        <td>
-          CA certificate reference<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>enable</b></td>
-        <td>boolean</td>
-        <td>
-          Enable TLS<br/>
-          <br/>
-            <i>Default</i>: false<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>insecureSkipVerify</b></td>
-        <td>boolean</td>
-        <td>
-          Skip client-side verification of the server certificate<br/>
-          <br/>
-            <i>Default</i>: false<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspeclokitlsusercert">userCert</a></b></td>
-        <td>object</td>
-        <td>
-          User certificate reference<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.loki.tls.caCert
-<sup><sup>[↩ Parent](#flowcollectorspeclokitls)</sup></sup>
-
-
-
-CA certificate reference
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>certFile</b></td>
-        <td>string</td>
-        <td>
-          Certificate file name within the ConfigMap / Secret<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>certKey</b></td>
-        <td>string</td>
-        <td>
-          Certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          Name of the ConfigMap or Secret containing certificates<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          Reference type: configmap or secret<br/>
-          <br/>
-            <i>Enum</i>: configmap, secret<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.loki.tls.userCert
-<sup><sup>[↩ Parent](#flowcollectorspeclokitls)</sup></sup>
-
-
-
-User certificate reference
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>certFile</b></td>
-        <td>string</td>
-        <td>
-          Certificate file name within the ConfigMap / Secret<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>certKey</b></td>
-        <td>string</td>
-        <td>
-          Certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          Name of the ConfigMap or Secret containing certificates<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          Reference type: configmap or secret<br/>
-          <br/>
-            <i>Enum</i>: configmap, secret<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.ovnKubernetes
-<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
-
-
-
-Settings related to OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>containerName</b></td>
-        <td>string</td>
-        <td>
-          Name of the container to configure for IPFIX.<br/>
-          <br/>
-            <i>Default</i>: ovnkube-node<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>daemonSetName</b></td>
-        <td>string</td>
-        <td>
-          Name of the DaemonSet controlling the OVN-Kubernetes pods.<br/>
-          <br/>
-            <i>Default</i>: ovnkube-node<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>namespace</b></td>
-        <td>string</td>
-        <td>
-          Namespace where OVN-Kubernetes pods are deployed.<br/>
-          <br/>
-            <i>Default</i>: ovn-kubernetes<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
 ### FlowCollector.status
 <sup><sup>[↩ Parent](#flowcollector)</sup></sup>
 
@@ -3287,14 +3287,14 @@ FlowCollectorStatus defines the observed state of FlowCollector
         <td><b><a href="#flowcollectorstatusconditionsindex">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          Conditions represent the latest available observations of an object's state<br/>
+          conditions represent the latest available observations of an object's state<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where console plugin and flowlogs-pipeline have been deployed.<br/>
+          namespace where console plugin and flowlogs-pipeline have been deployed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

@@ -90,7 +90,7 @@ func flowCollectorControllerSpecs() {
 				},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
 					Namespace: operatorNamespace,
-					FlowlogsPipeline: flowsv1alpha1.FlowCollectorFLP{
+					Processor: flowsv1alpha1.FlowCollectorFLP{
 						Kind:            "Deployment",
 						Port:            9999,
 						ImagePullPolicy: "Never",
@@ -207,7 +207,7 @@ func flowCollectorControllerSpecs() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
 				fc.Spec.Agent.IPFIX.CacheActiveTimeout = "30s"
 				fc.Spec.Agent.IPFIX.Sampling = 1234
-				fc.Spec.FlowlogsPipeline.Port = 1999
+				fc.Spec.Processor.Port = 1999
 			})
 
 			By("Expecting updated flowlogs-pipeline Service port")
@@ -294,8 +294,8 @@ func flowCollectorControllerSpecs() {
 			Expect(*hpa.Spec.Metrics[0].Resource.Target.AverageUtilization).To(Equal(int32(90)))
 			// update FlowCollector and verify that HPA spec also changed
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.FlowlogsPipeline.HPA.MinReplicas = pointer.Int32(2)
-				fc.Spec.FlowlogsPipeline.HPA.MaxReplicas = 2
+				fc.Spec.Processor.HPA.MinReplicas = pointer.Int32(2)
+				fc.Spec.Processor.HPA.MaxReplicas = 2
 			})
 
 			By("Changing the Horizontal Pod Autoscaler instance")
@@ -318,7 +318,7 @@ func flowCollectorControllerSpecs() {
 		var oldConfigDigest string
 		It("Should update successfully", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.FlowlogsPipeline = flowsv1alpha1.FlowCollectorFLP{
+				fc.Spec.Processor = flowsv1alpha1.FlowCollectorFLP{
 					Kind:            "DaemonSet",
 					Port:            7891,
 					ImagePullPolicy: "Never",
@@ -475,8 +475,8 @@ func flowCollectorControllerSpecs() {
 	Context("Changing namespace", func() {
 		It("Should update namespace successfully", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.FlowlogsPipeline.Kind = "Deployment"
-				fc.Spec.FlowlogsPipeline.Port = 9999
+				fc.Spec.Processor.Kind = "Deployment"
+				fc.Spec.Processor.Port = 9999
 				fc.Spec.Namespace = otherNamespace
 				fc.Spec.Agent.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
 					Sampling: 200,

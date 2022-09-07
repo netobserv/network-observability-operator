@@ -251,7 +251,7 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 		}
 	} else {
 		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
-		switch coll.Spec.FlowlogsPipeline.Kind {
+		switch coll.Spec.Processor.Kind {
 		case constants.DaemonSetKind:
 			// When flowlogs-pipeline is deployed as a daemonset, each agent must send
 			// data to the pod that is deployed in the same host
@@ -264,7 +264,7 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 				},
 			}, corev1.EnvVar{
 				Name:  envFlowsTargetPort,
-				Value: strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)),
+				Value: strconv.Itoa(int(coll.Spec.Processor.Port)),
 			})
 		case constants.DeploymentKind:
 			config = append(config, corev1.EnvVar{
@@ -272,7 +272,7 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 				Value: constants.FLPName + "." + c.baseNamespace,
 			}, corev1.EnvVar{
 				Name:  envFlowsTargetPort,
-				Value: strconv.Itoa(int(coll.Spec.FlowlogsPipeline.Port)),
+				Value: strconv.Itoa(int(coll.Spec.Processor.Port)),
 			})
 		}
 	}
