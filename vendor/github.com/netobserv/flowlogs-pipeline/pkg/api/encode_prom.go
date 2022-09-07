@@ -31,9 +31,10 @@ type PromEncode struct {
 }
 
 type PromEncodeOperationEnum struct {
-	Gauge     string `yaml:"gauge" json:"gauge" doc:"single numerical value that can arbitrarily go up and down"`
-	Counter   string `yaml:"counter" json:"counter" doc:"monotonically increasing counter whose value can only increase"`
-	Histogram string `yaml:"histogram" json:"histogram" doc:"counts samples in configurable buckets"`
+	Gauge        string `yaml:"gauge" json:"gauge" doc:"single numerical value that can arbitrarily go up and down"`
+	Counter      string `yaml:"counter" json:"counter" doc:"monotonically increasing counter whose value can only increase"`
+	Histogram    string `yaml:"histogram" json:"histogram" doc:"counts samples in configurable buckets"`
+	AggHistogram string `yaml:"agg_histogram" json:"agg_histogram" doc:"counts samples in configurable buckets, pre-aggregated via an Aggregate stage"`
 }
 
 func PromEncodeOperationName(operation string) string {
@@ -43,7 +44,7 @@ func PromEncodeOperationName(operation string) string {
 type PromMetricsItem struct {
 	Name     string            `yaml:"name" json:"name" doc:"the metric name"`
 	Type     string            `yaml:"type" json:"type" enum:"PromEncodeOperationEnum" doc:"one of the following:"`
-	Filter   PromMetricsFilter `yaml:"filter" json:"filter" doc:"the criterion to filter entries by"`
+	Filter   PromMetricsFilter `yaml:"filter" json:"filter" doc:"an optional criterion to filter entries by"`
 	ValueKey string            `yaml:"valueKey" json:"valueKey" doc:"entry key from which to resolve metric value"`
 	Labels   []string          `yaml:"labels" json:"labels" doc:"labels to be associated with the metric"`
 	Buckets  []float64         `yaml:"buckets" json:"buckets" doc:"histogram buckets"`

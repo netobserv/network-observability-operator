@@ -85,6 +85,8 @@ func (tc *TimedCache) UpdateCacheEntry(key string, entry interface{}) *cacheEntr
 }
 
 func (tc *TimedCache) GetCacheLen() int {
+	tc.mu.RLock()
+	defer tc.mu.RUnlock()
 	return tc.cacheList.Len()
 }
 
