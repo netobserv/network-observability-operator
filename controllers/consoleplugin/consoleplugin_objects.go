@@ -19,7 +19,7 @@ import (
 )
 
 const secretName = "console-serving-cert"
-const displayName = "Network Observability plugin"
+const displayName = "NetObserv plugin"
 const proxyAlias = "backend"
 
 const configMapName = "console-plugin-config"

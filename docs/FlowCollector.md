@@ -451,7 +451,7 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td><b>register</b></td>
         <td>boolean</td>
         <td>
-          register allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator. When set to false, you can still register it manually by editing console.operator.openshift.io/cluster. E.g: oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'<br/>
+          register allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator. When set to false, you can still register it manually by editing console.operator.openshift.io/cluster. E.g: oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -2168,7 +2168,7 @@ processor defines the settings of the component that receives the flows from the
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelineprometheus">prometheus</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorprometheus">prometheus</a></b></td>
         <td>object</td>
         <td>
           Prometheus endpoint configuration<br/>
@@ -3107,8 +3107,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.prometheus
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipeline)</sup></sup>
+### FlowCollector.spec.processor.prometheus
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
 
 
 
@@ -3136,7 +3136,7 @@ Prometheus endpoint configuration
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelineprometheustls">tls</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorprometheustls">tls</a></b></td>
         <td>object</td>
         <td>
           TLS configuration.<br/>
@@ -3146,8 +3146,8 @@ Prometheus endpoint configuration
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.prometheus.tls
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelineprometheus)</sup></sup>
+### FlowCollector.spec.processor.prometheus.tls
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorprometheus)</sup></sup>
 
 
 
@@ -3163,7 +3163,7 @@ TLS configuration.
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecflowlogspipelineprometheustlsprovided">provided</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorprometheustlsprovided">provided</a></b></td>
         <td>object</td>
         <td>
           TLS configuration.<br/>
@@ -3183,8 +3183,8 @@ TLS configuration.
 </table>
 
 
-### FlowCollector.spec.flowlogsPipeline.prometheus.tls.provided
-<sup><sup>[↩ Parent](#flowcollectorspecflowlogspipelineprometheustls)</sup></sup>
+### FlowCollector.spec.processor.prometheus.tls.provided
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorprometheustls)</sup></sup>
 
 
 
@@ -3203,28 +3203,28 @@ TLS configuration.
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          Certificate file name within the ConfigMap / Secret<br/>
+          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          Certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the ConfigMap or Secret containing certificates<br/>
+          name of the ConfigMap or Secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Reference type: configmap or secret<br/>
+          type for the certificate reference: configmap or secret<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>

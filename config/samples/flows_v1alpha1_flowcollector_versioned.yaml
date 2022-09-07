@@ -3,7 +3,7 @@ kind: FlowCollector
 metadata:
   name: cluster
 spec:
-  namespace: "network-observability"
+  namespace: netobserv
   agent:
     type: EBPF
     ipfix:
@@ -35,7 +35,7 @@ spec:
     dropUnusedFields: true
   kafka:
     enable: false
-    address: "kafka-cluster-kafka-bootstrap.network-observability"
+    address: "kafka-cluster-kafka-bootstrap.netobserv"
     topic: "network-flows"
     tls:
       enable: false
@@ -49,7 +49,7 @@ spec:
         certFile: user.crt
         certKey: user.key
   loki:
-    url: 'http://loki.network-observability.svc:3100/'
+    url: 'http://loki.netobserv.svc:3100/'
     batchWait: 1s
     batchSize: 102400
     minBackoff: 1s

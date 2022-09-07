@@ -28,7 +28,7 @@ Creating a `FlowCollector` triggers the operator deploying the monitoring pipeli
 
 - Configures IPFIX exports
 - Deploys the flow collector pods, `flowlogs-pipeline`
-- Deploys the `network-observability-plugin` if using OpenShift Console
+- Deploys the `netobserv-plugin` if using OpenShift Console
 
 You should be able to see flows in OpenShift Console and Grafana. If not, wait up to 10 minutes. See the [FAQ on troubleshooting](./README.md#faq--troubleshooting) for more information.
 

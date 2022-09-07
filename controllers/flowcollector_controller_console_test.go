@@ -25,7 +25,7 @@ const cpNamespace = "namespace-console-specs"
 // nolint:cyclop
 func flowCollectorConsolePluginSpecs() {
 	cpKey := types.NamespacedName{
-		Name:      "network-observability-plugin",
+		Name:      "netobserv-plugin",
 		Namespace: cpNamespace,
 	}
 	configKey := types.NamespacedName{
@@ -177,21 +177,21 @@ func flowCollectorConsolePluginSpecs() {
 
 	Context("Configuring the Loki URL", func() {
 		It("Should be initially configured with default Loki URL", func() {
-			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki", cpKey),
+			Eventually(getContainerArgumentAfter("netobserv-plugin", "-loki", cpKey),
 				timeout, interval).Should(Equal("http://loki:3100/"))
 		})
 		It("Should update the Loki URL in the Console Plugin if it changes in the Spec", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
 				fc.Spec.Loki.URL = "http://loki.namespace:8888"
 			})
-			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki", cpKey),
+			Eventually(getContainerArgumentAfter("netobserv-plugin", "-loki", cpKey),
 				timeout, interval).Should(Equal("http://loki.namespace:8888"))
 		})
 		It("Should use the Loki Querier URL instead of the Loki URL, if the first is defined", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
 				fc.Spec.Loki.QuerierURL = "http://loki-querier:6789"
 			})
-			Eventually(getContainerArgumentAfter("network-observability-plugin", "-loki", cpKey),
+			Eventually(getContainerArgumentAfter("netobserv-plugin", "-loki", cpKey),
 				timeout, interval).Should(Equal("http://loki-querier:6789"))
 		})
 	})
@@ -204,7 +204,7 @@ func flowCollectorConsolePluginSpecs() {
 					return err
 				}
 				return cr.Spec.Plugins
-			}, timeout, interval).Should(Equal([]string{"network-observability-plugin"}))
+			}, timeout, interval).Should(Equal([]string{"netobserv-plugin"}))
 		})
 
 		It("Should be unregistered", func() {

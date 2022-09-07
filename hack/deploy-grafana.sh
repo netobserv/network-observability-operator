@@ -1,6 +1,6 @@
 #!/bin/bash
 
-namespace=${1-network-observability}
+namespace=${1-netobserv}
 
 create_grafana_deployment() {
   echo "--> Creating grafana deployment (ConfigMap, Pod and Service) "
@@ -63,7 +63,7 @@ data:
       isDefault: true
       name: loki
       type: loki
-      url: http://loki.network-observability.svc.cluster.local:3100
+      url: http://loki.netobserv.svc.cluster.local:3100
       version: 1
 ---
 EOF

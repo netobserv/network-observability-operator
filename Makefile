@@ -83,7 +83,7 @@ DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
-NAMESPACE ?= network-observability
+NAMESPACE ?= netobserv
 
 all: help
 

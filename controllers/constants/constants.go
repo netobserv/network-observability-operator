@@ -2,10 +2,11 @@
 package constants
 
 const (
-	DefaultOperatorNamespace = "network-observability"
+	DefaultOperatorNamespace = "netobserv"
+	OperatorName             = "netobserv-operator"
 	FLPName                  = "flowlogs-pipeline"
 	FLPPortName              = "flp" // must be <15 chars
-	PluginName               = "network-observability-plugin"
+	PluginName               = "netobserv-plugin"
 	DeploymentKind           = "Deployment"
 	DaemonSetKind            = "DaemonSet"
 

@@ -817,7 +817,7 @@ spec:
                       operator. When set to false, you can still register it manually
                       by editing console.operator.openshift.io/cluster. E.g: oc patch
                       console.operator.openshift.io cluster --type=''json'' -p ''[{"op":
-                      "add", "path": "/spec/plugins/-", "value": "network-observability-plugin"}]'''
+                      "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'''
                     type: boolean
                   replicas:
                     default: 1
@@ -1731,20 +1731,21 @@ spec:
                             description: TLS configuration.
                             properties:
                               certFile:
-                                description: Certificate file name within the ConfigMap
-                                  / Secret
+                                description: certFile defines the path to the certificate
+                                  file name within the ConfigMap / Secret
                                 type: string
                               certKey:
-                                description: Certificate private key file name within
-                                  the ConfigMap / Secret. Omit when the key is not
-                                  necessary.
+                                description: certKey defines the path to the certificate
+                                  private key file name within the ConfigMap / Secret.
+                                  Omit when the key is not necessary.
                                 type: string
                               name:
-                                description: Name of the ConfigMap or Secret containing
+                                description: name of the ConfigMap or Secret containing
                                   certificates
                                 type: string
                               type:
-                                description: 'Reference type: configmap or secret'
+                                description: 'type for the certificate reference:
+                                  configmap or secret'
                                 enum:
                                 - configmap
                                 - secret
