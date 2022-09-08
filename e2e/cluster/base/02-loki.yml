@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loki-store
+spec:
+  resources:
+    requests:
+      storage: 64M
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-config
+data:
+  local-config.yaml: |
+    auth_enabled: false
+    server:
+      http_listen_port: 3100
+      grpc_listen_port: 9096
+    common:
+      path_prefix: /loki-store
+      storage:
+        filesystem:
+          chunks_directory: /loki-store/chunks
+          rules_directory: /loki-store/rules
+      replication_factor: 1
+      ring:
+        instance_addr: 127.0.0.1
+        kvstore:
+          store: inmemory
+    schema_config:
+      configs:
+        - from: 2020-10-24
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+    storage_config:
+      filesystem:
+        directory: /loki-store/storage
+      boltdb_shipper:
+        active_index_directory: /loki-store/index
+        shared_store: filesystem
+        cache_location: /loki-store/boltdb-cache
+  datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://localhost:3100
+        isDefault: true
+        version: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loki
+spec:
+  selector:
+    matchLabels:
+      app: loki
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec:
+      securityContext:
+        runAsGroup: 1000
+        runAsUser: 1000
+        fsGroup: 1000
+      volumes:
+        - name: loki-store
+          persistentVolumeClaim:
+            claimName: loki-store
+        - name: loki-config
+          configMap:
+            name: loki-config
+      containers:
+        - name: loki
+          image: grafana/loki:2.4.1
+          volumeMounts:
+            - mountPath: "/loki-store"
+              name: loki-store
+            - mountPath: "/etc/loki"
+              name: loki-config
+          ports:
+            - containerPort: 3100
+---
+# oc port-forward deployment/loki 3100 3000
+kind: Service
+apiVersion: v1
+metadata:
+  name: loki
+spec:
+  # NodePort will simplify port-forwarding (need to specify the port in 00-kind.yml)
+  type: NodePort
+  selector:
+    app: loki
+  ports:
+    - name: loki
+      port: 3100
+      targetPort: 3100
+      protocol: TCP
+      nodePort: 30100

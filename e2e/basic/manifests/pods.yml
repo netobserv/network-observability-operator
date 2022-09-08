@@ -1,0 +1,55 @@
+# Pods for basic eBPF agent test
+# client pod just sends periodic HTTP requests to an HTTP service (nginx)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client
+spec:
+  containers:
+    - name: fedora
+      image: fedora:36
+      command:
+        - sh
+        - -c
+        - "echo 'start pinging from client pod...'; while true; do curl -v http://server ; sleep 1; done"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: server
+  labels:
+    app: server
+spec:
+  selector:
+    app: server
+  ports:
+    - port: 80
+      protocol: TCP
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: server
+spec:
+  selector:
+    matchLabels:
+      app: server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: server
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+---
+# Used for single-packet test
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pinger
+spec:
+  containers:
+    - name: pinger
+      image: ibmcom/ping

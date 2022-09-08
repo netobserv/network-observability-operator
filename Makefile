@@ -123,6 +123,10 @@ prereqs:
 	@echo "### Test if prerequisites are met, and installing missing dependencies"
 	test -f $(go env GOPATH)/bin/golangci-lint || GOFLAGS="" go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}
 
+.PHONY: kind-prereqs
+kind-prereqs:
+	test -f $(shell go env GOPATH)/bin/kind || go install sigs.k8s.io/kind@latest
+
 .PHONY: vendors
 vendors:
 	@echo "### Checking vendors"
@@ -137,7 +141,28 @@ lint: prereqs
 	golangci-lint run --timeout 5m ./...
 
 test: generate envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverpkg=./... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test $$(go list ./...  | grep -v /e2e/) -coverpkg=./... -coverprofile cover.out
+
+.PHONY: e2e-test
+e2e-test: kind-prereqs
+	go clean -testcache
+	go test -p 1 -timeout 30m -v -mod vendor -tags e2e ./e2e/... || \
+		(echo -e "\nRun 'make e2e-test-cleanup' to make sure Kind clusters are destroyed, unless you want to keep them for debugging." && exit 1)
+
+.PHONY: e2e-test-cleanup
+e2e-test-cleanup: kind-prereqs
+	kind get clusters  2>&1 | (grep netobserv-e2e  || true) | xargs -r kind delete cluster --name
+
+# sudo is needed in some environments to start the eBPF agent
+.PHONY: sudo-e2e-test
+sudo-e2e-test: kind-prereqs
+	go clean -testcache
+	sudo env "PATH=$$PATH" env GOPATH="$$GOPATH" go test -p 1 -timeout 30m -v -mod vendor -tags e2e ./e2e/... || \
+		(echo -e "\nRun 'make sudo-e2e-test-cleanup' to make sure Kind clusters are destroyed, unless you want to keep them for debugging." && exit 1)
+
+.PHONY: sudo-e2e-test-cleanup
+sudo-e2e-test-cleanup: kind-prereqs
+	sudo env "PATH=$$PATH" env GOPATH="$$GOPATH" kind get clusters  2>&1 | (grep netobserv-e2e || true) | sudo xargs -r env "PATH=$$PATH" env GOPATH="$$GOPATH" kind delete cluster --name
 
 coverage-report:
 	go tool cover --func=./cover.out

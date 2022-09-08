@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: netobserv-ebpf-agent
+  labels:
+    k8s-app: netobserv-ebpf-agent
+spec:
+  selector:
+    matchLabels:
+      k8s-app: netobserv-ebpf-agent
+  template:
+    metadata:
+      labels:
+        k8s-app: netobserv-ebpf-agent
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: netobserv-ebpf-agent
+        image: quay.io/netobserv/netobserv-ebpf-agent:main
+        securityContext:
+          privileged: true
+          runAsUser: 0
+        env:
+          - name: CACHE_ACTIVE_TIMEOUT
+            value: 200ms
+          - name: LOG_LEVEL
+            value: debug
+          - name: FLOWS_TARGET_HOST
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: FLOWS_TARGET_PORT
+            value: "9999"

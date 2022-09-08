@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: netobserv-ebpf-agent
+  labels:
+    k8s-app: netobserv-ebpf-agent
+spec:
+  selector:
+    matchLabels:
+      k8s-app: netobserv-ebpf-agent
+  template:
+    metadata:
+      labels:
+        k8s-app: netobserv-ebpf-agent
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: netobserv-ebpf-agent
+        image: localhost/ebpf-agent:test
+        securityContext:
+          privileged: true
+          runAsUser: 0
+        env:
+          - name: EXPORT
+            value: kafka
+          - name: KAFKA_BROKERS
+            value: kafka-cluster-kafka-bootstrap
+          - name: CACHE_ACTIVE_TIMEOUT
+            value: 200ms
+          - name: LOG_LEVEL
+            value: debug
