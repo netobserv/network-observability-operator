@@ -38,6 +38,7 @@ const (
 	promCerts               = "prom-certs"
 	healthServiceName       = "health"
 	prometheusServiceName   = "prometheus"
+	profilePortName         = "profiler"
 	healthTimeoutSeconds    = 5
 	livenessPeriodSeconds   = 10
 	startupFailureThreshold = 5
@@ -174,6 +175,13 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 		Name:          prometheusServiceName,
 		ContainerPort: b.desired.Prometheus.Port,
 	})
+
+	if b.desired.ProfilePort > 0 {
+		ports = append(ports, corev1.ContainerPort{
+			Name:          profilePortName,
+			ContainerPort: b.desired.ProfilePort,
+		})
+	}
 
 	volumeMounts := []corev1.VolumeMount{{
 		MountPath: configPath,
@@ -482,6 +490,11 @@ func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
 		},
 		"pipeline":   stages,
 		"parameters": parameters,
+	}
+	if b.desired.ProfilePort > 0 {
+		config["profile"] = map[string]interface{}{
+			"port": b.desired.ProfilePort,
+		}
 	}
 
 	bs, err := json.Marshal(config)
