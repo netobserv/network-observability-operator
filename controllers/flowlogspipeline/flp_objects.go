@@ -38,7 +38,7 @@ const (
 	promCerts               = "prom-certs"
 	healthServiceName       = "health"
 	prometheusServiceName   = "prometheus"
-	profilePortName         = "profiler"
+	profilePortName         = "pprof"
 	healthTimeoutSeconds    = 5
 	livenessPeriodSeconds   = 10
 	startupFailureThreshold = 5
