@@ -15,4 +15,4 @@ images:
   newName: quay.io/netobserv/network-observability-operator
   newTag: 0.1.4
 commonLabels:
-  app: network-observability-operator
+  app: netobserv-operator

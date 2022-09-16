@@ -40,10 +40,11 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	//+kubebuilder:scaffold:imports
 )
 
-const app = "network-observability-operator"
+const app = constants.OperatorName
 
 var (
 	buildVersion = "unknown"

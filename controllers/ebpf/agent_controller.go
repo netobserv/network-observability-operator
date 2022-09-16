@@ -150,7 +150,7 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 	volumeMounts := []corev1.VolumeMount{}
 	volumes := []corev1.Volume{}
 	if coll.Spec.Kafka.Enable && coll.Spec.Kafka.TLS.Enable {
-		// NOTE: secrets need to be copied from the base network-observability namespace to the privileged one.
+		// NOTE: secrets need to be copied from the base netobserv namespace to the privileged one.
 		// This operation must currently be performed manually (run "make fix-ebpf-kafka-tls"). It could be automated here.
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &coll.Spec.Kafka.TLS, kafkaCerts)
 	}

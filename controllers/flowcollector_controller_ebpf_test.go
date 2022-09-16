@@ -116,11 +116,11 @@ func flowCollectorEBPFSpecs() {
 				fmt.Sprintf("expected FLOWS_TARGET_HOST env var in %+v", spec.Containers[0].Env))
 
 			ns := v1.Namespace{}
-			By("expecting to create the network-observability-privileged namespace")
+			By("expecting to create the netobserv-privileged namespace")
 			Expect(k8sClient.Get(ctx, nsKey, &ns)).To(Succeed())
 			Expect(ns.Labels).To(Satisfy(func(labels map[string]string) bool {
 				return helper.IsSubSet(ns.Labels, map[string]string{
-					"app":                                "network-observability-operator",
+					"app":                                constants.OperatorName,
 					"pod-security.kubernetes.io/enforce": "privileged",
 					"pod-security.kubernetes.io/audit":   "privileged",
 				})
@@ -195,7 +195,7 @@ func flowCollectorEBPFSpecs() {
 			}).WithTimeout(timeout).WithPolling(interval).
 				Should(BeGarbageCollectedBy(flowCR))
 
-			By("expecting to delete the network-observability-privileged namespace")
+			By("expecting to delete the netobserv-privileged namespace")
 			Eventually(func() interface{} {
 				ns := &v1.Namespace{}
 				if err := k8sClient.Get(ctx, nsKey, ns); err != nil {

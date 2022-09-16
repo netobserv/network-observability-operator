@@ -210,15 +210,15 @@ func TestLabels(t *testing.T) {
 
 	// Deployment
 	depl := builder.deployment("digest")
-	assert.Equal("network-observability-plugin", depl.Labels["app"])
-	assert.Equal("network-observability-plugin", depl.Spec.Template.Labels["app"])
+	assert.Equal("netobserv-plugin", depl.Labels["app"])
+	assert.Equal("netobserv-plugin", depl.Spec.Template.Labels["app"])
 	assert.Equal("dev", depl.Labels["version"])
 	assert.Equal("dev", depl.Spec.Template.Labels["version"])
 
 	// Service
 	svc := builder.service(nil)
-	assert.Equal("network-observability-plugin", svc.Labels["app"])
-	assert.Equal("network-observability-plugin", svc.Spec.Selector["app"])
+	assert.Equal("netobserv-plugin", svc.Labels["app"])
+	assert.Equal("netobserv-plugin", svc.Spec.Selector["app"])
 	assert.Equal("dev", svc.Labels["version"])
 	assert.Empty(svc.Spec.Selector["version"])
 }

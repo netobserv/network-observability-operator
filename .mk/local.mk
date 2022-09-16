@@ -15,7 +15,7 @@ local-deploy: create-kind-cluster deploy-all  ## Local deploy (kind, loki, grafa
 .PHONY: clean-leftovers
 clean-leftovers:
 	-PID=$$(pgrep --oldest --full "main.go"); pkill -P $$PID; pkill $$PID
-	-kubectl delete namespace network-observability
+	-kubectl delete namespace netobserv
 
 .PHONY: local-redeploy
 local-redeploy: clean-leftovers undeploy-all deploy-all  ## Local re-deploy (loki, grafana, example-cr and sample-workload excluding the operator)

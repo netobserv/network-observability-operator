@@ -60,11 +60,11 @@ func flowCollectorControllerSpecs() {
 		Namespace: operatorNamespace,
 	}
 	cpKey1 := types.NamespacedName{
-		Name:      "network-observability-plugin",
+		Name:      "netobserv-plugin",
 		Namespace: operatorNamespace,
 	}
 	cpKey2 := types.NamespacedName{
-		Name:      "network-observability-plugin",
+		Name:      "netobserv-plugin",
 		Namespace: otherNamespace,
 	}
 
@@ -540,17 +540,17 @@ func flowCollectorControllerSpecs() {
 			By("Expecting deployment in previous namespace to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, cpKey1, &appsv1.Deployment{})
-			}, timeout, interval).Should(MatchError(`deployments.apps "network-observability-plugin" not found`))
+			}, timeout, interval).Should(MatchError(`deployments.apps "netobserv-plugin" not found`))
 
 			By("Expecting service in previous namespace to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, cpKey1, &v1.Service{})
-			}, timeout, interval).Should(MatchError(`services "network-observability-plugin" not found`))
+			}, timeout, interval).Should(MatchError(`services "netobserv-plugin" not found`))
 
 			By("Expecting service account in previous namespace to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, cpKey1, &v1.ServiceAccount{})
-			}, timeout, interval).Should(MatchError(`serviceaccounts "network-observability-plugin" not found`))
+			}, timeout, interval).Should(MatchError(`serviceaccounts "netobserv-plugin" not found`))
 
 			By("Expecting deployment to be created in new namespace")
 			Eventually(func() interface{} {

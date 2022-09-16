@@ -29,8 +29,8 @@ ocp-run: ocp-undeploy ocp-deploy ocp-deploy-operator  ## OCP-deploy + run the op
 
 .PHONY: ocp-deploy-operator
 ocp-deploy-operator: ## run flp from the operator
-	@echo "====> Enable network-observability-plugin in OCP console"
-	oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["network-observability-plugin"]}]'
+	@echo "====> Enable netobserv-plugin in OCP console"
+	oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["netobserv-plugin"]}]'
 	@echo "====> Running the operator locally"
 	go run ./main.go
 

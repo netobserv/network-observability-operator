@@ -72,7 +72,7 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: c.privilegedNamespace,
 			Labels: map[string]string{
-				"app":                                "network-observability-operator",
+				"app":                                constants.OperatorName,
 				"pod-security.kubernetes.io/enforce": "privileged",
 				"pod-security.kubernetes.io/audit":   "privileged",
 			},

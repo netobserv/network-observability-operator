@@ -154,8 +154,8 @@ OpenShift 4.10 or above is required.
 Make sure all pods are up and running:
 
 ```bash
-# Assuming configured namespace is network-observability (default)
-kubectl get pods -n network-observability
+# Assuming configured namespace is netobserv (default)
+kubectl get pods -n netobserv
 ```
 
 Should provide results similar to this:
@@ -169,7 +169,7 @@ flowlogs-pipeline-wmx4z                         1/1     Running   0          43m
 grafana-6dbddc9869-sxn62                        1/1     Running   0          31m
 loki                                            1/1     Running   0          43m
 netobserv-controller-manager-7487d87dc-2ltq2    2/2     Running   0          43m
-network-observability-plugin-7fb8c5477b-drg2z   1/1     Running   0          43m
+netobserv-plugin-7fb8c5477b-drg2z               1/1     Running   0          43m
 ```
 
 Results may slightly differ depending on the installation method and the `FlowCollector` configuration. At least you should see `flowlogs-pipeline` pods in a `Running` state.
@@ -177,8 +177,8 @@ Results may slightly differ depending on the installation method and the `FlowCo
 If you use the eBPF agent, check also for pods in privileged namespace:
 
 ```bash
-# Assuming configured namespace is network-observability (default)
-kubectl get pods -n network-observability-privileged
+# Assuming configured namespace is netobserv (default)
+kubectl get pods -n netobserv-privileged
 ```
 
 ```
@@ -227,14 +227,14 @@ If it's not already there, add the plugin reference:
 ```yaml
 spec:
   plugins:
-  - network-observability-plugin
+  - netobserv-plugin
 ```
 
 If the new dashboards still don't show up, try clearing your browser cache and refreshing. Check also the `netobserv-console-plugin-...` pod status and logs.
 
 ```bash
-kubectl get pods -n network-observability -l app=network-observability-plugin
-kubectl logs -n network-observability -l app=network-observability-plugin
+kubectl get pods -n netobserv -l app=netobserv-plugin
+kubectl logs -n netobserv -l app=netobserv-plugin
 ```
 
 ## Contributions
