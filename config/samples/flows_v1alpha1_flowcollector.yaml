@@ -36,6 +36,7 @@ spec:
     logLevel: info
     enableKubeProbes: true
     healthPort: 8080
+    profilePort: 6060
     prometheus:
       port: 9102
     ignoreMetrics: []

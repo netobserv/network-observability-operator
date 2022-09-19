@@ -180,6 +180,7 @@ func (b *builder) podTemplate(hostNetwork bool, configDigest string) corev1.PodT
 		ports = append(ports, corev1.ContainerPort{
 			Name:          profilePortName,
 			ContainerPort: b.desired.ProfilePort,
+			Protocol:      corev1.ProtocolTCP,
 		})
 	}
 
