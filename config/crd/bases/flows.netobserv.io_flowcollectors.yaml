@@ -1714,6 +1714,13 @@ spec:
                     maximum: 65535
                     minimum: 1025
                     type: integer
+                  profilePort:
+                    description: profilePort allows setting up a Go pprof profiler
+                      listening to this port
+                    format: int32
+                    maximum: 65535
+                    minimum: 0
+                    type: integer
                   prometheus:
                     description: Prometheus endpoint configuration
                     properties:

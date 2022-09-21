@@ -295,6 +295,12 @@ type FlowCollectorFLP struct {
 	// healthPort is a collector HTTP port in the Pod that exposes the health check API
 	HealthPort int32 `json:"healthPort,omitempty"`
 
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:validation:Maximum=65535
+	//+optional
+	// profilePort allows setting up a Go pprof profiler listening to this port
+	ProfilePort int32 `json:"profilePort,omitempty"`
+
 	//+kubebuilder:default:="quay.io/netobserv/flowlogs-pipeline:main"
 	// image of the collector container (including domain and tag)
 	Image string `json:"image,omitempty"`

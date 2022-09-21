@@ -2168,6 +2168,17 @@ processor defines the settings of the component that receives the flows from the
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>profilePort</b></td>
+        <td>integer</td>
+        <td>
+          profilePort allows setting up a Go pprof profiler listening to this port<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Minimum</i>: 0<br/>
+            <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorprometheus">prometheus</a></b></td>
         <td>object</td>
         <td>
