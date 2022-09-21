@@ -24,9 +24,15 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 const (
-	AgentIPFIX = "IPFIX"
-	AgentEBPF  = "EBPF"
+	AgentIPFIX           = "IPFIX"
+	AgentEBPF            = "EBPF"
+	DeploymentTypeDirect = "DIRECT"
+	DeploymentTypeKafka  = "KAFKA"
 )
+
+func (spec *FlowCollectorSpec) UseEBPF() bool  { return spec.Agent.Type == AgentEBPF }
+func (spec *FlowCollectorSpec) UseIPFIX() bool { return spec.Agent.Type == AgentIPFIX }
+func (spec *FlowCollectorSpec) UseKafka() bool { return spec.DeploymentType == DeploymentTypeKafka }
 
 // Please notice that the FlowCollectorSpec's properties MUST redefine one of the default
 // values to force the definition of the section when it is not provided by the manifest.
@@ -55,29 +61,33 @@ type FlowCollectorSpec struct {
 	// loki, the flow store, client settings.
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
 
-	// kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline.
-	// Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
-	// +optional
-	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
-
 	// consolePlugin defines the settings related to the OpenShift Console plugin, when available.
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
-	// clusterNetworkOperator defines the settings related to the OpenShift Cluster Network Operator, when available.
-	ClusterNetworkOperator ClusterNetworkOperatorConfig `json:"clusterNetworkOperator,omitempty"`
+	// deploymentType defines the desired type of deployment for flow processing. Possible values are "DIRECT" (default) to make
+	// the flow processor listening directly from the agents, or "KAFKA" to make flows sent to a Kafka pipeline before consumption
+	// by the processor.
+	// Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="DIRECT";"KAFKA"
+	// +kubebuilder:validation:Required
+	// +kubebuilder:default:=DIRECT
+	DeploymentType string `json:"deploymentType"`
 
-	// ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
-	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty"`
+	// kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the "spec.deploymentType" is "KAFKA".
+	// +optional
+	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 }
 
 // FlowCollectorAgent is a discriminated union that allows to select either ipfix or ebpf, but does not
 // allow defining both fields.
 // +union
 type FlowCollectorAgent struct {
-	// type selects the flows tracing agent. Possible values are "IPFIX" (default) to use
-	// the IPFIX collector, or "EBPF" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes
-	// CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could
-	// work but require manual configuration.
+	// type selects the flows tracing agent. Possible values are "EBPF" (default) to use NetObserv eBPF agent,
+	// "IPFIX" to use the legacy IPFIX collector. "EBPF" is recommended in most cases as it offers better
+	// performances and should work regardless of the CNI installed on the cluster.
+	// "IPFIX" works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX,
+	// but they would require manual configuration).
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="IPFIX";"EBPF"
 	// +kubebuilder:validation:Required
@@ -124,6 +134,12 @@ type FlowCollectorIPFIX struct {
 	// If you REALLY want to do that, set this flag to true. Use at your own risks.
 	// When it is set to true, the value of "sampling" is ignored.
 	ForceSampleAll bool `json:"forceSampleAll,omitempty" mapstructure:"-"`
+
+	// clusterNetworkOperator defines the settings related to the OpenShift Cluster Network Operator, when available.
+	ClusterNetworkOperator ClusterNetworkOperatorConfig `json:"clusterNetworkOperator,omitempty" mapstructure:"-"`
+
+	// ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
+	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty" mapstructure:"-"`
 }
 
 // FlowCollectorEBPF defines a FlowCollector that uses eBPF to collect the flows information
@@ -198,12 +214,6 @@ type FlowCollectorEBPF struct {
 type FlowCollectorKafka struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	//+kubebuilder:default:=false
-	// enable Kafka. Set it to true to use Kafka as part of the flow collection pipeline. When enabled, the pipeline is split in two parts: ingestion and transformation, connected by Kafka.
-	// The ingestion is either done by a specific flowlogs-pipeline workload, or by the eBPF agent, depending on the value of `spec.agent`.
-	// The transformation is done by a new flowlogs-pipeline deployment.
-	Enable bool `json:"enable,omitempty"`
-
 	//+kubebuilder:default:=""
 	// address of the Kafka server
 	Address string `json:"address"`
@@ -215,18 +225,29 @@ type FlowCollectorKafka struct {
 	// tls client configuration.
 	// +optional
 	TLS ClientTLS `json:"tls"`
+
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=1
+	// consumerReplicas defines the number of replicas (pods) to start for flowlogs-pipeline-transformer, which consumes Kafka messages.
+	// This setting is ignored when Kafka is disabled.
+	ConsumerReplicas int32 `json:"consumerReplicas,omitempty"`
+
+	// consumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlogs-pipeline-transformer, which consumes Kafka messages.
+	// This setting is ignored when Kafka is disabled.
+	// +optional
+	ConsumerAutoscaler *FlowCollectorHPA `json:"consumerAutoscaler,omitempty"`
 }
 
 const (
-	PrometheusTLSDisabled = "DISABLED"
-	PrometheusTLSProvided = "PROVIDED"
-	PrometheusTLSAuto     = "AUTO"
+	ServerTLSDisabled = "DISABLED"
+	ServerTLSProvided = "PROVIDED"
+	ServerTLSAuto     = "AUTO"
 )
 
-type PrometheusTLSConfigType string
+type ServerTLSConfigType string
 
-// PrometheusTLS define the TLS configuration of Prometheus
-type PrometheusTLS struct {
+// ServerTLS define the TLS configuration, server side
+type ServerTLS struct {
 	// Select the type of TLS configuration
 	// "DISABLED" (default) to not configure TLS for the endpoint, "PROVIDED" to manually provide cert file and a key file,
 	// and "AUTO" to use Openshift auto generated certificate using annotations
@@ -234,15 +255,15 @@ type PrometheusTLS struct {
 	// +kubebuilder:validation:Enum:="DISABLED";"PROVIDED";"AUTO"
 	// +kubebuilder:validation:Required
 	//+kubebuilder:default:="DISABLED"
-	Type PrometheusTLSConfigType `json:"type,omitempty"`
+	Type ServerTLSConfigType `json:"type,omitempty"`
 
 	// TLS configuration.
 	// +optional
 	Provided *CertificateReference `json:"provided"`
 }
 
-// PrometheusConfig define the prometheus endpoint configuration
-type PrometheusConfig struct {
+// MetricsServerConfig define the metrics server endpoint configuration for Prometheus scraper
+type MetricsServerConfig struct {
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
@@ -252,42 +273,24 @@ type PrometheusConfig struct {
 
 	// TLS configuration.
 	// +optional
-	TLS PrometheusTLS `json:"tls"`
+	TLS ServerTLS `json:"tls"`
 }
 
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector
 type FlowCollectorFLP struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	//+kubebuilder:validation:Enum=DaemonSet;Deployment
-	//+kubebuilder:default:=DaemonSet
-	// kind of the workload, either DaemonSet or Deployment. When DaemonSet is used, each pod will receive
-	// flows from the node it is running on. When Deployment is used, the flows traffic received from nodes will
-	// be load-balanced. Note that in such a case, the number of replicas should be less or equal to the number of
-	// nodes, as extra-pods would be unused due to session affinity with the node IP.
-	// When using Kafka, this option only affects the flowlogs-pipeline ingester, not the transformer.
-	Kind string `json:"kind,omitempty"`
-
-	//+kubebuilder:validation:Minimum=0
-	//+kubebuilder:default:=1
-	// replicas defines the number of replicas (pods) to start for Deployment kind. Ignored for DaemonSet.
-	Replicas int32 `json:"replicas,omitempty"`
-
-	// hpa spec of a horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.
-	// +optional
-	HPA *FlowCollectorHPA `json:"hpa,omitempty"`
-
 	//+kubebuilder:validation:Minimum=1025
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=2055
-	// port of the flow collector: either a service port for Deployment kind, or host port for DaemonSet kind
+	// port of the flow collector (host port)
 	// By conventions, some value are not authorized port must not be below 1024 and must not equal this values:
 	// 4789,6081,500, and 4500
 	Port int32 `json:"port,omitempty"`
 
-	// Prometheus endpoint configuration
+	// Metrics server endpoint configuration for Prometheus scraper
 	// +optional
-	Prometheus PrometheusConfig `json:"prometheus,omitempty"`
+	MetricsServer MetricsServerConfig `json:"metricsServer,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
@@ -455,9 +458,9 @@ type FlowCollectorConsolePlugin struct {
 	// logLevel for the console plugin backend
 	LogLevel string `json:"logLevel,omitempty"`
 
-	// hpa spec of a horizontal pod autoscaler to set up for the plugin Deployment.
+	// autoscaler spec of a horizontal pod autoscaler to set up for the plugin Deployment.
 	// +optional
-	HPA *FlowCollectorHPA `json:"hpa,omitempty"`
+	Autoscaler *FlowCollectorHPA `json:"autoscaler,omitempty"`
 
 	//+kubebuilder:default:={enable:true}
 	// portNaming defines the configuration of the port-to-service name translation

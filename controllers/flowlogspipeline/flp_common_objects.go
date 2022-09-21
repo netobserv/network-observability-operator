@@ -43,13 +43,15 @@ const (
 	startupPeriodSeconds    = 10
 )
 
+type ConfKind string
+
 const (
-	ConfMonolith         = "allInOne"
-	ConfKafkaIngester    = "kafkaIngester"
-	ConfKafkaTransformer = "kafkaTransformer"
+	ConfMonolith         ConfKind = "allInOne"
+	ConfKafkaIngester    ConfKind = "kafkaIngester"
+	ConfKafkaTransformer ConfKind = "kafkaTransformer"
 )
 
-var FlpConfSuffix = map[string]string{
+var FlpConfSuffix = map[ConfKind]string{
 	ConfMonolith:         "",
 	ConfKafkaIngester:    "-ingester",
 	ConfKafkaTransformer: "-transformer",
@@ -65,13 +67,13 @@ type builder struct {
 	selector        map[string]string
 	desired         *flowsv1alpha1.FlowCollectorSpec
 	promTLS         *flowsv1alpha1.CertificateReference
-	confKind        string
+	confKind        ConfKind
 	useOpenShiftSCC bool
 }
 
-func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec, confKind string, useOpenShiftSCC bool) builder {
+func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec, ck ConfKind, useOpenShiftSCC bool) builder {
 	version := helper.ExtractVersion(desired.Processor.Image)
-	name := name(confKind)
+	name := name(ck)
 	var promTLS flowsv1alpha1.CertificateReference
 	switch desired.Processor.MetricsServer.TLS.Type {
 	case flowsv1alpha1.ServerTLSProvided:
@@ -79,7 +81,7 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec, confKind st
 	case flowsv1alpha1.ServerTLSAuto:
 		promTLS = flowsv1alpha1.CertificateReference{
 			Type:     "secret",
-			Name:     promServiceName(confKind),
+			Name:     promServiceName(ck),
 			CertFile: "tls.crt",
 			CertKey:  "tls.key",
 		}
@@ -94,21 +96,20 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec, confKind st
 			"app": name,
 		},
 		desired:         desired,
-		confKind:        confKind,
+		confKind:        ck,
 		useOpenShiftSCC: useOpenShiftSCC,
 		promTLS:         &promTLS,
 	}
 }
 
-func name(confKind string) string            { return constants.FLPName + FlpConfSuffix[confKind] }
-func roleBindingName(confKind string) string { return name(confKind) + "-role" }
-func promServiceName(confKind string) string { return name(confKind) + "-prom" }
-func configMapName(confKind string) string   { return name(confKind) + "-config" }
+func name(ck ConfKind) string                { return constants.FLPName + FlpConfSuffix[ck] }
+func RoleBindingName(ck ConfKind) string     { return name(ck) + "-role" }
+func RoleBindingMonoName(ck ConfKind) string { return name(ck) + "-role-mono" }
+func promServiceName(ck ConfKind) string     { return name(ck) + "-prom" }
+func configMapName(ck ConfKind) string       { return name(ck) + "-config" }
 func (b *builder) name() string              { return name(b.confKind) }
-
-// func (b *builder) roleBindingName() string   { return roleBindingName(b.confKind) }
-func (b *builder) promServiceName() string { return promServiceName(b.confKind) }
-func (b *builder) configMapName() string   { return configMapName(b.confKind) }
+func (b *builder) promServiceName() string   { return promServiceName(b.confKind) }
+func (b *builder) configMapName() string     { return configMapName(b.confKind) }
 
 func (b *builder) portProtocol() corev1.Protocol {
 	if b.desired.UseEBPF() {
@@ -471,9 +472,9 @@ func (b *builder) fillPromService(svc *corev1.Service) {
 		if svc.ObjectMeta.Annotations == nil {
 			svc.ObjectMeta.Annotations = map[string]string{}
 		}
-		svc.ObjectMeta.Annotations["service.beta.openshift.io/serving-cert-secret-name"] = b.promServiceName()
+		svc.ObjectMeta.Annotations[constants.OpenShiftCertificateAnnotation] = b.promServiceName()
 	} else if svc.ObjectMeta.Annotations != nil {
-		delete(svc.ObjectMeta.Annotations, "service.beta.openshift.io/serving-cert-secret-name")
+		delete(svc.ObjectMeta.Annotations, constants.OpenShiftCertificateAnnotation)
 	}
 }
 
@@ -489,10 +490,16 @@ func (b *builder) serviceAccount() *corev1.ServiceAccount {
 	}
 }
 
-func (b *builder) clusterRoleBinding(confKind string) *rbacv1.ClusterRoleBinding {
+func (b *builder) clusterRoleBinding(ck ConfKind, mono bool) *rbacv1.ClusterRoleBinding {
+	var rbName string
+	if mono {
+		rbName = RoleBindingMonoName(ck)
+	} else {
+		rbName = RoleBindingName(ck)
+	}
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: roleBindingName(confKind),
+			Name: rbName,
 			Labels: map[string]string{
 				"app": b.name(),
 			},
@@ -500,7 +507,7 @@ func (b *builder) clusterRoleBinding(confKind string) *rbacv1.ClusterRoleBinding
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     name(confKind),
+			Name:     name(ck),
 		},
 		Subjects: []rbacv1.Subject{{
 			Kind:      "ServiceAccount",

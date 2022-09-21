@@ -4,12 +4,19 @@ metadata:
   name: cluster
 spec:
   namespace: netobserv
+  deploymentType: DIRECT
   agent:
     type: EBPF
     ipfix:
       cacheActiveTimeout: 20s
       cacheMaxFlows: 400
       sampling: 400
+      clusterNetworkOperator:
+        namespace: openshift-network-operator
+      ovnKubernetes:
+        namespace: ovn-kubernetes
+        daemonSetName: ovnkube-node
+        containerName: ovnkube-node
     ebpf:
       image: 'quay.io/netobserv/netobserv-ebpf-agent:main'
       imagePullPolicy: IfNotPresent
@@ -27,9 +34,6 @@ spec:
         limits:
           memory: 100Mi
   processor:
-    kind: DaemonSet
-#    kind: Deployment
-#    replicas: 1
     port: 2055
     image: 'quay.io/netobserv/flowlogs-pipeline:main'
     imagePullPolicy: IfNotPresent
@@ -37,7 +41,7 @@ spec:
     enableKubeProbes: true
     healthPort: 8080
     profilePort: 6060
-    prometheus:
+    metricsServer:
       port: 9102
     ignoreMetrics: []
     dropUnusedFields: true
@@ -48,9 +52,10 @@ spec:
       limits:
         memory: 300Mi
   kafka:
-    enable: false
     address: "kafka-cluster-kafka-bootstrap.netobserv"
-    topic: "network-flows"
+    topic: network-flows
+    consumerReplicas: 1
+    consumerAutoscaler: null
     tls:
       enable: false
       caCert:
@@ -83,13 +88,8 @@ spec:
     imagePullPolicy: IfNotPresent
     port: 9001
     logLevel: info
+    autoscaler: null
     portNaming:
       enable: true
       portNames:
         "3100": loki
-  clusterNetworkOperator:
-    namespace: "openshift-network-operator"
-  ovnKubernetes:
-    namespace: "ovn-kubernetes"
-    daemonSetName: "ovnkube-node"
-    containerName: "ovnkube-node"

@@ -23,10 +23,10 @@ func configFromMap(data map[string]string) (*flowsConfig, error) {
 	return &config, err
 }
 
-func (fc *flowsConfig) asStringMap() map[string]string {
+func (fc *flowsConfig) asStringMap() (map[string]string, error) {
 	vals := map[string]interface{}{}
 	if err := mapstructure.WeakDecode(fc, &vals); err != nil {
-		panic(err)
+		return nil, err
 	}
 	stringVals := map[string]string{}
 	for k, v := range vals {
@@ -35,7 +35,7 @@ func (fc *flowsConfig) asStringMap() map[string]string {
 		}
 		stringVals[k] = fmt.Sprint(v)
 	}
-	return stringVals
+	return stringVals, nil
 }
 
 // getSampling returns the configured sampling, or 1 if ipfix.forceSampleAll is true

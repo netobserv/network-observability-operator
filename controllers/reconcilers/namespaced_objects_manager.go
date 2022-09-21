@@ -3,6 +3,7 @@ package reconcilers
 import (
 	"context"
 	"reflect"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -48,33 +49,32 @@ func (m *NamespacedObjectManager) AddManagedObject(name string, placeholder clie
 // Placeholders are filled with fetched resources. Resources not found are flagged internally.
 func (m *NamespacedObjectManager) FetchAll(ctx context.Context) error {
 	log := log.FromContext(ctx)
+	fetched := []string{}
+	notFound := []string{}
 	for i, ref := range m.managedObjects {
 		m.managedObjects[i].found = false
-		log.Info("Fetching " + ref.kind)
+		objLog := ref.kind + "/" + ref.name
 		err := m.client.Get(ctx, types.NamespacedName{Name: ref.name, Namespace: m.Namespace}, ref.placeholder)
 		if err != nil {
 			if errors.IsNotFound(err) {
-				log.Info(ref.name + " " + ref.kind + " not found")
+				notFound = append(notFound, objLog)
 			} else {
-				log.Error(err, "Failed to get "+ref.name+" "+ref.kind)
+				log.Error(err, "Failed to get "+objLog)
 				return err
 			}
 		} else {
+			fetched = append(fetched, objLog)
 			m.managedObjects[i].found = true
 			// On success, placeholder is filled with resource. Caller should keep a pointer to it.
 		}
 	}
+	log.Info("Fetched: " + strings.Join(fetched, ",") + ". Not found: " + strings.Join(notFound, ","))
 	return nil
 }
 
 // CleanupPreviousNamespace removes all managed objects (registered using AddManagedObject) from the previous namespace.
 func (m *NamespacedObjectManager) CleanupPreviousNamespace(ctx context.Context) {
 	m.cleanup(ctx, m.PreviousNamespace)
-}
-
-// CleanupCurrentNamespace removes all managed objects (registered using AddManagedObject) from the current namespace.
-func (m *NamespacedObjectManager) CleanupCurrentNamespace(ctx context.Context) {
-	m.cleanup(ctx, m.Namespace)
 }
 
 func (m *NamespacedObjectManager) cleanup(ctx context.Context, namespace string) {
@@ -88,6 +88,13 @@ func (m *NamespacedObjectManager) cleanup(ctx context.Context, namespace string)
 		if client.IgnoreNotFound(err) != nil {
 			log.Error(err, "Failed to delete old "+obj.kind, "Namespace", namespace, "Name", obj.name)
 		}
+	}
+}
+
+// TryDeleteAll is an helper function that tries to delete all managed objects previously loaded using FetchAll.
+func (m *NamespacedObjectManager) TryDeleteAll(ctx context.Context) {
+	for _, obj := range m.managedObjects {
+		m.TryDelete(ctx, obj.placeholder)
 	}
 }
 

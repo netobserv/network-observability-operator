@@ -44,7 +44,7 @@ func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 	nobjMngr.AddManagedObject(name, owned.daemonSet)
 	nobjMngr.AddManagedObject(name, owned.serviceAccount)
 	nobjMngr.AddManagedObject(promServiceName(ConfKafkaIngester), owned.promService)
-	nobjMngr.AddManagedObject(roleBindingName(ConfKafkaIngester), owned.roleBinding)
+	nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaIngester), owned.roleBinding)
 	nobjMngr.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
 
 	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift

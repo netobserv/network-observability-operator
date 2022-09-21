@@ -70,14 +70,15 @@ func flowCollectorConsolePluginSpecs() {
 					Name: crKey.Name,
 				},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
-					Namespace: cpNamespace,
-					Agent:     flowsv1alpha1.FlowCollectorAgent{Type: "IPFIX"},
+					Namespace:      cpNamespace,
+					DeploymentType: flowsv1alpha1.DeploymentTypeDirect,
+					Agent:          flowsv1alpha1.FlowCollectorAgent{Type: "IPFIX"},
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
 						Port:            9001,
 						ImagePullPolicy: "Never",
 						Image:           "testimg:latest",
 						Register:        true,
-						HPA: &flowsv1alpha1.FlowCollectorHPA{
+						Autoscaler: &flowsv1alpha1.FlowCollectorHPA{
 							MinReplicas: pointer.Int32(1),
 							MaxReplicas: 1,
 							Metrics: []ascv2.MetricSpec{{
@@ -151,7 +152,7 @@ func flowCollectorConsolePluginSpecs() {
 				}
 				fc.Spec.ConsolePlugin.Port = 9099
 				fc.Spec.ConsolePlugin.Replicas = 2
-				fc.Spec.ConsolePlugin.HPA = nil
+				fc.Spec.ConsolePlugin.Autoscaler = nil
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 

@@ -48,7 +48,7 @@ func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, 
 	nobjMngr.AddManagedObject(name, owned.hpa)
 	nobjMngr.AddManagedObject(name, owned.serviceAccount)
 	nobjMngr.AddManagedObject(promServiceName(ConfKafkaTransformer), owned.promService)
-	nobjMngr.AddManagedObject(roleBindingName(ConfKafkaTransformer), owned.roleBinding)
+	nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaTransformer), owned.roleBinding)
 	nobjMngr.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
 
 	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
@@ -117,17 +117,17 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 		return err
 	}
 
-	return r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, configDigest)
+	return r.reconcileDeployment(ctx, &desired.Spec.Processor, &desired.Spec.Kafka, &builder, configDigest)
 }
 
-func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder, configDigest string) error {
+func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flpSpec, desiredKafka *flowsv1alpha1.FlowCollectorKafka, builder *transfoBuilder, configDigest string) error {
 	ns := r.nobjMngr.Namespace
 
 	if !r.nobjMngr.Exists(r.owned.deployment) {
 		if err := r.CreateOwned(ctx, builder.deployment(configDigest)); err != nil {
 			return err
 		}
-	} else if deploymentNeedsUpdate(r.owned.deployment, desiredFLP, configDigest) {
+	} else if deploymentNeedsUpdate(r.owned.deployment, desiredFLP, desiredKafka, configDigest) {
 		if err := r.UpdateOwned(ctx, r.owned.deployment, builder.deployment(configDigest)); err != nil {
 			return err
 		}
@@ -137,15 +137,15 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 	}
 
 	// Delete or Create / Update Autoscaler according to HPA option
-	if desiredFLP.HPA == nil {
+	if desiredKafka.ConsumerAutoscaler == nil {
 		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
-	} else if desiredFLP.HPA != nil {
+	} else {
 		newASC := builder.autoScaler()
 		if !r.nobjMngr.Exists(r.owned.hpa) {
 			if err := r.CreateOwned(ctx, newASC); err != nil {
 				return err
 			}
-		} else if autoScalerNeedsUpdate(r.owned.hpa, desiredFLP, ns) {
+		} else if autoScalerNeedsUpdate(r.owned.hpa, desiredKafka.ConsumerAutoscaler, ns) {
 			if err := r.UpdateOwned(ctx, r.owned.hpa, newASC); err != nil {
 				return err
 			}
@@ -179,24 +179,24 @@ func (r *flpTransformerReconciler) reconcilePermissions(ctx context.Context, bui
 	return nil
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, configDigest string) bool {
+func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, desiredKafka *flowsv1alpha1.FlowCollectorKafka, configDigest string) bool {
 	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired, false) ||
 		configChanged(&depl.Spec.Template, configDigest) ||
-		(desired.HPA == nil && *depl.Spec.Replicas != desired.Replicas)
+		(desiredKafka.ConsumerAutoscaler == nil && *depl.Spec.Replicas != desiredKafka.ConsumerReplicas)
 }
 
-func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired *flpSpec, ns string) bool {
+func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired *flowsv1alpha1.FlowCollectorHPA, ns string) bool {
 	if asc.Namespace != ns {
 		return true
 	}
 	differentPointerValues := func(a, b *int32) bool {
 		return (a == nil && b != nil) || (a != nil && b == nil) || (a != nil && *a != *b)
 	}
-	if asc.Spec.MaxReplicas != desired.HPA.MaxReplicas ||
-		differentPointerValues(asc.Spec.MinReplicas, desired.HPA.MinReplicas) {
+	if asc.Spec.MaxReplicas != desired.MaxReplicas ||
+		differentPointerValues(asc.Spec.MinReplicas, desired.MinReplicas) {
 		return true
 	}
-	if !reflect.DeepEqual(asc.Spec.Metrics, desired.HPA.Metrics) {
+	if !reflect.DeepEqual(asc.Spec.Metrics, desired.Metrics) {
 		return true
 	}
 	return false

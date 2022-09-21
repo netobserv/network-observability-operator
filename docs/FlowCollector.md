@@ -93,12 +93,15 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecclusternetworkoperator">clusterNetworkOperator</a></b></td>
-        <td>object</td>
+        <td><b>deploymentType</b></td>
+        <td>enum</td>
         <td>
-          clusterNetworkOperator defines the settings related to the OpenShift Cluster Network Operator, when available.<br/>
+          deploymentType defines the desired type of deployment for flow processing. Possible values are "DIRECT" (default) to make the flow processor listening directly from the agents, or "KAFKA" to make flows sent to a Kafka pipeline before consumption by the processor. Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
+          <br/>
+            <i>Enum</i>: DIRECT, KAFKA<br/>
+            <i>Default</i>: DIRECT<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsoleplugin">consolePlugin</a></b></td>
         <td>object</td>
@@ -110,7 +113,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspeckafka">kafka</a></b></td>
         <td>object</td>
         <td>
-          kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
+          kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the "spec.deploymentType" is "KAFKA".<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -125,13 +128,6 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td>string</td>
         <td>
           namespace where NetObserv pods are deployed. If empty, the namespace of the operator is going to be used.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecovnkubernetes">ovnKubernetes</a></b></td>
-        <td>object</td>
-        <td>
-          ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -165,7 +161,7 @@ agent for flows extraction.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type selects the flows tracing agent. Possible values are "IPFIX" (default) to use the IPFIX collector, or "EBPF" to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs are not supported, they could work but require manual configuration.<br/>
+          type selects the flows tracing agent. Possible values are "EBPF" (default) to use NetObserv eBPF agent, "IPFIX" to use the legacy IPFIX collector. "EBPF" is recommended in most cases as it offers better performances and should work regardless of the CNI installed on the cluster. "IPFIX" works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
           <br/>
             <i>Enum</i>: IPFIX, EBPF<br/>
             <i>Default</i>: EBPF<br/>
@@ -379,12 +375,26 @@ ipfix describes the settings related to the IPFIX-based flow reporter when the "
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecagentipfixclusternetworkoperator">clusterNetworkOperator</a></b></td>
+        <td>object</td>
+        <td>
+          clusterNetworkOperator defines the settings related to the OpenShift Cluster Network Operator, when available.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>forceSampleAll</b></td>
         <td>boolean</td>
         <td>
           forceSampleAll allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risks. When it is set to true, the value of "sampling" is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentipfixovnkubernetes">ovnKubernetes</a></b></td>
+        <td>object</td>
+        <td>
+          ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -402,8 +412,8 @@ ipfix describes the settings related to the IPFIX-based flow reporter when the "
 </table>
 
 
-### FlowCollector.spec.clusterNetworkOperator
-<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+### FlowCollector.spec.agent.ipfix.clusterNetworkOperator
+<sup><sup>[↩ Parent](#flowcollectorspecagentipfix)</sup></sup>
 
 
 
@@ -425,6 +435,53 @@ clusterNetworkOperator defines the settings related to the OpenShift Cluster Net
           namespace  where the configmap is going to be deployed.<br/>
           <br/>
             <i>Default</i>: openshift-network-operator<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ipfix.ovnKubernetes
+<sup><sup>[↩ Parent](#flowcollectorspecagentipfix)</sup></sup>
+
+
+
+ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>containerName</b></td>
+        <td>string</td>
+        <td>
+          containerName defines the name of the container to configure for IPFIX.<br/>
+          <br/>
+            <i>Default</i>: ovnkube-node<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>daemonSetName</b></td>
+        <td>string</td>
+        <td>
+          daemonSetName defines the name of the DaemonSet controlling the OVN-Kubernetes pods.<br/>
+          <br/>
+            <i>Default</i>: ovnkube-node<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace where OVN-Kubernetes pods are deployed.<br/>
+          <br/>
+            <i>Default</i>: ovn-kubernetes<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -457,10 +514,10 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpa">hpa</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscaler">autoscaler</a></b></td>
         <td>object</td>
         <td>
-          hpa spec of a horizontal pod autoscaler to set up for the plugin Deployment.<br/>
+          autoscaler spec of a horizontal pod autoscaler to set up for the plugin Deployment.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -537,12 +594,12 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa
+### FlowCollector.spec.consolePlugin.autoscaler
 <sup><sup>[↩ Parent](#flowcollectorspecconsoleplugin)</sup></sup>
 
 
 
-hpa spec of a horizontal pod autoscaler to set up for the plugin Deployment.
+autoscaler spec of a horizontal pod autoscaler to set up for the plugin Deployment.
 
 <table>
     <thead>
@@ -563,7 +620,7 @@ hpa spec of a horizontal pod autoscaler to set up for the plugin Deployment.
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindex">metrics</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindex">metrics</a></b></td>
         <td>[]object</td>
         <td>
           metrics used by the pod autoscaler<br/>
@@ -582,8 +639,8 @@ hpa spec of a horizontal pod autoscaler to set up for the plugin Deployment.
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpa)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscaler)</sup></sup>
 
 
 
@@ -606,35 +663,35 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexcontainerresource">containerResource</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexcontainerresource">containerResource</a></b></td>
         <td>object</td>
         <td>
           container resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexexternal">external</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternal">external</a></b></td>
         <td>object</td>
         <td>
           external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexobject">object</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobject">object</a></b></td>
         <td>object</td>
         <td>
           object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexpods">pods</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpods">pods</a></b></td>
         <td>object</td>
         <td>
           pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexresource">resource</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexresource">resource</a></b></td>
         <td>object</td>
         <td>
           resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
@@ -644,8 +701,8 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].containerResource
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].containerResource
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindex)</sup></sup>
 
 
 
@@ -675,7 +732,7 @@ container resource refers to a resource metric (such as those specified in reque
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexcontainerresourcetarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexcontainerresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -685,8 +742,8 @@ container resource refers to a resource metric (such as those specified in reque
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].containerResource.target
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexcontainerresource)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].containerResource.target
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexcontainerresource)</sup></sup>
 
 
 
@@ -735,8 +792,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].external
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].external
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindex)</sup></sup>
 
 
 
@@ -752,14 +809,14 @@ external refers to a global metric that is not associated with any Kubernetes ob
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexexternalmetric">metric</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetric">metric</a></b></td>
         <td>object</td>
         <td>
           metric identifies the target metric by name and selector<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexexternaltarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternaltarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -769,8 +826,8 @@ external refers to a global metric that is not associated with any Kubernetes ob
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].external.metric
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexexternal)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].external.metric
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexexternal)</sup></sup>
 
 
 
@@ -793,7 +850,7 @@ metric identifies the target metric by name and selector
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexexternalmetricselector">selector</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
           selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
@@ -803,8 +860,8 @@ metric identifies the target metric by name and selector
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].external.metric.selector
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexexternalmetric)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].external.metric.selector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetric)</sup></sup>
 
 
 
@@ -820,7 +877,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexexternalmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
           matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
@@ -837,8 +894,8 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].external.metric.selector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexexternalmetricselector)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].external.metric.selector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetricselector)</sup></sup>
 
 
 
@@ -878,8 +935,8 @@ A label selector requirement is a selector that contains values, a key, and an o
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].external.target
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexexternal)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].external.target
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexexternal)</sup></sup>
 
 
 
@@ -928,8 +985,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].object
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].object
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindex)</sup></sup>
 
 
 
@@ -945,21 +1002,21 @@ object refers to a metric describing a single kubernetes object (for example, hi
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexobjectdescribedobject">describedObject</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectdescribedobject">describedObject</a></b></td>
         <td>object</td>
         <td>
           CrossVersionObjectReference contains enough information to let you identify the referred resource.<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexobjectmetric">metric</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetric">metric</a></b></td>
         <td>object</td>
         <td>
           metric identifies the target metric by name and selector<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexobjecttarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjecttarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -969,8 +1026,8 @@ object refers to a metric describing a single kubernetes object (for example, hi
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].object.describedObject
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexobject)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].object.describedObject
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexobject)</sup></sup>
 
 
 
@@ -1010,8 +1067,8 @@ CrossVersionObjectReference contains enough information to let you identify the 
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].object.metric
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexobject)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].object.metric
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexobject)</sup></sup>
 
 
 
@@ -1034,7 +1091,7 @@ metric identifies the target metric by name and selector
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexobjectmetricselector">selector</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
           selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
@@ -1044,8 +1101,8 @@ metric identifies the target metric by name and selector
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].object.metric.selector
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexobjectmetric)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].object.metric.selector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetric)</sup></sup>
 
 
 
@@ -1061,7 +1118,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexobjectmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
           matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
@@ -1078,8 +1135,8 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].object.metric.selector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexobjectmetricselector)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].object.metric.selector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetricselector)</sup></sup>
 
 
 
@@ -1119,8 +1176,8 @@ A label selector requirement is a selector that contains values, a key, and an o
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].object.target
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexobject)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].object.target
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexobject)</sup></sup>
 
 
 
@@ -1169,8 +1226,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].pods
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].pods
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindex)</sup></sup>
 
 
 
@@ -1186,14 +1243,14 @@ pods refers to a metric describing each pod in the current scale target (for exa
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexpodsmetric">metric</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetric">metric</a></b></td>
         <td>object</td>
         <td>
           metric identifies the target metric by name and selector<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexpodstarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodstarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -1203,8 +1260,8 @@ pods refers to a metric describing each pod in the current scale target (for exa
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].pods.metric
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexpods)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].pods.metric
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexpods)</sup></sup>
 
 
 
@@ -1227,7 +1284,7 @@ metric identifies the target metric by name and selector
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexpodsmetricselector">selector</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
           selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
@@ -1237,8 +1294,8 @@ metric identifies the target metric by name and selector
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].pods.metric.selector
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexpodsmetric)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].pods.metric.selector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetric)</sup></sup>
 
 
 
@@ -1254,7 +1311,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexpodsmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
           matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
@@ -1271,8 +1328,8 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].pods.metric.selector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexpodsmetricselector)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].pods.metric.selector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetricselector)</sup></sup>
 
 
 
@@ -1312,8 +1369,8 @@ A label selector requirement is a selector that contains values, a key, and an o
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].pods.target
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexpods)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].pods.target
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexpods)</sup></sup>
 
 
 
@@ -1362,8 +1419,8 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].resource
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].resource
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindex)</sup></sup>
 
 
 
@@ -1386,7 +1443,7 @@ resource refers to a resource metric (such as those specified in requests and li
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginhpametricsindexresourcetarget">target</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
           target specifies the target value for the given metric<br/>
@@ -1396,8 +1453,8 @@ resource refers to a resource metric (such as those specified in requests and li
 </table>
 
 
-### FlowCollector.spec.consolePlugin.hpa.metrics[index].resource.target
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginhpametricsindexresource)</sup></sup>
+### FlowCollector.spec.consolePlugin.autoscaler.metrics[index].resource.target
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginautoscalermetricsindexresource)</sup></sup>
 
 
 
@@ -1521,7 +1578,7 @@ resources, in terms of compute resources, required by this container. Cannot be 
 
 
 
-kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
+kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the "spec.deploymentType" is "KAFKA".
 
 <table>
     <thead>
@@ -1551,12 +1608,21 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>enable</b></td>
-        <td>boolean</td>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscaler">consumerAutoscaler</a></b></td>
+        <td>object</td>
         <td>
-          enable Kafka. Set it to true to use Kafka as part of the flow collection pipeline. When enabled, the pipeline is split in two parts: ingestion and transformation, connected by Kafka. The ingestion is either done by a specific flowlogs-pipeline workload, or by the eBPF agent, depending on the value of `spec.agent`. The transformation is done by a new flowlogs-pipeline deployment.<br/>
+          consumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlogs-pipeline-transformer, which consumes Kafka messages. This setting is ignored when Kafka is disabled.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>consumerReplicas</b></td>
+        <td>integer</td>
+        <td>
+          consumerReplicas defines the number of replicas (pods) to start for flowlogs-pipeline-transformer, which consumes Kafka messages. This setting is ignored when Kafka is disabled.<br/>
           <br/>
-            <i>Default</i>: false<br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 1<br/>
+            <i>Minimum</i>: 0<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1564,6 +1630,915 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td>object</td>
         <td>
           tls client configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler
+<sup><sup>[↩ Parent](#flowcollectorspeckafka)</sup></sup>
+
+
+
+consumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlogs-pipeline-transformer, which consumes Kafka messages. This setting is ignored when Kafka is disabled.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>maxReplicas</b></td>
+        <td>integer</td>
+        <td>
+          maxReplicas is the upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindex">metrics</a></b></td>
+        <td>[]object</td>
+        <td>
+          metrics used by the pod autoscaler<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>minReplicas</b></td>
+        <td>integer</td>
+        <td>
+          minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscaler)</sup></sup>
+
+
+
+MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type is the type of metric source.  It should be one of "ContainerResource", "External", "Object", "Pods" or "Resource", each mapping to a matching field in the object. Note: "ContainerResource" type is available on when the feature-gate HPAContainerMetrics is enabled<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexcontainerresource">containerResource</a></b></td>
+        <td>object</td>
+        <td>
+          container resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexexternal">external</a></b></td>
+        <td>object</td>
+        <td>
+          external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexobject">object</a></b></td>
+        <td>object</td>
+        <td>
+          object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexpods">pods</a></b></td>
+        <td>object</td>
+        <td>
+          pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexresource">resource</a></b></td>
+        <td>object</td>
+        <td>
+          resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].containerResource
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindex)</sup></sup>
+
+
+
+container resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>container</b></td>
+        <td>string</td>
+        <td>
+          container is the name of the container in the pods of the scaling target<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name is the name of the resource in question.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexcontainerresourcetarget">target</a></b></td>
+        <td>object</td>
+        <td>
+          target specifies the target value for the given metric<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].containerResource.target
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexcontainerresource)</sup></sup>
+
+
+
+target specifies the target value for the given metric
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>averageUtilization</b></td>
+        <td>integer</td>
+        <td>
+          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>averageValue</b></td>
+        <td>int or string</td>
+        <td>
+          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>int or string</td>
+        <td>
+          value is the target value of the metric (as a quantity).<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].external
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindex)</sup></sup>
+
+
+
+external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexexternalmetric">metric</a></b></td>
+        <td>object</td>
+        <td>
+          metric identifies the target metric by name and selector<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexexternaltarget">target</a></b></td>
+        <td>object</td>
+        <td>
+          target specifies the target value for the given metric<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].external.metric
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexexternal)</sup></sup>
+
+
+
+metric identifies the target metric by name and selector
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name is the name of the given metric<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexexternalmetricselector">selector</a></b></td>
+        <td>object</td>
+        <td>
+          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].external.metric.selector
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexexternalmetric)</sup></sup>
+
+
+
+selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexexternalmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].external.metric.selector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexexternalmetricselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].external.target
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexexternal)</sup></sup>
+
+
+
+target specifies the target value for the given metric
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>averageUtilization</b></td>
+        <td>integer</td>
+        <td>
+          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>averageValue</b></td>
+        <td>int or string</td>
+        <td>
+          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>int or string</td>
+        <td>
+          value is the target value of the metric (as a quantity).<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].object
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindex)</sup></sup>
+
+
+
+object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexobjectdescribedobject">describedObject</a></b></td>
+        <td>object</td>
+        <td>
+          CrossVersionObjectReference contains enough information to let you identify the referred resource.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexobjectmetric">metric</a></b></td>
+        <td>object</td>
+        <td>
+          metric identifies the target metric by name and selector<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexobjecttarget">target</a></b></td>
+        <td>object</td>
+        <td>
+          target specifies the target value for the given metric<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].object.describedObject
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexobject)</sup></sup>
+
+
+
+CrossVersionObjectReference contains enough information to let you identify the referred resource.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>kind</b></td>
+        <td>string</td>
+        <td>
+          Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>apiVersion</b></td>
+        <td>string</td>
+        <td>
+          API version of the referent<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].object.metric
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexobject)</sup></sup>
+
+
+
+metric identifies the target metric by name and selector
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name is the name of the given metric<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexobjectmetricselector">selector</a></b></td>
+        <td>object</td>
+        <td>
+          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].object.metric.selector
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexobjectmetric)</sup></sup>
+
+
+
+selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexobjectmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].object.metric.selector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexobjectmetricselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].object.target
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexobject)</sup></sup>
+
+
+
+target specifies the target value for the given metric
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>averageUtilization</b></td>
+        <td>integer</td>
+        <td>
+          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>averageValue</b></td>
+        <td>int or string</td>
+        <td>
+          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>int or string</td>
+        <td>
+          value is the target value of the metric (as a quantity).<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].pods
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindex)</sup></sup>
+
+
+
+pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexpodsmetric">metric</a></b></td>
+        <td>object</td>
+        <td>
+          metric identifies the target metric by name and selector<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexpodstarget">target</a></b></td>
+        <td>object</td>
+        <td>
+          target specifies the target value for the given metric<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].pods.metric
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexpods)</sup></sup>
+
+
+
+metric identifies the target metric by name and selector
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name is the name of the given metric<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexpodsmetricselector">selector</a></b></td>
+        <td>object</td>
+        <td>
+          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].pods.metric.selector
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexpodsmetric)</sup></sup>
+
+
+
+selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexpodsmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].pods.metric.selector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexpodsmetricselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].pods.target
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexpods)</sup></sup>
+
+
+
+target specifies the target value for the given metric
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>averageUtilization</b></td>
+        <td>integer</td>
+        <td>
+          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>averageValue</b></td>
+        <td>int or string</td>
+        <td>
+          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>int or string</td>
+        <td>
+          value is the target value of the metric (as a quantity).<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].resource
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindex)</sup></sup>
+
+
+
+resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name is the name of the resource in question.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaconsumerautoscalermetricsindexresourcetarget">target</a></b></td>
+        <td>object</td>
+        <td>
+          target specifies the target value for the given metric<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.consumerAutoscaler.metrics[index].resource.target
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaconsumerautoscalermetricsindexresource)</sup></sup>
+
+
+
+target specifies the target value for the given metric
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>string</td>
+        <td>
+          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>averageUtilization</b></td>
+        <td>integer</td>
+        <td>
+          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>averageValue</b></td>
+        <td>int or string</td>
+        <td>
+          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>int or string</td>
+        <td>
+          value is the target value of the metric (as a quantity).<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -2009,53 +2984,6 @@ userCert defines the user certificate reference
 </table>
 
 
-### FlowCollector.spec.ovnKubernetes
-<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
-
-
-
-ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>containerName</b></td>
-        <td>string</td>
-        <td>
-          containerName defines the name of the container to configure for IPFIX.<br/>
-          <br/>
-            <i>Default</i>: ovnkube-node<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>daemonSetName</b></td>
-        <td>string</td>
-        <td>
-          daemonSetName defines the name of the DaemonSet controlling the OVN-Kubernetes pods.<br/>
-          <br/>
-            <i>Default</i>: ovnkube-node<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>namespace</b></td>
-        <td>string</td>
-        <td>
-          namespace where OVN-Kubernetes pods are deployed.<br/>
-          <br/>
-            <i>Default</i>: ovn-kubernetes<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
 ### FlowCollector.spec.processor
 <sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
 
@@ -2103,13 +3031,6 @@ processor defines the settings of the component that receives the flows from the
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpa">hpa</a></b></td>
-        <td>object</td>
-        <td>
-          hpa spec of a horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>ignoreMetrics</b></td>
         <td>[]string</td>
         <td>
@@ -2136,16 +3057,6 @@ processor defines the settings of the component that receives the flows from the
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>kind</b></td>
-        <td>enum</td>
-        <td>
-          kind of the workload, either DaemonSet or Deployment. When DaemonSet is used, each pod will receive flows from the node it is running on. When Deployment is used, the flows traffic received from nodes will be load-balanced. Note that in such a case, the number of replicas should be less or equal to the number of nodes, as extra-pods would be unused due to session affinity with the node IP. When using Kafka, this option only affects the flowlogs-pipeline ingester, not the transformer.<br/>
-          <br/>
-            <i>Enum</i>: DaemonSet, Deployment<br/>
-            <i>Default</i>: DaemonSet<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>logLevel</b></td>
         <td>enum</td>
         <td>
@@ -2156,10 +3067,17 @@ processor defines the settings of the component that receives the flows from the
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessormetricsserver">metricsServer</a></b></td>
+        <td>object</td>
+        <td>
+          Metrics server endpoint configuration for Prometheus scraper<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          port of the flow collector: either a service port for Deployment kind, or host port for DaemonSet kind By conventions, some value are not authorized port must not be below 1024 and must not equal this values: 4789,6081,500, and 4500<br/>
+          port of the flow collector (host port) By conventions, some value are not authorized port must not be below 1024 and must not equal this values: 4789,6081,500, and 4500<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 2055<br/>
@@ -2179,24 +3097,6 @@ processor defines the settings of the component that receives the flows from the
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorprometheus">prometheus</a></b></td>
-        <td>object</td>
-        <td>
-          Prometheus endpoint configuration<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>replicas</b></td>
-        <td>integer</td>
-        <td>
-          replicas defines the number of replicas (pods) to start for Deployment kind. Ignored for DaemonSet.<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 1<br/>
-            <i>Minimum</i>: 0<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorresources">resources</a></b></td>
         <td>object</td>
         <td>
@@ -2209,921 +3109,12 @@ processor defines the settings of the component that receives the flows from the
 </table>
 
 
-### FlowCollector.spec.processor.hpa
+### FlowCollector.spec.processor.metricsServer
 <sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
 
 
 
-hpa spec of a horizontal pod autoscaler to set up for the collector Deployment. Ignored for DaemonSet.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>maxReplicas</b></td>
-        <td>integer</td>
-        <td>
-          maxReplicas is the upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindex">metrics</a></b></td>
-        <td>[]object</td>
-        <td>
-          metrics used by the pod autoscaler<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>minReplicas</b></td>
-        <td>integer</td>
-        <td>
-          minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpa)</sup></sup>
-
-
-
-MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>type</b></td>
-        <td>string</td>
-        <td>
-          type is the type of metric source.  It should be one of "ContainerResource", "External", "Object", "Pods" or "Resource", each mapping to a matching field in the object. Note: "ContainerResource" type is available on when the feature-gate HPAContainerMetrics is enabled<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexcontainerresource">containerResource</a></b></td>
-        <td>object</td>
-        <td>
-          container resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexexternal">external</a></b></td>
-        <td>object</td>
-        <td>
-          external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexobject">object</a></b></td>
-        <td>object</td>
-        <td>
-          object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexpods">pods</a></b></td>
-        <td>object</td>
-        <td>
-          pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexresource">resource</a></b></td>
-        <td>object</td>
-        <td>
-          resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].containerResource
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindex)</sup></sup>
-
-
-
-container resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>container</b></td>
-        <td>string</td>
-        <td>
-          container is the name of the container in the pods of the scaling target<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          name is the name of the resource in question.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexcontainerresourcetarget">target</a></b></td>
-        <td>object</td>
-        <td>
-          target specifies the target value for the given metric<br/>
-        </td>
-        <td>true</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].containerResource.target
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexcontainerresource)</sup></sup>
-
-
-
-target specifies the target value for the given metric
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>type</b></td>
-        <td>string</td>
-        <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>averageUtilization</b></td>
-        <td>integer</td>
-        <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>averageValue</b></td>
-        <td>int or string</td>
-        <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>value</b></td>
-        <td>int or string</td>
-        <td>
-          value is the target value of the metric (as a quantity).<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].external
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindex)</sup></sup>
-
-
-
-external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexexternalmetric">metric</a></b></td>
-        <td>object</td>
-        <td>
-          metric identifies the target metric by name and selector<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexexternaltarget">target</a></b></td>
-        <td>object</td>
-        <td>
-          target specifies the target value for the given metric<br/>
-        </td>
-        <td>true</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].external.metric
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexexternal)</sup></sup>
-
-
-
-metric identifies the target metric by name and selector
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          name is the name of the given metric<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexexternalmetricselector">selector</a></b></td>
-        <td>object</td>
-        <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].external.metric.selector
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexexternalmetric)</sup></sup>
-
-
-
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexexternalmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].external.metric.selector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexexternalmetricselector)</sup></sup>
-
-
-
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          key is the label key that the selector applies to.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].external.target
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexexternal)</sup></sup>
-
-
-
-target specifies the target value for the given metric
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>type</b></td>
-        <td>string</td>
-        <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>averageUtilization</b></td>
-        <td>integer</td>
-        <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>averageValue</b></td>
-        <td>int or string</td>
-        <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>value</b></td>
-        <td>int or string</td>
-        <td>
-          value is the target value of the metric (as a quantity).<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].object
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindex)</sup></sup>
-
-
-
-object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexobjectdescribedobject">describedObject</a></b></td>
-        <td>object</td>
-        <td>
-          CrossVersionObjectReference contains enough information to let you identify the referred resource.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexobjectmetric">metric</a></b></td>
-        <td>object</td>
-        <td>
-          metric identifies the target metric by name and selector<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexobjecttarget">target</a></b></td>
-        <td>object</td>
-        <td>
-          target specifies the target value for the given metric<br/>
-        </td>
-        <td>true</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].object.describedObject
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexobject)</sup></sup>
-
-
-
-CrossVersionObjectReference contains enough information to let you identify the referred resource.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>kind</b></td>
-        <td>string</td>
-        <td>
-          Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>apiVersion</b></td>
-        <td>string</td>
-        <td>
-          API version of the referent<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].object.metric
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexobject)</sup></sup>
-
-
-
-metric identifies the target metric by name and selector
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          name is the name of the given metric<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexobjectmetricselector">selector</a></b></td>
-        <td>object</td>
-        <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].object.metric.selector
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexobjectmetric)</sup></sup>
-
-
-
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexobjectmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].object.metric.selector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexobjectmetricselector)</sup></sup>
-
-
-
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          key is the label key that the selector applies to.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].object.target
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexobject)</sup></sup>
-
-
-
-target specifies the target value for the given metric
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>type</b></td>
-        <td>string</td>
-        <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>averageUtilization</b></td>
-        <td>integer</td>
-        <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>averageValue</b></td>
-        <td>int or string</td>
-        <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>value</b></td>
-        <td>int or string</td>
-        <td>
-          value is the target value of the metric (as a quantity).<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].pods
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindex)</sup></sup>
-
-
-
-pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexpodsmetric">metric</a></b></td>
-        <td>object</td>
-        <td>
-          metric identifies the target metric by name and selector<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexpodstarget">target</a></b></td>
-        <td>object</td>
-        <td>
-          target specifies the target value for the given metric<br/>
-        </td>
-        <td>true</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].pods.metric
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexpods)</sup></sup>
-
-
-
-metric identifies the target metric by name and selector
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          name is the name of the given metric<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexpodsmetricselector">selector</a></b></td>
-        <td>object</td>
-        <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].pods.metric.selector
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexpodsmetric)</sup></sup>
-
-
-
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexpodsmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].pods.metric.selector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexpodsmetricselector)</sup></sup>
-
-
-
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          key is the label key that the selector applies to.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].pods.target
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexpods)</sup></sup>
-
-
-
-target specifies the target value for the given metric
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>type</b></td>
-        <td>string</td>
-        <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>averageUtilization</b></td>
-        <td>integer</td>
-        <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>averageValue</b></td>
-        <td>int or string</td>
-        <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>value</b></td>
-        <td>int or string</td>
-        <td>
-          value is the target value of the metric (as a quantity).<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].resource
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindex)</sup></sup>
-
-
-
-resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          name is the name of the resource in question.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorhpametricsindexresourcetarget">target</a></b></td>
-        <td>object</td>
-        <td>
-          target specifies the target value for the given metric<br/>
-        </td>
-        <td>true</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.hpa.metrics[index].resource.target
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorhpametricsindexresource)</sup></sup>
-
-
-
-target specifies the target value for the given metric
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>type</b></td>
-        <td>string</td>
-        <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>averageUtilization</b></td>
-        <td>integer</td>
-        <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>averageValue</b></td>
-        <td>int or string</td>
-        <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>value</b></td>
-        <td>int or string</td>
-        <td>
-          value is the target value of the metric (as a quantity).<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.prometheus
-<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
-
-
-
-Prometheus endpoint configuration
+Metrics server endpoint configuration for Prometheus scraper
 
 <table>
     <thead>
@@ -3147,7 +3138,7 @@ Prometheus endpoint configuration
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorprometheustls">tls</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessormetricsservertls">tls</a></b></td>
         <td>object</td>
         <td>
           TLS configuration.<br/>
@@ -3157,8 +3148,8 @@ Prometheus endpoint configuration
 </table>
 
 
-### FlowCollector.spec.processor.prometheus.tls
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorprometheus)</sup></sup>
+### FlowCollector.spec.processor.metricsServer.tls
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsserver)</sup></sup>
 
 
 
@@ -3174,7 +3165,7 @@ TLS configuration.
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorprometheustlsprovided">provided</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessormetricsservertlsprovided">provided</a></b></td>
         <td>object</td>
         <td>
           TLS configuration.<br/>
@@ -3194,8 +3185,8 @@ TLS configuration.
 </table>
 
 
-### FlowCollector.spec.processor.prometheus.tls.provided
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorprometheustls)</sup></sup>
+### FlowCollector.spec.processor.metricsServer.tls.provided
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsservertls)</sup></sup>
 
 
 

@@ -91,7 +91,7 @@ func (c *AgentController) Reconcile(
 	if err != nil {
 		return fmt.Errorf("fetching current EBPF Agent: %w", err)
 	}
-	if target.Spec.Agent.Type != flowsv1alpha1.AgentEBPF {
+	if !target.Spec.UseEBPF() {
 		if current == nil {
 			rlog.Info("nothing to do, as the requested agent is not eBPF",
 				"currentAgent", target.Spec.Agent)
@@ -143,13 +143,13 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 }
 
 func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonSet {
-	if coll == nil || coll.Spec.Agent.Type != flowsv1alpha1.AgentEBPF {
+	if coll == nil || !coll.Spec.UseEBPF() {
 		return nil
 	}
 	version := helper.ExtractVersion(coll.Spec.Agent.EBPF.Image)
 	volumeMounts := []corev1.VolumeMount{}
 	volumes := []corev1.Volume{}
-	if coll.Spec.Kafka.Enable && coll.Spec.Kafka.TLS.Enable {
+	if coll.Spec.UseKafka() && coll.Spec.Kafka.TLS.Enable {
 		// NOTE: secrets need to be copied from the base netobserv namespace to the privileged one.
 		// This operation must currently be performed manually (run "make fix-ebpf-kafka-tls"). It could be automated here.
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &coll.Spec.Kafka.TLS, kafkaCerts)
@@ -235,7 +235,7 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 	for k, v := range coll.Spec.Agent.EBPF.Env {
 		config = append(config, corev1.EnvVar{Name: k, Value: v})
 	}
-	if coll.Spec.Kafka.Enable {
+	if coll.Spec.UseKafka() {
 		config = append(config,
 			corev1.EnvVar{Name: envExport, Value: exportKafka},
 			corev1.EnvVar{Name: envKafkaBrokers, Value: coll.Spec.Kafka.Address},
@@ -252,30 +252,19 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 		}
 	} else {
 		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
-		switch coll.Spec.Processor.Kind {
-		case constants.DaemonSetKind:
-			// When flowlogs-pipeline is deployed as a daemonset, each agent must send
-			// data to the pod that is deployed in the same host
-			config = append(config, corev1.EnvVar{
-				Name: envFlowsTargetHost,
-				ValueFrom: &corev1.EnvVarSource{
-					FieldRef: &corev1.ObjectFieldSelector{
-						FieldPath: "status.hostIP",
-					},
+		// When flowlogs-pipeline is deployed as a daemonset, each agent must send
+		// data to the pod that is deployed in the same host
+		config = append(config, corev1.EnvVar{
+			Name: envFlowsTargetHost,
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "status.hostIP",
 				},
-			}, corev1.EnvVar{
-				Name:  envFlowsTargetPort,
-				Value: strconv.Itoa(int(coll.Spec.Processor.Port)),
-			})
-		case constants.DeploymentKind:
-			config = append(config, corev1.EnvVar{
-				Name:  envFlowsTargetHost,
-				Value: constants.FLPName + "." + c.baseNamespace,
-			}, corev1.EnvVar{
-				Name:  envFlowsTargetPort,
-				Value: strconv.Itoa(int(coll.Spec.Processor.Port)),
-			})
-		}
+			},
+		}, corev1.EnvVar{
+			Name:  envFlowsTargetPort,
+			Value: strconv.Itoa(int(coll.Spec.Processor.Port)),
+		})
 	}
 	return config
 }

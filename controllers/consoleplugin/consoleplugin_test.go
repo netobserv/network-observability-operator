@@ -43,7 +43,7 @@ func getPluginConfig() flowsv1alpha1.FlowCollectorConsolePlugin {
 		Image:           testImage,
 		ImagePullPolicy: string(testPullPolicy),
 		Resources:       testResources,
-		HPA: &flowsv1alpha1.FlowCollectorHPA{
+		Autoscaler: &flowsv1alpha1.FlowCollectorHPA{
 			MinReplicas: &minReplicas,
 			MaxReplicas: maxReplicas,
 			Metrics: []ascv2.MetricSpec{{
@@ -106,7 +106,7 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowsv1alpha1.FlowColl
 		},
 		Spec: ascv2.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: ascv2.CrossVersionObjectReference{
-				Kind: constants.DeploymentKind,
+				Kind: "Deployment",
 				Name: constants.PluginName,
 			},
 			MinReplicas: &minReplicas,

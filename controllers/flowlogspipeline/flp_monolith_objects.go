@@ -81,6 +81,6 @@ func (b *monolithBuilder) serviceAccount() *corev1.ServiceAccount {
 	return b.generic.serviceAccount()
 }
 
-func (b *monolithBuilder) clusterRoleBinding(confKind string) *rbacv1.ClusterRoleBinding {
-	return b.generic.clusterRoleBinding(confKind)
+func (b *monolithBuilder) clusterRoleBinding(ck ConfKind) *rbacv1.ClusterRoleBinding {
+	return b.generic.clusterRoleBinding(ck, true)
 }

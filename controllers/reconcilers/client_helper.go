@@ -2,10 +2,15 @@ package reconcilers
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -87,4 +92,49 @@ func FindContainer(podSpec *corev1.PodSpec, name string) *corev1.Container {
 		}
 	}
 	return nil
+}
+
+func (c *ClientHelper) ReconcileClusterRoleBinding(ctx context.Context, desired *rbacv1.ClusterRoleBinding) error {
+	actual := rbacv1.ClusterRoleBinding{}
+	if err := c.Get(ctx, types.NamespacedName{Name: desired.ObjectMeta.Name}, &actual); err != nil {
+		if errors.IsNotFound(err) {
+			return c.CreateOwned(ctx, desired)
+		}
+		return fmt.Errorf("can't reconcile ClusterRoleBinding %s: %w", desired.Name, err)
+	}
+	if helper.IsSubSet(actual.Labels, desired.Labels) &&
+		actual.RoleRef == desired.RoleRef &&
+		reflect.DeepEqual(actual.Subjects, desired.Subjects) {
+		if actual.RoleRef != desired.RoleRef {
+			//Roleref cannot be updated deleting and creating a new rolebinding
+			log := log.FromContext(ctx)
+			log.Info("Deleting old ClusterRoleBinding", "Namespace", actual.GetNamespace(), "Name", actual.GetName())
+			err := c.Delete(ctx, &actual)
+			if err != nil {
+				log.Error(err, "error deleting old ClusterRoleBinding", "Namespace", actual.GetNamespace(), "Name", actual.GetName())
+			}
+			return c.CreateOwned(ctx, desired)
+		}
+		// cluster role binding already reconciled. Exiting
+		return nil
+	}
+	return c.UpdateOwned(ctx, &actual, desired)
+}
+
+func (c *ClientHelper) ReconcileClusterRole(ctx context.Context, desired *rbacv1.ClusterRole) error {
+	actual := rbacv1.ClusterRole{}
+	if err := c.Get(ctx, types.NamespacedName{Name: desired.Name}, &actual); err != nil {
+		if errors.IsNotFound(err) {
+			return c.CreateOwned(ctx, desired)
+		}
+		return fmt.Errorf("can't reconcile ClusterRole %s: %w", desired.Name, err)
+	}
+
+	if helper.IsSubSet(actual.Labels, desired.Labels) &&
+		reflect.DeepEqual(actual.Rules, desired.Rules) {
+		// cluster role already reconciled. Exiting
+		return nil
+	}
+
+	return c.UpdateOwned(ctx, &actual, desired)
 }

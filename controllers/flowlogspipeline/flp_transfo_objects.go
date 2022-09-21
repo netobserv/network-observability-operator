@@ -32,7 +32,7 @@ func (b *transfoBuilder) deployment(configDigest string) *appsv1.Deployment {
 			Labels:    b.generic.labels,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &b.generic.desired.Processor.Replicas,
+			Replicas: &b.generic.desired.Kafka.ConsumerReplicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: b.generic.selector,
 			},
@@ -93,9 +93,9 @@ func (b *transfoBuilder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 				Kind:       "Deployment",
 				Name:       b.generic.name(),
 			},
-			MinReplicas: b.generic.desired.Processor.HPA.MinReplicas,
-			MaxReplicas: b.generic.desired.Processor.HPA.MaxReplicas,
-			Metrics:     b.generic.desired.Processor.HPA.Metrics,
+			MinReplicas: b.generic.desired.Kafka.ConsumerAutoscaler.MinReplicas,
+			MaxReplicas: b.generic.desired.Kafka.ConsumerAutoscaler.MaxReplicas,
+			Metrics:     b.generic.desired.Kafka.ConsumerAutoscaler.Metrics,
 		},
 	}
 }
@@ -131,5 +131,5 @@ func (b *transfoBuilder) serviceAccount() *corev1.ServiceAccount {
 }
 
 func (b *transfoBuilder) clusterRoleBinding() *rbacv1.ClusterRoleBinding {
-	return b.generic.clusterRoleBinding(ConfKafkaTransformer)
+	return b.generic.clusterRoleBinding(ConfKafkaTransformer, false)
 }

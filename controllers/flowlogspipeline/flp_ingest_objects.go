@@ -102,5 +102,5 @@ func (b *ingestBuilder) serviceAccount() *corev1.ServiceAccount {
 }
 
 func (b *ingestBuilder) clusterRoleBinding() *rbacv1.ClusterRoleBinding {
-	return b.generic.clusterRoleBinding(ConfKafkaIngester)
+	return b.generic.clusterRoleBinding(ConfKafkaIngester, false)
 }

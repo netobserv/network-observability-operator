@@ -46,8 +46,8 @@ func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 	nobjMngr.AddManagedObject(name, owned.daemonSet)
 	nobjMngr.AddManagedObject(name, owned.serviceAccount)
 	nobjMngr.AddManagedObject(promServiceName(ConfMonolith), owned.promService)
-	nobjMngr.AddManagedObject(roleBindingName(ConfKafkaIngester), owned.roleBindingIn)
-	nobjMngr.AddManagedObject(roleBindingName(ConfKafkaTransformer), owned.roleBindingTr)
+	nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaIngester), owned.roleBindingIn)
+	nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaTransformer), owned.roleBindingTr)
 	nobjMngr.AddManagedObject(configMapName(ConfMonolith), owned.configMap)
 
 	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
@@ -149,8 +149,8 @@ func (r *flpMonolithReconciler) reconcilePermissions(ctx context.Context, builde
 	} // We only configure name, update is not needed for now
 
 	// Monolith uses ingester + transformer cluster roles
-	for _, kind := range []string{ConfKafkaIngester, ConfKafkaTransformer} {
-		desired := builder.clusterRoleBinding(name(kind))
+	for _, kind := range []ConfKind{ConfKafkaIngester, ConfKafkaTransformer} {
+		desired := builder.clusterRoleBinding(kind)
 		if err := r.ClientHelper.ReconcileClusterRoleBinding(ctx, desired); err != nil {
 			return err
 		}
