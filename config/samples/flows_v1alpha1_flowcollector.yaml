@@ -13,7 +13,7 @@ spec:
     ebpf:
       image: 'quay.io/netobserv/netobserv-ebpf-agent:main'
       imagePullPolicy: IfNotPresent
-      sampling: 50
+      sampling: 0
       cacheActiveTimeout: 5s
       cacheMaxFlows: 1000
       interfaces: [ ]
@@ -62,7 +62,7 @@ spec:
         certFile: user.crt
         certKey: user.key
   loki:
-    url: 'http://loki.netobserv.svc:3100/'
+    url: 'http://loki.default.svc:3100/'
     batchWait: 1s
     batchSize: 102400
     minBackoff: 1s

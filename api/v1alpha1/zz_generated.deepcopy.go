@@ -166,6 +166,11 @@ func (in *FlowCollectorConsolePlugin) DeepCopy() *FlowCollectorConsolePlugin {
 func (in *FlowCollectorEBPF) DeepCopyInto(out *FlowCollectorEBPF) {
 	*out = *in
 	in.Resources.DeepCopyInto(&out.Resources)
+	if in.Sampling != nil {
+		in, out := &in.Sampling, &out.Sampling
+		*out = new(int32)
+		**out = **in
+	}
 	if in.Interfaces != nil {
 		in, out := &in.Interfaces, &out.Interfaces
 		*out = make([]string, len(*in))
