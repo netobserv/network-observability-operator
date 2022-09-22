@@ -217,7 +217,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
           cacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 5000<br/>
+            <i>Default</i>: 100000<br/>
             <i>Minimum</i>: 1<br/>
         </td>
         <td>false</td>
@@ -264,6 +264,15 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>kafkaBatchSize</b></td>
+        <td>integer</td>
+        <td>
+          kafkaBatchSize limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 10MB.<br/>
+          <br/>
+            <i>Default</i>: 10485760<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>logLevel</b></td>
         <td>enum</td>
         <td>
@@ -286,7 +295,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td>
           resources are the compute resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
-            <i>Default</i>: map[limits:map[memory:100Mi] requests:map[cpu:100m memory:50Mi]]<br/>
+            <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:50Mi]]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2137,6 +2146,24 @@ processor defines the settings of the component that receives the flows from the
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>kafkaConsumerBatchSize</b></td>
+        <td>integer</td>
+        <td>
+          kafkaConsumerBatchSize indicates to the broker the maximum batch size, in bytes, that the consumer will accept. Ignored when not using Kafka. Default: 10MB.<br/>
+          <br/>
+            <i>Default</i>: 10485760<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>kafkaConsumerQueueCapacity</b></td>
+        <td>integer</td>
+        <td>
+          kafkaConsumerQueueCapacity defines the capacity of the internal message queue used in the Kafka consumer client. Ignored when not using Kafka.<br/>
+          <br/>
+            <i>Default</i>: 1000<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>kafkaConsumerReplicas</b></td>
         <td>integer</td>
         <td>
@@ -2193,7 +2220,7 @@ processor defines the settings of the component that receives the flows from the
         <td>
           resources are the compute resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
-            <i>Default</i>: map[limits:map[memory:300Mi] requests:map[cpu:100m memory:100Mi]]<br/>
+            <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:100Mi]]<br/>
         </td>
         <td>false</td>
       </tr></tbody>
