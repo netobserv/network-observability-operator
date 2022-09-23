@@ -441,11 +441,19 @@ func (b *builder) getKafkaTLS() *api.ClientTLS {
 func (b *builder) buildPipelineConfig() ([]config.Stage, []config.StageParam, error) {
 	var pipeline config.PipelineBuilderStage
 	if b.confKind == ConfKafkaTransformer {
+		// TODO in a later optimization patch: set ingester <-> transformer communication also via protobuf
+		// For now, we leave this communication via JSON and just setup protobuf ingestion when
+		// the transformer is communicating directly via eBPF agent
+		decoder := api.Decoder{Type: "protobuf"}
+		if b.agent == flowsv1alpha1.AgentIPFIX {
+			decoder = api.Decoder{Type: "json"}
+		}
+
 		pipeline = config.NewKafkaPipeline("kafka-read", api.IngestKafka{
 			Brokers: []string{b.desiredKafka.Address},
 			Topic:   b.desiredKafka.Topic,
 			GroupId: b.confKind, // Without groupid, each message is delivered to each consumers
-			Decoder: api.Decoder{Type: "json"},
+			Decoder: decoder,
 			TLS:     b.getKafkaTLS(),
 		})
 	} else if b.agent == flowsv1alpha1.AgentIPFIX {
