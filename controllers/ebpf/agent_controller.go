@@ -225,10 +225,11 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 			Value: strings.Join(coll.Spec.Agent.EBPF.ExcludeInterfaces, envListSeparator),
 		})
 	}
-	if coll.Spec.Agent.EBPF.Sampling > 1 {
+	sampling := coll.Spec.Agent.EBPF.Sampling
+	if sampling != nil && *sampling > 1 {
 		config = append(config, corev1.EnvVar{
 			Name:  envSampling,
-			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.Sampling)),
+			Value: strconv.Itoa(int(*sampling)),
 		})
 	}
 	for k, v := range coll.Spec.Agent.EBPF.Env {

@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/pointer"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -54,7 +55,7 @@ func flowCollectorEBPFSpecs() {
 						Type: "EBPF",
 						EBPF: flowsv1alpha1.FlowCollectorEBPF{
 							Image:              "netobserv-ebpf-agent:latest",
-							Sampling:           123,
+							Sampling:           pointer.Int32Ptr(123),
 							CacheActiveTimeout: "15s",
 							CacheMaxFlows:      100,
 							Interfaces:         []string{"veth0", "/^br-/"},
@@ -132,8 +133,8 @@ func flowCollectorEBPFSpecs() {
 
 		It("Should update fields that have changed", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				Expect(fc.Spec.Agent.EBPF.Sampling).To(Equal(int32(123)))
-				fc.Spec.Agent.EBPF.Sampling = 4
+				Expect(*fc.Spec.Agent.EBPF.Sampling).To(Equal(int32(123)))
+				*fc.Spec.Agent.EBPF.Sampling = 4
 				fc.Spec.Agent.EBPF.Privileged = true
 			})
 

@@ -150,7 +150,7 @@ type FlowCollectorEBPF struct {
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=50
 	//+optional
-	Sampling int32 `json:"sampling,omitempty"`
+	Sampling *int32 `json:"sampling,omitempty"`
 
 	// cacheActiveTimeout is the max period during which the reporter will aggregate flows before sending
 	//+kubebuilder:validation:Pattern:=^\d+(ns|ms|s|m)?$
