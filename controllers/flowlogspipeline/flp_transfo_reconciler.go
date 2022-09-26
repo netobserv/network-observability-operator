@@ -117,17 +117,17 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 		return err
 	}
 
-	return r.reconcileDeployment(ctx, &desired.Spec.Processor, &desired.Spec.Kafka, &builder, configDigest)
+	return r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, configDigest)
 }
 
-func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flpSpec, desiredKafka *flowsv1alpha1.FlowCollectorKafka, builder *transfoBuilder, configDigest string) error {
+func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder, configDigest string) error {
 	ns := r.nobjMngr.Namespace
 
 	if !r.nobjMngr.Exists(r.owned.deployment) {
 		if err := r.CreateOwned(ctx, builder.deployment(configDigest)); err != nil {
 			return err
 		}
-	} else if deploymentNeedsUpdate(r.owned.deployment, desiredFLP, desiredKafka, configDigest) {
+	} else if deploymentNeedsUpdate(r.owned.deployment, desiredFLP, configDigest) {
 		if err := r.UpdateOwned(ctx, r.owned.deployment, builder.deployment(configDigest)); err != nil {
 			return err
 		}
@@ -137,7 +137,7 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 	}
 
 	// Delete or Create / Update Autoscaler according to HPA option
-	if desiredKafka.ConsumerAutoscaler == nil {
+	if desiredFLP.KafkaConsumerAutoscaler == nil {
 		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
 	} else {
 		newASC := builder.autoScaler()
@@ -145,7 +145,7 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 			if err := r.CreateOwned(ctx, newASC); err != nil {
 				return err
 			}
-		} else if autoScalerNeedsUpdate(r.owned.hpa, desiredKafka.ConsumerAutoscaler, ns) {
+		} else if autoScalerNeedsUpdate(r.owned.hpa, desiredFLP.KafkaConsumerAutoscaler, ns) {
 			if err := r.UpdateOwned(ctx, r.owned.hpa, newASC); err != nil {
 				return err
 			}
@@ -179,10 +179,10 @@ func (r *flpTransformerReconciler) reconcilePermissions(ctx context.Context, bui
 	return nil
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, desiredKafka *flowsv1alpha1.FlowCollectorKafka, configDigest string) bool {
+func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, configDigest string) bool {
 	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired, false) ||
 		configChanged(&depl.Spec.Template, configDigest) ||
-		(desiredKafka.ConsumerAutoscaler == nil && *depl.Spec.Replicas != desiredKafka.ConsumerReplicas)
+		(desired.KafkaConsumerAutoscaler == nil && *depl.Spec.Replicas != desired.KafkaConsumerReplicas)
 }
 
 func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired *flowsv1alpha1.FlowCollectorHPA, ns string) bool {

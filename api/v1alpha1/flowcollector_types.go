@@ -24,15 +24,15 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 const (
-	AgentIPFIX           = "IPFIX"
-	AgentEBPF            = "EBPF"
-	DeploymentTypeDirect = "DIRECT"
-	DeploymentTypeKafka  = "KAFKA"
+	AgentIPFIX            = "IPFIX"
+	AgentEBPF             = "EBPF"
+	DeploymentModelDirect = "DIRECT"
+	DeploymentModelKafka  = "KAFKA"
 )
 
 func (spec *FlowCollectorSpec) UseEBPF() bool  { return spec.Agent.Type == AgentEBPF }
 func (spec *FlowCollectorSpec) UseIPFIX() bool { return spec.Agent.Type == AgentIPFIX }
-func (spec *FlowCollectorSpec) UseKafka() bool { return spec.DeploymentType == DeploymentTypeKafka }
+func (spec *FlowCollectorSpec) UseKafka() bool { return spec.DeploymentModel == DeploymentModelKafka }
 
 // Please notice that the FlowCollectorSpec's properties MUST redefine one of the default
 // values to force the definition of the section when it is not provided by the manifest.
@@ -64,7 +64,7 @@ type FlowCollectorSpec struct {
 	// consolePlugin defines the settings related to the OpenShift Console plugin, when available.
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
-	// deploymentType defines the desired type of deployment for flow processing. Possible values are "DIRECT" (default) to make
+	// deploymentModel defines the desired type of deployment for flow processing. Possible values are "DIRECT" (default) to make
 	// the flow processor listening directly from the agents, or "KAFKA" to make flows sent to a Kafka pipeline before consumption
 	// by the processor.
 	// Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
@@ -72,9 +72,9 @@ type FlowCollectorSpec struct {
 	// +kubebuilder:validation:Enum:="DIRECT";"KAFKA"
 	// +kubebuilder:validation:Required
 	// +kubebuilder:default:=DIRECT
-	DeploymentType string `json:"deploymentType"`
+	DeploymentModel string `json:"deploymentModel"`
 
-	// kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the "spec.deploymentType" is "KAFKA".
+	// kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the "spec.deploymentModel" is "KAFKA".
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 }
@@ -89,7 +89,7 @@ type FlowCollectorAgent struct {
 	// "IPFIX" works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX,
 	// but they would require manual configuration).
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="IPFIX";"EBPF"
+	// +kubebuilder:validation:Enum:="EBPF";"IPFIX"
 	// +kubebuilder:validation:Required
 	// +kubebuilder:default:=EBPF
 	Type string `json:"type"`
@@ -225,17 +225,6 @@ type FlowCollectorKafka struct {
 	// tls client configuration.
 	// +optional
 	TLS ClientTLS `json:"tls"`
-
-	//+kubebuilder:validation:Minimum=0
-	//+kubebuilder:default:=1
-	// consumerReplicas defines the number of replicas (pods) to start for flowlogs-pipeline-transformer, which consumes Kafka messages.
-	// This setting is ignored when Kafka is disabled.
-	ConsumerReplicas int32 `json:"consumerReplicas,omitempty"`
-
-	// consumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlogs-pipeline-transformer, which consumes Kafka messages.
-	// This setting is ignored when Kafka is disabled.
-	// +optional
-	ConsumerAutoscaler *FlowCollectorHPA `json:"consumerAutoscaler,omitempty"`
 }
 
 const (
@@ -335,6 +324,17 @@ type FlowCollectorFLP struct {
 	//+kubebuilder:default:=true
 	// dropUnusedFields allows, when set to true, to drop fields that are known to be unused by OVS, in order to save storage space.
 	DropUnusedFields bool `json:"dropUnusedFields,omitempty"`
+
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=3
+	// kafkaConsumerReplicas defines the number of replicas (pods) to start for flowlogs-pipeline-transformer, which consumes Kafka messages.
+	// This setting is ignored when Kafka is disabled.
+	KafkaConsumerReplicas int32 `json:"kafkaConsumerReplicas,omitempty"`
+
+	// kafkaConsumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlogs-pipeline-transformer, which consumes Kafka messages.
+	// This setting is ignored when Kafka is disabled.
+	// +optional
+	KafkaConsumerAutoscaler *FlowCollectorHPA `json:"kafkaConsumerAutoscaler,omitempty"`
 }
 
 type FlowCollectorHPA struct {

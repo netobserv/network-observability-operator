@@ -4,7 +4,7 @@ metadata:
   name: cluster
 spec:
   namespace: netobserv
-  deploymentType: DIRECT
+  deploymentModel: DIRECT
   agent:
     type: EBPF
     ipfix:
@@ -51,11 +51,11 @@ spec:
         cpu: 100m
       limits:
         memory: 300Mi
+    kafkaConsumerReplicas: 3
+    kafkaConsumerAutoscaler: null
   kafka:
     address: "kafka-cluster-kafka-bootstrap.netobserv"
     topic: network-flows
-    consumerReplicas: 1
-    consumerAutoscaler: null
     tls:
       enable: false
       caCert:

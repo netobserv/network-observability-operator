@@ -70,9 +70,9 @@ func flowCollectorConsolePluginSpecs() {
 					Name: crKey.Name,
 				},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
-					Namespace:      cpNamespace,
-					DeploymentType: flowsv1alpha1.DeploymentTypeDirect,
-					Agent:          flowsv1alpha1.FlowCollectorAgent{Type: "IPFIX"},
+					Namespace:       cpNamespace,
+					DeploymentModel: flowsv1alpha1.DeploymentModelDirect,
+					Agent:           flowsv1alpha1.FlowCollectorAgent{Type: "IPFIX"},
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
 						Port:            9001,
 						ImagePullPolicy: "Never",

@@ -84,8 +84,8 @@ func flowCollectorControllerSpecs() {
 					Name: crKey.Name,
 				},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
-					Namespace:      operatorNamespace,
-					DeploymentType: flowsv1alpha1.DeploymentTypeDirect,
+					Namespace:       operatorNamespace,
+					DeploymentModel: flowsv1alpha1.DeploymentModelDirect,
 					Processor: flowsv1alpha1.FlowCollectorFLP{
 						Port:            9999,
 						ImagePullPolicy: "Never",
@@ -303,7 +303,7 @@ func flowCollectorControllerSpecs() {
 	Context("With Kafka", func() {
 		It("Should update kafka config successfully", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.DeploymentType = flowsv1alpha1.DeploymentTypeKafka
+				fc.Spec.DeploymentModel = flowsv1alpha1.DeploymentModelKafka
 				fc.Spec.Kafka = flowsv1alpha1.FlowCollectorKafka{
 					Address: "localhost:9092",
 					Topic:   "FLP",
@@ -374,7 +374,7 @@ func flowCollectorControllerSpecs() {
 		hpa := ascv2.HorizontalPodAutoscaler{}
 		It("Should update with HPA", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Kafka.ConsumerAutoscaler = &flowsv1alpha1.FlowCollectorHPA{
+				fc.Spec.Processor.KafkaConsumerAutoscaler = &flowsv1alpha1.FlowCollectorHPA{
 					MinReplicas: pointer.Int32(1),
 					MaxReplicas: 1,
 					Metrics: []ascv2.MetricSpec{{
@@ -403,8 +403,8 @@ func flowCollectorControllerSpecs() {
 
 		It("Should autoscale when the HPA options change", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Kafka.ConsumerAutoscaler.MinReplicas = pointer.Int32(2)
-				fc.Spec.Kafka.ConsumerAutoscaler.MaxReplicas = 2
+				fc.Spec.Processor.KafkaConsumerAutoscaler.MinReplicas = pointer.Int32(2)
+				fc.Spec.Processor.KafkaConsumerAutoscaler.MaxReplicas = 2
 			})
 
 			By("Changing the Horizontal Pod Autoscaler instance")
@@ -426,7 +426,7 @@ func flowCollectorControllerSpecs() {
 	Context("Back without Kafka", func() {
 		It("Should remove kafka config successfully", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.DeploymentType = flowsv1alpha1.DeploymentTypeDirect
+				fc.Spec.DeploymentModel = flowsv1alpha1.DeploymentModelDirect
 			})
 		})
 

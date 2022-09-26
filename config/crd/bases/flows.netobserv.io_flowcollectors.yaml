@@ -254,8 +254,8 @@ spec:
                       CNI (other CNIs could work if they support exporting IPFIX,
                       but they would require manual configuration).
                     enum:
-                    - IPFIX
                     - EBPF
+                    - IPFIX
                     type: string
                 required:
                 - type
@@ -886,9 +886,9 @@ spec:
                 required:
                 - register
                 type: object
-              deploymentType:
+              deploymentModel:
                 default: DIRECT
-                description: deploymentType defines the desired type of deployment
+                description: deploymentModel defines the desired type of deployment
                   for flow processing. Possible values are "DIRECT" (default) to make
                   the flow processor listening directly from the agents, or "KAFKA"
                   to make flows sent to a Kafka pipeline before consumption by the
@@ -900,17 +900,274 @@ spec:
                 type: string
               kafka:
                 description: kafka configuration, allowing to use Kafka as a broker
-                  as part of the flow collection pipeline. Available when the "spec.deploymentType"
+                  as part of the flow collection pipeline. Available when the "spec.deploymentModel"
                   is "KAFKA".
                 properties:
                   address:
                     default: ""
                     description: address of the Kafka server
                     type: string
-                  consumerAutoscaler:
-                    description: consumerAutoscaler spec of a horizontal pod autoscaler
-                      to set up for flowlogs-pipeline-transformer, which consumes
-                      Kafka messages. This setting is ignored when Kafka is disabled.
+                  tls:
+                    description: tls client configuration.
+                    properties:
+                      caCert:
+                        description: caCert defines the reference of the certificate
+                          for the Certificate Authority
+                        properties:
+                          certFile:
+                            description: certFile defines the path to the certificate
+                              file name within the ConfigMap / Secret
+                            type: string
+                          certKey:
+                            description: certKey defines the path to the certificate
+                              private key file name within the ConfigMap / Secret.
+                              Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'type for the certificate reference: configmap
+                              or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      enable:
+                        default: false
+                        description: enable TLS
+                        type: boolean
+                      insecureSkipVerify:
+                        default: false
+                        description: insecureSkipVerify allows skipping client-side
+                          verification of the server certificate
+                        type: boolean
+                      userCert:
+                        description: userCert defines the user certificate reference
+                        properties:
+                          certFile:
+                            description: certFile defines the path to the certificate
+                              file name within the ConfigMap / Secret
+                            type: string
+                          certKey:
+                            description: certKey defines the path to the certificate
+                              private key file name within the ConfigMap / Secret.
+                              Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'type for the certificate reference: configmap
+                              or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                    type: object
+                  topic:
+                    default: ""
+                    description: kafka topic to use. It must exist, NetObserv will
+                      not create it.
+                    type: string
+                required:
+                - address
+                - topic
+                type: object
+              loki:
+                description: loki, the flow store, client settings.
+                properties:
+                  batchSize:
+                    default: 102400
+                    description: batchSize is max batch size (in bytes) of logs to
+                      accumulate before sending
+                    format: int64
+                    minimum: 1
+                    type: integer
+                  batchWait:
+                    default: 1s
+                    description: batchWait is max time to wait before sending a batch
+                    type: string
+                  maxBackoff:
+                    default: 300s
+                    description: maxBackoff is the maximum backoff time for client
+                      connection between retries
+                    type: string
+                  maxRetries:
+                    default: 10
+                    description: maxRetries is the maximum number of retries for client
+                      connections
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  minBackoff:
+                    default: 1s
+                    description: minBackoff is the initial backoff time for client
+                      connection between retries
+                    type: string
+                  querierUrl:
+                    description: querierURL specifies the address of the Loki querier
+                      service, in case it is different from the Loki ingester URL.
+                      If empty, the URL value will be used (assuming that the Loki
+                      ingester and querier are in the same server).
+                    type: string
+                  sendAuthToken:
+                    default: false
+                    description: sendAuthToken is a flag to enable or disable Authorization
+                      header from service account secret It allows authentication
+                      to loki operator gateway
+                    type: boolean
+                  staticLabels:
+                    additionalProperties:
+                      type: string
+                    default:
+                      app: netobserv-flowcollector
+                    description: staticLabels is a map of common labels to set on
+                      each flow
+                    type: object
+                  statusUrl:
+                    description: statusURL specifies the address of the Loki /ready
+                      /metrics /config endpoints, in case it is different from the
+                      Loki querier URL. If empty, the QuerierURL value will be used.
+                      This is useful to show error messages and some context in the
+                      frontend
+                    type: string
+                  tenantID:
+                    default: netobserv
+                    description: tenantID is the Loki X-Scope-OrgID that identifies
+                      the tenant for each request. it will be ignored if instanceSpec
+                      is specified
+                    type: string
+                  timeout:
+                    default: 10s
+                    description: timeout is the maximum time connection / request
+                      limit A Timeout of zero means no timeout.
+                    type: string
+                  tls:
+                    description: tls client configuration.
+                    properties:
+                      caCert:
+                        description: caCert defines the reference of the certificate
+                          for the Certificate Authority
+                        properties:
+                          certFile:
+                            description: certFile defines the path to the certificate
+                              file name within the ConfigMap / Secret
+                            type: string
+                          certKey:
+                            description: certKey defines the path to the certificate
+                              private key file name within the ConfigMap / Secret.
+                              Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'type for the certificate reference: configmap
+                              or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      enable:
+                        default: false
+                        description: enable TLS
+                        type: boolean
+                      insecureSkipVerify:
+                        default: false
+                        description: insecureSkipVerify allows skipping client-side
+                          verification of the server certificate
+                        type: boolean
+                      userCert:
+                        description: userCert defines the user certificate reference
+                        properties:
+                          certFile:
+                            description: certFile defines the path to the certificate
+                              file name within the ConfigMap / Secret
+                            type: string
+                          certKey:
+                            description: certKey defines the path to the certificate
+                              private key file name within the ConfigMap / Secret.
+                              Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: name of the ConfigMap or Secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'type for the certificate reference: configmap
+                              or secret'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                    type: object
+                  url:
+                    default: http://loki:3100/
+                    description: url is the address of an existing Loki service to
+                      push the flows to.
+                    type: string
+                type: object
+              namespace:
+                description: namespace where NetObserv pods are deployed. If empty,
+                  the namespace of the operator is going to be used.
+                type: string
+              processor:
+                description: processor defines the settings of the component that
+                  receives the flows from the agent, enriches them, and forwards them
+                  to the Loki persistence layer.
+                properties:
+                  dropUnusedFields:
+                    default: true
+                    description: dropUnusedFields allows, when set to true, to drop
+                      fields that are known to be unused by OVS, in order to save
+                      storage space.
+                    type: boolean
+                  enableKubeProbes:
+                    default: true
+                    description: enableKubeProbes is a flag to enable or disable Kubernetes
+                      liveness/readiness probes
+                    type: boolean
+                  healthPort:
+                    default: 8080
+                    description: healthPort is a collector HTTP port in the Pod that
+                      exposes the health check API
+                    format: int32
+                    maximum: 65535
+                    minimum: 1
+                    type: integer
+                  ignoreMetrics:
+                    description: ignoreMetrics is a list of tags to specify which
+                      metrics to ignore
+                    items:
+                      type: string
+                    type: array
+                  image:
+                    default: quay.io/netobserv/flowlogs-pipeline:main
+                    description: image of the collector container (including domain
+                      and tag)
+                    type: string
+                  imagePullPolicy:
+                    default: IfNotPresent
+                    description: imagePullPolicy is the Kubernetes pull policy for
+                      the image defined above
+                    enum:
+                    - IfNotPresent
+                    - Always
+                    - Never
+                    type: string
+                  kafkaConsumerAutoscaler:
+                    description: kafkaConsumerAutoscaler spec of a horizontal pod
+                      autoscaler to set up for flowlogs-pipeline-transformer, which
+                      consumes Kafka messages. This setting is ignored when Kafka
+                      is disabled.
                     properties:
                       maxReplicas:
                         description: maxReplicas is the upper limit for the number
@@ -1428,270 +1685,14 @@ spec:
                     required:
                     - maxReplicas
                     type: object
-                  consumerReplicas:
-                    default: 1
-                    description: consumerReplicas defines the number of replicas (pods)
-                      to start for flowlogs-pipeline-transformer, which consumes Kafka
-                      messages. This setting is ignored when Kafka is disabled.
+                  kafkaConsumerReplicas:
+                    default: 3
+                    description: kafkaConsumerReplicas defines the number of replicas
+                      (pods) to start for flowlogs-pipeline-transformer, which consumes
+                      Kafka messages. This setting is ignored when Kafka is disabled.
                     format: int32
                     minimum: 0
                     type: integer
-                  tls:
-                    description: tls client configuration.
-                    properties:
-                      caCert:
-                        description: caCert defines the reference of the certificate
-                          for the Certificate Authority
-                        properties:
-                          certFile:
-                            description: certFile defines the path to the certificate
-                              file name within the ConfigMap / Secret
-                            type: string
-                          certKey:
-                            description: certKey defines the path to the certificate
-                              private key file name within the ConfigMap / Secret.
-                              Omit when the key is not necessary.
-                            type: string
-                          name:
-                            description: name of the ConfigMap or Secret containing
-                              certificates
-                            type: string
-                          type:
-                            description: 'type for the certificate reference: configmap
-                              or secret'
-                            enum:
-                            - configmap
-                            - secret
-                            type: string
-                        type: object
-                      enable:
-                        default: false
-                        description: enable TLS
-                        type: boolean
-                      insecureSkipVerify:
-                        default: false
-                        description: insecureSkipVerify allows skipping client-side
-                          verification of the server certificate
-                        type: boolean
-                      userCert:
-                        description: userCert defines the user certificate reference
-                        properties:
-                          certFile:
-                            description: certFile defines the path to the certificate
-                              file name within the ConfigMap / Secret
-                            type: string
-                          certKey:
-                            description: certKey defines the path to the certificate
-                              private key file name within the ConfigMap / Secret.
-                              Omit when the key is not necessary.
-                            type: string
-                          name:
-                            description: name of the ConfigMap or Secret containing
-                              certificates
-                            type: string
-                          type:
-                            description: 'type for the certificate reference: configmap
-                              or secret'
-                            enum:
-                            - configmap
-                            - secret
-                            type: string
-                        type: object
-                    type: object
-                  topic:
-                    default: ""
-                    description: kafka topic to use. It must exist, NetObserv will
-                      not create it.
-                    type: string
-                required:
-                - address
-                - topic
-                type: object
-              loki:
-                description: loki, the flow store, client settings.
-                properties:
-                  batchSize:
-                    default: 102400
-                    description: batchSize is max batch size (in bytes) of logs to
-                      accumulate before sending
-                    format: int64
-                    minimum: 1
-                    type: integer
-                  batchWait:
-                    default: 1s
-                    description: batchWait is max time to wait before sending a batch
-                    type: string
-                  maxBackoff:
-                    default: 300s
-                    description: maxBackoff is the maximum backoff time for client
-                      connection between retries
-                    type: string
-                  maxRetries:
-                    default: 10
-                    description: maxRetries is the maximum number of retries for client
-                      connections
-                    format: int32
-                    minimum: 0
-                    type: integer
-                  minBackoff:
-                    default: 1s
-                    description: minBackoff is the initial backoff time for client
-                      connection between retries
-                    type: string
-                  querierUrl:
-                    description: querierURL specifies the address of the Loki querier
-                      service, in case it is different from the Loki ingester URL.
-                      If empty, the URL value will be used (assuming that the Loki
-                      ingester and querier are in the same server).
-                    type: string
-                  sendAuthToken:
-                    default: false
-                    description: sendAuthToken is a flag to enable or disable Authorization
-                      header from service account secret It allows authentication
-                      to loki operator gateway
-                    type: boolean
-                  staticLabels:
-                    additionalProperties:
-                      type: string
-                    default:
-                      app: netobserv-flowcollector
-                    description: staticLabels is a map of common labels to set on
-                      each flow
-                    type: object
-                  statusUrl:
-                    description: statusURL specifies the address of the Loki /ready
-                      /metrics /config endpoints, in case it is different from the
-                      Loki querier URL. If empty, the QuerierURL value will be used.
-                      This is useful to show error messages and some context in the
-                      frontend
-                    type: string
-                  tenantID:
-                    default: netobserv
-                    description: tenantID is the Loki X-Scope-OrgID that identifies
-                      the tenant for each request. it will be ignored if instanceSpec
-                      is specified
-                    type: string
-                  timeout:
-                    default: 10s
-                    description: timeout is the maximum time connection / request
-                      limit A Timeout of zero means no timeout.
-                    type: string
-                  tls:
-                    description: tls client configuration.
-                    properties:
-                      caCert:
-                        description: caCert defines the reference of the certificate
-                          for the Certificate Authority
-                        properties:
-                          certFile:
-                            description: certFile defines the path to the certificate
-                              file name within the ConfigMap / Secret
-                            type: string
-                          certKey:
-                            description: certKey defines the path to the certificate
-                              private key file name within the ConfigMap / Secret.
-                              Omit when the key is not necessary.
-                            type: string
-                          name:
-                            description: name of the ConfigMap or Secret containing
-                              certificates
-                            type: string
-                          type:
-                            description: 'type for the certificate reference: configmap
-                              or secret'
-                            enum:
-                            - configmap
-                            - secret
-                            type: string
-                        type: object
-                      enable:
-                        default: false
-                        description: enable TLS
-                        type: boolean
-                      insecureSkipVerify:
-                        default: false
-                        description: insecureSkipVerify allows skipping client-side
-                          verification of the server certificate
-                        type: boolean
-                      userCert:
-                        description: userCert defines the user certificate reference
-                        properties:
-                          certFile:
-                            description: certFile defines the path to the certificate
-                              file name within the ConfigMap / Secret
-                            type: string
-                          certKey:
-                            description: certKey defines the path to the certificate
-                              private key file name within the ConfigMap / Secret.
-                              Omit when the key is not necessary.
-                            type: string
-                          name:
-                            description: name of the ConfigMap or Secret containing
-                              certificates
-                            type: string
-                          type:
-                            description: 'type for the certificate reference: configmap
-                              or secret'
-                            enum:
-                            - configmap
-                            - secret
-                            type: string
-                        type: object
-                    type: object
-                  url:
-                    default: http://loki:3100/
-                    description: url is the address of an existing Loki service to
-                      push the flows to.
-                    type: string
-                type: object
-              namespace:
-                description: namespace where NetObserv pods are deployed. If empty,
-                  the namespace of the operator is going to be used.
-                type: string
-              processor:
-                description: processor defines the settings of the component that
-                  receives the flows from the agent, enriches them, and forwards them
-                  to the Loki persistence layer.
-                properties:
-                  dropUnusedFields:
-                    default: true
-                    description: dropUnusedFields allows, when set to true, to drop
-                      fields that are known to be unused by OVS, in order to save
-                      storage space.
-                    type: boolean
-                  enableKubeProbes:
-                    default: true
-                    description: enableKubeProbes is a flag to enable or disable Kubernetes
-                      liveness/readiness probes
-                    type: boolean
-                  healthPort:
-                    default: 8080
-                    description: healthPort is a collector HTTP port in the Pod that
-                      exposes the health check API
-                    format: int32
-                    maximum: 65535
-                    minimum: 1
-                    type: integer
-                  ignoreMetrics:
-                    description: ignoreMetrics is a list of tags to specify which
-                      metrics to ignore
-                    items:
-                      type: string
-                    type: array
-                  image:
-                    default: quay.io/netobserv/flowlogs-pipeline:main
-                    description: image of the collector container (including domain
-                      and tag)
-                    type: string
-                  imagePullPolicy:
-                    default: IfNotPresent
-                    description: imagePullPolicy is the Kubernetes pull policy for
-                      the image defined above
-                    enum:
-                    - IfNotPresent
-                    - Always
-                    - Never
-                    type: string
                   logLevel:
                     default: info
                     description: logLevel of the collector runtime
@@ -1807,7 +1808,7 @@ spec:
                 type: object
             required:
             - agent
-            - deploymentType
+            - deploymentModel
             type: object
           status:
             description: FlowCollectorStatus defines the observed state of FlowCollector

@@ -48,8 +48,8 @@ const testNamespace = "flp"
 
 func getConfig() v1alpha1.FlowCollectorSpec {
 	return v1alpha1.FlowCollectorSpec{
-		DeploymentType: v1alpha1.DeploymentTypeDirect,
-		Agent:          v1alpha1.FlowCollectorAgent{Type: v1alpha1.AgentIPFIX},
+		DeploymentModel: v1alpha1.DeploymentModelDirect,
+		Agent:           v1alpha1.FlowCollectorAgent{Type: v1alpha1.AgentIPFIX},
 		Processor: v1alpha1.FlowCollectorFLP{
 			Port:            2055,
 			Image:           image,
@@ -62,6 +62,21 @@ func getConfig() v1alpha1.FlowCollectorSpec {
 				TLS: v1alpha1.ServerTLS{
 					Type: v1alpha1.ServerTLSDisabled,
 				},
+			},
+			KafkaConsumerReplicas: 1,
+			KafkaConsumerAutoscaler: &v1alpha1.FlowCollectorHPA{
+				MinReplicas: &minReplicas,
+				MaxReplicas: maxReplicas,
+				Metrics: []ascv2.MetricSpec{{
+					Type: ascv2.ResourceMetricSourceType,
+					Resource: &ascv2.ResourceMetricSource{
+						Name: corev1.ResourceCPU,
+						Target: ascv2.MetricTarget{
+							Type:               ascv2.UtilizationMetricType,
+							AverageUtilization: &targetCPU,
+						},
+					},
+				}},
 			},
 		},
 		Loki: v1alpha1.FlowCollectorLoki{
@@ -80,30 +95,15 @@ func getConfig() v1alpha1.FlowCollectorSpec {
 			StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
 		},
 		Kafka: v1alpha1.FlowCollectorKafka{
-			Address:          "kafka",
-			Topic:            "flp",
-			ConsumerReplicas: 1,
-			ConsumerAutoscaler: &v1alpha1.FlowCollectorHPA{
-				MinReplicas: &minReplicas,
-				MaxReplicas: maxReplicas,
-				Metrics: []ascv2.MetricSpec{{
-					Type: ascv2.ResourceMetricSourceType,
-					Resource: &ascv2.ResourceMetricSource{
-						Name: corev1.ResourceCPU,
-						Target: ascv2.MetricTarget{
-							Type:               ascv2.UtilizationMetricType,
-							AverageUtilization: &targetCPU,
-						},
-					},
-				}},
-			},
+			Address: "kafka",
+			Topic:   "flp",
 		},
 	}
 }
 
 func getConfigNoHPA() v1alpha1.FlowCollectorSpec {
 	cfg := getConfig()
-	cfg.Kafka.ConsumerAutoscaler = nil
+	cfg.Processor.KafkaConsumerAutoscaler = nil
 	return cfg
 }
 
@@ -132,7 +132,7 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, v1alpha1.FlowCollector
 		},
 	}
 
-	return autoScaler, *getConfig().Kafka.ConsumerAutoscaler
+	return autoScaler, *getConfig().Processor.KafkaConsumerAutoscaler
 }
 
 func TestDaemonSetNoChange(t *testing.T) {
@@ -226,7 +226,7 @@ func TestDeploymentNoChange(t *testing.T) {
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 
-	assert.False(deploymentNeedsUpdate(first, &cfg.Processor, &cfg.Kafka, digest))
+	assert.False(deploymentNeedsUpdate(first, &cfg.Processor, digest))
 }
 
 func TestDeploymentChanged(t *testing.T) {
@@ -247,7 +247,7 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	second := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(first, &cfg.Processor, &cfg.Kafka, digest))
+	assert.True(deploymentNeedsUpdate(first, &cfg.Processor, digest))
 
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
@@ -256,7 +256,7 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	third := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(second, &cfg.Processor, &cfg.Kafka, digest))
+	assert.True(deploymentNeedsUpdate(second, &cfg.Processor, digest))
 
 	// Check resource change
 	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -268,7 +268,7 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	fourth := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(third, &cfg.Processor, &cfg.Kafka, digest))
+	assert.True(deploymentNeedsUpdate(third, &cfg.Processor, digest))
 
 	// Check reverting limits
 	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -280,17 +280,17 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	fifth := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(fourth, &cfg.Processor, &cfg.Kafka, digest))
-	assert.False(deploymentNeedsUpdate(third, &cfg.Processor, &cfg.Kafka, digest))
+	assert.True(deploymentNeedsUpdate(fourth, &cfg.Processor, digest))
+	assert.False(deploymentNeedsUpdate(third, &cfg.Processor, digest))
 
 	// Check replicas didn't change because HPA is used
 	cfg2 := cfg
-	cfg2.Kafka.ConsumerReplicas = 5
+	cfg2.Processor.KafkaConsumerReplicas = 5
 	b = newTransfoBuilder(ns, &cfg2, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 
-	assert.False(deploymentNeedsUpdate(fifth, &cfg2.Processor, &cfg2.Kafka, digest))
+	assert.False(deploymentNeedsUpdate(fifth, &cfg2.Processor, digest))
 }
 
 func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
@@ -306,12 +306,12 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 
 	// Check replicas changed (need to copy flp, as Spec.Replicas stores a pointer)
 	cfg2 := cfg
-	cfg2.Kafka.ConsumerReplicas = 5
+	cfg2.Processor.KafkaConsumerReplicas = 5
 	b = newTransfoBuilder(ns, &cfg2, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 
-	assert.True(deploymentNeedsUpdate(first, &cfg2.Processor, &cfg2.Kafka, digest))
+	assert.True(deploymentNeedsUpdate(first, &cfg2.Processor, digest))
 }
 
 func TestServiceNoChange(t *testing.T) {
@@ -492,7 +492,7 @@ func TestPipelineConfig(t *testing.T) {
 	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 
 	// Kafka Ingester
-	cfg.DeploymentType = v1alpha1.DeploymentTypeKafka
+	cfg.DeploymentModel = v1alpha1.DeploymentModelKafka
 	bi := newIngestBuilder(ns, &cfg, true)
 	stages, parameters, err = bi.buildPipelineConfig()
 	assert.NoError(err)

@@ -43,8 +43,8 @@ func flowCollectorEBPFSpecs() {
 			desired := &flowsv1alpha1.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
-					Namespace:      operatorNamespace,
-					DeploymentType: flowsv1alpha1.DeploymentTypeDirect,
+					Namespace:       operatorNamespace,
+					DeploymentModel: flowsv1alpha1.DeploymentModelDirect,
 					Processor: flowsv1alpha1.FlowCollectorFLP{
 						Port:            9999,
 						ImagePullPolicy: "Never",
@@ -239,9 +239,9 @@ func flowCollectorEBPFKafkaSpecs() {
 			descriptor := &flowsv1alpha1.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
-					Namespace:      operatorNamespace,
-					Agent:          flowsv1alpha1.FlowCollectorAgent{Type: "EBPF"},
-					DeploymentType: flowsv1alpha1.DeploymentTypeKafka,
+					Namespace:       operatorNamespace,
+					Agent:           flowsv1alpha1.FlowCollectorAgent{Type: "EBPF"},
+					DeploymentModel: flowsv1alpha1.DeploymentModelKafka,
 					Kafka: flowsv1alpha1.FlowCollectorKafka{
 						Address: "kafka-cluster-kafka-bootstrap",
 						Topic:   "network-flows",

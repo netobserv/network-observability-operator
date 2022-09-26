@@ -143,10 +143,10 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		ContainerPort: b.desired.Processor.MetricsServer.Port,
 	})
 
-	if b.desired.ProfilePort > 0 {
+	if b.desired.Processor.ProfilePort > 0 {
 		ports = append(ports, corev1.ContainerPort{
 			Name:          profilePortName,
-			ContainerPort: b.desired.ProfilePort,
+			ContainerPort: b.desired.Processor.ProfilePort,
 			Protocol:      corev1.ProtocolTCP,
 		})
 	}
@@ -415,9 +415,9 @@ func (b *builder) configMap(stages []config.Stage, parameters []config.StagePara
 		"pipeline":   stages,
 		"parameters": parameters,
 	}
-	if b.desired.ProfilePort > 0 {
+	if b.desired.Processor.ProfilePort > 0 {
 		config["profile"] = map[string]interface{}{
-			"port": b.desired.ProfilePort,
+			"port": b.desired.Processor.ProfilePort,
 		}
 	}
 

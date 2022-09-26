@@ -32,7 +32,7 @@ func (b *transfoBuilder) deployment(configDigest string) *appsv1.Deployment {
 			Labels:    b.generic.labels,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &b.generic.desired.Kafka.ConsumerReplicas,
+			Replicas: &b.generic.desired.Processor.KafkaConsumerReplicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: b.generic.selector,
 			},
@@ -54,7 +54,7 @@ func (b *transfoBuilder) buildPipelineConfig() ([]config.Stage, []config.StagePa
 	// For now, we leave this communication via JSON and just setup protobuf ingestion when
 	// the transformer is communicating directly via eBPF agent
 	decoder := api.Decoder{Type: "protobuf"}
-	if b.agent == flowsv1alpha1.AgentIPFIX {
+	if b.generic.desired.UseIPFIX() {
 		decoder = api.Decoder{Type: "json"}
 	}
 	pipeline := config.NewKafkaPipeline("kafka-read", api.IngestKafka{
@@ -93,9 +93,9 @@ func (b *transfoBuilder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 				Kind:       "Deployment",
 				Name:       b.generic.name(),
 			},
-			MinReplicas: b.generic.desired.Kafka.ConsumerAutoscaler.MinReplicas,
-			MaxReplicas: b.generic.desired.Kafka.ConsumerAutoscaler.MaxReplicas,
-			Metrics:     b.generic.desired.Kafka.ConsumerAutoscaler.Metrics,
+			MinReplicas: b.generic.desired.Processor.KafkaConsumerAutoscaler.MinReplicas,
+			MaxReplicas: b.generic.desired.Processor.KafkaConsumerAutoscaler.MaxReplicas,
+			Metrics:     b.generic.desired.Processor.KafkaConsumerAutoscaler.Metrics,
 		},
 	}
 }
