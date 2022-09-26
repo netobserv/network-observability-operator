@@ -26,19 +26,38 @@ import (
 )
 
 type Options struct {
-	PipeLine   string
-	Parameters string
-	Health     Health
+	PipeLine        string
+	Parameters      string
+	MetricsSettings string
+	Health          Health
+	Profile         Profile
 }
 
 type ConfigFileStruct struct {
-	LogLevel   string       `yaml:"log-level,omitempty" json:"log-level,omitempty"`
-	Pipeline   []Stage      `yaml:"pipeline,omitempty" json:"pipeline,omitempty"`
-	Parameters []StageParam `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	LogLevel        string          `yaml:"log-level,omitempty" json:"log-level,omitempty"`
+	Pipeline        []Stage         `yaml:"pipeline,omitempty" json:"pipeline,omitempty"`
+	Parameters      []StageParam    `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	MetricsSettings MetricsSettings `yaml:"metricsSettings,omitempty" json:"metricsSettings,omitempty"`
 }
 
 type Health struct {
 	Port string
+}
+
+type Profile struct {
+	Port int
+}
+
+// MetricsSettings is similar to api.PromEncode, but is global to the application, ie. it also works with operational metrics.
+// Also, currently FLP doesn't support defining more than one PromEncode stage. If this feature is added later, these global settings
+// will help configuring common setting for all PromEncode stages - PromEncode settings would then act as overrides.
+type MetricsSettings struct {
+	// TODO: manage global metrics server, ie. not coupled to PromEncode, cf https://github.com/netobserv/flowlogs-pipeline/issues/302
+	// Port       int              `yaml:"port,omitempty" json:"port,omitempty" doc:"port number to expose \"/metrics\" endpoint"`
+	// TLS        *PromTLSConf     `yaml:"tls,omitempty" json:"tls,omitempty" doc:"TLS configuration for the prometheus endpoint"`
+	// ExpiryTime int              `yaml:"expiryTime,omitempty" json:"expiryTime,omitempty" doc:"seconds of no-flow to wait before deleting prometheus data item"`
+	Prefix  string `yaml:"prefix,omitempty" json:"prefix,omitempty"`
+	NoPanic bool   `yaml:"noPanic,omitempty" json:"noPanic,omitempty"`
 }
 
 type Stage struct {
@@ -81,6 +100,7 @@ type Extract struct {
 	Type       string                    `yaml:"type" json:"type"`
 	Aggregates []api.AggregateDefinition `yaml:"aggregates,omitempty" json:"aggregates,omitempty"`
 	ConnTrack  *api.ConnTrack            `yaml:"conntrack,omitempty" json:"conntrack,omitempty"`
+	Timebased  *api.ExtractTimebased     `yaml:"timebased,omitempty" json:"timebased,omitempty"`
 }
 
 type Encode struct {
@@ -102,17 +122,27 @@ func ParseConfig(opts Options) (ConfigFileStruct, error) {
 	logrus.Debugf("opts.PipeLine = %v ", opts.PipeLine)
 	err := JsonUnmarshalStrict([]byte(opts.PipeLine), &out.Pipeline)
 	if err != nil {
-		logrus.Errorf("error when reading config file: %v", err)
+		logrus.Errorf("error when parsing pipeline: %v", err)
 		return out, err
 	}
 	logrus.Debugf("stages = %v ", out.Pipeline)
 
 	err = JsonUnmarshalStrict([]byte(opts.Parameters), &out.Parameters)
 	if err != nil {
-		logrus.Errorf("error when reading config file: %v", err)
+		logrus.Errorf("error when parsing pipeline parameters: %v", err)
 		return out, err
 	}
 	logrus.Debugf("params = %v ", out.Parameters)
+
+	if opts.MetricsSettings != "" {
+		err = JsonUnmarshalStrict([]byte(opts.MetricsSettings), &out.MetricsSettings)
+		if err != nil {
+			logrus.Errorf("error when parsing global metrics settings: %v", err)
+			return out, err
+		}
+		logrus.Debugf("metrics settings = %v ", out.MetricsSettings)
+	}
+
 	return out, nil
 }
 

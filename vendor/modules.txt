@@ -94,7 +94,7 @@ github.com/modern-go/reflect2
 github.com/munnerz/goautoneg
 # github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 github.com/mwitkow/go-conntrack
-# github.com/netobserv/flowlogs-pipeline v0.1.4-0.20220901073159-b399de560bbf
+# github.com/netobserv/flowlogs-pipeline v0.1.4-0.20220927094208-0949fbe83d55
 ## explicit
 github.com/netobserv/flowlogs-pipeline/pkg/api
 github.com/netobserv/flowlogs-pipeline/pkg/confgen

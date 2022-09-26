@@ -34,6 +34,7 @@ type Options struct {
 	SrcFolder                string
 	SkipWithTags             []string
 	GenerateStages           []string
+	GlobalMetricsPrefix      string
 }
 
 type ConfigVisualization struct {

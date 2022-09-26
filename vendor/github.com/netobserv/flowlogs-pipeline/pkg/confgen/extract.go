@@ -19,27 +19,48 @@ package confgen
 
 import (
 	jsoniter "github.com/json-iterator/go"
+	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	"github.com/netobserv/flowlogs-pipeline/pkg/pipeline/extract/aggregate"
 	log "github.com/sirupsen/logrus"
 )
 
-func (cg *ConfGen) parseExtract(extract *map[string]interface{}) (*aggregate.Definitions, error) {
+func (cg *ConfGen) parseExtract(extract *map[string]interface{}) (*aggregate.Definitions, *api.ExtractTimebased, error) {
 	var jsoniterJson = jsoniter.ConfigCompatibleWithStandardLibrary
 	aggregateExtract := (*extract)["aggregates"]
 	b, err := jsoniterJson.Marshal(&aggregateExtract)
 	if err != nil {
 		log.Debugf("jsoniterJson.Marshal err: %v ", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	var jsonNetworkAggregate aggregate.Definitions
 	err = config.JsonUnmarshalStrict(b, &jsonNetworkAggregate)
 	if err != nil {
 		log.Debugf("Unmarshal aggregate.Definitions err: %v ", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	cg.aggregateDefinitions = append(cg.aggregateDefinitions, jsonNetworkAggregate...)
-	return &jsonNetworkAggregate, nil
+
+	timebasedExtract, ok := (*extract)["timebased"]
+	if !ok {
+		return &jsonNetworkAggregate, nil, nil
+	}
+	b, err = jsoniterJson.Marshal(&timebasedExtract)
+	if err != nil {
+		log.Debugf("jsoniterJson.Marshal err: %v ", err)
+		return nil, nil, err
+	}
+
+	var jsonTimebasedTopKs api.ExtractTimebased
+	err = config.JsonUnmarshalStrict(b, &jsonTimebasedTopKs)
+	if err != nil {
+		log.Debugf("Unmarshal api.ExtractTimebased err: %v ", err)
+		return nil, nil, err
+	}
+
+	cg.timebasedTopKs.Rules = append(cg.timebasedTopKs.Rules, jsonTimebasedTopKs.Rules...)
+
+	return &jsonNetworkAggregate, &jsonTimebasedTopKs, nil
 }

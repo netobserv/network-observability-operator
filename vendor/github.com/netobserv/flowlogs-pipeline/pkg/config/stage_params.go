@@ -53,6 +53,10 @@ func NewConnTrackParams(name string, ct api.ConnTrack) StageParam {
 	return StageParam{Name: name, Extract: &Extract{Type: api.ConnTrackType, ConnTrack: &ct}}
 }
 
+func NewTimbasedParams(name string, ct api.ExtractTimebased) StageParam {
+	return StageParam{Name: name, Extract: &Extract{Type: api.TimebasedType, Timebased: &ct}}
+}
+
 func NewEncodePrometheusParams(name string, prom api.PromEncode) StageParam {
 	return StageParam{Name: name, Encode: &Encode{Type: api.PromType, Prom: &prom}}
 }

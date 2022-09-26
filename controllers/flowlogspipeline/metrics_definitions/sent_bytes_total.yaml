@@ -1,0 +1,30 @@
+#flp_confgen
+description:
+  This metric observes the outgoing traffic
+details:
+  Sum bytes for outgoing traffic per source and destination namespaces and owners
+usage:
+  Evaluate network outgoing usage breakdown per source and destination namespaces and owners
+tags:
+  - bandwidth
+  - rate
+  - namespace
+  - owner
+  - outgoing
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: sent_bytes_total
+        type: counter
+        valuekey: Bytes
+        filter:
+          key: FlowDirection
+          value: "1"
+        labels:
+          - SrcK8S_Namespace
+          - DstK8S_Namespace
+          - SrcK8S_OwnerName
+          - DstK8S_OwnerName
+          - SrcK8S_OwnerType
+          - DstK8S_OwnerType

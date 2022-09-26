@@ -2161,7 +2161,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b><a href="#flowcollectorspecprocessormetricsserver">metricsServer</a></b></td>
         <td>object</td>
         <td>
-          Metrics server endpoint configuration for Prometheus scraper<br/>
+          metricsServer endpoint configuration for Prometheus scraper<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3114,7 +3114,7 @@ target specifies the target value for the given metric
 
 
 
-Metrics server endpoint configuration for Prometheus scraper
+metricsServer endpoint configuration for Prometheus scraper
 
 <table>
     <thead>

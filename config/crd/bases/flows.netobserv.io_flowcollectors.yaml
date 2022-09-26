@@ -1709,7 +1709,7 @@ spec:
                     - panic
                     type: string
                   metricsServer:
-                    description: Metrics server endpoint configuration for Prometheus
+                    description: metricsServer endpoint configuration for Prometheus
                       scraper
                     properties:
                       port:

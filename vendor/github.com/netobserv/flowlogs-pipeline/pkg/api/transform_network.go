@@ -24,8 +24,19 @@ type TransformNetwork struct {
 	ProtocolsFile  string                `yaml:"protocolsFile,omitempty" json:"protocolsFile,omitempty" doc:"path to protocols file (optional, default: /etc/protocols)"`
 }
 
+func (tn *TransformNetwork) GetServiceFiles() (string, string) {
+	p := tn.ProtocolsFile
+	if p == "" {
+		p = "/etc/protocols"
+	}
+	s := tn.ServicesFile
+	if s == "" {
+		s = "/etc/services"
+	}
+	return p, s
+}
+
 type TransformNetworkOperationEnum struct {
-	ConnTracking  string `yaml:"conn_tracking" json:"conn_tracking" doc:"set output field to value of parameters field only for new flows by matching template in input field"`
 	AddRegExIf    string `yaml:"add_regex_if" json:"add_regex_if" doc:"add output field if input field satisfies regex pattern from parameters field"`
 	AddIf         string `yaml:"add_if" json:"add_if" doc:"add output field if input field satisfies criteria from parameters field"`
 	AddSubnet     string `yaml:"add_subnet" json:"add_subnet" doc:"add output subnet field from input field and prefix length from parameters field"`

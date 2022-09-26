@@ -31,6 +31,7 @@ type enums struct {
 	ConnTrackOperationEnum        ConnTrackOperationEnum
 	ConnTrackOutputRecordTypeEnum ConnTrackOutputRecordTypeEnum
 	DecoderEnum                   DecoderEnum
+	FilterOperationEnum           FilterOperationEnum
 }
 
 type enumNameCacheKey struct {
