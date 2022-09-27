@@ -277,7 +277,7 @@ type FlowCollectorFLP struct {
 	// 4789,6081,500, and 4500
 	Port int32 `json:"port,omitempty"`
 
-	// Metrics server endpoint configuration for Prometheus scraper
+	// metricsServer endpoint configuration for Prometheus scraper
 	// +optional
 	MetricsServer MetricsServerConfig `json:"metricsServer,omitempty"`
 
