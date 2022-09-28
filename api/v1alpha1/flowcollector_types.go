@@ -554,7 +554,8 @@ type FlowCollectorStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster
 //+kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.spec.agent.type`
-//+kubebuilder:printcolumn:name="Kafka",type="boolean",JSONPath=`.spec.kafka.enable`
+//+kubebuilder:printcolumn:name="Sampling (EBPF)",type="string",JSONPath=`.spec.agent.ebpf.sampling`
+//+kubebuilder:printcolumn:name="Deployment Model",type="string",JSONPath=`.spec.deploymentModel`
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
 
 // FlowCollector is the Schema for the flowcollectors API, which pilots and configures netflow collection.

@@ -20,9 +20,12 @@ spec:
     - jsonPath: .spec.agent.type
       name: Agent
       type: string
-    - jsonPath: .spec.kafka.enable
-      name: Kafka
-      type: boolean
+    - jsonPath: .spec.agent.ebpf.sampling
+      name: Sampling (EBPF)
+      type: string
+    - jsonPath: .spec.deploymentModel
+      name: Deployment Model
+      type: string
     - jsonPath: .status.conditions[*].reason
       name: Status
       type: string
