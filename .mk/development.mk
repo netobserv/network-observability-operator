@@ -1,7 +1,7 @@
 ##@ Development
 
 # use default cluster storage class
-DEFAULT_SC=$$(kubectl get storageclass -o=jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
+DEFAULT_SC := $(shell kubectl get storageclass -o=jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
 
 .PHONY: deploy-loki
 deploy-loki: ## Deploy loki.
@@ -54,6 +54,7 @@ deploy-kafka:
 	kubectl apply -f "https://strimzi.io/install/latest?namespace="$(NAMESPACE) -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/metrics-config.yaml" -n $(NAMESPACE)
 	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/default.yaml" | envsubst | kubectl apply -n $(NAMESPACE) -f -
+	@echo -e "\n==>Using storage class ${DEFAULT_SC}"
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/topic.yaml" -n $(NAMESPACE)
 	kubectl wait --timeout=180s --for=condition=ready kafkatopic network-flows -n $(NAMESPACE)
 
@@ -64,6 +65,7 @@ deploy-kafka-tls:
 	kubectl apply -f "https://strimzi.io/install/latest?namespace="$(NAMESPACE) -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/metrics-config.yaml" -n $(NAMESPACE)
 	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/tls.yaml" | envsubst | kubectl apply -n $(NAMESPACE) -f - 
+	@echo -e "\n==>Using storage class ${DEFAULT_SC}"
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/topic.yaml" -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/user.yaml" -n $(NAMESPACE)
 	kubectl wait --timeout=180s --for=condition=ready kafkauser flp-kafka -n $(NAMESPACE)
