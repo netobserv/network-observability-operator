@@ -18,7 +18,6 @@
 package aggregate
 
 import (
-	"container/heap"
 	"fmt"
 	"math"
 	"sort"
@@ -65,7 +64,7 @@ func (aggregate Aggregate) LabelsFromEntry(entry config.GenericMap) (Labels, boo
 	allLabelsFound := true
 	labels := Labels{}
 
-	for _, key := range aggregate.Definition.By {
+	for _, key := range aggregate.Definition.GroupByKeys {
 		value, ok := entry[key]
 		if !ok {
 			allLabelsFound = false
@@ -130,10 +129,10 @@ func (aggregate Aggregate) UpdateByEntry(entry config.GenericMap, normalizedValu
 	oldEntry, ok := aggregate.cache.GetCacheEntry(string(normalizedValues))
 	if !ok {
 		groupState = &GroupState{normalizedValues: normalizedValues, labels: labels}
-		initVal := getInitValue(string(aggregate.Definition.Operation))
+		initVal := getInitValue(string(aggregate.Definition.OperationType))
 		groupState.totalValue = initVal
 		groupState.recentOpValue = initVal
-		if aggregate.Definition.Operation == OperationRawValues {
+		if aggregate.Definition.OperationType == OperationRawValues {
 			groupState.recentRawValues = make([]float64, 0)
 		}
 	} else {
@@ -142,15 +141,15 @@ func (aggregate Aggregate) UpdateByEntry(entry config.GenericMap, normalizedValu
 	aggregate.cache.UpdateCacheEntry(string(normalizedValues), groupState)
 
 	// update value
-	recordKey := aggregate.Definition.RecordKey
-	operation := aggregate.Definition.Operation
+	operationKey := aggregate.Definition.OperationKey
+	operation := aggregate.Definition.OperationType
 
 	if operation == OperationCount {
 		groupState.totalValue = float64(groupState.totalCount + 1)
 		groupState.recentOpValue = float64(groupState.recentCount + 1)
 	} else {
-		if recordKey != "" {
-			value, ok := entry[recordKey]
+		if operationKey != "" {
+			value, ok := entry[operationKey]
 			if ok {
 				valueString := fmt.Sprintf("%v", value)
 				valueFloat64, _ := strconv.ParseFloat(valueString, 64)
@@ -211,107 +210,33 @@ func (aggregate Aggregate) GetMetrics() []config.GenericMap {
 		group := value.(*GroupState)
 		newEntry := config.GenericMap{
 			"name":              aggregate.Definition.Name,
-			"operation":         aggregate.Definition.Operation,
-			"record_key":        aggregate.Definition.RecordKey,
-			"by":                strings.Join(aggregate.Definition.By, ","),
+			"operation_type":    aggregate.Definition.OperationType,
+			"operation_key":     aggregate.Definition.OperationKey,
+			"by":                strings.Join(aggregate.Definition.GroupByKeys, ","),
 			"aggregate":         string(group.normalizedValues),
 			"total_value":       group.totalValue,
 			"total_count":       group.totalCount,
 			"recent_raw_values": group.recentRawValues,
 			"recent_op_value":   group.recentOpValue,
 			"recent_count":      group.recentCount,
-			strings.Join(aggregate.Definition.By, "_"): string(group.normalizedValues),
+			strings.Join(aggregate.Definition.GroupByKeys, "_"): string(group.normalizedValues),
 		}
-		// add the items in aggregate.Definition.By individually to the entry
-		for _, key := range aggregate.Definition.By {
+		// add the items in aggregate.Definition.GroupByKeys individually to the entry
+		for _, key := range aggregate.Definition.GroupByKeys {
 			newEntry[key] = group.labels[key]
 		}
 		metrics = append(metrics, newEntry)
 		// Once reported, we reset the recentXXX fields
-		if aggregate.Definition.Operation == OperationRawValues {
+		if aggregate.Definition.OperationType == OperationRawValues {
 			group.recentRawValues = make([]float64, 0)
 		}
 		group.recentCount = 0
-		group.recentOpValue = getInitValue(string(aggregate.Definition.Operation))
+		group.recentOpValue = getInitValue(string(aggregate.Definition.OperationType))
 	})
-
-	if aggregate.Definition.TopK > 0 {
-		metrics = aggregate.computeTopK(metrics)
-	}
 
 	return metrics
 }
 
 func (aggregate Aggregate) Cleanup(entry interface{}) {
 	// nothing special to do in this callback function
-}
-
-// functions to manipulate a heap to generate TopK entries
-// We need to implement the heap interface: Len(), Less(), Swap(), Push(), Pop()
-
-type heapItem struct {
-	value   float64
-	metrics *config.GenericMap
-}
-
-type topkHeap []heapItem
-
-func (h topkHeap) Len() int {
-	return len(h)
-}
-
-func (h topkHeap) Less(i, j int) bool {
-	return h[i].value < h[j].value
-}
-
-func (h topkHeap) Swap(i, j int) {
-	h[i], h[j] = h[j], h[i]
-}
-
-func (h *topkHeap) Push(x interface{}) {
-	*h = append(*h, x.(heapItem))
-}
-
-func (h *topkHeap) Pop() interface{} {
-	old := *h
-	n := len(old)
-	x := old[n-1]
-	*h = old[0 : n-1]
-	return x
-}
-
-func (aggregate Aggregate) computeTopK(inputMetrics []config.GenericMap) []config.GenericMap {
-	// maintain a heap with k items, always dropping the lowest
-	// we will be left with the TopK items
-	var prevMin float64
-	prevMin = -math.MaxFloat64
-	topk := aggregate.Definition.TopK
-	h := &topkHeap{}
-	for index, metricMap := range inputMetrics {
-		val := metricMap["total_value"].(float64)
-		if val < prevMin {
-			continue
-		}
-		item := heapItem{
-			metrics: &inputMetrics[index],
-			value:   val,
-		}
-		heap.Push(h, item)
-		if h.Len() > topk {
-			x := heap.Pop(h)
-			prevMin = x.(heapItem).value
-		}
-	}
-	log.Debugf("heap: %v", h)
-
-	// convert the remaining heap to a sorted array
-	result := make([]config.GenericMap, h.Len())
-	heapLen := h.Len()
-	for i := heapLen; i > 0; i-- {
-		poppedItem := heap.Pop(h).(heapItem)
-		log.Debugf("poppedItem: %v", poppedItem)
-		result[i-1] = *poppedItem.metrics
-	}
-	log.Debugf("topk items: %v", result)
-	return result
 }

@@ -412,8 +412,9 @@ func (b *builder) configMap(stages []config.Stage, parameters []config.StagePara
 		"health": map[string]interface{}{
 			"port": b.desired.Processor.HealthPort,
 		},
-		"pipeline":   stages,
-		"parameters": parameters,
+		"pipeline":         stages,
+		"parameters":       parameters,
+		"metrics-settings": config.MetricsSettings{Prefix: "netobserv_", NoPanic: true},
 	}
 	if b.desired.Processor.ProfilePort > 0 {
 		config["profile"] = map[string]interface{}{

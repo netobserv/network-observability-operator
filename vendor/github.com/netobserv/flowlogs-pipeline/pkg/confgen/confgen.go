@@ -43,6 +43,7 @@ type Definition struct {
 	Tags                 []string
 	TransformNetwork     *api.TransformNetwork
 	AggregateDefinitions *aggregate.Definitions
+	ExtractTimebased     *api.ExtractTimebased
 	PromEncode           *api.PromEncode
 	Visualization        *Visualization
 }
@@ -54,6 +55,7 @@ type ConfGen struct {
 	config               *Config
 	transformRules       api.NetworkTransformRules
 	aggregateDefinitions aggregate.Definitions
+	timebasedTopKs       api.ExtractTimebased
 	promMetrics          api.PromMetricsItems
 	visualizations       Visualizations
 	definitions          Definitions
@@ -178,7 +180,7 @@ func (cg *ConfGen) ParseDefinition(name string, bytes []byte) error {
 	}
 
 	// parse extract
-	definition.AggregateDefinitions, err = cg.parseExtract(&defFile.Extract)
+	definition.AggregateDefinitions, definition.ExtractTimebased, err = cg.parseExtract(&defFile.Extract)
 	if err != nil {
 		log.Debugf("parseExtract err: %v ", err)
 		return err
