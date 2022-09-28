@@ -1,5 +1,8 @@
 ##@ Development
 
+# use default cluster storage class
+DEFAULT_SC=$$(kubectl get storageclass -o=jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
+
 .PHONY: deploy-loki
 deploy-loki: ## Deploy loki.
 	@echo -e "\n==> Deploy loki"
@@ -50,7 +53,7 @@ deploy-kafka:
 	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
 	kubectl apply -f "https://strimzi.io/install/latest?namespace="$(NAMESPACE) -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/metrics-config.yaml" -n $(NAMESPACE)
-	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/default.yaml" -n $(NAMESPACE)
+	curl -s L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/default.yaml" | envsubst | kubectl apply -n $(NAMESPACE) -f -
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/topic.yaml" -n $(NAMESPACE)
 	kubectl wait --timeout=180s --for=condition=ready kafkatopic network-flows -n $(NAMESPACE)
 
@@ -60,7 +63,7 @@ deploy-kafka-tls:
 	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
 	kubectl apply -f "https://strimzi.io/install/latest?namespace="$(NAMESPACE) -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/metrics-config.yaml" -n $(NAMESPACE)
-	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/tls.yaml" -n $(NAMESPACE)
+	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/tls.yaml" | envsubst | kubectl apply -n $(NAMESPACE) -f - 
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/topic.yaml" -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/user.yaml" -n $(NAMESPACE)
 	kubectl wait --timeout=180s --for=condition=ready kafkauser flp-kafka -n $(NAMESPACE)
