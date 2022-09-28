@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"net"
 	"strings"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,7 +22,6 @@ import (
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
 	"github.com/netobserv/network-observability-operator/pkg/conditions"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 const timeout = time.Second * 10
@@ -32,10 +31,6 @@ const interval = 50 * time.Millisecond
 func flowCollectorControllerSpecs() {
 	const operatorNamespace = "main-namespace"
 	const otherNamespace = "other-namespace"
-	ipResolver.On("LookupIP", constants.FLPName+"."+operatorNamespace).
-		Return([]net.IP{net.IPv4(11, 22, 33, 44)}, nil)
-	ipResolver.On("LookupIP", constants.FLPName+"."+otherNamespace).
-		Return([]net.IP{net.IPv4(111, 122, 133, 144)}, nil)
 	crKey := types.NamespacedName{
 		Name: "cluster",
 	}
@@ -67,6 +62,10 @@ func flowCollectorControllerSpecs() {
 		Name:      "netobserv-plugin",
 		Namespace: otherNamespace,
 	}
+	rbKeyIngest := types.NamespacedName{Name: flowlogspipeline.RoleBindingName(flowlogspipeline.ConfKafkaIngester)}
+	rbKeyTransform := types.NamespacedName{Name: flowlogspipeline.RoleBindingName(flowlogspipeline.ConfKafkaTransformer)}
+	rbKeyIngestMono := types.NamespacedName{Name: flowlogspipeline.RoleBindingMonoName(flowlogspipeline.ConfKafkaIngester)}
+	rbKeyTransformMono := types.NamespacedName{Name: flowlogspipeline.RoleBindingMonoName(flowlogspipeline.ConfKafkaTransformer)}
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
@@ -76,40 +75,22 @@ func flowCollectorControllerSpecs() {
 		// Add any teardown steps that needs to be executed after each test
 	})
 
-	// Add Tests for OpenAPI validation (or additonal CRD features) specified in
-	// your API definition.
-	// Avoid adding tests for vanilla CRUD operations because they would
-	// test Kubernetes API server, which isn't the goal here.
-	Context("Deployment with autho-scaling", func() {
-		var oldDigest string
+	Context("Deploying as DaemonSet", func() {
+		var digest string
+		ds := appsv1.DaemonSet{}
 		It("Should create successfully", func() {
-
 			created := &flowsv1alpha1.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: crKey.Name,
 				},
 				Spec: flowsv1alpha1.FlowCollectorSpec{
-					Namespace: operatorNamespace,
+					Namespace:       operatorNamespace,
+					DeploymentModel: flowsv1alpha1.DeploymentModelDirect,
 					Processor: flowsv1alpha1.FlowCollectorFLP{
-						Kind:            "Deployment",
 						Port:            9999,
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
 						Image:           "testimg:latest",
-						HPA: &flowsv1alpha1.FlowCollectorHPA{
-							MinReplicas: pointer.Int32(1),
-							MaxReplicas: 1,
-							Metrics: []ascv2.MetricSpec{{
-								Type: ascv2.ResourceMetricSourceType,
-								Resource: &ascv2.ResourceMetricSource{
-									Name: v1.ResourceCPU,
-									Target: ascv2.MetricTarget{
-										Type:               ascv2.UtilizationMetricType,
-										AverageUtilization: pointer.Int32(90),
-									},
-								},
-							}},
-						},
 					},
 					Agent: flowsv1alpha1.FlowCollectorAgent{
 						Type: "IPFIX",
@@ -121,20 +102,6 @@ func flowCollectorControllerSpecs() {
 						Port:            9001,
 						ImagePullPolicy: "Never",
 						Image:           "testimg:latest",
-						HPA: &flowsv1alpha1.FlowCollectorHPA{
-							MinReplicas: pointer.Int32(1),
-							MaxReplicas: 1,
-							Metrics: []ascv2.MetricSpec{{
-								Type: ascv2.ResourceMetricSourceType,
-								Resource: &ascv2.ResourceMetricSource{
-									Name: v1.ResourceCPU,
-									Target: ascv2.MetricTarget{
-										Type:               ascv2.UtilizationMetricType,
-										AverageUtilization: pointer.Int32(90),
-									},
-								},
-							}},
-						},
 						PortNaming: flowsv1alpha1.ConsolePluginPortConfig{
 							Enable: true,
 							PortNames: map[string]string{
@@ -148,34 +115,17 @@ func flowCollectorControllerSpecs() {
 			// Create
 			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
 
-			By("Expecting to create the flowlogs-pipeline Deployment")
-			Eventually(func() interface{} {
-				dp := appsv1.Deployment{}
-				if err := k8sClient.Get(ctx, flpKey1, &dp); err != nil {
+			By("Expecting to create the flowlogs-pipeline DaemonSet")
+			Eventually(func() error {
+				if err := k8sClient.Get(ctx, flpKey1, &ds); err != nil {
 					return err
 				}
-				oldDigest = dp.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
-				if oldDigest == "" {
+				digest = ds.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
+				if digest == "" {
 					return fmt.Errorf("%q annotation can't be empty", flowlogspipeline.PodConfigurationDigest)
 				}
-
-				return *dp.Spec.Replicas
-			}, timeout, interval).Should(Equal(int32(1)))
-
-			svc := v1.Service{}
-			By("Expecting to create the flowlogs-pipeline Service")
-			Eventually(func() interface{} {
-				if err := k8sClient.Get(ctx, flpKey1, &svc); err != nil {
-					return err
-				}
-				return svc
-			}, timeout, interval).Should(Satisfy(func(svc v1.Service) bool {
-				return svc.Labels != nil && svc.Labels["app"] == constants.FLPName &&
-					svc.Spec.Selector != nil && svc.Spec.Selector["app"] == constants.FLPName &&
-					len(svc.Spec.Ports) == 1 &&
-					svc.Spec.Ports[0].Protocol == v1.ProtocolUDP &&
-					svc.Spec.Ports[0].Port == 9999
-			}), "unexpected service contents", helper.AsyncJSON{Ptr: svc})
+				return nil
+			}, timeout, interval).Should(Succeed())
 
 			By("Expecting to create the flowlogs-pipeline ServiceAccount")
 			Eventually(func() interface{} {
@@ -188,6 +138,33 @@ func flowCollectorControllerSpecs() {
 				return svcAcc.Labels != nil && svcAcc.Labels["app"] == constants.FLPName
 			}))
 
+			By("Expecting to create two flowlogs-pipeline role binding")
+			rb1 := rbacv1.ClusterRoleBinding{}
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyIngestMono, &rb1)
+			}, timeout, interval).Should(Succeed())
+			Expect(rb1.Subjects).Should(HaveLen(1))
+			Expect(rb1.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
+			Expect(rb1.RoleRef.Name).Should(Equal("flowlogs-pipeline-ingester"))
+
+			rb2 := rbacv1.ClusterRoleBinding{}
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyTransformMono, &rb2)
+			}, timeout, interval).Should(Succeed())
+			Expect(rb2.Subjects).Should(HaveLen(1))
+			Expect(rb2.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
+			Expect(rb2.RoleRef.Name).Should(Equal("flowlogs-pipeline-transformer"))
+
+			By("Not expecting transformer role binding")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyIngest, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-ingester-role" not found`))
+
+			By("Not expecting ingester role binding")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyTransform, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-transformer-role" not found`))
+
 			By("Creating the ovn-flows-configmap with the configuration from the FlowCollector")
 			Eventually(func() interface{} {
 				ofc := v1.ConfigMap{}
@@ -197,7 +174,7 @@ func flowCollectorControllerSpecs() {
 				return ofc.Data
 			}, timeout, interval).Should(Equal(map[string]string{
 				"sampling":           "200",
-				"sharedTarget":       "11.22.33.44:9999",
+				"nodePort":           "9999",
 				"cacheMaxFlows":      "400",
 				"cacheActiveTimeout": "20s",
 			}))
@@ -205,33 +182,89 @@ func flowCollectorControllerSpecs() {
 
 		It("Should update successfully", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Agent.IPFIX.CacheActiveTimeout = "30s"
-				fc.Spec.Agent.IPFIX.Sampling = 1234
-				fc.Spec.Processor.Port = 1999
+				fc.Spec.Processor = flowsv1alpha1.FlowCollectorFLP{
+					Port:            7891,
+					ImagePullPolicy: "Never",
+					LogLevel:        "error",
+					Image:           "testimg:latest",
+				}
+				fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}
+				fc.Spec.Agent.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
+					Sampling:           400,
+					CacheActiveTimeout: "30s",
+					CacheMaxFlows:      1000,
+				}
 			})
 
-			By("Expecting updated flowlogs-pipeline Service port")
-			Eventually(func() interface{} {
-				svc := v1.Service{}
-				if err := k8sClient.Get(ctx, flpKey1, &svc); err != nil {
-					return err
-				}
-				return svc.Spec.Ports[0].Port
-			}, timeout, interval).Should(Equal(int32(1999)))
+			By("CR updated", func() {
+				Eventually(func() error {
+					err := k8sClient.Get(ctx, flpKey1, &ds)
+					if err != nil {
+						return err
+					}
+					return checkDigestUpdate(&digest, ds.Spec.Template.Annotations)
+				}, timeout, interval).Should(Succeed())
+			})
 
-			By("Expecting that ovn-flows-configmap is updated accordingly")
-			Eventually(func() interface{} {
-				ofc := v1.ConfigMap{}
-				if err := k8sClient.Get(ctx, ovsConfigMapKey, &ofc); err != nil {
+			By("Expecting to create the ovn-flows-configmap with the configuration from the FlowCollector", func() {
+				Eventually(func() interface{} {
+					ofc := v1.ConfigMap{}
+					if err := k8sClient.Get(ctx, ovsConfigMapKey, &ofc); err != nil {
+						return err
+					}
+					return ofc.Data
+				}, timeout, interval).Should(Equal(map[string]string{
+					"sampling":           "400",
+					"nodePort":           "7891",
+					"cacheMaxFlows":      "1000",
+					"cacheActiveTimeout": "30s",
+				}))
+			})
+
+			By("Creating the required HostPort to access flowlogs-pipeline through the NodeIP", func() {
+				var cnt *v1.Container
+				for i := range ds.Spec.Template.Spec.Containers {
+					if ds.Spec.Template.Spec.Containers[i].Name == constants.FLPName {
+						cnt = &ds.Spec.Template.Spec.Containers[i]
+						break
+					}
+				}
+				Expect(cnt).ToNot(BeNil(), "can't find a container named", constants.FLPName)
+				var cp *v1.ContainerPort
+				for i := range cnt.Ports {
+					if cnt.Ports[i].Name == constants.FLPPortName {
+						cp = &cnt.Ports[i]
+						break
+					}
+				}
+				Expect(cp).
+					ToNot(BeNil(), "can't find a container port named", constants.FLPPortName)
+				Expect(*cp).To(Equal(v1.ContainerPort{
+					Name:          constants.FLPPortName,
+					HostPort:      7891,
+					ContainerPort: 7891,
+					Protocol:      "UDP",
+				}))
+			})
+
+			By("Allocating the proper toleration to allow its placement in the master nodes", func() {
+				Expect(ds.Spec.Template.Spec.Tolerations).
+					To(ContainElement(v1.Toleration{Operator: v1.TolerationOpExists}))
+			})
+		})
+
+		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+				fc.Spec.Loki.MaxRetries = 7
+			})
+
+			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
+			Eventually(func() error {
+				if err := k8sClient.Get(ctx, flpKey1, &ds); err != nil {
 					return err
 				}
-				return ofc.Data
-			}, timeout, interval).Should(Equal(map[string]string{
-				"sampling":           "1234",
-				"sharedTarget":       "11.22.33.44:1999",
-				"cacheMaxFlows":      "400",
-				"cacheActiveTimeout": "30s",
-			}))
+				return checkDigestUpdate(&digest, ds.Spec.Template.Annotations)
+			}).Should(Succeed())
 		})
 
 		It("Should prevent undesired sampling-everything", func() {
@@ -265,149 +298,13 @@ func flowCollectorControllerSpecs() {
 				return ofc.Data["sampling"]
 			}, timeout, interval).Should(Equal("1"))
 		})
-
-		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Loki.MaxRetries = 7
-			})
-
-			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
-			Eventually(func() error {
-				dp := appsv1.Deployment{}
-				if err := k8sClient.Get(ctx, flpKey1, &dp); err != nil {
-					return err
-				}
-				currentConfigDigest := dp.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
-				if currentConfigDigest == oldDigest {
-					return fmt.Errorf("annotation %v %q was expected to change",
-						flowlogspipeline.PodConfigurationDigest, currentConfigDigest)
-				}
-				return nil
-			}).Should(Succeed())
-		})
-
-		It("Should autoscale when the HPA options change", func() {
-			hpa := ascv2.HorizontalPodAutoscaler{}
-			Expect(k8sClient.Get(ctx, flpKey1, &hpa)).To(Succeed())
-			Expect(*hpa.Spec.MinReplicas).To(Equal(int32(1)))
-			Expect(hpa.Spec.MaxReplicas).To(Equal(int32(1)))
-			Expect(*hpa.Spec.Metrics[0].Resource.Target.AverageUtilization).To(Equal(int32(90)))
-			// update FlowCollector and verify that HPA spec also changed
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Processor.HPA.MinReplicas = pointer.Int32(2)
-				fc.Spec.Processor.HPA.MaxReplicas = 2
-			})
-
-			By("Changing the Horizontal Pod Autoscaler instance")
-			Eventually(func() error {
-				if err := k8sClient.Get(ctx, flpKey1, &hpa); err != nil {
-					return err
-				}
-				if *hpa.Spec.MinReplicas != int32(2) || hpa.Spec.MaxReplicas != int32(2) ||
-					*hpa.Spec.Metrics[0].Resource.Target.AverageUtilization != int32(90) {
-					return fmt.Errorf("expected {2, 2, 90}: Got %v, %v, %v",
-						*hpa.Spec.MinReplicas, hpa.Spec.MaxReplicas,
-						*hpa.Spec.Metrics[0].Resource.Target.AverageUtilization)
-				}
-				return nil
-			}, timeout, interval).Should(Succeed())
-		})
 	})
 
-	Context("Deploying as DaemonSet", func() {
-		var oldConfigDigest string
-		It("Should update successfully", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Processor = flowsv1alpha1.FlowCollectorFLP{
-					Kind:            "DaemonSet",
-					Port:            7891,
-					ImagePullPolicy: "Never",
-					LogLevel:        "error",
-					Image:           "testimg:latest",
-				}
-				fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}
-				fc.Spec.Agent.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
-					Sampling: 200,
-				}
-			})
-
-			By("Expecting to create the ovn-flows-configmap with the configuration from the FlowCollector")
-			Eventually(func() interface{} {
-				ofc := v1.ConfigMap{}
-				if err := k8sClient.Get(ctx, ovsConfigMapKey, &ofc); err != nil {
-					return err
-				}
-				return ofc.Data
-			}, timeout, interval).Should(Equal(map[string]string{
-				"sampling":           "200",
-				"nodePort":           "7891",
-				"cacheMaxFlows":      "400",
-				"cacheActiveTimeout": "20s",
-			}))
-
-			ds := appsv1.DaemonSet{}
-			Eventually(func() error { return k8sClient.Get(ctx, flpKey1, &ds) }).Should(Succeed())
-
-			oldConfigDigest = ds.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
-			Expect(oldConfigDigest).ToNot(BeEmpty())
-
-			By("Creating the required HostPort to access flowlogs-pipeline through the NodeIP", func() {
-				var cnt *v1.Container
-				for i := range ds.Spec.Template.Spec.Containers {
-					if ds.Spec.Template.Spec.Containers[i].Name == constants.FLPName {
-						cnt = &ds.Spec.Template.Spec.Containers[i]
-						break
-					}
-				}
-				Expect(cnt).ToNot(BeNil(), "can't find a container named", constants.FLPName)
-				var cp *v1.ContainerPort
-				for i := range cnt.Ports {
-					if cnt.Ports[i].Name == constants.FLPPortName {
-						cp = &cnt.Ports[i]
-						break
-					}
-				}
-				Expect(cp).
-					ToNot(BeNil(), "can't find a container port named", constants.FLPPortName)
-				Expect(*cp).To(Equal(v1.ContainerPort{
-					Name:          constants.FLPPortName,
-					HostPort:      7891,
-					ContainerPort: 7891,
-					Protocol:      "UDP",
-				}))
-			})
-
-			By("Allocating the proper toleration to allow its placement in the master nodes", func() {
-				Expect(ds.Spec.Template.Spec.Tolerations).
-					To(ContainElement(v1.Toleration{Operator: v1.TolerationOpExists}))
-			})
-		})
-		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Loki.MaxRetries = 7
-			})
-
-			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
-			Eventually(func() error {
-				dp := appsv1.DaemonSet{}
-				if err := k8sClient.Get(ctx, flpKey1, &dp); err != nil {
-					return err
-				}
-				currentConfigDigest := dp.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
-				if currentConfigDigest == oldConfigDigest {
-					return fmt.Errorf("annotation %v %q was expected to change (was %q)",
-						flowlogspipeline.PodConfigurationDigest, currentConfigDigest, oldConfigDigest)
-				}
-				return nil
-			}).Should(Succeed())
-		})
-	})
-
-	Context("Changing kafka config", func() {
+	Context("With Kafka", func() {
 		It("Should update kafka config successfully", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+				fc.Spec.DeploymentModel = flowsv1alpha1.DeploymentModelKafka
 				fc.Spec.Kafka = flowsv1alpha1.FlowCollectorKafka{
-					Enable:  true,
 					Address: "localhost:9092",
 					Topic:   "FLP",
 					TLS: flowsv1alpha1.ClientTLS{
@@ -436,18 +333,100 @@ func flowCollectorControllerSpecs() {
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &v1.Service{})
 			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline-transformer" not found`))
+
+			By("Expecting to create two different flowlogs-pipeline role bindings")
+			rb1 := rbacv1.ClusterRoleBinding{}
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyIngest, &rb1)
+			}, timeout, interval).Should(Succeed())
+			Expect(rb1.Subjects).Should(HaveLen(1))
+			Expect(rb1.Subjects[0].Name).Should(Equal("flowlogs-pipeline-ingester"))
+			Expect(rb1.RoleRef.Name).Should(Equal("flowlogs-pipeline-ingester"))
+
+			rb2 := rbacv1.ClusterRoleBinding{}
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyTransform, &rb2)
+			}, timeout, interval).Should(Succeed())
+			Expect(rb2.Subjects).Should(HaveLen(1))
+			Expect(rb2.Subjects[0].Name).Should(Equal("flowlogs-pipeline-transformer"))
+			Expect(rb2.RoleRef.Name).Should(Equal("flowlogs-pipeline-transformer"))
+
+			By("Not expecting mono-transformer role binding")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyIngestMono, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-ingester-role-mono" not found`))
+
+			By("Not expecting mono-ingester role binding")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyTransformMono, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-transformer-role-mono" not found`))
 		})
 
 		It("Should delete previous flp deployment", func() {
-			By("Expecting deployment to be deleted")
+			By("Expecting monolith to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, flpKey1, &appsv1.DaemonSet{})
 			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline" not found`))
 		})
+	})
 
+	Context("Adding auto-scaling", func() {
+		hpa := ascv2.HorizontalPodAutoscaler{}
+		It("Should update with HPA", func() {
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+				fc.Spec.Processor.KafkaConsumerAutoscaler = &flowsv1alpha1.FlowCollectorHPA{
+					MinReplicas: pointer.Int32(1),
+					MaxReplicas: 1,
+					Metrics: []ascv2.MetricSpec{{
+						Type: ascv2.ResourceMetricSourceType,
+						Resource: &ascv2.ResourceMetricSource{
+							Name: v1.ResourceCPU,
+							Target: ascv2.MetricTarget{
+								Type:               ascv2.UtilizationMetricType,
+								AverageUtilization: pointer.Int32(90),
+							},
+						},
+					}},
+				}
+			})
+		})
+
+		It("Should have HPA installed", func() {
+			By("Expecting HPA to be created")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &hpa)
+			}, timeout, interval).Should(Succeed())
+			Expect(*hpa.Spec.MinReplicas).To(Equal(int32(1)))
+			Expect(hpa.Spec.MaxReplicas).To(Equal(int32(1)))
+			Expect(*hpa.Spec.Metrics[0].Resource.Target.AverageUtilization).To(Equal(int32(90)))
+		})
+
+		It("Should autoscale when the HPA options change", func() {
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+				fc.Spec.Processor.KafkaConsumerAutoscaler.MinReplicas = pointer.Int32(2)
+				fc.Spec.Processor.KafkaConsumerAutoscaler.MaxReplicas = 2
+			})
+
+			By("Changing the Horizontal Pod Autoscaler instance")
+			Eventually(func() error {
+				if err := k8sClient.Get(ctx, flpKeyKafkaTransformer, &hpa); err != nil {
+					return err
+				}
+				if *hpa.Spec.MinReplicas != int32(2) || hpa.Spec.MaxReplicas != int32(2) ||
+					*hpa.Spec.Metrics[0].Resource.Target.AverageUtilization != int32(90) {
+					return fmt.Errorf("expected {2, 2, 90}: Got %v, %v, %v",
+						*hpa.Spec.MinReplicas, hpa.Spec.MaxReplicas,
+						*hpa.Spec.Metrics[0].Resource.Target.AverageUtilization)
+				}
+				return nil
+			}, timeout, interval).Should(Succeed())
+		})
+	})
+
+	Context("Back without Kafka", func() {
 		It("Should remove kafka config successfully", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Kafka.Enable = false
+				fc.Spec.DeploymentModel = flowsv1alpha1.DeploymentModelDirect
 			})
 		})
 
@@ -469,13 +448,11 @@ func flowCollectorControllerSpecs() {
 				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &appsv1.Deployment{})
 			}, timeout, interval).Should(MatchError(`deployments.apps "flowlogs-pipeline-transformer" not found`))
 		})
-
 	})
 
 	Context("Changing namespace", func() {
 		It("Should update namespace successfully", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Processor.Kind = "Deployment"
 				fc.Spec.Processor.Port = 9999
 				fc.Spec.Namespace = otherNamespace
 				fc.Spec.Agent.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
@@ -484,7 +461,7 @@ func flowCollectorControllerSpecs() {
 			})
 		})
 
-		It("Should redeploy goglow-kube in new namespace", func() {
+		It("Should redeploy FLP in new namespace", func() {
 			By("Expecting daemonset in previous namespace to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, flpKey1, &appsv1.DaemonSet{})
@@ -495,45 +472,20 @@ func flowCollectorControllerSpecs() {
 				return k8sClient.Get(ctx, flpKey1, &appsv1.Deployment{})
 			}, timeout, interval).Should(MatchError(`deployments.apps "flowlogs-pipeline" not found`))
 
-			By("Expecting service in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey1, &v1.Service{})
-			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline" not found`))
-
 			By("Expecting service account in previous namespace to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, flpKey1, &v1.ServiceAccount{})
 			}, timeout, interval).Should(MatchError(`serviceaccounts "flowlogs-pipeline" not found`))
 
-			By("Expecting deployment to be created in new namespace")
+			By("Expecting daemonset to be created in new namespace")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey2, &appsv1.Deployment{})
-			}, timeout, interval).Should(Succeed())
-
-			By("Expecting service to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey2, &v1.Service{})
+				return k8sClient.Get(ctx, flpKey2, &appsv1.DaemonSet{})
 			}, timeout, interval).Should(Succeed())
 
 			By("Expecting service account to be created in new namespace")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, flpKey2, &v1.ServiceAccount{})
 			}, timeout, interval).Should(Succeed())
-		})
-
-		It("Should update ovn-flows-configmap with new IP", func() {
-			Eventually(func() interface{} {
-				ofc := v1.ConfigMap{}
-				if err := k8sClient.Get(ctx, ovsConfigMapKey, &ofc); err != nil {
-					return err
-				}
-				return ofc.Data
-			}, timeout, interval).Should(Equal(map[string]string{
-				"sampling":           "200",
-				"sharedTarget":       "111.122.133.144:9999",
-				"cacheMaxFlows":      "400",
-				"cacheActiveTimeout": "20s",
-			}))
 		})
 
 		It("Should redeploy console plugin in new namespace", func() {
@@ -585,18 +537,11 @@ func flowCollectorControllerSpecs() {
 		})
 
 		It("Should be garbage collected", func() {
-			By("Expecting flowlogs-pipeline deployment to be garbage collected")
+			By("Expecting flowlogs-pipeline daemonset to be garbage collected")
 			Eventually(func() interface{} {
-				d := appsv1.Deployment{}
+				d := appsv1.DaemonSet{}
 				_ = k8sClient.Get(ctx, flpKey2, &d)
 				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
-
-			By("Expecting flowlogs-pipeline service to be garbage collected")
-			Eventually(func() interface{} {
-				svc := v1.Service{}
-				_ = k8sClient.Get(ctx, flpKey2, &svc)
-				return &svc
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
 
 			By("Expecting flowlogs-pipeline service account to be garbage collected")
@@ -676,4 +621,15 @@ func UpdateCR(key types.NamespacedName, updater func(*flowsv1alpha1.FlowCollecto
 		updater(cr)
 		return k8sClient.Update(ctx, cr)
 	}).Should(Succeed())
+}
+
+func checkDigestUpdate(oldDigest *string, annots map[string]string) error {
+	newDigest := annots[flowlogspipeline.PodConfigurationDigest]
+	if newDigest == "" {
+		return fmt.Errorf("%q annotation can't be empty", flowlogspipeline.PodConfigurationDigest)
+	} else if newDigest == *oldDigest {
+		return fmt.Errorf("expect digest to change, but is still %s", *oldDigest)
+	}
+	*oldDigest = newDigest
+	return nil
 }

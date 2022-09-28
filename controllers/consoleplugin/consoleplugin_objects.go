@@ -209,13 +209,13 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 		},
 		Spec: ascv2.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: ascv2.CrossVersionObjectReference{
-				Kind:       constants.DeploymentKind,
-				Name:       constants.PluginName,
 				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+				Name:       constants.PluginName,
 			},
-			MinReplicas: b.desired.HPA.MinReplicas,
-			MaxReplicas: b.desired.HPA.MaxReplicas,
-			Metrics:     b.desired.HPA.Metrics,
+			MinReplicas: b.desired.Autoscaler.MinReplicas,
+			MaxReplicas: b.desired.Autoscaler.MaxReplicas,
+			Metrics:     b.desired.Autoscaler.Metrics,
 		},
 	}
 }
@@ -228,7 +228,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 				Namespace: b.namespace,
 				Labels:    b.labels,
 				Annotations: map[string]string{
-					"service.alpha.openshift.io/serving-cert-secret-name": "console-serving-cert",
+					constants.OpenShiftCertificateAnnotation: "console-serving-cert",
 				},
 			},
 			Spec: corev1.ServiceSpec{

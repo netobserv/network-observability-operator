@@ -14,7 +14,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 )
 
@@ -55,7 +54,7 @@ func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flows
 		return err
 	}
 
-	ovnkubeNode := reconcilers.FindContainer(&ds.Spec.Template.Spec, target.Spec.OVNKubernetes.ContainerName)
+	ovnkubeNode := reconcilers.FindContainer(&ds.Spec.Template.Spec, target.Spec.Agent.IPFIX.OVNKubernetes.ContainerName)
 	if ovnkubeNode == nil {
 		return errors.New("could not find container ovnkube-node")
 	}
@@ -100,43 +99,12 @@ func (c *FlowsConfigOVNKController) desiredEnv(ctx context.Context, coll *flowsv
 		"OVN_IPFIX_SAMPLING":             strconv.Itoa(int(sampling)),
 	}
 
-	if coll.Spec.Agent.Type != flowsv1alpha1.AgentIPFIX {
+	if !coll.Spec.UseIPFIX() {
 		// No IPFIX => leave target empty and return
 		return envs, nil
 	}
 
-	// According to the "OVS flow export configuration" RFE:
-	// nodePort be set by the NOO when the collector is deployed as a DaemonSet
-	// sharedTarget set when deployed as Deployment + Service
-	switch coll.Spec.Processor.Kind {
-	case constants.DaemonSetKind:
-		envs["OVN_IPFIX_TARGETS"] = fmt.Sprintf(":%d", coll.Spec.Processor.Port)
-	case constants.DeploymentKind:
-		svc := corev1.Service{}
-		if err := c.client.Get(ctx, types.NamespacedName{
-			Namespace: c.namespace,
-			Name:      constants.FLPName,
-		}, &svc); err != nil {
-			return nil, fmt.Errorf("can't get service %s in %s: %w", constants.FLPName, c.namespace, err)
-		}
-		// service IP resolution
-		svcHost := svc.Name + "." + svc.Namespace
-		addrs, err := c.lookupIP(svcHost)
-		if err != nil {
-			return nil, fmt.Errorf("can't resolve IP address for service %v: %w", svcHost, err)
-		}
-		var ip string
-		for _, addr := range addrs {
-			if len(addr) > 0 {
-				ip = addr.String()
-				break
-			}
-		}
-		if ip == "" {
-			return nil, fmt.Errorf("can't find any suitable IP for host %s", svcHost)
-		}
-		envs["OVN_IPFIX_TARGETS"] = net.JoinHostPort(ip, strconv.Itoa(int(coll.Spec.Processor.Port)))
-	}
+	envs["OVN_IPFIX_TARGETS"] = fmt.Sprintf(":%d", coll.Spec.Processor.Port)
 	return envs, nil
 }
 

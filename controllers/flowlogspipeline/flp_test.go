@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
@@ -46,84 +46,75 @@ var targetCPU = int32(75)
 
 const testNamespace = "flp"
 
-func getFLPConfig() flowsv1alpha1.FlowCollectorFLP {
-	return flowsv1alpha1.FlowCollectorFLP{
-		Replicas:        1,
-		Port:            2055,
-		Image:           image,
-		ImagePullPolicy: string(pullPolicy),
-		LogLevel:        "trace",
-		Resources:       resources,
-		HPA: &flowsv1alpha1.FlowCollectorHPA{
-			MinReplicas: &minReplicas,
-			MaxReplicas: maxReplicas,
-			Metrics: []ascv2.MetricSpec{{
-				Type: ascv2.ResourceMetricSourceType,
-				Resource: &ascv2.ResourceMetricSource{
-					Name: corev1.ResourceCPU,
-					Target: ascv2.MetricTarget{
-						Type:               ascv2.UtilizationMetricType,
-						AverageUtilization: &targetCPU,
-					},
+func getConfig() v1alpha1.FlowCollectorSpec {
+	return v1alpha1.FlowCollectorSpec{
+		DeploymentModel: v1alpha1.DeploymentModelDirect,
+		Agent:           v1alpha1.FlowCollectorAgent{Type: v1alpha1.AgentIPFIX},
+		Processor: v1alpha1.FlowCollectorFLP{
+			Port:            2055,
+			Image:           image,
+			ImagePullPolicy: string(pullPolicy),
+			LogLevel:        "trace",
+			Resources:       resources,
+			HealthPort:      8080,
+			MetricsServer: v1alpha1.MetricsServerConfig{
+				Port: 9090,
+				TLS: v1alpha1.ServerTLS{
+					Type: v1alpha1.ServerTLSDisabled,
 				},
-			}},
-		},
-		HealthPort: 8080,
-		Prometheus: flowsv1alpha1.PrometheusConfig{
-			Port: 9090,
-			TLS: flowsv1alpha1.PrometheusTLS{
-				Type: flowsv1alpha1.PrometheusTLSDisabled,
+			},
+			KafkaConsumerReplicas: 1,
+			KafkaConsumerAutoscaler: &v1alpha1.FlowCollectorHPA{
+				MinReplicas: &minReplicas,
+				MaxReplicas: maxReplicas,
+				Metrics: []ascv2.MetricSpec{{
+					Type: ascv2.ResourceMetricSourceType,
+					Resource: &ascv2.ResourceMetricSource{
+						Name: corev1.ResourceCPU,
+						Target: ascv2.MetricTarget{
+							Type:               ascv2.UtilizationMetricType,
+							AverageUtilization: &targetCPU,
+						},
+					},
+				}},
 			},
 		},
-	}
-}
-
-func getFLPConfigNoHPA() flowsv1alpha1.FlowCollectorFLP {
-	return flowsv1alpha1.FlowCollectorFLP{
-		Replicas:        1,
-		Port:            2055,
-		Image:           image,
-		ImagePullPolicy: string(pullPolicy),
-		LogLevel:        "trace",
-		Resources:       resources,
-		HealthPort:      8080,
-	}
-}
-
-func getLokiConfig() flowsv1alpha1.FlowCollectorLoki {
-	return flowsv1alpha1.FlowCollectorLoki{
-		URL: "http://loki:3100/",
-		BatchWait: metav1.Duration{
-			Duration: 1,
+		Loki: v1alpha1.FlowCollectorLoki{
+			URL: "http://loki:3100/",
+			BatchWait: metav1.Duration{
+				Duration: 1,
+			},
+			BatchSize: 102400,
+			MinBackoff: metav1.Duration{
+				Duration: 1,
+			},
+			MaxBackoff: metav1.Duration{
+				Duration: 300,
+			},
+			MaxRetries:   10,
+			StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
 		},
-		BatchSize: 102400,
-		MinBackoff: metav1.Duration{
-			Duration: 1,
+		Kafka: v1alpha1.FlowCollectorKafka{
+			Address: "kafka",
+			Topic:   "flp",
 		},
-		MaxBackoff: metav1.Duration{
-			Duration: 300,
-		},
-		MaxRetries:   10,
-		StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
 	}
 }
 
-func getKafkaConfig() flowsv1alpha1.FlowCollectorKafka {
-	return flowsv1alpha1.FlowCollectorKafka{
-		Enable:  false,
-		Address: "kafka",
-		Topic:   "flp",
-	}
+func getConfigNoHPA() v1alpha1.FlowCollectorSpec {
+	cfg := getConfig()
+	cfg.Processor.KafkaConsumerAutoscaler = nil
+	return cfg
 }
 
-func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowsv1alpha1.FlowCollectorFLP) {
+func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, v1alpha1.FlowCollectorHPA) {
 	var autoScaler = ascv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: testNamespace,
 		},
 		Spec: ascv2.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: ascv2.CrossVersionObjectReference{
-				Kind: constants.DeploymentKind,
+				Kind: "Deployment",
 				Name: constants.FLPName,
 			},
 			MinReplicas: &minReplicas,
@@ -141,7 +132,7 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowsv1alpha1.FlowColl
 		},
 	}
 
-	return autoScaler, getFLPConfig()
+	return autoScaler, *getConfig().Processor.KafkaConsumerAutoscaler
 }
 
 func TestDaemonSetNoChange(t *testing.T) {
@@ -149,22 +140,19 @@ func TestDaemonSetNoChange(t *testing.T) {
 
 	// Get first
 	ns := "namespace"
-	flp := getFLPConfig()
-	loki := getLokiConfig()
-	kafka := getKafkaConfig()
-	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg := getConfig()
+	b := newMonolithBuilder(ns, &cfg, true)
 	_, digest, err := b.configMap()
 	assert.NoError(err)
 	first := b.daemonSet(digest)
 
 	// Check no change
-	flp = getFLPConfig()
-	loki = getLokiConfig()
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg = getConfig()
+	b = newMonolithBuilder(ns, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 
-	assert.False(daemonSetNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.False(daemonSetNeedsUpdate(first, &cfg.Processor, digest))
 }
 
 func TestDaemonSetChanged(t *testing.T) {
@@ -172,55 +160,53 @@ func TestDaemonSetChanged(t *testing.T) {
 
 	// Get first
 	ns := "namespace"
-	flp := getFLPConfig()
-	loki := getLokiConfig()
-	kafka := getKafkaConfig()
-	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg := getConfig()
+	b := newMonolithBuilder(ns, &cfg, true)
 	_, digest, err := b.configMap()
 	assert.NoError(err)
 	first := b.daemonSet(digest)
 
 	// Check probes enabled change
-	flp.EnableKubeProbes = true
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg.Processor.EnableKubeProbes = true
+	b = newMonolithBuilder(ns, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 	second := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.True(daemonSetNeedsUpdate(first, &cfg.Processor, digest))
 
 	// Check log level change
-	flp.LogLevel = "info"
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg.Processor.LogLevel = "info"
+	b = newMonolithBuilder(ns, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 	third := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(second, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.True(daemonSetNeedsUpdate(second, &cfg.Processor, digest))
 
 	// Check resource change
-	flp.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
+	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	b = newMonolithBuilder(ns, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 	fourth := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.True(daemonSetNeedsUpdate(third, &cfg.Processor, digest))
 
 	// Check reverting limits
-	flp.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
+	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceCPU:    resource.MustParse("1"),
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	b = newMonolithBuilder(ns, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 
-	assert.True(daemonSetNeedsUpdate(fourth, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
-	assert.False(daemonSetNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.True(daemonSetNeedsUpdate(fourth, &cfg.Processor, digest))
+	assert.False(daemonSetNeedsUpdate(third, &cfg.Processor, digest))
 }
 
 func TestDeploymentNoChange(t *testing.T) {
@@ -228,22 +214,19 @@ func TestDeploymentNoChange(t *testing.T) {
 
 	// Get first
 	ns := "namespace"
-	flp := getFLPConfig()
-	loki := getLokiConfig()
-	kafka := getKafkaConfig()
-	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg := getConfig()
+	b := newTransfoBuilder(ns, &cfg, true)
 	_, digest, err := b.configMap()
 	assert.NoError(err)
 	first := b.deployment(digest)
 
 	// Check no change
-	flp = getFLPConfig()
-	loki = getLokiConfig()
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg = getConfig()
+	b = newTransfoBuilder(ns, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 
-	assert.False(deploymentNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.False(deploymentNeedsUpdate(first, &cfg.Processor, digest))
 }
 
 func TestDeploymentChanged(t *testing.T) {
@@ -251,65 +234,63 @@ func TestDeploymentChanged(t *testing.T) {
 
 	// Get first
 	ns := "namespace"
-	flp := getFLPConfig()
-	loki := getLokiConfig()
-	kafka := getKafkaConfig()
-	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg := getConfig()
+	b := newTransfoBuilder(ns, &cfg, true)
 	_, digest, err := b.configMap()
 	assert.NoError(err)
 	first := b.deployment(digest)
 
 	// Check probes enabled change
-	flp.EnableKubeProbes = true
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg.Processor.EnableKubeProbes = true
+	b = newTransfoBuilder(ns, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 	second := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(first, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.True(deploymentNeedsUpdate(first, &cfg.Processor, digest))
 
 	// Check log level change
-	flp.LogLevel = "info"
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg.Processor.LogLevel = "info"
+	b = newTransfoBuilder(ns, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 	third := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(second, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.True(deploymentNeedsUpdate(second, &cfg.Processor, digest))
 
 	// Check resource change
-	flp.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
+	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	b = newTransfoBuilder(ns, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 	fourth := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.True(deploymentNeedsUpdate(third, &cfg.Processor, digest))
 
 	// Check reverting limits
-	flp.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
+	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceCPU:    resource.MustParse("1"),
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	b = newTransfoBuilder(ns, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 	fifth := b.deployment(digest)
 
-	assert.True(deploymentNeedsUpdate(fourth, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
-	assert.False(deploymentNeedsUpdate(third, &flp, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.True(deploymentNeedsUpdate(fourth, &cfg.Processor, digest))
+	assert.False(deploymentNeedsUpdate(third, &cfg.Processor, digest))
 
 	// Check replicas didn't change because HPA is used
-	flp2 := flp
-	flp2.Replicas = 5
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp2, &loki, &kafka, ConfSingle, true)
+	cfg2 := cfg
+	cfg2.Processor.KafkaConsumerReplicas = 5
+	b = newTransfoBuilder(ns, &cfg2, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 
-	assert.False(deploymentNeedsUpdate(fifth, &flp2, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.False(deploymentNeedsUpdate(fifth, &cfg2.Processor, digest))
 }
 
 func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
@@ -317,22 +298,20 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 
 	// Get first
 	ns := "namespace"
-	flp := getFLPConfigNoHPA()
-	loki := getLokiConfig()
-	kafka := getKafkaConfig()
-	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg := getConfigNoHPA()
+	b := newTransfoBuilder(ns, &cfg, true)
 	_, digest, err := b.configMap()
 	assert.NoError(err)
 	first := b.deployment(digest)
 
 	// Check replicas changed (need to copy flp, as Spec.Replicas stores a pointer)
-	flp2 := flp
-	flp2.Replicas = 5
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp2, &loki, &kafka, ConfSingle, true)
+	cfg2 := cfg
+	cfg2.Processor.KafkaConsumerReplicas = 5
+	b = newTransfoBuilder(ns, &cfg2, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 
-	assert.True(deploymentNeedsUpdate(first, &flp2, digest, constants.FLPName+FlpConfSuffix[ConfSingle]))
+	assert.True(deploymentNeedsUpdate(first, &cfg2.Processor, digest))
 }
 
 func TestServiceNoChange(t *testing.T) {
@@ -340,11 +319,9 @@ func TestServiceNoChange(t *testing.T) {
 
 	// Get first
 	ns := "namespace"
-	flp := getFLPConfig()
-	loki := getLokiConfig()
-	kafka := getKafkaConfig()
-	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	first := b.service(nil)
+	cfg := getConfig()
+	b := newMonolithBuilder(ns, &cfg, true)
+	first := b.newPromService()
 
 	// Check no change
 	newService := first.DeepCopy()
@@ -357,23 +334,21 @@ func TestServiceChanged(t *testing.T) {
 
 	// Get first
 	ns := "namespace"
-	flp := getFLPConfig()
-	loki := getLokiConfig()
-	kafka := getKafkaConfig()
-	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	first := b.service(nil)
+	cfg := getConfig()
+	b := newMonolithBuilder(ns, &cfg, true)
+	first := b.newPromService()
 
 	// Check port changed
-	flp.Port = 9999
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	second := b.service(first)
+	cfg.Processor.MetricsServer.Port = 9999
+	b = newMonolithBuilder(ns, &cfg, true)
+	second := b.fromPromService(first)
 
 	assert.True(serviceNeedsUpdate(first, second))
 
 	// Make sure non-service settings doesn't trigger service update
-	flp.LogLevel = "error"
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
-	third := b.service(first)
+	cfg.Processor.LogLevel = "error"
+	b = newMonolithBuilder(ns, &cfg, true)
+	third := b.fromPromService(first)
 
 	assert.False(serviceNeedsUpdate(second, third))
 }
@@ -382,10 +357,9 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert := assert.New(t)
 
 	ns := "namespace"
-	flp := getFLPConfig()
-	loki := getLokiConfig()
-	kafka := getKafkaConfig()
-	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg := getConfig()
+	loki := cfg.Loki
+	b := newMonolithBuilder(ns, &cfg, true)
 	cm, digest, err := b.configMap()
 	assert.NoError(err)
 	assert.NotEmpty(t, digest)
@@ -395,11 +369,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	data, ok := cm.Data[configFile]
 	assert.True(ok)
 
-	type cfg struct {
-		Parameters []config.StageParam `json:"parameters"`
-		LogLevel   string              `json:"log-level"`
-	}
-	var decoded cfg
+	var decoded config.ConfigFileStruct
 	err = json.Unmarshal([]byte(data), &decoded)
 
 	assert.Nil(err)
@@ -407,7 +377,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 
 	params := decoded.Parameters
 	assert.Len(params, 5)
-	assert.Equal(flp.Port, int32(params[0].Ingest.Collector.Port))
+	assert.Equal(cfg.Processor.Port, int32(params[0].Ingest.Collector.Port))
 
 	lokiCfg := params[2].Write.Loki
 	assert.Equal(loki.URL, lokiCfg.URL)
@@ -419,50 +389,49 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
-	assert.Equal(flp.Prometheus.Port, int32(params[4].Encode.Prom.Port))
-
+	assert.Equal(cfg.Processor.MetricsServer.Port, int32(params[4].Encode.Prom.Port))
 }
 
 func TestAutoScalerUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 
 	//equals specs
-	autoScalerSpec, flp := getAutoScalerSpecs()
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &flp, testNamespace), false)
+	autoScalerSpec, hpa := getAutoScalerSpecs()
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &hpa, testNamespace), false)
 
 	//wrong max replicas
-	autoScalerSpec, flp = getAutoScalerSpecs()
+	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MaxReplicas = 10
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &flp, testNamespace), true)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &hpa, testNamespace), true)
 
 	//missing min replicas
-	autoScalerSpec, flp = getAutoScalerSpecs()
+	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MinReplicas = nil
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &flp, testNamespace), true)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &hpa, testNamespace), true)
 
 	//missing metrics
-	autoScalerSpec, flp = getAutoScalerSpecs()
+	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Spec.Metrics = []ascv2.MetricSpec{}
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &flp, testNamespace), true)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &hpa, testNamespace), true)
 
 	//wrong namespace
-	autoScalerSpec, flp = getAutoScalerSpecs()
+	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Namespace = "NewNamespace"
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &flp, testNamespace), true)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &hpa, testNamespace), true)
 }
 
 func TestLabels(t *testing.T) {
 	assert := assert.New(t)
 
-	flpk := getFLPConfig()
-	kafka := getKafkaConfig()
-	loki := getLokiConfig()
-	builder := newBuilder("ns", flowsv1alpha1.AgentIPFIX, &flpk, &loki, &kafka, ConfSingle, true)
+	cfg := getConfig()
+	builder := newMonolithBuilder("ns", &cfg, true)
+	tBuilder := newTransfoBuilder("ns", &cfg, true)
+	iBuilder := newIngestBuilder("ns", &cfg, true)
 
 	// Deployment
-	depl := builder.deployment("digest")
-	assert.Equal("flowlogs-pipeline", depl.Labels["app"])
-	assert.Equal("flowlogs-pipeline", depl.Spec.Template.Labels["app"])
+	depl := tBuilder.deployment("digest")
+	assert.Equal("flowlogs-pipeline-transformer", depl.Labels["app"])
+	assert.Equal("flowlogs-pipeline-transformer", depl.Spec.Template.Labels["app"])
 	assert.Equal("dev", depl.Labels["version"])
 	assert.Equal("dev", depl.Spec.Template.Labels["version"])
 
@@ -473,56 +442,19 @@ func TestLabels(t *testing.T) {
 	assert.Equal("dev", ds.Labels["version"])
 	assert.Equal("dev", ds.Spec.Template.Labels["version"])
 
+	// DaemonSet (ingester)
+	ds2 := iBuilder.daemonSet("digest")
+	assert.Equal("flowlogs-pipeline-ingester", ds2.Labels["app"])
+	assert.Equal("flowlogs-pipeline-ingester", ds2.Spec.Template.Labels["app"])
+	assert.Equal("dev", ds2.Labels["version"])
+	assert.Equal("dev", ds2.Spec.Template.Labels["version"])
+
 	// Service
-	svc := builder.service(nil)
+	svc := builder.newPromService()
 	assert.Equal("flowlogs-pipeline", svc.Labels["app"])
 	assert.Equal("flowlogs-pipeline", svc.Spec.Selector["app"])
 	assert.Equal("dev", svc.Labels["version"])
 	assert.Empty(svc.Spec.Selector["version"])
-}
-
-func TestDeployNeeded(t *testing.T) {
-	assert := assert.New(t)
-
-	spec := flowsv1alpha1.FlowCollectorSpec{
-		Agent: flowsv1alpha1.FlowCollectorAgent{Type: "IPFIX"},
-		Kafka: flowsv1alpha1.FlowCollectorKafka{Enable: false, Address: "loaclhost:9092", Topic: "FLP"},
-	}
-	// Kafka not configured
-	res, err := checkDeployNeeded(&spec, ConfSingle)
-	assert.True(res)
-	assert.NoError(err)
-	res, err = checkDeployNeeded(&spec, ConfKafkaIngester)
-	assert.False(res)
-	assert.NoError(err)
-	res, err = checkDeployNeeded(&spec, ConfKafkaTransformer)
-	assert.False(res)
-	assert.NoError(err)
-
-	// Kafka configured
-	spec.Kafka.Enable = true
-	res, err = checkDeployNeeded(&spec, ConfSingle)
-	assert.False(res)
-	assert.NoError(err)
-	res, err = checkDeployNeeded(&spec, ConfKafkaIngester)
-	assert.True(res)
-	assert.NoError(err)
-	res, err = checkDeployNeeded(&spec, ConfKafkaTransformer)
-	assert.True(res)
-	assert.NoError(err)
-
-	// Kafka + eBPF agent configured
-	spec.Agent.Type = "EBPF"
-	res, err = checkDeployNeeded(&spec, ConfSingle)
-	assert.False(res)
-	assert.NoError(err)
-	res, err = checkDeployNeeded(&spec, ConfKafkaIngester)
-	assert.False(res)
-	assert.NoError(err)
-	res, err = checkDeployNeeded(&spec, ConfKafkaTransformer)
-	assert.True(res)
-	assert.NoError(err)
-
 }
 
 // This function validate that each stage has its matching parameter
@@ -550,11 +482,9 @@ func TestPipelineConfig(t *testing.T) {
 
 	// Single config
 	ns := "namespace"
-	flp := getFLPConfig()
-	flp.LogLevel = "info"
-	loki := getLokiConfig()
-	kafka := getKafkaConfig()
-	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg := getConfig()
+	cfg.Processor.LogLevel = "info"
+	b := newMonolithBuilder(ns, &cfg, true)
 	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
@@ -562,17 +492,17 @@ func TestPipelineConfig(t *testing.T) {
 	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 
 	// Kafka Ingester
-	kafka.Enable = true
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfKafkaIngester, true)
-	stages, parameters, err = b.buildPipelineConfig()
+	cfg.DeploymentModel = v1alpha1.DeploymentModelKafka
+	bi := newIngestBuilder(ns, &cfg, true)
+	stages, parameters, err = bi.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"kafka-write","follows":"ipfix"}]`, string(jsonStages))
 
 	// Kafka Transformer
-	b = newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfKafkaTransformer, true)
-	stages, parameters, err = b.buildPipelineConfig()
+	bt := newTransfoBuilder(ns, &cfg, true)
+	stages, parameters, err = bt.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
@@ -584,12 +514,10 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 
 	// Single config
 	ns := "namespace"
-	flp := getFLPConfig()
-	flp.LogLevel = "info"
-	flp.DropUnusedFields = true
-	loki := getLokiConfig()
-	kafka := getKafkaConfig()
-	b := newBuilder(ns, flowsv1alpha1.AgentIPFIX, &flp, &loki, &kafka, ConfSingle, true)
+	cfg := getConfig()
+	cfg.Processor.LogLevel = "info"
+	cfg.Processor.DropUnusedFields = true
+	b := newMonolithBuilder(ns, &cfg, true)
 	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
@@ -605,9 +533,9 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 func TestPipelineTraceStage(t *testing.T) {
 	assert := assert.New(t)
 
-	flp := getFLPConfig()
+	cfg := getConfig()
 
-	b := newBuilder("namespace", flowsv1alpha1.AgentIPFIX, &flp, nil, nil, "", true)
+	b := newMonolithBuilder("namespace", &cfg, true)
 	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
@@ -618,9 +546,9 @@ func TestPipelineTraceStage(t *testing.T) {
 func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	assert := assert.New(t)
 
-	flp := getFLPConfig()
+	cfg := getConfig()
 
-	b := newBuilder("namespace", flowsv1alpha1.AgentIPFIX, &flp, nil, nil, "", true)
+	b := newMonolithBuilder("namespace", &cfg, true)
 	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
@@ -636,10 +564,10 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	assert := assert.New(t)
 
-	flp := getFLPConfig()
-	flp.IgnoreMetrics = []string{"subnet"}
+	cfg := getConfig()
+	cfg.Processor.IgnoreMetrics = []string{"subnet"}
 
-	b := newBuilder("namespace", flowsv1alpha1.AgentIPFIX, &flp, nil, nil, "", true)
+	b := newMonolithBuilder("namespace", &cfg, true)
 	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))

@@ -201,7 +201,7 @@ func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, de
 
 func (r *CPReconciler) reconcileHPA(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) error {
 	// Delete or Create / Update Autoscaler according to HPA option
-	if desired.ConsolePlugin.HPA == nil {
+	if desired.ConsolePlugin.Autoscaler == nil {
 		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
 	} else {
 		newASC := builder.autoScaler()
@@ -229,7 +229,7 @@ func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowC
 	}
 	return containerNeedsUpdate(&depl.Spec.Template.Spec, &desired.ConsolePlugin, &desired.Loki) ||
 		configChanged(&depl.Spec.Template, cmDigest) ||
-		(desired.ConsolePlugin.HPA == nil && *depl.Spec.Replicas != desired.ConsolePlugin.Replicas)
+		(desired.ConsolePlugin.Autoscaler == nil && *depl.Spec.Replicas != desired.ConsolePlugin.Replicas)
 }
 
 func configChanged(tmpl *corev1.PodTemplateSpec, cmDigest string) bool {
@@ -287,11 +287,11 @@ func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired *pluginSp
 	differentPointerValues := func(a, b *int32) bool {
 		return (a == nil && b != nil) || (a != nil && b == nil) || (a != nil && *a != *b)
 	}
-	if asc.Spec.MaxReplicas != desired.HPA.MaxReplicas ||
-		differentPointerValues(asc.Spec.MinReplicas, desired.HPA.MinReplicas) {
+	if asc.Spec.MaxReplicas != desired.Autoscaler.MaxReplicas ||
+		differentPointerValues(asc.Spec.MinReplicas, desired.Autoscaler.MinReplicas) {
 		return true
 	}
-	if !reflect.DeepEqual(asc.Spec.Metrics, desired.HPA.Metrics) {
+	if !reflect.DeepEqual(asc.Spec.Metrics, desired.Autoscaler.Metrics) {
 		return true
 	}
 	return false

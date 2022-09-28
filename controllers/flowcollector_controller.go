@@ -126,7 +126,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if r.availableAPIs.HasCNO() {
 		ovsConfigController := ovs.NewFlowsConfigCNOController(clientHelper,
 			ns,
-			desired.Spec.ClusterNetworkOperator.Namespace,
+			desired.Spec.Agent.IPFIX.ClusterNetworkOperator.Namespace,
 			ovsFlowsConfigMapName,
 			r.lookupIP)
 		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
@@ -135,7 +135,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	} else {
 		ovsConfigController := ovs.NewFlowsConfigOVNKController(clientHelper,
 			ns,
-			desired.Spec.OVNKubernetes,
+			desired.Spec.Agent.IPFIX.OVNKubernetes,
 			r.lookupIP)
 		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
 			return ctrl.Result{}, r.failure(ctx, conditions.ReconcileOVNKFailed(err), desired)
@@ -331,7 +331,7 @@ func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsv1
 		clientHelper := r.newClientHelper(desired)
 		ovsConfigController := ovs.NewFlowsConfigOVNKController(clientHelper,
 			ns,
-			desired.Spec.OVNKubernetes,
+			desired.Spec.Agent.IPFIX.OVNKubernetes,
 			r.lookupIP)
 		if err := ovsConfigController.Finalize(ctx, desired); err != nil {
 			return fmt.Errorf("failed to finalize ovn-kubernetes reconciler: %w", err)

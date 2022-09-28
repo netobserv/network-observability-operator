@@ -59,7 +59,7 @@ Kafka can be used to separate flow ingestion from flow transformation. The opera
 make deploy-kafka
 ```
 
-Kafka can then be enabled in the `FlowCollector` resource by setting `spec.kafka.enable` flag to `true`. If you use your own Kafka setup, make sure to configure `spec.kafka.address` and `spec.kafka.topic` accordingly.
+Kafka can then be enabled in the `FlowCollector` resource by setting `spec.deploymentModel` to `KAFKA`. If you use your own Kafka setup, make sure to configure `spec.kafka.address` and `spec.kafka.topic` accordingly.
 
 ## Linking with API changes in flowlogs-pipeline
 
