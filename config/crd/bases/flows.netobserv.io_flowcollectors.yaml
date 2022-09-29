@@ -66,7 +66,7 @@ spec:
                         pattern: ^\d+(ns|ms|s|m)?$
                         type: string
                       cacheMaxFlows:
-                        default: 5000
+                        default: 100000
                         description: cacheMaxFlows is the max number of flows in an
                           aggregate; when reached, the reporter sends the flows
                         format: int32
@@ -117,6 +117,12 @@ spec:
                         items:
                           type: string
                         type: array
+                      kafkaBatchSize:
+                        default: 10485760
+                        description: 'kafkaBatchSize limits the maximum size of a
+                          request in bytes before being sent to a partition. Ignored
+                          when not using Kafka. Default: 10MB.'
+                        type: integer
                       logLevel:
                         default: info
                         description: logLevel defines the log level for the NetObserv
@@ -139,7 +145,7 @@ spec:
                       resources:
                         default:
                           limits:
-                            memory: 100Mi
+                            memory: 800Mi
                           requests:
                             cpu: 100m
                             memory: 50Mi
@@ -1688,6 +1694,18 @@ spec:
                     required:
                     - maxReplicas
                     type: object
+                  kafkaConsumerBatchSize:
+                    default: 10485760
+                    description: 'kafkaConsumerBatchSize indicates to the broker the
+                      maximum batch size, in bytes, that the consumer will accept.
+                      Ignored when not using Kafka. Default: 10MB.'
+                    type: integer
+                  kafkaConsumerQueueCapacity:
+                    default: 1000
+                    description: kafkaConsumerQueueCapacity defines the capacity of
+                      the internal message queue used in the Kafka consumer client.
+                      Ignored when not using Kafka.
+                    type: integer
                   kafkaConsumerReplicas:
                     default: 3
                     description: kafkaConsumerReplicas defines the number of replicas
@@ -1778,7 +1796,7 @@ spec:
                   resources:
                     default:
                       limits:
-                        memory: 300Mi
+                        memory: 800Mi
                       requests:
                         cpu: 100m
                         memory: 100Mi

@@ -155,7 +155,7 @@ type FlowCollectorEBPF struct {
 	// imagePullPolicy is the Kubernetes pull policy for the image defined above
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 
-	//+kubebuilder:default:={requests:{memory:"50Mi",cpu:"100m"},limits:{memory:"100Mi"}}
+	//+kubebuilder:default:={requests:{memory:"50Mi",cpu:"100m"},limits:{memory:"800Mi"}}
 	// resources are the compute resources required by this container.
 	// Cannot be updated.
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -175,7 +175,7 @@ type FlowCollectorEBPF struct {
 
 	// cacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows
 	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:default:=5000
+	//+kubebuilder:default:=100000
 	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty"`
 
 	// interfaces contains the interface names from where flows will be collected. If empty, the agent
@@ -208,6 +208,11 @@ type FlowCollectorEBPF struct {
 	// BPF, PERFMON, NET_ADMIN, SYS_RESOURCE.
 	// +optional
 	Privileged bool `json:"privileged,omitempty"`
+
+	//+kubebuilder:default:=10485760
+	// +optional
+	// kafkaBatchSize limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 10MB.
+	KafkaBatchSize int `json:"kafkaBatchSize"`
 }
 
 // FlowCollectorKafka defines the desired Kafka config of FlowCollector
@@ -310,7 +315,7 @@ type FlowCollectorFLP struct {
 	// logLevel of the collector runtime
 	LogLevel string `json:"logLevel,omitempty"`
 
-	//+kubebuilder:default:={requests:{memory:"100Mi",cpu:"100m"},limits:{memory:"300Mi"}}
+	//+kubebuilder:default:={requests:{memory:"100Mi",cpu:"100m"},limits:{memory:"800Mi"}}
 	// resources are the compute resources required by this container.
 	// Cannot be updated.
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -335,6 +340,16 @@ type FlowCollectorFLP struct {
 	// This setting is ignored when Kafka is disabled.
 	// +optional
 	KafkaConsumerAutoscaler *FlowCollectorHPA `json:"kafkaConsumerAutoscaler,omitempty"`
+
+	//+kubebuilder:default:=1000
+	// +optional
+	// kafkaConsumerQueueCapacity defines the capacity of the internal message queue used in the Kafka consumer client. Ignored when not using Kafka.
+	KafkaConsumerQueueCapacity int `json:"kafkaConsumerQueueCapacity"`
+
+	//+kubebuilder:default:=10485760
+	// +optional
+	// kafkaConsumerBatchSize indicates to the broker the maximum batch size, in bytes, that the consumer will accept. Ignored when not using Kafka. Default: 10MB.
+	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
 }
 
 type FlowCollectorHPA struct {

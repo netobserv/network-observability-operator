@@ -22,7 +22,7 @@ spec:
       imagePullPolicy: IfNotPresent
       sampling: 50
       cacheActiveTimeout: 5s
-      cacheMaxFlows: 1000
+      cacheMaxFlows: 100000
       interfaces: [ ]
       excludeInterfaces: [ "lo" ]
       logLevel: info
@@ -32,7 +32,8 @@ spec:
           memory: 50Mi
           cpu: 100m
         limits:
-          memory: 100Mi
+          memory: 800Mi
+      kafkaBatchSize: 10485760
   processor:
     port: 2055
     image: 'quay.io/netobserv/flowlogs-pipeline:main'
@@ -50,9 +51,11 @@ spec:
         memory: 100Mi
         cpu: 100m
       limits:
-        memory: 300Mi
+        memory: 800Mi
     kafkaConsumerReplicas: 3
     kafkaConsumerAutoscaler: null
+    kafkaConsumerQueueCapacity: 1000
+    kafkaConsumerBatchSize: 10485760
   kafka:
     address: "kafka-cluster-kafka-bootstrap.netobserv"
     topic: network-flows
@@ -70,10 +73,10 @@ spec:
   loki:
     url: 'http://loki.netobserv.svc:3100/'
     batchWait: 1s
-    batchSize: 102400
+    batchSize: 10485760
     minBackoff: 1s
-    maxBackoff: 300s
-    maxRetries: 10
+    maxBackoff: 30s
+    maxRetries: 5
     staticLabels:
       app: netobserv-flowcollector
     tls:

@@ -34,6 +34,8 @@ const (
 	envExport                     = "EXPORT"
 	envKafkaBrokers               = "KAFKA_BROKERS"
 	envKafkaTopic                 = "KAFKA_TOPIC"
+	envKafkaBatchSize             = "KAFKA_BATCH_SIZE"
+	envKafkaBatchMessages         = "KAFKA_BATCH_MESSAGES"
 	envKafkaEnableTLS             = "KAFKA_ENABLE_TLS"
 	envKafkaTLSInsecureSkipVerify = "KAFKA_TLS_INSECURE_SKIP_VERIFY"
 	envKafkaTLSCACertPath         = "KAFKA_TLS_CA_CERT_PATH"
@@ -50,6 +52,7 @@ const (
 )
 
 const kafkaCerts = "kafka-certs"
+const averageMessageSize = 100
 
 type reconcileAction int
 
@@ -240,6 +243,9 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 			corev1.EnvVar{Name: envExport, Value: exportKafka},
 			corev1.EnvVar{Name: envKafkaBrokers, Value: coll.Spec.Kafka.Address},
 			corev1.EnvVar{Name: envKafkaTopic, Value: coll.Spec.Kafka.Topic},
+			corev1.EnvVar{Name: envKafkaBatchSize, Value: strconv.Itoa(coll.Spec.Agent.EBPF.KafkaBatchSize)},
+			// For easier user configuration, we can assume a constant message size per flow (~100B in protobuf)
+			corev1.EnvVar{Name: envKafkaBatchMessages, Value: strconv.Itoa(coll.Spec.Agent.EBPF.KafkaBatchSize / averageMessageSize)},
 		)
 		if coll.Spec.Kafka.TLS.Enable {
 			config = append(config,
