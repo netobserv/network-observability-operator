@@ -446,6 +446,11 @@ type FlowCollectorConsolePlugin struct {
 	// imagePullPolicy is the Kubernetes pull policy for the image defined above
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 
+	//+kubebuilder:default:=false
+	// sendAuthToken is a flag to enable or disable forwarind auth token
+	// if enabled, this overide loki.sendAuthToken
+	ForwardUserAuthToken bool `json:"forwardUserAuthToken,omitempty"`
+
 	//+kubebuilder:default:={requests:{memory:"50Mi",cpu:"100m"},limits:{memory:"100Mi"}}
 	// resources, in terms of compute resources, required by this container.
 	// Cannot be updated.

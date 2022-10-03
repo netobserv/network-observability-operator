@@ -84,6 +84,7 @@ spec:
         certFile: service-ca.crt
   consolePlugin:
     register: true
+    forwardUserAuthToken: false
     image: 'quay.io/netobserv/network-observability-console-plugin:main'
     imagePullPolicy: IfNotPresent
     port: 9001

@@ -71,8 +71,9 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 				BasePath:  "/",
 			},
 			Proxy: []osv1alpha1.ConsolePluginProxy{{
-				Type:  osv1alpha1.ProxyTypeService,
-				Alias: proxyAlias,
+				Type:      osv1alpha1.ProxyTypeService,
+				Alias:     proxyAlias,
+				Authorize: true,
 				Service: osv1alpha1.ConsolePluginProxyServiceConfig{
 					Name:      constants.PluginName,
 					Namespace: b.namespace,
@@ -119,6 +120,10 @@ func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *f
 		"-loki-tenant-id", desiredLoki.TenantID,
 		"-loglevel", desired.LogLevel,
 		"-frontend-config", filepath.Join(configPath, configFile),
+	}
+
+	if desired.ForwardUserAuthToken {
+		args = append(args, "-loki-forward-user-token")
 	}
 
 	if querierURL != statusURL {
