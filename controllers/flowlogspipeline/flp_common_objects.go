@@ -174,7 +174,7 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		if b.desired.Loki.TLS.Enable {
 			volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts)
 		}
-		if b.desired.Loki.SendAuthToken {
+		if b.desired.Loki.UseHostToken() {
 			volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, lokiToken, constants.FLPName)
 		}
 	}
@@ -333,7 +333,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	}
 
 	var authorization *promConfig.Authorization
-	if b.desired.Loki.SendAuthToken {
+	if b.desired.Loki.UseHostToken() {
 		authorization = &promConfig.Authorization{
 			Type:            "Bearer",
 			CredentialsFile: helper.TokensPath + constants.FLPName,

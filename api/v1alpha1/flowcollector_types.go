@@ -352,6 +352,24 @@ type FlowCollectorHPA struct {
 	Metrics []ascv2.MetricSpec `json:"metrics"`
 }
 
+const (
+	LokiAuthDisabled         = "DISABLED"
+	LokiAuthUseHostToken     = "HOST"
+	LokiAuthForwardUserToken = "FORWARD"
+)
+
+func (spec *FlowCollectorLoki) NoAuthToken() bool {
+	return spec.AuthToken == LokiAuthDisabled
+}
+
+func (spec *FlowCollectorLoki) UseHostToken() bool {
+	return spec.AuthToken == LokiAuthUseHostToken
+}
+
+func (spec *FlowCollectorLoki) ForwardUserToken() bool {
+	return spec.AuthToken == LokiAuthForwardUserToken
+}
+
 // FlowCollectorLoki defines the desired state for FlowCollector's Loki client
 type FlowCollectorLoki struct {
 	//+kubebuilder:default:="http://loki:3100/"
@@ -375,10 +393,13 @@ type FlowCollectorLoki struct {
 	// it will be ignored if instanceSpec is specified
 	TenantID string `json:"tenantID,omitempty"`
 
-	//+kubebuilder:default:=false
-	// sendAuthToken is a flag to enable or disable Authorization header from service account secret
-	// It allows authentication to loki operator gateway
-	SendAuthToken bool `json:"sendAuthToken,omitempty"`
+	// +kubebuilder:validation:Enum:="DISABLED";"HOST";"FORWARD"
+	//+kubebuilder:default:="DISABLED"
+	// AuthToken describe the way to get a token to authenticate to Loki
+	// DISABLED will not send any token with the request
+	// HOST will use the local pod service account to authenticate to Loki
+	// FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode.
+	AuthToken string `json:"authToken,omitempty"`
 
 	//+kubebuilder:default:="1s"
 	// batchWait is max time to wait before sending a batch
@@ -416,15 +437,6 @@ type FlowCollectorLoki struct {
 	TLS ClientTLS `json:"tls"`
 }
 
-const (
-	IgnoreUserToken  = "IGNORE"
-	ForwardUserToken = "FORWARD"
-)
-
-func (spec *FlowCollectorConsolePlugin) ForwardUserToken() bool {
-	return spec.UserToken == ForwardUserToken
-}
-
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector
 type FlowCollectorConsolePlugin struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
@@ -454,12 +466,6 @@ type FlowCollectorConsolePlugin struct {
 	//+kubebuilder:default:=IfNotPresent
 	// imagePullPolicy is the Kubernetes pull policy for the image defined above
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
-
-	// +kubebuilder:validation:Enum:="IGNORE";"FORWARD"
-	//+kubebuilder:default:="IGNORE"
-	// sendAuthToken is a flag to enable or disable forwarind auth token
-	// if enabled, this overide loki.sendAuthToken
-	UserToken string `json:"forwardUserAuthToken,omitempty"`
 
 	//+kubebuilder:default:={requests:{memory:"50Mi",cpu:"100m"},limits:{memory:"100Mi"}}
 	// resources, in terms of compute resources, required by this container.

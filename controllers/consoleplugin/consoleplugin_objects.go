@@ -102,7 +102,7 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 }
 
 func tokenPath(desiredLoki *flowsv1alpha1.FlowCollectorLoki) string {
-	if desiredLoki.SendAuthToken {
+	if desiredLoki.UseHostToken() {
 		return tokensPath + constants.PluginName
 	}
 	return ""
@@ -122,7 +122,7 @@ func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *f
 		"-frontend-config", filepath.Join(configPath, configFile),
 	}
 
-	if desired.ForwardUserToken() {
+	if desiredLoki.ForwardUserToken() {
 		args = append(args, "-loki-forward-user-token")
 	}
 
@@ -137,7 +137,7 @@ func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *f
 			args = append(args, "--loki-ca-path", helper.GetCACertPath(&desiredLoki.TLS, lokiCerts))
 		}
 	}
-	if desiredLoki.SendAuthToken {
+	if desiredLoki.UseHostToken() {
 		args = append(args, "-loki-token-path", tokenPath(desiredLoki))
 	}
 	return args
@@ -179,7 +179,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts)
 	}
 
-	if b.desiredLoki.SendAuthToken {
+	if b.desiredLoki.UseHostToken() {
 		volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, constants.PluginName, constants.PluginName)
 	}
 

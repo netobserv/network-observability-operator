@@ -787,14 +787,6 @@ spec:
                     required:
                     - maxReplicas
                     type: object
-                  forwardUserAuthToken:
-                    default: IGNORE
-                    description: sendAuthToken is a flag to enable or disable forwarind
-                      auth token if enabled, this overide loki.sendAuthToken
-                    enum:
-                    - IGNORE
-                    - FORWARD
-                    type: string
                   image:
                     default: quay.io/netobserv/network-observability-console-plugin:main
                     description: image is the plugin image (including domain and tag)
@@ -992,6 +984,19 @@ spec:
               loki:
                 description: loki, the flow store, client settings.
                 properties:
+                  authToken:
+                    default: DISABLED
+                    description: AuthToken describe the way to get a token to authenticate
+                      to Loki DISABLED will not send any token with the request HOST
+                      will use the local pod service account to authenticate to Loki
+                      FORWARD will forward user token, in this mode, pod that are
+                      not receiving user request like the processor will use the local
+                      pod service account. Similar to HOST mode.
+                    enum:
+                    - DISABLED
+                    - HOST
+                    - FORWARD
+                    type: string
                   batchSize:
                     default: 102400
                     description: batchSize is max batch size (in bytes) of logs to
@@ -1026,12 +1031,6 @@ spec:
                       If empty, the URL value will be used (assuming that the Loki
                       ingester and querier are in the same server).
                     type: string
-                  sendAuthToken:
-                    default: false
-                    description: sendAuthToken is a flag to enable or disable Authorization
-                      header from service account secret It allows authentication
-                      to loki operator gateway
-                    type: boolean
                   staticLabels:
                     additionalProperties:
                       type: string
