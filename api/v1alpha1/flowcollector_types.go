@@ -416,6 +416,15 @@ type FlowCollectorLoki struct {
 	TLS ClientTLS `json:"tls"`
 }
 
+const (
+	IgnoreUserToken  = "IGNORE"
+	ForwardUserToken = "FORWARD"
+)
+
+func (spec *FlowCollectorConsolePlugin) ForwardUserToken() bool {
+	return spec.UserToken == ForwardUserToken
+}
+
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector
 type FlowCollectorConsolePlugin struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
@@ -446,10 +455,11 @@ type FlowCollectorConsolePlugin struct {
 	// imagePullPolicy is the Kubernetes pull policy for the image defined above
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 
-	//+kubebuilder:default:=false
+	// +kubebuilder:validation:Enum:="IGNORE";"FORWARD"
+	//+kubebuilder:default:="IGNORE"
 	// sendAuthToken is a flag to enable or disable forwarind auth token
 	// if enabled, this overide loki.sendAuthToken
-	ForwardUserAuthToken bool `json:"forwardUserAuthToken,omitempty"`
+	UserToken string `json:"forwardUserAuthToken,omitempty"`
 
 	//+kubebuilder:default:={requests:{memory:"50Mi",cpu:"100m"},limits:{memory:"100Mi"}}
 	// resources, in terms of compute resources, required by this container.

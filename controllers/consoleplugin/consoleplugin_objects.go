@@ -122,7 +122,7 @@ func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *f
 		"-frontend-config", filepath.Join(configPath, configFile),
 	}
 
-	if desired.ForwardUserAuthToken {
+	if desired.ForwardUserToken() {
 		args = append(args, "-loki-forward-user-token")
 	}
 

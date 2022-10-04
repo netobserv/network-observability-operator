@@ -788,10 +788,13 @@ spec:
                     - maxReplicas
                     type: object
                   forwardUserAuthToken:
-                    default: false
+                    default: IGNORE
                     description: sendAuthToken is a flag to enable or disable forwarind
                       auth token if enabled, this overide loki.sendAuthToken
-                    type: boolean
+                    enum:
+                    - IGNORE
+                    - FORWARD
+                    type: string
                   image:
                     default: quay.io/netobserv/network-observability-console-plugin:main
                     description: image is the plugin image (including domain and tag)

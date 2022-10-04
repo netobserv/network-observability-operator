@@ -522,11 +522,12 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td>false</td>
       </tr><tr>
         <td><b>forwardUserAuthToken</b></td>
-        <td>boolean</td>
+        <td>enum</td>
         <td>
           sendAuthToken is a flag to enable or disable forwarind auth token if enabled, this overide loki.sendAuthToken<br/>
           <br/>
-            <i>Default</i>: false<br/>
+            <i>Enum</i>: IGNORE, FORWARD<br/>
+            <i>Default</i>: IGNORE<br/>
         </td>
         <td>false</td>
       </tr><tr>
