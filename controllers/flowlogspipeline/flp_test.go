@@ -554,10 +554,11 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
-	assert.Len(parameters[4].Encode.Prom.Metrics, 6)
-	assert.Equal("bandwidth_per_source_subnet", parameters[4].Encode.Prom.Metrics[0].Name)
-	assert.Equal("network_service_total", parameters[4].Encode.Prom.Metrics[1].Name)
-	assert.Equal("node_received_bytes_total", parameters[4].Encode.Prom.Metrics[2].Name)
+	assert.Len(parameters[4].Encode.Prom.Metrics, 4)
+	assert.Equal("node_received_bytes_total", parameters[4].Encode.Prom.Metrics[0].Name)
+	assert.Equal("node_sent_bytes_total", parameters[4].Encode.Prom.Metrics[1].Name)
+	assert.Equal("received_bytes_total", parameters[4].Encode.Prom.Metrics[2].Name)
+	assert.Equal("sent_bytes_total", parameters[4].Encode.Prom.Metrics[3].Name)
 	assert.Equal("netobserv_", parameters[4].Encode.Prom.Prefix)
 }
 
@@ -565,7 +566,7 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Processor.IgnoreMetrics = []string{"subnet"}
+	cfg.Processor.IgnoreMetrics = []string{"node"}
 
 	b := newMonolithBuilder("namespace", &cfg, true)
 	stages, parameters, err := b.buildPipelineConfig()
@@ -573,7 +574,7 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
-	assert.Len(parameters[4].Encode.Prom.Metrics, 5)
-	assert.Equal("network_service_total", parameters[4].Encode.Prom.Metrics[0].Name)
+	assert.Len(parameters[4].Encode.Prom.Metrics, 2)
+	assert.Equal("received_bytes_total", parameters[4].Encode.Prom.Metrics[0].Name)
 	assert.Equal("netobserv_", parameters[4].Encode.Prom.Prefix)
 }

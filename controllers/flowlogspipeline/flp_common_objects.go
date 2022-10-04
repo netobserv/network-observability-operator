@@ -299,16 +299,6 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 			Input:  "DstAddr",
 			Output: "DstK8S",
 			Type:   api.AddKubernetesRuleType,
-		}, {
-			Input:      "DstPort",
-			Output:     "Service",
-			Type:       api.AddServiceRuleType,
-			Parameters: "Proto",
-		}, {
-			Input:      "SrcAddr",
-			Output:     "SrcSubnet",
-			Type:       api.AddSubnetRuleType,
-			Parameters: "/16",
 		}},
 	})
 
