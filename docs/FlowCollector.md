@@ -1796,6 +1796,16 @@ loki, the flow store, client settings.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>authToken</b></td>
+        <td>enum</td>
+        <td>
+          AuthToken describe the way to get a token to authenticate to Loki DISABLED will not send any token with the request HOST will use the local pod service account to authenticate to Loki FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode.<br/>
+          <br/>
+            <i>Enum</i>: DISABLED, HOST, FORWARD<br/>
+            <i>Default</i>: DISABLED<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>batchSize</b></td>
         <td>integer</td>
         <td>
@@ -1849,15 +1859,6 @@ loki, the flow store, client settings.
         <td>string</td>
         <td>
           querierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server).<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>sendAuthToken</b></td>
-        <td>boolean</td>
-        <td>
-          sendAuthToken is a flag to enable or disable Authorization header from service account secret It allows authentication to loki operator gateway<br/>
-          <br/>
-            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>
