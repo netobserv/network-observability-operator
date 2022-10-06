@@ -74,16 +74,18 @@ type builder struct {
 func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec, ck ConfKind, useOpenShiftSCC bool) builder {
 	version := helper.ExtractVersion(desired.Processor.Image)
 	name := name(ck)
-	var promTLS flowsv1alpha1.CertificateReference
-	switch desired.Processor.MetricsServer.TLS.Type {
-	case flowsv1alpha1.ServerTLSProvided:
-		promTLS = *desired.Processor.MetricsServer.TLS.Provided
-	case flowsv1alpha1.ServerTLSAuto:
-		promTLS = flowsv1alpha1.CertificateReference{
-			Type:     "secret",
-			Name:     promServiceName(ck),
-			CertFile: "tls.crt",
-			CertKey:  "tls.key",
+	var promTLS *flowsv1alpha1.CertificateReference
+	if desired.Processor.MetricsServer != nil {
+		switch desired.Processor.MetricsServer.TLS.Type {
+		case flowsv1alpha1.ServerTLSProvided:
+			promTLS = desired.Processor.MetricsServer.TLS.Provided
+		case flowsv1alpha1.ServerTLSAuto:
+			promTLS = &flowsv1alpha1.CertificateReference{
+				Type:     "secret",
+				Name:     promServiceName(ck),
+				CertFile: "tls.crt",
+				CertKey:  "tls.key",
+			}
 		}
 	}
 	return builder{
@@ -98,7 +100,7 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec, ck ConfKind
 		desired:         desired,
 		confKind:        ck,
 		useOpenShiftSCC: useOpenShiftSCC,
-		promTLS:         &promTLS,
+		promTLS:         promTLS,
 	}
 }
 
@@ -138,10 +140,12 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		ContainerPort: b.desired.Processor.HealthPort,
 	})
 
-	ports = append(ports, corev1.ContainerPort{
-		Name:          prometheusServiceName,
-		ContainerPort: b.desired.Processor.MetricsServer.Port,
-	})
+	if b.desired.Processor.MetricsServer != nil {
+		ports = append(ports, corev1.ContainerPort{
+			Name:          prometheusServiceName,
+			ContainerPort: b.desired.Processor.MetricsServer.Port,
+		})
+	}
 
 	if b.desired.Processor.ProfilePort > 0 {
 		ports = append(ports, corev1.ContainerPort{
@@ -179,7 +183,8 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		}
 	}
 
-	if b.desired.Processor.MetricsServer.TLS.Type != flowsv1alpha1.ServerTLSDisabled {
+	if b.desired.Processor.MetricsServer != nil &&
+		b.desired.Processor.MetricsServer.TLS.Type != flowsv1alpha1.ServerTLSDisabled {
 		volumes, volumeMounts = helper.AppendSingleCertVolumes(volumes, volumeMounts, b.promTLS, promCerts)
 	}
 
@@ -226,14 +231,23 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		dnsPolicy = corev1.DNSClusterFirstWithHostNet
 	}
 
+	var annotations map[string]string
+	if b.desired.Processor.MetricsServer != nil {
+		annotations = map[string]string{
+			PodConfigurationDigest:      configDigest,
+			"prometheus.io/scrape":      "true",
+			"prometheus.io/scrape_port": fmt.Sprint(b.desired.Processor.MetricsServer.Port),
+		}
+	} else {
+		annotations = map[string]string{
+			PodConfigurationDigest: configDigest,
+		}
+	}
+
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: b.labels,
-			Annotations: map[string]string{
-				PodConfigurationDigest:      configDigest,
-				"prometheus.io/scrape":      "true",
-				"prometheus.io/scrape_port": fmt.Sprint(b.desired.Processor.MetricsServer.Port),
-			},
+			Labels:      b.labels,
+			Annotations: annotations,
 		},
 		Spec: corev1.PodSpec{
 			Tolerations:        tolerations,
@@ -371,20 +385,22 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	}
 
 	// prometheus stage (encode) configuration
-	promEncode := api.PromEncode{
-		Port:    int(b.desired.Processor.MetricsServer.Port),
-		Prefix:  "netobserv_",
-		Metrics: promMetrics,
-	}
-
-	if b.desired.Processor.MetricsServer.TLS.Type != flowsv1alpha1.ServerTLSDisabled {
-		promEncode.TLS = &api.PromTLSConf{
-			CertPath: helper.GetSingleCertPath(b.promTLS, promCerts),
-			KeyPath:  helper.GetSingleKeyPath(b.promTLS, promCerts),
+	if b.desired.Processor.MetricsServer != nil {
+		promEncode := api.PromEncode{
+			Port:    int(b.desired.Processor.MetricsServer.Port),
+			Prefix:  "netobserv_",
+			Metrics: promMetrics,
 		}
-	}
 
-	enrichedStage.EncodePrometheus("prometheus", promEncode)
+		if b.desired.Processor.MetricsServer.TLS.Type != flowsv1alpha1.ServerTLSDisabled {
+			promEncode.TLS = &api.PromTLSConf{
+				CertPath: helper.GetSingleCertPath(b.promTLS, promCerts),
+				KeyPath:  helper.GetSingleKeyPath(b.promTLS, promCerts),
+			}
+		}
+
+		enrichedStage.EncodePrometheus("prometheus", promEncode)
+	}
 	return nil
 }
 
@@ -441,6 +457,9 @@ func (b *builder) configMap(stages []config.Stage, parameters []config.StagePara
 }
 
 func (b *builder) newPromService() *corev1.Service {
+	if b.desired.Processor.MetricsServer == nil {
+		return nil
+	}
 	service := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.promServiceName(),
@@ -454,12 +473,18 @@ func (b *builder) newPromService() *corev1.Service {
 }
 
 func (b *builder) fromPromService(old *corev1.Service) *corev1.Service {
+	if b.desired.Processor.MetricsServer == nil {
+		return nil
+	}
 	svc := old.DeepCopy()
 	b.fillPromService(svc)
 	return svc
 }
 
 func (b *builder) fillPromService(svc *corev1.Service) {
+	if b.desired.Processor.MetricsServer == nil {
+		return
+	}
 	svc.Spec.Ports = []corev1.ServicePort{{
 		Name:     prometheusServiceName,
 		Port:     b.desired.Processor.MetricsServer.Port,

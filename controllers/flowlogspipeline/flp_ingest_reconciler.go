@@ -117,6 +117,20 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowsv1a
 }
 
 func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, builder *ingestBuilder) error {
+	if builder.generic.desired.Processor.MetricsServer == nil {
+		return r.reconcilePrometheusServiceUnset(ctx)
+	}
+	return r.reconcilePrometheusServiceSet(ctx, builder)
+}
+
+func (r *flpIngesterReconciler) reconcilePrometheusServiceUnset(ctx context.Context) error {
+	if r.nobjMngr.Exists(r.owned.promService) {
+		return r.Delete(ctx, r.owned.promService)
+	}
+	return nil
+}
+
+func (r *flpIngesterReconciler) reconcilePrometheusServiceSet(ctx context.Context, builder *ingestBuilder) error {
 	if !r.nobjMngr.Exists(r.owned.promService) {
 		return r.CreateOwned(ctx, builder.newPromService())
 	}

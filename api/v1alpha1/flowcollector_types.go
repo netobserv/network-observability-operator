@@ -284,7 +284,7 @@ type FlowCollectorFLP struct {
 
 	// metricsServer endpoint configuration for Prometheus scraper
 	// +optional
-	MetricsServer MetricsServerConfig `json:"metricsServer,omitempty"`
+	MetricsServer *MetricsServerConfig `json:"metricsServer,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535

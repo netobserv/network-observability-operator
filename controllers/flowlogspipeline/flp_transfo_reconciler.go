@@ -155,6 +155,20 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 }
 
 func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Context, builder *transfoBuilder) error {
+	if builder.generic.desired.Processor.MetricsServer == nil {
+		return r.reconcilePrometheusServiceUnset(ctx)
+	}
+	return r.reconcilePrometheusServiceSet(ctx, builder)
+}
+
+func (r *flpTransformerReconciler) reconcilePrometheusServiceUnset(ctx context.Context) error {
+	if r.nobjMngr.Exists(r.owned.promService) {
+		return r.Delete(ctx, r.owned.promService)
+	}
+	return nil
+}
+
+func (r *flpTransformerReconciler) reconcilePrometheusServiceSet(ctx context.Context, builder *transfoBuilder) error {
 	if !r.nobjMngr.Exists(r.owned.promService) {
 		return r.CreateOwned(ctx, builder.newPromService())
 	}
