@@ -1151,6 +1151,15 @@ spec:
                     description: enableKubeProbes is a flag to enable or disable Kubernetes
                       liveness/readiness probes
                     type: boolean
+                  env:
+                    additionalProperties:
+                      type: string
+                    description: env allows passing custom environment variables to
+                      the Flowlogs-Pipeline pod. This field is useful for passing
+                      some concrete performance-tuning options (e.g. GOGC, GOMAXPROCS)
+                      that shouldn't be publicly exposed as part of the FlowCollector
+                      descriptor.
+                    type: object
                   healthPort:
                     default: 8080
                     description: healthPort is a collector HTTP port in the Pod that

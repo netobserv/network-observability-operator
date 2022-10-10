@@ -183,6 +183,11 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		volumes, volumeMounts = helper.AppendSingleCertVolumes(volumes, volumeMounts, b.promTLS, promCerts)
 	}
 
+	var envs []corev1.EnvVar
+	for k, v := range b.desired.Processor.Env {
+		envs = append(envs, corev1.EnvVar{Name: k, Value: v})
+	}
+
 	container := corev1.Container{
 		Name:            constants.FLPName,
 		Image:           b.desired.Processor.Image,
@@ -191,6 +196,7 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		Resources:       *b.desired.Processor.Resources.DeepCopy(),
 		VolumeMounts:    volumeMounts,
 		Ports:           ports,
+		Env:             envs,
 	}
 	if b.desired.Processor.EnableKubeProbes {
 		container.LivenessProbe = &corev1.Probe{
