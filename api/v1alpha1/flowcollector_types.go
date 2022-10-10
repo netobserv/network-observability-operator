@@ -350,6 +350,13 @@ type FlowCollectorFLP struct {
 	// +optional
 	// kafkaConsumerBatchSize indicates to the broker the maximum batch size, in bytes, that the consumer will accept. Ignored when not using Kafka. Default: 10MB.
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
+
+	// env allows passing custom environment variables to the Flowlogs-Pipeline pod.
+	// This field is useful for passing some concrete performance-tuning options
+	// (e.g. GOGC, GOMAXPROCS) that shouldn't be
+	// publicly exposed as part of the FlowCollector descriptor.
+	//+optional
+	Env map[string]string `json:"env,omitempty"`
 }
 
 type FlowCollectorHPA struct {

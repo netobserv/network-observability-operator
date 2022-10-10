@@ -2102,6 +2102,13 @@ processor defines the settings of the component that receives the flows from the
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>env</b></td>
+        <td>map[string]string</td>
+        <td>
+          env allows passing custom environment variables to the Flowlogs-Pipeline pod. This field is useful for passing some concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>healthPort</b></td>
         <td>integer</td>
         <td>

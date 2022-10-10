@@ -91,6 +91,9 @@ func flowCollectorControllerSpecs() {
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
 						Image:           "testimg:latest",
+						Env: map[string]string{
+							"GOGC": "200",
+						},
 					},
 					Agent: flowsv1alpha1.FlowCollectorAgent{
 						Type: "IPFIX",
@@ -187,6 +190,9 @@ func flowCollectorControllerSpecs() {
 					ImagePullPolicy: "Never",
 					LogLevel:        "error",
 					Image:           "testimg:latest",
+					Env: map[string]string{
+						"GOGC": "400",
+					},
 				}
 				fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}
 				fc.Spec.Agent.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
@@ -245,6 +251,7 @@ func flowCollectorControllerSpecs() {
 					ContainerPort: 7891,
 					Protocol:      "UDP",
 				}))
+				Expect(cnt.Env).To(ContainElement(v1.EnvVar{Name: "GOGC", Value: "400"}))
 			})
 
 			By("Allocating the proper toleration to allow its placement in the master nodes", func() {
