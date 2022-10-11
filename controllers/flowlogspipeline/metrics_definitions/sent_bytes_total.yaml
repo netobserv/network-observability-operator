@@ -8,7 +8,6 @@ usage:
 tags:
   - egress
   - bytes
-  - nodes
   - workloads
   - namespaces
 encode:
