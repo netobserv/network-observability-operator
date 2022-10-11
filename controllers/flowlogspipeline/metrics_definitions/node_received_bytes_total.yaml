@@ -6,10 +6,9 @@ details:
 usage:
   Evaluate network incoming usage breakdown per source and destination nodes
 tags:
-  - bandwidth
-  - rate
-  - node
-  - incoming
+  - ingress
+  - bytes
+  - nodes
 encode:
   type: prom
   prom:

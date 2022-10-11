@@ -6,11 +6,11 @@ details:
 usage:
   Evaluate network incoming usage breakdown per source and destination namespaces and owners
 tags:
-  - bandwidth
-  - rate
-  - namespace
-  - owner
-  - incoming
+  - ingress
+  - bytes
+  - nodes
+  - workloads
+  - namespaces
 encode:
   type: prom
   prom:
