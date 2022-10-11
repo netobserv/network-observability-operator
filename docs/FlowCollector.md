@@ -2118,6 +2118,8 @@ processor defines the settings of the component that receives the flows from the
         <td>[]string</td>
         <td>
           ignoreMetrics is a list of tags to specify which metrics to ignore<br/>
+          <br/>
+            <i>Default</i>: [egress packets]<br/>
         </td>
         <td>false</td>
       </tr><tr>

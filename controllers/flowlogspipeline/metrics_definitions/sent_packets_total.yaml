@@ -15,7 +15,7 @@ encode:
   type: prom
   prom:
     metrics:
-      - name: received_packets_total
+      - name: sent_packets_total
         type: counter
         valuekey: Packets
         filter:

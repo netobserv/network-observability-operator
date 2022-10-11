@@ -44,7 +44,9 @@ spec:
     profilePort: 6060
     metricsServer:
       port: 9102
-    ignoreMetrics: []
+    ignoreMetrics:
+      - egress
+      - packets
     dropUnusedFields: true
     resources:
       requests:
