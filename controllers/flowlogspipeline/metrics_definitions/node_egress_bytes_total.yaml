@@ -1,24 +1,24 @@
 #flp_confgen
 description:
-  This metric observes the nodes incoming traffic
+  This metric observes the nodes outgoing traffic
 details:
-  Sum bytes for incoming traffic per source and destination nodes
+  Sum bytes for outgoing traffic per source and destination nodes
 usage:
-  Evaluate network incoming usage breakdown per source and destination nodes
+  Evaluate network outgoing usage breakdown per source and destination nodes
 tags:
-  - ingress
+  - egress
   - bytes
   - nodes
 encode:
   type: prom
   prom:
     metrics:
-      - name: node_received_bytes_total
+      - name: node_egress_bytes_total
         type: counter
         valuekey: Bytes
         filter:
           key: FlowDirection
-          value: "0"
+          value: "1"
         labels:
           - SrcK8S_HostName
           - DstK8S_HostName

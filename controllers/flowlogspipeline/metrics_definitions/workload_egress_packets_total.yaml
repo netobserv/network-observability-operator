@@ -1,12 +1,12 @@
 #flp_confgen
 description:
-  This metric observes the incoming traffic
+  This metric observes the outgoing traffic
 details:
-  Sum packet number for incoming traffic per source and destination namespaces and owners
+  Sum packet number for outgoing traffic per source and destination namespaces and owners
 usage:
   Evaluate network incoming usage breakdown per source and destination namespaces and owners
 tags:
-  - ingress
+  - egress
   - packets
   - workloads
   - namespaces
@@ -14,7 +14,7 @@ encode:
   type: prom
   prom:
     metrics:
-      - name: received_packets_total
+      - name: workload_egress_packets_total
         type: counter
         valuekey: Packets
         filter:

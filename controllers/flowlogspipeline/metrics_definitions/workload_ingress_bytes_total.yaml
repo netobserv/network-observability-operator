@@ -1,12 +1,12 @@
 #flp_confgen
 description:
-  This metric observes the outgoing traffic
+  This metric observes the incoming traffic
 details:
-  Sum bytes for outgoing traffic per source and destination namespaces and owners
+  Sum bytes for incoming traffic per source and destination namespaces and owners
 usage:
-  Evaluate network outgoing usage breakdown per source and destination namespaces and owners
+  Evaluate network incoming usage breakdown per source and destination namespaces and owners
 tags:
-  - egress
+  - ingress
   - bytes
   - workloads
   - namespaces
@@ -14,12 +14,12 @@ encode:
   type: prom
   prom:
     metrics:
-      - name: sent_bytes_total
+      - name: workload_ingress_bytes_total
         type: counter
         valuekey: Bytes
         filter:
           key: FlowDirection
-          value: "1"
+          value: "0"
         labels:
           - SrcK8S_Namespace
           - DstK8S_Namespace

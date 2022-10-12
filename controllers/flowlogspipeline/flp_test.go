@@ -555,12 +555,12 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 	assert.Len(parameters[4].Encode.Prom.Metrics, 6)
-	assert.Equal("node_received_bytes_total", parameters[4].Encode.Prom.Metrics[0].Name)
-	assert.Equal("node_sent_bytes_total", parameters[4].Encode.Prom.Metrics[1].Name)
-	assert.Equal("received_bytes_total", parameters[4].Encode.Prom.Metrics[2].Name)
-	assert.Equal("received_packets_total", parameters[4].Encode.Prom.Metrics[3].Name)
-	assert.Equal("sent_bytes_total", parameters[4].Encode.Prom.Metrics[4].Name)
-	assert.Equal("sent_packets_total", parameters[4].Encode.Prom.Metrics[5].Name)
+	assert.Equal("node_egress_bytes_total", parameters[4].Encode.Prom.Metrics[0].Name)
+	assert.Equal("node_ingress_bytes_total", parameters[4].Encode.Prom.Metrics[1].Name)
+	assert.Equal("workload_egress_bytes_total", parameters[4].Encode.Prom.Metrics[2].Name)
+	assert.Equal("workload_egress_packets_total", parameters[4].Encode.Prom.Metrics[3].Name)
+	assert.Equal("workload_ingress_bytes_total", parameters[4].Encode.Prom.Metrics[4].Name)
+	assert.Equal("workload_ingress_packets_total", parameters[4].Encode.Prom.Metrics[5].Name)
 	assert.Equal("netobserv_", parameters[4].Encode.Prom.Prefix)
 }
 
@@ -577,6 +577,6 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 	assert.Len(parameters[4].Encode.Prom.Metrics, 4)
-	assert.Equal("received_bytes_total", parameters[4].Encode.Prom.Metrics[0].Name)
+	assert.Equal("workload_egress_bytes_total", parameters[4].Encode.Prom.Metrics[0].Name)
 	assert.Equal("netobserv_", parameters[4].Encode.Prom.Prefix)
 }
