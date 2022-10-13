@@ -128,5 +128,5 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  replaces: netobserv-operator.v0.1.3
+  replaces: netobserv-operator.v0.1.4
   version: 0.0.0

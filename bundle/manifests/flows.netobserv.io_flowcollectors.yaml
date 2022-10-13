@@ -18,9 +18,12 @@ spec:
     - jsonPath: .spec.agent.type
       name: Agent
       type: string
-    - jsonPath: .spec.kafka.enable
-      name: Kafka
-      type: boolean
+    - jsonPath: .spec.agent.ebpf.sampling
+      name: Sampling (EBPF)
+      type: string
+    - jsonPath: .spec.deploymentModel
+      name: Deployment Model
+      type: string
     - jsonPath: .status.conditions[*].reason
       name: Status
       type: string
@@ -65,7 +68,7 @@ spec:
                         pattern: ^\d+(ns|ms|s|m)?$
                         type: string
                       cacheMaxFlows:
-                        default: 5000
+                        default: 100000
                         description: cacheMaxFlows is the max number of flows in an
                           aggregate; when reached, the reporter sends the flows
                         format: int32
@@ -93,7 +96,7 @@ spec:
                           type: string
                         type: array
                       image:
-                        default: 'quay.io/netobserv/netobserv-ebpf-agent:'
+                        default: quay.io/netobserv/netobserv-ebpf-agent:v0.2.1-rc0
                         description: image is the NetObserv Agent image (including
                           domain and tag)
                         type: string
@@ -116,6 +119,12 @@ spec:
                         items:
                           type: string
                         type: array
+                      kafkaBatchSize:
+                        default: 10485760
+                        description: 'kafkaBatchSize limits the maximum size of a
+                          request in bytes before being sent to a partition. Ignored
+                          when not using Kafka. Default: 10MB.'
+                        type: integer
                       logLevel:
                         default: info
                         description: logLevel defines the log level for the NetObserv
@@ -136,6 +145,12 @@ spec:
                           PERFMON, NET_ADMIN, SYS_RESOURCE.'
                         type: boolean
                       resources:
+                        default:
+                          limits:
+                            memory: 800Mi
+                          requests:
+                            cpu: 100m
+                            memory: 50Mi
                         description: 'resources are the compute resources required
                           by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         properties:
@@ -188,6 +203,16 @@ spec:
                         format: int32
                         minimum: 0
                         type: integer
+                      clusterNetworkOperator:
+                        description: clusterNetworkOperator defines the settings related
+                          to the OpenShift Cluster Network Operator, when available.
+                        properties:
+                          namespace:
+                            default: openshift-network-operator
+                            description: namespace  where the configmap is going to
+                              be deployed.
+                            type: string
+                        type: object
                       forceSampleAll:
                         default: false
                         description: forceSampleAll allows disabling sampling in the
@@ -197,6 +222,27 @@ spec:
                           at your own risks. When it is set to true, the value of
                           "sampling" is ignored.
                         type: boolean
+                      ovnKubernetes:
+                        description: ovnKubernetes defines the settings of the OVN-Kubernetes
+                          CNI, when available. This configuration is used when using
+                          OVN's IPFIX exports, without OpenShift. When using OpenShift,
+                          refer to the `clusterNetworkOperator` property instead.
+                        properties:
+                          containerName:
+                            default: ovnkube-node
+                            description: containerName defines the name of the container
+                              to configure for IPFIX.
+                            type: string
+                          daemonSetName:
+                            default: ovnkube-node
+                            description: daemonSetName defines the name of the DaemonSet
+                              controlling the OVN-Kubernetes pods.
+                            type: string
+                          namespace:
+                            default: ovn-kubernetes
+                            description: namespace where OVN-Kubernetes pods are deployed.
+                            type: string
+                        type: object
                       sampling:
                         default: 400
                         description: sampling is the sampling rate on the reporter.
@@ -212,33 +258,26 @@ spec:
                   type:
                     default: EBPF
                     description: type selects the flows tracing agent. Possible values
-                      are "IPFIX" (default) to use the IPFIX collector, or "EBPF"
-                      to use NetObserv eBPF agent. When using IPFIX with OVN-Kubernetes
-                      CNI, NetObserv will configure OVN's IPFIX exporter. Other CNIs
-                      are not supported, they could work but require manual configuration.
+                      are "EBPF" (default) to use NetObserv eBPF agent, "IPFIX" to
+                      use the legacy IPFIX collector. "EBPF" is recommended in most
+                      cases as it offers better performances and should work regardless
+                      of the CNI installed on the cluster. "IPFIX" works with OVN-Kubernetes
+                      CNI (other CNIs could work if they support exporting IPFIX,
+                      but they would require manual configuration).
                     enum:
-                    - IPFIX
                     - EBPF
+                    - IPFIX
                     type: string
                 required:
                 - type
-                type: object
-              clusterNetworkOperator:
-                description: clusterNetworkOperator defines the settings related to
-                  the OpenShift Cluster Network Operator, when available.
-                properties:
-                  namespace:
-                    default: openshift-network-operator
-                    description: namespace  where the configmap is going to be deployed.
-                    type: string
                 type: object
               consolePlugin:
                 description: consolePlugin defines the settings related to the OpenShift
                   Console plugin, when available.
                 properties:
-                  hpa:
-                    description: hpa spec of a horizontal pod autoscaler to set up
-                      for the plugin Deployment.
+                  autoscaler:
+                    description: autoscaler spec of a horizontal pod autoscaler to
+                      set up for the plugin Deployment.
                     properties:
                       maxReplicas:
                         description: maxReplicas is the upper limit for the number
@@ -757,7 +796,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: 'quay.io/netobserv/network-observability-console-plugin:v0.1.4'
+                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.5-rc0
                     description: image is the plugin image (including domain and tag)
                     type: string
                   imagePullPolicy:
@@ -808,11 +847,12 @@ spec:
                     type: object
                   register:
                     default: true
-                    description: 'register allows, when set to true, to automatically register the provided console plugin
-                      with the OpenShift Console operator. When set to false, you
-                      can still register it manually by editing console.operator.openshift.io/cluster.
-                      E.g: oc patch console.operator.openshift.io cluster --type=''json''
-                      -p ''[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'''
+                    description: 'register allows, when set to true, to automatically
+                      register the provided console plugin with the OpenShift Console
+                      operator. When set to false, you can still register it manually
+                      by editing console.operator.openshift.io/cluster. E.g: oc patch
+                      console.operator.openshift.io cluster --type=''json'' -p ''[{"op":
+                      "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'''
                     type: boolean
                   replicas:
                     default: 1
@@ -857,25 +897,27 @@ spec:
                 required:
                 - register
                 type: object
+              deploymentModel:
+                default: DIRECT
+                description: deploymentModel defines the desired type of deployment
+                  for flow processing. Possible values are "DIRECT" (default) to make
+                  the flow processor listening directly from the agents, or "KAFKA"
+                  to make flows sent to a Kafka pipeline before consumption by the
+                  processor. Kafka can provide better scalability, resiliency and
+                  high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
+                enum:
+                - DIRECT
+                - KAFKA
+                type: string
               kafka:
                 description: kafka configuration, allowing to use Kafka as a broker
-                  as part of the flow collection pipeline. Kafka can provide better
-                  scalability, resiliency and high availability (for more details,
-                  see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
+                  as part of the flow collection pipeline. Available when the "spec.deploymentModel"
+                  is "KAFKA".
                 properties:
                   address:
                     default: ""
                     description: address of the Kafka server
                     type: string
-                  enable:
-                    default: false
-                    description: 'enable Kafka. Set it to true to use Kafka as part
-                      of the flow collection pipeline. When enabled, the pipeline
-                      is split in two parts: ingestion and transformation, connected
-                      by Kafka. The ingestion is either done by a specific flowlogs-pipeline
-                      workload, or by the eBPF agent, depending on the value of `spec.agent`.
-                      The transformation is done by a new flowlogs-pipeline deployment.'
-                    type: boolean
                   tls:
                     description: tls client configuration.
                     properties:
@@ -950,6 +992,19 @@ spec:
               loki:
                 description: loki, the flow store, client settings.
                 properties:
+                  authToken:
+                    default: DISABLED
+                    description: AuthToken describe the way to get a token to authenticate
+                      to Loki DISABLED will not send any token with the request HOST
+                      will use the local pod service account to authenticate to Loki
+                      FORWARD will forward user token, in this mode, pod that are
+                      not receiving user request like the processor will use the local
+                      pod service account. Similar to HOST mode.
+                    enum:
+                    - DISABLED
+                    - HOST
+                    - FORWARD
+                    type: string
                   batchSize:
                     default: 102400
                     description: batchSize is max batch size (in bytes) of logs to
@@ -984,12 +1039,6 @@ spec:
                       If empty, the URL value will be used (assuming that the Loki
                       ingester and querier are in the same server).
                     type: string
-                  sendAuthToken:
-                    default: false
-                    description: sendAuthToken is a flag to enable or disable Authorization
-                      header from service account secret It allows authentication
-                      to loki operator gateway
-                    type: boolean
                   staticLabels:
                     additionalProperties:
                       type: string
@@ -1088,27 +1137,6 @@ spec:
                 description: namespace where NetObserv pods are deployed. If empty,
                   the namespace of the operator is going to be used.
                 type: string
-              ovnKubernetes:
-                description: ovnKubernetes defines the settings of the OVN-Kubernetes
-                  CNI, when available. This configuration is used when using OVN's
-                  IPFIX exports, without OpenShift. When using OpenShift, refer to
-                  the `clusterNetworkOperator` property instead.
-                properties:
-                  containerName:
-                    default: ovnkube-node
-                    description: containerName defines the name of the container to
-                      configure for IPFIX.
-                    type: string
-                  daemonSetName:
-                    default: ovnkube-node
-                    description: daemonSetName defines the name of the DaemonSet controlling
-                      the OVN-Kubernetes pods.
-                    type: string
-                  namespace:
-                    default: ovn-kubernetes
-                    description: namespace where OVN-Kubernetes pods are deployed.
-                    type: string
-                type: object
               processor:
                 description: processor defines the settings of the component that
                   receives the flows from the agent, enriches them, and forwards them
@@ -1125,6 +1153,15 @@ spec:
                     description: enableKubeProbes is a flag to enable or disable Kubernetes
                       liveness/readiness probes
                     type: boolean
+                  env:
+                    additionalProperties:
+                      type: string
+                    description: env allows passing custom environment variables to
+                      the Flowlogs-Pipeline pod. This field is useful for passing
+                      some concrete performance-tuning options (e.g. GOGC, GOMAXPROCS)
+                      that shouldn't be publicly exposed as part of the FlowCollector
+                      descriptor.
+                    type: object
                   healthPort:
                     default: 8080
                     description: healthPort is a collector HTTP port in the Pod that
@@ -1133,9 +1170,31 @@ spec:
                     maximum: 65535
                     minimum: 1
                     type: integer
-                  hpa:
-                    description: hpa spec of a horizontal pod autoscaler to set up
-                      for the collector Deployment. Ignored for DaemonSet.
+                  ignoreMetrics:
+                    description: ignoreMetrics is a list of tags to specify which
+                      metrics to ignore
+                    items:
+                      type: string
+                    type: array
+                  image:
+                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.4-rc0
+                    description: image of the collector container (including domain
+                      and tag)
+                    type: string
+                  imagePullPolicy:
+                    default: IfNotPresent
+                    description: imagePullPolicy is the Kubernetes pull policy for
+                      the image defined above
+                    enum:
+                    - IfNotPresent
+                    - Always
+                    - Never
+                    type: string
+                  kafkaConsumerAutoscaler:
+                    description: kafkaConsumerAutoscaler spec of a horizontal pod
+                      autoscaler to set up for flowlogs-pipeline-transformer, which
+                      consumes Kafka messages. This setting is ignored when Kafka
+                      is disabled.
                     properties:
                       maxReplicas:
                         description: maxReplicas is the upper limit for the number
@@ -1653,40 +1712,26 @@ spec:
                     required:
                     - maxReplicas
                     type: object
-                  ignoreMetrics:
-                    description: ignoreMetrics is a list of tags to specify which
-                      metrics to ignore
-                    items:
-                      type: string
-                    type: array
-                  image:
-                    default: 'quay.io/netobserv/flowlogs-pipeline:v0.1.3'
-                    description: image of the collector container (including domain
-                      and tag)
-                    type: string
-                  imagePullPolicy:
-                    default: IfNotPresent
-                    description: imagePullPolicy is the Kubernetes pull policy for
-                      the image defined above
-                    enum:
-                    - IfNotPresent
-                    - Always
-                    - Never
-                    type: string
-                  kind:
-                    default: DaemonSet
-                    description: kind of the workload, either DaemonSet or Deployment.
-                      When DaemonSet is used, each pod will receive flows from the
-                      node it is running on. When Deployment is used, the flows traffic
-                      received from nodes will be load-balanced. Note that in such
-                      a case, the number of replicas should be less or equal to the
-                      number of nodes, as extra-pods would be unused due to session
-                      affinity with the node IP. When using Kafka, this option only
-                      affects the flowlogs-pipeline ingester, not the transformer.
-                    enum:
-                    - DaemonSet
-                    - Deployment
-                    type: string
+                  kafkaConsumerBatchSize:
+                    default: 10485760
+                    description: 'kafkaConsumerBatchSize indicates to the broker the
+                      maximum batch size, in bytes, that the consumer will accept.
+                      Ignored when not using Kafka. Default: 10MB.'
+                    type: integer
+                  kafkaConsumerQueueCapacity:
+                    default: 1000
+                    description: kafkaConsumerQueueCapacity defines the capacity of
+                      the internal message queue used in the Kafka consumer client.
+                      Ignored when not using Kafka.
+                    type: integer
+                  kafkaConsumerReplicas:
+                    default: 3
+                    description: kafkaConsumerReplicas defines the number of replicas
+                      (pods) to start for flowlogs-pipeline-transformer, which consumes
+                      Kafka messages. This setting is ignored when Kafka is disabled.
+                    format: int32
+                    minimum: 0
+                    type: integer
                   logLevel:
                     default: info
                     description: logLevel of the collector runtime
@@ -1699,35 +1744,77 @@ spec:
                     - fatal
                     - panic
                     type: string
+                  metricsServer:
+                    description: metricsServer endpoint configuration for Prometheus
+                      scraper
+                    properties:
+                      port:
+                        default: 9102
+                        description: the prometheus HTTP port
+                        format: int32
+                        maximum: 65535
+                        minimum: 1
+                        type: integer
+                      tls:
+                        description: TLS configuration.
+                        properties:
+                          provided:
+                            description: TLS configuration.
+                            properties:
+                              certFile:
+                                description: certFile defines the path to the certificate
+                                  file name within the ConfigMap / Secret
+                                type: string
+                              certKey:
+                                description: certKey defines the path to the certificate
+                                  private key file name within the ConfigMap / Secret.
+                                  Omit when the key is not necessary.
+                                type: string
+                              name:
+                                description: name of the ConfigMap or Secret containing
+                                  certificates
+                                type: string
+                              type:
+                                description: 'type for the certificate reference:
+                                  configmap or secret'
+                                enum:
+                                - configmap
+                                - secret
+                                type: string
+                            type: object
+                          type:
+                            default: DISABLED
+                            description: Select the type of TLS configuration "DISABLED"
+                              (default) to not configure TLS for the endpoint, "PROVIDED"
+                              to manually provide cert file and a key file, and "AUTO"
+                              to use Openshift auto generated certificate using annotations
+                            enum:
+                            - DISABLED
+                            - PROVIDED
+                            - AUTO
+                            type: string
+                        type: object
+                    type: object
                   port:
                     default: 2055
-                    description: 'port of the flow collector: either a service port
-                      for Deployment kind, or host port for DaemonSet kind By conventions,
+                    description: 'port of the flow collector (host port) By conventions,
                       some value are not authorized port must not be below 1024 and
                       must not equal this values: 4789,6081,500, and 4500'
                     format: int32
                     maximum: 65535
                     minimum: 1025
                     type: integer
-                  prometheusPort:
-                    default: 9102
-                    description: 'prometheusPort is the prometheus HTTP port: this
-                      port exposes prometheus metrics'
+                  profilePort:
+                    description: profilePort allows setting up a Go pprof profiler
+                      listening to this port
                     format: int32
                     maximum: 65535
-                    minimum: 1
-                    type: integer
-                  replicas:
-                    default: 1
-                    description: replicas defines the number of replicas (pods) to
-                      start for Deployment kind. Ignored for DaemonSet.
-                    format: int32
                     minimum: 0
                     type: integer
                   resources:
                     default:
                       limits:
-                        memory: 300Mi
+                        memory: 800Mi
                       requests:
                         cpu: 100m
                         memory: 100Mi
@@ -1760,6 +1847,7 @@ spec:
                 type: object
             required:
             - agent
+            - deploymentModel
             type: object
           status:
             description: FlowCollectorStatus defines the observed state of FlowCollector
