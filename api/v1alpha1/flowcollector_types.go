@@ -303,6 +303,7 @@ type FlowCollectorFLP struct {
 	Image string `json:"image,omitempty"`
 
 	// ignoreMetrics is a list of tags to specify which metrics to ignore
+	//+kubebuilder:default:={"egress","packets"}
 	IgnoreMetrics []string `json:"ignoreMetrics,omitempty"`
 
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never

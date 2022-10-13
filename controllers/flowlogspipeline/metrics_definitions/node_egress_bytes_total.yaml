@@ -6,15 +6,14 @@ details:
 usage:
   Evaluate network outgoing usage breakdown per source and destination nodes
 tags:
-  - bandwidth
-  - rate
-  - node
-  - outgoing
+  - egress
+  - bytes
+  - nodes
 encode:
   type: prom
   prom:
     metrics:
-      - name: node_sent_bytes_total
+      - name: node_egress_bytes_total
         type: counter
         valuekey: Bytes
         filter:

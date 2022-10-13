@@ -1169,6 +1169,9 @@ spec:
                     minimum: 1
                     type: integer
                   ignoreMetrics:
+                    default:
+                    - egress
+                    - packets
                     description: ignoreMetrics is a list of tags to specify which
                       metrics to ignore
                     items:
