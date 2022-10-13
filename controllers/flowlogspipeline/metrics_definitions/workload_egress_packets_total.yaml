@@ -9,7 +9,6 @@ tags:
   - egress
   - packets
   - workloads
-  - namespaces
 encode:
   type: prom
   prom:
