@@ -42,11 +42,12 @@ spec:
     enableKubeProbes: true
     healthPort: 8080
     profilePort: 6060
-    metricsServer:
-      port: 9102
-    ignoreMetrics:
-      - egress
-      - packets
+    metrics:
+      server:
+        port: 9102
+      ignoreTags:
+        - egress
+        - packets
     dropUnusedFields: true
     resources:
       requests:

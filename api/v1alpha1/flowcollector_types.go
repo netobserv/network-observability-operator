@@ -274,9 +274,10 @@ type MetricsServerConfig struct {
 type FLPMetrics struct {
 	// metricsServer endpoint configuration for Prometheus scraper
 	// +optional
-	Server MetricsServerConfig `json:"erver,omitempty"`
+	Server MetricsServerConfig `json:"server,omitempty"`
 
-	// ignoreMetrics is a list of tags to specify which metrics to ignore
+	// ignoreTags is a list of tags to specify which metrics to ignore
+	//+kubebuilder:default:={"egress","packets"}
 	IgnoreTags []string `json:"ignoreTags,omitempty"`
 }
 
@@ -308,17 +309,13 @@ type FlowCollectorFLP struct {
 	// image of the collector container (including domain and tag)
 	Image string `json:"image,omitempty"`
 
-	// ignoreMetrics is a list of tags to specify which metrics to ignore
-	//+kubebuilder:default:={"egress","packets"}
-	IgnoreMetrics []string `json:"ignoreMetrics,omitempty"`
-
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
 	// imagePullPolicy is the Kubernetes pull policy for the image defined above
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 
 	// Metrics define the processor configuration regarding metrics
-	Metrics FLPMetrics `json:"metrics, omitempty`
+	Metrics FLPMetrics `json:"metrics,omitempty"`
 
 	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic
 	//+kubebuilder:default:=info

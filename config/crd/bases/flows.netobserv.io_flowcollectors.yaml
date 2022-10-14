@@ -1168,15 +1168,6 @@ spec:
                     maximum: 65535
                     minimum: 1
                     type: integer
-                  ignoreMetrics:
-                    default:
-                    - egress
-                    - packets
-                    description: ignoreMetrics is a list of tags to specify which
-                      metrics to ignore
-                    items:
-                      type: string
-                    type: array
                   image:
                     default: quay.io/netobserv/flowlogs-pipeline:main
                     description: image of the collector container (including domain
@@ -1745,55 +1736,71 @@ spec:
                     - fatal
                     - panic
                     type: string
-                  metricsServer:
-                    description: metricsServer endpoint configuration for Prometheus
-                      scraper
+                  metrics:
+                    description: Metrics define the processor configuration regarding
+                      metrics
                     properties:
-                      port:
-                        default: 9102
-                        description: the prometheus HTTP port
-                        format: int32
-                        maximum: 65535
-                        minimum: 1
-                        type: integer
-                      tls:
-                        description: TLS configuration.
+                      ignoreTags:
+                        default:
+                        - egress
+                        - packets
+                        description: ignoreTags is a list of tags to specify which
+                          metrics to ignore
+                        items:
+                          type: string
+                        type: array
+                      server:
+                        description: metricsServer endpoint configuration for Prometheus
+                          scraper
                         properties:
-                          provided:
+                          port:
+                            default: 9102
+                            description: the prometheus HTTP port
+                            format: int32
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                          tls:
                             description: TLS configuration.
                             properties:
-                              certFile:
-                                description: certFile defines the path to the certificate
-                                  file name within the ConfigMap / Secret
-                                type: string
-                              certKey:
-                                description: certKey defines the path to the certificate
-                                  private key file name within the ConfigMap / Secret.
-                                  Omit when the key is not necessary.
-                                type: string
-                              name:
-                                description: name of the ConfigMap or Secret containing
-                                  certificates
-                                type: string
+                              provided:
+                                description: TLS configuration.
+                                properties:
+                                  certFile:
+                                    description: certFile defines the path to the
+                                      certificate file name within the ConfigMap /
+                                      Secret
+                                    type: string
+                                  certKey:
+                                    description: certKey defines the path to the certificate
+                                      private key file name within the ConfigMap /
+                                      Secret. Omit when the key is not necessary.
+                                    type: string
+                                  name:
+                                    description: name of the ConfigMap or Secret containing
+                                      certificates
+                                    type: string
+                                  type:
+                                    description: 'type for the certificate reference:
+                                      configmap or secret'
+                                    enum:
+                                    - configmap
+                                    - secret
+                                    type: string
+                                type: object
                               type:
-                                description: 'type for the certificate reference:
-                                  configmap or secret'
+                                default: DISABLED
+                                description: Select the type of TLS configuration
+                                  "DISABLED" (default) to not configure TLS for the
+                                  endpoint, "PROVIDED" to manually provide cert file
+                                  and a key file, and "AUTO" to use Openshift auto
+                                  generated certificate using annotations
                                 enum:
-                                - configmap
-                                - secret
+                                - DISABLED
+                                - PROVIDED
+                                - AUTO
                                 type: string
                             type: object
-                          type:
-                            default: DISABLED
-                            description: Select the type of TLS configuration "DISABLED"
-                              (default) to not configure TLS for the endpoint, "PROVIDED"
-                              to manually provide cert file and a key file, and "AUTO"
-                              to use Openshift auto generated certificate using annotations
-                            enum:
-                            - DISABLED
-                            - PROVIDED
-                            - AUTO
-                            type: string
                         type: object
                     type: object
                   port:
