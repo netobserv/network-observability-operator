@@ -796,7 +796,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.5-rc0
+                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.5-rc1
                     description: image is the plugin image (including domain and tag)
                     type: string
                   imagePullPolicy:
@@ -1171,13 +1171,16 @@ spec:
                     minimum: 1
                     type: integer
                   ignoreMetrics:
+                    default:
+                    - egress
+                    - packets
                     description: ignoreMetrics is a list of tags to specify which
                       metrics to ignore
                     items:
                       type: string
                     type: array
                   image:
-                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.4-rc0
+                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.4-rc1
                     description: image of the collector container (including domain
                       and tag)
                     type: string
