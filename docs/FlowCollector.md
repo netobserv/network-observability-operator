@@ -1831,7 +1831,7 @@ loki, the flow store, client settings.
         <td>
           maxBackoff is the maximum backoff time for client connection between retries<br/>
           <br/>
-            <i>Default</i>: 300s<br/>
+            <i>Default</i>: 5s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1841,7 +1841,7 @@ loki, the flow store, client settings.
           maxRetries is the maximum number of retries for client connections<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 10<br/>
+            <i>Default</i>: 2<br/>
             <i>Minimum</i>: 0<br/>
         </td>
         <td>false</td>

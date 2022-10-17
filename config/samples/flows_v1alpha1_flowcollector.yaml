@@ -77,8 +77,8 @@ spec:
     batchWait: 1s
     batchSize: 10485760
     minBackoff: 1s
-    maxBackoff: 30s
-    maxRetries: 5
+    maxBackoff: 5s
+    maxRetries: 2
     staticLabels:
       app: netobserv-flowcollector
     tls:
