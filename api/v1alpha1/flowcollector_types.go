@@ -442,12 +442,12 @@ type FlowCollectorLoki struct {
 	// minBackoff is the initial backoff time for client connection between retries
 	MinBackoff metav1.Duration `json:"minBackoff,omitempty"`
 
-	//+kubebuilder:default:="300s"
+	//+kubebuilder:default:="5s"
 	// maxBackoff is the maximum backoff time for client connection between retries
 	MaxBackoff metav1.Duration `json:"maxBackoff,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
-	//+kubebuilder:default:=10
+	//+kubebuilder:default:=2
 	// maxRetries is the maximum number of retries for client connections
 	MaxRetries int32 `json:"maxRetries,omitempty"`
 

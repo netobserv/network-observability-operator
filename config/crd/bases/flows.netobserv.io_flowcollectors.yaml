@@ -1015,12 +1015,12 @@ spec:
                     description: batchWait is max time to wait before sending a batch
                     type: string
                   maxBackoff:
-                    default: 300s
+                    default: 5s
                     description: maxBackoff is the maximum backoff time for client
                       connection between retries
                     type: string
                   maxRetries:
-                    default: 10
+                    default: 2
                     description: maxRetries is the maximum number of retries for client
                       connections
                     format: int32
