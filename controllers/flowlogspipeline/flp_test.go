@@ -57,10 +57,12 @@ func getConfig() v1alpha1.FlowCollectorSpec {
 			LogLevel:        "trace",
 			Resources:       resources,
 			HealthPort:      8080,
-			MetricsServer: v1alpha1.MetricsServerConfig{
-				Port: 9090,
-				TLS: v1alpha1.ServerTLS{
-					Type: v1alpha1.ServerTLSDisabled,
+			Metrics: v1alpha1.FLPMetrics{
+				Server: v1alpha1.MetricsServerConfig{
+					Port: 9090,
+					TLS: v1alpha1.ServerTLS{
+						Type: v1alpha1.ServerTLSDisabled,
+					},
 				},
 			},
 			KafkaConsumerReplicas: 1,
@@ -339,7 +341,7 @@ func TestServiceChanged(t *testing.T) {
 	first := b.newPromService()
 
 	// Check port changed
-	cfg.Processor.MetricsServer.Port = 9999
+	cfg.Processor.Metrics.Server.Port = 9999
 	b = newMonolithBuilder(ns, &cfg, true)
 	second := b.fromPromService(first)
 
@@ -389,7 +391,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
-	assert.Equal(cfg.Processor.MetricsServer.Port, int32(params[4].Encode.Prom.Port))
+	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(params[4].Encode.Prom.Port))
 }
 
 func TestAutoScalerUpdateCheck(t *testing.T) {
@@ -568,7 +570,7 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Processor.IgnoreMetrics = []string{"nodes"}
+	cfg.Processor.Metrics.IgnoreTags = []string{"nodes"}
 
 	b := newMonolithBuilder("namespace", &cfg, true)
 	stages, parameters, err := b.buildPipelineConfig()

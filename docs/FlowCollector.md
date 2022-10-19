@@ -2121,15 +2121,6 @@ processor defines the settings of the component that receives the flows from the
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>ignoreMetrics</b></td>
-        <td>[]string</td>
-        <td>
-          ignoreMetrics is a list of tags to specify which metrics to ignore<br/>
-          <br/>
-            <i>Default</i>: [egress packets]<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>image</b></td>
         <td>string</td>
         <td>
@@ -2195,10 +2186,10 @@ processor defines the settings of the component that receives the flows from the
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessormetricsserver">metricsServer</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessormetrics">metrics</a></b></td>
         <td>object</td>
         <td>
-          metricsServer endpoint configuration for Prometheus scraper<br/>
+          Metrics define the processor configuration regarding metrics<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3146,8 +3137,44 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.processor.metricsServer
+### FlowCollector.spec.processor.metrics
 <sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
+
+
+
+Metrics define the processor configuration regarding metrics
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>ignoreTags</b></td>
+        <td>[]string</td>
+        <td>
+          ignoreTags is a list of tags to specify which metrics to ignore<br/>
+          <br/>
+            <i>Default</i>: [egress packets]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessormetricsserver">server</a></b></td>
+        <td>object</td>
+        <td>
+          metricsServer endpoint configuration for Prometheus scraper<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.metrics.server
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetrics)</sup></sup>
 
 
 
@@ -3185,7 +3212,7 @@ metricsServer endpoint configuration for Prometheus scraper
 </table>
 
 
-### FlowCollector.spec.processor.metricsServer.tls
+### FlowCollector.spec.processor.metrics.server.tls
 <sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsserver)</sup></sup>
 
 
@@ -3222,7 +3249,7 @@ TLS configuration.
 </table>
 
 
-### FlowCollector.spec.processor.metricsServer.tls.provided
+### FlowCollector.spec.processor.metrics.server.tls.provided
 <sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsservertls)</sup></sup>
 
 

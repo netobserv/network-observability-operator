@@ -270,6 +270,17 @@ type MetricsServerConfig struct {
 	TLS ServerTLS `json:"tls"`
 }
 
+// FLPMetrics define the desired FLP configuration regarding metrics
+type FLPMetrics struct {
+	// metricsServer endpoint configuration for Prometheus scraper
+	// +optional
+	Server MetricsServerConfig `json:"server,omitempty"`
+
+	// ignoreTags is a list of tags to specify which metrics to ignore
+	//+kubebuilder:default:={"egress","packets"}
+	IgnoreTags []string `json:"ignoreTags,omitempty"`
+}
+
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector
 type FlowCollectorFLP struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
@@ -281,10 +292,6 @@ type FlowCollectorFLP struct {
 	// By conventions, some value are not authorized port must not be below 1024 and must not equal this values:
 	// 4789,6081,500, and 4500
 	Port int32 `json:"port,omitempty"`
-
-	// metricsServer endpoint configuration for Prometheus scraper
-	// +optional
-	MetricsServer MetricsServerConfig `json:"metricsServer,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
@@ -302,14 +309,13 @@ type FlowCollectorFLP struct {
 	// image of the collector container (including domain and tag)
 	Image string `json:"image,omitempty"`
 
-	// ignoreMetrics is a list of tags to specify which metrics to ignore
-	//+kubebuilder:default:={"egress","packets"}
-	IgnoreMetrics []string `json:"ignoreMetrics,omitempty"`
-
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
 	// imagePullPolicy is the Kubernetes pull policy for the image defined above
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
+
+	// Metrics define the processor configuration regarding metrics
+	Metrics FLPMetrics `json:"metrics,omitempty"`
 
 	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic
 	//+kubebuilder:default:=info
