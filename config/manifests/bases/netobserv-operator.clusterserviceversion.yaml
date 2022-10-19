@@ -35,8 +35,8 @@ spec:
 
     ```
     kubectl create namespace netobserv
-    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/be14cbdca9af223f5472fffef05257089bc73c8a/examples/zero-click-loki/1-storage.yaml) -n netobserv
-    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/be14cbdca9af223f5472fffef05257089bc73c8a/examples/zero-click-loki/2-loki.yaml) -n netobserv
+    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/f0a1816aa15ea27185cae1cd597f982a5c72935d/examples/zero-click-loki/1-storage.yaml) -n netobserv
+    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/f0a1816aa15ea27185cae1cd597f982a5c72935d/examples/zero-click-loki/2-loki.yaml) -n netobserv
     ```
 
     - [Grafana](https://grafana.com/oss/grafana/) can optionally be installed for custom dashboards and query capabilities.

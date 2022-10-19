@@ -18,7 +18,7 @@ metadata:
                 "excludeInterfaces": [
                   "lo"
                 ],
-                "image": "quay.io/netobserv/netobserv-ebpf-agent:v0.2.1-rc0",
+                "image": "quay.io/netobserv/netobserv-ebpf-agent:v0.2.1-rc1",
                 "imagePullPolicy": "IfNotPresent",
                 "interfaces": [],
                 "kafkaBatchSize": 10485760,
@@ -52,7 +52,7 @@ metadata:
             },
             "consolePlugin": {
               "autoscaler": null,
-              "image": "quay.io/netobserv/network-observability-console-plugin:v0.1.5-rc1",
+              "image": "quay.io/netobserv/network-observability-console-plugin:v0.1.5-rc2",
               "imagePullPolicy": "IfNotPresent",
               "logLevel": "info",
               "port": 9001,
@@ -86,8 +86,8 @@ metadata:
             "loki": {
               "batchSize": 10485760,
               "batchWait": "1s",
-              "maxBackoff": "30s",
-              "maxRetries": 5,
+              "maxBackoff": "5s",
+              "maxRetries": 2,
               "minBackoff": "1s",
               "staticLabels": {
                 "app": "netobserv-flowcollector"
@@ -107,10 +107,6 @@ metadata:
               "dropUnusedFields": true,
               "enableKubeProbes": true,
               "healthPort": 8080,
-              "ignoreMetrics": [
-                "egress",
-                "packets"
-              ],
               "image": "quay.io/netobserv/flowlogs-pipeline:v0.1.4-rc1",
               "imagePullPolicy": "IfNotPresent",
               "kafkaConsumerAutoscaler": null,
@@ -118,8 +114,14 @@ metadata:
               "kafkaConsumerQueueCapacity": 1000,
               "kafkaConsumerReplicas": 3,
               "logLevel": "info",
-              "metricsServer": {
-                "port": 9102
+              "metrics": {
+                "ignoreTags": [
+                  "egress",
+                  "packets"
+                ],
+                "server": {
+                  "port": 9102
+                }
               },
               "port": 2055,
               "profilePort": 6060,
@@ -139,13 +141,13 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
-    containerImage: quay.io/netobserv/network-observability-operator:0.1.5-rc1
-    createdAt: "2022-10-17T09:15:07Z"
+    containerImage: quay.io/netobserv/network-observability-operator:0.1.5-rc2
+    createdAt: "2022-10-19T08:00:30Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.22.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
-  name: netobserv-operator.v0.1.5-rc1
+  name: netobserv-operator.v0.1.5-rc2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -170,8 +172,8 @@ spec:
 
     ```
     kubectl create namespace netobserv
-    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/be14cbdca9af223f5472fffef05257089bc73c8a/examples/zero-click-loki/1-storage.yaml) -n netobserv
-    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/be14cbdca9af223f5472fffef05257089bc73c8a/examples/zero-click-loki/2-loki.yaml) -n netobserv
+    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/f0a1816aa15ea27185cae1cd597f982a5c72935d/examples/zero-click-loki/1-storage.yaml) -n netobserv
+    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/f0a1816aa15ea27185cae1cd597f982a5c72935d/examples/zero-click-loki/2-loki.yaml) -n netobserv
     ```
 
     - [Grafana](https://grafana.com/oss/grafana/) can optionally be installed for custom dashboards and query capabilities.
@@ -425,7 +427,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/netobserv/network-observability-operator:0.1.5-rc1
+                image: quay.io/netobserv/network-observability-operator:0.1.5-rc2
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -527,4 +529,4 @@ spec:
     name: Red Hat
     url: https://www.redhat.com
   replaces: netobserv-operator.v0.1.4
-  version: 0.1.5-rc1
+  version: 0.1.5-rc2

@@ -18,7 +18,7 @@ spec:
         daemonSetName: ovnkube-node
         containerName: ovnkube-node
     ebpf:
-      image: 'quay.io/netobserv/netobserv-ebpf-agent:v0.2.1-rc0'
+      image: 'quay.io/netobserv/netobserv-ebpf-agent:v0.2.1-rc1'
       imagePullPolicy: IfNotPresent
       sampling: 50
       cacheActiveTimeout: 5s
@@ -42,11 +42,12 @@ spec:
     enableKubeProbes: true
     healthPort: 8080
     profilePort: 6060
-    metricsServer:
-      port: 9102
-    ignoreMetrics:
-      - egress
-      - packets
+    metrics:
+      server:
+        port: 9102
+      ignoreTags:
+        - egress
+        - packets
     dropUnusedFields: true
     resources:
       requests:
@@ -77,8 +78,8 @@ spec:
     batchWait: 1s
     batchSize: 10485760
     minBackoff: 1s
-    maxBackoff: 30s
-    maxRetries: 5
+    maxBackoff: 5s
+    maxRetries: 2
     staticLabels:
       app: netobserv-flowcollector
     tls:
@@ -89,7 +90,7 @@ spec:
         certFile: service-ca.crt
   consolePlugin:
     register: true
-    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.5-rc1'
+    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.5-rc2'
     imagePullPolicy: IfNotPresent
     port: 9001
     logLevel: info
