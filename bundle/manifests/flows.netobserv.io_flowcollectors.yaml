@@ -96,7 +96,7 @@ spec:
                           type: string
                         type: array
                       image:
-                        default: quay.io/netobserv/netobserv-ebpf-agent:v0.2.1-rc1
+                        default: quay.io/netobserv/netobserv-ebpf-agent:v0.2.1
                         description: image is the NetObserv Agent image (including
                           domain and tag)
                         type: string
@@ -796,7 +796,7 @@ spec:
                     - maxReplicas
                     type: object
                   image:
-                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.5-rc2
+                    default: quay.io/netobserv/network-observability-console-plugin:v0.1.5
                     description: image is the plugin image (including domain and tag)
                     type: string
                   imagePullPolicy:
@@ -1171,7 +1171,7 @@ spec:
                     minimum: 1
                     type: integer
                   image:
-                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.4-rc1
+                    default: quay.io/netobserv/flowlogs-pipeline:v0.1.4
                     description: image of the collector container (including domain
                       and tag)
                     type: string

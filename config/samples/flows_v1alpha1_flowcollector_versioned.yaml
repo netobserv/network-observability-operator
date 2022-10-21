@@ -18,7 +18,7 @@ spec:
         daemonSetName: ovnkube-node
         containerName: ovnkube-node
     ebpf:
-      image: 'quay.io/netobserv/netobserv-ebpf-agent:v0.2.1-rc1'
+      image: 'quay.io/netobserv/netobserv-ebpf-agent:v0.2.1'
       imagePullPolicy: IfNotPresent
       sampling: 50
       cacheActiveTimeout: 5s
@@ -36,7 +36,7 @@ spec:
       kafkaBatchSize: 10485760
   processor:
     port: 2055
-    image: 'quay.io/netobserv/flowlogs-pipeline:v0.1.4-rc1'
+    image: 'quay.io/netobserv/flowlogs-pipeline:v0.1.4'
     imagePullPolicy: IfNotPresent
     logLevel: info
     enableKubeProbes: true
@@ -90,7 +90,7 @@ spec:
         certFile: service-ca.crt
   consolePlugin:
     register: true
-    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.5-rc2'
+    image: 'quay.io/netobserv/network-observability-console-plugin:v0.1.5'
     imagePullPolicy: IfNotPresent
     port: 9001
     logLevel: info
