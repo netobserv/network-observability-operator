@@ -165,11 +165,7 @@ func (in *FlowCollectorAgent) DeepCopy() *FlowCollectorAgent {
 func (in *FlowCollectorConsolePlugin) DeepCopyInto(out *FlowCollectorConsolePlugin) {
 	*out = *in
 	in.Resources.DeepCopyInto(&out.Resources)
-	if in.Autoscaler != nil {
-		in, out := &in.Autoscaler, &out.Autoscaler
-		*out = new(FlowCollectorHPA)
-		(*in).DeepCopyInto(*out)
-	}
+	in.Autoscaler.DeepCopyInto(&out.Autoscaler)
 	in.PortNaming.DeepCopyInto(&out.PortNaming)
 }
 
@@ -226,11 +222,7 @@ func (in *FlowCollectorFLP) DeepCopyInto(out *FlowCollectorFLP) {
 	*out = *in
 	in.Metrics.DeepCopyInto(&out.Metrics)
 	in.Resources.DeepCopyInto(&out.Resources)
-	if in.KafkaConsumerAutoscaler != nil {
-		in, out := &in.KafkaConsumerAutoscaler, &out.KafkaConsumerAutoscaler
-		*out = new(FlowCollectorHPA)
-		(*in).DeepCopyInto(*out)
-	}
+	in.KafkaConsumerAutoscaler.DeepCopyInto(&out.KafkaConsumerAutoscaler)
 	if in.Env != nil {
 		in, out := &in.Env, &out.Env
 		*out = make(map[string]string, len(*in))

@@ -201,7 +201,7 @@ func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, de
 
 func (r *CPReconciler) reconcileHPA(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) error {
 	// Delete or Create / Update Autoscaler according to HPA option
-	if desired.ConsolePlugin.Autoscaler == nil {
+	if desired.ConsolePlugin.Autoscaler.Disabled() {
 		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
 	} else {
 		newASC := builder.autoScaler()
@@ -229,7 +229,7 @@ func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowC
 	}
 	return containerNeedsUpdate(&depl.Spec.Template.Spec, &desired.ConsolePlugin, &desired.Loki) ||
 		configChanged(&depl.Spec.Template, cmDigest) ||
-		(desired.ConsolePlugin.Autoscaler == nil && *depl.Spec.Replicas != desired.ConsolePlugin.Replicas)
+		(desired.ConsolePlugin.Autoscaler.Disabled() && *depl.Spec.Replicas != desired.ConsolePlugin.Replicas)
 }
 
 func configChanged(tmpl *corev1.PodTemplateSpec, cmDigest string) bool {

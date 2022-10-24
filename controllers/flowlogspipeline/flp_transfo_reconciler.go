@@ -137,7 +137,7 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 	}
 
 	// Delete or Create / Update Autoscaler according to HPA option
-	if desiredFLP.KafkaConsumerAutoscaler == nil {
+	if desiredFLP.KafkaConsumerAutoscaler.Disabled() {
 		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
 	} else {
 		newASC := builder.autoScaler()
@@ -182,10 +182,10 @@ func (r *flpTransformerReconciler) reconcilePermissions(ctx context.Context, bui
 func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, configDigest string) bool {
 	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired, false) ||
 		configChanged(&depl.Spec.Template, configDigest) ||
-		(desired.KafkaConsumerAutoscaler == nil && *depl.Spec.Replicas != desired.KafkaConsumerReplicas)
+		(desired.KafkaConsumerAutoscaler.Disabled() && *depl.Spec.Replicas != desired.KafkaConsumerReplicas)
 }
 
-func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired *flowsv1alpha1.FlowCollectorHPA, ns string) bool {
+func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired flowsv1alpha1.FlowCollectorHPA, ns string) bool {
 	if asc.Namespace != ns {
 		return true
 	}

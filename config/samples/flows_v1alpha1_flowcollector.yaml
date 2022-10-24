@@ -94,7 +94,6 @@ spec:
     imagePullPolicy: IfNotPresent
     port: 9001
     logLevel: info
-    autoscaler: null
     portNaming:
       enable: true
       portNames:

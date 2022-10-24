@@ -346,7 +346,7 @@ type FlowCollectorFLP struct {
 	// kafkaConsumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlogs-pipeline-transformer, which consumes Kafka messages.
 	// This setting is ignored when Kafka is disabled.
 	// +optional
-	KafkaConsumerAutoscaler *FlowCollectorHPA `json:"kafkaConsumerAutoscaler,omitempty"`
+	KafkaConsumerAutoscaler FlowCollectorHPA `json:"kafkaConsumerAutoscaler,omitempty"`
 
 	//+kubebuilder:default:=1000
 	// +optional
@@ -366,7 +366,19 @@ type FlowCollectorFLP struct {
 	Env map[string]string `json:"env,omitempty"`
 }
 
+const (
+	HPAStatusDisabled = "DISABLED"
+	HPAStatusEnabled  = "ENABLED"
+)
+
 type FlowCollectorHPA struct {
+	// +kubebuilder:validation:Enum:=DISABLED;ENABLED
+	// +kubebuilder:default:=DISABLED
+	// AuthToken describe the way to get a token to authenticate to Loki
+	// DISABLED will not send any token with the requestmode.
+	// ENABLED will deploy an horizontal pod autoscaler
+	Status string `json:"status,omitempty"`
+
 	// minReplicas is the lower limit for the number of replicas to which the autoscaler
 	// can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the
 	// alpha feature gate HPAScaleToZero is enabled and at least one Object or External
@@ -375,10 +387,20 @@ type FlowCollectorHPA struct {
 	// +optional
 	MinReplicas *int32 `json:"minReplicas,omitempty" protobuf:"varint,2,opt,name=minReplicas"`
 	// maxReplicas is the upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.
+	// +kubebuilder:default:=3
+	// +optional
 	MaxReplicas int32 `json:"maxReplicas" protobuf:"varint,3,opt,name=maxReplicas"`
 	// metrics used by the pod autoscaler
 	// +optional
 	Metrics []ascv2.MetricSpec `json:"metrics"`
+}
+
+func (spec *FlowCollectorHPA) Disabled() bool {
+	return spec.Status == HPAStatusDisabled
+}
+
+func (spec *FlowCollectorHPA) Enabled() bool {
+	return spec.Status == HPAStatusEnabled
 }
 
 const (
@@ -510,7 +532,7 @@ type FlowCollectorConsolePlugin struct {
 
 	// autoscaler spec of a horizontal pod autoscaler to set up for the plugin Deployment.
 	// +optional
-	Autoscaler *FlowCollectorHPA `json:"autoscaler,omitempty"`
+	Autoscaler FlowCollectorHPA `json:"autoscaler,omitempty"`
 
 	//+kubebuilder:default:={enable:true}
 	// portNaming defines the configuration of the port-to-service name translation

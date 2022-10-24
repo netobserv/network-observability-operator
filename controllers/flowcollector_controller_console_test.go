@@ -78,7 +78,8 @@ func flowCollectorConsolePluginSpecs() {
 						ImagePullPolicy: "Never",
 						Image:           "testimg:latest",
 						Register:        true,
-						Autoscaler: &flowsv1alpha1.FlowCollectorHPA{
+						Autoscaler: flowsv1alpha1.FlowCollectorHPA{
+							Status:      flowsv1alpha1.HPAStatusEnabled,
 							MinReplicas: pointer.Int32(1),
 							MaxReplicas: 1,
 							Metrics: []ascv2.MetricSpec{{
@@ -152,7 +153,7 @@ func flowCollectorConsolePluginSpecs() {
 				}
 				fc.Spec.ConsolePlugin.Port = 9099
 				fc.Spec.ConsolePlugin.Replicas = 2
-				fc.Spec.ConsolePlugin.Autoscaler = nil
+				fc.Spec.ConsolePlugin.Autoscaler.Status = flowsv1alpha1.HPAStatusDisabled
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 

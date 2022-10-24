@@ -43,7 +43,8 @@ func getPluginConfig() flowsv1alpha1.FlowCollectorConsolePlugin {
 		Image:           testImage,
 		ImagePullPolicy: string(testPullPolicy),
 		Resources:       testResources,
-		Autoscaler: &flowsv1alpha1.FlowCollectorHPA{
+		Autoscaler: flowsv1alpha1.FlowCollectorHPA{
+			Status:      flowsv1alpha1.HPAStatusEnabled,
 			MinReplicas: &minReplicas,
 			MaxReplicas: maxReplicas,
 			Metrics: []ascv2.MetricSpec{{

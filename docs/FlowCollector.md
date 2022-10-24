@@ -626,8 +626,9 @@ autoscaler spec of a horizontal pod autoscaler to set up for the plugin Deployme
           maxReplicas is the upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
           <br/>
             <i>Format</i>: int32<br/>
+            <i>Default</i>: 3<br/>
         </td>
-        <td>true</td>
+        <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindex">metrics</a></b></td>
         <td>[]object</td>
@@ -642,6 +643,16 @@ autoscaler spec of a horizontal pod autoscaler to set up for the plugin Deployme
           minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.<br/>
           <br/>
             <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          AuthToken describe the way to get a token to authenticate to Loki DISABLED will not send any token with the requestmode. ENABLED will deploy an horizontal pod autoscaler<br/>
+          <br/>
+            <i>Enum</i>: DISABLED, ENABLED<br/>
+            <i>Default</i>: DISABLED<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -2251,8 +2262,9 @@ kafkaConsumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlo
           maxReplicas is the upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
           <br/>
             <i>Format</i>: int32<br/>
+            <i>Default</i>: 3<br/>
         </td>
-        <td>true</td>
+        <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindex">metrics</a></b></td>
         <td>[]object</td>
@@ -2267,6 +2279,16 @@ kafkaConsumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlo
           minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.<br/>
           <br/>
             <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>status</b></td>
+        <td>enum</td>
+        <td>
+          AuthToken describe the way to get a token to authenticate to Loki DISABLED will not send any token with the requestmode. ENABLED will deploy an horizontal pod autoscaler<br/>
+          <br/>
+            <i>Enum</i>: DISABLED, ENABLED<br/>
+            <i>Default</i>: DISABLED<br/>
         </td>
         <td>false</td>
       </tr></tbody>
