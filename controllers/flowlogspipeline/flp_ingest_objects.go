@@ -79,6 +79,13 @@ func (b *ingestBuilder) fromPromService(old *corev1.Service) *corev1.Service {
 	return b.generic.fromPromService(old)
 }
 
+func (b *ingestBuilder) newMetricsService() *corev1.Service {
+	return b.generic.newMetricsService()
+}
+
+func (b *ingestBuilder) fromMetricsService(old *corev1.Service) *corev1.Service {
+	return b.generic.fromMetricsService(old)
+}
 func buildClusterRoleIngester(useOpenShiftSCC bool) *rbacv1.ClusterRole {
 	cr := rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{

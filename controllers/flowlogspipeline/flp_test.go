@@ -457,6 +457,13 @@ func TestLabels(t *testing.T) {
 	assert.Equal("flowlogs-pipeline", svc.Spec.Selector["app"])
 	assert.Equal("dev", svc.Labels["version"])
 	assert.Empty(svc.Spec.Selector["version"])
+
+	// Service (metrics)
+	svc2 := builder.newMetricsService()
+	assert.Equal("flowlogs-pipeline", svc2.Labels["app"])
+	assert.Equal("flowlogs-pipeline", svc2.Spec.Selector["app"])
+	assert.Equal("dev", svc2.Labels["version"])
+	assert.Empty(svc2.Spec.Selector["version"])
 }
 
 // This function validate that each stage has its matching parameter

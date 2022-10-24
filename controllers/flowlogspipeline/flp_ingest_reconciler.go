@@ -26,6 +26,7 @@ type flpIngesterReconciler struct {
 type ingestOwnedObjects struct {
 	daemonSet      *appsv1.DaemonSet
 	promService    *corev1.Service
+	metricsService *corev1.Service
 	serviceAccount *corev1.ServiceAccount
 	configMap      *corev1.ConfigMap
 	roleBinding    *rbacv1.ClusterRoleBinding
@@ -36,6 +37,7 @@ func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 	owned := ingestOwnedObjects{
 		daemonSet:      &appsv1.DaemonSet{},
 		promService:    &corev1.Service{},
+		metricsService: &corev1.Service{},
 		serviceAccount: &corev1.ServiceAccount{},
 		configMap:      &corev1.ConfigMap{},
 		roleBinding:    &rbacv1.ClusterRoleBinding{},
@@ -44,6 +46,7 @@ func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 	nobjMngr.AddManagedObject(name, owned.daemonSet)
 	nobjMngr.AddManagedObject(name, owned.serviceAccount)
 	nobjMngr.AddManagedObject(promServiceName(ConfKafkaIngester), owned.promService)
+	nobjMngr.AddManagedObject(metricServiceName(ConfKafkaIngester), owned.metricsService)
 	nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaIngester), owned.roleBinding)
 	nobjMngr.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
 
@@ -113,6 +116,11 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowsv1a
 		return err
 	}
 
+	err = r.reconcileMetricsService(ctx, &builder)
+	if err != nil {
+		return err
+	}
+
 	return r.reconcileDaemonSet(ctx, &desired.Spec.Processor, &builder, configDigest)
 }
 
@@ -123,6 +131,19 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 	newSVC := builder.fromPromService(r.owned.promService)
 	if serviceNeedsUpdate(r.owned.promService, newSVC) {
 		if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *flpIngesterReconciler) reconcileMetricsService(ctx context.Context, builder *ingestBuilder) error {
+	if !r.nobjMngr.Exists(r.owned.metricsService) {
+		return r.CreateOwned(ctx, builder.newMetricsService())
+	}
+	newSVC := builder.fromMetricsService(r.owned.metricsService)
+	if serviceNeedsUpdate(r.owned.metricsService, newSVC) {
+		if err := r.UpdateOwned(ctx, r.owned.metricsService, newSVC); err != nil {
 			return err
 		}
 	}

@@ -38,6 +38,9 @@ ocp-deploy-operator: ## run flp from the operator
 undeploy-operator: ## stop the operator locally
 	-PID=$$(pgrep --oldest --full "main.go"); pkill -P $$PID; pkill $$PID
 	kubectl delete ds flowlogs-pipeline || true
+	kubectl delete service flowlogs-pipeline-prom || true
+	kubectl delete service netobserv-plugin || true
+	kubectl delete deployment netobserv-plugin || true
 
 .PHONY: ocp-refresh-ovs
 ocp-refresh-ovs:

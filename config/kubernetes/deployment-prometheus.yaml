@@ -73,18 +73,6 @@ data:
       - /etc/prometheus/prometheus.rules
     scrape_configs:
       - job_name: 'flowlogs-pipeline'
-        kubernetes_sd_configs:
-          - role: pod
+        static_configs:
+          - targets: ['flowlogs-pipeline-metrics.netobserv.svc.cluster.local:9102']
 
-        relabel_configs:
-        # Scrape only pods that have "prometheus.io/scrape = true" annotation.
-        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-          regex: "true"
-          replacement: $1
-          action: keep
-        # Scrape only single, desired port for the pod based on pod "prometheus.io/scrape_port = <port>" annotation.
-        - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_scrape_port]
-          action: replace
-          regex: ([^:]+)(?::\d+)?;(\d+)
-          replacement: $1:$2
-          target_label: __address__

@@ -77,6 +77,14 @@ func (b *monolithBuilder) fromPromService(old *corev1.Service) *corev1.Service {
 	return b.generic.fromPromService(old)
 }
 
+func (b *monolithBuilder) newMetricsService() *corev1.Service {
+	return b.generic.newMetricsService()
+}
+
+func (b *monolithBuilder) fromMetricsService(old *corev1.Service) *corev1.Service {
+	return b.generic.fromMetricsService(old)
+}
+
 func (b *monolithBuilder) serviceAccount() *corev1.ServiceAccount {
 	return b.generic.serviceAccount()
 }

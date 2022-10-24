@@ -82,6 +82,14 @@ func (b *transfoBuilder) fromPromService(old *corev1.Service) *corev1.Service {
 	return b.generic.fromPromService(old)
 }
 
+func (b *transfoBuilder) newMetricsService() *corev1.Service {
+	return b.generic.newMetricsService()
+}
+
+func (b *transfoBuilder) fromMetricsService(old *corev1.Service) *corev1.Service {
+	return b.generic.fromMetricsService(old)
+}
+
 func (b *transfoBuilder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 	return &ascv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{

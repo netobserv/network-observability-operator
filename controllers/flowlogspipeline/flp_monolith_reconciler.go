@@ -26,6 +26,7 @@ type flpMonolithReconciler struct {
 type monolithOwnedObjects struct {
 	daemonSet      *appsv1.DaemonSet
 	promService    *corev1.Service
+	metricsService *corev1.Service
 	serviceAccount *corev1.ServiceAccount
 	configMap      *corev1.ConfigMap
 	roleBindingIn  *rbacv1.ClusterRoleBinding
@@ -37,6 +38,7 @@ func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 	owned := monolithOwnedObjects{
 		daemonSet:      &appsv1.DaemonSet{},
 		promService:    &corev1.Service{},
+		metricsService: &corev1.Service{},
 		serviceAccount: &corev1.ServiceAccount{},
 		configMap:      &corev1.ConfigMap{},
 		roleBindingIn:  &rbacv1.ClusterRoleBinding{},
@@ -46,6 +48,7 @@ func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 	nobjMngr.AddManagedObject(name, owned.daemonSet)
 	nobjMngr.AddManagedObject(name, owned.serviceAccount)
 	nobjMngr.AddManagedObject(promServiceName(ConfMonolith), owned.promService)
+	nobjMngr.AddManagedObject(metricServiceName(ConfMonolith), owned.metricsService)
 	nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaIngester), owned.roleBindingIn)
 	nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaTransformer), owned.roleBindingTr)
 	nobjMngr.AddManagedObject(configMapName(ConfMonolith), owned.configMap)
@@ -115,6 +118,11 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowsv1a
 		return err
 	}
 
+	err = r.reconcileMetricsService(ctx, &builder)
+	if err != nil {
+		return err
+	}
+
 	return r.reconcileDaemonSet(ctx, &desired.Spec.Processor, &builder, configDigest)
 }
 
@@ -125,6 +133,19 @@ func (r *flpMonolithReconciler) reconcilePrometheusService(ctx context.Context, 
 	newSVC := builder.fromPromService(r.owned.promService)
 	if serviceNeedsUpdate(r.owned.promService, newSVC) {
 		if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *flpMonolithReconciler) reconcileMetricsService(ctx context.Context, builder *monolithBuilder) error {
+	if !r.nobjMngr.Exists(r.owned.metricsService) {
+		return r.CreateOwned(ctx, builder.newMetricsService())
+	}
+	newSVC := builder.fromMetricsService(r.owned.metricsService)
+	if serviceNeedsUpdate(r.owned.metricsService, newSVC) {
+		if err := r.UpdateOwned(ctx, r.owned.metricsService, newSVC); err != nil {
 			return err
 		}
 	}

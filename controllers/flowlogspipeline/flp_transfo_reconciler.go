@@ -27,6 +27,7 @@ type flpTransformerReconciler struct {
 type transfoOwnedObjects struct {
 	deployment     *appsv1.Deployment
 	promService    *corev1.Service
+	metricsService *corev1.Service
 	hpa            *ascv2.HorizontalPodAutoscaler
 	serviceAccount *corev1.ServiceAccount
 	configMap      *corev1.ConfigMap
@@ -38,6 +39,7 @@ func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, 
 	owned := transfoOwnedObjects{
 		deployment:     &appsv1.Deployment{},
 		promService:    &corev1.Service{},
+		metricsService: &corev1.Service{},
 		hpa:            &ascv2.HorizontalPodAutoscaler{},
 		serviceAccount: &corev1.ServiceAccount{},
 		configMap:      &corev1.ConfigMap{},
@@ -48,6 +50,7 @@ func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, 
 	nobjMngr.AddManagedObject(name, owned.hpa)
 	nobjMngr.AddManagedObject(name, owned.serviceAccount)
 	nobjMngr.AddManagedObject(promServiceName(ConfKafkaTransformer), owned.promService)
+	nobjMngr.AddManagedObject(metricServiceName(ConfKafkaTransformer), owned.metricsService)
 	nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaTransformer), owned.roleBinding)
 	nobjMngr.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
 
@@ -117,6 +120,11 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 		return err
 	}
 
+	err = r.reconcileMetricsService(ctx, &builder)
+	if err != nil {
+		return err
+	}
+
 	return r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, configDigest)
 }
 
@@ -161,6 +169,19 @@ func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Contex
 	newSVC := builder.fromPromService(r.owned.promService)
 	if serviceNeedsUpdate(r.owned.promService, newSVC) {
 		if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *flpTransformerReconciler) reconcileMetricsService(ctx context.Context, builder *transfoBuilder) error {
+	if !r.nobjMngr.Exists(r.owned.metricsService) {
+		return r.CreateOwned(ctx, builder.newMetricsService())
+	}
+	newSVC := builder.fromMetricsService(r.owned.metricsService)
+	if serviceNeedsUpdate(r.owned.metricsService, newSVC) {
+		if err := r.UpdateOwned(ctx, r.owned.metricsService, newSVC); err != nil {
 			return err
 		}
 	}

@@ -36,6 +36,7 @@ const (
 	lokiToken               = "loki-token"
 	healthServiceName       = "health"
 	prometheusServiceName   = "prometheus"
+	flpMetricsServiceName   = "metrics"
 	profilePortName         = "pprof"
 	healthTimeoutSeconds    = 5
 	livenessPeriodSeconds   = 10
@@ -106,9 +107,11 @@ func name(ck ConfKind) string                { return constants.FLPName + FlpCon
 func RoleBindingName(ck ConfKind) string     { return name(ck) + "-role" }
 func RoleBindingMonoName(ck ConfKind) string { return name(ck) + "-role-mono" }
 func promServiceName(ck ConfKind) string     { return name(ck) + "-prom" }
+func metricServiceName(ck ConfKind) string   { return name(ck) + "-metrics" }
 func configMapName(ck ConfKind) string       { return name(ck) + "-config" }
 func (b *builder) name() string              { return name(b.confKind) }
 func (b *builder) promServiceName() string   { return promServiceName(b.confKind) }
+func (b *builder) metricServiceName() string { return metricServiceName(b.confKind) }
 func (b *builder) configMapName() string     { return configMapName(b.confKind) }
 
 func (b *builder) portProtocol() corev1.Protocol {
@@ -470,6 +473,41 @@ func (b *builder) fillPromService(svc *corev1.Service) {
 			svc.ObjectMeta.Annotations = map[string]string{}
 		}
 		svc.ObjectMeta.Annotations[constants.OpenShiftCertificateAnnotation] = b.promServiceName()
+	} else if svc.ObjectMeta.Annotations != nil {
+		delete(svc.ObjectMeta.Annotations, constants.OpenShiftCertificateAnnotation)
+	}
+}
+
+func (b *builder) newMetricsService() *corev1.Service {
+	service := corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      b.metricServiceName(),
+			Namespace: b.namespace,
+			Labels:    b.labels,
+		},
+		Spec: corev1.ServiceSpec{Selector: b.selector},
+	}
+	b.fillMetricsService(&service)
+	return &service
+}
+
+func (b *builder) fromMetricsService(old *corev1.Service) *corev1.Service {
+	svc := old.DeepCopy()
+	b.fillMetricsService(svc)
+	return svc
+}
+
+func (b *builder) fillMetricsService(svc *corev1.Service) {
+	svc.Spec.Ports = []corev1.ServicePort{{
+		Name:     flpMetricsServiceName,
+		Port:     b.desired.Processor.Metrics.Server.Port,
+		Protocol: corev1.ProtocolTCP,
+	}}
+	if b.desired.Processor.Metrics.Server.TLS.Type == flowsv1alpha1.ServerTLSAuto {
+		if svc.ObjectMeta.Annotations == nil {
+			svc.ObjectMeta.Annotations = map[string]string{}
+		}
+		svc.ObjectMeta.Annotations[constants.OpenShiftCertificateAnnotation] = b.metricServiceName()
 	} else if svc.ObjectMeta.Annotations != nil {
 		delete(svc.ObjectMeta.Annotations, constants.OpenShiftCertificateAnnotation)
 	}
