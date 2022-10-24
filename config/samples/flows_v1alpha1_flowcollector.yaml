@@ -99,3 +99,8 @@ spec:
       enable: true
       portNames:
         "3100": loki
+  exporters: []
+    # - type: KAFKA
+    #   kafka:
+    #     address: "kafka-cluster-kafka-bootstrap.netobserv"
+    #     topic: netobserv-flows-export

@@ -103,6 +103,13 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindex">exporters</a></b></td>
+        <td>[]object</td>
+        <td>
+          exporters defines additional optional exporters for custom consumption or storage. This is an experimental feature. Currently, only KAFKA exporter is available.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecconsoleplugin">consolePlugin</a></b></td>
         <td>object</td>
         <td>
@@ -491,6 +498,239 @@ ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. Th
           namespace where OVN-Kubernetes pods are deployed.<br/>
           <br/>
             <i>Default</i>: ovn-kubernetes<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index]
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+FlowCollectorExporter defines an additional exporter to send enriched flows to
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type selects the type of exporte. Only "KAFKA" is available at the moment.<br/>
+          <br/>
+            <i>Enum</i>: KAFKA<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafka">kafka</a></b></td>
+        <td>object</td>
+        <td>
+          kafka describes the kafka configuration (address, topic...) to send enriched flows to.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindex)</sup></sup>
+
+
+
+kafka describes the kafka configuration (address, topic...) to send enriched flows to.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>address</b></td>
+        <td>string</td>
+        <td>
+          address of the Kafka server<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>topic</b></td>
+        <td>string</td>
+        <td>
+          kafka topic to use. It must exist, NetObserv will not create it.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkatls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          tls client configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.tls
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafka)</sup></sup>
+
+
+
+tls client configuration.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkatlscacert">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          caCert defines the reference of the certificate for the Certificate Authority<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          insecureSkipVerify allows skipping client-side verification of the server certificate<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkatlsusercert">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          userCert defines the user certificate reference<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.tls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkatls)</sup></sup>
+
+
+
+caCert defines the reference of the certificate for the Certificate Authority
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the ConfigMap or Secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type for the certificate reference: configmap or secret<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.tls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkatls)</sup></sup>
+
+
+
+userCert defines the user certificate reference
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the ConfigMap or Secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type for the certificate reference: configmap or secret<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>

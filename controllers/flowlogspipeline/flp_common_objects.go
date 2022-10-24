@@ -385,16 +385,34 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	}
 
 	enrichedStage.EncodePrometheus("prometheus", promEncode)
+	b.addCustomExportStages(&enrichedStage)
+
 	return nil
 }
 
-func (b *builder) getKafkaTLS() *api.ClientTLS {
-	if b.desired.Kafka.TLS.Enable {
+func (b *builder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage) {
+	for i, exporter := range b.desired.Exporters {
+		if exporter.Type == flowsv1alpha1.KafkaExporter {
+			createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), &exporter.Kafka, enrichedStage)
+		}
+	}
+}
+
+func createKafkaWriteStage(name string, spec *flowsv1alpha1.FlowCollectorKafka, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
+	return fromStage.EncodeKafka(name, api.EncodeKafka{
+		Address: spec.Address,
+		Topic:   spec.Topic,
+		TLS:     getKafkaTLS(&spec.TLS),
+	})
+}
+
+func getKafkaTLS(tls *flowsv1alpha1.ClientTLS) *api.ClientTLS {
+	if tls.Enable {
 		return &api.ClientTLS{
-			InsecureSkipVerify: b.desired.Kafka.TLS.InsecureSkipVerify,
-			CACertPath:         helper.GetCACertPath(&b.desired.Kafka.TLS, kafkaCerts),
-			UserCertPath:       helper.GetUserCertPath(&b.desired.Kafka.TLS, kafkaCerts),
-			UserKeyPath:        helper.GetUserKeyPath(&b.desired.Kafka.TLS, kafkaCerts),
+			InsecureSkipVerify: tls.InsecureSkipVerify,
+			CACertPath:         helper.GetCACertPath(tls, kafkaCerts),
+			UserCertPath:       helper.GetUserCertPath(tls, kafkaCerts),
+			UserKeyPath:        helper.GetUserKeyPath(tls, kafkaCerts),
 		}
 	}
 	return nil

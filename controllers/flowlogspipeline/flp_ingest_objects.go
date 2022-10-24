@@ -62,11 +62,7 @@ func (b *ingestBuilder) buildPipelineConfig() ([]config.Stage, []config.StagePar
 		})
 	}
 
-	pipeline = pipeline.EncodeKafka("kafka-write", api.EncodeKafka{
-		Address: b.generic.desired.Kafka.Address,
-		Topic:   b.generic.desired.Kafka.Topic,
-		TLS:     b.generic.getKafkaTLS(),
-	})
+	pipeline = createKafkaWriteStage("kafka-write", &b.generic.desired.Kafka, &pipeline)
 
 	return pipeline.GetStages(), pipeline.GetStageParams(), nil
 }

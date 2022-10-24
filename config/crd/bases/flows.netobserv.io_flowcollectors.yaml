@@ -907,6 +907,103 @@ spec:
                 - DIRECT
                 - KAFKA
                 type: string
+              exporters:
+                description: exporters defines additional optional exporters for custom
+                  consumption or storage. This is an experimental feature. Currently,
+                  only KAFKA exporter is available.
+                items:
+                  description: FlowCollectorExporter defines an additional exporter
+                    to send enriched flows to
+                  properties:
+                    kafka:
+                      description: kafka describes the kafka configuration (address,
+                        topic...) to send enriched flows to.
+                      properties:
+                        address:
+                          default: ""
+                          description: address of the Kafka server
+                          type: string
+                        tls:
+                          description: tls client configuration.
+                          properties:
+                            caCert:
+                              description: caCert defines the reference of the certificate
+                                for the Certificate Authority
+                              properties:
+                                certFile:
+                                  description: certFile defines the path to the certificate
+                                    file name within the ConfigMap / Secret
+                                  type: string
+                                certKey:
+                                  description: certKey defines the path to the certificate
+                                    private key file name within the ConfigMap / Secret.
+                                    Omit when the key is not necessary.
+                                  type: string
+                                name:
+                                  description: name of the ConfigMap or Secret containing
+                                    certificates
+                                  type: string
+                                type:
+                                  description: 'type for the certificate reference:
+                                    configmap or secret'
+                                  enum:
+                                  - configmap
+                                  - secret
+                                  type: string
+                              type: object
+                            enable:
+                              default: false
+                              description: enable TLS
+                              type: boolean
+                            insecureSkipVerify:
+                              default: false
+                              description: insecureSkipVerify allows skipping client-side
+                                verification of the server certificate
+                              type: boolean
+                            userCert:
+                              description: userCert defines the user certificate reference
+                              properties:
+                                certFile:
+                                  description: certFile defines the path to the certificate
+                                    file name within the ConfigMap / Secret
+                                  type: string
+                                certKey:
+                                  description: certKey defines the path to the certificate
+                                    private key file name within the ConfigMap / Secret.
+                                    Omit when the key is not necessary.
+                                  type: string
+                                name:
+                                  description: name of the ConfigMap or Secret containing
+                                    certificates
+                                  type: string
+                                type:
+                                  description: 'type for the certificate reference:
+                                    configmap or secret'
+                                  enum:
+                                  - configmap
+                                  - secret
+                                  type: string
+                              type: object
+                          type: object
+                        topic:
+                          default: ""
+                          description: kafka topic to use. It must exist, NetObserv
+                            will not create it.
+                          type: string
+                      required:
+                      - address
+                      - topic
+                      type: object
+                    type:
+                      description: type selects the type of exporte. Only "KAFKA"
+                        is available at the moment.
+                      enum:
+                      - KAFKA
+                      type: string
+                  required:
+                  - type
+                  type: object
+                type: array
               kafka:
                 description: kafka configuration, allowing to use Kafka as a broker
                   as part of the flow collection pipeline. Available when the "spec.deploymentModel"
@@ -1856,6 +1953,7 @@ spec:
             required:
             - agent
             - deploymentModel
+            - exporters
             type: object
           status:
             description: FlowCollectorStatus defines the observed state of FlowCollector

@@ -77,6 +77,9 @@ type FlowCollectorSpec struct {
 	// kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the "spec.deploymentModel" is "KAFKA".
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
+
+	// exporters defines additional optional exporters for custom consumption or storage. This is an experimental feature. Currently, only KAFKA exporter is available.
+	Exporters []*FlowCollectorExporter `json:"exporters"`
 }
 
 // FlowCollectorAgent is a discriminated union that allows to select either ipfix or ebpf, but does not
@@ -587,6 +590,26 @@ type ClientTLS struct {
 	// userCert defines the user certificate reference
 	// +optional
 	UserCert CertificateReference `json:"userCert,omitempty"`
+}
+
+// Add more exporter types below
+type ExporterType string
+
+const (
+	KafkaExporter ExporterType = "KAFKA"
+)
+
+// FlowCollectorExporter defines an additional exporter to send enriched flows to
+type FlowCollectorExporter struct {
+	// type selects the type of exporte. Only "KAFKA" is available at the moment.
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="KAFKA"
+	// +kubebuilder:validation:Required
+	Type ExporterType `json:"type"`
+
+	// kafka describes the kafka configuration (address, topic...) to send enriched flows to.
+	// +optional
+	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 }
 
 // FlowCollectorStatus defines the observed state of FlowCollector
