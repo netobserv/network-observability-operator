@@ -79,6 +79,7 @@ type FlowCollectorSpec struct {
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
 	// exporters defines additional optional exporters for custom consumption or storage. This is an experimental feature. Currently, only KAFKA exporter is available.
+	// +optional
 	Exporters []*FlowCollectorExporter `json:"exporters"`
 }
 

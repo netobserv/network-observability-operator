@@ -1953,7 +1953,6 @@ spec:
             required:
             - agent
             - deploymentModel
-            - exporters
             type: object
           status:
             description: FlowCollectorStatus defines the observed state of FlowCollector
