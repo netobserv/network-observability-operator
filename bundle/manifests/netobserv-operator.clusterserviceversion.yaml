@@ -141,13 +141,13 @@ metadata:
     capabilities: Basic Install
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
-    containerImage: quay.io/netobserv/network-observability-operator:0.1.5
-    createdAt: "2022-10-21T15:13:44Z"
+    containerImage: quay.io/netobserv/network-observability-operator:0.2.0
+    createdAt: "2022-10-25T09:40:09Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.22.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
-  name: netobserv-operator.v0.1.5
+  name: netobserv-operator.v0.2.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -427,7 +427,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/netobserv/network-observability-operator:0.1.5
+                image: quay.io/netobserv/network-observability-operator:0.2.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -529,4 +529,4 @@ spec:
     name: Red Hat
     url: https://www.redhat.com
   replaces: netobserv-operator.v0.1.4
-  version: 0.1.5
+  version: 0.2.0

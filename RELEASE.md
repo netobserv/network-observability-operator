@@ -33,7 +33,7 @@ Once all sub-components are released (or have a release candidate), we can proce
 # Previous operator version
 previous="v0.1.4"
 # Set desired operator version - CAREFUL, no leading "v" here
-version="0.1.5"
+version="0.2.0"
 # Set console plugin released version
 plgv="v0.1.5"
 # Set flowlogs-pipeline released version
@@ -91,8 +91,8 @@ Before publishing, we should check that upgrading the operator from a previous v
 
 ```bash
 # NOTE: on my last try, I needed to pass an index-image that corresponds to the operator-sdk version. This is likely due to a bug and should be eventually removed (cf https://github.com/operator-framework/operator-sdk/issues/5980)
-operator-sdk run bundle quay.io/netobserv/network-observability-operator-bundle:$previous --index-image quay.io/operator-framework/opm:v1.22
-operator-sdk run bundle-upgrade quay.io/netobserv/network-observability-operator-bundle:$vv
+operator-sdk run bundle quay.io/netobserv/network-observability-operator-bundle:$previous --index-image quay.io/operator-framework/opm:v1.22 --timeout 5m
+operator-sdk run bundle-upgrade quay.io/netobserv/network-observability-operator-bundle:$vv --timeout 5m
 ```
 
 Note: currently, [seamless upgrade](https://sdk.operatorframework.io/docs/overview/operator-capabilities/#level-2---seamless-upgrades) is not fully supported because an existing custom resource needs first to be deleted before the operator is upgraded. See also: https://issues.redhat.com/browse/NETOBSERV-521.
@@ -120,7 +120,7 @@ After having cloned or updated these repo, copy the bundle content:
 # Here, set correct paths and new version
 path_k8s="../community-operators"
 path_okd="../community-operators-prod"
-version="0.1.4"
+version="0.2.0"
 
 mkdir -p $path_k8s/operators/netobserv-operator/$version
 mkdir -p $path_okd/operators/netobserv-operator/$version
