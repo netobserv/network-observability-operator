@@ -649,7 +649,7 @@ autoscaler spec of a horizontal pod autoscaler to set up for the plugin Deployme
         <td><b>status</b></td>
         <td>enum</td>
         <td>
-          AuthToken describe the way to get a token to authenticate to Loki DISABLED will not send any token with the requestmode. ENABLED will deploy an horizontal pod autoscaler<br/>
+          Status describe the desired status regarding deploying an horizontal pod autoscaler DISABLED will not deploy an horizontal pod autoscaler ENABLED will deploy an horizontal pod autoscaler<br/>
           <br/>
             <i>Enum</i>: DISABLED, ENABLED<br/>
             <i>Default</i>: DISABLED<br/>
@@ -2285,7 +2285,7 @@ kafkaConsumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlo
         <td><b>status</b></td>
         <td>enum</td>
         <td>
-          AuthToken describe the way to get a token to authenticate to Loki DISABLED will not send any token with the requestmode. ENABLED will deploy an horizontal pod autoscaler<br/>
+          Status describe the desired status regarding deploying an horizontal pod autoscaler DISABLED will not deploy an horizontal pod autoscaler ENABLED will deploy an horizontal pod autoscaler<br/>
           <br/>
             <i>Enum</i>: DISABLED, ENABLED<br/>
             <i>Default</i>: DISABLED<br/>

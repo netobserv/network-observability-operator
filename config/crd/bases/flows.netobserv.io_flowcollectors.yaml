@@ -793,9 +793,10 @@ spec:
                         type: integer
                       status:
                         default: DISABLED
-                        description: AuthToken describe the way to get a token to
-                          authenticate to Loki DISABLED will not send any token with
-                          the requestmode. ENABLED will deploy an horizontal pod autoscaler
+                        description: Status describe the desired status regarding
+                          deploying an horizontal pod autoscaler DISABLED will not
+                          deploy an horizontal pod autoscaler ENABLED will deploy
+                          an horizontal pod autoscaler
                         enum:
                         - DISABLED
                         - ENABLED
@@ -1712,9 +1713,10 @@ spec:
                         type: integer
                       status:
                         default: DISABLED
-                        description: AuthToken describe the way to get a token to
-                          authenticate to Loki DISABLED will not send any token with
-                          the requestmode. ENABLED will deploy an horizontal pod autoscaler
+                        description: Status describe the desired status regarding
+                          deploying an horizontal pod autoscaler DISABLED will not
+                          deploy an horizontal pod autoscaler ENABLED will deploy
+                          an horizontal pod autoscaler
                         enum:
                         - DISABLED
                         - ENABLED

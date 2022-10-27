@@ -374,8 +374,8 @@ const (
 type FlowCollectorHPA struct {
 	// +kubebuilder:validation:Enum:=DISABLED;ENABLED
 	// +kubebuilder:default:=DISABLED
-	// AuthToken describe the way to get a token to authenticate to Loki
-	// DISABLED will not send any token with the requestmode.
+	// Status describe the desired status regarding deploying an horizontal pod autoscaler
+	// DISABLED will not deploy an horizontal pod autoscaler
 	// ENABLED will deploy an horizontal pod autoscaler
 	Status string `json:"status,omitempty"`
 
