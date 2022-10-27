@@ -120,6 +120,9 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowsv1a
 
 func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, builder *ingestBuilder) error {
 	if !r.nobjMngr.Exists(r.owned.promService) {
+		if err := AddPrometheusServiceMonitor(ctx, &builder.generic, r.ClientHelper); err != nil {
+			return err
+		}
 		return r.CreateOwned(ctx, builder.newPromService())
 	}
 	newSVC := builder.fromPromService(r.owned.promService)
