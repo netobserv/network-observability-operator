@@ -541,6 +541,10 @@ type FlowCollectorConsolePlugin struct {
 	//+kubebuilder:default:={enable:true}
 	// portNaming defines the configuration of the port-to-service name translation
 	PortNaming ConsolePluginPortConfig `json:"portNaming,omitempty"`
+
+	//+kubebuilder:default:={{name:"Applications",filter:{"src_namespace!":"openshift-,netobserv","dst_namespace!":"openshift-,netobserv"},default:true},{name:"OpenShift infra",filter:{"namespace":"openshift-*,netobserv"}},{name:"Exclude services",filter:{"src_kind!":"Service","dst_kind!":"Service"}}}
+	// quickFilters configures quick filter presets for the Console plugin
+	QuickFilters []QuickFilter `json:"quickFilters,omitempty"`
 }
 
 // Configuration of the port to service name translation feature of the console plugin
@@ -553,6 +557,20 @@ type ConsolePluginPortConfig struct {
 	// E.g. portNames: {"3100": "loki"}
 	// +optional
 	PortNames map[string]string `json:"portNames,omitempty" yaml:"portNames,omitempty"`
+}
+
+// QuickFilter defines preset configuration for Console's quick filters
+type QuickFilter struct {
+	// name of the filter, that will be displayed in Console
+	// +kubebuilder:MinLength:=1
+	Name string `json:"name"`
+	// filter is a set of keys and values to be set when this filter is selected. Each key can relate to a list of values using a coma-separated string
+	// E.g. filter: {"src_namespace": "namespace1,namespace2"}
+	// +kubebuilder:MinProperties:=1
+	Filter map[string]string `json:"filter"`
+	// default defines whether this filter should be active by default or not
+	// +optional
+	Default bool `json:"default,omitempty"`
 }
 
 // ClusterNetworkOperatorConfig defines the desired configuration related to the Cluster Network Configuration

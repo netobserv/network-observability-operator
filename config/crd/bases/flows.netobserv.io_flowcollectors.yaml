@@ -852,6 +852,47 @@ spec:
                           in the console E.g. portNames: {"3100": "loki"}'
                         type: object
                     type: object
+                  quickFilters:
+                    default:
+                    - default: true
+                      filter:
+                        dst_namespace!: openshift-,netobserv
+                        src_namespace!: openshift-,netobserv
+                      name: Applications
+                    - filter:
+                        namespace: openshift-*,netobserv
+                      name: OpenShift infra
+                    - filter:
+                        dst_kind!: Service
+                        src_kind!: Service
+                      name: Exclude services
+                    description: quickFilters configures quick filter presets for
+                      the Console plugin
+                    items:
+                      description: QuickFilter defines preset configuration for Console's
+                        quick filters
+                      properties:
+                        default:
+                          description: default defines whether this filter should
+                            be active by default or not
+                          type: boolean
+                        filter:
+                          additionalProperties:
+                            type: string
+                          description: 'filter is a set of keys and values to be set
+                            when this filter is selected. Each key can relate to a
+                            list of values using a coma-separated string E.g. filter:
+                            {"src_namespace": "namespace1,namespace2"}'
+                          type: object
+                        name:
+                          description: name of the filter, that will be displayed
+                            in Console
+                          type: string
+                      required:
+                      - filter
+                      - name
+                      type: object
+                    type: array
                   register:
                     default: true
                     description: 'register allows, when set to true, to automatically

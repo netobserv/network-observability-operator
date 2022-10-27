@@ -587,6 +587,15 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginquickfiltersindex">quickFilters</a></b></td>
+        <td>[]object</td>
+        <td>
+          quickFilters configures quick filter presets for the Console plugin<br/>
+          <br/>
+            <i>Default</i>: [map[default:true filter:map[dst_namespace!:openshift-,netobserv src_namespace!:openshift-,netobserv] name:Applications] map[filter:map[namespace:openshift-*,netobserv] name:OpenShift infra] map[filter:map[dst_kind!:Service src_kind!:Service] name:Exclude services]]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>replicas</b></td>
         <td>integer</td>
         <td>
@@ -1560,6 +1569,47 @@ portNaming defines the configuration of the port-to-service name translation
         <td>map[string]string</td>
         <td>
           portNames defines additional port names to use in the console E.g. portNames: {"3100": "loki"}<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.quickFilters[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsoleplugin)</sup></sup>
+
+
+
+QuickFilter defines preset configuration for Console's quick filters
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>filter</b></td>
+        <td>map[string]string</td>
+        <td>
+          filter is a set of keys and values to be set when this filter is selected. Each key can relate to a list of values using a coma-separated string E.g. filter: {"src_namespace": "namespace1,namespace2"}<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the filter, that will be displayed in Console<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>default</b></td>
+        <td>boolean</td>
+        <td>
+          default defines whether this filter should be active by default or not<br/>
         </td>
         <td>false</td>
       </tr></tbody>
