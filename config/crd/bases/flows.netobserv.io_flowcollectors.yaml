@@ -278,6 +278,7 @@ spec:
                       set up for the plugin Deployment.
                     properties:
                       maxReplicas:
+                        default: 3
                         description: maxReplicas is the upper limit for the number
                           of pods that can be set by the autoscaler; cannot be smaller
                           than MinReplicas.
@@ -790,8 +791,16 @@ spec:
                           active as long as at least one metric value is available.
                         format: int32
                         type: integer
-                    required:
-                    - maxReplicas
+                      status:
+                        default: DISABLED
+                        description: Status describe the desired status regarding
+                          deploying an horizontal pod autoscaler DISABLED will not
+                          deploy an horizontal pod autoscaler ENABLED will deploy
+                          an horizontal pod autoscaler
+                        enum:
+                        - DISABLED
+                        - ENABLED
+                        type: string
                     type: object
                   image:
                     default: quay.io/netobserv/network-observability-console-plugin:main
@@ -1286,6 +1295,7 @@ spec:
                       is disabled.
                     properties:
                       maxReplicas:
+                        default: 3
                         description: maxReplicas is the upper limit for the number
                           of pods that can be set by the autoscaler; cannot be smaller
                           than MinReplicas.
@@ -1798,8 +1808,16 @@ spec:
                           active as long as at least one metric value is available.
                         format: int32
                         type: integer
-                    required:
-                    - maxReplicas
+                      status:
+                        default: DISABLED
+                        description: Status describe the desired status regarding
+                          deploying an horizontal pod autoscaler DISABLED will not
+                          deploy an horizontal pod autoscaler ENABLED will deploy
+                          an horizontal pod autoscaler
+                        enum:
+                        - DISABLED
+                        - ENABLED
+                        type: string
                     type: object
                   kafkaConsumerBatchSize:
                     default: 10485760

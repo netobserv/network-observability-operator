@@ -66,7 +66,8 @@ func getConfig() v1alpha1.FlowCollectorSpec {
 				},
 			},
 			KafkaConsumerReplicas: 1,
-			KafkaConsumerAutoscaler: &v1alpha1.FlowCollectorHPA{
+			KafkaConsumerAutoscaler: v1alpha1.FlowCollectorHPA{
+				Status:      v1alpha1.HPAStatusEnabled,
 				MinReplicas: &minReplicas,
 				MaxReplicas: maxReplicas,
 				Metrics: []ascv2.MetricSpec{{
@@ -105,7 +106,7 @@ func getConfig() v1alpha1.FlowCollectorSpec {
 
 func getConfigNoHPA() v1alpha1.FlowCollectorSpec {
 	cfg := getConfig()
-	cfg.Processor.KafkaConsumerAutoscaler = nil
+	cfg.Processor.KafkaConsumerAutoscaler.Status = v1alpha1.HPAStatusDisabled
 	return cfg
 }
 
@@ -134,7 +135,7 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, v1alpha1.FlowCollector
 		},
 	}
 
-	return autoScaler, *getConfig().Processor.KafkaConsumerAutoscaler
+	return autoScaler, getConfig().Processor.KafkaConsumerAutoscaler
 }
 
 func TestDaemonSetNoChange(t *testing.T) {
@@ -399,27 +400,27 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 
 	//equals specs
 	autoScalerSpec, hpa := getAutoScalerSpecs()
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &hpa, testNamespace), false)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, hpa, testNamespace), false)
 
 	//wrong max replicas
 	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MaxReplicas = 10
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &hpa, testNamespace), true)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, hpa, testNamespace), true)
 
 	//missing min replicas
 	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MinReplicas = nil
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &hpa, testNamespace), true)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, hpa, testNamespace), true)
 
 	//missing metrics
 	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Spec.Metrics = []ascv2.MetricSpec{}
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &hpa, testNamespace), true)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, hpa, testNamespace), true)
 
 	//wrong namespace
 	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Namespace = "NewNamespace"
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &hpa, testNamespace), true)
+	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, hpa, testNamespace), true)
 }
 
 func TestLabels(t *testing.T) {

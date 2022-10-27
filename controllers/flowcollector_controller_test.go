@@ -381,7 +381,8 @@ func flowCollectorControllerSpecs() {
 		hpa := ascv2.HorizontalPodAutoscaler{}
 		It("Should update with HPA", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Processor.KafkaConsumerAutoscaler = &flowsv1alpha1.FlowCollectorHPA{
+				fc.Spec.Processor.KafkaConsumerAutoscaler = flowsv1alpha1.FlowCollectorHPA{
+					Status:      flowsv1alpha1.HPAStatusEnabled,
 					MinReplicas: pointer.Int32(1),
 					MaxReplicas: 1,
 					Metrics: []ascv2.MetricSpec{{
