@@ -582,3 +582,23 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	assert.Equal("workload_egress_bytes_total", parameters[4].Encode.Prom.Metrics[0].Name)
 	assert.Equal("netobserv_", parameters[4].Encode.Prom.Prefix)
 }
+
+func TestPipelineWithExporter(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := getConfig()
+	cfg.Exporters = append(cfg.Exporters, &v1alpha1.FlowCollectorExporter{
+		Type:  v1alpha1.KafkaExporter,
+		Kafka: v1alpha1.FlowCollectorKafka{Address: "kafka-test", Topic: "topic-test"},
+	})
+
+	b := newMonolithBuilder("namespace", &cfg, true)
+	stages, parameters, err := b.buildPipelineConfig()
+	assert.NoError(err)
+	assert.True(validatePipelineConfig(stages, parameters))
+	jsonStages, _ := json.Marshal(stages)
+	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"kafka-export-0","follows":"enrich"}]`, string(jsonStages))
+
+	assert.Equal("kafka-test", parameters[5].Encode.Kafka.Address)
+	assert.Equal("topic-test", parameters[5].Encode.Kafka.Topic)
+}
