@@ -191,6 +191,10 @@ func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, de
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
 			return err
 		}
+		serviceMonitor := builder.consolePluginServiceMonitor()
+		if err := r.CreateOwned(ctx, serviceMonitor); err != nil {
+			return err
+		}
 	} else if serviceNeedsUpdate(r.owned.service, &desired.ConsolePlugin, ns) {
 		newSVC := builder.service(r.owned.service)
 		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {

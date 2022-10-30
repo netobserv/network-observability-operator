@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -82,6 +83,39 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 					Port:      b.desired.Port,
 				},
 			}},
+		},
+	}
+}
+
+func (b *builder) consolePluginServiceMonitor() *monitoringv1.ServiceMonitor {
+	return &monitoringv1.ServiceMonitor{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.PluginServiceMonitorName,
+			Namespace: constants.DefaultOperatorNamespace,
+		},
+		Spec: monitoringv1.ServiceMonitorSpec{
+			Endpoints: []monitoringv1.Endpoint{
+				{
+					Port:     "main",
+					Interval: "15s",
+					Scheme:   "https",
+					TLSConfig: &monitoringv1.TLSConfig{
+						SafeTLSConfig: monitoringv1.SafeTLSConfig{
+							InsecureSkipVerify: true,
+						},
+					},
+				},
+			},
+			NamespaceSelector: monitoringv1.NamespaceSelector{
+				MatchNames: []string{
+					b.namespace,
+				},
+			},
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": constants.PluginName,
+				},
+			},
 		},
 	}
 }

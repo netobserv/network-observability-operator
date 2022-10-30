@@ -7,6 +7,7 @@ const (
 	FLPName                  = "flowlogs-pipeline"
 	FLPPortName              = "flp" // must be <15 chars
 	PluginName               = "netobserv-plugin"
+	PluginServiceMonitorName = "netobserv-console-plugin"
 
 	// EBPFAgentName and other constants for it
 	EBPFAgentName          = "netobserv-ebpf-agent"
