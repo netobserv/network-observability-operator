@@ -42,6 +42,10 @@ const (
 	envKafkaTLSUserCertPath       = "KAFKA_TLS_USER_CERT_PATH"
 	envKafkaTLSUserKeyPath        = "KAFKA_TLS_USER_KEY_PATH"
 	envLogLevel                   = "LOG_LEVEL"
+	envDedupe                     = "DEDUPE"
+	dedupeDefault                 = "firstCome"
+	envDedupeJustMark             = "DEDUPE_JUST_MARK"
+	dedupeJustMarkDefault         = "true"
 
 	envListSeparator = ","
 )
@@ -235,9 +239,20 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 			Value: strconv.Itoa(int(*sampling)),
 		})
 	}
+	dedup := dedupeDefault
+	dedupJustMark := dedupeJustMarkDefault
 	for k, v := range coll.Spec.Agent.EBPF.Env {
-		config = append(config, corev1.EnvVar{Name: k, Value: v})
+		if k == envDedupe {
+			dedup = v
+		} else if k == envDedupeJustMark {
+			dedupJustMark = v
+		} else {
+			config = append(config, corev1.EnvVar{Name: k, Value: v})
+		}
 	}
+	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
+	config = append(config, corev1.EnvVar{Name: envDedupeJustMark, Value: dedupJustMark})
+
 	if coll.Spec.UseKafka() {
 		config = append(config,
 			corev1.EnvVar{Name: envExport, Value: exportKafka},
