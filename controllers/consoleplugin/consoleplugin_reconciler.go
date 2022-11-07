@@ -9,7 +9,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -193,7 +193,7 @@ func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, de
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
 			return err
 		}
-		crd := v1beta1.CustomResourceDefinition{}
+		crd := apiextensionsv1.CustomResourceDefinition{}
 		crdKey := types.NamespacedName{
 			Name: "servicemonitors.monitoring.coreos.com",
 		}

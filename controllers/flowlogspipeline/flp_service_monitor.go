@@ -7,7 +7,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1 "k8s.io/api/core/v1"
-	v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -26,7 +26,7 @@ func AddPrometheusServiceMonitor(ctx context.Context, b *builder, cl reconcilers
 		logger.Info("flowlogs-pipeline prom service not found; not creating the service monitor")
 		return nil
 	}
-	crd := v1beta1.CustomResourceDefinition{}
+	crd := apiextensionsv1.CustomResourceDefinition{}
 	crdKey := types.NamespacedName{
 		Name: "servicemonitors.monitoring.coreos.com",
 	}
