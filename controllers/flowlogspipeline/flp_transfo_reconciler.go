@@ -158,10 +158,13 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 
 func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Context, builder *transfoBuilder) error {
 	if !r.nobjMngr.Exists(r.owned.promService) {
+		if err := r.CreateOwned(ctx, builder.newPromService()); err != nil {
+			return err
+		}
 		if err := AddPrometheusServiceMonitor(ctx, &builder.generic, r.ClientHelper); err != nil {
 			return err
 		}
-		return r.CreateOwned(ctx, builder.newPromService())
+		return nil
 	}
 	newSVC := builder.fromPromService(r.owned.promService)
 	if serviceNeedsUpdate(r.owned.promService, newSVC) {

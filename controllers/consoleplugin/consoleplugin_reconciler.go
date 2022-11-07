@@ -9,6 +9,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -186,10 +187,20 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder,
 }
 
 func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) error {
+	logger := log.FromContext(ctx)
 	if !r.nobjMngr.Exists(r.owned.service) {
 		newSVC := builder.service(nil)
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
 			return err
+		}
+		crd := v1beta1.CustomResourceDefinition{}
+		crdKey := types.NamespacedName{
+			Name: "servicemonitors.monitoring.coreos.com",
+		}
+		err := r.Client.Get(ctx, crdKey, &crd)
+		if err != nil {
+			logger.Info("Service Monitor crd not found; not creating the service monitor")
+			return nil
 		}
 		serviceMonitor := builder.consolePluginServiceMonitor()
 		if err := r.CreateOwned(ctx, serviceMonitor); err != nil {
