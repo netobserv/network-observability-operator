@@ -18,7 +18,6 @@ metadata:
                 "excludeInterfaces": [
                   "lo"
                 ],
-                "image": "quay.io/netobserv/netobserv-ebpf-agent:v0.2.1",
                 "imagePullPolicy": "IfNotPresent",
                 "interfaces": [],
                 "kafkaBatchSize": 10485760,
@@ -190,7 +189,7 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:0.2.0
-    createdAt: "2022-11-15T09:15:46Z"
+    createdAt: "2022-10-25T09:40:09Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.25.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
@@ -473,8 +472,12 @@ spec:
                 - --health-probe-bind-address=:8081
                 - --metrics-bind-address=127.0.0.1:8080
                 - --leader-elect
+                - --ebpf-agent-image=$(RELATED_IMAGE_EBPF_AGENT)
                 command:
                 - /manager
+                env:
+                - name: RELATED_IMAGE_EBPF_AGENT
+                  value: quay.io/netobserv/netobserv-ebpf-agent:main
                 image: quay.io/netobserv/network-observability-operator:0.2.0
                 imagePullPolicy: Always
                 livenessProbe:

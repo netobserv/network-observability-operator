@@ -95,11 +95,6 @@ spec:
                         items:
                           type: string
                         type: array
-                      image:
-                        default: quay.io/netobserv/netobserv-ebpf-agent:v0.2.1
-                        description: image is the NetObserv Agent image (including
-                          domain and tag)
-                        type: string
                       imagePullPolicy:
                         default: IfNotPresent
                         description: imagePullPolicy is the Kubernetes pull policy

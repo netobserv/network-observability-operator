@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/netobserv/network-observability-operator/controllers/operator"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
@@ -70,11 +71,15 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	var versionFlag bool
+
+	config := operator.Config{}
+
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&config.EBPFAgentImage, "ebpf-agent-image", "", "The image of the eBPF agent")
 	flag.BoolVar(&versionFlag, "v", false, "print version")
 	opts := zap.Options{
 		Development: true,
@@ -91,6 +96,11 @@ func main() {
 	}
 	setupLog.Info("Starting " + appVersion)
 
+	if err := config.Validate(); err != nil {
+		setupLog.Error(err, "unable to start the manager")
+		os.Exit(1)
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
@@ -104,7 +114,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = controllers.NewFlowCollectorReconciler(mgr.GetClient(), mgr.GetScheme()).
+	ctrl.Log.Info("using eBPF Agent image", "image", config.EBPFAgentImage)
+
+	if err = controllers.NewFlowCollectorReconciler(mgr.GetClient(), mgr.GetScheme(), &config).
 		SetupWithManager(context.Background(), mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "FlowCollector")
 		os.Exit(1)

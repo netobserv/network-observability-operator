@@ -130,3 +130,16 @@ The NetObserv Operator is available in OperatorHub: https://operatorhub.io/opera
 ## Publish on central OperatorHub
 
 See [RELEASE.md](./RELEASE.md#publishing-on-operatorhub).
+
+## Using custom operand image
+
+Patch `RELATED_IMAGE_EBPF_AGENT` environment variable's value with your custom operand image:
+
+In the operator's deployment:
+
+```sh
+# netobserv-controller-manager has index 1
+# "RELATED_IMAGE_EBPF_AGENT" environment variable has index 0
+oc -n netobserv patch deployment netobserv-controller-manager --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/1/env/0/value", "value":"<CUSTOM_IMAGE_TAG>"}]'
+```
+

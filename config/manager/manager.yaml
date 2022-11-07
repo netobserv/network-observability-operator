@@ -29,6 +29,11 @@ spec:
         - /manager
         args:
         - --leader-elect
+        - --ebpf-agent-image=$(RELATED_IMAGE_EBPF_AGENT)
+        env:
+          # images MUST be defined in this order for a proper replacement
+          - name: RELATED_IMAGE_EBPF_AGENT
+            value: quay.io/netobserv/netobserv-ebpf-agent:main
         image: controller:latest
         name: manager
         imagePullPolicy: Always

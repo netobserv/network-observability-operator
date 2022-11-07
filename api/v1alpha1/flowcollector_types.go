@@ -150,10 +150,6 @@ type FlowCollectorIPFIX struct {
 type FlowCollectorEBPF struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	//+kubebuilder:default:="quay.io/netobserv/netobserv-ebpf-agent:main"
-	// image is the NetObserv Agent image (including domain and tag)
-	Image string `json:"image,omitempty"`
-
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
 	// imagePullPolicy is the Kubernetes pull policy for the image defined above

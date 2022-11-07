@@ -18,7 +18,6 @@ spec:
         daemonSetName: ovnkube-node
         containerName: ovnkube-node
     ebpf:
-      image: 'quay.io/netobserv/netobserv-ebpf-agent:main'
       imagePullPolicy: IfNotPresent
       sampling: 50
       cacheActiveTimeout: 5s
