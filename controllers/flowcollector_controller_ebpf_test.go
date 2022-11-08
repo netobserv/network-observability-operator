@@ -62,6 +62,8 @@ func flowCollectorEBPFSpecs() {
 							ExcludeInterfaces:  []string{"br-3", "lo"},
 							LogLevel:           "trace",
 							Env: map[string]string{
+								// we'll test that multiple variables are reordered
+								"GOGC":           "400",
 								"BUFFERS_LENGTH": "100",
 							},
 						},
@@ -96,6 +98,7 @@ func flowCollectorEBPFSpecs() {
 				v1.EnvVar{Name: "INTERFACES", Value: "veth0,/^br-/"},
 				v1.EnvVar{Name: "EXCLUDE_INTERFACES", Value: "br-3,lo"},
 				v1.EnvVar{Name: "BUFFERS_LENGTH", Value: "100"},
+				v1.EnvVar{Name: "GOGC", Value: "400"},
 				v1.EnvVar{Name: "SAMPLING", Value: "123"},
 				v1.EnvVar{Name: "FLOWS_TARGET_PORT", Value: "9999"},
 			))

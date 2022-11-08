@@ -161,6 +161,7 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 		// This operation must currently be performed manually (run "make fix-ebpf-kafka-tls"). It could be automated here.
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &coll.Spec.Kafka.TLS, kafkaCerts)
 	}
+
 	return &v1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFAgentName,
@@ -241,7 +242,10 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 	}
 	dedup := dedupeDefault
 	dedupJustMark := dedupeJustMarkDefault
-	for k, v := range coll.Spec.Agent.EBPF.Env {
+	// we need to sort env map to keep idempotency,
+	// as equal maps could be iterated in different order
+	for _, pair := range helper.KeySorted(coll.Spec.Agent.EBPF.Env) {
+		k, v := pair[0], pair[1]
 		if k == envDedupe {
 			dedup = v
 		} else if k == envDedupeJustMark {
@@ -279,7 +283,8 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 			Name: envFlowsTargetHost,
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
-					FieldPath: "status.hostIP",
+					APIVersion: "v1",
+					FieldPath:  "status.hostIP",
 				},
 			},
 		}, corev1.EnvVar{
@@ -297,10 +302,16 @@ func (c *AgentController) requiredAction(current, desired *v1.DaemonSet) reconci
 	if current == nil && desired != nil {
 		return actionCreate
 	}
-	if equality.Semantic.DeepDerivative(&desired.Spec, current.Spec) {
-		return actionNone
+	cSpec, dSpec := current.Spec, desired.Spec
+	eq := equality.Semantic.DeepDerivative
+	if !helper.IsSubSet(current.ObjectMeta.Labels, desired.ObjectMeta.Labels) ||
+		!eq(dSpec.Selector, cSpec.Selector) ||
+		!eq(dSpec.Template, cSpec.Template) {
+
+		return actionUpdate
 	}
-	return actionUpdate
+
+	return actionNone
 }
 
 func (c *AgentController) securityContext(coll *flowsv1alpha1.FlowCollector) *corev1.SecurityContext {
