@@ -76,6 +76,12 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 				"pod-security.kubernetes.io/enforce": "privileged",
 				"pod-security.kubernetes.io/audit":   "privileged",
 			},
+			Annotations: map[string]string{
+				// Means that only userID 0 is allowed in the eBPF pods
+				"openshift.io/sa.scc.uid-range": "0/1",
+				// unclassified Multi-Category Security (MCS) level of SELinux
+				"openshift.io/sa.scc.mcs": "s0",
+			},
 		},
 	}
 	if actual == nil && desired != nil {
