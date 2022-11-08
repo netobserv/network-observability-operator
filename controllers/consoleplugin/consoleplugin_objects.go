@@ -91,7 +91,7 @@ func (b *builder) consolePluginServiceMonitor() *monitoringv1.ServiceMonitor {
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.PluginServiceMonitorName,
-			Namespace: constants.DefaultOperatorNamespace,
+			Namespace: b.namespace,
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Endpoints: []monitoringv1.Endpoint{
@@ -101,7 +101,14 @@ func (b *builder) consolePluginServiceMonitor() *monitoringv1.ServiceMonitor {
 					Scheme:   "https",
 					TLSConfig: &monitoringv1.TLSConfig{
 						SafeTLSConfig: monitoringv1.SafeTLSConfig{
-							InsecureSkipVerify: true,
+							Cert: monitoringv1.SecretOrConfigMap{
+								Secret: &corev1.SecretKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: secretName,
+									},
+									Key: "tls.crt",
+								},
+							},
 						},
 					},
 				},
