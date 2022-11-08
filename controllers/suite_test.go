@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/netobserv/network-observability-operator/controllers/operator"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
@@ -154,6 +155,9 @@ func NewTestFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme
 		Client:   client,
 		Scheme:   scheme,
 		lookupIP: ipResolver.LookupIP,
+		config: &operator.Config{
+			EBPFAgentImage: "ebpf-agent-image:test",
+		},
 	}
 }
 
