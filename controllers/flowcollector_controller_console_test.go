@@ -139,11 +139,8 @@ func flowCollectorConsolePluginSpecs() {
 				if err := k8sClient.Get(ctx, configKey, &ofc); err != nil {
 					return err
 				}
-				return ofc.Data
-			}, timeout, interval).Should(Equal(map[string]string{
-				"config.yaml": "portNaming:\n  enable: true\n  portNames:\n    \"3100\": loki\n" +
-					"quickFilters:\n- name: Applications\n  filter:\n    dst_namespace!: openshift-,netobserv\n    src_namespace!: openshift-,netobserv\n  default: true\n- name: OpenShift infra\n  filter:\n    namespace: openshift-*,netobserv\n  default: false\n- name: Exclude services\n  filter:\n    dst_kind!: Service\n    src_kind!: Service\n  default: false\n",
-			}))
+				return ofc.Data["config.yaml"]
+			}, timeout, interval).Should(ContainSubstring("portNaming:\n  enable: true\n  portNames:\n    \"3100\": loki\nquickFilters:\n- name: Applications"))
 		})
 
 		It("Should update successfully", func() {
