@@ -2,11 +2,11 @@ package flowlogspipeline
 
 import (
 	"context"
-	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
@@ -98,7 +98,7 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowsv1a
 		if err := r.CreateOwned(ctx, newCM); err != nil {
 			return err
 		}
-	} else if !reflect.DeepEqual(newCM.Data, r.owned.configMap.Data) {
+	} else if !equality.Semantic.DeepDerivative(newCM.Data, r.owned.configMap.Data) {
 		if err := r.UpdateOwned(ctx, r.owned.configMap, newCM); err != nil {
 			return err
 		}

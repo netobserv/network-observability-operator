@@ -3,10 +3,10 @@ package flowlogspipeline
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -93,8 +93,8 @@ func configChanged(tmpl *corev1.PodTemplateSpec, configDigest string) bool {
 }
 
 func serviceNeedsUpdate(actual *corev1.Service, desired *corev1.Service) bool {
-	return !reflect.DeepEqual(actual.ObjectMeta, desired.ObjectMeta) ||
-		!reflect.DeepEqual(actual.Spec, desired.Spec)
+	return !equality.Semantic.DeepDerivative(desired.ObjectMeta, actual.ObjectMeta) ||
+		!equality.Semantic.DeepDerivative(desired.Spec, actual.Spec)
 }
 
 func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flpSpec, expectHostPort bool) bool {
@@ -105,7 +105,7 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flpSpec, expectHostP
 		desired.Image != container.Image ||
 		desired.ImagePullPolicy != string(container.ImagePullPolicy) ||
 		probesNeedUpdate(container, desired.EnableKubeProbes) ||
-		!reflect.DeepEqual(desired.Resources, container.Resources)
+		!equality.Semantic.DeepDerivative(desired.Resources, container.Resources)
 }
 
 func probesNeedUpdate(container *corev1.Container, enabled bool) bool {
