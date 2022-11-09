@@ -42,9 +42,9 @@ const (
 	envKafkaTLSUserCertPath       = "KAFKA_TLS_USER_CERT_PATH"
 	envKafkaTLSUserKeyPath        = "KAFKA_TLS_USER_KEY_PATH"
 	envLogLevel                   = "LOG_LEVEL"
-	envDedupe                     = "DEDUPE"
+	envDedupe                     = "DEDUPER"
 	dedupeDefault                 = "firstCome"
-	envDedupeJustMark             = "DEDUPE_JUST_MARK"
+	envDedupeJustMark             = "DEDUPER_JUST_MARK"
 	dedupeJustMarkDefault         = "true"
 
 	envListSeparator = ","
