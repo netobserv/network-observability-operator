@@ -860,12 +860,17 @@ spec:
                         src_namespace!: openshift-,netobserv
                       name: Applications
                     - filter:
-                        namespace: openshift-*,netobserv
-                      name: OpenShift infra
+                        dst_namespace: openshift-,netobserv
+                        src_namespace: openshift-,netobserv
+                      name: Infrastructure
+                    - default: true
+                      filter:
+                        dst_kind: Pod
+                        src_kind: Pod
+                      name: Pods network
                     - filter:
-                        dst_kind!: Service
-                        src_kind!: Service
-                      name: Exclude services
+                        dst_kind: Service
+                      name: Services network
                     description: quickFilters configures quick filter presets for
                       the Console plugin
                     items:

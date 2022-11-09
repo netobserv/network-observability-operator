@@ -542,7 +542,7 @@ type FlowCollectorConsolePlugin struct {
 	// portNaming defines the configuration of the port-to-service name translation
 	PortNaming ConsolePluginPortConfig `json:"portNaming,omitempty"`
 
-	//+kubebuilder:default:={{name:"Applications",filter:{"src_namespace!":"openshift-,netobserv","dst_namespace!":"openshift-,netobserv"},default:true},{name:"OpenShift infra",filter:{"namespace":"openshift-*,netobserv"}},{name:"Exclude services",filter:{"src_kind!":"Service","dst_kind!":"Service"}}}
+	//+kubebuilder:default:={{name:"Applications",filter:{"src_namespace!":"openshift-,netobserv","dst_namespace!":"openshift-,netobserv"},default:true},{name:"Infrastructure",filter:{"src_namespace":"openshift-,netobserv","dst_namespace":"openshift-,netobserv"}},{name:"Pods network",filter:{"src_kind":"Pod","dst_kind":"Pod"},default:true},{name:"Services network",filter:{"dst_kind":"Service"}}}
 	// quickFilters configures quick filter presets for the Console plugin
 	QuickFilters []QuickFilter `json:"quickFilters,omitempty"`
 }

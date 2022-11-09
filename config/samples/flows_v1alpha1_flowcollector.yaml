@@ -112,16 +112,21 @@ spec:
     quickFilters:
     - name: Applications
       filter:
-        dst_namespace!: openshift-,netobserv
-        src_namespace!: openshift-,netobserv
+        src_namespace!: 'openshift-,netobserv'
+        dst_namespace!: 'openshift-,netobserv'
       default: true
-    - name: OpenShift infra
+    - name: Infrastructure
       filter:
-        namespace: openshift-*,netobserv
-    - name: Exclude services
+        src_namespace: 'openshift-,netobserv'
+        dst_namespace: 'openshift-,netobserv'
+    - name: Pods network
       filter:
-        dst_kind!: Service
-        src_kind!: Service
+        src_kind: 'Pod'
+        dst_kind: 'Pod'
+      default: true
+    - name: Services network
+      filter:
+        dst_kind: 'Service'
   exporters: []
     # - type: KAFKA
     #   kafka:

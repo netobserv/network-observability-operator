@@ -592,7 +592,7 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td>
           quickFilters configures quick filter presets for the Console plugin<br/>
           <br/>
-            <i>Default</i>: [map[default:true filter:map[dst_namespace!:openshift-,netobserv src_namespace!:openshift-,netobserv] name:Applications] map[filter:map[namespace:openshift-*,netobserv] name:OpenShift infra] map[filter:map[dst_kind!:Service src_kind!:Service] name:Exclude services]]<br/>
+            <i>Default</i>: [map[default:true filter:map[dst_namespace!:openshift-,netobserv src_namespace!:openshift-,netobserv] name:Applications] map[filter:map[dst_namespace:openshift-,netobserv src_namespace:openshift-,netobserv] name:Infrastructure] map[default:true filter:map[dst_kind:Pod src_kind:Pod] name:Pods network] map[filter:map[dst_kind:Service] name:Services network]]<br/>
         </td>
         <td>false</td>
       </tr><tr>
