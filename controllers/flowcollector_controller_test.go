@@ -630,7 +630,7 @@ func GetReadyCR(key types.NamespacedName) *flowsv1alpha1.FlowCollector {
 			return err
 		}
 		cond := meta.FindStatusCondition(cr.Status.Conditions, conditions.TypeReady)
-		if cond.Status == metav1.ConditionFalse {
+		if cond != nil && cond.Status == metav1.ConditionFalse {
 			return fmt.Errorf("CR is not ready: %s - %v", cond.Reason, cond.Message)
 		}
 		return nil
