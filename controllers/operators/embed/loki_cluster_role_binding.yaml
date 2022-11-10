@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lokistack-netobserv-tenant-logs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: lokistack-netobserv-tenant-logs
+subjects:
+- kind: ServiceAccount
+  name: flowlogs-pipeline
+  namespace: netobserv
+- kind: ServiceAccount
+  name: netobserv-plugin
+  namespace: netobserv

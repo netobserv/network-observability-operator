@@ -156,10 +156,11 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 	version := helper.ExtractVersion(coll.Spec.Agent.EBPF.Image)
 	volumeMounts := []corev1.VolumeMount{}
 	volumes := []corev1.Volume{}
-	if coll.Spec.UseKafka() && coll.Spec.Kafka.TLS.Enable {
+	kafkaTLS := reconcilers.KafkaTLS(&coll.Spec.Kafka, coll.Spec.OperatorsAutoInstall)
+	if coll.Spec.UseKafka() && kafkaTLS.Enable {
 		// NOTE: secrets need to be copied from the base netobserv namespace to the privileged one.
 		// This operation must currently be performed manually (run "make fix-ebpf-kafka-tls"). It could be automated here.
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &coll.Spec.Kafka.TLS, kafkaCerts)
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, kafkaTLS, kafkaCerts)
 	}
 
 	return &v1.DaemonSet{
@@ -260,19 +261,20 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 	if coll.Spec.UseKafka() {
 		config = append(config,
 			corev1.EnvVar{Name: envExport, Value: exportKafka},
-			corev1.EnvVar{Name: envKafkaBrokers, Value: coll.Spec.Kafka.Address},
-			corev1.EnvVar{Name: envKafkaTopic, Value: coll.Spec.Kafka.Topic},
+			corev1.EnvVar{Name: envKafkaBrokers, Value: reconcilers.KafkaAddress(&coll.Spec.Kafka, c.baseNamespace, coll.Spec.OperatorsAutoInstall)},
+			corev1.EnvVar{Name: envKafkaTopic, Value: reconcilers.KafkaTopic(&coll.Spec.Kafka, coll.Spec.OperatorsAutoInstall)},
 			corev1.EnvVar{Name: envKafkaBatchSize, Value: strconv.Itoa(coll.Spec.Agent.EBPF.KafkaBatchSize)},
 			// For easier user configuration, we can assume a constant message size per flow (~100B in protobuf)
 			corev1.EnvVar{Name: envKafkaBatchMessages, Value: strconv.Itoa(coll.Spec.Agent.EBPF.KafkaBatchSize / averageMessageSize)},
 		)
-		if coll.Spec.Kafka.TLS.Enable {
+		kafkaTLS := reconcilers.KafkaTLS(&coll.Spec.Kafka, coll.Spec.OperatorsAutoInstall)
+		if kafkaTLS != nil && kafkaTLS.Enable {
 			config = append(config,
 				corev1.EnvVar{Name: envKafkaEnableTLS, Value: "true"},
-				corev1.EnvVar{Name: envKafkaTLSInsecureSkipVerify, Value: strconv.FormatBool(coll.Spec.Kafka.TLS.InsecureSkipVerify)},
-				corev1.EnvVar{Name: envKafkaTLSCACertPath, Value: helper.GetCACertPath(&coll.Spec.Kafka.TLS, kafkaCerts)},
-				corev1.EnvVar{Name: envKafkaTLSUserCertPath, Value: helper.GetUserCertPath(&coll.Spec.Kafka.TLS, kafkaCerts)},
-				corev1.EnvVar{Name: envKafkaTLSUserKeyPath, Value: helper.GetUserKeyPath(&coll.Spec.Kafka.TLS, kafkaCerts)},
+				corev1.EnvVar{Name: envKafkaTLSInsecureSkipVerify, Value: strconv.FormatBool(kafkaTLS.InsecureSkipVerify)},
+				corev1.EnvVar{Name: envKafkaTLSCACertPath, Value: helper.GetCACertPath(kafkaTLS, kafkaCerts)},
+				corev1.EnvVar{Name: envKafkaTLSUserCertPath, Value: helper.GetUserCertPath(kafkaTLS, kafkaCerts)},
+				corev1.EnvVar{Name: envKafkaTLSUserKeyPath, Value: helper.GetUserKeyPath(kafkaTLS, kafkaCerts)},
 			)
 		}
 	} else {

@@ -21,6 +21,7 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
@@ -166,15 +167,17 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		},
 	}}
 
-	if b.desired.UseKafka() && b.desired.Kafka.TLS.Enable {
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Kafka.TLS, kafkaCerts)
+	kafkaTLS := reconcilers.KafkaTLS(&b.desired.Kafka, b.desired.OperatorsAutoInstall)
+	if b.desired.UseKafka() && kafkaTLS != nil && kafkaTLS.Enable {
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, kafkaTLS, kafkaCerts)
 	}
 
 	if hasLokiInterface {
-		if b.desired.Loki.TLS.Enable {
-			volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts)
+		lokiTLS := reconcilers.LokiTLS(b.desired)
+		if lokiTLS != nil && lokiTLS.Enable {
+			volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, lokiTLS, lokiCerts)
 		}
-		if b.desired.Loki.UseHostToken() || b.desired.Loki.ForwardUserToken() {
+		if reconcilers.SendAuthToken(b.desired) {
 			volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, lokiToken, constants.FLPName)
 		}
 	}
@@ -320,10 +323,10 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		MinBackoff:     b.desired.Loki.MinBackoff.ToUnstructured().(string),
 		StaticLabels:   model.LabelSet{},
 		Timeout:        b.desired.Loki.Timeout.ToUnstructured().(string),
-		URL:            b.desired.Loki.URL,
+		URL:            reconcilers.LokiURL(b.desired, b.namespace),
 		TimestampLabel: "TimeFlowEndMs",
 		TimestampScale: "1ms",
-		TenantID:       b.desired.Loki.TenantID,
+		TenantID:       reconcilers.TenantID(b.desired),
 	}
 
 	for k, v := range b.desired.Loki.StaticLabels {
@@ -331,15 +334,16 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	}
 
 	var authorization *promConfig.Authorization
-	if b.desired.Loki.UseHostToken() || b.desired.Loki.ForwardUserToken() {
+	if reconcilers.SendAuthToken(b.desired) {
 		authorization = &promConfig.Authorization{
 			Type:            "Bearer",
 			CredentialsFile: helper.TokensPath + constants.FLPName,
 		}
 	}
 
-	if b.desired.Loki.TLS.Enable {
-		if b.desired.Loki.TLS.InsecureSkipVerify {
+	lokiTLS := reconcilers.LokiTLS(b.desired)
+	if lokiTLS != nil && lokiTLS.Enable {
+		if lokiTLS.InsecureSkipVerify {
 			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
 				Authorization: authorization,
 				TLSConfig: promConfig.TLSConfig{
@@ -350,7 +354,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
 				Authorization: authorization,
 				TLSConfig: promConfig.TLSConfig{
-					CAFile: helper.GetCACertPath(&b.desired.Loki.TLS, lokiCerts),
+					CAFile: helper.GetCACertPath(lokiTLS, lokiCerts),
 				},
 			}
 		}
@@ -395,26 +399,27 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 func (b *builder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage) {
 	for i, exporter := range b.desired.Exporters {
 		if exporter.Type == flowsv1alpha1.KafkaExporter {
-			createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), &exporter.Kafka, enrichedStage)
+			createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), "", nil, &exporter.Kafka, enrichedStage)
 		}
 	}
 }
 
-func createKafkaWriteStage(name string, spec *flowsv1alpha1.FlowCollectorKafka, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
+func createKafkaWriteStage(name string, namespace string, operatorsAutoInstall *[]string, spec *flowsv1alpha1.FlowCollectorKafka, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
 	return fromStage.EncodeKafka(name, api.EncodeKafka{
-		Address: spec.Address,
-		Topic:   spec.Topic,
-		TLS:     getKafkaTLS(&spec.TLS),
+		Address: reconcilers.KafkaAddress(spec, namespace, operatorsAutoInstall),
+		Topic:   reconcilers.KafkaTopic(spec, operatorsAutoInstall),
+		TLS:     getKafkaTLS(spec, operatorsAutoInstall),
 	})
 }
 
-func getKafkaTLS(tls *flowsv1alpha1.ClientTLS) *api.ClientTLS {
-	if tls.Enable {
+func getKafkaTLS(spec *flowsv1alpha1.FlowCollectorKafka, operatorsAutoInstall *[]string) *api.ClientTLS {
+	kafkaTLS := reconcilers.KafkaTLS(spec, operatorsAutoInstall)
+	if kafkaTLS != nil && kafkaTLS.Enable {
 		return &api.ClientTLS{
-			InsecureSkipVerify: tls.InsecureSkipVerify,
-			CACertPath:         helper.GetCACertPath(tls, kafkaCerts),
-			UserCertPath:       helper.GetUserCertPath(tls, kafkaCerts),
-			UserKeyPath:        helper.GetUserKeyPath(tls, kafkaCerts),
+			InsecureSkipVerify: kafkaTLS.InsecureSkipVerify,
+			CACertPath:         helper.GetCACertPath(kafkaTLS, kafkaCerts),
+			UserCertPath:       helper.GetUserCertPath(kafkaTLS, kafkaCerts),
+			UserKeyPath:        helper.GetUserKeyPath(kafkaTLS, kafkaCerts),
 		}
 	}
 	return nil

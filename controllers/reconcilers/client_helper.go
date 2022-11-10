@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/netobserv/network-observability-operator/pkg/conditions"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -29,14 +32,19 @@ func (c *ClientHelper) CreateOwned(ctx context.Context, obj client.Object) error
 	c.changed = true
 	err := c.SetControllerReference(obj)
 	if err != nil {
-		log.Error(err, "Failed to set controller reference")
+		log.Error(err, fmt.Sprintf("Failed to set controller reference of %s", obj.GetName()))
 		return err
 	}
-	kind := reflect.TypeOf(obj).String()
-	log.Info("Creating a new "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+
+	objectType := reflect.TypeOf(obj)
+	kind := objectType.String()
+	if objectType == reflect.TypeOf(&unstructured.Unstructured{}) {
+		kind = obj.(*unstructured.Unstructured).GetKind()
+	}
+	log.Info(fmt.Sprintf("Creating %s Namespace %s Name %s", kind, obj.GetNamespace(), obj.GetName()))
 	err = c.Create(ctx, obj)
 	if err != nil {
-		log.Error(err, "Failed to create new "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+		log.Error(err, fmt.Sprintf("Failed to create %s Namespace %s Name %s", kind, obj.GetNamespace(), obj.GetName()))
 		return err
 	}
 	return nil
@@ -51,14 +59,14 @@ func (c *ClientHelper) UpdateOwned(ctx context.Context, old, obj client.Object) 
 	}
 	err := c.SetControllerReference(obj)
 	if err != nil {
-		log.Error(err, "Failed to set controller reference")
+		log.Error(err, fmt.Sprintf("Failed to set controller reference of %s", obj.GetName()))
 		return err
 	}
 	kind := reflect.TypeOf(obj).String()
-	log.Info("Updating "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+	log.Info(fmt.Sprintf("Updating %s Namespace %s Name %s", kind, obj.GetNamespace(), obj.GetName()))
 	err = c.Update(ctx, obj)
 	if err != nil {
-		log.Error(err, "Failed to update "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+		log.Error(err, fmt.Sprintf("Failed to update %s Namespace %s Name %s", kind, obj.GetNamespace(), obj.GetName()))
 		return err
 	}
 	return nil
@@ -137,4 +145,32 @@ func (c *ClientHelper) ReconcileClusterRole(ctx context.Context, desired *rbacv1
 	}
 
 	return c.UpdateOwned(ctx, &actual, desired)
+}
+
+// Apply a given manifest with an optional namespace to override
+func (c *ClientHelper) Apply(ctx context.Context, u *unstructured.Unstructured) error {
+	log := log.FromContext(ctx, "component", "ClientHelper", "function", "Apply")
+
+	err := c.Get(ctx, types.NamespacedName{
+		Namespace: u.GetNamespace(),
+		Name:      u.GetName(),
+	}, u)
+	if errors.IsNotFound(err) {
+		log.Info(u.GetName() + " in ns " + u.GetNamespace() + " is not found")
+		return c.Create(ctx, u)
+	}
+	return err
+}
+
+func (c *ClientHelper) GetClientCondition() metav1.Condition {
+	var condition metav1.Condition
+	if c.DidChange() {
+		condition = conditions.Updating()
+	} else if c.IsInProgress() {
+		condition = conditions.DeploymentInProgress()
+	} else {
+		// TODO: update this to get deployments statuses instead of considering our components as 'ready'
+		condition = conditions.Ready()
+	}
+	return condition
 }

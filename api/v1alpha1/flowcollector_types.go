@@ -18,6 +18,7 @@ package v1alpha1
 import (
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -81,6 +82,15 @@ type FlowCollectorSpec struct {
 	// exporters defines additional optional exporters for custom consumption or storage. This is an experimental feature. Currently, only KAFKA exporter is available.
 	// +optional
 	Exporters []*FlowCollectorExporter `json:"exporters"`
+
+	// operatorsAutoInstall contains the dependency names to install alongside the operator
+	// Possible values are "loki" and / or "kafka"
+	// Experimental feature. If provided, the listed operators will be automatically installed
+	// using operator lifecycle manager (https://olm.operatorframework.io/)
+	// It will create a "Subscription" using "operators.coreos.com/v1alpha1"
+	// and related instances. Check autoInstallSpec sections.
+	// +optional
+	OperatorsAutoInstall *[]string `json:"operatorsAutoInstall,omitempty"`
 }
 
 // FlowCollectorAgent is a discriminated union that allows to select either ipfix or ebpf, but does not
@@ -223,17 +233,111 @@ type FlowCollectorEBPF struct {
 type FlowCollectorKafka struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
+	// autoInstallSpec is the Spec section of LokiStack instance.
+	// Experimental feature. If provided, the Loki operator will be automatically installed
+	// using operator lifecycle manager (https://olm.operatorframework.io/)
+	// It will create a "Subscription" using "operators.coreos.com/v1alpha1"
+	// and "Kafka" instance, "KafkaTopic", "KafkaUser" using "kafka.strimzi.io/v1beta2"
+	AutoInstallSpec *KafkaInstanceSpec `json:"autoInstallSpec,omitempty"`
+
 	//+kubebuilder:default:=""
 	// address of the Kafka server
+	// it will be ignored if autoInstallSpec is specified
 	Address string `json:"address"`
 
 	//+kubebuilder:default:=""
 	// kafka topic to use. It must exist, NetObserv will not create it.
+	// it will be ignored if autoInstallSpec is specified
 	Topic string `json:"topic"`
 
 	// tls client configuration.
+	// it will be ignored if autoInstallSpec is specified
 	// +optional
 	TLS ClientTLS `json:"tls"`
+}
+
+type KafkaInstanceSpec struct {
+	// The subscription catalog source name
+	// empty value will set either "operatorhubio-catalog" or "redhat-operators"
+	// according to your platform
+	//
+	// +required
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=""
+	Source string `json:"source"`
+
+	// The subscription starting CSV version
+	// keep empty to get latest version available with automatic updates
+	// else it will set install plan approval to manual with your specified version
+	//
+	// +required
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=""
+	StartingCSV string `json:"startingCSV"`
+
+	// The number of pods in the cluster
+	//
+	// +required
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=3
+	Replicas int32 `json:"replicas"`
+
+	// The kafka storage
+	//
+	// +required
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={"type":"persistent-claim","size":"200Gi","class":"gp2"}
+	Storage KafkaStorage `json:"storage"`
+
+	// The number of zookeeper pods in the cluster
+	//
+	// +required
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=3
+	ZooKeeperReplicas int32 `json:"zooKeeperReplicas"`
+
+	// The zookeeper storage
+	//
+	// +required
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={"type":"persistent-claim","size":"20Gi","class":"gp2"}
+	ZooKeeperStorage KafkaStorage `json:"zooKeeperStorage"`
+
+	// The number of partitions the topic should have
+	// Set this to N * kafkaConsumerReplicas to balance consumers load
+	//
+	// +required
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=24
+	Partitions *int32 `json:"partitions,omitempty"`
+
+	// The number of replicas the topic should have
+	//
+	// +required
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=3
+	TopicReplicas int32 `json:"topicReplicas"`
+}
+
+// Storage configuration (disk). Cannot be updated.
+type KafkaStorage struct {
+	// Storage type, must be either 'ephemeral' or 'persistent-claim'. 'jbod' is not supported by automatic install.
+	//
+	// +required
+	// +kubebuilder:validation:Enum=ephemeral;persistent-claim
+	// +kubebuilder:default:=persistent-claim
+	Type string `json:"type"`
+
+	// When type=persistent-claim, defines the size of the persistent volume claim
+	// (i.e 1Gi). Mandatory when type=persistent-claim.
+	//
+	// +optional
+	Size *resource.Quantity `json:"size,omitempty"`
+
+	// The storage class to use for dynamic volume allocation.
+	//
+	// +optional
+	Class *string `json:"class,omitempty"`
 }
 
 const (
@@ -427,25 +531,35 @@ func (spec *FlowCollectorLoki) ForwardUserToken() bool {
 
 // FlowCollectorLoki defines the desired state for FlowCollector's Loki client
 type FlowCollectorLoki struct {
+	// autoInstallSpec is the Spec section of LokiStack instance.
+	// Experimental feature. If provided, the Loki operator will be automatically installed
+	// using operator lifecycle manager (https://olm.operatorframework.io/)
+	// It will create a "Subscription" using "operators.coreos.com/v1alpha1"
+	// and a "LokiStack" instance using "loki.grafana.com/v1" apis
+	AutoInstallSpec *LokiInstanceSpec `json:"autoInstallSpec,omitempty"`
+
 	//+kubebuilder:default:="http://loki:3100/"
 	// url is the address of an existing Loki service to push the flows to.
+	// it will be ignored if autoInstallSpec is specified
 	URL string `json:"url,omitempty"`
 
 	//+kubebuilder:validation:optional
 	// querierURL specifies the address of the Loki querier service, in case it is different from the
 	// Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester
 	// and querier are in the same server).
+	// it will be ignored if autoInstallSpec is specified
 	QuerierURL string `json:"querierUrl,omitempty"`
 
 	//+kubebuilder:validation:optional
 	// statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the
 	// Loki querier URL. If empty, the QuerierURL value will be used.
 	// This is useful to show error messages and some context in the frontend
+	// it will be ignored if autoInstallSpec is specified
 	StatusURL string `json:"statusUrl,omitempty"`
 
 	//+kubebuilder:default:="netobserv"
 	// tenantID is the Loki X-Scope-OrgID that identifies the tenant for each request.
-	// it will be ignored if instanceSpec is specified
+	// it will be ignored if autoInstallSpec is specified
 	TenantID string `json:"tenantID,omitempty"`
 
 	// +kubebuilder:validation:Enum:="DISABLED";"HOST";"FORWARD"
@@ -454,6 +568,7 @@ type FlowCollectorLoki struct {
 	// DISABLED will not send any token with the request
 	// HOST will use the local pod service account to authenticate to Loki
 	// FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode.
+	// it will fallback to HOST if autoInstallSpec is specified
 	AuthToken string `json:"authToken,omitempty"`
 
 	//+kubebuilder:default:="1s"
@@ -488,8 +603,82 @@ type FlowCollectorLoki struct {
 	StaticLabels map[string]string `json:"staticLabels,omitempty"`
 
 	// tls client configuration.
+	// it will be ignored if autoInstallSpec is specified
 	// +optional
 	TLS ClientTLS `json:"tls"`
+}
+
+// LokiInstanceSpec defines the desired state for LokiStack instance configuration
+type LokiInstanceSpec struct {
+	// The subscription catalog source name
+	// empty value will set either "operatorhubio-catalog" or "redhat-operators"
+	// according to your platform
+	//
+	// +required
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=""
+	Source string `json:"source"`
+
+	// The subscription starting CSV
+	// keep empty to get latest version available with automatic updates
+	// else it will set install plan approval to manual with your specified version
+	//
+	// +required
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=""
+	StartingCSV string `json:"startingCSV"`
+
+	// secretName is the name of a secret in the same namespace as the LokiStack custom resource
+	//
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:default:="loki-secret"
+	SecretName string `json:"secretName"`
+
+	// objectStorageType is the type of object storage that should be used
+	//
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=azure;gcs;s3;swift
+	ObjectStorageType string `json:"objectStorageType"`
+
+	// managementState defines the type for CR management states.
+	// Default is managed.
+	//
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:default:=Managed
+	// +kubebuilder:validation:Enum=Managed;Unmanaged
+	ManagementState string `json:"managementState,omitempty"`
+
+	// size defines one of the support Loki deployment scale out sizes.
+	//
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum="1x.extra-small";"1x.small";"1x.medium"
+	Size string `json:"size"`
+
+	// storageClassName defines the storage class for ingester/querier PVCs.
+	//
+	// +required
+	// +kubebuilder:validation:Required
+	StorageClassName string `json:"storageClassName"`
+
+	// replicationFactor defines the policy for log stream replication.
+	//
+	// +required
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:=1
+	// +kubebuilder:validation:Minimum:=1
+	ReplicationFactor int32 `json:"replicationFactor"`
+
+	// retentionDays contains the number of days logs are kept.
+	//
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:default:=1
+	// +kubebuilder:validation:Minimum:=1
+	RetentionDays uint `json:"retentionDays"`
 }
 
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector

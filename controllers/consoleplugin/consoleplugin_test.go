@@ -133,9 +133,12 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	//equals specs
 	podSpec, containerConfig := getContainerSpecs()
-	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
-	fmt.Printf("%v\n", buildArgs(&containerConfig, loki))
-	assert.False(containerNeedsUpdate(&podSpec, &containerConfig, loki))
+	spec := &flowsv1alpha1.FlowCollectorSpec{
+		Loki:          flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"},
+		ConsolePlugin: containerConfig,
+	}
+	fmt.Printf("%v\n", buildArgs(spec, "netobserv"))
+	assert.False(containerNeedsUpdate(&podSpec, spec, "netobserv"))
 
 	//wrong resources
 	podSpec, containerConfig = getContainerSpecs()
@@ -143,17 +146,20 @@ func TestContainerUpdateCheck(t *testing.T) {
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
-	assert.True(containerNeedsUpdate(&podSpec, &containerConfig, loki))
+	spec.ConsolePlugin = containerConfig
+	assert.True(containerNeedsUpdate(&podSpec, spec, "netobserv"))
 
 	//new image
 	podSpec, containerConfig = getContainerSpecs()
 	containerConfig.Image = "quay.io/netobserv/network-observability-console-plugin:latest"
-	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
+	spec.ConsolePlugin = containerConfig
+	assert.Equal(containerNeedsUpdate(&podSpec, spec, "netobserv"), true)
 
 	//new pull policy
 	podSpec, containerConfig = getContainerSpecs()
 	containerConfig.ImagePullPolicy = string(corev1.PullAlways)
-	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
+	spec.ConsolePlugin = containerConfig
+	assert.Equal(containerNeedsUpdate(&podSpec, spec, "netobserv"), true)
 
 }
 
@@ -186,10 +192,13 @@ func TestBuiltContainer(t *testing.T) {
 
 	//newly created containers should not need update
 	plugin := getPluginConfig()
-	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234", TenantID: "netobserv"}
-	builder := newBuilder(testNamespace, &plugin, loki)
+	spec := &flowsv1alpha1.FlowCollectorSpec{
+		Loki:          flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234", TenantID: "netobserv"},
+		ConsolePlugin: plugin,
+	}
+	builder := newBuilder(testNamespace, spec)
 	newContainer := builder.podTemplate("digest")
-	assert.Equal(containerNeedsUpdate(&newContainer.Spec, &plugin, loki), false)
+	assert.Equal(containerNeedsUpdate(&newContainer.Spec, spec, "netobserv"), false)
 }
 
 func TestBuiltService(t *testing.T) {
@@ -197,7 +206,10 @@ func TestBuiltService(t *testing.T) {
 
 	//newly created service should not need update
 	plugin := getPluginConfig()
-	builder := newBuilder(testNamespace, &plugin, nil)
+	spec := &flowsv1alpha1.FlowCollectorSpec{
+		ConsolePlugin: plugin,
+	}
+	builder := newBuilder(testNamespace, spec)
 	newService := builder.service(nil)
 	assert.Equal(serviceNeedsUpdate(newService, &plugin, testNamespace), false)
 }
@@ -206,8 +218,11 @@ func TestLabels(t *testing.T) {
 	assert := assert.New(t)
 
 	plugin := getPluginConfig()
-	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234"}
-	builder := newBuilder(testNamespace, &plugin, loki)
+	spec := &flowsv1alpha1.FlowCollectorSpec{
+		Loki:          flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234/"},
+		ConsolePlugin: plugin,
+	}
+	builder := newBuilder(testNamespace, spec)
 
 	// Deployment
 	depl := builder.deployment("digest")

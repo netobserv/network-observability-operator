@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +15,7 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -34,15 +35,14 @@ const tokensPath = "/var/run/secrets/tokens/"
 const PodConfigurationDigest = "flows.netobserv.io/" + configMapName
 
 type builder struct {
-	namespace   string
-	labels      map[string]string
-	selector    map[string]string
-	desired     *flowsv1alpha1.FlowCollectorConsolePlugin
-	desiredLoki *flowsv1alpha1.FlowCollectorLoki
+	namespace string
+	labels    map[string]string
+	selector  map[string]string
+	desired   *flowsv1alpha1.FlowCollectorSpec
 }
 
-func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki) builder {
-	version := helper.ExtractVersion(desired.Image)
+func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec) builder {
+	version := helper.ExtractVersion(desired.ConsolePlugin.Image)
 	return builder{
 		namespace: ns,
 		labels: map[string]string{
@@ -52,8 +52,7 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorConsolePlugin, de
 		selector: map[string]string{
 			"app": constants.PluginName,
 		},
-		desired:     desired,
-		desiredLoki: desiredLoki,
+		desired: desired,
 	}
 }
 
@@ -67,7 +66,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 			Service: osv1alpha1.ConsolePluginService{
 				Name:      constants.PluginName,
 				Namespace: b.namespace,
-				Port:      b.desired.Port,
+				Port:      b.desired.ConsolePlugin.Port,
 				BasePath:  "/",
 			},
 			Proxy: []osv1alpha1.ConsolePluginProxy{{
@@ -77,7 +76,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 				Service: osv1alpha1.ConsolePluginProxyServiceConfig{
 					Name:      constants.PluginName,
 					Namespace: b.namespace,
-					Port:      b.desired.Port,
+					Port:      b.desired.ConsolePlugin.Port,
 				},
 			}},
 		},
@@ -92,7 +91,7 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 			Labels:    b.labels,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &b.desired.Replicas,
+			Replicas: &b.desired.ConsolePlugin.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: b.selector,
 			},
@@ -101,28 +100,28 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 	}
 }
 
-func tokenPath(desiredLoki *flowsv1alpha1.FlowCollectorLoki) string {
-	if desiredLoki.UseHostToken() {
+func tokenPath(desired *flowsv1alpha1.FlowCollectorSpec) string {
+	if reconcilers.SendHostToken(desired) {
 		return tokensPath + constants.PluginName
 	}
 	return ""
 }
 
-func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki) []string {
-	querierURL := querierURL(desiredLoki)
-	statusURL := statusURL(desiredLoki)
+func buildArgs(desired *flowsv1alpha1.FlowCollectorSpec, ns string) []string {
+	querierURL := reconcilers.LokiQuerierURL(desired, ns)
+	statusURL := reconcilers.LokiStatusURL(desired, ns)
 
 	args := []string{
 		"-cert", "/var/serving-cert/tls.crt",
 		"-key", "/var/serving-cert/tls.key",
 		"-loki", querierURL,
 		"-loki-labels", strings.Join(constants.LokiIndexFields, ","),
-		"-loki-tenant-id", desiredLoki.TenantID,
-		"-loglevel", desired.LogLevel,
+		"-loki-tenant-id", reconcilers.TenantID(desired),
+		"-loglevel", desired.ConsolePlugin.LogLevel,
 		"-frontend-config", filepath.Join(configPath, configFile),
 	}
 
-	if desiredLoki.ForwardUserToken() {
+	if desired.Loki.ForwardUserToken() {
 		args = append(args, "-loki-forward-user-token")
 	}
 
@@ -130,15 +129,16 @@ func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *f
 		args = append(args, "-loki-status", statusURL)
 	}
 
-	if desiredLoki.TLS.Enable {
-		if desiredLoki.TLS.InsecureSkipVerify {
+	lokiTLS := reconcilers.LokiTLS(desired)
+	if lokiTLS != nil && lokiTLS.Enable {
+		if lokiTLS.InsecureSkipVerify {
 			args = append(args, "-loki-skip-tls")
 		} else {
-			args = append(args, "--loki-ca-path", helper.GetCACertPath(&desiredLoki.TLS, lokiCerts))
+			args = append(args, "--loki-ca-path", helper.GetCACertPath(lokiTLS, lokiCerts))
 		}
 	}
-	if desiredLoki.UseHostToken() {
-		args = append(args, "-loki-token-path", tokenPath(desiredLoki))
+	if reconcilers.SendHostToken(desired) {
+		args = append(args, "-loki-token-path", tokenPath(desired))
 	}
 	return args
 }
@@ -174,12 +174,14 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 	},
 	}
 
-	args := buildArgs(b.desired, b.desiredLoki)
-	if b.desiredLoki != nil && b.desiredLoki.TLS.Enable && !b.desiredLoki.TLS.InsecureSkipVerify {
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts)
+	args := buildArgs(b.desired, b.namespace)
+
+	lokiTLS := reconcilers.LokiTLS(b.desired)
+	if lokiTLS != nil && lokiTLS.Enable && !lokiTLS.InsecureSkipVerify {
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, lokiTLS, lokiCerts)
 	}
 
-	if b.desiredLoki.UseHostToken() {
+	if reconcilers.SendHostToken(b.desired) {
 		volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, constants.PluginName, constants.PluginName)
 	}
 
@@ -193,9 +195,9 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
 				Name:            constants.PluginName,
-				Image:           b.desired.Image,
-				ImagePullPolicy: corev1.PullPolicy(b.desired.ImagePullPolicy),
-				Resources:       *b.desired.Resources.DeepCopy(),
+				Image:           b.desired.ConsolePlugin.Image,
+				ImagePullPolicy: corev1.PullPolicy(b.desired.ConsolePlugin.ImagePullPolicy),
+				Resources:       *b.desired.ConsolePlugin.Resources.DeepCopy(),
 				VolumeMounts:    volumeMounts,
 				Args:            args,
 			}},
@@ -218,9 +220,9 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 				Kind:       "Deployment",
 				Name:       constants.PluginName,
 			},
-			MinReplicas: b.desired.Autoscaler.MinReplicas,
-			MaxReplicas: b.desired.Autoscaler.MaxReplicas,
-			Metrics:     b.desired.Autoscaler.Metrics,
+			MinReplicas: b.desired.ConsolePlugin.Autoscaler.MinReplicas,
+			MaxReplicas: b.desired.ConsolePlugin.Autoscaler.MaxReplicas,
+			Metrics:     b.desired.ConsolePlugin.Autoscaler.Metrics,
 		},
 	}
 }
@@ -239,7 +241,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 			Spec: corev1.ServiceSpec{
 				Selector: b.selector,
 				Ports: []corev1.ServicePort{{
-					Port:     b.desired.Port,
+					Port:     b.desired.ConsolePlugin.Port,
 					Protocol: "TCP",
 					Name:     "main",
 				}},
@@ -249,7 +251,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 	// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
 	newService := old.DeepCopy()
 	newService.Spec.Ports = []corev1.ServicePort{{
-		Port:     b.desired.Port,
+		Port:     b.desired.ConsolePlugin.Port,
 		Protocol: corev1.ProtocolUDP,
 	}}
 	return newService
@@ -271,8 +273,8 @@ func buildServiceAccount(ns string) *corev1.ServiceAccount {
 // detect any configuration change
 func (b *builder) configMap() (*corev1.ConfigMap, string) {
 	config := map[string]interface{}{
-		"portNaming":   b.desired.PortNaming,
-		"quickFilters": b.desired.QuickFilters,
+		"portNaming":   b.desired.ConsolePlugin.PortNaming,
+		"quickFilters": b.desired.ConsolePlugin.QuickFilters,
 	}
 
 	configStr := "{}"

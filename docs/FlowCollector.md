@@ -138,6 +138,13 @@ FlowCollectorSpec defines the desired state of FlowCollector
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>operatorsAutoInstall</b></td>
+        <td>[]string</td>
+        <td>
+          operatorsAutoInstall contains the dependency names to install alongside the operator Possible values are "loki" and / or "kafka" Experimental feature. If provided, the listed operators will be automatically installed using operator lifecycle manager (https://olm.operatorframework.io/) It will create a "Subscription" using "operators.coreos.com/v1alpha1" and related instances. Check autoInstallSpec sections.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessor">processor</a></b></td>
         <td>object</td>
         <td>
@@ -1706,7 +1713,7 @@ kafka describes the kafka configuration (address, topic...) to send enriched flo
         <td><b>address</b></td>
         <td>string</td>
         <td>
-          address of the Kafka server<br/>
+          address of the Kafka server it will be ignored if autoInstallSpec is specified<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -1715,16 +1722,207 @@ kafka describes the kafka configuration (address, topic...) to send enriched flo
         <td><b>topic</b></td>
         <td>string</td>
         <td>
-          kafka topic to use. It must exist, NetObserv will not create it.<br/>
+          kafka topic to use. It must exist, NetObserv will not create it. it will be ignored if autoInstallSpec is specified<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkaautoinstallspec">autoInstallSpec</a></b></td>
+        <td>object</td>
+        <td>
+          autoInstallSpec is the Spec section of LokiStack instance. Experimental feature. If provided, the Loki operator will be automatically installed using operator lifecycle manager (https://olm.operatorframework.io/) It will create a "Subscription" using "operators.coreos.com/v1alpha1" and "Kafka" instance, "KafkaTopic", "KafkaUser" using "kafka.strimzi.io/v1beta2"<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindexkafkatls">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration.<br/>
+          tls client configuration. it will be ignored if autoInstallSpec is specified<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.autoInstallSpec
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafka)</sup></sup>
+
+
+
+autoInstallSpec is the Spec section of LokiStack instance. Experimental feature. If provided, the Loki operator will be automatically installed using operator lifecycle manager (https://olm.operatorframework.io/) It will create a "Subscription" using "operators.coreos.com/v1alpha1" and "Kafka" instance, "KafkaTopic", "KafkaUser" using "kafka.strimzi.io/v1beta2"
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>partitions</b></td>
+        <td>integer</td>
+        <td>
+          The number of partitions the topic should have Set this to N * kafkaConsumerReplicas to balance consumers load<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 24<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>replicas</b></td>
+        <td>integer</td>
+        <td>
+          The number of pods in the cluster<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 3<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>source</b></td>
+        <td>string</td>
+        <td>
+          The subscription catalog source name empty value will set either "operatorhubio-catalog" or "redhat-operators" according to your platform<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>startingCSV</b></td>
+        <td>string</td>
+        <td>
+          The subscription starting CSV version keep empty to get latest version available with automatic updates else it will set install plan approval to manual with your specified version<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkaautoinstallspecstorage">storage</a></b></td>
+        <td>object</td>
+        <td>
+          The kafka storage<br/>
+          <br/>
+            <i>Default</i>: map[class:gp2 size:200Gi type:persistent-claim]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>topicReplicas</b></td>
+        <td>integer</td>
+        <td>
+          The number of replicas the topic should have<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 3<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>zooKeeperReplicas</b></td>
+        <td>integer</td>
+        <td>
+          The number of zookeeper pods in the cluster<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 3<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkaautoinstallspeczookeeperstorage">zooKeeperStorage</a></b></td>
+        <td>object</td>
+        <td>
+          The zookeeper storage<br/>
+          <br/>
+            <i>Default</i>: map[class:gp2 size:20Gi type:persistent-claim]<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.autoInstallSpec.storage
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkaautoinstallspec)</sup></sup>
+
+
+
+The kafka storage
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Storage type, must be either 'ephemeral' or 'persistent-claim'. 'jbod' is not supported by automatic install.<br/>
+          <br/>
+            <i>Enum</i>: ephemeral, persistent-claim<br/>
+            <i>Default</i>: persistent-claim<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>class</b></td>
+        <td>string</td>
+        <td>
+          The storage class to use for dynamic volume allocation.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>size</b></td>
+        <td>int or string</td>
+        <td>
+          When type=persistent-claim, defines the size of the persistent volume claim (i.e 1Gi). Mandatory when type=persistent-claim.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.autoInstallSpec.zooKeeperStorage
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkaautoinstallspec)</sup></sup>
+
+
+
+The zookeeper storage
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Storage type, must be either 'ephemeral' or 'persistent-claim'. 'jbod' is not supported by automatic install.<br/>
+          <br/>
+            <i>Enum</i>: ephemeral, persistent-claim<br/>
+            <i>Default</i>: persistent-claim<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>class</b></td>
+        <td>string</td>
+        <td>
+          The storage class to use for dynamic volume allocation.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>size</b></td>
+        <td>int or string</td>
+        <td>
+          When type=persistent-claim, defines the size of the persistent volume claim (i.e 1Gi). Mandatory when type=persistent-claim.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1736,7 +1934,7 @@ kafka describes the kafka configuration (address, topic...) to send enriched flo
 
 
 
-tls client configuration.
+tls client configuration. it will be ignored if autoInstallSpec is specified
 
 <table>
     <thead>
@@ -1903,7 +2101,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b>address</b></td>
         <td>string</td>
         <td>
-          address of the Kafka server<br/>
+          address of the Kafka server it will be ignored if autoInstallSpec is specified<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -1912,16 +2110,207 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b>topic</b></td>
         <td>string</td>
         <td>
-          kafka topic to use. It must exist, NetObserv will not create it.<br/>
+          kafka topic to use. It must exist, NetObserv will not create it. it will be ignored if autoInstallSpec is specified<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaautoinstallspec">autoInstallSpec</a></b></td>
+        <td>object</td>
+        <td>
+          autoInstallSpec is the Spec section of LokiStack instance. Experimental feature. If provided, the Loki operator will be automatically installed using operator lifecycle manager (https://olm.operatorframework.io/) It will create a "Subscription" using "operators.coreos.com/v1alpha1" and "Kafka" instance, "KafkaTopic", "KafkaUser" using "kafka.strimzi.io/v1beta2"<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspeckafkatls">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration.<br/>
+          tls client configuration. it will be ignored if autoInstallSpec is specified<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.autoInstallSpec
+<sup><sup>[↩ Parent](#flowcollectorspeckafka)</sup></sup>
+
+
+
+autoInstallSpec is the Spec section of LokiStack instance. Experimental feature. If provided, the Loki operator will be automatically installed using operator lifecycle manager (https://olm.operatorframework.io/) It will create a "Subscription" using "operators.coreos.com/v1alpha1" and "Kafka" instance, "KafkaTopic", "KafkaUser" using "kafka.strimzi.io/v1beta2"
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>partitions</b></td>
+        <td>integer</td>
+        <td>
+          The number of partitions the topic should have Set this to N * kafkaConsumerReplicas to balance consumers load<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 24<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>replicas</b></td>
+        <td>integer</td>
+        <td>
+          The number of pods in the cluster<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 3<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>source</b></td>
+        <td>string</td>
+        <td>
+          The subscription catalog source name empty value will set either "operatorhubio-catalog" or "redhat-operators" according to your platform<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>startingCSV</b></td>
+        <td>string</td>
+        <td>
+          The subscription starting CSV version keep empty to get latest version available with automatic updates else it will set install plan approval to manual with your specified version<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaautoinstallspecstorage">storage</a></b></td>
+        <td>object</td>
+        <td>
+          The kafka storage<br/>
+          <br/>
+            <i>Default</i>: map[class:gp2 size:200Gi type:persistent-claim]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>topicReplicas</b></td>
+        <td>integer</td>
+        <td>
+          The number of replicas the topic should have<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 3<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>zooKeeperReplicas</b></td>
+        <td>integer</td>
+        <td>
+          The number of zookeeper pods in the cluster<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 3<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkaautoinstallspeczookeeperstorage">zooKeeperStorage</a></b></td>
+        <td>object</td>
+        <td>
+          The zookeeper storage<br/>
+          <br/>
+            <i>Default</i>: map[class:gp2 size:20Gi type:persistent-claim]<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.autoInstallSpec.storage
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaautoinstallspec)</sup></sup>
+
+
+
+The kafka storage
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Storage type, must be either 'ephemeral' or 'persistent-claim'. 'jbod' is not supported by automatic install.<br/>
+          <br/>
+            <i>Enum</i>: ephemeral, persistent-claim<br/>
+            <i>Default</i>: persistent-claim<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>class</b></td>
+        <td>string</td>
+        <td>
+          The storage class to use for dynamic volume allocation.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>size</b></td>
+        <td>int or string</td>
+        <td>
+          When type=persistent-claim, defines the size of the persistent volume claim (i.e 1Gi). Mandatory when type=persistent-claim.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.autoInstallSpec.zooKeeperStorage
+<sup><sup>[↩ Parent](#flowcollectorspeckafkaautoinstallspec)</sup></sup>
+
+
+
+The zookeeper storage
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Storage type, must be either 'ephemeral' or 'persistent-claim'. 'jbod' is not supported by automatic install.<br/>
+          <br/>
+            <i>Enum</i>: ephemeral, persistent-claim<br/>
+            <i>Default</i>: persistent-claim<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>class</b></td>
+        <td>string</td>
+        <td>
+          The storage class to use for dynamic volume allocation.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>size</b></td>
+        <td>int or string</td>
+        <td>
+          When type=persistent-claim, defines the size of the persistent volume claim (i.e 1Gi). Mandatory when type=persistent-claim.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1933,7 +2322,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
 
 
 
-tls client configuration.
+tls client configuration. it will be ignored if autoInstallSpec is specified
 
 <table>
     <thead>
@@ -2100,10 +2489,17 @@ loki, the flow store, client settings.
         <td><b>authToken</b></td>
         <td>enum</td>
         <td>
-          AuthToken describe the way to get a token to authenticate to Loki DISABLED will not send any token with the request HOST will use the local pod service account to authenticate to Loki FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode.<br/>
+          AuthToken describe the way to get a token to authenticate to Loki DISABLED will not send any token with the request HOST will use the local pod service account to authenticate to Loki FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode. it will fallback to HOST if autoInstallSpec is specified<br/>
           <br/>
             <i>Enum</i>: DISABLED, HOST, FORWARD<br/>
             <i>Default</i>: DISABLED<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeclokiautoinstallspec">autoInstallSpec</a></b></td>
+        <td>object</td>
+        <td>
+          autoInstallSpec is the Spec section of LokiStack instance. Experimental feature. If provided, the Loki operator will be automatically installed using operator lifecycle manager (https://olm.operatorframework.io/) It will create a "Subscription" using "operators.coreos.com/v1alpha1" and a "LokiStack" instance using "loki.grafana.com/v1" apis<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2159,7 +2555,7 @@ loki, the flow store, client settings.
         <td><b>querierUrl</b></td>
         <td>string</td>
         <td>
-          querierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server).<br/>
+          querierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server). it will be ignored if autoInstallSpec is specified<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2175,14 +2571,14 @@ loki, the flow store, client settings.
         <td><b>statusUrl</b></td>
         <td>string</td>
         <td>
-          statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend<br/>
+          statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend it will be ignored if autoInstallSpec is specified<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>tenantID</b></td>
         <td>string</td>
         <td>
-          tenantID is the Loki X-Scope-OrgID that identifies the tenant for each request. it will be ignored if instanceSpec is specified<br/>
+          tenantID is the Loki X-Scope-OrgID that identifies the tenant for each request. it will be ignored if autoInstallSpec is specified<br/>
           <br/>
             <i>Default</i>: netobserv<br/>
         </td>
@@ -2200,16 +2596,119 @@ loki, the flow store, client settings.
         <td><b><a href="#flowcollectorspeclokitls">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration.<br/>
+          tls client configuration. it will be ignored if autoInstallSpec is specified<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>url</b></td>
         <td>string</td>
         <td>
-          url is the address of an existing Loki service to push the flows to.<br/>
+          url is the address of an existing Loki service to push the flows to. it will be ignored if autoInstallSpec is specified<br/>
           <br/>
             <i>Default</i>: http://loki:3100/<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.autoInstallSpec
+<sup><sup>[↩ Parent](#flowcollectorspecloki)</sup></sup>
+
+
+
+autoInstallSpec is the Spec section of LokiStack instance. Experimental feature. If provided, the Loki operator will be automatically installed using operator lifecycle manager (https://olm.operatorframework.io/) It will create a "Subscription" using "operators.coreos.com/v1alpha1" and a "LokiStack" instance using "loki.grafana.com/v1" apis
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>objectStorageType</b></td>
+        <td>enum</td>
+        <td>
+          objectStorageType is the type of object storage that should be used<br/>
+          <br/>
+            <i>Enum</i>: azure, gcs, s3, swift<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>retentionDays</b></td>
+        <td>integer</td>
+        <td>
+          retentionDays contains the number of days logs are kept.<br/>
+          <br/>
+            <i>Default</i>: 1<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>secretName</b></td>
+        <td>string</td>
+        <td>
+          secretName is the name of a secret in the same namespace as the LokiStack custom resource<br/>
+          <br/>
+            <i>Default</i>: loki-secret<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>size</b></td>
+        <td>enum</td>
+        <td>
+          size defines one of the support Loki deployment scale out sizes.<br/>
+          <br/>
+            <i>Enum</i>: 1x.extra-small, 1x.small, 1x.medium<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>storageClassName</b></td>
+        <td>string</td>
+        <td>
+          storageClassName defines the storage class for ingester/querier PVCs.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>managementState</b></td>
+        <td>enum</td>
+        <td>
+          managementState defines the type for CR management states. Default is managed.<br/>
+          <br/>
+            <i>Enum</i>: Managed, Unmanaged<br/>
+            <i>Default</i>: Managed<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>replicationFactor</b></td>
+        <td>integer</td>
+        <td>
+          replicationFactor defines the policy for log stream replication.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 1<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>source</b></td>
+        <td>string</td>
+        <td>
+          The subscription catalog source name empty value will set either "operatorhubio-catalog" or "redhat-operators" according to your platform<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>startingCSV</b></td>
+        <td>string</td>
+        <td>
+          The subscription starting CSV keep empty to get latest version available with automatic updates else it will set install plan approval to manual with your specified version<br/>
+          <br/>
+            <i>Default</i>: <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -2221,7 +2720,7 @@ loki, the flow store, client settings.
 
 
 
-tls client configuration.
+tls client configuration. it will be ignored if autoInstallSpec is specified
 
 <table>
     <thead>

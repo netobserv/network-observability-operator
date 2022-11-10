@@ -140,7 +140,7 @@ func flowCollectorConsolePluginSpecs() {
 					return err
 				}
 				return ofc.Data["config.yaml"]
-			}, timeout, interval).Should(ContainSubstring("portNaming:\n  enable: true\n  portNames:\n    \"3100\": loki\nquickFilters:\n- name: Applications"))
+			}, timeout, interval).Should(ContainSubstring("portNaming:\n    enable: true\n    portNames:\n        \"3100\": loki\nquickFilters:\n    - name: Applications"))
 		})
 
 		It("Should update successfully", func() {

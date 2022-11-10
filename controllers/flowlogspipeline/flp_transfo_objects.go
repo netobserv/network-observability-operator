@@ -10,6 +10,7 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 )
 
 type transfoBuilder struct {
@@ -58,11 +59,11 @@ func (b *transfoBuilder) buildPipelineConfig() ([]config.Stage, []config.StagePa
 		decoder = api.Decoder{Type: "json"}
 	}
 	pipeline := config.NewKafkaPipeline("kafka-read", api.IngestKafka{
-		Brokers:           []string{b.generic.desired.Kafka.Address},
-		Topic:             b.generic.desired.Kafka.Topic,
+		Brokers:           []string{reconcilers.KafkaAddress(&b.generic.desired.Kafka, b.generic.namespace, b.generic.desired.OperatorsAutoInstall)},
+		Topic:             reconcilers.KafkaTopic(&b.generic.desired.Kafka, b.generic.desired.OperatorsAutoInstall),
 		GroupId:           b.generic.name(), // Without groupid, each message is delivered to each consumers
 		Decoder:           decoder,
-		TLS:               getKafkaTLS(&b.generic.desired.Kafka.TLS),
+		TLS:               getKafkaTLS(&b.generic.desired.Kafka, b.generic.desired.OperatorsAutoInstall),
 		PullQueueCapacity: b.generic.desired.Processor.KafkaConsumerQueueCapacity,
 		PullMaxBytes:      b.generic.desired.Processor.KafkaConsumerBatchSize,
 	})

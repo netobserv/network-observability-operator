@@ -81,7 +81,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 	}
 
 	// Create object builder
-	builder := newBuilder(ns, &desired.Spec.ConsolePlugin, &desired.Spec.Loki)
+	builder := newBuilder(ns, &desired.Spec)
 
 	if err = r.reconcilePlugin(ctx, builder, &desired.Spec, ns); err != nil {
 		return err
@@ -227,27 +227,13 @@ func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowC
 	if depl.Namespace != ns {
 		return true
 	}
-	return containerNeedsUpdate(&depl.Spec.Template.Spec, &desired.ConsolePlugin, &desired.Loki) ||
+	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired, ns) ||
 		configChanged(&depl.Spec.Template, cmDigest) ||
 		(desired.ConsolePlugin.Autoscaler.Disabled() && *depl.Spec.Replicas != desired.ConsolePlugin.Replicas)
 }
 
 func configChanged(tmpl *corev1.PodTemplateSpec, cmDigest string) bool {
 	return tmpl.Annotations == nil || tmpl.Annotations[PodConfigurationDigest] != cmDigest
-}
-
-func querierURL(loki *flowsv1alpha1.FlowCollectorLoki) string {
-	if loki.QuerierURL != "" {
-		return loki.QuerierURL
-	}
-	return loki.URL
-}
-
-func statusURL(loki *flowsv1alpha1.FlowCollectorLoki) string {
-	if loki.StatusURL != "" {
-		return loki.StatusURL
-	}
-	return querierURL(loki)
 }
 
 func serviceNeedsUpdate(svc *corev1.Service, desired *pluginSpec, ns string) bool {
@@ -262,19 +248,19 @@ func serviceNeedsUpdate(svc *corev1.Service, desired *pluginSpec, ns string) boo
 	return true
 }
 
-func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pluginSpec, desiredLoki *flowsv1alpha1.FlowCollectorLoki) bool {
+func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flowsv1alpha1.FlowCollectorSpec, ns string) bool {
 	container := reconcilers.FindContainer(podSpec, constants.PluginName)
 	if container == nil {
 		return true
 	}
-	if desired.Image != container.Image || desired.ImagePullPolicy != string(container.ImagePullPolicy) {
+	if desired.ConsolePlugin.Image != container.Image || desired.ConsolePlugin.ImagePullPolicy != string(container.ImagePullPolicy) {
 		return true
 	}
-	desiredArgs := buildArgs(desired, desiredLoki)
+	desiredArgs := buildArgs(desired, ns)
 	if !reflect.DeepEqual(desiredArgs, container.Args) {
 		return true
 	}
-	if !reflect.DeepEqual(desired.Resources, container.Resources) {
+	if !reflect.DeepEqual(desired.ConsolePlugin.Resources, container.Resources) {
 		return true
 	}
 	return false
