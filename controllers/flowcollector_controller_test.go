@@ -191,7 +191,9 @@ func flowCollectorControllerSpecs() {
 					LogLevel:        "error",
 					Image:           "testimg:latest",
 					Env: map[string]string{
-						"GOGC": "400",
+						// we'll test that env vars are sorted, to keep idempotency
+						"GOMAXPROCS": "33",
+						"GOGC":       "400",
 					},
 				}
 				fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}
@@ -251,7 +253,9 @@ func flowCollectorControllerSpecs() {
 					ContainerPort: 7891,
 					Protocol:      "UDP",
 				}))
-				Expect(cnt.Env).To(ContainElement(v1.EnvVar{Name: "GOGC", Value: "400"}))
+				Expect(cnt.Env).To(Equal([]v1.EnvVar{
+					{Name: "GOGC", Value: "400"}, {Name: "GOMAXPROCS", Value: "33"},
+				}))
 			})
 
 			By("Allocating the proper toleration to allow its placement in the master nodes", func() {

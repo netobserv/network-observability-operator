@@ -47,3 +47,15 @@ func TestRemoveAllStrings(t *testing.T) {
 	s = RemoveAllStrings(s, "five")
 	assert.Equal([]string{"one", "two", "four"}, s)
 }
+
+func TestKeySorted(t *testing.T) {
+	set := map[string]string{
+		"b": "1",
+		"c": "2",
+		"a": "3",
+		"d": "4",
+	}
+	assert.Equal(t,
+		[][2]string{{"a", "3"}, {"b", "1"}, {"c", "2"}, {"d", "4"}},
+		KeySorted(set))
+}

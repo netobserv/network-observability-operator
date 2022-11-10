@@ -184,8 +184,10 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 	}
 
 	var envs []corev1.EnvVar
-	for k, v := range b.desired.Processor.Env {
-		envs = append(envs, corev1.EnvVar{Name: k, Value: v})
+	// we need to sort env map to keep idempotency,
+	// as equal maps could be iterated in different order
+	for _, pair := range helper.KeySorted(b.desired.Processor.Env) {
+		envs = append(envs, corev1.EnvVar{Name: pair[0], Value: pair[1]})
 	}
 
 	container := corev1.Container{
@@ -482,6 +484,10 @@ func (b *builder) fillPromService(svc *corev1.Service) {
 		Name:     prometheusServiceName,
 		Port:     b.desired.Processor.Metrics.Server.Port,
 		Protocol: corev1.ProtocolTCP,
+		// Some Kubernetes versions might automatically set TargetPort to Port. We need to
+		// explicitly set it here so the reconcile loop verifies that the owned service
+		// is equal as the desired service
+		TargetPort: intstr.FromInt(int(b.desired.Processor.Metrics.Server.Port)),
 	}}
 	if b.desired.Processor.Metrics.Server.TLS.Type == flowsv1alpha1.ServerTLSAuto {
 		if svc.ObjectMeta.Annotations == nil {

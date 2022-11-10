@@ -2,7 +2,10 @@
 // to perform some basic computational operations
 package helper
 
-import "strings"
+import (
+	"sort"
+	"strings"
+)
 
 func ContainsString(slice []string, s string) bool {
 	for _, item := range slice {
@@ -40,4 +43,16 @@ func IsSubSet(set, subset map[string]string) bool {
 		}
 	}
 	return true
+}
+
+// KeySorted returns the map key-value pairs sorted by Key
+func KeySorted(set map[string]string) [][2]string {
+	vals := make([][2]string, 0, len(set))
+	for k, v := range set {
+		vals = append(vals, [2]string{k, v})
+	}
+	sort.Slice(vals, func(i, j int) bool {
+		return vals[i][0] < vals[j][0]
+	})
+	return vals
 }

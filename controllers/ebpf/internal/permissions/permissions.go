@@ -76,12 +76,6 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 				"pod-security.kubernetes.io/enforce": "privileged",
 				"pod-security.kubernetes.io/audit":   "privileged",
 			},
-			Annotations: map[string]string{
-				// Means that only userID 0 is allowed in the eBPF pods
-				"openshift.io/sa.scc.uid-range": "0/1",
-				// unclassified Multi-Category Security (MCS) level of SELinux
-				"openshift.io/sa.scc.mcs": "s0",
-			},
 		},
 	}
 	if actual == nil && desired != nil {
@@ -89,7 +83,14 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 		return c.client.CreateOwned(ctx, desired)
 	}
 	if actual != nil && desired != nil {
-		if !helper.IsSubSet(actual.ObjectMeta.Labels, desired.ObjectMeta.Labels) {
+		// We noticed that audit labels are automatically removed
+		// in some configurations of K8s, so to avoid an infinite update loop, we just ignore
+		// it (if the user removes it manually, it's at their own risk)
+		if !helper.IsSubSet(actual.ObjectMeta.Labels,
+			map[string]string{
+				"app":                                constants.OperatorName,
+				"pod-security.kubernetes.io/enforce": "privileged",
+			}) {
 			rlog.Info("updating namespace")
 			return c.client.UpdateOwned(ctx, actual, desired)
 		}
@@ -169,7 +170,13 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 		rlog.Info("creating SecurityContextConstraints")
 		return c.client.CreateOwned(ctx, scc)
 	}
-	if !equality.Semantic.DeepDerivative(&scc, &actual) {
+	if scc.AllowHostNetwork != actual.AllowHostNetwork ||
+		!equality.Semantic.DeepDerivative(&scc.RunAsUser, &actual.RunAsUser) ||
+		!equality.Semantic.DeepDerivative(&scc.SELinuxContext, &actual.SELinuxContext) ||
+		!equality.Semantic.DeepDerivative(&scc.Users, &actual.Users) ||
+		scc.AllowPrivilegedContainer != actual.AllowPrivilegedContainer ||
+		!equality.Semantic.DeepDerivative(&scc.AllowedCapabilities, &actual.AllowedCapabilities) {
+
 		rlog.Info("updating SecurityContextConstraints")
 		return c.client.UpdateOwned(ctx, actual, scc)
 	}
