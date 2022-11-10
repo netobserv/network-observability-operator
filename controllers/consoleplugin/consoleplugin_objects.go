@@ -271,7 +271,8 @@ func buildServiceAccount(ns string) *corev1.ServiceAccount {
 // detect any configuration change
 func (b *builder) configMap() (*corev1.ConfigMap, string) {
 	config := map[string]interface{}{
-		"portNaming": b.desired.PortNaming,
+		"portNaming":   b.desired.PortNaming,
+		"quickFilters": b.desired.QuickFilters,
 	}
 
 	configStr := "{}"
