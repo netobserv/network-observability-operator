@@ -76,12 +76,6 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 				"pod-security.kubernetes.io/enforce": "privileged",
 				"pod-security.kubernetes.io/audit":   "privileged",
 			},
-			Annotations: map[string]string{
-				// Means that only userID 0 is allowed in the eBPF pods
-				"openshift.io/sa.scc.uid-range": "0/1",
-				// unclassified Multi-Category Security (MCS) level of SELinux
-				"openshift.io/sa.scc.mcs": "s0",
-			},
 		},
 	}
 	if actual == nil && desired != nil {
@@ -89,11 +83,14 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 		return c.client.CreateOwned(ctx, desired)
 	}
 	if actual != nil && desired != nil {
-		// We noticed that some labels (e.g. audit: privileged) are automatically removed
+		// We noticed that audit labels are automatically removed
 		// in some configurations of K8s, so to avoid an infinite update loop, we just ignore
-		// the labels, as they don't provide any actual functionality that the reconcile should
-		// take care of (if the user modifies them manually, it's at their own risk)
-		if !helper.IsSubSet(actual.ObjectMeta.Annotations, desired.ObjectMeta.Annotations) {
+		// it (if the user removes it manually, it's at their own risk)
+		if !helper.IsSubSet(actual.ObjectMeta.Labels,
+			map[string]string{
+				"app":                                constants.OperatorName,
+				"pod-security.kubernetes.io/enforce": "privileged",
+			}) {
 			rlog.Info("updating namespace")
 			return c.client.UpdateOwned(ctx, actual, desired)
 		}
