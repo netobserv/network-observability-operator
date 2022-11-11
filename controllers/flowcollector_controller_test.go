@@ -90,7 +90,8 @@ func flowCollectorControllerSpecs() {
 						Port:            9999,
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
-						Image:           "testimg:latest",
+						// Test that version labels will be properly cut to max 63 chars
+						Image: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-flowlogs-pipeline@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
 						Env: map[string]string{
 							"GOGC": "200",
 						},
@@ -104,7 +105,8 @@ func flowCollectorControllerSpecs() {
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
 						Port:            9001,
 						ImagePullPolicy: "Never",
-						Image:           "testimg:latest",
+						// Test that version labels will be properly cut to max 63 chars
+						Image: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-console-plugin@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
 						PortNaming: flowsv1alpha1.ConsolePluginPortConfig{
 							Enable: true,
 							PortNames: map[string]string{
@@ -181,6 +183,15 @@ func flowCollectorControllerSpecs() {
 				"cacheMaxFlows":      "400",
 				"cacheActiveTimeout": "20s",
 			}))
+
+			By("Expecting flowlogs-pipeline-config configmap to be created")
+			Eventually(func() interface{} {
+				cm := v1.ConfigMap{}
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "flowlogs-pipeline-config",
+					Namespace: operatorNamespace,
+				}, &cm)
+			}, timeout, interval).Should(Succeed())
 		})
 
 		It("Should update successfully", func() {

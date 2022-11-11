@@ -54,7 +54,8 @@ func flowCollectorEBPFSpecs() {
 					Agent: flowsv1alpha1.FlowCollectorAgent{
 						Type: "EBPF",
 						EBPF: flowsv1alpha1.FlowCollectorEBPF{
-							Image:              "netobserv-ebpf-agent:latest",
+							// Test that version labels will be properly cut to max 63 chars
+							Image:              "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-ebpf-agent@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
 							Sampling:           pointer.Int32Ptr(123),
 							CacheActiveTimeout: "15s",
 							CacheMaxFlows:      100,

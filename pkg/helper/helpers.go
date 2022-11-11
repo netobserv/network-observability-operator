@@ -7,6 +7,9 @@ import (
 	"strings"
 )
 
+// maximum length of a metadata label in Kubernetes
+const maxLabelLength = 63
+
 func ContainsString(slice []string, s string) bool {
 	for _, item := range slice {
 		if item == s {
@@ -55,4 +58,13 @@ func KeySorted(set map[string]string) [][2]string {
 		return vals[i][0] < vals[j][0]
 	})
 	return vals
+}
+
+// MaxLabelLength cuts an input string it ifs length is largen than 63, the maximum length allowed
+// by Kubernetes metadata
+func MaxLabelLength(in string) string {
+	if len(in) <= maxLabelLength {
+		return in
+	}
+	return in[:maxLabelLength]
 }
