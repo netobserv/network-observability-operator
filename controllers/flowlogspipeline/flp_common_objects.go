@@ -90,7 +90,7 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec, ck ConfKind
 		namespace: ns,
 		labels: map[string]string{
 			"app":     name,
-			"version": version,
+			"version": helper.MaxLabelLength(version),
 		},
 		selector: map[string]string{
 			"app": name,

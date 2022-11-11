@@ -59,3 +59,14 @@ func TestKeySorted(t *testing.T) {
 		[][2]string{{"a", "3"}, {"b", "1"}, {"c", "2"}, {"d", "4"}},
 		KeySorted(set))
 }
+
+func TestMaxLabelLengt_Cut(t *testing.T) {
+	assert.Equal(t, "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde",
+		MaxLabelLength("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde_CUT_HERE"))
+}
+
+func TestMaxLabelLengt_NoCut(t *testing.T) {
+	assert.Equal(t, "0123456789", MaxLabelLength("0123456789"))
+	assert.Equal(t, "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde",
+		MaxLabelLength("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde"))
+}

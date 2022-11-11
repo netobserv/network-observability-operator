@@ -168,7 +168,7 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 			Namespace: c.privilegedNamespace,
 			Labels: map[string]string{
 				"app":     constants.EBPFAgentName,
-				"version": version,
+				"version": helper.MaxLabelLength(version),
 			},
 		},
 		Spec: v1.DaemonSetSpec{
