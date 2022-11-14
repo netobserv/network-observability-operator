@@ -3,6 +3,8 @@ package flowlogspipeline
 import (
 	"context"
 
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -31,6 +33,7 @@ type monolithOwnedObjects struct {
 	configMap      *corev1.ConfigMap
 	roleBindingIn  *rbacv1.ClusterRoleBinding
 	roleBindingTr  *rbacv1.ClusterRoleBinding
+	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
 func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) *flpMonolithReconciler {
@@ -42,6 +45,7 @@ func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 		configMap:      &corev1.ConfigMap{},
 		roleBindingIn:  &rbacv1.ClusterRoleBinding{},
 		roleBindingTr:  &rbacv1.ClusterRoleBinding{},
+		serviceMonitor: &monitoringv1.ServiceMonitor{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
 	nobjMngr.AddManagedObject(name, owned.daemonSet)
@@ -50,6 +54,7 @@ func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 	nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaIngester), owned.roleBindingIn)
 	nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaTransformer), owned.roleBindingTr)
 	nobjMngr.AddManagedObject(configMapName(ConfMonolith), owned.configMap)
+	nobjMngr.AddManagedObject(constants.FLPServiceMonitorName, owned.serviceMonitor)
 
 	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
 

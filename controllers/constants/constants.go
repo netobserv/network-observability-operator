@@ -5,6 +5,7 @@ const (
 	DefaultOperatorNamespace = "netobserv"
 	OperatorName             = "netobserv-operator"
 	FLPName                  = "flowlogs-pipeline"
+	FLPServiceMonitorName    = "flowlogs-pipeline"
 	FLPPortName              = "flp" // must be <15 chars
 	PluginName               = "netobserv-plugin"
 	PluginServiceMonitorName = "netobserv-console-plugin"

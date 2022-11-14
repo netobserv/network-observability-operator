@@ -3,6 +3,8 @@ package flowlogspipeline
 import (
 	"context"
 
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -30,6 +32,7 @@ type ingestOwnedObjects struct {
 	serviceAccount *corev1.ServiceAccount
 	configMap      *corev1.ConfigMap
 	roleBinding    *rbacv1.ClusterRoleBinding
+	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
 func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) *flpIngesterReconciler {
@@ -40,6 +43,7 @@ func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 		serviceAccount: &corev1.ServiceAccount{},
 		configMap:      &corev1.ConfigMap{},
 		roleBinding:    &rbacv1.ClusterRoleBinding{},
+		serviceMonitor: &monitoringv1.ServiceMonitor{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
 	nobjMngr.AddManagedObject(name, owned.daemonSet)
@@ -47,6 +51,7 @@ func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 	nobjMngr.AddManagedObject(promServiceName(ConfKafkaIngester), owned.promService)
 	nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaIngester), owned.roleBinding)
 	nobjMngr.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
+	nobjMngr.AddManagedObject(constants.FLPServiceMonitorName, owned.serviceMonitor)
 
 	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
 

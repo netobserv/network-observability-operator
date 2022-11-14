@@ -3,6 +3,8 @@ package flowlogspipeline
 import (
 	"context"
 
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -32,6 +34,7 @@ type transfoOwnedObjects struct {
 	serviceAccount *corev1.ServiceAccount
 	configMap      *corev1.ConfigMap
 	roleBinding    *rbacv1.ClusterRoleBinding
+	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
 func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) *flpTransformerReconciler {
@@ -43,6 +46,7 @@ func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, 
 		serviceAccount: &corev1.ServiceAccount{},
 		configMap:      &corev1.ConfigMap{},
 		roleBinding:    &rbacv1.ClusterRoleBinding{},
+		serviceMonitor: &monitoringv1.ServiceMonitor{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
 	nobjMngr.AddManagedObject(name, owned.deployment)
@@ -51,6 +55,7 @@ func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, 
 	nobjMngr.AddManagedObject(promServiceName(ConfKafkaTransformer), owned.promService)
 	nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaTransformer), owned.roleBinding)
 	nobjMngr.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
+	nobjMngr.AddManagedObject(constants.FLPServiceMonitorName, owned.serviceMonitor)
 
 	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
 

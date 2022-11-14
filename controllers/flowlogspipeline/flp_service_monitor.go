@@ -46,7 +46,7 @@ func AddPrometheusServiceMonitor(ctx context.Context, b *builder, cl reconcilers
 func buildPrometheusServiceMonitorObject(b *builder) *monitoringv1.ServiceMonitor {
 	flpServiceMonitorObject := monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.FLPName,
+			Name:      constants.FLPServiceMonitorName,
 			Namespace: b.namespace,
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
