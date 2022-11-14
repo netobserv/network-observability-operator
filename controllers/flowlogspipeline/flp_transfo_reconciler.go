@@ -3,7 +3,6 @@ package flowlogspipeline
 import (
 	"context"
 
-	"github.com/netobserv/network-observability-operator/controllers/constants"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -55,7 +54,7 @@ func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, 
 	nobjMngr.AddManagedObject(promServiceName(ConfKafkaTransformer), owned.promService)
 	nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaTransformer), owned.roleBinding)
 	nobjMngr.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
-	nobjMngr.AddManagedObject(constants.FLPServiceMonitorName, owned.serviceMonitor)
+	nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaTransformer), owned.serviceMonitor)
 
 	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
 

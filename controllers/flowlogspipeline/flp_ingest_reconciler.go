@@ -3,7 +3,6 @@ package flowlogspipeline
 import (
 	"context"
 
-	"github.com/netobserv/network-observability-operator/controllers/constants"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -51,7 +50,7 @@ func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 	nobjMngr.AddManagedObject(promServiceName(ConfKafkaIngester), owned.promService)
 	nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaIngester), owned.roleBinding)
 	nobjMngr.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
-	nobjMngr.AddManagedObject(constants.FLPServiceMonitorName, owned.serviceMonitor)
+	nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaIngester), owned.serviceMonitor)
 
 	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
 

@@ -112,6 +112,7 @@ func configMapName(ck ConfKind) string       { return name(ck) + "-config" }
 func (b *builder) name() string              { return name(b.confKind) }
 func (b *builder) promServiceName() string   { return promServiceName(b.confKind) }
 func (b *builder) configMapName() string     { return configMapName(b.confKind) }
+func serviceMonitorName(ck ConfKind) string  { return name(ck) + "-monitor" }
 
 func (b *builder) portProtocol() corev1.Protocol {
 	if b.desired.UseEBPF() {
