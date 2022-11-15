@@ -10,9 +10,12 @@ BUILD_SHA := $(shell git rev-parse --short HEAD)
 
 # Other component versions when building bundle / release
 PREVIOUS_VERSION ?= tochange
-PLG_VERSION ?= 'v0.1.4' # console plugin
-FLP_VERSION ?= 'v0.1.3' # flowlogs-pipeline
-BPF_VERSION ?= 'v0.1.2' # eBPF agent
+# console plugin
+export PLG_VERSION ?= v0.1.5
+# flowlogs-pipeline
+export FLP_VERSION ?= v0.1.4
+# eBPF agent
+export BPF_VERSION ?= v0.2.1
 
 # Allows building bundles in Mac replacing BSD 'sed' command by GNU-compatible 'gsed'
 SED ?= sed

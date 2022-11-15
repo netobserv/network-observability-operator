@@ -51,7 +51,23 @@ metadata:
               "type": "EBPF"
             },
             "consolePlugin": {
-              "autoscaler": null,
+              "autoscaler": {
+                "maxReplicas": 3,
+                "metrics": [
+                  {
+                    "resource": {
+                      "name": "cpu",
+                      "target": {
+                        "averageUtilization": 50,
+                        "type": "Utilization"
+                      }
+                    },
+                    "type": "Resource"
+                  }
+                ],
+                "minReplicas": 1,
+                "status": "DISABLED"
+              },
               "image": "quay.io/netobserv/network-observability-console-plugin:v0.1.5",
               "imagePullPolicy": "IfNotPresent",
               "logLevel": "info",
@@ -62,9 +78,41 @@ metadata:
                   "3100": "loki"
                 }
               },
+              "quickFilters": [
+                {
+                  "default": true,
+                  "filter": {
+                    "dst_namespace!": "openshift-,netobserv",
+                    "src_namespace!": "openshift-,netobserv"
+                  },
+                  "name": "Applications"
+                },
+                {
+                  "filter": {
+                    "dst_namespace": "openshift-,netobserv",
+                    "src_namespace": "openshift-,netobserv"
+                  },
+                  "name": "Infrastructure"
+                },
+                {
+                  "default": true,
+                  "filter": {
+                    "dst_kind": "Pod",
+                    "src_kind": "Pod"
+                  },
+                  "name": "Pods network"
+                },
+                {
+                  "filter": {
+                    "dst_kind": "Service"
+                  },
+                  "name": "Services network"
+                }
+              ],
               "register": true
             },
             "deploymentModel": "DIRECT",
+            "exporters": [],
             "kafka": {
               "address": "kafka-cluster-kafka-bootstrap.netobserv",
               "tls": {
@@ -142,9 +190,9 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:0.2.0
-    createdAt: "2022-10-25T09:40:09Z"
+    createdAt: "2022-11-15T09:15:46Z"
     description: Network flows collector and monitoring solution
-    operators.operatorframework.io/builder: operator-sdk-v1.22.2
+    operators.operatorframework.io/builder: operator-sdk-v1.25.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
   name: netobserv-operator.v0.2.0
