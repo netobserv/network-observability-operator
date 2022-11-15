@@ -280,6 +280,7 @@ spec:
                       set up for the plugin Deployment.
                     properties:
                       maxReplicas:
+                        default: 3
                         description: maxReplicas is the upper limit for the number
                           of pods that can be set by the autoscaler; cannot be smaller
                           than MinReplicas.
@@ -792,8 +793,16 @@ spec:
                           active as long as at least one metric value is available.
                         format: int32
                         type: integer
-                    required:
-                    - maxReplicas
+                      status:
+                        default: DISABLED
+                        description: Status describe the desired status regarding
+                          deploying an horizontal pod autoscaler DISABLED will not
+                          deploy an horizontal pod autoscaler ENABLED will deploy
+                          an horizontal pod autoscaler
+                        enum:
+                        - DISABLED
+                        - ENABLED
+                        type: string
                     type: object
                   image:
                     default: quay.io/netobserv/network-observability-console-plugin:v0.1.5
@@ -845,6 +854,52 @@ spec:
                           in the console E.g. portNames: {"3100": "loki"}'
                         type: object
                     type: object
+                  quickFilters:
+                    default:
+                    - default: true
+                      filter:
+                        dst_namespace!: openshift-,netobserv
+                        src_namespace!: openshift-,netobserv
+                      name: Applications
+                    - filter:
+                        dst_namespace: openshift-,netobserv
+                        src_namespace: openshift-,netobserv
+                      name: Infrastructure
+                    - default: true
+                      filter:
+                        dst_kind: Pod
+                        src_kind: Pod
+                      name: Pods network
+                    - filter:
+                        dst_kind: Service
+                      name: Services network
+                    description: quickFilters configures quick filter presets for
+                      the Console plugin
+                    items:
+                      description: QuickFilter defines preset configuration for Console's
+                        quick filters
+                      properties:
+                        default:
+                          description: default defines whether this filter should
+                            be active by default or not
+                          type: boolean
+                        filter:
+                          additionalProperties:
+                            type: string
+                          description: 'filter is a set of keys and values to be set
+                            when this filter is selected. Each key can relate to a
+                            list of values using a coma-separated string E.g. filter:
+                            {"src_namespace": "namespace1,namespace2"}'
+                          type: object
+                        name:
+                          description: name of the filter, that will be displayed
+                            in Console
+                          type: string
+                      required:
+                      - filter
+                      - name
+                      type: object
+                    type: array
                   register:
                     default: true
                     description: 'register allows, when set to true, to automatically
@@ -909,6 +964,103 @@ spec:
                 - DIRECT
                 - KAFKA
                 type: string
+              exporters:
+                description: exporters defines additional optional exporters for custom
+                  consumption or storage. This is an experimental feature. Currently,
+                  only KAFKA exporter is available.
+                items:
+                  description: FlowCollectorExporter defines an additional exporter
+                    to send enriched flows to
+                  properties:
+                    kafka:
+                      description: kafka describes the kafka configuration (address,
+                        topic...) to send enriched flows to.
+                      properties:
+                        address:
+                          default: ""
+                          description: address of the Kafka server
+                          type: string
+                        tls:
+                          description: tls client configuration.
+                          properties:
+                            caCert:
+                              description: caCert defines the reference of the certificate
+                                for the Certificate Authority
+                              properties:
+                                certFile:
+                                  description: certFile defines the path to the certificate
+                                    file name within the ConfigMap / Secret
+                                  type: string
+                                certKey:
+                                  description: certKey defines the path to the certificate
+                                    private key file name within the ConfigMap / Secret.
+                                    Omit when the key is not necessary.
+                                  type: string
+                                name:
+                                  description: name of the ConfigMap or Secret containing
+                                    certificates
+                                  type: string
+                                type:
+                                  description: 'type for the certificate reference:
+                                    configmap or secret'
+                                  enum:
+                                  - configmap
+                                  - secret
+                                  type: string
+                              type: object
+                            enable:
+                              default: false
+                              description: enable TLS
+                              type: boolean
+                            insecureSkipVerify:
+                              default: false
+                              description: insecureSkipVerify allows skipping client-side
+                                verification of the server certificate
+                              type: boolean
+                            userCert:
+                              description: userCert defines the user certificate reference
+                              properties:
+                                certFile:
+                                  description: certFile defines the path to the certificate
+                                    file name within the ConfigMap / Secret
+                                  type: string
+                                certKey:
+                                  description: certKey defines the path to the certificate
+                                    private key file name within the ConfigMap / Secret.
+                                    Omit when the key is not necessary.
+                                  type: string
+                                name:
+                                  description: name of the ConfigMap or Secret containing
+                                    certificates
+                                  type: string
+                                type:
+                                  description: 'type for the certificate reference:
+                                    configmap or secret'
+                                  enum:
+                                  - configmap
+                                  - secret
+                                  type: string
+                              type: object
+                          type: object
+                        topic:
+                          default: ""
+                          description: kafka topic to use. It must exist, NetObserv
+                            will not create it.
+                          type: string
+                      required:
+                      - address
+                      - topic
+                      type: object
+                    type:
+                      description: type selects the type of exporte. Only "KAFKA"
+                        is available at the moment.
+                      enum:
+                      - KAFKA
+                      type: string
+                  required:
+                  - type
+                  type: object
+                type: array
               kafka:
                 description: kafka configuration, allowing to use Kafka as a broker
                   as part of the flow collection pipeline. Available when the "spec.deploymentModel"
@@ -1191,6 +1343,7 @@ spec:
                       is disabled.
                     properties:
                       maxReplicas:
+                        default: 3
                         description: maxReplicas is the upper limit for the number
                           of pods that can be set by the autoscaler; cannot be smaller
                           than MinReplicas.
@@ -1703,8 +1856,16 @@ spec:
                           active as long as at least one metric value is available.
                         format: int32
                         type: integer
-                    required:
-                    - maxReplicas
+                      status:
+                        default: DISABLED
+                        description: Status describe the desired status regarding
+                          deploying an horizontal pod autoscaler DISABLED will not
+                          deploy an horizontal pod autoscaler ENABLED will deploy
+                          an horizontal pod autoscaler
+                        enum:
+                        - DISABLED
+                        - ENABLED
+                        type: string
                     type: object
                   kafkaConsumerBatchSize:
                     default: 10485760

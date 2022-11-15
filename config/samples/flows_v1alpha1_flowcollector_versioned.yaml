@@ -94,8 +94,41 @@ spec:
     imagePullPolicy: IfNotPresent
     port: 9001
     logLevel: info
-    autoscaler: null
+    autoscaler:
+      status: DISABLED
+      minReplicas: 1
+      maxReplicas: 3
+      metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 50
     portNaming:
       enable: true
       portNames:
         "3100": loki
+    quickFilters:
+    - name: Applications
+      filter:
+        src_namespace!: 'openshift-,netobserv'
+        dst_namespace!: 'openshift-,netobserv'
+      default: true
+    - name: Infrastructure
+      filter:
+        src_namespace: 'openshift-,netobserv'
+        dst_namespace: 'openshift-,netobserv'
+    - name: Pods network
+      filter:
+        src_kind: 'Pod'
+        dst_kind: 'Pod'
+      default: true
+    - name: Services network
+      filter:
+        dst_kind: 'Service'
+  exporters: []
+    # - type: KAFKA
+    #   kafka:
+    #     address: "kafka-cluster-kafka-bootstrap.netobserv"
+    #     topic: netobserv-flows-export
