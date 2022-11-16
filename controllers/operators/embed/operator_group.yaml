@@ -1,6 +1,6 @@
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
-  name: netobserv-dependend-operators
+  name: netobserv-dependent-operators
   namespace: netobserv
 spec: {}

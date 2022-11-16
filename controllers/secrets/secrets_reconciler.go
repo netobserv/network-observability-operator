@@ -58,7 +58,7 @@ func (c *Reconciler) Reconcile(ctx context.Context, desired *v1alpha1.FlowCollec
 }
 
 func (c *Reconciler) getSecrets(ctx context.Context, name string) (*v1.Secret, *v1.Secret, error) {
-	rlog := log.FromContext(ctx, "component", "deployLoki")
+	rlog := log.FromContext(ctx, "component", "getSecrets")
 
 	secret := &v1.Secret{}
 	privilegedSecret := &v1.Secret{}
