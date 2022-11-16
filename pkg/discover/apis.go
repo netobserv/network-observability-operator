@@ -1,7 +1,6 @@
 package discover
 
 import (
-	"fmt"
 	"strings"
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
@@ -37,8 +36,6 @@ func NewAvailableAPIs(client *discovery.DiscoveryClient) (*AvailableAPIs, error)
 			for j := range resources[i].APIResources {
 				fullName := resources[i].APIResources[j].Name + "." + resources[i].GroupVersion
 				if strings.HasPrefix(fullName, apiName) {
-					fmt.Printf("===================== NewAvailableAPIs: fullName = %v, apiName = %v \n", fullName, apiName)
-					fmt.Printf("===================== xxxxxxxxxxxxxxxx NewAvailableAPIs: matched the prefix \n")
 					apiMap[apiName] = true
 					break out
 				}
