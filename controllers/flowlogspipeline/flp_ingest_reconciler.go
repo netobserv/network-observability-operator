@@ -34,7 +34,7 @@ type ingestOwnedObjects struct {
 	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
-func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) *flpIngesterReconciler {
+func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions, availableAPIs *discover.AvailableAPIs) *flpIngesterReconciler {
 	name := name(ConfKafkaIngester)
 	owned := ingestOwnedObjects{
 		daemonSet:      &appsv1.DaemonSet{},
@@ -50,7 +50,9 @@ func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 	nobjMngr.AddManagedObject(promServiceName(ConfKafkaIngester), owned.promService)
 	nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaIngester), owned.roleBinding)
 	nobjMngr.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
-	nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaIngester), owned.serviceMonitor)
+	if availableAPIs.HasSvcMonitor() {
+		nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaIngester), owned.serviceMonitor)
+	}
 
 	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
 

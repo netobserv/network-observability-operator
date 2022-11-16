@@ -35,7 +35,7 @@ type monolithOwnedObjects struct {
 	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
-func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) *flpMonolithReconciler {
+func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions, availableAPIs *discover.AvailableAPIs) *flpMonolithReconciler {
 	name := name(ConfMonolith)
 	owned := monolithOwnedObjects{
 		daemonSet:      &appsv1.DaemonSet{},
@@ -53,7 +53,9 @@ func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 	nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaIngester), owned.roleBindingIn)
 	nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaTransformer), owned.roleBindingTr)
 	nobjMngr.AddManagedObject(configMapName(ConfMonolith), owned.configMap)
-	nobjMngr.AddManagedObject(serviceMonitorName(ConfMonolith), owned.serviceMonitor)
+	if availableAPIs.HasSvcMonitor() {
+		nobjMngr.AddManagedObject(serviceMonitorName(ConfMonolith), owned.serviceMonitor)
+	}
 
 	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
 

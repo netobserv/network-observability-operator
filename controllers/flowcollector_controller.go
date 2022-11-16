@@ -107,10 +107,10 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	previousNamespace := desired.Status.Namespace
 
 	// Create reconcilers
-	flpReconciler := flowlogspipeline.NewReconciler(ctx, clientHelper, ns, previousNamespace, r.config.FlowlogsPipelineImage, &r.permissions)
+	flpReconciler := flowlogspipeline.NewReconciler(ctx, clientHelper, ns, previousNamespace, r.config.FlowlogsPipelineImage, &r.permissions, r.availableAPIs)
 	var cpReconciler consoleplugin.CPReconciler
 	if r.availableAPIs.HasConsole() {
-		cpReconciler = consoleplugin.NewReconciler(clientHelper, ns, previousNamespace, r.config.ConsolePluginImage)
+		cpReconciler = consoleplugin.NewReconciler(clientHelper, ns, previousNamespace, r.config.ConsolePluginImage, r.availableAPIs)
 	}
 
 	// Check namespace changed

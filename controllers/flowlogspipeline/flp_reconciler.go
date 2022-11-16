@@ -31,12 +31,12 @@ type singleReconciler interface {
 	reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error
 }
 
-func NewReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) FLPReconciler {
+func NewReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions, availableAPIs *discover.AvailableAPIs) FLPReconciler {
 	return FLPReconciler{
 		reconcilers: []singleReconciler{
-			newMonolithReconciler(ctx, cl, ns, prevNS, image, permissionsVendor),
-			newTransformerReconciler(ctx, cl, ns, prevNS, image, permissionsVendor),
-			newIngesterReconciler(ctx, cl, ns, prevNS, image, permissionsVendor),
+			newMonolithReconciler(ctx, cl, ns, prevNS, image, permissionsVendor, availableAPIs),
+			newTransformerReconciler(ctx, cl, ns, prevNS, image, permissionsVendor, availableAPIs),
+			newIngesterReconciler(ctx, cl, ns, prevNS, image, permissionsVendor, availableAPIs),
 		},
 	}
 }

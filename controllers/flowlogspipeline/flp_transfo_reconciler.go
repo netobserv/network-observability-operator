@@ -36,7 +36,7 @@ type transfoOwnedObjects struct {
 	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
-func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) *flpTransformerReconciler {
+func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions, availableAPIs *discover.AvailableAPIs) *flpTransformerReconciler {
 	name := name(ConfKafkaTransformer)
 	owned := transfoOwnedObjects{
 		deployment:     &appsv1.Deployment{},
@@ -54,7 +54,9 @@ func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, 
 	nobjMngr.AddManagedObject(promServiceName(ConfKafkaTransformer), owned.promService)
 	nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaTransformer), owned.roleBinding)
 	nobjMngr.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
-	nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaTransformer), owned.serviceMonitor)
+	if availableAPIs.HasSvcMonitor() {
+		nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaTransformer), owned.serviceMonitor)
+	}
 
 	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/netobserv/network-observability-operator/pkg/discover"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -41,7 +42,7 @@ type ownedObjects struct {
 	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
-func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string) CPReconciler {
+func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string, availableAPIs *discover.AvailableAPIs) CPReconciler {
 	owned := ownedObjects{
 		deployment:     &appsv1.Deployment{},
 		service:        &corev1.Service{},
@@ -56,7 +57,9 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string) CP
 	nobjMngr.AddManagedObject(constants.PluginName, owned.hpa)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.serviceAccount)
 	nobjMngr.AddManagedObject(configMapName, owned.configMap)
-	nobjMngr.AddManagedObject(constants.PluginServiceMonitorName, owned.serviceMonitor)
+	if availableAPIs.HasSvcMonitor() {
+		nobjMngr.AddManagedObject(constants.PluginServiceMonitorName, owned.serviceMonitor)
+	}
 
 	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, image: imageName}
 }
