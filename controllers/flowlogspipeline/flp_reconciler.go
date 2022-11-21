@@ -31,12 +31,12 @@ type singleReconciler interface {
 	reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error
 }
 
-func NewReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS string, permissionsVendor *discover.Permissions) FLPReconciler {
+func NewReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) FLPReconciler {
 	return FLPReconciler{
 		reconcilers: []singleReconciler{
-			newMonolithReconciler(ctx, cl, ns, prevNS, permissionsVendor),
-			newTransformerReconciler(ctx, cl, ns, prevNS, permissionsVendor),
-			newIngesterReconciler(ctx, cl, ns, prevNS, permissionsVendor),
+			newMonolithReconciler(ctx, cl, ns, prevNS, image, permissionsVendor),
+			newTransformerReconciler(ctx, cl, ns, prevNS, image, permissionsVendor),
+			newIngesterReconciler(ctx, cl, ns, prevNS, image, permissionsVendor),
 		},
 	}
 }
@@ -83,8 +83,8 @@ func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Fl
 	return nil
 }
 
-func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flpSpec, configDigest string) bool {
-	return containerNeedsUpdate(&ds.Spec.Template.Spec, desired, true) ||
+func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flpSpec, image, configDigest string) bool {
+	return containerNeedsUpdate(&ds.Spec.Template.Spec, desired, image) ||
 		configChanged(&ds.Spec.Template, configDigest)
 }
 
@@ -97,12 +97,12 @@ func serviceNeedsUpdate(actual *corev1.Service, desired *corev1.Service) bool {
 		!equality.Semantic.DeepDerivative(desired.Spec, actual.Spec)
 }
 
-func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flpSpec, expectHostPort bool) bool {
+func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flpSpec, image string) bool {
 	// Note, we don't check for changed port / host port here, because that would change also the configmap,
 	//	which also triggers pod update anyway
 	container := reconcilers.FindContainer(podSpec, constants.FLPName)
 	return container == nil ||
-		desired.Image != container.Image ||
+		image != container.Image ||
 		desired.ImagePullPolicy != string(container.ImagePullPolicy) ||
 		probesNeedUpdate(container, desired.EnableKubeProbes) ||
 		!equality.Semantic.DeepDerivative(desired.Resources, container.Resources)

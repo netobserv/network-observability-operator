@@ -39,10 +39,11 @@ type builder struct {
 	selector    map[string]string
 	desired     *flowsv1alpha1.FlowCollectorConsolePlugin
 	desiredLoki *flowsv1alpha1.FlowCollectorLoki
+	imageName   string
 }
 
-func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki) builder {
-	version := helper.ExtractVersion(desired.Image)
+func newBuilder(ns, imageName string, desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki) builder {
+	version := helper.ExtractVersion(imageName)
 	return builder{
 		namespace: ns,
 		labels: map[string]string{
@@ -54,6 +55,7 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorConsolePlugin, de
 		},
 		desired:     desired,
 		desiredLoki: desiredLoki,
+		imageName:   imageName,
 	}
 }
 
@@ -193,7 +195,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
 				Name:            constants.PluginName,
-				Image:           b.desired.Image,
+				Image:           b.imageName,
 				ImagePullPolicy: corev1.PullPolicy(b.desired.ImagePullPolicy),
 				Resources:       *b.desired.Resources.DeepCopy(),
 				VolumeMounts:    volumeMounts,

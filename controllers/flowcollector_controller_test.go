@@ -90,8 +90,6 @@ func flowCollectorControllerSpecs() {
 						Port:            9999,
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
-						// Test that version labels will be properly cut to max 63 chars
-						Image: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-flowlogs-pipeline@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
 						Env: map[string]string{
 							"GOGC": "200",
 						},
@@ -105,8 +103,6 @@ func flowCollectorControllerSpecs() {
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
 						Port:            9001,
 						ImagePullPolicy: "Never",
-						// Test that version labels will be properly cut to max 63 chars
-						Image: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-console-plugin@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
 						PortNaming: flowsv1alpha1.ConsolePluginPortConfig{
 							Enable: true,
 							PortNames: map[string]string{
@@ -200,7 +196,6 @@ func flowCollectorControllerSpecs() {
 					Port:            7891,
 					ImagePullPolicy: "Never",
 					LogLevel:        "error",
-					Image:           "testimg:latest",
 					Env: map[string]string{
 						// we'll test that env vars are sorted, to keep idempotency
 						"GOMAXPROCS": "33",

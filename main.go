@@ -80,6 +80,8 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&config.EBPFAgentImage, "ebpf-agent-image", "", "The image of the eBPF agent")
+	flag.StringVar(&config.FlowlogsPipelineImage, "flowlogs-pipeline-image", "", "The image of Flowlogs Pipeline")
+	flag.StringVar(&config.ConsolePluginImage, "console-plugin-image", "", "The image of the Console Plugin")
 	flag.BoolVar(&versionFlag, "v", false, "print version")
 	opts := zap.Options{
 		Development: true,

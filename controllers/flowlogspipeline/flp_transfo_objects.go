@@ -16,8 +16,8 @@ type transfoBuilder struct {
 	generic builder
 }
 
-func newTransfoBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec, useOpenShiftSCC bool) transfoBuilder {
-	gen := newBuilder(ns, desired, ConfKafkaTransformer, useOpenShiftSCC)
+func newTransfoBuilder(ns, image string, desired *flowsv1alpha1.FlowCollectorSpec, useOpenShiftSCC bool) transfoBuilder {
+	gen := newBuilder(ns, image, desired, ConfKafkaTransformer, useOpenShiftSCC)
 	return transfoBuilder{
 		generic: gen,
 	}

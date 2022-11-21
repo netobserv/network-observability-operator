@@ -21,6 +21,7 @@ type flpMonolithReconciler struct {
 	nobjMngr        *reconcilers.NamespacedObjectManager
 	owned           monolithOwnedObjects
 	useOpenShiftSCC bool
+	image           string
 }
 
 type monolithOwnedObjects struct {
@@ -32,7 +33,7 @@ type monolithOwnedObjects struct {
 	roleBindingTr  *rbacv1.ClusterRoleBinding
 }
 
-func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS string, permissionsVendor *discover.Permissions) *flpMonolithReconciler {
+func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) *flpMonolithReconciler {
 	name := name(ConfMonolith)
 	owned := monolithOwnedObjects{
 		daemonSet:      &appsv1.DaemonSet{},
@@ -57,6 +58,7 @@ func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 		nobjMngr:        nobjMngr,
 		owned:           owned,
 		useOpenShiftSCC: openshift,
+		image:           image,
 	}
 }
 
@@ -91,7 +93,7 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowsv1a
 		return nil
 	}
 
-	builder := newMonolithBuilder(r.nobjMngr.Namespace, &desired.Spec, r.useOpenShiftSCC)
+	builder := newMonolithBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC)
 	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err
@@ -134,7 +136,7 @@ func (r *flpMonolithReconciler) reconcilePrometheusService(ctx context.Context, 
 func (r *flpMonolithReconciler) reconcileDaemonSet(ctx context.Context, desiredFLP *flpSpec, builder *monolithBuilder, configDigest string) error {
 	if !r.nobjMngr.Exists(r.owned.daemonSet) {
 		return r.CreateOwned(ctx, builder.daemonSet(configDigest))
-	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredFLP, configDigest) {
+	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredFLP, r.image, configDigest) {
 		return r.UpdateOwned(ctx, r.owned.daemonSet, builder.daemonSet(configDigest))
 	} else {
 		// DaemonSet up to date, check if it's ready

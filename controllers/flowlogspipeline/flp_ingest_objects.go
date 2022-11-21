@@ -15,8 +15,8 @@ type ingestBuilder struct {
 	generic builder
 }
 
-func newIngestBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec, useOpenShiftSCC bool) ingestBuilder {
-	gen := newBuilder(ns, desired, ConfKafkaIngester, useOpenShiftSCC)
+func newIngestBuilder(ns, image string, desired *flowsv1alpha1.FlowCollectorSpec, useOpenShiftSCC bool) ingestBuilder {
+	gen := newBuilder(ns, image, desired, ConfKafkaIngester, useOpenShiftSCC)
 	return ingestBuilder{
 		generic: gen,
 	}

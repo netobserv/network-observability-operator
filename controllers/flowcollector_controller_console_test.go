@@ -76,7 +76,6 @@ func flowCollectorConsolePluginSpecs() {
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
 						Port:            9001,
 						ImagePullPolicy: "Never",
-						Image:           "testimg:latest",
 						Register:        true,
 						Autoscaler: flowsv1alpha1.FlowCollectorHPA{
 							Status:      flowsv1alpha1.HPAStatusEnabled,

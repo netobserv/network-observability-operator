@@ -15,8 +15,8 @@ type monolithBuilder struct {
 	generic builder
 }
 
-func newMonolithBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec, useOpenShiftSCC bool) monolithBuilder {
-	gen := newBuilder(ns, desired, ConfMonolith, useOpenShiftSCC)
+func newMonolithBuilder(ns, image string, desired *flowsv1alpha1.FlowCollectorSpec, useOpenShiftSCC bool) monolithBuilder {
+	gen := newBuilder(ns, image, desired, ConfMonolith, useOpenShiftSCC)
 	return monolithBuilder{
 		generic: gen,
 	}
