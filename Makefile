@@ -233,13 +233,14 @@ endif
 
 .PHONY: bundle-prepare
 bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
+	# TODO: remove this line when we move all images to CSV
 	envsubst < config/crd/patches/version_in_flowcollectors_envtpl.yaml > config/crd/patches/version_in_flowcollectors.yaml
 	$(OPSDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	$(SED) -i -r 's~ebpf-agent:main~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
 	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 	$(SED) -i -r 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	$(SED) -i -r 's~ebpf-agent:main~ebpf-agent:$(BPF_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)\?/~blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
 	$(SED) -i -r 's~replaces: netobserv-operator\.v.*~replaces: netobserv-operator\.$(PREVIOUS_VERSION)~' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
 

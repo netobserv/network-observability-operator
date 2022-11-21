@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/netobserv/network-observability-operator/controllers/operator"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -44,14 +45,16 @@ type FlowCollectorReconciler struct {
 	permissions   discover.Permissions
 	availableAPIs *discover.AvailableAPIs
 	Scheme        *runtime.Scheme
+	config        *operator.Config
 	lookupIP      func(string) ([]net.IP, error)
 }
 
-func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *FlowCollectorReconciler {
+func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme, config *operator.Config) *FlowCollectorReconciler {
 	return &FlowCollectorReconciler{
 		Client:   client,
 		Scheme:   scheme,
 		lookupIP: net.LookupIP,
+		config:   config,
 	}
 }
 
@@ -143,7 +146,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	// eBPF agent
-	ebpfAgentController := ebpf.NewAgentController(clientHelper, ns, &r.permissions)
+	ebpfAgentController := ebpf.NewAgentController(clientHelper, ns, &r.permissions, r.config)
 	if err := ebpfAgentController.Reconcile(ctx, desired); err != nil {
 		return ctrl.Result{}, r.failure(ctx, conditions.ReconcileAgentFailed(err), desired)
 	}

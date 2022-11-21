@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
+	"github.com/netobserv/network-observability-operator/controllers/operator"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -74,12 +75,14 @@ type AgentController struct {
 	baseNamespace       string
 	privilegedNamespace string
 	permissions         permissions.Reconciler
+	config              *operator.Config
 }
 
 func NewAgentController(
 	client reconcilers.ClientHelper,
 	baseNamespace string,
 	permissionsVendor *discover.Permissions,
+	config *operator.Config,
 ) *AgentController {
 	pns := baseNamespace + constants.EBPFPrivilegedNSSuffix
 	return &AgentController{
@@ -87,6 +90,7 @@ func NewAgentController(
 		baseNamespace:       baseNamespace,
 		privilegedNamespace: pns,
 		permissions:         permissions.NewReconciler(client, pns, permissionsVendor),
+		config:              config,
 	}
 }
 
@@ -153,7 +157,7 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 	if coll == nil || !coll.Spec.UseEBPF() {
 		return nil
 	}
-	version := helper.ExtractVersion(coll.Spec.Agent.EBPF.Image)
+	version := helper.ExtractVersion(c.config.EBPFAgentImage)
 	volumeMounts := []corev1.VolumeMount{}
 	volumes := []corev1.Volume{}
 	if coll.Spec.UseKafka() && coll.Spec.Kafka.TLS.Enable {
@@ -188,7 +192,7 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 					Volumes:            volumes,
 					Containers: []corev1.Container{{
 						Name:            constants.EBPFAgentName,
-						Image:           coll.Spec.Agent.EBPF.Image,
+						Image:           c.config.EBPFAgentImage,
 						ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.ImagePullPolicy),
 						Resources:       coll.Spec.Agent.EBPF.Resources,
 						SecurityContext: c.securityContext(coll),

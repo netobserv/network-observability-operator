@@ -21,7 +21,7 @@ patches:
     kind: CustomResourceDefinition
     name: flowcollectors.flows.netobserv.io
   path: patches/singleton_in_flowcollectors.yaml
-- target:
+- target: # TODO: remove when we move all the related images to the CSV
     kind: CustomResourceDefinition
     name: flowcollectors.flows.netobserv.io
   path: patches/version_in_flowcollectors.yaml

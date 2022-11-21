@@ -245,15 +245,6 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>image</b></td>
-        <td>string</td>
-        <td>
-          image is the NetObserv Agent image (including domain and tag)<br/>
-          <br/>
-            <i>Default</i>: quay.io/netobserv/netobserv-ebpf-agent:main<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
