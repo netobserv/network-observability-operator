@@ -1008,7 +1008,8 @@ spec:
                             insecureSkipVerify:
                               default: false
                               description: insecureSkipVerify allows skipping client-side
-                                verification of the server certificate
+                                verification of the server certificate If set to true,
+                                CACert field will be ignored
                               type: boolean
                             userCert:
                               description: userCert defines the user certificate reference
@@ -1098,7 +1099,8 @@ spec:
                       insecureSkipVerify:
                         default: false
                         description: insecureSkipVerify allows skipping client-side
-                          verification of the server certificate
+                          verification of the server certificate If set to true, CACert
+                          field will be ignored
                         type: boolean
                       userCert:
                         description: userCert defines the user certificate reference
@@ -1245,7 +1247,8 @@ spec:
                       insecureSkipVerify:
                         default: false
                         description: insecureSkipVerify allows skipping client-side
-                          verification of the server certificate
+                          verification of the server certificate If set to true, CACert
+                          field will be ignored
                         type: boolean
                       userCert:
                         description: userCert defines the user certificate reference

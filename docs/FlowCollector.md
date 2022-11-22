@@ -1758,7 +1758,7 @@ tls client configuration.
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          insecureSkipVerify allows skipping client-side verification of the server certificate<br/>
+          insecureSkipVerify allows skipping client-side verification of the server certificate If set to true, CACert field will be ignored<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -1955,7 +1955,7 @@ tls client configuration.
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          insecureSkipVerify allows skipping client-side verification of the server certificate<br/>
+          insecureSkipVerify allows skipping client-side verification of the server certificate If set to true, CACert field will be ignored<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -2243,7 +2243,7 @@ tls client configuration.
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          insecureSkipVerify allows skipping client-side verification of the server certificate<br/>
+          insecureSkipVerify allows skipping client-side verification of the server certificate If set to true, CACert field will be ignored<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>

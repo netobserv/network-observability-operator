@@ -171,7 +171,7 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 	}
 
 	if hasLokiInterface {
-		if b.desired.Loki.TLS.Enable {
+		if b.desired.Loki.TLS.Enable && !b.desired.Loki.TLS.InsecureSkipVerify {
 			volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts)
 		}
 		if b.desired.Loki.UseHostToken() || b.desired.Loki.ForwardUserToken() {
