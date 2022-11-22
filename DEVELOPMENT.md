@@ -138,8 +138,10 @@ Patch `RELATED_IMAGE_EBPF_AGENT` environment variable's value with your custom o
 In the operator's deployment:
 
 ```sh
-# netobserv-controller-manager has index 1
+# netobserv-controller-manager's manager container has index 0
 # "RELATED_IMAGE_EBPF_AGENT" environment variable has index 0
-oc -n netobserv patch deployment netobserv-controller-manager --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/1/env/0/value", "value":"<CUSTOM_IMAGE_TAG>"}]'
+# "RELATED_IMAGE_FLOWLOGS_PIPELINE" environment variable has index 1
+# "RELATED_IMAGE_CONSOLE_PLUGIN" environment variable has index 2
+oc -n netobserv patch deployment netobserv-controller-manager --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/env/0/value", "value":"<CUSTOM_IMAGE_TAG>"}]'
 ```
 

@@ -21,6 +21,7 @@ type flpIngesterReconciler struct {
 	nobjMngr        *reconcilers.NamespacedObjectManager
 	owned           ingestOwnedObjects
 	useOpenShiftSCC bool
+	image           string
 }
 
 type ingestOwnedObjects struct {
@@ -31,7 +32,7 @@ type ingestOwnedObjects struct {
 	roleBinding    *rbacv1.ClusterRoleBinding
 }
 
-func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS string, permissionsVendor *discover.Permissions) *flpIngesterReconciler {
+func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) *flpIngesterReconciler {
 	name := name(ConfKafkaIngester)
 	owned := ingestOwnedObjects{
 		daemonSet:      &appsv1.DaemonSet{},
@@ -54,6 +55,7 @@ func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 		nobjMngr:        nobjMngr,
 		owned:           owned,
 		useOpenShiftSCC: openshift,
+		image:           image,
 	}
 }
 
@@ -89,7 +91,7 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowsv1a
 		return nil
 	}
 
-	builder := newIngestBuilder(r.nobjMngr.Namespace, &desired.Spec, r.useOpenShiftSCC)
+	builder := newIngestBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC)
 	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err
@@ -132,7 +134,7 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 func (r *flpIngesterReconciler) reconcileDaemonSet(ctx context.Context, desiredFLP *flpSpec, builder *ingestBuilder, configDigest string) error {
 	if !r.nobjMngr.Exists(r.owned.daemonSet) {
 		return r.CreateOwned(ctx, builder.daemonSet(configDigest))
-	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredFLP, configDigest) {
+	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredFLP, r.image, configDigest) {
 		return r.UpdateOwned(ctx, r.owned.daemonSet, builder.daemonSet(configDigest))
 	} else {
 		// DaemonSet up to date, check if it's ready

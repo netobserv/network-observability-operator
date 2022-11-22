@@ -40,7 +40,6 @@ var testResources = corev1.ResourceRequirements{
 func getPluginConfig() flowsv1alpha1.FlowCollectorConsolePlugin {
 	return flowsv1alpha1.FlowCollectorConsolePlugin{
 		Port:            9001,
-		Image:           testImage,
 		ImagePullPolicy: string(testPullPolicy),
 		Resources:       testResources,
 		Autoscaler: flowsv1alpha1.FlowCollectorHPA{
@@ -135,7 +134,8 @@ func TestContainerUpdateCheck(t *testing.T) {
 	podSpec, containerConfig := getContainerSpecs()
 	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
 	fmt.Printf("%v\n", buildArgs(&containerConfig, loki))
-	assert.False(containerNeedsUpdate(&podSpec, &containerConfig, loki))
+	cr := CPReconciler{image: testImage}
+	assert.False(cr.containerNeedsUpdate(&podSpec, &containerConfig, loki))
 
 	//wrong resources
 	podSpec, containerConfig = getContainerSpecs()
@@ -143,17 +143,17 @@ func TestContainerUpdateCheck(t *testing.T) {
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
-	assert.True(containerNeedsUpdate(&podSpec, &containerConfig, loki))
+	assert.True(cr.containerNeedsUpdate(&podSpec, &containerConfig, loki))
 
 	//new image
 	podSpec, containerConfig = getContainerSpecs()
-	containerConfig.Image = "quay.io/netobserv/network-observability-console-plugin:latest"
-	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
+	cr.image = "quay.io/netobserv/network-observability-console-plugin:latest"
+	assert.Equal(cr.containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
 
 	//new pull policy
 	podSpec, containerConfig = getContainerSpecs()
 	containerConfig.ImagePullPolicy = string(corev1.PullAlways)
-	assert.Equal(containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
+	assert.Equal(cr.containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
 
 }
 
@@ -187,9 +187,10 @@ func TestBuiltContainer(t *testing.T) {
 	//newly created containers should not need update
 	plugin := getPluginConfig()
 	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234", TenantID: "netobserv"}
-	builder := newBuilder(testNamespace, &plugin, loki)
+	builder := newBuilder(testNamespace, testImage, &plugin, loki)
 	newContainer := builder.podTemplate("digest")
-	assert.Equal(containerNeedsUpdate(&newContainer.Spec, &plugin, loki), false)
+	cr := CPReconciler{image: testImage}
+	assert.Equal(cr.containerNeedsUpdate(&newContainer.Spec, &plugin, loki), false)
 }
 
 func TestBuiltService(t *testing.T) {
@@ -197,7 +198,7 @@ func TestBuiltService(t *testing.T) {
 
 	//newly created service should not need update
 	plugin := getPluginConfig()
-	builder := newBuilder(testNamespace, &plugin, nil)
+	builder := newBuilder(testNamespace, testImage, &plugin, nil)
 	newService := builder.service(nil)
 	assert.Equal(serviceNeedsUpdate(newService, &plugin, testNamespace), false)
 }
@@ -207,7 +208,7 @@ func TestLabels(t *testing.T) {
 
 	plugin := getPluginConfig()
 	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234"}
-	builder := newBuilder(testNamespace, &plugin, loki)
+	builder := newBuilder(testNamespace, testImage, &plugin, loki)
 
 	// Deployment
 	depl := builder.deployment("digest")
@@ -252,8 +253,8 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), true)
 }
 
-//ensure HTTPClientConfig Marshal / Unmarshal works as expected for ProxyURL *URL
-//ProxyURL should not be set when only TLSConfig.InsecureSkipVerify is specified
+// ensure HTTPClientConfig Marshal / Unmarshal works as expected for ProxyURL *URL
+// ProxyURL should not be set when only TLSConfig.InsecureSkipVerify is specified
 func TestHTTPClientConfig(t *testing.T) {
 	config := promConfig.HTTPClientConfig{
 		TLSConfig: promConfig.TLSConfig{

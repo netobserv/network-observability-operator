@@ -305,10 +305,6 @@ type FlowCollectorFLP struct {
 	// profilePort allows setting up a Go pprof profiler listening to this port
 	ProfilePort int32 `json:"profilePort,omitempty"`
 
-	//+kubebuilder:default:="quay.io/netobserv/flowlogs-pipeline:main"
-	// image of the collector container (including domain and tag)
-	Image string `json:"image,omitempty"`
-
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
 	// imagePullPolicy is the Kubernetes pull policy for the image defined above
@@ -508,10 +504,6 @@ type FlowCollectorConsolePlugin struct {
 	//+kubebuilder:default:=9001
 	// port is the plugin service port
 	Port int32 `json:"port,omitempty"`
-
-	//+kubebuilder:default:="quay.io/netobserv/network-observability-console-plugin:main"
-	// image is the plugin image (including domain and tag)
-	Image string `json:"image,omitempty"`
 
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent

@@ -27,6 +27,7 @@ type CPReconciler struct {
 	reconcilers.ClientHelper
 	nobjMngr *reconcilers.NamespacedObjectManager
 	owned    ownedObjects
+	image    string
 }
 
 type ownedObjects struct {
@@ -37,7 +38,7 @@ type ownedObjects struct {
 	configMap      *corev1.ConfigMap
 }
 
-func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) CPReconciler {
+func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string) CPReconciler {
 	owned := ownedObjects{
 		deployment:     &appsv1.Deployment{},
 		service:        &corev1.Service{},
@@ -52,7 +53,7 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS string) CPReconciler 
 	nobjMngr.AddManagedObject(constants.PluginName, owned.serviceAccount)
 	nobjMngr.AddManagedObject(configMapName, owned.configMap)
 
-	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned}
+	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, image: imageName}
 }
 
 // InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
@@ -81,7 +82,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 	}
 
 	// Create object builder
-	builder := newBuilder(ns, &desired.Spec.ConsolePlugin, &desired.Spec.Loki)
+	builder := newBuilder(ns, r.image, &desired.Spec.ConsolePlugin, &desired.Spec.Loki)
 
 	if err = r.reconcilePlugin(ctx, builder, &desired.Spec, ns); err != nil {
 		return err
@@ -174,7 +175,7 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder,
 		if err := r.CreateOwned(ctx, newDepl); err != nil {
 			return err
 		}
-	} else if deploymentNeedsUpdate(r.owned.deployment, desired, ns, cmDigest) {
+	} else if r.deploymentNeedsUpdate(r.owned.deployment, desired, ns, cmDigest) {
 		if err := r.UpdateOwned(ctx, r.owned.deployment, newDepl); err != nil {
 			return err
 		}
@@ -223,11 +224,11 @@ func pluginNeedsUpdate(plg *osv1alpha1.ConsolePlugin, desired *pluginSpec, ns st
 		plg.Spec.Service.Port != desired.Port
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorSpec, ns string, cmDigest string) bool {
+func (r *CPReconciler) deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flowsv1alpha1.FlowCollectorSpec, ns string, cmDigest string) bool {
 	if depl.Namespace != ns {
 		return true
 	}
-	return containerNeedsUpdate(&depl.Spec.Template.Spec, &desired.ConsolePlugin, &desired.Loki) ||
+	return r.containerNeedsUpdate(&depl.Spec.Template.Spec, &desired.ConsolePlugin, &desired.Loki) ||
 		configChanged(&depl.Spec.Template, cmDigest) ||
 		(desired.ConsolePlugin.Autoscaler.Disabled() && *depl.Spec.Replicas != desired.ConsolePlugin.Replicas)
 }
@@ -262,12 +263,12 @@ func serviceNeedsUpdate(svc *corev1.Service, desired *pluginSpec, ns string) boo
 	return true
 }
 
-func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pluginSpec, desiredLoki *flowsv1alpha1.FlowCollectorLoki) bool {
+func (r *CPReconciler) containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pluginSpec, desiredLoki *flowsv1alpha1.FlowCollectorLoki) bool {
 	container := reconcilers.FindContainer(podSpec, constants.PluginName)
 	if container == nil {
 		return true
 	}
-	if desired.Image != container.Image || desired.ImagePullPolicy != string(container.ImagePullPolicy) {
+	if r.image != container.Image || desired.ImagePullPolicy != string(container.ImagePullPolicy) {
 		return true
 	}
 	desiredArgs := buildArgs(desired, desiredLoki)

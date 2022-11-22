@@ -22,6 +22,7 @@ type flpTransformerReconciler struct {
 	nobjMngr        *reconcilers.NamespacedObjectManager
 	owned           transfoOwnedObjects
 	useOpenShiftSCC bool
+	image           string
 }
 
 type transfoOwnedObjects struct {
@@ -33,7 +34,7 @@ type transfoOwnedObjects struct {
 	roleBinding    *rbacv1.ClusterRoleBinding
 }
 
-func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS string, permissionsVendor *discover.Permissions) *flpTransformerReconciler {
+func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) *flpTransformerReconciler {
 	name := name(ConfKafkaTransformer)
 	owned := transfoOwnedObjects{
 		deployment:     &appsv1.Deployment{},
@@ -58,6 +59,7 @@ func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, 
 		nobjMngr:        nobjMngr,
 		owned:           owned,
 		useOpenShiftSCC: openshift,
+		image:           image,
 	}
 }
 
@@ -93,7 +95,7 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 		return nil
 	}
 
-	builder := newTransfoBuilder(r.nobjMngr.Namespace, &desired.Spec, r.useOpenShiftSCC)
+	builder := newTransfoBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC)
 	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err
@@ -127,7 +129,7 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 		if err := r.CreateOwned(ctx, builder.deployment(configDigest)); err != nil {
 			return err
 		}
-	} else if deploymentNeedsUpdate(r.owned.deployment, desiredFLP, configDigest) {
+	} else if r.deploymentNeedsUpdate(r.owned.deployment, desiredFLP, configDigest) {
 		if err := r.UpdateOwned(ctx, r.owned.deployment, builder.deployment(configDigest)); err != nil {
 			return err
 		}
@@ -179,8 +181,8 @@ func (r *flpTransformerReconciler) reconcilePermissions(ctx context.Context, bui
 	return nil
 }
 
-func deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, configDigest string) bool {
-	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired, false) ||
+func (r *flpTransformerReconciler) deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, configDigest string) bool {
+	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired, r.image) ||
 		configChanged(&depl.Spec.Template, configDigest) ||
 		(desired.KafkaConsumerAutoscaler.Disabled() && *depl.Spec.Replicas != desired.KafkaConsumerReplicas)
 }

@@ -797,10 +797,6 @@ spec:
                         - ENABLED
                         type: string
                     type: object
-                  image:
-                    default: quay.io/netobserv/network-observability-console-plugin:main
-                    description: image is the plugin image (including domain and tag)
-                    type: string
                   imagePullPolicy:
                     default: IfNotPresent
                     description: imagePullPolicy is the Kubernetes pull policy for
@@ -1315,11 +1311,6 @@ spec:
                     maximum: 65535
                     minimum: 1
                     type: integer
-                  image:
-                    default: quay.io/netobserv/flowlogs-pipeline:main
-                    description: image of the collector container (including domain
-                      and tag)
-                    type: string
                   imagePullPolicy:
                     default: IfNotPresent
                     description: imagePullPolicy is the Kubernetes pull policy for

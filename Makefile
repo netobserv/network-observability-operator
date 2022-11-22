@@ -28,7 +28,7 @@ PORT_FWD ?= true
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
 # - use the CHANNELS as arg of the bundle target (e.g make bundle CHANNELS=candidate,fast,stable)
 # - use environment variables to overwrite this value (e.g export CHANNELS="candidate,fast,stable")
-CHANNELS := v0.2.x
+CHANNELS := v1.0.x
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
 endif
@@ -38,7 +38,7 @@ endif
 # To re-generate a bundle for any other default channel without changing the default setup, you can:
 # - use the DEFAULT_CHANNEL as arg of the bundle target (e.g make bundle DEFAULT_CHANNEL=stable)
 # - use environment variables to overwrite this value (e.g export DEFAULT_CHANNEL="stable")
-DEFAULT_CHANNEL := v0.2.x
+DEFAULT_CHANNEL := v1.0.x
 ifneq ($(origin DEFAULT_CHANNEL), undefined)
 BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
@@ -233,16 +233,14 @@ endif
 
 .PHONY: bundle-prepare
 bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
-	# TODO: remove this line when we move all images to CSV
-	envsubst < config/crd/patches/version_in_flowcollectors_envtpl.yaml > config/crd/patches/version_in_flowcollectors.yaml
 	$(OPSDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(SED) -i -r 's~ebpf-agent:main~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
-	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	$(SED) -i -r 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
-	$(SED) -i -r 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' config/samples/flows_v1alpha1_flowcollector_versioned.yaml
+	$(SED) -i -r 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' ./config/manager/manager.yaml
+	$(SED) -i -r 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)\?/~blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
 	$(SED) -i -r 's~replaces: netobserv-operator\.v.*~replaces: netobserv-operator\.$(PREVIOUS_VERSION)~' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 
 .PHONY: bundle
 bundle: bundle-prepare

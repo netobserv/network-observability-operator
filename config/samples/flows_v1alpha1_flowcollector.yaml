@@ -35,7 +35,6 @@ spec:
       kafkaBatchSize: 10485760
   processor:
     port: 2055
-    image: 'quay.io/netobserv/flowlogs-pipeline:main'
     imagePullPolicy: IfNotPresent
     logLevel: info
     enableKubeProbes: true
@@ -89,7 +88,6 @@ spec:
         certFile: service-ca.crt
   consolePlugin:
     register: true
-    image: 'quay.io/netobserv/network-observability-console-plugin:main'
     imagePullPolicy: IfNotPresent
     port: 9001
     logLevel: info

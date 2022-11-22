@@ -49,7 +49,6 @@ func flowCollectorEBPFSpecs() {
 						Port:            9999,
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
-						Image:           "testimg:latest",
 					},
 					Agent: flowsv1alpha1.FlowCollectorAgent{
 						Type: "EBPF",

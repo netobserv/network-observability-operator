@@ -69,10 +69,11 @@ type builder struct {
 	promTLS         *flowsv1alpha1.CertificateReference
 	confKind        ConfKind
 	useOpenShiftSCC bool
+	image           string
 }
 
-func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec, ck ConfKind, useOpenShiftSCC bool) builder {
-	version := helper.ExtractVersion(desired.Processor.Image)
+func newBuilder(ns, image string, desired *flowsv1alpha1.FlowCollectorSpec, ck ConfKind, useOpenShiftSCC bool) builder {
+	version := helper.ExtractVersion(image)
 	name := name(ck)
 	var promTLS flowsv1alpha1.CertificateReference
 	switch desired.Processor.Metrics.Server.TLS.Type {
@@ -99,6 +100,7 @@ func newBuilder(ns string, desired *flowsv1alpha1.FlowCollectorSpec, ck ConfKind
 		confKind:        ck,
 		useOpenShiftSCC: useOpenShiftSCC,
 		promTLS:         &promTLS,
+		image:           image,
 	}
 }
 
@@ -192,7 +194,7 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 
 	container := corev1.Container{
 		Name:            constants.FLPName,
-		Image:           b.desired.Processor.Image,
+		Image:           b.image,
 		ImagePullPolicy: corev1.PullPolicy(b.desired.Processor.ImagePullPolicy),
 		Args:            []string{fmt.Sprintf(`--config=%s/%s`, configPath, configFile)},
 		Resources:       *b.desired.Processor.Resources.DeepCopy(),

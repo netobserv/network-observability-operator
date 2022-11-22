@@ -528,15 +528,6 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>image</b></td>
-        <td>string</td>
-        <td>
-          image is the plugin image (including domain and tag)<br/>
-          <br/>
-            <i>Default</i>: quay.io/netobserv/network-observability-console-plugin:main<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
@@ -2410,15 +2401,6 @@ processor defines the settings of the component that receives the flows from the
             <i>Default</i>: 8080<br/>
             <i>Minimum</i>: 1<br/>
             <i>Maximum</i>: 65535<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>image</b></td>
-        <td>string</td>
-        <td>
-          image of the collector container (including domain and tag)<br/>
-          <br/>
-            <i>Default</i>: quay.io/netobserv/flowlogs-pipeline:main<br/>
         </td>
         <td>false</td>
       </tr><tr>
