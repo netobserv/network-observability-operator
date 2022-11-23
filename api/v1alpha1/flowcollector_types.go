@@ -611,6 +611,7 @@ type ClientTLS struct {
 
 	//+kubebuilder:default:=false
 	// insecureSkipVerify allows skipping client-side verification of the server certificate
+	// If set to true, CACert field will be ignored
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
 	// caCert defines the reference of the certificate for the Certificate Authority
