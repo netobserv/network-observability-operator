@@ -69,23 +69,31 @@ _Pre-requisite: OpenShift 4.10 or above_
 
 If the OpenShift Console is detected in the cluster, a console plugin is deployed when a `FlowCollector` is installed. It adds new pages and tabs to the console:
 
-- A flow table, with powerful filtering and display options
+#### Overview dashboard
+
+This dashboard shows overall, aggregated statistics on the cluster traffic. The stats can be refined with comprehensive filtering and display options. Different levels of aggregations are available: per node, per namespace, per owner or per pod/service). It allows to identify biggest talkers in different contexts: for instance, top X inter-namespace flows, or top X pod-to-pod flows within a namespace, etc.
+
+![Overview](./docs/assets/overview-dashboard.png)
+
+#### Topology
+
+The topology view represents traffic between elements as a graph. The same filtering and aggregation options as described above are available, plus extra display options e.g. to group element by node, namespaces, etc. A side panel provides contextual information and metrics related to the selected element.
+
+![Topology](./docs/assets/topology-main.png)
+_This screenshot shows the NetObserv architecture itself: Nodes (via eBPF agents) sending traffic (flows) to the collector flowlogs-pipeline, which in turn sends data to Loki. The NetObserv console plugin fetches these flows from Loki._
+
+#### Flow table
+
+The table view shows raw flows, ie. non aggregated, still with the same filtering options, and configurable columns.
 
 ![Flow table](./docs/assets/network-traffic-main.png)
 
-- A network topology, with the same filtering options and several levels of aggregations (nodes, namespaces, owner controllers, pods). A side panel provides contextual insight and metrics.
+#### Integration in existing views
 
-![Topology](./docs/assets/topology-main.png)
+These views are accessible directly from the main menu, and also as contextual tabs for any Pod, Deployment, Service (etc.) in their details page, with preset filters to focus on that resource.
 
-These components are accessible directly from the main menu, and also as contextual tabs for any Pod, Deployment, Service (etc.) in their details page.
+![Contextual topology](./docs/assets/topology-pod.png)
 
-![Contextual topology](./docs/assets/topology-deployment.png)
-
-TODO: another pic with NetObserv topology (to talk briefly about the deployed components)
-
-### Standalone console
-
-_Coming soon_
 
 ### Grafana
 
