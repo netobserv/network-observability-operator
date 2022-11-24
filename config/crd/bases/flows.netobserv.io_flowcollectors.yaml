@@ -970,7 +970,9 @@ spec:
                           description: address of the Kafka server
                           type: string
                         tls:
-                          description: tls client configuration.
+                          description: tls client configuration. Note that, when eBPF
+                            agents are used, Kafka certificate needs to be copied
+                            in the agent namespace (by default it's netobserv-privileged).
                           properties:
                             caCert:
                               description: caCert defines the reference of the certificate
@@ -1061,7 +1063,9 @@ spec:
                     description: address of the Kafka server
                     type: string
                   tls:
-                    description: tls client configuration.
+                    description: tls client configuration. Note that, when eBPF agents
+                      are used, Kafka certificate needs to be copied in the agent
+                      namespace (by default it's netobserv-privileged).
                     properties:
                       caCert:
                         description: caCert defines the reference of the certificate

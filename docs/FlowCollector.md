@@ -1706,7 +1706,7 @@ kafka describes the kafka configuration (address, topic...) to send enriched flo
         <td><b><a href="#flowcollectorspecexportersindexkafkatls">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration.<br/>
+          tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1718,7 +1718,7 @@ kafka describes the kafka configuration (address, topic...) to send enriched flo
 
 
 
-tls client configuration.
+tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 
 <table>
     <thead>
@@ -1903,7 +1903,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b><a href="#flowcollectorspeckafkatls">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration.<br/>
+          tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1915,7 +1915,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
 
 
 
-tls client configuration.
+tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 
 <table>
     <thead>

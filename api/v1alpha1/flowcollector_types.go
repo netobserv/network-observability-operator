@@ -227,7 +227,7 @@ type FlowCollectorKafka struct {
 	// kafka topic to use. It must exist, NetObserv will not create it.
 	Topic string `json:"topic"`
 
-	// tls client configuration.
+	// tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 	// +optional
 	TLS ClientTLS `json:"tls"`
 }
