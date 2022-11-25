@@ -136,3 +136,31 @@ undeploy-prometheus: ## Undeploy prometheus.
 	kubectl --ignore-not-found=true delete -f config/kubernetes/deployment-prometheus.yaml || true
 	-pkill --oldest --full "9090:9090"
 
+.PHONY: get-related-images
+get-related-images:
+	kubectl set env deployment netobserv-controller-manager -c "manager" --list
+
+.PHONY: set-agent-image
+set-agent-image:
+	kubectl set env deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_EBPF_AGENT=quay.io/$(USER)/netobserv-ebpf-agent:$(VERSION)
+	@echo -e "\n==> Redeploying..."
+	kubectl rollout status -n $(NAMESPACE) --timeout=60s deployment netobserv-controller-manager
+	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
+	@echo -e "\n==> Wait a moment before agents are fully redeployed"
+
+.PHONY: set-flp-image
+set-flp-image:
+	kubectl set env deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_FLOWLOGS_PIPELINE=quay.io/$(USER)/flowlogs-pipeline:$(VERSION)
+	@echo -e "\n==> Redeploying..."
+	kubectl rollout status -n $(NAMESPACE) --timeout=60s deployment netobserv-controller-manager
+	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
+	@echo -e "\n==> Wait a moment before FLP is fully redeployed"
+
+.PHONY: set-plugin-image
+set-plugin-image:
+	kubectl set env deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN=quay.io/$(USER)/network-observability-console-plugin:$(VERSION)
+	@echo -e "\n==> Redeploying..."
+	kubectl rollout status -n $(NAMESPACE) --timeout=60s deployment netobserv-controller-manager
+	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
+	kubectl rollout status -n $(NAMESPACE) --timeout=60s deployment netobserv-plugin
+	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-plugin
