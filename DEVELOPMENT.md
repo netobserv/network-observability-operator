@@ -143,9 +143,14 @@ following the environment variables with your custom operand image with `kubectl
 
 Examples:
 
-```
+```bash
 oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_EBPF_AGENT="quay.io/netobserv/netobserv-ebpf-agent:main"
 oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_FLOWLOGS_PIPELINE="quay.io/netobserv/flowlogs-pipeline:main"
 oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN="quay.io/netobserv/network-observability-console-plugin:main"
 ```
 
+Alternatively you can use helper make targets for the same purpose:
+
+```bash
+USER=myself VERSION=test make set-agent-image set-flp-image set-plugin-image
+```
