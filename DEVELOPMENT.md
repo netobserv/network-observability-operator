@@ -133,15 +133,19 @@ See [RELEASE.md](./RELEASE.md#publishing-on-operatorhub).
 
 ## Using custom operand image
 
-Patch `RELATED_IMAGE_EBPF_AGENT` environment variable's value with your custom operand image:
+In the `manager` container of the `netobserv-controller-manager` Deployment, set any of the
+following the environment variables with your custom operand image with `kubectl set env` or
+`oc set env`:
 
-In the operator's deployment:
+* `RELATED_IMAGE_EBPF_AGENT`
+* `RELATED_IMAGE_FLOWLOGS_PIPELINE`
+* `RELATED_IMAGE_CONSOLE_PLUGIN`
 
-```sh
-# netobserv-controller-manager's manager container has index 0
-# "RELATED_IMAGE_EBPF_AGENT" environment variable has index 0
-# "RELATED_IMAGE_FLOWLOGS_PIPELINE" environment variable has index 1
-# "RELATED_IMAGE_CONSOLE_PLUGIN" environment variable has index 2
-oc -n netobserv patch deployment netobserv-controller-manager --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/env/0/value", "value":"<CUSTOM_IMAGE_TAG>"}]'
+Examples:
+
+```
+oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_EBPF_AGENT="quay.io/netobserv/netobserv-ebpf-agent:main"
+oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_FLOWLOGS_PIPELINE="quay.io/netobserv/flowlogs-pipeline:main"
+oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN="quay.io/netobserv/network-observability-console-plugin:main"
 ```
 
