@@ -85,9 +85,9 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&config.EBPFAgentImage, "ebpf-agent-image", "", "The image of the eBPF agent")
-	flag.StringVar(&config.FlowlogsPipelineImage, "flowlogs-pipeline-image", "", "The image of Flowlogs Pipeline")
-	flag.StringVar(&config.ConsolePluginImage, "console-plugin-image", "", "The image of the Console Plugin")
+	flag.StringVar(&config.EBPFAgentImage, "ebpf-agent-image", "quay.io/netobserv/netobserv-ebpf-agent:main", "The image of the eBPF agent")
+	flag.StringVar(&config.FlowlogsPipelineImage, "flowlogs-pipeline-image", "quay.io/netobserv/flowlogs-pipeline:main", "The image of Flowlogs Pipeline")
+	flag.StringVar(&config.ConsolePluginImage, "console-plugin-image", "quay.io/netobserv/network-observability-console-plugin:main", "The image of the Console Plugin")
 	flag.BoolVar(&versionFlag, "v", false, "print version")
 	opts := zap.Options{
 		Development: true,
