@@ -29,7 +29,10 @@ local-run: create-kind-cluster local-redeploy local-deploy-operator ## local-red
 local-deploy-operator:
 # TODO: restore traffic generator, but using IPFIX instead of NFv5 (could be inspired from https://github.com/netobserv/flowlogs-pipeline/blob/main/pkg/test/ipfix.go)
 	@echo "====> Running the operator locally (in background process)"
-	go run ./main.go &
+	go run ./main.go \
+		-ebpf-agent-image=quay.io/netobserv/netobserv-ebpf-agent:main \
+		-flowlogs-pipeline-image=quay.io/netobserv/flowlogs-pipeline:main \
+		-console-plugin-image=quay.io/netobserv/network-observability-console-plugin:main &
 	@echo "====> Waiting for flowlogs-pipeline pod to be ready"
 	while : ; do kubectl get ds flowlogs-pipeline && break; sleep 1; done
 	kubectl wait --timeout=180s --for=condition=ready pod -l app=flowlogs-pipeline

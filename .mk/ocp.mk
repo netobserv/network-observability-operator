@@ -32,7 +32,10 @@ ocp-deploy-operator: ## run flp from the operator
 	@echo "====> Enable netobserv-plugin in OCP console"
 	oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["netobserv-plugin"]}]'
 	@echo "====> Running the operator locally"
-	go run ./main.go
+	go run ./main.go \
+		-ebpf-agent-image=quay.io/netobserv/netobserv-ebpf-agent:main \
+		-flowlogs-pipeline-image=quay.io/netobserv/flowlogs-pipeline:main \
+		-console-plugin-image=quay.io/netobserv/network-observability-console-plugin:main
 
 .PHONY: undeploy-operator
 undeploy-operator: ## stop the operator locally
