@@ -11,7 +11,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -28,9 +27,10 @@ type pluginSpec = flowsv1alpha1.FlowCollectorConsolePlugin
 // CPReconciler reconciles the current console plugin state with the desired configuration
 type CPReconciler struct {
 	reconcilers.ClientHelper
-	nobjMngr *reconcilers.NamespacedObjectManager
-	owned    ownedObjects
-	image    string
+	nobjMngr      *reconcilers.NamespacedObjectManager
+	owned         ownedObjects
+	image         string
+	availableAPIs *discover.AvailableAPIs
 }
 
 type ownedObjects struct {
@@ -61,7 +61,7 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string, av
 		nobjMngr.AddManagedObject(constants.PluginServiceMonitorName, owned.serviceMonitor)
 	}
 
-	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, image: imageName}
+	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, image: imageName, availableAPIs: availableAPIs}
 }
 
 // InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
@@ -194,24 +194,16 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder,
 }
 
 func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) error {
-	logger := log.FromContext(ctx)
 	if !r.nobjMngr.Exists(r.owned.service) {
 		newSVC := builder.service(nil)
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
 			return err
 		}
-		crd := apiextensionsv1.CustomResourceDefinition{}
-		crdKey := types.NamespacedName{
-			Name: "servicemonitors.monitoring.coreos.com",
-		}
-		err := r.Client.Get(ctx, crdKey, &crd)
-		if err != nil {
-			logger.Info("Service Monitor crd not found; not creating the service monitor")
-			return nil
-		}
-		serviceMonitor := builder.consolePluginServiceMonitor()
-		if err := r.CreateOwned(ctx, serviceMonitor); err != nil {
-			return err
+		if r.availableAPIs.HasSvcMonitor() {
+			serviceMonitor := builder.consolePluginServiceMonitor()
+			if err := r.CreateOwned(ctx, serviceMonitor); err != nil {
+				return err
+			}
 		}
 	} else if serviceNeedsUpdate(r.owned.service, &desired.ConsolePlugin, ns) {
 		newSVC := builder.service(r.owned.service)

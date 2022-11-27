@@ -23,6 +23,7 @@ type flpIngesterReconciler struct {
 	owned           ingestOwnedObjects
 	useOpenShiftSCC bool
 	image           string
+	availableAPIs   *discover.AvailableAPIs
 }
 
 type ingestOwnedObjects struct {
@@ -62,6 +63,7 @@ func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 		owned:           owned,
 		useOpenShiftSCC: openshift,
 		image:           image,
+		availableAPIs:   availableAPIs,
 	}
 }
 
@@ -129,8 +131,10 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 		if err := r.CreateOwned(ctx, builder.newPromService()); err != nil {
 			return err
 		}
-		if err := AddPrometheusServiceMonitor(ctx, &builder.generic, r.ClientHelper); err != nil {
-			return err
+		if r.availableAPIs.HasSvcMonitor() {
+			if err := AddPrometheusServiceMonitor(ctx, &builder.generic, r.ClientHelper); err != nil {
+				return err
+			}
 		}
 		return nil
 	}

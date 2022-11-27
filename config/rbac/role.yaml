@@ -7,18 +7,6 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - apiextensions.k8s.io
-  resources:
-  - customresourcedefinitions
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
   - apiregistration.k8s.io
   resources:
   - apiservices
