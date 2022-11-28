@@ -71,7 +71,9 @@ If the OpenShift Console is detected in the cluster, a console plugin is deploye
 
 #### Overview dashboard
 
-This dashboard shows overall, aggregated statistics on the cluster traffic. The stats can be refined with comprehensive filtering and display options. Different levels of aggregations are available: per node, per namespace, per owner or per pod/service). It allows to identify biggest talkers in different contexts: for instance, top X inter-namespace flows, or top X pod-to-pod flows within a namespace, etc.
+This dashboard shows overall, aggregated metrics on the cluster network. The stats can be refined with comprehensive filtering and display options. Different levels of aggregations are available: per node, per namespace, per owner or per pod/service). For instance, it allows to identify biggest talkers in different contexts: top X inter-namespace flows, or top X pod-to-pod flows within a namespace, etc.
+
+The watched time interval can be adjusted, as well as the refresh frequency, hence you can get an almost live view on the cluster traffic. This also applies to the other pages described below.
 
 ![Overview](./docs/assets/overview-dashboard.png)
 
@@ -88,9 +90,9 @@ The table view shows raw flows, ie. non aggregated, still with the same filterin
 
 ![Flow table](./docs/assets/network-traffic-main.png)
 
-#### Integration in existing views
+#### Integration with existing console views
 
-These views are accessible directly from the main menu, and also as contextual tabs for any Pod, Deployment, Service (etc.) in their details page, with preset filters to focus on that resource.
+These views are accessible directly from the main menu, and also as contextual tabs for any Pod, Deployment, Service (etc.) in their details page, with filters set to focus on that particular resource.
 
 ![Contextual topology](./docs/assets/topology-pod.png)
 
@@ -153,7 +155,7 @@ The `FlowCollector` resource includes configuration of the Loki client, which is
 
 On the Loki server side, configuration differs depending on how Loki was installed, e.g. via Helm chart, Loki Operator, etc. Nevertheless, here are a couple of settings that may impact the flow processing pipeline:
 
-- Rate limits ([cf Loki documentation](https://grafana.com/docs/loki/latest/configuration/#limits_config)), especially ingestion rate limit, ingestion burst size, per-stream rate limit and burst size. When these rate limits are reached, Loki returns an error when `flowlogs-pipeline` tries to send batches, visible in logs. A good practice is to define an alert, to get notified when these limits are reached: (TODO: link to Mehul's Alert)
+- Rate limits ([cf Loki documentation](https://grafana.com/docs/loki/latest/configuration/#limits_config)), especially ingestion rate limit, ingestion burst size, per-stream rate limit and burst size. When these rate limits are reached, Loki returns an error when `flowlogs-pipeline` tries to send batches, visible in logs. A good practice is to define an alert, to get notified when these limits are reached: [cf this example](https://github.com/netobserv/documents/blob/main/examples/distributed-loki/alerting/loki-ratelimit-alert.yaml). It uses a metrics provided by the Loki operator: `loki_request_duration_seconds_count`. In case you don't use the Loki operator, you can replace it by the same metric provided by NetObserv Loki client, named `netobserv_loki_request_duration_seconds_count`.
 
 - Max active streams / max streams per user: this limit is reached when too many streams are created. In Loki terminology, a stream is a given set of labels (keys and values) used for indexing. NetObserv defines labels for source and destination namespaces and pod owners (ie. aggregated workloads, such as Deployments). So the more workloads are running and generating traffic on the cluster, the more chances there are to hit this limit, when it's set. We recommend setting a high limit or turning it off (0 stands for unlimited).
 
@@ -172,14 +174,30 @@ More performance fine-tuning is possible when using Kafka, ie. with `spec.deploy
 
 NetObserv is currently meant to be used by cluster / network admins. There is not yet multi-tenancy implemented, which means a user having access to the data will be able to see *all* the data. It is up to the cluster admins to restrict the access to the NetObserv and Loki namespaces and services according to their security policy.
 
-To make authenticated queries to Loki, set `spec.loki.authToken` to `FORWARD`: the console plugin will then forward the logged-in Console user token to Loki.
-
-By default, communications between internal components are not secured. It is possible, and straightforward, to set up TLS for several communications:
+By default, communications between internal components are not secured. It is possible to set up TLS for several communications:
 
 - Between processor (`flowlogs-pipeline`) and Loki, by setting `spec.loki.tls`.
 - With Kafka (both on producer and consumer sides), by setting `spec.kafka.tls`. Mutual TLS is supported here.
 - The metrics server running in the processor (`flowlogs-pipeline`) can listen using TLS, via `spec.processor.metrics.server.tls`.
 - The Console plugin server always uses TLS.
+
+To make authenticated queries to Loki, when using the Loki Operator, there are two options:
+
+- per-user auth: set `spec.loki.authToken` to `FORWARD` in the `FlowCollector` resource. The console plugin will forward the logged-in Console user token to Loki. To get access to the flow logs, users must have the following permission:
+
+```yaml
+- apiGroups:
+  - 'loki.grafana.com'
+  resources:
+  - network
+  resourceNames:
+  - logs
+  verbs:
+  - 'get'
+```
+
+- per-app auth, ie. with NetObserv components having access to the logs using their own service account, regardless of the user permissions. For this mode, set `spec.loki.authToken` to `HOST` and setup `ClusterRole` for `flowlogs-pipeline` and `netobserv-plugin`, e.g: [role.yaml](https://github.com/netobserv/documents/blob/main/examples/loki-stack/role.yaml).
+
 
 ## Development & building from sources
 
