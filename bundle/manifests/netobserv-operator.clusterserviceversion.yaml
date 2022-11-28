@@ -193,7 +193,7 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
   name: netobserv-operator.v0.2.0
-  namespace: placeholder
+  namespace: netobserv
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:

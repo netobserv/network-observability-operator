@@ -11,7 +11,7 @@ metadata:
     description: Network flows collector and monitoring solution
     repository: https://github.com/netobserv/network-observability-operator
   name: netobserv-operator.v0.0.0
-  namespace: placeholder
+  namespace: netobserv
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
