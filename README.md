@@ -237,6 +237,12 @@ kubectl get pods -n netobserv -l app=netobserv-plugin
 kubectl logs -n netobserv -l app=netobserv-plugin
 ```
 
+### I first deployed flowcollector, and then kafka. Flowlogs-pipeline is not consuming any flow from Kafka
+
+This is a [known bug](https://github.com/segmentio/kafka-go/issues/1044) in one of flowlogs-pipeline dependencies.
+
+Please recreate the flowlogs-pipeline pods by either killing them maunally or deleting and recreating the flow collector object.
+
 ## Contributions
 
 This project is licensed under [Apache 2.0](./LICENSE) and accepts contributions via GitHub pull requests. Other related `netobserv` projects follow the same rules:
