@@ -39,9 +39,11 @@ var testResources = corev1.ResourceRequirements{
 
 func getPluginConfig() flowsv1alpha1.FlowCollectorConsolePlugin {
 	return flowsv1alpha1.FlowCollectorConsolePlugin{
-		Port:            9001,
-		ImagePullPolicy: string(testPullPolicy),
-		Resources:       testResources,
+		Port: 9001,
+		Debug: flowsv1alpha1.PluginDebugConfig{
+			ImagePullPolicy: string(testPullPolicy),
+		},
+		Resources: testResources,
 		Autoscaler: flowsv1alpha1.FlowCollectorHPA{
 			Status:      flowsv1alpha1.HPAStatusEnabled,
 			MinReplicas: &minReplicas,
@@ -152,7 +154,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	//new pull policy
 	podSpec, containerConfig = getContainerSpecs()
-	containerConfig.ImagePullPolicy = string(corev1.PullAlways)
+	containerConfig.Debug.ImagePullPolicy = string(corev1.PullAlways)
 	assert.Equal(cr.containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
 
 }

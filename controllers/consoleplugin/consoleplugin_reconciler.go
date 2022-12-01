@@ -268,7 +268,7 @@ func (r *CPReconciler) containerNeedsUpdate(podSpec *corev1.PodSpec, desired *pl
 	if container == nil {
 		return true
 	}
-	if r.image != container.Image || desired.ImagePullPolicy != string(container.ImagePullPolicy) {
+	if r.image != container.Image || desired.Debug.ImagePullPolicy != string(container.ImagePullPolicy) {
 		return true
 	}
 	desiredArgs := buildArgs(desired, desiredLoki)

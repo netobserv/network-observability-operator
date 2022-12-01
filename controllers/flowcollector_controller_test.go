@@ -87,11 +87,13 @@ func flowCollectorControllerSpecs() {
 					Namespace:       operatorNamespace,
 					DeploymentModel: flowsv1alpha1.DeploymentModelDirect,
 					Processor: flowsv1alpha1.FlowCollectorFLP{
-						Port:            9999,
-						ImagePullPolicy: "Never",
-						LogLevel:        "error",
-						Env: map[string]string{
-							"GOGC": "200",
+						Port:     9999,
+						LogLevel: "error",
+						Debug: flowsv1alpha1.DebugConfig{
+							ImagePullPolicy: "Never",
+							Env: map[string]string{
+								"GOGC": "200",
+							},
 						},
 					},
 					Agent: flowsv1alpha1.FlowCollectorAgent{
@@ -101,8 +103,10 @@ func flowCollectorControllerSpecs() {
 						},
 					},
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
-						Port:            9001,
-						ImagePullPolicy: "Never",
+						Port: 9001,
+						Debug: flowsv1alpha1.PluginDebugConfig{
+							ImagePullPolicy: "Never",
+						},
 						PortNaming: flowsv1alpha1.ConsolePluginPortConfig{
 							Enable: true,
 							PortNames: map[string]string{
@@ -193,13 +197,15 @@ func flowCollectorControllerSpecs() {
 		It("Should update successfully", func() {
 			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
 				fc.Spec.Processor = flowsv1alpha1.FlowCollectorFLP{
-					Port:            7891,
-					ImagePullPolicy: "Never",
-					LogLevel:        "error",
-					Env: map[string]string{
-						// we'll test that env vars are sorted, to keep idempotency
-						"GOMAXPROCS": "33",
-						"GOGC":       "400",
+					Port:     7891,
+					LogLevel: "error",
+					Debug: flowsv1alpha1.DebugConfig{
+						ImagePullPolicy: "Never",
+						Env: map[string]string{
+							// we'll test that env vars are sorted, to keep idempotency
+							"GOMAXPROCS": "33",
+							"GOGC":       "400",
+						},
 					},
 				}
 				fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}

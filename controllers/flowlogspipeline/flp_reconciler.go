@@ -103,7 +103,7 @@ func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flpSpec, image strin
 	container := reconcilers.FindContainer(podSpec, constants.FLPName)
 	return container == nil ||
 		image != container.Image ||
-		desired.ImagePullPolicy != string(container.ImagePullPolicy) ||
+		desired.Debug.ImagePullPolicy != string(container.ImagePullPolicy) ||
 		probesNeedUpdate(container, desired.EnableKubeProbes) ||
 		!equality.Semantic.DeepDerivative(desired.Resources, container.Resources)
 }

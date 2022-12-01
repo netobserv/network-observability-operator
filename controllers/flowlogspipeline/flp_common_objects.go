@@ -188,14 +188,14 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 	var envs []corev1.EnvVar
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
-	for _, pair := range helper.KeySorted(b.desired.Processor.Env) {
+	for _, pair := range helper.KeySorted(b.desired.Processor.Debug.Env) {
 		envs = append(envs, corev1.EnvVar{Name: pair[0], Value: pair[1]})
 	}
 
 	container := corev1.Container{
 		Name:            constants.FLPName,
 		Image:           b.image,
-		ImagePullPolicy: corev1.PullPolicy(b.desired.Processor.ImagePullPolicy),
+		ImagePullPolicy: corev1.PullPolicy(b.desired.Processor.Debug.ImagePullPolicy),
 		Args:            []string{fmt.Sprintf(`--config=%s/%s`, configPath, configFile)},
 		Resources:       *b.desired.Processor.Resources.DeepCopy(),
 		VolumeMounts:    volumeMounts,

@@ -74,9 +74,11 @@ func flowCollectorConsolePluginSpecs() {
 					DeploymentModel: flowsv1alpha1.DeploymentModelDirect,
 					Agent:           flowsv1alpha1.FlowCollectorAgent{Type: "IPFIX"},
 					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
-						Port:            9001,
-						ImagePullPolicy: "Never",
-						Register:        true,
+						Port:     9001,
+						Register: true,
+						Debug: flowsv1alpha1.PluginDebugConfig{
+							ImagePullPolicy: "Never",
+						},
 						Autoscaler: flowsv1alpha1.FlowCollectorHPA{
 							Status:      flowsv1alpha1.HPAStatusEnabled,
 							MinReplicas: pointer.Int32(1),

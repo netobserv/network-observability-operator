@@ -46,9 +46,11 @@ func flowCollectorEBPFSpecs() {
 					Namespace:       operatorNamespace,
 					DeploymentModel: flowsv1alpha1.DeploymentModelDirect,
 					Processor: flowsv1alpha1.FlowCollectorFLP{
-						Port:            9999,
-						ImagePullPolicy: "Never",
-						LogLevel:        "error",
+						Port:     9999,
+						LogLevel: "error",
+						Debug: flowsv1alpha1.DebugConfig{
+							ImagePullPolicy: "Never",
+						},
 					},
 					Agent: flowsv1alpha1.FlowCollectorAgent{
 						Type: "EBPF",
@@ -59,10 +61,12 @@ func flowCollectorEBPFSpecs() {
 							Interfaces:         []string{"veth0", "/^br-/"},
 							ExcludeInterfaces:  []string{"br-3", "lo"},
 							LogLevel:           "trace",
-							Env: map[string]string{
-								// we'll test that multiple variables are reordered
-								"GOGC":           "400",
-								"BUFFERS_LENGTH": "100",
+							Debug: flowsv1alpha1.DebugConfig{
+								Env: map[string]string{
+									// we'll test that multiple variables are reordered
+									"GOGC":           "400",
+									"BUFFERS_LENGTH": "100",
+								},
 							},
 						},
 					},

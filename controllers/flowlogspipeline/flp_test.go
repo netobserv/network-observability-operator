@@ -51,11 +51,11 @@ func getConfig() v1alpha1.FlowCollectorSpec {
 		DeploymentModel: v1alpha1.DeploymentModelDirect,
 		Agent:           v1alpha1.FlowCollectorAgent{Type: v1alpha1.AgentIPFIX},
 		Processor: v1alpha1.FlowCollectorFLP{
-			Port:            2055,
-			ImagePullPolicy: string(pullPolicy),
-			LogLevel:        "trace",
-			Resources:       resources,
-			HealthPort:      8080,
+			Port:       2055,
+			Debug:      v1alpha1.DebugConfig{ImagePullPolicy: string(pullPolicy)},
+			LogLevel:   "trace",
+			Resources:  resources,
+			HealthPort: 8080,
 			Metrics: v1alpha1.FLPMetrics{
 				Server: v1alpha1.MetricsServerConfig{
 					Port: 9090,
