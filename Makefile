@@ -54,6 +54,7 @@ IMAGE_TAG_BASE ?= quay.io/netobserv/network-observability-operator
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
+BUNDLE_VERSION ?= $(VERSION)
 
 # Image URL to use all building/pushing image targets
 IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
@@ -89,6 +90,8 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 NAMESPACE ?= netobserv
+
+CSV_DESC ?= description-upstream.md
 
 all: help
 
@@ -238,18 +241,21 @@ bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metada
 	$(SED) -i -r 's~ebpf-agent:main~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)\?/~blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?/~blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?/~blob/$(VERSION)/~g' ./config/manifests/bases/$(CSV_DESC)
 	$(SED) -i -r 's~replaces: netobserv-operator\.v.*~replaces: netobserv-operator\.$(PREVIOUS_VERSION)~' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
 	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 
 .PHONY: bundle
 bundle: bundle-prepare
-	$(KUSTOMIZE) build config/manifests | $(SED) -e 's~:container-image:~$(IMG)~' | $(SED) -e 's~:created-at:~$(DATE)~' | $(OPSDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	$(OPSDK) bundle validate ./bundle
-
-.PHONY: bundle-for-test
-bundle-for-test: bundle-prepare
-	$(KUSTOMIZE) build config/manifests | $(SED) -e 's~:container-image:~$(IMG)~' | $(SED) -e 's~:created-at:~$(DATE)~' | $(OPSDK) generate bundle -q --overwrite --version 0.0.0-$(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(SED) -e 's/^/    /' config/manifests/bases/$(CSV_DESC) > tmp-desc
+	$(KUSTOMIZE) build config/manifests \
+		| $(SED) -e 's~:container-image:~$(IMG)~' \
+		| $(SED) -e 's~:created-at:~$(DATE)~' \
+		| $(SED) -e "/':full-description:'/r tmp-desc" \
+		| $(SED) -e "s/':full-description:'/|\-/" \
+		| $(OPSDK) generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
+	rm tmp-desc
 	$(OPSDK) bundle validate ./bundle
 
 .PHONY: bundle-build

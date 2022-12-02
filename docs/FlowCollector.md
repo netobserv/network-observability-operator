@@ -392,7 +392,7 @@ ipfix describes the settings related to the IPFIX-based flow reporter when the "
         <td><b>forceSampleAll</b></td>
         <td>boolean</td>
         <td>
-          forceSampleAll allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risks. When it is set to true, the value of "sampling" is ignored.<br/>
+          forceSampleAll allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risk. When it is set to true, the value of "sampling" is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -1706,7 +1706,7 @@ kafka describes the kafka configuration (address, topic...) to send enriched flo
         <td><b><a href="#flowcollectorspecexportersindexkafkatls">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration.<br/>
+          tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1718,7 +1718,7 @@ kafka describes the kafka configuration (address, topic...) to send enriched flo
 
 
 
-tls client configuration.
+tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 
 <table>
     <thead>
@@ -1903,7 +1903,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b><a href="#flowcollectorspeckafkatls">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration.<br/>
+          tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1915,7 +1915,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
 
 
 
-tls client configuration.
+tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 
 <table>
     <thead>
