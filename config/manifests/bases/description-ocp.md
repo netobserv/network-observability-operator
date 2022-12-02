@@ -1,6 +1,6 @@
 Network observability is an OpenShift operator that deploys a monitoring pipeline to collect and enrich network flows that are produced by the Network observability eBPF agent.
 
-The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When a FlowCollector is deployed, new dashboards are available in the Console.
+The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When a `FlowCollector` instance is created, new views are available in the Console.
 
 ## Dependencies
 
@@ -52,7 +52,7 @@ A couple of settings deserve special attention:
 
 - Kafka (`spec.deploymentModel: KAFKA` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created.
 
-- Exporters (`spec.exporters`, _experimental_) an optional list of exporters to which to send enriched flows. Currently only KAFKA is supported. This allows you to define any custom storage or processing that can read from Kafka. This feature is flagged as _experimental_ as it has not been thoroughly or stress tested yet, so use at your own risks.
+- Exporters (`spec.exporters`, _experimental_) an optional list of exporters to which to send enriched flows. Currently only KAFKA is supported. This allows you to define any custom storage or processing that can read from Kafka. This feature is flagged as _experimental_ as it has not been thoroughly or stress tested yet, so use at your own risk.
 
 ## Further reading
 

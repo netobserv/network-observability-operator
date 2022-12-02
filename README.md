@@ -2,7 +2,7 @@
 
 NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by the NetObserv eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
 
-The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When used in OpenShift, new dashboards are available in the Console.
+The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When used in OpenShift, new views are available in the Console.
 
 ## Getting Started
 
@@ -69,9 +69,9 @@ _Pre-requisite: OpenShift 4.10 or above_
 
 If the OpenShift Console is detected in the cluster, a console plugin is deployed when a `FlowCollector` is installed. It adds new pages and tabs to the console:
 
-#### Overview dashboard
+#### Overview metrics
 
-This dashboard shows overall, aggregated metrics on the cluster network. The stats can be refined with comprehensive filtering and display options. Different levels of aggregations are available: per node, per namespace, per owner or per pod/service). For instance, it allows to identify biggest talkers in different contexts: top X inter-namespace flows, or top X pod-to-pod flows within a namespace, etc.
+Charts on this page show overall, aggregated metrics on the cluster network. The stats can be refined with comprehensive filtering and display options. Different levels of aggregations are available: per node, per namespace, per owner or per pod/service). For instance, it allows to identify biggest talkers in different contexts: top X inter-namespace flows, or top X pod-to-pod flows within a namespace, etc.
 
 The watched time interval can be adjusted, as well as the refresh frequency, hence you can get an almost live view on the cluster traffic. This also applies to the other pages described below.
 
@@ -123,17 +123,17 @@ A couple of settings deserve special attention:
 
 - Sampling (`spec.agent.ebpf.sampling` and `spec.agent.ipfix.sampling`): a value of `100` means: one flow every 100 is sampled. `1` means all flows are sampled. The lower it is, the more flows you get, and the more accurate are derived metrics, but the higher amount of resources are consumed. By default, sampling is set to 50 (ie. 1:50) for eBPF and 400 (1:400) for IPFIX. Note that more sampled flows also means more storage needed. We recommend to start with default values and refine empirically, to figure out which setting your cluster can manage.
 
-- Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned in the _Getting Started_ section, but you may have to configure differently if you used another installation method.
+- Loki (`spec.loki`): configure here how to reach Loki. The default URL values match the Loki quick install paths mentioned in the _Getting Started_ section, but you may have to configure differently if you used another installation method. You will find more information in our guides for deploying Loki: [with Loki Operator](https://github.com/netobserv/documents/blob/main/loki_operator.md), or our alternative ["distributed Loki" guide](https://github.com/netobserv/documents/blob/main/loki_distributed.md).
 
 - Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](./docs/QuickFilters.md).
 
-- Kafka (`spec.deploymentModel: KAFKA` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created. For convenience, we provide a quick deployment using [strimzi](https://strimzi.io/): run `make deploy-kafka` from the repository.
+- Kafka (`spec.deploymentModel: KAFKA` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability. It's also an option to consider when you have a bursty traffic. [This page](https://www.redhat.com/en/topics/integration/what-is-apache-kafka) provides some guidance on why to use Kafka. When configured to use Kafka, NetObserv operator assumes it is already deployed and a topic is created. For convenience, we provide a quick deployment using [Strimzi](https://strimzi.io/): run `make deploy-kafka` from the repository.
 
-- Exporters (`spec.exporters`, _experimental_) an optional list of exporters to which to send enriched flows. Currently only KAFKA is supported. This allows you to define any custom storage or processing that can read from Kafka. This feature is flagged as _experimental_ as it has not been thoroughly or stress tested yet, so use at your own risks.
+- Exporters (`spec.exporters`, _experimental_) an optional list of exporters to which to send enriched flows. Currently only KAFKA is supported. This allows you to define any custom storage or processing that can read from Kafka. This feature is flagged as _experimental_ as it has not been thoroughly or stress tested yet, so use at your own risk.
 
 ### Performance fine-tuning
 
-In addition to sampling, other settings can help you get an optimal setup without compromising on the observability.
+In addition to sampling and using Kafka or not, other settings can help you get an optimal setup without compromising on the observability.
 
 Here is what you should pay attention to:
 
@@ -314,7 +314,7 @@ spec:
   - netobserv-plugin
 ```
 
-If the new dashboards still don't show up, try clearing your browser cache and refreshing. Check also the `netobserv-console-plugin-...` pod status and logs.
+If the new views still don't show up, try clearing your browser cache and refreshing. Check also the `netobserv-console-plugin-...` pod status and logs.
 
 ```bash
 kubectl get pods -n netobserv -l app=netobserv-plugin

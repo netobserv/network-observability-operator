@@ -135,7 +135,7 @@ type FlowCollectorIPFIX struct {
 	//+kubebuilder:default:=false
 	// forceSampleAll allows disabling sampling in the IPFIX-based flow reporter.
 	// It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability.
-	// If you REALLY want to do that, set this flag to true. Use at your own risks.
+	// If you REALLY want to do that, set this flag to true. Use at your own risk.
 	// When it is set to true, the value of "sampling" is ignored.
 	ForceSampleAll bool `json:"forceSampleAll,omitempty" mapstructure:"-"`
 
