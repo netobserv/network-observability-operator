@@ -9,8 +9,8 @@ BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
 BUILD_SHA := $(shell git rev-parse --short HEAD)
 
 # Other component versions when building bundle / release
-PREVIOUS_VERSION ?= v0.1.4
-BUNDLE_VERSION ?= 0.2.0
+PREVIOUS_VERSION ?= v0.2.0
+BUNDLE_VERSION ?= 1.0.0
 # console plugin
 export PLG_VERSION ?= v0.1.5
 # flowlogs-pipeline
@@ -29,7 +29,7 @@ PORT_FWD ?= true
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
 # - use the CHANNELS as arg of the bundle target (e.g make bundle CHANNELS=candidate,fast,stable)
 # - use environment variables to overwrite this value (e.g export CHANNELS="candidate,fast,stable")
-CHANNELS := v0.2.x
+CHANNELS := v1.0.x
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
 endif
@@ -39,7 +39,7 @@ endif
 # To re-generate a bundle for any other default channel without changing the default setup, you can:
 # - use the DEFAULT_CHANNEL as arg of the bundle target (e.g make bundle DEFAULT_CHANNEL=stable)
 # - use environment variables to overwrite this value (e.g export DEFAULT_CHANNEL="stable")
-DEFAULT_CHANNEL := v0.2.x
+DEFAULT_CHANNEL := v1.0.x
 ifneq ($(origin DEFAULT_CHANNEL), undefined)
 BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
