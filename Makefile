@@ -176,7 +176,9 @@ uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified i
 
 deploy: generate kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	cd config/manager && $(KUSTOMIZE) edit set label version:$(VERSION)
+	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
+	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
+	$(SED) -i -r 's~console-plugin:.+~console-plugin:main~' ./config/manager/manager.yaml
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
@@ -237,9 +239,9 @@ endif
 bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPSDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG_FOR_BUNDLE)
-	$(SED) -i -r 's~ebpf-agent:main~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' ./config/manager/manager.yaml
+	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
+	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:$(FLP_VERSION)~' ./config/manager/manager.yaml
+	$(SED) -i -r 's~console-plugin:.+~console-plugin:$(PLG_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?/~blob/$(BUNDLE_VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
 	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?/~blob/$(BUNDLE_VERSION)/~g' ./config/manifests/bases/description-upstream.md
 	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?/~blob/$(BUNDLE_VERSION)/~g' ./config/manifests/bases/description-ocp.md
