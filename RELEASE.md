@@ -31,20 +31,20 @@ Once all sub-components are released (or have a release candidate), we can proce
 
 ```bash
 # Previous operator version
-previous="v0.1.4"
+previous="v0.2.0"
 # Set desired operator version - CAREFUL, no leading "v" here
-version="0.2.0"
+version="0.2.1-rc0"
 # Set console plugin released version
-plgv="v0.1.5"
+plgv="v0.1.6-rc0"
 # Set flowlogs-pipeline released version
-flpv="v0.1.4"
+flpv="v0.1.5-rc0"
 # Set ebpf-agent released version
-bpfv="v0.2.1"
+bpfv="v0.2.2-rc0"
 
 vv=v$version
 test_branch=test-$vv
 
-VERSION="$version" PLG_VERSION="$plgv" FLP_VERSION="$flpv" BPF_VERSION="$bpfv" PREVIOUS_VERSION="$previous" make bundle
+BUNDLE_VERSION="$version" PLG_VERSION="$plgv" FLP_VERSION="$flpv" BPF_VERSION="$bpfv" PREVIOUS_VERSION="$previous" make bundle
 
 git commit -a -m "Prepare release $vv"
 # Push to a test branch, and tag for release

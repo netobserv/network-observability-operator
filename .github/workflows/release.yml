@@ -53,7 +53,7 @@ jobs:
           tags: ${{ steps.validate_tag.outputs.tag }}
           registry: ${{ env.REGISTRY }}
       - name: build bundle
-        run: VERSION=${{ steps.validate_tag.outputs.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make bundle-build
+        run: BUNDLE_VERSION=${{ steps.validate_tag.outputs.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make bundle-build
       - name: push bundle to quay.io
         id: push-bundle
         uses: redhat-actions/push-to-registry@v2
@@ -62,7 +62,7 @@ jobs:
           tags: v${{ steps.validate_tag.outputs.tag }}
           registry: ${{ env.REGISTRY }}
       - name: build catalog
-        run: VERSION=${{ steps.validate_tag.outputs.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make catalog-build
+        run: BUNDLE_VERSION=${{ steps.validate_tag.outputs.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make catalog-build
       - name: push catalog to quay.io
         id: push-catalog
         uses: redhat-actions/push-to-registry@v2
