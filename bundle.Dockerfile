@@ -7,7 +7,7 @@ LABEL operators.operatorframework.io.bundle.metadata.v1=metadata/
 LABEL operators.operatorframework.io.bundle.package.v1=netobserv-operator
 LABEL operators.operatorframework.io.bundle.channels.v1=v0.2.x
 LABEL operators.operatorframework.io.bundle.channel.default.v1=v0.2.x
-LABEL operators.operatorframework.io.metrics.builder=operator-sdk-v1.22.2
+LABEL operators.operatorframework.io.metrics.builder=operator-sdk-v1.25.2
 LABEL operators.operatorframework.io.metrics.mediatype.v1=metrics+v1
 LABEL operators.operatorframework.io.metrics.project_layout=go.kubebuilder.io/v3
 
