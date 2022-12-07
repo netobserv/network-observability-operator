@@ -164,7 +164,11 @@ ci-images-build: image-build
 	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMG) -t $(IMG_SHA) -f ./shortlived.Dockerfile .
 
 image-push: ## Push OCI image with the manager.
+ifneq (,$(findstring quay.io/netobserv/,$(IMG)))
+	$(error Do not push to quay.io/netobserv)
+else
 	$(OCI_BIN) push ${IMG}
+endif
 
 ##@ Deployment
 
