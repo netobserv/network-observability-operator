@@ -58,7 +58,7 @@ The release script should be triggered ([check github actions](https://github.co
 At this point, you can test the bundle / catalog on your cluster:
 
 ```bash
-VERSION="$version" make catalog-deploy
+BUNDLE_VERSION="$version" make catalog-deploy
 ```
 
 When everything is ok, push to main and delete the test branch
