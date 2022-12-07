@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: ['1.17']
+        go: ['1.18']
     name: Checking bundle up-to-date
     steps:
     - name: install make
