@@ -9,14 +9,14 @@ BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
 BUILD_SHA := $(shell git rev-parse --short HEAD)
 
 # Other component versions when building bundle / release
-PREVIOUS_VERSION ?= v0.1.4
-BUNDLE_VERSION ?= 0.2.0
+PREVIOUS_VERSION ?= v0.2.0
+BUNDLE_VERSION ?= 0.2.1
 # console plugin
-export PLG_VERSION ?= v0.1.5
+export PLG_VERSION ?= v0.1.6
 # flowlogs-pipeline
-export FLP_VERSION ?= v0.1.4
+export FLP_VERSION ?= v0.1.5
 # eBPF agent
-export BPF_VERSION ?= v0.2.1
+export BPF_VERSION ?= v0.2.2
 
 # Allows building bundles in Mac replacing BSD 'sed' command by GNU-compatible 'gsed'
 SED ?= sed
@@ -164,7 +164,11 @@ ci-images-build: image-build
 	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMG) -t $(IMG_SHA) -f ./shortlived.Dockerfile .
 
 image-push: ## Push OCI image with the manager.
+ifneq (,$(findstring quay.io/netobserv/,$(IMG)))
+	$(error Do not push to quay.io/netobserv)
+else
 	$(OCI_BIN) push ${IMG}
+endif
 
 ##@ Deployment
 
@@ -227,7 +231,7 @@ ifeq (,$(shell which operator-sdk 2>/dev/null))
 	set -e ;\
 	mkdir -p $(dir $(OPSDK)) ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPSDK) https://github.com/operator-framework/operator-sdk/releases/download/v1.22.1/operator-sdk_$${OS}_$${ARCH} ;\
+	curl -sSLo $(OPSDK) https://github.com/operator-framework/operator-sdk/releases/download/v1.25.2/operator-sdk_$${OS}_$${ARCH} ;\
 	chmod +x $(OPSDK) ;\
 	}
 else
@@ -290,7 +294,7 @@ endif
 BUNDLE_IMGS ?= $(BUNDLE_IMG)
 
 # The image tag given to the resulting catalog image (e.g. make catalog-build CATALOG_IMG=example.com/operator-catalog:v0.2.0).
-CATALOG_IMG ?= $(IMAGE_TAG_BASE)-catalog:v$(VERSION)
+CATALOG_IMG ?= $(IMAGE_TAG_BASE)-catalog:v$(BUNDLE_VERSION)
 
 # Set CATALOG_BASE_IMG to an existing catalog image tag to add $BUNDLE_IMGS to that image.
 ifneq ($(origin CATALOG_BASE_IMG), undefined)
