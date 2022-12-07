@@ -18,8 +18,8 @@ For a quick try that is not suitable for production and not scalable (it deploys
 
 ```
 kubectl create namespace netobserv
-kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/3c42f1ff9c775dd0b746a92dc08c043f9a05f47f/examples/zero-click-loki/1-storage.yaml) -n netobserv
-kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/3c42f1ff9c775dd0b746a92dc08c043f9a05f47f/examples/zero-click-loki/2-loki.yaml) -n netobserv
+kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/252bb624cf0425a1b66f59ce68fb939f246ef77b/examples/zero-click-loki/1-storage.yaml) -n netobserv
+kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/252bb624cf0425a1b66f59ce68fb939f246ef77b/examples/zero-click-loki/2-loki.yaml) -n netobserv
 ```
 
 ### Kafka
@@ -32,7 +32,7 @@ kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents
 
 ## Configuration
 
-The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/0.2.1-rc1/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/0.2.1-rc1/config/samples/flows_v1alpha1_flowcollector.yaml).
+The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/0.2.1/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/0.2.1/config/samples/flows_v1alpha1_flowcollector.yaml).
 
 To edit configuration in cluster, run:
 
@@ -48,7 +48,7 @@ A couple of settings deserve special attention:
 
 - Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned above, but you may have to configure differently if you used another installation method.
 
-- Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/0.2.1-rc1/docs/QuickFilters.md).
+- Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/0.2.1/docs/QuickFilters.md).
 
 - Kafka (`spec.deploymentModel: KAFKA` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created.
 

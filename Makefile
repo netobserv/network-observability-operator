@@ -9,14 +9,14 @@ BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
 BUILD_SHA := $(shell git rev-parse --short HEAD)
 
 # Other component versions when building bundle / release
-PREVIOUS_VERSION ?= v0.1.4
-BUNDLE_VERSION ?= 0.2.0
+PREVIOUS_VERSION ?= v0.2.0
+BUNDLE_VERSION ?= 0.2.1
 # console plugin
-export PLG_VERSION ?= v0.1.5
+export PLG_VERSION ?= v0.1.6
 # flowlogs-pipeline
-export FLP_VERSION ?= v0.1.4
+export FLP_VERSION ?= v0.1.5
 # eBPF agent
-export BPF_VERSION ?= v0.2.1
+export BPF_VERSION ?= v0.2.2
 
 # Allows building bundles in Mac replacing BSD 'sed' command by GNU-compatible 'gsed'
 SED ?= sed
