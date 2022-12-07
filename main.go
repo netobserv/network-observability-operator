@@ -23,6 +23,8 @@ import (
 	"os"
 
 	"github.com/netobserv/network-observability-operator/controllers/operator"
+	"go.uber.org/zap/zapcore"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
@@ -85,6 +87,7 @@ func main() {
 	flag.BoolVar(&versionFlag, "v", false, "print version")
 	opts := zap.Options{
 		Development: true,
+		TimeEncoder: zapcore.ISO8601TimeEncoder,
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()

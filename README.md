@@ -2,7 +2,7 @@
 
 NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by the NetObserv eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
 
-The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When used in OpenShift, new dashboards are available in the Console.
+The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When used in OpenShift, new views are available in the Console.
 
 ## Getting Started
 
@@ -14,7 +14,7 @@ NetObserv Operator is available in [OperatorHub](https://operatorhub.io/operator
 
 ![OpenShift OperatorHub search](./docs/assets/operatorhub-search.png)
 
-Please read the operator description. You will need to install Loki, some instructions are provided there.
+Please read the [operator description in OLM](./config/manifests/bases/description-upstream.md). You will need to install Loki, some instructions are provided there.
 
 After the operator is installed, create a `FlowCollector` resource:
 
@@ -69,21 +69,33 @@ _Pre-requisite: OpenShift 4.10 or above_
 
 If the OpenShift Console is detected in the cluster, a console plugin is deployed when a `FlowCollector` is installed. It adds new pages and tabs to the console:
 
-- A flow table, with powerful filtering and display options
+#### Overview metrics
+
+Charts on this page show overall, aggregated metrics on the cluster network. The stats can be refined with comprehensive filtering and display options. Different levels of aggregations are available: per node, per namespace, per owner or per pod/service). For instance, it allows to identify biggest talkers in different contexts: top X inter-namespace flows, or top X pod-to-pod flows within a namespace, etc.
+
+The watched time interval can be adjusted, as well as the refresh frequency, hence you can get an almost live view on the cluster traffic. This also applies to the other pages described below.
+
+![Overview](./docs/assets/overview-dashboard.png)
+
+#### Topology
+
+The topology view represents traffic between elements as a graph. The same filtering and aggregation options as described above are available, plus extra display options e.g. to group element by node, namespaces, etc. A side panel provides contextual information and metrics related to the selected element.
+
+![Topology](./docs/assets/topology-main.png)
+_This screenshot shows the NetObserv architecture itself: Nodes (via eBPF agents) sending traffic (flows) to the collector flowlogs-pipeline, which in turn sends data to Loki. The NetObserv console plugin fetches these flows from Loki._
+
+#### Flow table
+
+The table view shows raw flows, ie. non aggregated, still with the same filtering options, and configurable columns.
 
 ![Flow table](./docs/assets/network-traffic-main.png)
 
-- A network topology, with the same filtering options and several levels of aggregations (nodes, namespaces, owner controllers, pods). A side panel provides contextual insight and metrics.
+#### Integration with existing console views
 
-![Topology](./docs/assets/topology-main.png)
+These views are accessible directly from the main menu, and also as contextual tabs for any Pod, Deployment, Service (etc.) in their details page, with filters set to focus on that particular resource.
 
-These components are accessible directly from the main menu, and also as contextual tabs for any Pod, Deployment, Service (etc.) in their details page.
+![Contextual topology](./docs/assets/topology-pod.png)
 
-![Contextual topology](./docs/assets/topology-deployment.png)
-
-### Standalone console
-
-_Coming soon_
 
 ### Grafana
 
@@ -107,13 +119,85 @@ As it operates cluster-wide, only a single `FlowCollector` is allowed, and it ha
 
 A couple of settings deserve special attention:
 
-- Agent (`spec.agent.type`) can be `EBPF` (default) or `IPFIX`. eBPF is recommended, as it should work in more situations and offers better performances. If you can't, or don't want to use eBPF, note that the IPFIX option is fully functional only when using OVN-Kubernetes CNI. Other CNIs are not officially supported, but you may still be able to configure them manually if they allow IPFIX exports.
+- Agent (`spec.agent.type`) can be `EBPF` (default) or `IPFIX`. eBPF is recommended, as it should work in more situations and offers better performances. If you can't, or don't want to use eBPF, note that the IPFIX option is fully functional only when using [OVN-Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) CNI. Other CNIs are not officially supported, but you may still be able to configure them manually if they allow IPFIX exports.
 
-- Sampling (`spec.agent.ebpf.sampling` and `spec.agent.ipfix.sampling`): 24/7, 1:1 sampled flow collection may consume a non-negligible amount of resources. While we are doing our best to make it a viable option in production, it is still sometimes necessary to mitigate by setting a sampling ratio. A value of `100` means: one flow every 100 is sampled. `1` means all flows are sampled. The lower it is, the more flows you get, and the more accurate are derived metrics. By default, sampling is set to 50 (ie. 1:50) for eBPF and 400 (1:400) for IPFIX. Note that more sampled flows also means more storage needed. We recommend to start with default values and refine empirically, to figure out which setting your cluster can manage.
+- Sampling (`spec.agent.ebpf.sampling` and `spec.agent.ipfix.sampling`): a value of `100` means: one flow every 100 is sampled. `1` means all flows are sampled. The lower it is, the more flows you get, and the more accurate are derived metrics, but the higher amount of resources are consumed. By default, sampling is set to 50 (ie. 1:50) for eBPF and 400 (1:400) for IPFIX. Note that more sampled flows also means more storage needed. We recommend to start with default values and refine empirically, to figure out which setting your cluster can manage.
 
-- Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned in the _Getting Started_ section, but you may have to configure differently if you used another installation method.
+- Loki (`spec.loki`): configure here how to reach Loki. The default URL values match the Loki quick install paths mentioned in the _Getting Started_ section, but you may have to configure differently if you used another installation method. You will find more information in our guides for deploying Loki: [with Loki Operator](https://github.com/netobserv/documents/blob/main/loki_operator.md), or our alternative ["distributed Loki" guide](https://github.com/netobserv/documents/blob/main/loki_distributed.md).
 
-- Kafka (`spec.kafka`): when enabled, integrate the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created. For convenience, we provide a quick deployment using [strimzi](https://strimzi.io/): run `make deploy-kafka` from the repository.
+- Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](./docs/QuickFilters.md).
+
+- Kafka (`spec.deploymentModel: KAFKA` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability. It's also an option to consider when you have a bursty traffic. [This page](https://www.redhat.com/en/topics/integration/what-is-apache-kafka) provides some guidance on why to use Kafka. When configured to use Kafka, NetObserv operator assumes it is already deployed and a topic is created. For convenience, we provide a quick deployment using [Strimzi](https://strimzi.io/): run `make deploy-kafka` from the repository.
+
+- Exporters (`spec.exporters`, _experimental_) an optional list of exporters to which to send enriched flows. Currently only KAFKA is supported. This allows you to define any custom storage or processing that can read from Kafka. This feature is flagged as _experimental_ as it has not been thoroughly or stress tested yet, so use at your own risk.
+
+### Performance fine-tuning
+
+In addition to sampling and using Kafka or not, other settings can help you get an optimal setup without compromising on the observability.
+
+Here is what you should pay attention to:
+
+- Resource requirements and limits (`spec.agent.ebpf.resources`, `spec.agent.processor.resources`): adapt the resource requirements and limits to the load and memory usage you expect on your cluster. The default limits (800MB) should be sufficient for most medium sized clusters. You can read more about reqs and limits [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
+
+- eBPF agent's cache max flows (`spec.agent.ebpf.cacheMaxFlows`) and timeout (`spec.agent.ebpf.cacheActiveTimeout`) control how often flows are reported by the agents. The higher are `cacheMaxFlows` and `cacheActiveTimeout`, the less traffic will be generated by the agents themselves, which also ties with less CPU load. But on the flip side, it leads to a slightly higher memory consumption, and might generate more latency in the flow collection.
+
+- It is possible to reduce the overall observed traffic by restricting or excluding interfaces via `spec.agent.ebpf.interfaces` and `spec.agent.ebpf.excludeInterfaces`. Note that the interface names may vary according to the CNI used.
+
+- The eBPF agent offers more advanced settings via [environment variables](https://github.com/netobserv/netobserv-ebpf-agent/blob/main/docs/config.md) that you can set through `spec.agent.ebpf.env`.
+
+#### Loki
+
+The `FlowCollector` resource includes configuration of the Loki client, which is used by the processor (`flowlogs-pipeline`) to connect and send data to Loki for storage. They impact two things: batches and retries.
+
+- `spec.loki.batchWait` and `spec.loki.batchSize` control the batching mechanism, ie. how often data is flushed out to Loki. Like in the eBPF agent batching, higher values will generate fewer traffic and consume less CPU, however it will increase a bit the memory consumption of `flowlogs-pipeline`, and may increase a bit collection latency.
+
+- `spec.loki.minBackoff`, `spec.loki.maxBackoff` and `spec.loki.maxRetries` control the retry mechanism. Retries may happen when Loki is unreachable or when it returns errors. Often, it is due to the rate limits configured on Loki server. When such situation occurs, it might not always be the best solution to increase rate limits (on server configuration side) or to increase retries. Increasing rate limits will put more pressure on Loki, so expect more memory and CPU usage, and also more traffic. Increasing retries will put more pressure on `flowlogs-pipeline`, as it will retain data for longer and accumulate more flows to send. When all the retry attempts fail, flows are simply dropped. Flow drops are counted in the metric `netobserv_loki_dropped_entries_total`.
+
+On the Loki server side, configuration differs depending on how Loki was installed, e.g. via Helm chart, Loki Operator, etc. Nevertheless, here are a couple of settings that may impact the flow processing pipeline:
+
+- Rate limits ([cf Loki documentation](https://grafana.com/docs/loki/latest/configuration/#limits_config)), especially ingestion rate limit, ingestion burst size, per-stream rate limit and burst size. When these rate limits are reached, Loki returns an error when `flowlogs-pipeline` tries to send batches, visible in logs. A good practice is to define an alert, to get notified when these limits are reached: [cf this example](https://github.com/netobserv/documents/blob/main/examples/distributed-loki/alerting/loki-ratelimit-alert.yaml). It uses a metrics provided by the Loki operator: `loki_request_duration_seconds_count`. In case you don't use the Loki operator, you can replace it by the same metric provided by NetObserv Loki client, named `netobserv_loki_request_duration_seconds_count`.
+
+- Max active streams / max streams per user: this limit is reached when too many streams are created. In Loki terminology, a stream is a given set of labels (keys and values) used for indexing. NetObserv defines labels for source and destination namespaces and pod owners (ie. aggregated workloads, such as Deployments). So the more workloads are running and generating traffic on the cluster, the more chances there are to hit this limit, when it's set. We recommend setting a high limit or turning it off (0 stands for unlimited).
+
+#### With Kafka
+
+More performance fine-tuning is possible when using Kafka, ie. with `spec.deploymentModel` set to `KAFKA`:
+
+- You can set the size of the batches (in bytes) sent by the eBPF agent to Kafka, with `spec.agent.ebpf.kafkaBatchSize`. It has a similar impact than `cacheMaxFlows` mentioned above, with higher values generating less traffic and less CPU usage, but more memory consumption and more latency. It is recommended to keep these two settings somewhat aligned (ie. do not set a super low `cacheMaxFlows` with high `kafkaBatchSize`, or the other way around). We expect the default values to be a good fit for most environments.
+
+- If you find that the Kafka consumer might be a bottleneck, you can increase the number of replicas with `spec.processor.kafkaConsumerReplicas`, or set up an horizontal autoscaler with `spec.processor.kafkaConsumerAutoscaler`.
+
+- Other advanced settings for Kafka include `spec.processor.kafkaConsumerQueueCapacity`, that defines the capacity of the internal message queue used in the Kafka consumer client, and `spec.processor.kafkaConsumerBatchSize`, which indicates to the broker the maximum batch size, in bytes, that the consumer will read.
+
+
+### Securing data and communications
+
+NetObserv is currently meant to be used by cluster / network admins. There is not yet multi-tenancy implemented, which means a user having access to the data will be able to see *all* the data. It is up to the cluster admins to restrict the access to the NetObserv and Loki namespaces and services according to their security policy.
+
+By default, communications between internal components are not secured. It is possible to set up TLS for several communications:
+
+- Between processor (`flowlogs-pipeline`) and Loki, by setting `spec.loki.tls`.
+- With Kafka (both on producer and consumer sides), by setting `spec.kafka.tls`. Mutual TLS is supported here.
+- The metrics server running in the processor (`flowlogs-pipeline`) can listen using TLS, via `spec.processor.metrics.server.tls`.
+- The Console plugin server always uses TLS.
+
+To make authenticated queries to Loki, when using the Loki Operator, there are two options:
+
+- per-user auth: set `spec.loki.authToken` to `FORWARD` in the `FlowCollector` resource. The console plugin will forward the logged-in Console user token to Loki. To get access to the flow logs, users must have the following permission:
+
+```yaml
+- apiGroups:
+  - 'loki.grafana.com'
+  resources:
+  - network
+  resourceNames:
+  - logs
+  verbs:
+  - 'get'
+```
+
+- per-app auth, ie. with NetObserv components having access to the logs using their own service account, regardless of the user permissions. For this mode, set `spec.loki.authToken` to `HOST` and setup `ClusterRole` for `flowlogs-pipeline` and `netobserv-plugin`, e.g: [role.yaml](https://github.com/netobserv/documents/blob/main/examples/loki-stack/role.yaml).
+
 
 ## Development & building from sources
 
@@ -230,7 +314,7 @@ spec:
   - netobserv-plugin
 ```
 
-If the new dashboards still don't show up, try clearing your browser cache and refreshing. Check also the `netobserv-console-plugin-...` pod status and logs.
+If the new views still don't show up, try clearing your browser cache and refreshing. Check also the `netobserv-console-plugin-...` pod status and logs.
 
 ```bash
 kubectl get pods -n netobserv -l app=netobserv-plugin

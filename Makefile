@@ -9,7 +9,8 @@ BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
 BUILD_SHA := $(shell git rev-parse --short HEAD)
 
 # Other component versions when building bundle / release
-PREVIOUS_VERSION ?= tochange
+PREVIOUS_VERSION ?= v0.1.4
+BUNDLE_VERSION ?= 0.2.0
 # console plugin
 export PLG_VERSION ?= v0.1.5
 # flowlogs-pipeline
@@ -28,7 +29,7 @@ PORT_FWD ?= true
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
 # - use the CHANNELS as arg of the bundle target (e.g make bundle CHANNELS=candidate,fast,stable)
 # - use environment variables to overwrite this value (e.g export CHANNELS="candidate,fast,stable")
-CHANNELS := v1.0.x
+CHANNELS := v0.2.x
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
 endif
@@ -38,7 +39,7 @@ endif
 # To re-generate a bundle for any other default channel without changing the default setup, you can:
 # - use the DEFAULT_CHANNEL as arg of the bundle target (e.g make bundle DEFAULT_CHANNEL=stable)
 # - use environment variables to overwrite this value (e.g export DEFAULT_CHANNEL="stable")
-DEFAULT_CHANNEL := v1.0.x
+DEFAULT_CHANNEL := v0.2.x
 ifneq ($(origin DEFAULT_CHANNEL), undefined)
 BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
@@ -48,15 +49,16 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # This variable is used to construct full image tags for bundle and catalog images.
 #
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
-# netobserv/network-observability-operator-bundle:$VERSION and netobserv/network-observability-operator-catalog:$VERSION.
+# netobserv/network-observability-operator-bundle:$BUNDLE_VERSION and netobserv/network-observability-operator-catalog:$BUNDLE_VERSION.
 IMAGE_TAG_BASE ?= quay.io/netobserv/network-observability-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
-BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
+BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
 
 # Image URL to use all building/pushing image targets
 IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
+IMG_FOR_BUNDLE ?= $(IMAGE_TAG_BASE):$(BUNDLE_VERSION)
 IMG_SHA = $(IMAGE_TAG_BASE):$(BUILD_SHA)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
@@ -174,7 +176,9 @@ uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified i
 
 deploy: generate kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	cd config/manager && $(KUSTOMIZE) edit set label version:$(VERSION)
+	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
+	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
+	$(SED) -i -r 's~console-plugin:.+~console-plugin:main~' ./config/manager/manager.yaml
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
@@ -234,22 +238,26 @@ endif
 .PHONY: bundle-prepare
 bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPSDK) generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(SED) -i -r 's~ebpf-agent:main~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~flowlogs-pipeline:main~flowlogs-pipeline:$(FLP_VERSION)~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~console-plugin:main~console-plugin:$(PLG_VERSION)~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)\?/~blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG_FOR_BUNDLE)
+	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
+	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:$(FLP_VERSION)~' ./config/manager/manager.yaml
+	$(SED) -i -r 's~console-plugin:.+~console-plugin:$(PLG_VERSION)~' ./config/manager/manager.yaml
+	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?/~blob/$(BUNDLE_VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?/~blob/$(BUNDLE_VERSION)/~g' ./config/manifests/bases/description-upstream.md
+	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?/~blob/$(BUNDLE_VERSION)/~g' ./config/manifests/bases/description-ocp.md
 	$(SED) -i -r 's~replaces: netobserv-operator\.v.*~replaces: netobserv-operator\.$(PREVIOUS_VERSION)~' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
 	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 
 .PHONY: bundle
 bundle: bundle-prepare
-	$(KUSTOMIZE) build config/manifests | $(SED) -e 's~:container-image:~$(IMG)~' | $(SED) -e 's~:created-at:~$(DATE)~' | $(OPSDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	$(OPSDK) bundle validate ./bundle
-
-.PHONY: bundle-for-test
-bundle-for-test: bundle-prepare
-	$(KUSTOMIZE) build config/manifests | $(SED) -e 's~:container-image:~$(IMG)~' | $(SED) -e 's~:created-at:~$(DATE)~' | $(OPSDK) generate bundle -q --overwrite --version 0.0.0-$(VERSION) $(BUNDLE_METADATA_OPTS)
+	$(SED) -e 's/^/    /' config/manifests/bases/description-upstream.md > tmp-desc
+	$(KUSTOMIZE) build config/manifests \
+		| $(SED) -e 's~:container-image:~$(IMG_FOR_BUNDLE)~' \
+		| $(SED) -e 's~:created-at:~$(DATE)~' \
+		| $(SED) -e "/':full-description:'/r tmp-desc" \
+		| $(SED) -e "s/':full-description:'/|\-/" \
+		| $(OPSDK) generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
+	rm tmp-desc
 	$(OPSDK) bundle validate ./bundle
 
 .PHONY: bundle-build

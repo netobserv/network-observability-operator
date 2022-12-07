@@ -167,6 +167,7 @@ go.uber.org/atomic
 # go.uber.org/multierr v1.7.0
 go.uber.org/multierr
 # go.uber.org/zap v1.19.1
+## explicit
 go.uber.org/zap
 go.uber.org/zap/buffer
 go.uber.org/zap/internal/bufferpool
