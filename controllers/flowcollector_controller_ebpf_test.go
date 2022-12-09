@@ -46,11 +46,9 @@ func flowCollectorEBPFSpecs() {
 					Namespace:       operatorNamespace,
 					DeploymentModel: flowsv1alpha1.DeploymentModelDirect,
 					Processor: flowsv1alpha1.FlowCollectorFLP{
-						Port:     9999,
-						LogLevel: "error",
-						Debug: flowsv1alpha1.DebugConfig{
-							ImagePullPolicy: "Never",
-						},
+						Port:            9999,
+						ImagePullPolicy: "Never",
+						LogLevel:        "error",
 					},
 					Agent: flowsv1alpha1.FlowCollectorAgent{
 						Type: "EBPF",

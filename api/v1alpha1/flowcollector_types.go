@@ -150,6 +150,11 @@ type FlowCollectorIPFIX struct {
 type FlowCollectorEBPF struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
+	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
+	//+kubebuilder:default:=IfNotPresent
+	// imagePullPolicy is the Kubernetes pull policy for the image defined above
+	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
+
 	//+kubebuilder:default:={requests:{memory:"50Mi",cpu:"100m"},limits:{memory:"800Mi"}}
 	// resources are the compute resources required by this container.
 	// Cannot be updated.
@@ -298,6 +303,11 @@ type FlowCollectorFLP struct {
 	//+optional
 	// profilePort allows setting up a Go pprof profiler listening to this port
 	ProfilePort int32 `json:"profilePort,omitempty"`
+
+	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
+	//+kubebuilder:default:=IfNotPresent
+	// imagePullPolicy is the Kubernetes pull policy for the image defined above
+	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 
 	// Metrics define the processor configuration regarding metrics
 	Metrics FLPMetrics `json:"metrics,omitempty"`
@@ -493,6 +503,11 @@ type FlowCollectorConsolePlugin struct {
 	// port is the plugin service port
 	Port int32 `json:"port,omitempty"`
 
+	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
+	//+kubebuilder:default:=IfNotPresent
+	// imagePullPolicy is the Kubernetes pull policy for the image defined above
+	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
+
 	//+kubebuilder:default:={requests:{memory:"50Mi",cpu:"100m"},limits:{memory:"100Mi"}}
 	// resources, in terms of compute resources, required by this container.
 	// Cannot be updated.
@@ -516,12 +531,6 @@ type FlowCollectorConsolePlugin struct {
 	//+kubebuilder:default:={{name:"Applications",filter:{"src_namespace!":"openshift-,netobserv","dst_namespace!":"openshift-,netobserv"},default:true},{name:"Infrastructure",filter:{"src_namespace":"openshift-,netobserv","dst_namespace":"openshift-,netobserv"}},{name:"Pods network",filter:{"src_kind":"Pod","dst_kind":"Pod"},default:true},{name:"Services network",filter:{"dst_kind":"Service"}}}
 	// quickFilters configures quick filter presets for the Console plugin
 	QuickFilters []QuickFilter `json:"quickFilters,omitempty"`
-
-	// Debug allows setting some aspects of the internal configuration of the Console Plugin.
-	// This section is aimed exclusively for debugging. Users setting its values do it at their
-	// own risk.
-	// +optional
-	Debug PluginDebugConfig `json:"debug,omitempty"`
 }
 
 // Configuration of the port to service name translation feature of the console plugin
@@ -614,26 +623,12 @@ type ClientTLS struct {
 // DebugConfig allows tweaking some aspects of the internal configuration of the agent and FLP.
 // They are aimed exclusively for debugging. Users setting these values do it at their own risk.
 type DebugConfig struct {
-	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
-	//+kubebuilder:default:=IfNotPresent
-	// imagePullPolicy is the Kubernetes pull policy for the component image.
-	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
-
 	// env allows passing custom environment variables to the NetObserv Agent. Useful for passing
 	// some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be
 	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
 	// in edge debug/support scenarios.
 	//+optional
 	Env map[string]string `json:"env,omitempty"`
-}
-
-// PluginDebugConfig allows tweaking some aspects of the internal configuration of the console plugin.
-// They are aimed exclusively for debugging. Users setting these values do it at their own risk.
-type PluginDebugConfig struct {
-	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
-	//+kubebuilder:default:=IfNotPresent
-	// imagePullPolicy is the Kubernetes pull policy for the component image.
-	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 }
 
 // Add more exporter types below

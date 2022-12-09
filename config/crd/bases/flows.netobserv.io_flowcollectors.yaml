@@ -89,15 +89,6 @@ spec:
                               descriptor, as they are only useful in edge debug/support
                               scenarios.
                             type: object
-                          imagePullPolicy:
-                            default: IfNotPresent
-                            description: imagePullPolicy is the Kubernetes pull policy
-                              for the component image.
-                            enum:
-                            - IfNotPresent
-                            - Always
-                            - Never
-                            type: string
                         type: object
                       excludeInterfaces:
                         default:
@@ -110,6 +101,15 @@ spec:
                         items:
                           type: string
                         type: array
+                      imagePullPolicy:
+                        default: IfNotPresent
+                        description: imagePullPolicy is the Kubernetes pull policy
+                          for the image defined above
+                        enum:
+                        - IfNotPresent
+                        - Always
+                        - Never
+                        type: string
                       interfaces:
                         description: interfaces contains the interface names from
                           where flows will be collected. If empty, the agent will
@@ -805,21 +805,15 @@ spec:
                         - ENABLED
                         type: string
                     type: object
-                  debug:
-                    description: Debug allows setting some aspects of the internal
-                      configuration of the Console Plugin. This section is aimed exclusively
-                      for debugging. Users setting its values do it at their own risk.
-                    properties:
-                      imagePullPolicy:
-                        default: IfNotPresent
-                        description: imagePullPolicy is the Kubernetes pull policy
-                          for the component image.
-                        enum:
-                        - IfNotPresent
-                        - Always
-                        - Never
-                        type: string
-                    type: object
+                  imagePullPolicy:
+                    default: IfNotPresent
+                    description: imagePullPolicy is the Kubernetes pull policy for
+                      the image defined above
+                    enum:
+                    - IfNotPresent
+                    - Always
+                    - Never
+                    type: string
                   logLevel:
                     default: info
                     description: logLevel for the console plugin backend
@@ -1321,15 +1315,6 @@ spec:
                           descriptor, as they are only useful in edge debug/support
                           scenarios.
                         type: object
-                      imagePullPolicy:
-                        default: IfNotPresent
-                        description: imagePullPolicy is the Kubernetes pull policy
-                          for the component image.
-                        enum:
-                        - IfNotPresent
-                        - Always
-                        - Never
-                        type: string
                     type: object
                   dropUnusedFields:
                     default: true
@@ -1350,6 +1335,15 @@ spec:
                     maximum: 65535
                     minimum: 1
                     type: integer
+                  imagePullPolicy:
+                    default: IfNotPresent
+                    description: imagePullPolicy is the Kubernetes pull policy for
+                      the image defined above
+                    enum:
+                    - IfNotPresent
+                    - Always
+                    - Never
+                    type: string
                   kafkaConsumerAutoscaler:
                     description: kafkaConsumerAutoscaler spec of a horizontal pod
                       autoscaler to set up for flowlogs-pipeline-transformer, which

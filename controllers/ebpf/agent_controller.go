@@ -193,7 +193,7 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 					Containers: []corev1.Container{{
 						Name:            constants.EBPFAgentName,
 						Image:           c.config.EBPFAgentImage,
-						ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.Debug.ImagePullPolicy),
+						ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.ImagePullPolicy),
 						Resources:       coll.Spec.Agent.EBPF.Resources,
 						SecurityContext: c.securityContext(coll),
 						Env:             c.envConfig(coll),

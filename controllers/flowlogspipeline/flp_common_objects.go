@@ -195,7 +195,7 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 	container := corev1.Container{
 		Name:            constants.FLPName,
 		Image:           b.image,
-		ImagePullPolicy: corev1.PullPolicy(b.desired.Processor.Debug.ImagePullPolicy),
+		ImagePullPolicy: corev1.PullPolicy(b.desired.Processor.ImagePullPolicy),
 		Args:            []string{fmt.Sprintf(`--config=%s/%s`, configPath, configFile)},
 		Resources:       *b.desired.Processor.Resources.DeepCopy(),
 		VolumeMounts:    volumeMounts,

@@ -18,6 +18,7 @@ metadata:
                 "excludeInterfaces": [
                   "lo"
                 ],
+                "imagePullPolicy": "IfNotPresent",
                 "interfaces": [],
                 "kafkaBatchSize": 10485760,
                 "logLevel": "info",
@@ -66,6 +67,7 @@ metadata:
                 "minReplicas": 1,
                 "status": "DISABLED"
               },
+              "imagePullPolicy": "IfNotPresent",
               "logLevel": "info",
               "port": 9001,
               "portNaming": {
@@ -152,6 +154,7 @@ metadata:
               "dropUnusedFields": true,
               "enableKubeProbes": true,
               "healthPort": 8080,
+              "imagePullPolicy": "IfNotPresent",
               "kafkaConsumerAutoscaler": null,
               "kafkaConsumerBatchSize": 10485760,
               "kafkaConsumerQueueCapacity": 1000,
@@ -185,7 +188,7 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:0.2.1
-    createdAt: "2022-12-07T09:00:48Z"
+    createdAt: "2022-12-09T12:12:52Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.25.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3

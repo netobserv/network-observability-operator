@@ -245,6 +245,16 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>imagePullPolicy</b></td>
+        <td>enum</td>
+        <td>
+          imagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
+          <br/>
+            <i>Enum</i>: IfNotPresent, Always, Never<br/>
+            <i>Default</i>: IfNotPresent<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>interfaces</b></td>
         <td>[]string</td>
         <td>
@@ -322,16 +332,6 @@ Debug allows setting some aspects of the internal configuration of the eBPF agen
         <td>map[string]string</td>
         <td>
           env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug/support scenarios.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>imagePullPolicy</b></td>
-        <td>enum</td>
-        <td>
-          imagePullPolicy is the Kubernetes pull policy for the component image.<br/>
-          <br/>
-            <i>Enum</i>: IfNotPresent, Always, Never<br/>
-            <i>Default</i>: IfNotPresent<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -555,10 +555,13 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsoleplugindebug">debug</a></b></td>
-        <td>object</td>
+        <td><b>imagePullPolicy</b></td>
+        <td>enum</td>
         <td>
-          Debug allows setting some aspects of the internal configuration of the Console Plugin. This section is aimed exclusively for debugging. Users setting its values do it at their own risk.<br/>
+          imagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
+          <br/>
+            <i>Enum</i>: IfNotPresent, Always, Never<br/>
+            <i>Default</i>: IfNotPresent<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1545,36 +1548,6 @@ target specifies the target value for the given metric
 </table>
 
 
-### FlowCollector.spec.consolePlugin.debug
-<sup><sup>[↩ Parent](#flowcollectorspecconsoleplugin)</sup></sup>
-
-
-
-Debug allows setting some aspects of the internal configuration of the Console Plugin. This section is aimed exclusively for debugging. Users setting its values do it at their own risk.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>imagePullPolicy</b></td>
-        <td>enum</td>
-        <td>
-          imagePullPolicy is the Kubernetes pull policy for the component image.<br/>
-          <br/>
-            <i>Enum</i>: IfNotPresent, Always, Never<br/>
-            <i>Default</i>: IfNotPresent<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
 ### FlowCollector.spec.consolePlugin.portNaming
 <sup><sup>[↩ Parent](#flowcollectorspecconsoleplugin)</sup></sup>
 
@@ -2458,6 +2431,16 @@ processor defines the settings of the component that receives the flows from the
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>imagePullPolicy</b></td>
+        <td>enum</td>
+        <td>
+          imagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
+          <br/>
+            <i>Enum</i>: IfNotPresent, Always, Never<br/>
+            <i>Default</i>: IfNotPresent<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscaler">kafkaConsumerAutoscaler</a></b></td>
         <td>object</td>
         <td>
@@ -2567,16 +2550,6 @@ Debug allows setting some aspects of the internal configuration of the flow proc
         <td>map[string]string</td>
         <td>
           env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug/support scenarios.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>imagePullPolicy</b></td>
-        <td>enum</td>
-        <td>
-          imagePullPolicy is the Kubernetes pull policy for the component image.<br/>
-          <br/>
-            <i>Enum</i>: IfNotPresent, Always, Never<br/>
-            <i>Default</i>: IfNotPresent<br/>
         </td>
         <td>false</td>
       </tr></tbody>

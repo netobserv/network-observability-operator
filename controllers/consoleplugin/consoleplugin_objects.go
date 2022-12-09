@@ -196,7 +196,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 			Containers: []corev1.Container{{
 				Name:            constants.PluginName,
 				Image:           b.imageName,
-				ImagePullPolicy: corev1.PullPolicy(b.desired.Debug.ImagePullPolicy),
+				ImagePullPolicy: corev1.PullPolicy(b.desired.ImagePullPolicy),
 				Resources:       *b.desired.Resources.DeepCopy(),
 				VolumeMounts:    volumeMounts,
 				Args:            args,
