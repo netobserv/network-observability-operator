@@ -16,6 +16,7 @@ If you can't find help here, don't hesitate to open [an issue](https://github.co
   * [Everything seems correctly deployed but there isn't any flow showing up](#everything-seems-correctly-deployed-but-there-isnt-any-flow-showing-up)
   * [There is no Network Traffic menu entry in OpenShift Console](#there-is-no-network-traffic-menu-entry-in-openshift-console)
   * [I first deployed flowcollector, and then kafka. Flowlogs-pipeline is not consuming any flow from Kafka](#i-first-deployed-flowcollector-and-then-kafka-flowlogs-pipeline-is-not-consuming-any-flow-from-kafka)
+  * [I don't see flows from either the `br-int` or `br-ex` interfaces](#i-dont-see-flows-from-either-the-br-int-or-br-ex-interfaces)
 
 ## Q&A
 
@@ -142,3 +143,13 @@ kubectl logs -n netobserv -l app=netobserv-plugin
 This is a [known bug](https://github.com/segmentio/kafka-go/issues/1044) in one of flowlogs-pipeline dependencies.
 
 Please recreate the flowlogs-pipeline pods by either killing them maunally or deleting and recreating the flow collector object.
+
+### I don't see flows from either the `br-int` or `br-ex` interfaces 
+
+[`br-ex` and `br-int` are virtual bridge devices](https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.0/html/networking_guide/bridge-mappings),
+so they operate at OSI Layer 2 (e.g. Ethernet level). The eBPF agent works at Layers 3 and 4
+(IP and TCP level), so it is expected that traffic passing through `br-int` and `br-ex` is captured
+by the agent when it is processed by other interfaces (e.g. physical host or virtual pod interfaces).
+
+This means that, if you restrict the agent interfaces (using the `interfaces` or `excludeInterfaces`
+properties) to attach only to `br-int` and/or `br-ex`, you won't be able to see any flow.
