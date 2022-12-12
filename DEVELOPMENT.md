@@ -1,5 +1,7 @@
 The NetObserv Operator is meant to run in a Kubernetes cluster like OpenShift or [Kind](https://kind.sigs.k8s.io/). These are the two options most used by the development team.
 
+[Architecture description](./docs/Architecture.md).
+
 ## Build / format / lint the code, run unit tests
 
 ```bash
