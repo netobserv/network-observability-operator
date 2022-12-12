@@ -138,7 +138,7 @@ kubectl get pods -n netobserv -l app=netobserv-plugin
 kubectl logs -n netobserv -l app=netobserv-plugin
 ```
 
-It is also possible that the openshift console is failing to restart:
+It is also possible that the OpenShift Console is failing to restart. There is for instance a [known issue](https://issues.redhat.com/browse/OCPBUGS-810) with very small clusters, causing this problem.
 ```bash
 kubectl get pods -n openshift-console
 ```
