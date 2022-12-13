@@ -72,15 +72,23 @@ spec:
                         format: int32
                         minimum: 1
                         type: integer
-                      env:
-                        additionalProperties:
-                          type: string
-                        description: env allows passing custom environment variables
-                          to the NetObserv Agent. Useful for passing some very concrete
-                          performance-tuning options (e.g. GOGC, GOMAXPROCS) that
-                          shouldn't be publicly exposed as part of the FlowCollector
-                          descriptor, as they are only useful in edge debug/support
-                          scenarios.
+                      debug:
+                        description: Debug allows setting some aspects of the internal
+                          configuration of the eBPF agent. This section is aimed exclusively
+                          for debugging and fine-grained performance optimizations
+                          (e.g. GOGC, GOMAXPROCS env vars). Users setting its values
+                          do it at their own risk.
+                        properties:
+                          env:
+                            additionalProperties:
+                              type: string
+                            description: env allows passing custom environment variables
+                              to the NetObserv Agent. Useful for passing some very
+                              concrete performance-tuning options (e.g. GOGC, GOMAXPROCS)
+                              that shouldn't be publicly exposed as part of the FlowCollector
+                              descriptor, as they are only useful in edge debug/support
+                              scenarios.
+                            type: object
                         type: object
                       excludeInterfaces:
                         default:
@@ -1290,6 +1298,24 @@ spec:
                   receives the flows from the agent, enriches them, and forwards them
                   to the Loki persistence layer.
                 properties:
+                  debug:
+                    description: Debug allows setting some aspects of the internal
+                      configuration of the flow processor. This section is aimed exclusively
+                      for debugging and fine-grained performance optimizations (e.g.
+                      GOGC, GOMAXPROCS env vars). Users setting its values do it at
+                      their own risk.
+                    properties:
+                      env:
+                        additionalProperties:
+                          type: string
+                        description: env allows passing custom environment variables
+                          to the NetObserv Agent. Useful for passing some very concrete
+                          performance-tuning options (e.g. GOGC, GOMAXPROCS) that
+                          shouldn't be publicly exposed as part of the FlowCollector
+                          descriptor, as they are only useful in edge debug/support
+                          scenarios.
+                        type: object
+                    type: object
                   dropUnusedFields:
                     default: true
                     description: dropUnusedFields allows, when set to true, to drop
@@ -1301,15 +1327,6 @@ spec:
                     description: enableKubeProbes is a flag to enable or disable Kubernetes
                       liveness/readiness probes
                     type: boolean
-                  env:
-                    additionalProperties:
-                      type: string
-                    description: env allows passing custom environment variables to
-                      the Flowlogs-Pipeline pod. This field is useful for passing
-                      some concrete performance-tuning options (e.g. GOGC, GOMAXPROCS)
-                      that shouldn't be publicly exposed as part of the FlowCollector
-                      descriptor.
-                    type: object
                   healthPort:
                     default: 8080
                     description: healthPort is a collector HTTP port in the Pod that
