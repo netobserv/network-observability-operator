@@ -188,9 +188,9 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.0.0
-    createdAt: "2022-12-02T13:07:57Z"
+    createdAt: "2022-12-13T09:38:43Z"
     description: Network flows collector and monitoring solution
-    operators.operatorframework.io/builder: operator-sdk-v1.22.2
+    operators.operatorframework.io/builder: operator-sdk-v1.25.2
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
   name: netobserv-operator.v1.0.0
@@ -226,8 +226,8 @@ spec:
 
     ```
     kubectl create namespace netobserv
-    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/252bb624cf0425a1b66f59ce68fb939f246ef77b/examples/zero-click-loki/1-storage.yaml) -n netobserv
-    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/252bb624cf0425a1b66f59ce68fb939f246ef77b/examples/zero-click-loki/2-loki.yaml) -n netobserv
+    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/3c42f1ff9c775dd0b746a92dc08c043f9a05f47f/examples/zero-click-loki/1-storage.yaml) -n netobserv
+    kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/3c42f1ff9c775dd0b746a92dc08c043f9a05f47f/examples/zero-click-loki/2-loki.yaml) -n netobserv
     ```
 
     ### Kafka
@@ -240,7 +240,7 @@ spec:
 
     ## Configuration
 
-    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/0.2.1/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/0.2.1/config/samples/flows_v1alpha1_flowcollector.yaml).
+    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/1.0.0/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/1.0.0/config/samples/flows_v1alpha1_flowcollector.yaml).
 
     To edit configuration in cluster, run:
 
@@ -258,7 +258,7 @@ spec:
 
     - Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned above, but you may have to configure differently if you used another installation method.
 
-    - Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/0.2.1/docs/QuickFilters.md).
+    - Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/1.0.0/docs/QuickFilters.md).
 
     - Kafka (`spec.deploymentModel: KAFKA` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created.
 
@@ -475,12 +475,12 @@ spec:
                 - /manager
                 env:
                 - name: RELATED_IMAGE_EBPF_AGENT
-                  value: quay.io/netobserv/netobserv-ebpf-agent:v0.2.2
+                  value: quay.io/netobserv/netobserv-ebpf-agent:v0.2.1
                 - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
-                  value: quay.io/netobserv/flowlogs-pipeline:v0.1.5
+                  value: quay.io/netobserv/flowlogs-pipeline:v0.1.4
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN
-                  value: quay.io/netobserv/network-observability-console-plugin:v0.1.6
-                image: quay.io/netobserv/network-observability-operator:0.2.1
+                  value: quay.io/netobserv/network-observability-console-plugin:v0.1.5
+                image: quay.io/netobserv/network-observability-operator:1.0.0
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -594,11 +594,11 @@ spec:
     name: Red Hat
     url: https://www.redhat.com
   relatedImages:
-  - image: quay.io/netobserv/netobserv-ebpf-agent:v0.2.2
+  - image: quay.io/netobserv/netobserv-ebpf-agent:v0.2.1
     name: ebpf-agent
-  - image: quay.io/netobserv/flowlogs-pipeline:v0.1.5
+  - image: quay.io/netobserv/flowlogs-pipeline:v0.1.4
     name: flowlogs-pipeline
-  - image: quay.io/netobserv/network-observability-console-plugin:v0.1.6
+  - image: quay.io/netobserv/network-observability-console-plugin:v0.1.5
     name: console-plugin
   replaces: netobserv-operator.v0.2.0
-  version: 0.2.1
+  version: 1.0.0
