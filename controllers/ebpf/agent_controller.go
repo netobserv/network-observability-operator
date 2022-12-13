@@ -248,7 +248,7 @@ func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.
 	dedupJustMark := dedupeJustMarkDefault
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
-	for _, pair := range helper.KeySorted(coll.Spec.Agent.EBPF.Env) {
+	for _, pair := range helper.KeySorted(coll.Spec.Agent.EBPF.Debug.Env) {
 		k, v := pair[0], pair[1]
 		if k == envDedupe {
 			dedup = v

@@ -229,10 +229,10 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>env</b></td>
-        <td>map[string]string</td>
+        <td><b><a href="#flowcollectorspecagentebpfdebug">debug</a></b></td>
+        <td>object</td>
         <td>
-          env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug/support scenarios.<br/>
+          Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (e.g. GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -305,6 +305,33 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
             <i>Format</i>: int32<br/>
             <i>Default</i>: 50<br/>
             <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.debug
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpf)</sup></sup>
+
+
+
+Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (e.g. GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>env</b></td>
+        <td>map[string]string</td>
+        <td>
+          env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug/support scenarios.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -2367,6 +2394,13 @@ processor defines the settings of the component that receives the flows from the
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessordebug">debug</a></b></td>
+        <td>object</td>
+        <td>
+          Debug allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations (e.g. GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>dropUnusedFields</b></td>
         <td>boolean</td>
         <td>
@@ -2382,13 +2416,6 @@ processor defines the settings of the component that receives the flows from the
           enableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes<br/>
           <br/>
             <i>Default</i>: true<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>env</b></td>
-        <td>map[string]string</td>
-        <td>
-          env allows passing custom environment variables to the Flowlogs-Pipeline pod. This field is useful for passing some concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2496,6 +2523,33 @@ processor defines the settings of the component that receives the flows from the
           resources are the compute resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:100Mi]]<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.debug
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
+
+
+
+Debug allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations (e.g. GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>env</b></td>
+        <td>map[string]string</td>
+        <td>
+          env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug/support scenarios.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
