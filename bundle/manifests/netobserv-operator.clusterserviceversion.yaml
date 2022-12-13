@@ -169,7 +169,7 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:0.2.1
-    createdAt: "2022-12-13T10:17:29Z"
+    createdAt: "2022-12-13T15:18:33Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.25.3
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
@@ -293,7 +293,7 @@ spec:
           - list
           - watch
         - apiGroups:
-          - autoscaling
+          - autoscaling/v2
           resources:
           - horizontalpodautoscalers
           verbs:
@@ -496,7 +496,13 @@ spec:
                 - containerPort: 8443
                   name: https
                   protocol: TCP
-                resources: {}
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 128Mi
+                  requests:
+                    cpu: 5m
+                    memory: 64Mi
               securityContext:
                 runAsNonRoot: true
               serviceAccountName: netobserv-controller-manager
@@ -528,7 +534,7 @@ spec:
           - patch
           - delete
         - apiGroups:
-          - ""
+          - events.k8s.io/v1
           resources:
           - events
           verbs:
@@ -571,6 +577,7 @@ spec:
   - email: ocazade@redhat.com
     name: Olivier Cazade
   maturity: alpha
+  minKubeVersion: 1.23.0
   provider:
     name: Red Hat
     url: https://www.redhat.com

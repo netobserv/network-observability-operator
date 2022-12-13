@@ -262,7 +262,12 @@ bundle: bundle-prepare
 		| $(SED) -e "s/':full-description:'/|\-/" \
 		| $(OPSDK) generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
 	rm tmp-desc
-	$(OPSDK) bundle validate ./bundle
+	sh -c '\
+	VALIDATION_OUTPUT=$$($(OPSDK) bundle validate ./bundle --select-optional suite=operatorframework); \
+	echo $${VALIDATION_OUTPUT}; \
+	if [ $$(echo $${VALIDATION_OUTPUT} | grep -i 'warning' | wc -c) -gt 0 ]; then echo "please correct warnings and errors first"; exit -1 ; fi \
+	'
+
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.

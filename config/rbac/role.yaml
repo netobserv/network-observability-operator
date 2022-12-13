@@ -36,7 +36,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - autoscaling
+  - autoscaling/v2
   resources:
   - horizontalpodautoscalers
   verbs:

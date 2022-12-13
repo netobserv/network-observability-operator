@@ -66,6 +66,7 @@ spec:
   - email: ocazade@redhat.com
     name: Olivier Cazade
   maturity: alpha
+  minKubeVersion: 1.23.0
   provider:
     name: Red Hat
     url: https://www.redhat.com
