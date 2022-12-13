@@ -284,7 +284,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>privileged</b></td>
         <td>boolean</td>
         <td>
-          privileged mode for the eBPF Agent container. If false, the operator will add the following capabilities to the container, to enable its correct operation: BPF, PERFMON, NET_ADMIN, SYS_RESOURCE.<br/>
+          privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false: in that case, the operator will set granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container, to enable its correct operation. If for some reason these capabilities cannot be set (e.g. old kernel version not knowing CAP_BPF) then you can turn on this mode for more global privileges.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1733,7 +1733,7 @@ kafka describes the kafka configuration (address, topic...) to send enriched flo
         <td><b><a href="#flowcollectorspecexportersindexkafkatls">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
+          tls client configuration. When using TLS, make sure the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1745,7 +1745,7 @@ kafka describes the kafka configuration (address, topic...) to send enriched flo
 
 
 
-tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
+tls client configuration. When using TLS, make sure the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 
 <table>
     <thead>
@@ -1785,7 +1785,7 @@ tls client configuration. Note that, when eBPF agents are used, Kafka certificat
         <td><b><a href="#flowcollectorspecexportersindexkafkatlsusercert">userCert</a></b></td>
         <td>object</td>
         <td>
-          userCert defines the user certificate reference<br/>
+          userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1847,7 +1847,7 @@ caCert defines the reference of the certificate for the Certificate Authority
 
 
 
-userCert defines the user certificate reference
+userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)
 
 <table>
     <thead>
@@ -1930,7 +1930,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b><a href="#flowcollectorspeckafkatls">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
+          tls client configuration. When using TLS, make sure the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1942,7 +1942,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
 
 
 
-tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
+tls client configuration. When using TLS, make sure the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 
 <table>
     <thead>
@@ -1982,7 +1982,7 @@ tls client configuration. Note that, when eBPF agents are used, Kafka certificat
         <td><b><a href="#flowcollectorspeckafkatlsusercert">userCert</a></b></td>
         <td>object</td>
         <td>
-          userCert defines the user certificate reference<br/>
+          userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -2044,7 +2044,7 @@ caCert defines the reference of the certificate for the Certificate Authority
 
 
 
-userCert defines the user certificate reference
+userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)
 
 <table>
     <thead>
@@ -2270,7 +2270,7 @@ tls client configuration.
         <td><b><a href="#flowcollectorspeclokitlsusercert">userCert</a></b></td>
         <td>object</td>
         <td>
-          userCert defines the user certificate reference<br/>
+          userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -2332,7 +2332,7 @@ caCert defines the reference of the certificate for the Certificate Authority
 
 
 
-userCert defines the user certificate reference
+userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)
 
 <table>
     <thead>

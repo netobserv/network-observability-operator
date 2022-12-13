@@ -141,9 +141,13 @@ spec:
                         type: string
                       privileged:
                         description: 'privileged mode for the eBPF Agent container.
-                          If false, the operator will add the following capabilities
-                          to the container, to enable its correct operation: BPF,
-                          PERFMON, NET_ADMIN, SYS_RESOURCE.'
+                          In general this setting can be ignored or set to false:
+                          in that case, the operator will set granular capabilities
+                          (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container,
+                          to enable its correct operation. If for some reason these
+                          capabilities cannot be set (e.g. old kernel version not
+                          knowing CAP_BPF) then you can turn on this mode for more
+                          global privileges.'
                         type: boolean
                       resources:
                         default:
@@ -978,9 +982,11 @@ spec:
                           description: address of the Kafka server
                           type: string
                         tls:
-                          description: tls client configuration. Note that, when eBPF
-                            agents are used, Kafka certificate needs to be copied
-                            in the agent namespace (by default it's netobserv-privileged).
+                          description: tls client configuration. When using TLS, make
+                            sure the address matches the Kafka port used for TLS,
+                            generally 9093. Note that, when eBPF agents are used,
+                            Kafka certificate needs to be copied in the agent namespace
+                            (by default it's netobserv-privileged).
                           properties:
                             caCert:
                               description: caCert defines the reference of the certificate
@@ -1018,7 +1024,9 @@ spec:
                                 CACert field will be ignored
                               type: boolean
                             userCert:
-                              description: userCert defines the user certificate reference
+                              description: userCert defines the user certificate reference,
+                                used for mTLS (you can ignore it when using regular,
+                                one-way TLS)
                               properties:
                                 certFile:
                                   description: certFile defines the path to the certificate
@@ -1071,9 +1079,10 @@ spec:
                     description: address of the Kafka server
                     type: string
                   tls:
-                    description: tls client configuration. Note that, when eBPF agents
-                      are used, Kafka certificate needs to be copied in the agent
-                      namespace (by default it's netobserv-privileged).
+                    description: tls client configuration. When using TLS, make sure
+                      the address matches the Kafka port used for TLS, generally 9093.
+                      Note that, when eBPF agents are used, Kafka certificate needs
+                      to be copied in the agent namespace (by default it's netobserv-privileged).
                     properties:
                       caCert:
                         description: caCert defines the reference of the certificate
@@ -1111,7 +1120,9 @@ spec:
                           field will be ignored
                         type: boolean
                       userCert:
-                        description: userCert defines the user certificate reference
+                        description: userCert defines the user certificate reference,
+                          used for mTLS (you can ignore it when using regular, one-way
+                          TLS)
                         properties:
                           certFile:
                             description: certFile defines the path to the certificate
@@ -1259,7 +1270,9 @@ spec:
                           field will be ignored
                         type: boolean
                       userCert:
-                        description: userCert defines the user certificate reference
+                        description: userCert defines the user certificate reference,
+                          used for mTLS (you can ignore it when using regular, one-way
+                          TLS)
                         properties:
                           certFile:
                             description: certFile defines the path to the certificate

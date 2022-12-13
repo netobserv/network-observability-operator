@@ -22,7 +22,6 @@ metadata:
                 "interfaces": [],
                 "kafkaBatchSize": 10485760,
                 "logLevel": "info",
-                "privileged": false,
                 "resources": {
                   "limits": {
                     "memory": "800Mi"
@@ -33,19 +32,6 @@ metadata:
                   }
                 },
                 "sampling": 50
-              },
-              "ipfix": {
-                "cacheActiveTimeout": "20s",
-                "cacheMaxFlows": 400,
-                "clusterNetworkOperator": {
-                  "namespace": "openshift-network-operator"
-                },
-                "ovnKubernetes": {
-                  "containerName": "ovnkube-node",
-                  "daemonSetName": "ovnkube-node",
-                  "namespace": "ovn-kubernetes"
-                },
-                "sampling": 400
               },
               "type": "EBPF"
             },
@@ -135,9 +121,6 @@ metadata:
               "maxBackoff": "5s",
               "maxRetries": 2,
               "minBackoff": "1s",
-              "staticLabels": {
-                "app": "netobserv-flowcollector"
-              },
               "tls": {
                 "caCert": {
                   "certFile": "service-ca.crt",
@@ -152,8 +135,6 @@ metadata:
             "namespace": "netobserv",
             "processor": {
               "dropUnusedFields": true,
-              "enableKubeProbes": true,
-              "healthPort": 8080,
               "imagePullPolicy": "IfNotPresent",
               "kafkaConsumerAutoscaler": null,
               "kafkaConsumerBatchSize": 10485760,
@@ -188,9 +169,9 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:0.2.1
-    createdAt: "2022-12-09T12:12:52Z"
+    createdAt: "2022-12-13T10:17:29Z"
     description: Network flows collector and monitoring solution
-    operators.operatorframework.io/builder: operator-sdk-v1.25.2
+    operators.operatorframework.io/builder: operator-sdk-v1.25.3
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
   name: netobserv-operator.v0.2.1
