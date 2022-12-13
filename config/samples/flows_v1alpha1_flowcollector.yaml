@@ -7,16 +7,6 @@ spec:
   deploymentModel: DIRECT
   agent:
     type: EBPF
-    ipfix:
-      cacheActiveTimeout: 20s
-      cacheMaxFlows: 400
-      sampling: 400
-      clusterNetworkOperator:
-        namespace: openshift-network-operator
-      ovnKubernetes:
-        namespace: ovn-kubernetes
-        daemonSetName: ovnkube-node
-        containerName: ovnkube-node
     ebpf:
       imagePullPolicy: IfNotPresent
       sampling: 50
@@ -25,7 +15,6 @@ spec:
       interfaces: [ ]
       excludeInterfaces: [ "lo" ]
       logLevel: info
-      privileged: false
       resources:
         requests:
           memory: 50Mi
@@ -37,8 +26,6 @@ spec:
     port: 2055
     imagePullPolicy: IfNotPresent
     logLevel: info
-    enableKubeProbes: true
-    healthPort: 8080
     profilePort: 6060
     metrics:
       server:
@@ -89,8 +76,6 @@ spec:
     minBackoff: 1s
     maxBackoff: 5s
     maxRetries: 2
-    staticLabels:
-      app: netobserv-flowcollector
   consolePlugin:
     register: true
     imagePullPolicy: IfNotPresent
