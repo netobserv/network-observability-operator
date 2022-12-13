@@ -188,7 +188,7 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 	var envs []corev1.EnvVar
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
-	for _, pair := range helper.KeySorted(b.desired.Processor.Env) {
+	for _, pair := range helper.KeySorted(b.desired.Processor.Debug.Env) {
 		envs = append(envs, corev1.EnvVar{Name: pair[0], Value: pair[1]})
 	}
 

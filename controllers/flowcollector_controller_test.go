@@ -90,8 +90,10 @@ func flowCollectorControllerSpecs() {
 						Port:            9999,
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
-						Env: map[string]string{
-							"GOGC": "200",
+						Debug: flowsv1alpha1.DebugConfig{
+							Env: map[string]string{
+								"GOGC": "200",
+							},
 						},
 					},
 					Agent: flowsv1alpha1.FlowCollectorAgent{
@@ -196,10 +198,12 @@ func flowCollectorControllerSpecs() {
 					Port:            7891,
 					ImagePullPolicy: "Never",
 					LogLevel:        "error",
-					Env: map[string]string{
-						// we'll test that env vars are sorted, to keep idempotency
-						"GOMAXPROCS": "33",
-						"GOGC":       "400",
+					Debug: flowsv1alpha1.DebugConfig{
+						Env: map[string]string{
+							// we'll test that env vars are sorted, to keep idempotency
+							"GOMAXPROCS": "33",
+							"GOGC":       "400",
+						},
 					},
 				}
 				fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}

@@ -196,13 +196,6 @@ type FlowCollectorEBPF struct {
 	// logLevel defines the log level for the NetObserv eBPF Agent
 	LogLevel string `json:"logLevel,omitempty"`
 
-	// env allows passing custom environment variables to the NetObserv Agent. Useful for passing
-	// some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be
-	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
-	// in edge debug/support scenarios.
-	//+optional
-	Env map[string]string `json:"env,omitempty"`
-
 	// privileged mode for the eBPF Agent container. If false, the operator will add the following
 	// capabilities to the container, to enable its correct operation:
 	// BPF, PERFMON, NET_ADMIN, SYS_RESOURCE.
@@ -213,6 +206,12 @@ type FlowCollectorEBPF struct {
 	// +optional
 	// kafkaBatchSize limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 10MB.
 	KafkaBatchSize int `json:"kafkaBatchSize"`
+
+	// Debug allows setting some aspects of the internal configuration of the eBPF agent.
+	// This section is aimed exclusively for debugging and fine-grained performance optimizations
+	// (e.g. GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
+	// +optional
+	Debug DebugConfig `json:"debug,omitempty"`
 }
 
 // FlowCollectorKafka defines the desired Kafka config of FlowCollector
@@ -354,12 +353,11 @@ type FlowCollectorFLP struct {
 	// kafkaConsumerBatchSize indicates to the broker the maximum batch size, in bytes, that the consumer will accept. Ignored when not using Kafka. Default: 10MB.
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
 
-	// env allows passing custom environment variables to the Flowlogs-Pipeline pod.
-	// This field is useful for passing some concrete performance-tuning options
-	// (e.g. GOGC, GOMAXPROCS) that shouldn't be
-	// publicly exposed as part of the FlowCollector descriptor.
-	//+optional
-	Env map[string]string `json:"env,omitempty"`
+	// Debug allows setting some aspects of the internal configuration of the flow processor.
+	// This section is aimed exclusively for debugging and fine-grained performance optimizations
+	// (e.g. GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
+	// +optional
+	Debug DebugConfig `json:"debug,omitempty"`
 }
 
 const (
@@ -620,6 +618,17 @@ type ClientTLS struct {
 	// userCert defines the user certificate reference
 	// +optional
 	UserCert CertificateReference `json:"userCert,omitempty"`
+}
+
+// DebugConfig allows tweaking some aspects of the internal configuration of the agent and FLP.
+// They are aimed exclusively for debugging. Users setting these values do it at their own risk.
+type DebugConfig struct {
+	// env allows passing custom environment variables to the NetObserv Agent. Useful for passing
+	// some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be
+	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
+	// in edge debug/support scenarios.
+	//+optional
+	Env map[string]string `json:"env,omitempty"`
 }
 
 // Add more exporter types below
