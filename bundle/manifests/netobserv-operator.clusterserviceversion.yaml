@@ -1,4 +1,4 @@
-apiVersion: operators.coreos.com/v1alpha1
+apiVersion: operators.coreos.com/v1
 kind: ClusterServiceVersion
 metadata:
   annotations:
@@ -169,7 +169,7 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:0.2.1
-    createdAt: "2022-12-13T15:42:49Z"
+    createdAt: "2022-12-14T10:47:45Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.25.3
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
@@ -293,7 +293,7 @@ spec:
           - list
           - watch
         - apiGroups:
-          - autoscaling/v2
+          - autoscaling
           resources:
           - horizontalpodautoscalers
           verbs:
@@ -534,7 +534,7 @@ spec:
           - patch
           - delete
         - apiGroups:
-          - events.k8s.io/v1
+          - ""
           resources:
           - events
           verbs:
