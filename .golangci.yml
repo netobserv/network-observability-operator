@@ -1,5 +1,6 @@
 linters:
   enable:
+    - deadcode
     - errcheck
     - errorlint
     - cyclop
@@ -7,18 +8,20 @@ linters:
     - exhaustive
     - exportloopref
     - gocritic
-    - gofmt
+    - goimports
     - gosimple
     - govet
     - ineffassign
     - revive
     - staticcheck
+    - structcheck
     - stylecheck
     - typecheck
     - unused
+    - varcheck
 linters-settings:
   stylecheck:
-    go: "1.18"
+    go: "1.17"
   gocritic:
     enabled-checks:
       - hugeParam
