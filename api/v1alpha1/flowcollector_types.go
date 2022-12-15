@@ -196,9 +196,11 @@ type FlowCollectorEBPF struct {
 	// logLevel defines the log level for the NetObserv eBPF Agent
 	LogLevel string `json:"logLevel,omitempty"`
 
-	// privileged mode for the eBPF Agent container. If false, the operator will add the following
-	// capabilities to the container, to enable its correct operation:
-	// BPF, PERFMON, NET_ADMIN, SYS_RESOURCE.
+	// privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false:
+	// in that case, the operator will set granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE)
+	// to the container, to enable its correct operation.
+	// If for some reason these capabilities cannot be set (e.g. old kernel version not knowing CAP_BPF)
+	// then you can turn on this mode for more global privileges.
 	// +optional
 	Privileged bool `json:"privileged,omitempty"`
 
@@ -226,7 +228,8 @@ type FlowCollectorKafka struct {
 	// kafka topic to use. It must exist, NetObserv will not create it.
 	Topic string `json:"topic"`
 
-	// tls client configuration. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
+	// tls client configuration. When using TLS, make sure the address matches the Kafka port used for TLS, generally 9093.
+	// Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 	// +optional
 	TLS ClientTLS `json:"tls"`
 }
@@ -615,7 +618,7 @@ type ClientTLS struct {
 	// caCert defines the reference of the certificate for the Certificate Authority
 	CACert CertificateReference `json:"caCert,omitempty"`
 
-	// userCert defines the user certificate reference
+	// userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)
 	// +optional
 	UserCert CertificateReference `json:"userCert,omitempty"`
 }
