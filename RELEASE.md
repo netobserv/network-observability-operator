@@ -29,22 +29,16 @@ Click the "Auto-generate release note" button.
 
 Once all sub-components are released (or have a release candidate), we can proceed with the operator.
 
-```bash
-# Previous operator version
-previous="v0.2.0"
-# Set desired operator version - CAREFUL, no leading "v" here
-version="0.2.1"
-# Set console plugin released version
-plgv="v0.1.6"
-# Set flowlogs-pipeline released version
-flpv="v0.1.5"
-# Set ebpf-agent released version
-bpfv="v0.2.2"
+Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, `PLG_VERSION`, `FLP_VERSION` and `BPF_VERSION`.
 
+```bash
+
+make bundle
+
+# Set desired operator version - CAREFUL, no leading "v" here
+version="0.2.2-rc0"
 vv=v$version
 test_branch=test-$vv
-
-BUNDLE_VERSION="$version" PLG_VERSION="$plgv" FLP_VERSION="$flpv" BPF_VERSION="$bpfv" PREVIOUS_VERSION="$previous" make bundle
 
 git commit -a -m "Prepare release $vv"
 # Push to a test branch, and tag for release
@@ -138,6 +132,13 @@ cp -r "bundle/metadata" "$path_okd/operators/netobserv-operator/$version"
 
 You should double check eveything is correct by comparing the produced files with their equivalent in the previous release,
 making sure there's nothing unexpected.
+
+On OKD repo, edit the annotations.yaml to include the supported OpenShift versions:
+
+```yaml
+  # OpenShift annotations.
+  com.redhat.openshift.versions: "v4.10-v4.12"
+```
 
 Then commit and push (commits must be signed):
 
