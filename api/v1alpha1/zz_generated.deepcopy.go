@@ -22,7 +22,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"k8s.io/api/autoscaling/v2beta2"
+	"k8s.io/api/autoscaling/v2"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -285,7 +285,7 @@ func (in *FlowCollectorHPA) DeepCopyInto(out *FlowCollectorHPA) {
 	}
 	if in.Metrics != nil {
 		in, out := &in.Metrics, &out.Metrics
-		*out = make([]v2beta2.MetricSpec, len(*in))
+		*out = make([]v2.MetricSpec, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

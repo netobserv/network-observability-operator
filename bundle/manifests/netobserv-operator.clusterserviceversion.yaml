@@ -1,4 +1,4 @@
-apiVersion: operators.coreos.com/v1alpha1
+apiVersion: operators.coreos.com/v1
 kind: ClusterServiceVersion
 metadata:
   annotations:
@@ -169,7 +169,7 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:0.2.1
-    createdAt: "2022-12-14T17:02:13Z"
+    createdAt: "2022-12-14T11:56:17Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.25.3
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
@@ -495,7 +495,13 @@ spec:
                 - containerPort: 8443
                   name: https
                   protocol: TCP
-                resources: {}
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 128Mi
+                  requests:
+                    cpu: 5m
+                    memory: 64Mi
               securityContext:
                 runAsNonRoot: true
               serviceAccountName: netobserv-controller-manager
@@ -570,6 +576,7 @@ spec:
   - email: ocazade@redhat.com
     name: Olivier Cazade
   maturity: alpha
+  minKubeVersion: 1.23.0
   provider:
     name: Red Hat
     url: https://www.redhat.com

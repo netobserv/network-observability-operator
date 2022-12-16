@@ -9,7 +9,7 @@ import (
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
-	ascv2 "k8s.io/api/autoscaling/v2beta2"
+	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
