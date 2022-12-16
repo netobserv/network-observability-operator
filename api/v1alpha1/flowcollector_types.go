@@ -16,7 +16,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	ascv2 "k8s.io/api/autoscaling/v2beta2"
+	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

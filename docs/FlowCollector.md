@@ -711,7 +711,7 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexcontainerresource">containerResource</a></b></td>
         <td>object</td>
         <td>
-          container resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
+          containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -751,7 +751,7 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 
 
 
-container resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
+containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
 
 <table>
     <thead>
@@ -1050,7 +1050,7 @@ object refers to a metric describing a single kubernetes object (for example, hi
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectdescribedobject">describedObject</a></b></td>
         <td>object</td>
         <td>
-          CrossVersionObjectReference contains enough information to let you identify the referred resource.<br/>
+          describedObject specifies the descriptions of a object,such as kind,name apiVersion<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -1076,7 +1076,7 @@ object refers to a metric describing a single kubernetes object (for example, hi
 
 
 
-CrossVersionObjectReference contains enough information to let you identify the referred resource.
+describedObject specifies the descriptions of a object,such as kind,name apiVersion
 
 <table>
     <thead>
@@ -2639,7 +2639,7 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexcontainerresource">containerResource</a></b></td>
         <td>object</td>
         <td>
-          container resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
+          containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2679,7 +2679,7 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 
 
 
-container resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
+containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
 
 <table>
     <thead>
@@ -2978,7 +2978,7 @@ object refers to a metric describing a single kubernetes object (for example, hi
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectdescribedobject">describedObject</a></b></td>
         <td>object</td>
         <td>
-          CrossVersionObjectReference contains enough information to let you identify the referred resource.<br/>
+          describedObject specifies the descriptions of a object,such as kind,name apiVersion<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -3004,7 +3004,7 @@ object refers to a metric describing a single kubernetes object (for example, hi
 
 
 
-CrossVersionObjectReference contains enough information to let you identify the referred resource.
+describedObject specifies the descriptions of a object,such as kind,name apiVersion
 
 <table>
     <thead>
