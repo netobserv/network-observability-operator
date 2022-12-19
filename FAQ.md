@@ -131,6 +131,18 @@ spec:
   - netobserv-plugin
 ```
 
+Ensure console pods are all in `Running` state using the following command:
+
+```bash
+oc get pods -n openshift-console -l app=console
+```
+
+If you had previously used the console with the plugin installed, you may need to restart console pods to clear cache:
+
+```bash
+oc delete pods -n openshift-console -l app=console
+```
+
 If the new views still don't show up, try clearing your browser cache and refreshing. Check also the `netobserv-console-plugin-...` pod status and logs.
 
 ```bash
