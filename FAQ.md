@@ -154,7 +154,7 @@ downloads-5fc6cc467f-2gfpw   1/1     Running   0          45m
 
 To force a restart, kill the running console pod using the following command:
 `oc delete pods -n openshift-console -l app=console`
-Note that this will make the console anavailable for some time
+Note that this will make the console unavailable for some time
 
 ### I first deployed flowcollector, and then kafka. Flowlogs-pipeline is not consuming any flow from Kafka
 
