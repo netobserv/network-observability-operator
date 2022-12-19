@@ -10,11 +10,11 @@ BUILD_SHA := $(shell git rev-parse --short HEAD)
 
 # Other component versions when building bundle / release
 PREVIOUS_VERSION ?= v0.2.1
-BUNDLE_VERSION ?= 0.2.2-rc0
+BUNDLE_VERSION ?= 0.2.2-rc1
 # console plugin
 export PLG_VERSION ?= v0.1.7-rc0
 # flowlogs-pipeline
-export FLP_VERSION ?= v0.1.6-rc0
+export FLP_VERSION ?= v0.1.6-rc1
 # eBPF agent
 export BPF_VERSION ?= v0.2.3-rc0
 

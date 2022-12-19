@@ -36,7 +36,7 @@ spec:
           - name: RELATED_IMAGE_EBPF_AGENT
             value: quay.io/netobserv/netobserv-ebpf-agent:v0.2.3-rc0
           - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
-            value: quay.io/netobserv/flowlogs-pipeline:v0.1.6-rc0
+            value: quay.io/netobserv/flowlogs-pipeline:v0.1.6-rc1
           - name: RELATED_IMAGE_CONSOLE_PLUGIN
             value: quay.io/netobserv/network-observability-console-plugin:v0.1.7-rc0
         image: controller:latest
