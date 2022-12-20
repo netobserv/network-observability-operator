@@ -113,7 +113,6 @@ After having cloned or updated these repo, copy the bundle content:
 # Here, set correct paths and new version
 path_k8s="../community-operators"
 path_okd="../community-operators-prod"
-version="0.2.1"
 
 cd $path_k8s && git fetch upstream && git rebase upstream/main
 cd -
@@ -122,8 +121,6 @@ cd -
 
 mkdir -p $path_k8s/operators/netobserv-operator/$version
 mkdir -p $path_okd/operators/netobserv-operator/$version
-cp "bundle.Dockerfile" "$path_k8s/operators/netobserv-operator/$version"
-# no bundle.Dockerfile for openshift's repo
 cp -r "bundle/manifests" "$path_k8s/operators/netobserv-operator/$version"
 cp -r "bundle/manifests" "$path_okd/operators/netobserv-operator/$version"
 cp -r "bundle/metadata" "$path_k8s/operators/netobserv-operator/$version"
