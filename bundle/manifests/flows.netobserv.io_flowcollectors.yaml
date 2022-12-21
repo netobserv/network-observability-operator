@@ -159,7 +159,7 @@ spec:
                             cpu: 100m
                             memory: 50Mi
                         description: 'resources are the compute resources required
-                          by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                          by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         properties:
                           limits:
                             additionalProperties:
@@ -926,7 +926,7 @@ spec:
                         cpu: 100m
                         memory: 50Mi
                     description: 'resources, in terms of compute resources, required
-                      by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                      by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                     properties:
                       limits:
                         additionalProperties:
@@ -2011,7 +2011,7 @@ spec:
                         cpu: 100m
                         memory: 100Mi
                     description: 'resources are the compute resources required by
-                      this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                      this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                     properties:
                       limits:
                         additionalProperties:
