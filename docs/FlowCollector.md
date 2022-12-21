@@ -291,7 +291,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b><a href="#flowcollectorspecagentebpfresources">resources</a></b></td>
         <td>object</td>
         <td>
-          resources are the compute resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          resources are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:50Mi]]<br/>
         </td>
@@ -343,7 +343,7 @@ Debug allows setting some aspects of the internal configuration of the eBPF agen
 
 
 
-resources are the compute resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+resources are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 <table>
     <thead>
@@ -619,7 +619,7 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td><b><a href="#flowcollectorspecconsolepluginresources">resources</a></b></td>
         <td>object</td>
         <td>
-          resources, in terms of compute resources, required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          resources, in terms of compute resources, required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:100Mi] requests:map[cpu:100m memory:50Mi]]<br/>
         </td>
@@ -1630,7 +1630,7 @@ QuickFilter defines preset configuration for Console's quick filters
 
 
 
-resources, in terms of compute resources, required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+resources, in terms of compute resources, required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 <table>
     <thead>
@@ -2520,7 +2520,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b><a href="#flowcollectorspecprocessorresources">resources</a></b></td>
         <td>object</td>
         <td>
-          resources are the compute resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          resources are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:100Mi]]<br/>
         </td>
@@ -3643,7 +3643,7 @@ TLS configuration.
 
 
 
-resources are the compute resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+resources are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 <table>
     <thead>
