@@ -22,8 +22,10 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.WithField("component", "utils.TimedCache")
 
 // Functions to manage an LRU cache with an expiry
 // When an item expires, allow a callback to allow the specific implementation to perform its particular cleanup
@@ -58,6 +60,8 @@ func (tc *TimedCache) GetCacheEntry(key string) (interface{}, bool) {
 	}
 }
 
+var uclog = log.WithField("method", "UpdateCacheEntry")
+
 func (tc *TimedCache) UpdateCacheEntry(key string, entry interface{}) *cacheEntry {
 	nowInSecs := time.Now().Unix()
 	tc.mu.Lock()
@@ -75,11 +79,10 @@ func (tc *TimedCache) UpdateCacheEntry(key string, entry interface{}) *cacheEntr
 			key:             key,
 			SourceEntry:     entry,
 		}
+		uclog.Debugf("adding entry: %#v", cEntry)
 		// place at end of list
-		log.Debugf("adding entry = %v", cEntry)
 		cEntry.e = tc.cacheList.PushBack(cEntry)
 		tc.cacheMap[key] = cEntry
-		log.Debugf("cacheList = %v", tc.cacheList)
 	}
 	return cEntry
 }
@@ -103,13 +106,18 @@ func (tc *TimedCache) Iterate(f func(key string, value interface{})) {
 
 // CleanupExpiredEntries removes items from cache that were last touched more than expiryTime seconds ago
 func (tc *TimedCache) CleanupExpiredEntries(expiryTime int64, callback CacheCallback) {
-	log.Debugf("entering cleanupExpiredEntries")
 	tc.mu.Lock()
 	defer tc.mu.Unlock()
-	log.Debugf("cache = %v", tc.cacheMap)
-	log.Debugf("list = %v", tc.cacheList)
+
+	clog := log.WithFields(logrus.Fields{
+		"mapLen":  len(tc.cacheMap),
+		"listLen": tc.cacheList.Len(),
+	})
+	clog.Debugf("cleaning up expried entries")
+
 	nowInSecs := time.Now().Unix()
 	expireTime := nowInSecs - expiryTime
+	deleted := 0
 	// go through the list until we reach recently used entries
 	for {
 		listEntry := tc.cacheList.Front()
@@ -117,12 +125,12 @@ func (tc *TimedCache) CleanupExpiredEntries(expiryTime int64, callback CacheCall
 			return
 		}
 		pCacheInfo := listEntry.Value.(*cacheEntry)
-		log.Debugf("lastUpdatedTime = %d, expireTime = %d", pCacheInfo.lastUpdatedTime, expireTime)
-		log.Debugf("pCacheInfo = %v", pCacheInfo)
 		if pCacheInfo.lastUpdatedTime > expireTime {
 			// no more expired items
+			clog.Debugf("deleted %d expired entries", deleted)
 			return
 		}
+		deleted++
 		callback.Cleanup(pCacheInfo.SourceEntry)
 		delete(tc.cacheMap, pCacheInfo.key)
 		tc.cacheList.Remove(listEntry)

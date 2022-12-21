@@ -60,7 +60,7 @@ type GroupState struct {
 	totalCount       int
 }
 
-func (aggregate Aggregate) LabelsFromEntry(entry config.GenericMap) (Labels, bool) {
+func (aggregate *Aggregate) LabelsFromEntry(entry config.GenericMap) (Labels, bool) {
 	allLabelsFound := true
 	labels := Labels{}
 
@@ -69,7 +69,7 @@ func (aggregate Aggregate) LabelsFromEntry(entry config.GenericMap) (Labels, boo
 		if !ok {
 			allLabelsFound = false
 		}
-		labels[key] = fmt.Sprintf("%v", value)
+		labels[key] = fmt.Sprint(value)
 	}
 
 	return labels, allLabelsFound
@@ -95,7 +95,7 @@ func (labels Labels) getNormalizedValues() NormalizedValues {
 	return NormalizedValues(normalizedAsString)
 }
 
-func (aggregate Aggregate) FilterEntry(entry config.GenericMap) (error, NormalizedValues, Labels) {
+func (aggregate *Aggregate) FilterEntry(entry config.GenericMap) (error, NormalizedValues, Labels) {
 	labels, allLabelsFound := aggregate.LabelsFromEntry(entry)
 	if !allLabelsFound {
 		return fmt.Errorf("missing keys in entry"), "", nil
@@ -120,7 +120,7 @@ func getInitValue(operation string) float64 {
 	}
 }
 
-func (aggregate Aggregate) UpdateByEntry(entry config.GenericMap, normalizedValues NormalizedValues, labels Labels) error {
+func (aggregate *Aggregate) UpdateByEntry(entry config.GenericMap, normalizedValues NormalizedValues, labels Labels) error {
 
 	aggregate.mutex.Lock()
 	defer aggregate.mutex.Unlock()
@@ -180,7 +180,7 @@ func (aggregate Aggregate) UpdateByEntry(entry config.GenericMap, normalizedValu
 	return nil
 }
 
-func (aggregate Aggregate) Evaluate(entries []config.GenericMap) error {
+func (aggregate *Aggregate) Evaluate(entries []config.GenericMap) error {
 	for _, entry := range entries {
 		// filter entries matching labels with aggregates
 		err, normalizedValues, labels := aggregate.FilterEntry(entry)
@@ -199,7 +199,7 @@ func (aggregate Aggregate) Evaluate(entries []config.GenericMap) error {
 	return nil
 }
 
-func (aggregate Aggregate) GetMetrics() []config.GenericMap {
+func (aggregate *Aggregate) GetMetrics() []config.GenericMap {
 	aggregate.mutex.Lock()
 	defer aggregate.mutex.Unlock()
 

@@ -30,14 +30,14 @@ func (cg *ConfGen) parseExtract(extract *map[string]interface{}) (*aggregate.Def
 	aggregateExtract := (*extract)["aggregates"]
 	b, err := jsoniterJson.Marshal(&aggregateExtract)
 	if err != nil {
-		log.Debugf("jsoniterJson.Marshal err: %v ", err)
+		log.Errorf("jsoniterJson.Marshal err: %v ", err)
 		return nil, nil, err
 	}
 
 	var jsonNetworkAggregate aggregate.Definitions
 	err = config.JsonUnmarshalStrict(b, &jsonNetworkAggregate)
 	if err != nil {
-		log.Debugf("Unmarshal aggregate.Definitions err: %v ", err)
+		log.Errorf("Unmarshal aggregate.Definitions err: %v ", err)
 		return nil, nil, err
 	}
 
@@ -49,14 +49,14 @@ func (cg *ConfGen) parseExtract(extract *map[string]interface{}) (*aggregate.Def
 	}
 	b, err = jsoniterJson.Marshal(&timebasedExtract)
 	if err != nil {
-		log.Debugf("jsoniterJson.Marshal err: %v ", err)
+		log.Errorf("jsoniterJson.Marshal err: %v ", err)
 		return nil, nil, err
 	}
 
 	var jsonTimebasedTopKs api.ExtractTimebased
 	err = config.JsonUnmarshalStrict(b, &jsonTimebasedTopKs)
 	if err != nil {
-		log.Debugf("Unmarshal api.ExtractTimebased err: %v ", err)
+		log.Errorf("Unmarshal api.ExtractTimebased err: %v ", err)
 		return nil, nil, err
 	}
 

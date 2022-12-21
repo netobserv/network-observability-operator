@@ -4,13 +4,13 @@ go 1.16
 
 require (
 	github.com/mitchellh/mapstructure v1.4.3
-	github.com/netobserv/flowlogs-pipeline v0.1.4-0.20220927094208-0949fbe83d55
+	github.com/netobserv/flowlogs-pipeline v0.1.7-0.20221221173558-e6e77158b956
 	github.com/onsi/ginkgo/v2 v2.1.3
 	github.com/onsi/gomega v1.19.0
 	github.com/openshift/api v0.0.0-20220112145620-704957ce4980
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.48.0
 	github.com/prometheus/common v0.32.1
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.8.0
 	go.uber.org/zap v1.19.1
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.24.0

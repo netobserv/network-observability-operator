@@ -21,7 +21,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
-	"io/ioutil"
+	"os"
 )
 
 type ClientTLS struct {
@@ -36,7 +36,7 @@ func (c *ClientTLS) Build() (*tls.Config, error) {
 		InsecureSkipVerify: c.InsecureSkipVerify,
 	}
 	if c.CACertPath != "" {
-		caCert, err := ioutil.ReadFile(c.CACertPath)
+		caCert, err := os.ReadFile(c.CACertPath)
 		if err != nil {
 			return nil, err
 		}
@@ -44,15 +44,15 @@ func (c *ClientTLS) Build() (*tls.Config, error) {
 		tlsConfig.RootCAs.AppendCertsFromPEM(caCert)
 
 		if c.UserCertPath != "" && c.UserKeyPath != "" {
-			userCert, err := ioutil.ReadFile(c.UserCertPath)
+			userCert, err := os.ReadFile(c.UserCertPath)
 			if err != nil {
 				return nil, err
 			}
-			userKey, err := ioutil.ReadFile(c.UserKeyPath)
+			userKey, err := os.ReadFile(c.UserKeyPath)
 			if err != nil {
 				return nil, err
 			}
-			pair, err := tls.X509KeyPair([]byte(userCert), []byte(userKey))
+			pair, err := tls.X509KeyPair(userCert, userKey)
 			if err != nil {
 				return nil, err
 			}

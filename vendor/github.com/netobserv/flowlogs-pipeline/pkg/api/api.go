@@ -18,29 +18,31 @@
 package api
 
 const (
-	FileType              = "file"
-	FileLoopType          = "file_loop"
-	FileChunksType        = "file_chunks"
-	CollectorType         = "collector"
-	GRPCType              = "grpc"
-	FakeType              = "fake"
-	KafkaType             = "kafka"
-	StdoutType            = "stdout"
-	LokiType              = "loki"
-	AggregateType         = "aggregates"
-	TimebasedType         = "timebased"
-	PromType              = "prom"
-	GenericType           = "generic"
-	NetworkType           = "network"
-	FilterType            = "filter"
-	ConnTrackType         = "conntrack"
-	NoneType              = "none"
-	AddRegExIfRuleType    = "add_regex_if"
-	AddIfRuleType         = "add_if"
-	AddSubnetRuleType     = "add_subnet"
-	AddLocationRuleType   = "add_location"
-	AddServiceRuleType    = "add_service"
-	AddKubernetesRuleType = "add_kubernetes"
+	FileType                     = "file"
+	FileLoopType                 = "file_loop"
+	FileChunksType               = "file_chunks"
+	CollectorType                = "collector"
+	GRPCType                     = "grpc"
+	FakeType                     = "fake"
+	KafkaType                    = "kafka"
+	S3Type                       = "s3"
+	StdoutType                   = "stdout"
+	LokiType                     = "loki"
+	AggregateType                = "aggregates"
+	TimebasedType                = "timebased"
+	PromType                     = "prom"
+	GenericType                  = "generic"
+	NetworkType                  = "network"
+	FilterType                   = "filter"
+	ConnTrackType                = "conntrack"
+	NoneType                     = "none"
+	AddRegExIfRuleType           = "add_regex_if"
+	AddIfRuleType                = "add_if"
+	AddSubnetRuleType            = "add_subnet"
+	AddLocationRuleType          = "add_location"
+	AddServiceRuleType           = "add_service"
+	AddKubernetesRuleType        = "add_kubernetes"
+	ReinterpretDirectionRuleType = "reinterpret_direction"
 
 	TagYaml = "yaml"
 	TagDoc  = "doc"
@@ -52,6 +54,7 @@ const (
 type API struct {
 	PromEncode         PromEncode          `yaml:"prom" doc:"## Prometheus encode API\nFollowing is the supported API format for prometheus encode:\n"`
 	KafkaEncode        EncodeKafka         `yaml:"kafka" doc:"## Kafka encode API\nFollowing is the supported API format for kafka encode:\n"`
+	S3Encode           EncodeS3            `yaml:"s3" doc:"## S3 encode API\nFollowing is the supported API format for S3 encode:\n"`
 	IngestCollector    IngestCollector     `yaml:"collector" doc:"## Ingest collector API\nFollowing is the supported API format for the NetFlow / IPFIX collector:\n"`
 	IngestKafka        IngestKafka         `yaml:"kafka" doc:"## Ingest Kafka API\nFollowing is the supported API format for the kafka ingest:\n"`
 	IngestGRPCProto    IngestGRPCProto     `yaml:"grpc" doc:"## Ingest GRPC from Network Observability eBPF Agent\nFollowing is the supported API format for the Network Observability eBPF ingest:\n"`
