@@ -2,32 +2,16 @@ package flowlogspipeline
 
 import (
 	"context"
-
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func AddPrometheusServiceMonitor(ctx context.Context, b *builder, cl reconcilers.ClientHelper) error {
-	logger := log.FromContext(ctx)
-	svcKey := types.NamespacedName{
-		Name:      b.promServiceName(),
-		Namespace: b.namespace,
-	}
-	svc := v1.Service{}
-	err := cl.Client.Get(ctx, svcKey, &svc)
-	if errors.IsNotFound(err) {
-		logger.Info("flowlogs-pipeline prom service not found; not creating the service monitor")
-		return nil
-	}
 	serviceMonitorObject := buildPrometheusServiceMonitorObject(b)
 	// apply object to kubernetes
-	if err = cl.CreateOwned(ctx, serviceMonitorObject); err != nil {
+	if err := cl.CreateOwned(ctx, serviceMonitorObject); err != nil {
 		return err
 	}
 	return nil
