@@ -11,13 +11,13 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/confgen"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	promConfig "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-
-	promConfig "github.com/prometheus/common/config"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -104,15 +104,16 @@ func newBuilder(ns, image string, desired *flowsv1alpha1.FlowCollectorSpec, ck C
 	}
 }
 
-func name(ck ConfKind) string                { return constants.FLPName + FlpConfSuffix[ck] }
-func RoleBindingName(ck ConfKind) string     { return name(ck) + "-role" }
-func RoleBindingMonoName(ck ConfKind) string { return name(ck) + "-role-mono" }
-func promServiceName(ck ConfKind) string     { return name(ck) + "-prom" }
-func configMapName(ck ConfKind) string       { return name(ck) + "-config" }
-func (b *builder) name() string              { return name(b.confKind) }
-func (b *builder) promServiceName() string   { return promServiceName(b.confKind) }
-func (b *builder) configMapName() string     { return configMapName(b.confKind) }
-func serviceMonitorName(ck ConfKind) string  { return name(ck) + "-monitor" }
+func name(ck ConfKind) string                 { return constants.FLPName + FlpConfSuffix[ck] }
+func RoleBindingName(ck ConfKind) string      { return name(ck) + "-role" }
+func RoleBindingMonoName(ck ConfKind) string  { return name(ck) + "-role-mono" }
+func promServiceName(ck ConfKind) string      { return name(ck) + "-prom" }
+func configMapName(ck ConfKind) string        { return name(ck) + "-config" }
+func serviceMonitorName(ck ConfKind) string   { return name(ck) + "-monitor" }
+func (b *builder) name() string               { return name(b.confKind) }
+func (b *builder) promServiceName() string    { return promServiceName(b.confKind) }
+func (b *builder) configMapName() string      { return configMapName(b.confKind) }
+func (b *builder) serviceMonitorName() string { return serviceMonitorName(b.confKind) }
 
 func (b *builder) portProtocol() corev1.Protocol {
 	if b.desired.UseEBPF() {
@@ -539,4 +540,31 @@ func (b *builder) clusterRoleBinding(ck ConfKind, mono bool) *rbacv1.ClusterRole
 			Namespace: b.namespace,
 		}},
 	}
+}
+
+func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
+	flpServiceMonitorObject := monitoringv1.ServiceMonitor{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      b.serviceMonitorName(),
+			Namespace: b.namespace,
+		},
+		Spec: monitoringv1.ServiceMonitorSpec{
+			Endpoints: []monitoringv1.Endpoint{
+				{
+					Port:     prometheusServiceName,
+					Interval: "15s",
+					Scheme:   "http",
+				},
+			},
+			NamespaceSelector: monitoringv1.NamespaceSelector{
+				MatchNames: []string{
+					b.namespace,
+				},
+			},
+			Selector: metav1.LabelSelector{
+				MatchLabels: b.selector,
+			},
+		},
+	}
+	return &flpServiceMonitorObject
 }

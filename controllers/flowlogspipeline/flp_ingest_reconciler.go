@@ -11,19 +11,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/discover"
 )
 
 // flpIngesterReconciler reconciles the current flowlogs-pipeline-ingester state with the desired configuration
 type flpIngesterReconciler struct {
 	singleReconciler
-	reconcilers.ClientHelper
-	nobjMngr        *reconcilers.NamespacedObjectManager
-	owned           ingestOwnedObjects
-	useOpenShiftSCC bool
-	image           string
-	availableAPIs   *discover.AvailableAPIs
+	reconcilersCommonInfo
+	owned ingestOwnedObjects
 }
 
 type ingestOwnedObjects struct {
@@ -35,7 +29,7 @@ type ingestOwnedObjects struct {
 	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
-func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions, availableAPIs *discover.AvailableAPIs) *flpIngesterReconciler {
+func newIngesterReconciler(info *reconcilersCommonInfo) *flpIngesterReconciler {
 	name := name(ConfKafkaIngester)
 	owned := ingestOwnedObjects{
 		daemonSet:      &appsv1.DaemonSet{},
@@ -45,25 +39,18 @@ func newIngesterReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 		roleBinding:    &rbacv1.ClusterRoleBinding{},
 		serviceMonitor: &monitoringv1.ServiceMonitor{},
 	}
-	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
-	nobjMngr.AddManagedObject(name, owned.daemonSet)
-	nobjMngr.AddManagedObject(name, owned.serviceAccount)
-	nobjMngr.AddManagedObject(promServiceName(ConfKafkaIngester), owned.promService)
-	nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaIngester), owned.roleBinding)
-	nobjMngr.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
-	if availableAPIs.HasSvcMonitor() {
-		nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaIngester), owned.serviceMonitor)
+	info.nobjMngr.AddManagedObject(name, owned.daemonSet)
+	info.nobjMngr.AddManagedObject(name, owned.serviceAccount)
+	info.nobjMngr.AddManagedObject(promServiceName(ConfKafkaIngester), owned.promService)
+	info.nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaIngester), owned.roleBinding)
+	info.nobjMngr.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
+	if info.availableAPIs.HasSvcMonitor() {
+		info.nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaIngester), owned.serviceMonitor)
 	}
 
-	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
-
 	return &flpIngesterReconciler{
-		ClientHelper:    cl,
-		nobjMngr:        nobjMngr,
-		owned:           owned,
-		useOpenShiftSCC: openshift,
-		image:           image,
-		availableAPIs:   availableAPIs,
+		reconcilersCommonInfo: *info,
+		owned:                 owned,
 	}
 }
 
@@ -132,7 +119,7 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 			return err
 		}
 		if r.availableAPIs.HasSvcMonitor() {
-			if err := AddPrometheusServiceMonitor(ctx, &builder.generic, r.ClientHelper); err != nil {
+			if err := r.CreateOwned(ctx, builder.generic.serviceMonitor()); err != nil {
 				return err
 			}
 		}

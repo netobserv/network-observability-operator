@@ -58,7 +58,7 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string, av
 	nobjMngr.AddManagedObject(constants.PluginName, owned.serviceAccount)
 	nobjMngr.AddManagedObject(configMapName, owned.configMap)
 	if availableAPIs.HasSvcMonitor() {
-		nobjMngr.AddManagedObject(constants.ConsoleServiceMonitorName, owned.serviceMonitor)
+		nobjMngr.AddManagedObject(constants.PluginName, owned.serviceMonitor)
 	}
 
 	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, image: imageName, availableAPIs: availableAPIs}
@@ -200,7 +200,7 @@ func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, de
 			return err
 		}
 		if r.availableAPIs.HasSvcMonitor() {
-			serviceMonitor := builder.buildConsolePluginServiceMonitorObject()
+			serviceMonitor := builder.serviceMonitor()
 			if err := r.CreateOwned(ctx, serviceMonitor); err != nil {
 				return err
 			}

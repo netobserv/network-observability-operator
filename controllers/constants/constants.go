@@ -2,13 +2,11 @@
 package constants
 
 const (
-	DefaultOperatorNamespace  = "netobserv"
-	OperatorName              = "netobserv-operator"
-	FLPName                   = "flowlogs-pipeline"
-	FLPServiceMonitorName     = "flowlogs-pipeline-monitor"
-	FLPPortName               = "flp" // must be <15 chars
-	PluginName                = "netobserv-plugin"
-	ConsoleServiceMonitorName = "netobserv-console-plugin"
+	DefaultOperatorNamespace = "netobserv"
+	OperatorName             = "netobserv-operator"
+	FLPName                  = "flowlogs-pipeline"
+	FLPPortName              = "flp" // must be <15 chars
+	PluginName               = "netobserv-plugin"
 
 	// EBPFAgentName and other constants for it
 	EBPFAgentName          = "netobserv-ebpf-agent"

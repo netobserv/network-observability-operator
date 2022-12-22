@@ -87,10 +87,10 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 	}
 }
 
-func (b *builder) buildConsolePluginServiceMonitorObject() *monitoringv1.ServiceMonitor {
+func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.ConsoleServiceMonitorName,
+			Name:      constants.PluginName,
 			Namespace: b.namespace,
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
