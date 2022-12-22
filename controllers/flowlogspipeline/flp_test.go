@@ -228,7 +228,7 @@ func TestDeploymentNoChange(t *testing.T) {
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 
-	ftr := flpTransformerReconciler{image: image}
+	ftr := flpTransformerReconciler{reconcilersCommonInfo: reconcilersCommonInfo{image: image}}
 	assert.False(ftr.deploymentNeedsUpdate(first, &cfg.Processor, digest))
 }
 
@@ -250,7 +250,7 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	second := b.deployment(digest)
 
-	ftr := flpTransformerReconciler{image: image}
+	ftr := flpTransformerReconciler{reconcilersCommonInfo: reconcilersCommonInfo{image: image}}
 	assert.True(ftr.deploymentNeedsUpdate(first, &cfg.Processor, digest))
 
 	// Check log level change
@@ -315,7 +315,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	_, digest, err = b.configMap()
 	assert.NoError(err)
 
-	ftr := flpTransformerReconciler{image: image}
+	ftr := flpTransformerReconciler{reconcilersCommonInfo: reconcilersCommonInfo{image: image}}
 	assert.True(ftr.deploymentNeedsUpdate(first, &cfg2.Processor, digest))
 }
 
@@ -460,6 +460,17 @@ func TestLabels(t *testing.T) {
 	assert.Equal("flowlogs-pipeline", svc.Spec.Selector["app"])
 	assert.Equal("dev", svc.Labels["version"])
 	assert.Empty(svc.Spec.Selector["version"])
+
+	// ServiceMonitor
+	smMono := builder.generic.serviceMonitor()
+	assert.Equal("flowlogs-pipeline-monitor", smMono.Name)
+	assert.Equal("flowlogs-pipeline", smMono.Spec.Selector.MatchLabels["app"])
+	smTrans := tBuilder.generic.serviceMonitor()
+	assert.Equal("flowlogs-pipeline-transformer-monitor", smTrans.Name)
+	assert.Equal("flowlogs-pipeline-transformer", smTrans.Spec.Selector.MatchLabels["app"])
+	smIng := iBuilder.generic.serviceMonitor()
+	assert.Equal("flowlogs-pipeline-ingester-monitor", smIng.Name)
+	assert.Equal("flowlogs-pipeline-ingester", smIng.Spec.Selector.MatchLabels["app"])
 }
 
 // This function validate that each stage has its matching parameter

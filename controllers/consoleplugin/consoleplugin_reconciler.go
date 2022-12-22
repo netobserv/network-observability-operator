@@ -4,8 +4,10 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/netobserv/network-observability-operator/pkg/discover"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -25,9 +27,10 @@ type pluginSpec = flowsv1alpha1.FlowCollectorConsolePlugin
 // CPReconciler reconciles the current console plugin state with the desired configuration
 type CPReconciler struct {
 	reconcilers.ClientHelper
-	nobjMngr *reconcilers.NamespacedObjectManager
-	owned    ownedObjects
-	image    string
+	nobjMngr      *reconcilers.NamespacedObjectManager
+	owned         ownedObjects
+	image         string
+	availableAPIs *discover.AvailableAPIs
 }
 
 type ownedObjects struct {
@@ -36,15 +39,17 @@ type ownedObjects struct {
 	hpa            *ascv2.HorizontalPodAutoscaler
 	serviceAccount *corev1.ServiceAccount
 	configMap      *corev1.ConfigMap
+	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
-func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string) CPReconciler {
+func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string, availableAPIs *discover.AvailableAPIs) CPReconciler {
 	owned := ownedObjects{
 		deployment:     &appsv1.Deployment{},
 		service:        &corev1.Service{},
 		hpa:            &ascv2.HorizontalPodAutoscaler{},
 		serviceAccount: &corev1.ServiceAccount{},
 		configMap:      &corev1.ConfigMap{},
+		serviceMonitor: &monitoringv1.ServiceMonitor{},
 	}
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.deployment)
@@ -52,8 +57,11 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string) CP
 	nobjMngr.AddManagedObject(constants.PluginName, owned.hpa)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.serviceAccount)
 	nobjMngr.AddManagedObject(configMapName, owned.configMap)
+	if availableAPIs.HasSvcMonitor() {
+		nobjMngr.AddManagedObject(constants.PluginName, owned.serviceMonitor)
+	}
 
-	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, image: imageName}
+	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, image: imageName, availableAPIs: availableAPIs}
 }
 
 // InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
@@ -190,6 +198,12 @@ func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, de
 		newSVC := builder.service(nil)
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
 			return err
+		}
+		if r.availableAPIs.HasSvcMonitor() {
+			serviceMonitor := builder.serviceMonitor()
+			if err := r.CreateOwned(ctx, serviceMonitor); err != nil {
+				return err
+			}
 		}
 	} else if serviceNeedsUpdate(r.owned.service, &desired.ConsolePlugin, ns) {
 		newSVC := builder.service(r.owned.service)

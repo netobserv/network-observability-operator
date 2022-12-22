@@ -36,8 +36,6 @@ local-deploy-operator:
 	@echo "====> Waiting for flowlogs-pipeline pod to be ready"
 	while : ; do kubectl get ds flowlogs-pipeline && break; sleep 1; done
 	kubectl wait --timeout=180s --for=condition=ready pod -l app=flowlogs-pipeline
-	@echo "====> Getting first pod in the demon-set"
-	first_pod=$$(kubectl get pods --selector=app=flowlogs-pipeline -o jsonpath='{.items[0].metadata.name}'); \
 	@echo "====> Operator process info"
 	@PID=$$(pgrep --oldest --full "main.go"); echo -e "\n===> The operator is running in process $$PID\nTo stop the operator process use: pkill -p $$PID"
 	@echo "====> Done"

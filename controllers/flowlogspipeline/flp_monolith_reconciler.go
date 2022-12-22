@@ -3,6 +3,7 @@ package flowlogspipeline
 import (
 	"context"
 
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -10,18 +11,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/discover"
 )
 
 // flpMonolithReconciler reconciles the current flowlogs-pipeline monolith state with the desired configuration
 type flpMonolithReconciler struct {
 	singleReconciler
-	reconcilers.ClientHelper
-	nobjMngr        *reconcilers.NamespacedObjectManager
-	owned           monolithOwnedObjects
-	useOpenShiftSCC bool
-	image           string
+	reconcilersCommonInfo
+	owned monolithOwnedObjects
 }
 
 type monolithOwnedObjects struct {
@@ -31,9 +27,10 @@ type monolithOwnedObjects struct {
 	configMap      *corev1.ConfigMap
 	roleBindingIn  *rbacv1.ClusterRoleBinding
 	roleBindingTr  *rbacv1.ClusterRoleBinding
+	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
-func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) *flpMonolithReconciler {
+func newMonolithReconciler(info *reconcilersCommonInfo) *flpMonolithReconciler {
 	name := name(ConfMonolith)
 	owned := monolithOwnedObjects{
 		daemonSet:      &appsv1.DaemonSet{},
@@ -42,23 +39,21 @@ func newMonolithReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns,
 		configMap:      &corev1.ConfigMap{},
 		roleBindingIn:  &rbacv1.ClusterRoleBinding{},
 		roleBindingTr:  &rbacv1.ClusterRoleBinding{},
+		serviceMonitor: &monitoringv1.ServiceMonitor{},
 	}
-	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
-	nobjMngr.AddManagedObject(name, owned.daemonSet)
-	nobjMngr.AddManagedObject(name, owned.serviceAccount)
-	nobjMngr.AddManagedObject(promServiceName(ConfMonolith), owned.promService)
-	nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaIngester), owned.roleBindingIn)
-	nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaTransformer), owned.roleBindingTr)
-	nobjMngr.AddManagedObject(configMapName(ConfMonolith), owned.configMap)
-
-	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
+	info.nobjMngr.AddManagedObject(name, owned.daemonSet)
+	info.nobjMngr.AddManagedObject(name, owned.serviceAccount)
+	info.nobjMngr.AddManagedObject(promServiceName(ConfMonolith), owned.promService)
+	info.nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaIngester), owned.roleBindingIn)
+	info.nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaTransformer), owned.roleBindingTr)
+	info.nobjMngr.AddManagedObject(configMapName(ConfMonolith), owned.configMap)
+	if info.availableAPIs.HasSvcMonitor() {
+		info.nobjMngr.AddManagedObject(serviceMonitorName(ConfMonolith), owned.serviceMonitor)
+	}
 
 	return &flpMonolithReconciler{
-		ClientHelper:    cl,
-		nobjMngr:        nobjMngr,
-		owned:           owned,
-		useOpenShiftSCC: openshift,
-		image:           image,
+		reconcilersCommonInfo: *info,
+		owned:                 owned,
 	}
 }
 
@@ -122,7 +117,15 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowsv1a
 
 func (r *flpMonolithReconciler) reconcilePrometheusService(ctx context.Context, builder *monolithBuilder) error {
 	if !r.nobjMngr.Exists(r.owned.promService) {
-		return r.CreateOwned(ctx, builder.newPromService())
+		if err := r.CreateOwned(ctx, builder.newPromService()); err != nil {
+			return err
+		}
+		if r.availableAPIs.HasSvcMonitor() {
+			if err := r.CreateOwned(ctx, builder.generic.serviceMonitor()); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 	newSVC := builder.fromPromService(r.owned.promService)
 	if serviceNeedsUpdate(r.owned.promService, newSVC) {

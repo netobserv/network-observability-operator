@@ -3,6 +3,7 @@ package flowlogspipeline
 import (
 	"context"
 
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -11,18 +12,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/discover"
 )
 
 // flpTransformerReconciler reconciles the current flowlogs-pipeline-transformer state with the desired configuration
 type flpTransformerReconciler struct {
 	singleReconciler
-	reconcilers.ClientHelper
-	nobjMngr        *reconcilers.NamespacedObjectManager
-	owned           transfoOwnedObjects
-	useOpenShiftSCC bool
-	image           string
+	reconcilersCommonInfo
+	owned transfoOwnedObjects
 }
 
 type transfoOwnedObjects struct {
@@ -32,9 +28,10 @@ type transfoOwnedObjects struct {
 	serviceAccount *corev1.ServiceAccount
 	configMap      *corev1.ConfigMap
 	roleBinding    *rbacv1.ClusterRoleBinding
+	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
-func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions) *flpTransformerReconciler {
+func newTransformerReconciler(info *reconcilersCommonInfo) *flpTransformerReconciler {
 	name := name(ConfKafkaTransformer)
 	owned := transfoOwnedObjects{
 		deployment:     &appsv1.Deployment{},
@@ -43,23 +40,21 @@ func newTransformerReconciler(ctx context.Context, cl reconcilers.ClientHelper, 
 		serviceAccount: &corev1.ServiceAccount{},
 		configMap:      &corev1.ConfigMap{},
 		roleBinding:    &rbacv1.ClusterRoleBinding{},
+		serviceMonitor: &monitoringv1.ServiceMonitor{},
 	}
-	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
-	nobjMngr.AddManagedObject(name, owned.deployment)
-	nobjMngr.AddManagedObject(name, owned.hpa)
-	nobjMngr.AddManagedObject(name, owned.serviceAccount)
-	nobjMngr.AddManagedObject(promServiceName(ConfKafkaTransformer), owned.promService)
-	nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaTransformer), owned.roleBinding)
-	nobjMngr.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
-
-	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
+	info.nobjMngr.AddManagedObject(name, owned.deployment)
+	info.nobjMngr.AddManagedObject(name, owned.hpa)
+	info.nobjMngr.AddManagedObject(name, owned.serviceAccount)
+	info.nobjMngr.AddManagedObject(promServiceName(ConfKafkaTransformer), owned.promService)
+	info.nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaTransformer), owned.roleBinding)
+	info.nobjMngr.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
+	if info.availableAPIs.HasSvcMonitor() {
+		info.nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaTransformer), owned.serviceMonitor)
+	}
 
 	return &flpTransformerReconciler{
-		ClientHelper:    cl,
-		nobjMngr:        nobjMngr,
-		owned:           owned,
-		useOpenShiftSCC: openshift,
-		image:           image,
+		reconcilersCommonInfo: *info,
+		owned:                 owned,
 	}
 }
 
@@ -158,7 +153,15 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 
 func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Context, builder *transfoBuilder) error {
 	if !r.nobjMngr.Exists(r.owned.promService) {
-		return r.CreateOwned(ctx, builder.newPromService())
+		if err := r.CreateOwned(ctx, builder.newPromService()); err != nil {
+			return err
+		}
+		if r.availableAPIs.HasSvcMonitor() {
+			if err := r.CreateOwned(ctx, builder.generic.serviceMonitor()); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 	newSVC := builder.fromPromService(r.owned.promService)
 	if serviceNeedsUpdate(r.owned.promService, newSVC) {
