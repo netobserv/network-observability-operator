@@ -1,0 +1,9 @@
+version: 2
+outputDir: _tmp
+apisToHide: []
+apiMap:
+- name: flows.netobserv.io
+  resources:
+  - kind: FlowCollector
+    group: flows.netobserv.io
+    version: v1alpha1

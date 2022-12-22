@@ -78,18 +78,18 @@ spec:
                         description: Debug allows setting some aspects of the internal
                           configuration of the eBPF agent. This section is aimed exclusively
                           for debugging and fine-grained performance optimizations
-                          (e.g. GOGC, GOMAXPROCS env vars). Users setting its values
-                          do it at their own risk.
+                          (for example GOGC, GOMAXPROCS env vars). Users setting its
+                          values do it at their own risk.
                         properties:
                           env:
                             additionalProperties:
                               type: string
                             description: env allows passing custom environment variables
                               to the NetObserv Agent. Useful for passing some very
-                              concrete performance-tuning options (e.g. GOGC, GOMAXPROCS)
+                              concrete performance-tuning options (such as GOGC, GOMAXPROCS)
                               that shouldn't be publicly exposed as part of the FlowCollector
-                              descriptor, as they are only useful in edge debug/support
-                              scenarios.
+                              descriptor, as they are only useful in edge debug and
+                              support scenarios.
                             type: object
                         type: object
                       excludeInterfaces:
@@ -97,8 +97,8 @@ spec:
                         - lo
                         description: excludeInterfaces contains the interface names
                           that will be excluded from flow tracing. If an entry is
-                          enclosed by slashes (e.g. `/br-/`), it will match as regular
-                          expression, otherwise it will be matched as a case-sensitive
+                          enclosed by slashes (such as `/br-/`), it will match as
+                          regular expression, otherwise it will be matched as a case-sensitive
                           string.
                         items:
                           type: string
@@ -117,7 +117,7 @@ spec:
                           where flows will be collected. If empty, the agent will
                           fetch all the interfaces in the system, excepting the ones
                           listed in ExcludeInterfaces. If an entry is enclosed by
-                          slashes (e.g. `/br-/`), it will match as regular expression,
+                          slashes (such as `/br-/`), it will match as regular expression,
                           otherwise it will be matched as a case-sensitive string.
                         items:
                           type: string
@@ -147,9 +147,9 @@ spec:
                           in that case, the operator will set granular capabilities
                           (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container,
                           to enable its correct operation. If for some reason these
-                          capabilities cannot be set (e.g. old kernel version not
-                          knowing CAP_BPF) then you can turn on this mode for more
-                          global privileges.'
+                          capabilities cannot be set (for example old kernel version
+                          not knowing CAP_BPF) then you can turn on this mode for
+                          more global privileges.'
                         type: boolean
                       resources:
                         default:
@@ -216,18 +216,18 @@ spec:
                         properties:
                           namespace:
                             default: openshift-network-operator
-                            description: namespace  where the configmap is going to
-                              be deployed.
+                            description: namespace  where the config map is going
+                              to be deployed.
                             type: string
                         type: object
                       forceSampleAll:
                         default: false
                         description: forceSampleAll allows disabling sampling in the
                           IPFIX-based flow reporter. It is not recommended to sample
-                          all the traffic with IPFIX, as it may generate cluster instability.
-                          If you REALLY want to do that, set this flag to true. Use
-                          at your own risk. When it is set to true, the value of "sampling"
-                          is ignored.
+                          all the traffic with IPFIX, as it might generate cluster
+                          instability. If you REALLY want to do that, set this flag
+                          to true. Use at your own risk. When it is set to true, the
+                          value of "sampling" is ignored.
                         type: boolean
                       ovnKubernetes:
                         description: ovnKubernetes defines the settings of the OVN-Kubernetes
@@ -255,7 +255,7 @@ spec:
                         description: sampling is the sampling rate on the reporter.
                           100 means one flow on 100 is sent. To ensure cluster stability,
                           it is not possible to set a value below 2. If you really
-                          want to sample every packet, which may impact the cluster
+                          want to sample every packet, which might impact the cluster
                           stability, refer to "forceSampleAll". Alternatively, you
                           can use the eBPF Agent instead of IPFIX.
                         format: int32
@@ -853,7 +853,7 @@ spec:
                         additionalProperties:
                           type: string
                         description: 'portNames defines additional port names to use
-                          in the console E.g. portNames: {"3100": "loki"}'
+                          in the console. Example: portNames: {"3100": "loki"}'
                         type: object
                     type: object
                   quickFilters:
@@ -890,8 +890,8 @@ spec:
                             type: string
                           description: 'filter is a set of keys and values to be set
                             when this filter is selected. Each key can relate to a
-                            list of values using a coma-separated string E.g. filter:
-                            {"src_namespace": "namespace1,namespace2"}'
+                            list of values using a coma-separated string. Example:
+                            filter: {"src_namespace": "namespace1,namespace2"}'
                           type: object
                         name:
                           description: name of the filter, that will be displayed
@@ -983,8 +983,8 @@ spec:
                           description: address of the Kafka server
                           type: string
                         tls:
-                          description: tls client configuration. When using TLS, make
-                            sure the address matches the Kafka port used for TLS,
+                          description: tls client configuration. When using TLS, verify
+                            that the address matches the Kafka port used for TLS,
                             generally 9093. Note that, when eBPF agents are used,
                             Kafka certificate needs to be copied in the agent namespace
                             (by default it's netobserv-privileged).
@@ -995,20 +995,20 @@ spec:
                               properties:
                                 certFile:
                                   description: certFile defines the path to the certificate
-                                    file name within the ConfigMap / Secret
+                                    file name within the config map or secret
                                   type: string
                                 certKey:
                                   description: certKey defines the path to the certificate
-                                    private key file name within the ConfigMap / Secret.
-                                    Omit when the key is not necessary.
+                                    private key file name within the config map or
+                                    secret. Omit when the key is not necessary.
                                   type: string
                                 name:
-                                  description: name of the ConfigMap or Secret containing
+                                  description: name of the config map or secret containing
                                     certificates
                                   type: string
                                 type:
                                   description: 'type for the certificate reference:
-                                    configmap or secret'
+                                    "configmap" or "secret"'
                                   enum:
                                   - configmap
                                   - secret
@@ -1031,20 +1031,20 @@ spec:
                               properties:
                                 certFile:
                                   description: certFile defines the path to the certificate
-                                    file name within the ConfigMap / Secret
+                                    file name within the config map or secret
                                   type: string
                                 certKey:
                                   description: certKey defines the path to the certificate
-                                    private key file name within the ConfigMap / Secret.
-                                    Omit when the key is not necessary.
+                                    private key file name within the config map or
+                                    secret. Omit when the key is not necessary.
                                   type: string
                                 name:
-                                  description: name of the ConfigMap or Secret containing
+                                  description: name of the config map or secret containing
                                     certificates
                                   type: string
                                 type:
                                   description: 'type for the certificate reference:
-                                    configmap or secret'
+                                    "configmap" or "secret"'
                                   enum:
                                   - configmap
                                   - secret
@@ -1061,7 +1061,7 @@ spec:
                       - topic
                       type: object
                     type:
-                      description: type selects the type of exporte. Only "KAFKA"
+                      description: type selects the type of exporters. Only "KAFKA"
                         is available at the moment.
                       enum:
                       - KAFKA
@@ -1080,10 +1080,10 @@ spec:
                     description: address of the Kafka server
                     type: string
                   tls:
-                    description: tls client configuration. When using TLS, make sure
-                      the address matches the Kafka port used for TLS, generally 9093.
-                      Note that, when eBPF agents are used, Kafka certificate needs
-                      to be copied in the agent namespace (by default it's netobserv-privileged).
+                    description: tls client configuration. When using TLS, verify
+                      that the address matches the Kafka port used for TLS, generally
+                      9093. Note that, when eBPF agents are used, Kafka certificate
+                      needs to be copied in the agent namespace (by default it's netobserv-privileged).
                     properties:
                       caCert:
                         description: caCert defines the reference of the certificate
@@ -1091,20 +1091,20 @@ spec:
                         properties:
                           certFile:
                             description: certFile defines the path to the certificate
-                              file name within the ConfigMap / Secret
+                              file name within the config map or secret
                             type: string
                           certKey:
                             description: certKey defines the path to the certificate
-                              private key file name within the ConfigMap / Secret.
+                              private key file name within the config map or secret.
                               Omit when the key is not necessary.
                             type: string
                           name:
-                            description: name of the ConfigMap or Secret containing
+                            description: name of the config map or secret containing
                               certificates
                             type: string
                           type:
-                            description: 'type for the certificate reference: configmap
-                              or secret'
+                            description: 'type for the certificate reference: "configmap"
+                              or "secret"'
                             enum:
                             - configmap
                             - secret
@@ -1127,20 +1127,20 @@ spec:
                         properties:
                           certFile:
                             description: certFile defines the path to the certificate
-                              file name within the ConfigMap / Secret
+                              file name within the config map or secret
                             type: string
                           certKey:
                             description: certKey defines the path to the certificate
-                              private key file name within the ConfigMap / Secret.
+                              private key file name within the config map or secret.
                               Omit when the key is not necessary.
                             type: string
                           name:
-                            description: name of the ConfigMap or Secret containing
+                            description: name of the config map or secret containing
                               certificates
                             type: string
                           type:
-                            description: 'type for the certificate reference: configmap
-                              or secret'
+                            description: 'type for the certificate reference: "configmap"
+                              or "secret"'
                             enum:
                             - configmap
                             - secret
@@ -1162,11 +1162,12 @@ spec:
                   authToken:
                     default: DISABLED
                     description: AuthToken describe the way to get a token to authenticate
-                      to Loki DISABLED will not send any token with the request HOST
-                      will use the local pod service account to authenticate to Loki
-                      FORWARD will forward user token, in this mode, pod that are
-                      not receiving user request like the processor will use the local
-                      pod service account. Similar to HOST mode.
+                      to Loki. DISABLED will not send any token with the request.
+                      HOST will use the local pod service account to authenticate
+                      to Loki. FORWARD will forward user token, in this mode, pod
+                      that are not receiving user request like the processor will
+                      use the local pod service account. Similar to HOST mode. When
+                      using the Loki Operator, set it to `HOST` or `FORWARD`.
                     enum:
                     - DISABLED
                     - HOST
@@ -1175,36 +1176,38 @@ spec:
                   batchSize:
                     default: 102400
                     description: batchSize is max batch size (in bytes) of logs to
-                      accumulate before sending
+                      accumulate before sending.
                     format: int64
                     minimum: 1
                     type: integer
                   batchWait:
                     default: 1s
-                    description: batchWait is max time to wait before sending a batch
+                    description: batchWait is max time to wait before sending a batch.
                     type: string
                   maxBackoff:
                     default: 5s
                     description: maxBackoff is the maximum backoff time for client
-                      connection between retries
+                      connection between retries.
                     type: string
                   maxRetries:
                     default: 2
                     description: maxRetries is the maximum number of retries for client
-                      connections
+                      connections.
                     format: int32
                     minimum: 0
                     type: integer
                   minBackoff:
                     default: 1s
                     description: minBackoff is the initial backoff time for client
-                      connection between retries
+                      connection between retries.
                     type: string
                   querierUrl:
                     description: querierURL specifies the address of the Loki querier
                       service, in case it is different from the Loki ingester URL.
                       If empty, the URL value will be used (assuming that the Loki
-                      ingester and querier are in the same server).
+                      ingester and querier are in the same server). When using the
+                      Loki Operator, do not set it, since ingestion and queries use
+                      the Loki gateway.
                     type: string
                   staticLabels:
                     additionalProperties:
@@ -1212,25 +1215,26 @@ spec:
                     default:
                       app: netobserv-flowcollector
                     description: staticLabels is a map of common labels to set on
-                      each flow
+                      each flow.
                     type: object
                   statusUrl:
                     description: statusURL specifies the address of the Loki /ready
                       /metrics /config endpoints, in case it is different from the
                       Loki querier URL. If empty, the QuerierURL value will be used.
                       This is useful to show error messages and some context in the
-                      frontend
+                      frontend. When using the Loki Operator, set it to the Loki HTTP
+                      query frontend service, for example https://loki-query-frontend-http.netobserv.svc:3100/.
                     type: string
                   tenantID:
                     default: netobserv
                     description: tenantID is the Loki X-Scope-OrgID that identifies
-                      the tenant for each request. it will be ignored if instanceSpec
-                      is specified
+                      the tenant for each request. When using the Loki Operator, set
+                      it to `network`, which corresponds to a special tenant mode.
                     type: string
                   timeout:
                     default: 10s
                     description: timeout is the maximum time connection / request
-                      limit A Timeout of zero means no timeout.
+                      limit. A Timeout of zero means no timeout.
                     type: string
                   tls:
                     description: tls client configuration.
@@ -1241,20 +1245,20 @@ spec:
                         properties:
                           certFile:
                             description: certFile defines the path to the certificate
-                              file name within the ConfigMap / Secret
+                              file name within the config map or secret
                             type: string
                           certKey:
                             description: certKey defines the path to the certificate
-                              private key file name within the ConfigMap / Secret.
+                              private key file name within the config map or secret.
                               Omit when the key is not necessary.
                             type: string
                           name:
-                            description: name of the ConfigMap or Secret containing
+                            description: name of the config map or secret containing
                               certificates
                             type: string
                           type:
-                            description: 'type for the certificate reference: configmap
-                              or secret'
+                            description: 'type for the certificate reference: "configmap"
+                              or "secret"'
                             enum:
                             - configmap
                             - secret
@@ -1277,20 +1281,20 @@ spec:
                         properties:
                           certFile:
                             description: certFile defines the path to the certificate
-                              file name within the ConfigMap / Secret
+                              file name within the config map or secret
                             type: string
                           certKey:
                             description: certKey defines the path to the certificate
-                              private key file name within the ConfigMap / Secret.
+                              private key file name within the config map or secret.
                               Omit when the key is not necessary.
                             type: string
                           name:
-                            description: name of the ConfigMap or Secret containing
+                            description: name of the config map or secret containing
                               certificates
                             type: string
                           type:
-                            description: 'type for the certificate reference: configmap
-                              or secret'
+                            description: 'type for the certificate reference: "configmap"
+                              or "secret"'
                             enum:
                             - configmap
                             - secret
@@ -1300,7 +1304,9 @@ spec:
                   url:
                     default: http://loki:3100/
                     description: url is the address of an existing Loki service to
-                      push the flows to.
+                      push the flows to. When using the Loki Operator, set it to the
+                      Loki gateway service with the `network` tenant set in path,
+                      for example https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.
                     type: string
                 type: object
               namespace:
@@ -1315,18 +1321,18 @@ spec:
                   debug:
                     description: Debug allows setting some aspects of the internal
                       configuration of the flow processor. This section is aimed exclusively
-                      for debugging and fine-grained performance optimizations (e.g.
-                      GOGC, GOMAXPROCS env vars). Users setting its values do it at
-                      their own risk.
+                      for debugging and fine-grained performance optimizations (for
+                      example GOGC, GOMAXPROCS env vars). Users setting its values
+                      do it at their own risk.
                     properties:
                       env:
                         additionalProperties:
                           type: string
                         description: env allows passing custom environment variables
                           to the NetObserv Agent. Useful for passing some very concrete
-                          performance-tuning options (e.g. GOGC, GOMAXPROCS) that
+                          performance-tuning options (such as GOGC, GOMAXPROCS) that
                           shouldn't be publicly exposed as part of the FlowCollector
-                          descriptor, as they are only useful in edge debug/support
+                          descriptor, as they are only useful in edge debug and support
                           scenarios.
                         type: object
                     type: object
@@ -1339,7 +1345,7 @@ spec:
                   enableKubeProbes:
                     default: true
                     description: enableKubeProbes is a flag to enable or disable Kubernetes
-                      liveness/readiness probes
+                      liveness and readiness probes
                     type: boolean
                   healthPort:
                     default: 8080
@@ -1952,21 +1958,21 @@ spec:
                                 properties:
                                   certFile:
                                     description: certFile defines the path to the
-                                      certificate file name within the ConfigMap /
-                                      Secret
+                                      certificate file name within the config map
+                                      or secret
                                     type: string
                                   certKey:
                                     description: certKey defines the path to the certificate
-                                      private key file name within the ConfigMap /
-                                      Secret. Omit when the key is not necessary.
+                                      private key file name within the config map
+                                      or secret. Omit when the key is not necessary.
                                     type: string
                                   name:
-                                    description: name of the ConfigMap or Secret containing
-                                      certificates
+                                    description: name of the config map or secret
+                                      containing certificates
                                     type: string
                                   type:
                                     description: 'type for the certificate reference:
-                                      configmap or secret'
+                                      "configmap" or "secret"'
                                     enum:
                                     - configmap
                                     - secret
@@ -1977,7 +1983,7 @@ spec:
                                 description: Select the type of TLS configuration
                                   "DISABLED" (default) to not configure TLS for the
                                   endpoint, "PROVIDED" to manually provide cert file
-                                  and a key file, and "AUTO" to use Openshift auto
+                                  and a key file, and "AUTO" to use OpenShift auto
                                   generated certificate using annotations
                                 enum:
                                 - DISABLED
