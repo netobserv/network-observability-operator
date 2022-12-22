@@ -2109,7 +2109,7 @@ loki, the flow store, client settings.
         <td><b>authToken</b></td>
         <td>enum</td>
         <td>
-          AuthToken describe the way to get a token to authenticate to Loki DISABLED will not send any token with the request HOST will use the local pod service account to authenticate to Loki FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode.<br/>
+          AuthToken describe the way to get a token to authenticate to Loki. DISABLED will not send any token with the request. HOST will use the local pod service account to authenticate to Loki. FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode. When using the Loki Operator, set it to `HOST` or `FORWARD`.<br/>
           <br/>
             <i>Enum</i>: DISABLED, HOST, FORWARD<br/>
             <i>Default</i>: DISABLED<br/>
@@ -2119,7 +2119,7 @@ loki, the flow store, client settings.
         <td><b>batchSize</b></td>
         <td>integer</td>
         <td>
-          batchSize is max batch size (in bytes) of logs to accumulate before sending<br/>
+          batchSize is max batch size (in bytes) of logs to accumulate before sending.<br/>
           <br/>
             <i>Format</i>: int64<br/>
             <i>Default</i>: 102400<br/>
@@ -2130,7 +2130,7 @@ loki, the flow store, client settings.
         <td><b>batchWait</b></td>
         <td>string</td>
         <td>
-          batchWait is max time to wait before sending a batch<br/>
+          batchWait is max time to wait before sending a batch.<br/>
           <br/>
             <i>Default</i>: 1s<br/>
         </td>
@@ -2139,7 +2139,7 @@ loki, the flow store, client settings.
         <td><b>maxBackoff</b></td>
         <td>string</td>
         <td>
-          maxBackoff is the maximum backoff time for client connection between retries<br/>
+          maxBackoff is the maximum backoff time for client connection between retries.<br/>
           <br/>
             <i>Default</i>: 5s<br/>
         </td>
@@ -2148,7 +2148,7 @@ loki, the flow store, client settings.
         <td><b>maxRetries</b></td>
         <td>integer</td>
         <td>
-          maxRetries is the maximum number of retries for client connections<br/>
+          maxRetries is the maximum number of retries for client connections.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 2<br/>
@@ -2159,7 +2159,7 @@ loki, the flow store, client settings.
         <td><b>minBackoff</b></td>
         <td>string</td>
         <td>
-          minBackoff is the initial backoff time for client connection between retries<br/>
+          minBackoff is the initial backoff time for client connection between retries.<br/>
           <br/>
             <i>Default</i>: 1s<br/>
         </td>
@@ -2168,14 +2168,14 @@ loki, the flow store, client settings.
         <td><b>querierUrl</b></td>
         <td>string</td>
         <td>
-          querierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server).<br/>
+          querierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server). When using the Loki Operator, do not set it, since ingestion and queries use the Loki gateway.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>staticLabels</b></td>
         <td>map[string]string</td>
         <td>
-          staticLabels is a map of common labels to set on each flow<br/>
+          staticLabels is a map of common labels to set on each flow.<br/>
           <br/>
             <i>Default</i>: map[app:netobserv-flowcollector]<br/>
         </td>
@@ -2184,14 +2184,14 @@ loki, the flow store, client settings.
         <td><b>statusUrl</b></td>
         <td>string</td>
         <td>
-          statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend<br/>
+          statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend. When using the Loki Operator, set it to the Loki HTTP query frontend service, for example https://loki-query-frontend-http.netobserv.svc:3100/.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>tenantID</b></td>
         <td>string</td>
         <td>
-          tenantID is the Loki X-Scope-OrgID that identifies the tenant for each request. it will be ignored if instanceSpec is specified<br/>
+          tenantID is the Loki X-Scope-OrgID that identifies the tenant for each request. When using the Loki Operator, set it to `network`, which corresponds to a special tenant mode.<br/>
           <br/>
             <i>Default</i>: netobserv<br/>
         </td>
@@ -2200,7 +2200,7 @@ loki, the flow store, client settings.
         <td><b>timeout</b></td>
         <td>string</td>
         <td>
-          timeout is the maximum time connection / request limit A Timeout of zero means no timeout.<br/>
+          timeout is the maximum time connection / request limit. A Timeout of zero means no timeout.<br/>
           <br/>
             <i>Default</i>: 10s<br/>
         </td>
@@ -2216,7 +2216,7 @@ loki, the flow store, client settings.
         <td><b>url</b></td>
         <td>string</td>
         <td>
-          url is the address of an existing Loki service to push the flows to.<br/>
+          url is the address of an existing Loki service to push the flows to. When using the Loki Operator, set it to the Loki gateway service with the `network` tenant set in path, for example https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.<br/>
           <br/>
             <i>Default</i>: http://loki:3100/<br/>
         </td>

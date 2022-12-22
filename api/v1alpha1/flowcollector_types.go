@@ -416,66 +416,72 @@ func (spec *FlowCollectorLoki) ForwardUserToken() bool {
 	return spec.AuthToken == LokiAuthForwardUserToken
 }
 
-// FlowCollectorLoki defines the desired state for FlowCollector's Loki client
+// FlowCollectorLoki defines the desired state for FlowCollector's Loki client.
 type FlowCollectorLoki struct {
 	//+kubebuilder:default:="http://loki:3100/"
-	// url is the address of an existing Loki service to push the flows to.
+	// url is the address of an existing Loki service to push the flows to. When using the Loki Operator,
+	// set it to the Loki gateway service with the `network` tenant set in path, for example
+	// https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.
 	URL string `json:"url,omitempty"`
 
 	//+kubebuilder:validation:optional
 	// querierURL specifies the address of the Loki querier service, in case it is different from the
 	// Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester
-	// and querier are in the same server).
+	// and querier are in the same server). When using the Loki Operator, do not set it, since
+	// ingestion and queries use the Loki gateway.
 	QuerierURL string `json:"querierUrl,omitempty"`
 
 	//+kubebuilder:validation:optional
 	// statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the
 	// Loki querier URL. If empty, the QuerierURL value will be used.
-	// This is useful to show error messages and some context in the frontend
+	// This is useful to show error messages and some context in the frontend.
+	// When using the Loki Operator, set it to the Loki HTTP query frontend service, for example
+	// https://loki-query-frontend-http.netobserv.svc:3100/.
 	StatusURL string `json:"statusUrl,omitempty"`
 
 	//+kubebuilder:default:="netobserv"
 	// tenantID is the Loki X-Scope-OrgID that identifies the tenant for each request.
-	// it will be ignored if instanceSpec is specified
+	// When using the Loki Operator, set it to `network`, which corresponds to a special tenant mode.
 	TenantID string `json:"tenantID,omitempty"`
 
 	// +kubebuilder:validation:Enum:="DISABLED";"HOST";"FORWARD"
 	//+kubebuilder:default:="DISABLED"
-	// AuthToken describe the way to get a token to authenticate to Loki
-	// DISABLED will not send any token with the request
-	// HOST will use the local pod service account to authenticate to Loki
+	// AuthToken describe the way to get a token to authenticate to Loki.
+	// DISABLED will not send any token with the request.
+	// HOST will use the local pod service account to authenticate to Loki.
 	// FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode.
+	// When using the Loki Operator, set it to `HOST` or `FORWARD`.
 	AuthToken string `json:"authToken,omitempty"`
 
 	//+kubebuilder:default:="1s"
-	// batchWait is max time to wait before sending a batch
+	// batchWait is max time to wait before sending a batch.
 	BatchWait metav1.Duration `json:"batchWait,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=102400
-	// batchSize is max batch size (in bytes) of logs to accumulate before sending
+	// batchSize is max batch size (in bytes) of logs to accumulate before sending.
 	BatchSize int64 `json:"batchSize,omitempty"`
 
 	//+kubebuilder:default:="10s"
-	// timeout is the maximum time connection / request limit
+	// timeout is the maximum time connection / request limit.
 	// A Timeout of zero means no timeout.
 	Timeout metav1.Duration `json:"timeout,omitempty"`
 
 	//+kubebuilder:default:="1s"
-	// minBackoff is the initial backoff time for client connection between retries
+	// minBackoff is the initial backoff time for client connection between retries.
 	MinBackoff metav1.Duration `json:"minBackoff,omitempty"`
 
 	//+kubebuilder:default:="5s"
-	// maxBackoff is the maximum backoff time for client connection between retries
+	// maxBackoff is the maximum backoff time for client connection between retries.
 	MaxBackoff metav1.Duration `json:"maxBackoff,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=2
-	// maxRetries is the maximum number of retries for client connections
+	// maxRetries is the maximum number of retries for client connections.
 	MaxRetries int32 `json:"maxRetries,omitempty"`
 
 	//+kubebuilder:default:={"app":"netobserv-flowcollector"}
-	// staticLabels is a map of common labels to set on each flow
+	// staticLabels is a map of common labels to set on each flow.
 	StaticLabels map[string]string `json:"staticLabels,omitempty"`
 
 	// tls client configuration.

@@ -845,47 +845,47 @@ Type::
 
 | `authToken`
 | `string`
-| AuthToken describe the way to get a token to authenticate to Loki DISABLED will not send any token with the request HOST will use the local pod service account to authenticate to Loki FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode.
+| AuthToken describe the way to get a token to authenticate to Loki. DISABLED will not send any token with the request. HOST will use the local pod service account to authenticate to Loki. FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode. When using the Loki Operator, set it to `HOST` or `FORWARD`.
 
 | `batchSize`
 | `integer`
-| batchSize is max batch size (in bytes) of logs to accumulate before sending
+| batchSize is max batch size (in bytes) of logs to accumulate before sending.
 
 | `batchWait`
 | `string`
-| batchWait is max time to wait before sending a batch
+| batchWait is max time to wait before sending a batch.
 
 | `maxBackoff`
 | `string`
-| maxBackoff is the maximum backoff time for client connection between retries
+| maxBackoff is the maximum backoff time for client connection between retries.
 
 | `maxRetries`
 | `integer`
-| maxRetries is the maximum number of retries for client connections
+| maxRetries is the maximum number of retries for client connections.
 
 | `minBackoff`
 | `string`
-| minBackoff is the initial backoff time for client connection between retries
+| minBackoff is the initial backoff time for client connection between retries.
 
 | `querierUrl`
 | `string`
-| querierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server).
+| querierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server). When using the Loki Operator, do not set it, since ingestion and queries use the Loki gateway.
 
 | `staticLabels`
 | `object (string)`
-| staticLabels is a map of common labels to set on each flow
+| staticLabels is a map of common labels to set on each flow.
 
 | `statusUrl`
 | `string`
-| statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend
+| statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend. When using the Loki Operator, set it to the Loki HTTP query frontend service, for example https://loki-query-frontend-http.netobserv.svc:3100/.
 
 | `tenantID`
 | `string`
-| tenantID is the Loki X-Scope-OrgID that identifies the tenant for each request. it will be ignored if instanceSpec is specified
+| tenantID is the Loki X-Scope-OrgID that identifies the tenant for each request. When using the Loki Operator, set it to `network`, which corresponds to a special tenant mode.
 
 | `timeout`
 | `string`
-| timeout is the maximum time connection / request limit A Timeout of zero means no timeout.
+| timeout is the maximum time connection / request limit. A Timeout of zero means no timeout.
 
 | `tls`
 | `object`
@@ -893,7 +893,7 @@ Type::
 
 | `url`
 | `string`
-| url is the address of an existing Loki service to push the flows to.
+| url is the address of an existing Loki service to push the flows to. When using the Loki Operator, set it to the Loki gateway service with the `network` tenant set in path, for example https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.
 
 |===
 == .spec.loki.tls
