@@ -1,5 +1,5 @@
 version: 2
-outputDir: docs
+outputDir: _tmp
 apisToHide: []
 apiMap:
 - name: flows.netobserv.io
