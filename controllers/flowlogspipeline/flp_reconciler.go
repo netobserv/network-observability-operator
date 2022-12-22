@@ -31,12 +31,32 @@ type singleReconciler interface {
 	reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error
 }
 
+type reconcilersCommonInfo struct {
+	reconcilers.ClientHelper
+	nobjMngr        *reconcilers.NamespacedObjectManager
+	useOpenShiftSCC bool
+	image           string
+	availableAPIs   *discover.AvailableAPIs
+}
+
+func createCommonInfo(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions, availableAPIs *discover.AvailableAPIs) *reconcilersCommonInfo {
+	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
+	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
+	return &reconcilersCommonInfo{
+		ClientHelper:    cl,
+		nobjMngr:        nobjMngr,
+		useOpenShiftSCC: openshift,
+		image:           image,
+		availableAPIs:   availableAPIs,
+	}
+}
+
 func NewReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions, availableAPIs *discover.AvailableAPIs) FLPReconciler {
 	return FLPReconciler{
 		reconcilers: []singleReconciler{
-			newMonolithReconciler(ctx, cl, ns, prevNS, image, permissionsVendor, availableAPIs),
-			newTransformerReconciler(ctx, cl, ns, prevNS, image, permissionsVendor, availableAPIs),
-			newIngesterReconciler(ctx, cl, ns, prevNS, image, permissionsVendor, availableAPIs),
+			newMonolithReconciler(createCommonInfo(ctx, cl, ns, prevNS, image, permissionsVendor, availableAPIs)),
+			newTransformerReconciler(createCommonInfo(ctx, cl, ns, prevNS, image, permissionsVendor, availableAPIs)),
+			newIngesterReconciler(createCommonInfo(ctx, cl, ns, prevNS, image, permissionsVendor, availableAPIs)),
 		},
 	}
 }
