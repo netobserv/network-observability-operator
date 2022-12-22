@@ -49,7 +49,7 @@ jobs:
       - name: generate test bundle
         run: VERSION=${{ env.TAGS }} PLG_VERSION=${{ env.TAGS }} FLP_VERSION=${{ env.TAGS }} BPF_VERSION=${{ env.TAGS }} BUNDLE_VERSION=0.0.0-${{ env.TAGS }} make bundle
       - name: build bundle
-        run: VERSION=${{ env.TAGS }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make bundle-build
+        run: BUNDLE_VERSION=${{ env.TAGS }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make bundle-build
       - name: push bundle to quay.io
         id: push-bundle
         uses: redhat-actions/push-to-registry@v2
@@ -58,7 +58,7 @@ jobs:
           tags: v${{ env.TAGS }}
           registry: ${{ env.REGISTRY }}
       - name: build catalog
-        run: VERSION=${{ env.TAGS }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make catalog-build
+        run: BUNDLE_VERSION=${{ env.TAGS }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make catalog-build
       - name: push catalog to quay.io
         id: push-catalog
         uses: redhat-actions/push-to-registry@v2
