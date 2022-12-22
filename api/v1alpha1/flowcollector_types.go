@@ -128,13 +128,13 @@ type FlowCollectorIPFIX struct {
 	//+kubebuilder:default:=400
 	// sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent.
 	// To ensure cluster stability, it is not possible to set a value below 2.
-	// If you really want to sample every packet, which may impact the cluster stability,
+	// If you really want to sample every packet, which might impact the cluster stability,
 	// refer to "forceSampleAll". Alternatively, you can use the eBPF Agent instead of IPFIX.
 	Sampling int32 `json:"sampling,omitempty" mapstructure:"sampling,omitempty"`
 
 	//+kubebuilder:default:=false
 	// forceSampleAll allows disabling sampling in the IPFIX-based flow reporter.
-	// It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability.
+	// It is not recommended to sample all the traffic with IPFIX, as it might generate cluster instability.
 	// If you REALLY want to do that, set this flag to true. Use at your own risk.
 	// When it is set to true, the value of "sampling" is ignored.
 	ForceSampleAll bool `json:"forceSampleAll,omitempty" mapstructure:"-"`
@@ -179,13 +179,13 @@ type FlowCollectorEBPF struct {
 
 	// interfaces contains the interface names from where flows will be collected. If empty, the agent
 	// will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
-	// If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression,
+	// If an entry is enclosed by slashes (such as `/br-/`), it will match as regular expression,
 	// otherwise it will be matched as a case-sensitive string.
 	//+optional
 	Interfaces []string `json:"interfaces,omitempty"`
 
 	// excludeInterfaces contains the interface names that will be excluded from flow tracing.
-	// If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression,
+	// If an entry is enclosed by slashes (such as `/br-/`), it will match as regular expression,
 	// otherwise it will be matched as a case-sensitive string.
 	//+kubebuilder:default=lo;
 	ExcludeInterfaces []string `json:"excludeInterfaces,omitempty"`
@@ -198,7 +198,7 @@ type FlowCollectorEBPF struct {
 	// privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false:
 	// in that case, the operator will set granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE)
 	// to the container, to enable its correct operation.
-	// If for some reason these capabilities cannot be set (e.g. old kernel version not knowing CAP_BPF)
+	// If for some reason these capabilities cannot be set (for example old kernel version not knowing CAP_BPF)
 	// then you can turn on this mode for more global privileges.
 	// +optional
 	Privileged bool `json:"privileged,omitempty"`
@@ -210,7 +210,7 @@ type FlowCollectorEBPF struct {
 
 	// Debug allows setting some aspects of the internal configuration of the eBPF agent.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations
-	// (e.g. GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
+	// (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
 }
@@ -227,7 +227,7 @@ type FlowCollectorKafka struct {
 	// kafka topic to use. It must exist, NetObserv will not create it.
 	Topic string `json:"topic"`
 
-	// tls client configuration. When using TLS, make sure the address matches the Kafka port used for TLS, generally 9093.
+	// tls client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
 	// Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 	// +optional
 	TLS ClientTLS `json:"tls"`
@@ -245,7 +245,7 @@ type ServerTLSConfigType string
 type ServerTLS struct {
 	// Select the type of TLS configuration
 	// "DISABLED" (default) to not configure TLS for the endpoint, "PROVIDED" to manually provide cert file and a key file,
-	// and "AUTO" to use Openshift auto generated certificate using annotations
+	// and "AUTO" to use OpenShift auto generated certificate using annotations
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="DISABLED";"PROVIDED";"AUTO"
 	// +kubebuilder:validation:Required
@@ -326,7 +326,7 @@ type FlowCollectorFLP struct {
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
 	//+kubebuilder:default:=true
-	// enableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes
+	// enableKubeProbes is a flag to enable or disable Kubernetes liveness and readiness probes
 	EnableKubeProbes bool `json:"enableKubeProbes,omitempty"`
 
 	//+kubebuilder:default:=true
@@ -356,7 +356,7 @@ type FlowCollectorFLP struct {
 
 	// Debug allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations
-	// (e.g. GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
+	// (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
 }
@@ -539,8 +539,8 @@ type ConsolePluginPortConfig struct {
 	// enable the console plugin port-to-service name translation
 	Enable bool `json:"enable,omitempty"`
 
-	// portNames defines additional port names to use in the console
-	// E.g. portNames: {"3100": "loki"}
+	// portNames defines additional port names to use in the console.
+	// Example: portNames: {"3100": "loki"}
 	// +optional
 	PortNames map[string]string `json:"portNames,omitempty" yaml:"portNames,omitempty"`
 }
@@ -550,8 +550,8 @@ type QuickFilter struct {
 	// name of the filter, that will be displayed in Console
 	// +kubebuilder:MinLength:=1
 	Name string `json:"name"`
-	// filter is a set of keys and values to be set when this filter is selected. Each key can relate to a list of values using a coma-separated string
-	// E.g. filter: {"src_namespace": "namespace1,namespace2"}
+	// filter is a set of keys and values to be set when this filter is selected. Each key can relate to a list of values using a coma-separated string.
+	// Example: filter: {"src_namespace": "namespace1,namespace2"}
 	// +kubebuilder:MinProperties:=1
 	Filter map[string]string `json:"filter"`
 	// default defines whether this filter should be active by default or not
@@ -564,7 +564,7 @@ type ClusterNetworkOperatorConfig struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=openshift-network-operator
-	// namespace  where the configmap is going to be deployed.
+	// namespace  where the config map is going to be deployed.
 	Namespace string `json:"namespace,omitempty"`
 }
 
@@ -587,16 +587,16 @@ type OVNKubernetesConfig struct {
 
 type CertificateReference struct {
 	//+kubebuilder:validation:Enum=configmap;secret
-	// type for the certificate reference: configmap or secret
+	// type for the certificate reference: "configmap" or "secret"
 	Type string `json:"type,omitempty"`
 
-	// name of the ConfigMap or Secret containing certificates
+	// name of the config map or secret containing certificates
 	Name string `json:"name,omitempty"`
 
-	// certFile defines the path to the certificate file name within the ConfigMap / Secret
+	// certFile defines the path to the certificate file name within the config map or secret
 	CertFile string `json:"certFile,omitempty"`
 
-	// certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.
+	// certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.
 	// +optional
 	CertKey string `json:"certKey,omitempty"`
 }
@@ -624,9 +624,9 @@ type ClientTLS struct {
 // They are aimed exclusively for debugging. Users setting these values do it at their own risk.
 type DebugConfig struct {
 	// env allows passing custom environment variables to the NetObserv Agent. Useful for passing
-	// some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be
+	// some very concrete performance-tuning options (such as GOGC, GOMAXPROCS) that shouldn't be
 	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
-	// in edge debug/support scenarios.
+	// in edge debug and support scenarios.
 	//+optional
 	Env map[string]string `json:"env,omitempty"`
 }
@@ -640,7 +640,7 @@ const (
 
 // FlowCollectorExporter defines an additional exporter to send enriched flows to
 type FlowCollectorExporter struct {
-	// type selects the type of exporte. Only "KAFKA" is available at the moment.
+	// type selects the type of exporters. Only "KAFKA" is available at the moment.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="KAFKA"
 	// +kubebuilder:validation:Required

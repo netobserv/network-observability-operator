@@ -232,14 +232,14 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b><a href="#flowcollectorspecagentebpfdebug">debug</a></b></td>
         <td>object</td>
         <td>
-          Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (e.g. GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.<br/>
+          Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>excludeInterfaces</b></td>
         <td>[]string</td>
         <td>
-          excludeInterfaces contains the interface names that will be excluded from flow tracing. If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
+          excludeInterfaces contains the interface names that will be excluded from flow tracing. If an entry is enclosed by slashes (such as `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
           <br/>
             <i>Default</i>: [lo]<br/>
         </td>
@@ -258,7 +258,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>interfaces</b></td>
         <td>[]string</td>
         <td>
-          interfaces contains the interface names from where flows will be collected. If empty, the agent will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. If an entry is enclosed by slashes (e.g. `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
+          interfaces contains the interface names from where flows will be collected. If empty, the agent will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. If an entry is enclosed by slashes (such as `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -284,7 +284,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>privileged</b></td>
         <td>boolean</td>
         <td>
-          privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false: in that case, the operator will set granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container, to enable its correct operation. If for some reason these capabilities cannot be set (e.g. old kernel version not knowing CAP_BPF) then you can turn on this mode for more global privileges.<br/>
+          privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false: in that case, the operator will set granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container, to enable its correct operation. If for some reason these capabilities cannot be set (for example old kernel version not knowing CAP_BPF) then you can turn on this mode for more global privileges.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -316,7 +316,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
 
 
 
-Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (e.g. GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
+Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
 
 <table>
     <thead>
@@ -331,7 +331,7 @@ Debug allows setting some aspects of the internal configuration of the eBPF agen
         <td><b>env</b></td>
         <td>map[string]string</td>
         <td>
-          env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug/support scenarios.<br/>
+          env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (such as GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug and support scenarios.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -419,7 +419,7 @@ ipfix describes the settings related to the IPFIX-based flow reporter when the "
         <td><b>forceSampleAll</b></td>
         <td>boolean</td>
         <td>
-          forceSampleAll allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it may generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risk. When it is set to true, the value of "sampling" is ignored.<br/>
+          forceSampleAll allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it might generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risk. When it is set to true, the value of "sampling" is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -435,7 +435,7 @@ ipfix describes the settings related to the IPFIX-based flow reporter when the "
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which may impact the cluster stability, refer to "forceSampleAll". Alternatively, you can use the eBPF Agent instead of IPFIX.<br/>
+          sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which might impact the cluster stability, refer to "forceSampleAll". Alternatively, you can use the eBPF Agent instead of IPFIX.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 400<br/>
@@ -466,7 +466,7 @@ clusterNetworkOperator defines the settings related to the OpenShift Cluster Net
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace  where the configmap is going to be deployed.<br/>
+          namespace  where the config map is going to be deployed.<br/>
           <br/>
             <i>Default</i>: openshift-network-operator<br/>
         </td>
@@ -1577,7 +1577,7 @@ portNaming defines the configuration of the port-to-service name translation
         <td><b>portNames</b></td>
         <td>map[string]string</td>
         <td>
-          portNames defines additional port names to use in the console E.g. portNames: {"3100": "loki"}<br/>
+          portNames defines additional port names to use in the console. Example: portNames: {"3100": "loki"}<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1604,7 +1604,7 @@ QuickFilter defines preset configuration for Console's quick filters
         <td><b>filter</b></td>
         <td>map[string]string</td>
         <td>
-          filter is a set of keys and values to be set when this filter is selected. Each key can relate to a list of values using a coma-separated string E.g. filter: {"src_namespace": "namespace1,namespace2"}<br/>
+          filter is a set of keys and values to be set when this filter is selected. Each key can relate to a list of values using a coma-separated string. Example: filter: {"src_namespace": "namespace1,namespace2"}<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -1679,7 +1679,7 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type selects the type of exporte. Only "KAFKA" is available at the moment.<br/>
+          type selects the type of exporters. Only "KAFKA" is available at the moment.<br/>
           <br/>
             <i>Enum</i>: KAFKA<br/>
         </td>
@@ -1733,7 +1733,7 @@ kafka describes the kafka configuration (address, topic...) to send enriched flo
         <td><b><a href="#flowcollectorspecexportersindexkafkatls">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration. When using TLS, make sure the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
+          tls client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1745,7 +1745,7 @@ kafka describes the kafka configuration (address, topic...) to send enriched flo
 
 
 
-tls client configuration. When using TLS, make sure the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
+tls client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 
 <table>
     <thead>
@@ -1812,28 +1812,28 @@ caCert defines the reference of the certificate for the Certificate Authority
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+          certFile defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the ConfigMap or Secret containing certificates<br/>
+          name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: configmap or secret<br/>
+          type for the certificate reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -1862,28 +1862,28 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+          certFile defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the ConfigMap or Secret containing certificates<br/>
+          name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: configmap or secret<br/>
+          type for the certificate reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -1930,7 +1930,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b><a href="#flowcollectorspeckafkatls">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration. When using TLS, make sure the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
+          tls client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1942,7 +1942,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
 
 
 
-tls client configuration. When using TLS, make sure the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
+tls client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 
 <table>
     <thead>
@@ -2009,28 +2009,28 @@ caCert defines the reference of the certificate for the Certificate Authority
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+          certFile defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the ConfigMap or Secret containing certificates<br/>
+          name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: configmap or secret<br/>
+          type for the certificate reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -2059,28 +2059,28 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+          certFile defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the ConfigMap or Secret containing certificates<br/>
+          name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: configmap or secret<br/>
+          type for the certificate reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -2297,28 +2297,28 @@ caCert defines the reference of the certificate for the Certificate Authority
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+          certFile defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the ConfigMap or Secret containing certificates<br/>
+          name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: configmap or secret<br/>
+          type for the certificate reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -2347,28 +2347,28 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+          certFile defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the ConfigMap or Secret containing certificates<br/>
+          name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: configmap or secret<br/>
+          type for the certificate reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -2397,7 +2397,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b><a href="#flowcollectorspecprocessordebug">debug</a></b></td>
         <td>object</td>
         <td>
-          Debug allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations (e.g. GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.<br/>
+          Debug allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2413,7 +2413,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b>enableKubeProbes</b></td>
         <td>boolean</td>
         <td>
-          enableKubeProbes is a flag to enable or disable Kubernetes liveness/readiness probes<br/>
+          enableKubeProbes is a flag to enable or disable Kubernetes liveness and readiness probes<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -2534,7 +2534,7 @@ processor defines the settings of the component that receives the flows from the
 
 
 
-Debug allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations (e.g. GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
+Debug allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
 
 <table>
     <thead>
@@ -2549,7 +2549,7 @@ Debug allows setting some aspects of the internal configuration of the flow proc
         <td><b>env</b></td>
         <td>map[string]string</td>
         <td>
-          env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (e.g. GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug/support scenarios.<br/>
+          env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (such as GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug and support scenarios.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3578,7 +3578,7 @@ TLS configuration.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Select the type of TLS configuration "DISABLED" (default) to not configure TLS for the endpoint, "PROVIDED" to manually provide cert file and a key file, and "AUTO" to use Openshift auto generated certificate using annotations<br/>
+          Select the type of TLS configuration "DISABLED" (default) to not configure TLS for the endpoint, "PROVIDED" to manually provide cert file and a key file, and "AUTO" to use OpenShift auto generated certificate using annotations<br/>
           <br/>
             <i>Enum</i>: DISABLED, PROVIDED, AUTO<br/>
             <i>Default</i>: DISABLED<br/>
@@ -3608,28 +3608,28 @@ TLS configuration.
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the ConfigMap / Secret<br/>
+          certFile defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the ConfigMap / Secret. Omit when the key is not necessary.<br/>
+          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the ConfigMap or Secret containing certificates<br/>
+          name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: configmap or secret<br/>
+          type for the certificate reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
