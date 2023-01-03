@@ -20,6 +20,7 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"time"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/sirupsen/logrus"
@@ -38,10 +39,12 @@ type ConfigFileStruct struct {
 	Pipeline        []Stage         `yaml:"pipeline,omitempty" json:"pipeline,omitempty"`
 	Parameters      []StageParam    `yaml:"parameters,omitempty" json:"parameters,omitempty"`
 	MetricsSettings MetricsSettings `yaml:"metricsSettings,omitempty" json:"metricsSettings,omitempty"`
+	PerfSettings    PerfSettings    `yaml:"perfSettings,omitempty" json:"perfSettings,omitempty"`
 }
 
 type Health struct {
-	Port string
+	Address string
+	Port    string
 }
 
 type Profile struct {
@@ -58,6 +61,13 @@ type MetricsSettings struct {
 	// ExpiryTime int              `yaml:"expiryTime,omitempty" json:"expiryTime,omitempty" doc:"seconds of no-flow to wait before deleting prometheus data item"`
 	Prefix  string `yaml:"prefix,omitempty" json:"prefix,omitempty"`
 	NoPanic bool   `yaml:"noPanic,omitempty" json:"noPanic,omitempty"`
+}
+
+// PerfSettings allows setting some internal configuration parameters
+type PerfSettings struct {
+	BatcherMaxLen  int           `yaml:"batcherMaxLen,omitempty" json:"batcherMaxLen,omitempty"`
+	BatcherTimeout time.Duration `yaml:"batcherMaxTimeout,omitempty" json:"batcherMaxTimeout,omitempty"`
+	NodeBufferLen  int           `yaml:"nodeBufferLen,omitempty" json:"nodeBufferLen,omitempty"`
 }
 
 type Stage struct {
@@ -107,6 +117,7 @@ type Encode struct {
 	Type  string           `yaml:"type" json:"type"`
 	Prom  *api.PromEncode  `yaml:"prom,omitempty" json:"prom,omitempty"`
 	Kafka *api.EncodeKafka `yaml:"kafka,omitempty" json:"kafka,omitempty"`
+	S3    *api.EncodeS3    `yaml:"s3,omitempty" json:"s3,omitempty"`
 }
 
 type Write struct {

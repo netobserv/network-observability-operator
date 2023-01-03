@@ -21,7 +21,7 @@ type GenericMap map[string]interface{}
 
 // Copy will create a flat copy of GenericMap
 func (m GenericMap) Copy() GenericMap {
-	result := GenericMap{}
+	result := make(GenericMap, len(m))
 
 	for k, v := range m {
 		result[k] = v

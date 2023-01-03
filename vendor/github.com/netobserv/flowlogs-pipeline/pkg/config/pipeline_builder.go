@@ -30,18 +30,19 @@ type pipeline struct {
 
 // PipelineBuilderStage holds information about a created pipeline stage. This stage can be used to chain a following stage, or several of them (resulting in a fork).
 // Example:
-// 	firstStage := NewCollectorPipeline("first stage", ...)
-// 	secondStage := firstStage.DecodeJSON("second stage")
-// 	thirdStage := secondStage.WriteLoki("third stage", ...)
-// 	forkedStage := secondStage.WriteStdout("fork following second stage", ...)
+//
+//	firstStage := NewCollectorPipeline("first stage", ...)
+//	secondStage := firstStage.DecodeJSON("second stage")
+//	thirdStage := secondStage.WriteLoki("third stage", ...)
+//	forkedStage := secondStage.WriteStdout("fork following second stage", ...)
 //
 // All created stages hold a pointer to the whole pipeline, so that the resulting pipeline can be retrieve from any of the stages:
 //
-// 	forkedStage.GetStages()
-// 	forkedStage.GetStageParams()
+//	forkedStage.GetStages()
+//	forkedStage.GetStageParams()
 //	// is equivalent to:
-// 	firstStage.GetStages()
-// 	firstStage.GetStageParams()
+//	firstStage.GetStages()
+//	firstStage.GetStageParams()
 type PipelineBuilderStage struct {
 	lastStage string
 	pipeline  *pipeline

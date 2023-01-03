@@ -19,7 +19,6 @@ package confgen
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -82,7 +81,7 @@ func (cg *ConfGen) Run() error {
 
 	definitionFiles := getDefinitionFiles(cg.opts.SrcFolder)
 	for _, definitionFile := range definitionFiles {
-		b, err := ioutil.ReadFile(definitionFile)
+		b, err := os.ReadFile(definitionFile)
 		if err != nil {
 			log.Debugf("ioutil.ReadFile err: %v ", err)
 			continue

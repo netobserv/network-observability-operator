@@ -18,7 +18,6 @@
 package confgen
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
@@ -62,7 +61,7 @@ func (cg *ConfGen) ParseConfigFile(fileName string) (*Config, error) {
 		}
 		return &Config{}, nil
 	}
-	yamlFile, err := ioutil.ReadFile(fileName)
+	yamlFile, err := os.ReadFile(fileName)
 	if err != nil {
 		log.Debugf("ioutil.ReadFile err: %v ", err)
 		return nil, err

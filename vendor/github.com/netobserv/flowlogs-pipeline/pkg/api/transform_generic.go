@@ -32,8 +32,9 @@ func TransformGenericOperationName(operation string) string {
 }
 
 type GenericTransformRule struct {
-	Input  string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
-	Output string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
+	Input      string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
+	Output     string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
+	Multiplier int    `yaml:"multiplier,omitempty" json:"multiplier,omitempty" doc:"scaling factor to compenstate for sampling"`
 }
 
 type GenericTransform []GenericTransformRule

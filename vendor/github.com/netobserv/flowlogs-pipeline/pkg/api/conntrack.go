@@ -24,6 +24,7 @@ import (
 const (
 	HashIdFieldName     = "_HashId"
 	RecordTypeFieldName = "_RecordType"
+	IsFirstFieldName    = "_IsFirst"
 )
 
 type ConnTrack struct {
