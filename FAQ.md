@@ -150,13 +150,31 @@ kubectl get pods -n netobserv -l app=netobserv-plugin
 kubectl logs -n netobserv -l app=netobserv-plugin
 ```
 
+It is also possible that the OpenShift Console is failing to restart. There is for instance a [known issue](https://issues.redhat.com/browse/OCPBUGS-810) with very small clusters, causing this problem.
+```bash
+kubectl get pods -n openshift-console
+```
+
+```
+NAME                         READY   STATUS    RESTARTS   AGE
+console-65486f987c-bk6zn     1/1     Running   0          44m
+console-67fd7b6f49-l5nmq     0/1     Pending   0          10m
+console-67fd7b6f49-wmhp4     0/1     Pending   0          10m
+downloads-5fc6cc467f-2fttx   1/1     Running   0          45m
+downloads-5fc6cc467f-2gfpw   1/1     Running   0          45m
+```
+
+To force a restart, kill the running console pod using the following command:
+`oc delete pods -n openshift-console -l app=console`
+Note that this will make the console unavailable for some time
+
 ### I first deployed flowcollector, and then kafka. Flowlogs-pipeline is not consuming any flow from Kafka
 
 This is a [known bug](https://github.com/segmentio/kafka-go/issues/1044) in one of flowlogs-pipeline dependencies.
 
 Please recreate the flowlogs-pipeline pods by either killing them maunally or deleting and recreating the flow collector object.
 
-### I don't see flows from either the `br-int` or `br-ex` interfaces 
+### I don't see flows from either the `br-int` or `br-ex` interfaces
 
 [`br-ex` and `br-int` are virtual bridge devices](https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.0/html/networking_guide/bridge-mappings),
 so they operate at OSI Layer 2 (e.g. Ethernet level). The eBPF agent works at Layers 3 and 4
