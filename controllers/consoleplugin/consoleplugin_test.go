@@ -2,7 +2,6 @@ package consoleplugin
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,6 +12,7 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 
 	promConfig "github.com/prometheus/common/config"
 )
@@ -20,15 +20,6 @@ import (
 const testImage = "quay.io/netobserv/network-observability-console-plugin:dev"
 const testNamespace = constants.PluginName
 
-var testArgs = []string{
-	"-cert", "/var/serving-cert/tls.crt",
-	"-key", "/var/serving-cert/tls.key",
-	"-loki", "http://loki:3100/",
-	"-loki-labels", "SrcK8S_Namespace,SrcK8S_OwnerName,DstK8S_Namespace,DstK8S_OwnerName,FlowDirection",
-	"-loki-tenant-id", "netobserv",
-	"-loglevel", "info",
-	"-frontend-config", "/opt/app-root/config.yaml",
-}
 var testPullPolicy = corev1.PullIfNotPresent
 var testResources = corev1.ResourceRequirements{
 	Limits: map[corev1.ResourceName]resource.Quantity{
@@ -59,22 +50,6 @@ func getPluginConfig() flowsv1alpha1.FlowCollectorConsolePlugin {
 		},
 		LogLevel: "info",
 	}
-}
-
-func getContainerSpecs() (corev1.PodSpec, flowsv1alpha1.FlowCollectorConsolePlugin) {
-	var podSpec = corev1.PodSpec{
-		Containers: []corev1.Container{
-			{
-				Name:            constants.PluginName,
-				Image:           testImage,
-				Resources:       testResources,
-				ImagePullPolicy: testPullPolicy,
-				Args:            testArgs,
-			},
-		},
-	}
-
-	return podSpec, getPluginConfig()
 }
 
 func getServiceSpecs() (corev1.Service, flowsv1alpha1.FlowCollectorConsolePlugin) {
@@ -131,30 +106,66 @@ func TestContainerUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 
 	//equals specs
-	podSpec, containerConfig := getContainerSpecs()
+	plugin := getPluginConfig()
 	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
-	fmt.Printf("%v\n", buildArgs(&containerConfig, loki))
-	cr := CPReconciler{image: testImage}
-	assert.False(cr.containerNeedsUpdate(&podSpec, &containerConfig, loki))
+	builder := newBuilder(testNamespace, testImage, &plugin, loki)
+	old := builder.deployment("digest")
+	new := builder.deployment("digest")
+	assert.False(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
 
 	//wrong resources
-	podSpec, containerConfig = getContainerSpecs()
-	containerConfig.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
+	plugin.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
-	assert.True(cr.containerNeedsUpdate(&podSpec, &containerConfig, loki))
+	new = builder.deployment("digest")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	old = new
 
 	//new image
-	podSpec, containerConfig = getContainerSpecs()
-	cr.image = "quay.io/netobserv/network-observability-console-plugin:latest"
-	assert.Equal(cr.containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
+	builder.imageName = "quay.io/netobserv/network-observability-console-plugin:latest"
+	new = builder.deployment("digest")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	old = new
 
 	//new pull policy
-	podSpec, containerConfig = getContainerSpecs()
-	containerConfig.ImagePullPolicy = string(corev1.PullAlways)
-	assert.Equal(cr.containerNeedsUpdate(&podSpec, &containerConfig, loki), true)
+	plugin.ImagePullPolicy = string(corev1.PullAlways)
+	new = builder.deployment("digest")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	old = new
 
+	//new log level
+	plugin.LogLevel = "debug"
+	new = builder.deployment("digest")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	old = new
+
+	//new loki config
+	loki = &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv", TLS: flowsv1alpha1.ClientTLS{
+		Enable: true,
+		CACert: flowsv1alpha1.CertificateReference{
+			Type:     "configmap",
+			Name:     "cm-name",
+			CertFile: "ca.crt",
+		},
+	}}
+	builder = newBuilder(testNamespace, testImage, &plugin, loki)
+	new = builder.deployment("digest")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	old = new
+
+	//new loki cert name
+	loki.TLS.CACert.Name = "cm-name-2"
+	builder = newBuilder(testNamespace, testImage, &plugin, loki)
+	new = builder.deployment("digest")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	old = new
+
+	//test again no change
+	loki.TLS.CACert.Name = "cm-name-2"
+	builder = newBuilder(testNamespace, testImage, &plugin, loki)
+	new = builder.deployment("digest")
+	assert.False(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
 }
 
 func TestServiceUpdateCheck(t *testing.T) {
@@ -179,18 +190,6 @@ func TestServiceUpdateCheck(t *testing.T) {
 	serviceSpec.Namespace = "OldNamespace"
 	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, testNamespace), true)
 
-}
-
-func TestBuiltContainer(t *testing.T) {
-	assert := assert.New(t)
-
-	//newly created containers should not need update
-	plugin := getPluginConfig()
-	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234", TenantID: "netobserv"}
-	builder := newBuilder(testNamespace, testImage, &plugin, loki)
-	newContainer := builder.podTemplate("digest")
-	cr := CPReconciler{image: testImage}
-	assert.Equal(cr.containerNeedsUpdate(&newContainer.Spec, &plugin, loki), false)
 }
 
 func TestBuiltService(t *testing.T) {

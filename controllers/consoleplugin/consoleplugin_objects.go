@@ -30,10 +30,6 @@ const configPath = "/opt/app-root/"
 const lokiCerts = "loki-certs"
 const tokensPath = "/var/run/secrets/tokens/"
 
-// PodConfigurationDigest is an annotation name to facilitate pod restart after
-// any external configuration change
-const PodConfigurationDigest = "flows.netobserv.io/" + configMapName
-
 type builder struct {
 	namespace   string
 	labels      map[string]string
@@ -230,7 +226,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: b.labels,
 			Annotations: map[string]string{
-				PodConfigurationDigest: cmDigest,
+				constants.PodConfigurationDigest: cmDigest,
 			},
 		},
 		Spec: corev1.PodSpec{

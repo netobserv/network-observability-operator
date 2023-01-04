@@ -11,6 +11,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 // flpIngesterReconciler reconciles the current flowlogs-pipeline-ingester state with the desired configuration
@@ -110,7 +112,7 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowsv1a
 		return err
 	}
 
-	return r.reconcileDaemonSet(ctx, &desired.Spec.Processor, &builder, configDigest)
+	return r.reconcileDaemonSet(ctx, builder.daemonSet(configDigest))
 }
 
 func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, builder *ingestBuilder) error {
@@ -126,7 +128,7 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 		return nil
 	}
 	newSVC := builder.fromPromService(r.owned.promService)
-	if serviceNeedsUpdate(r.owned.promService, newSVC) {
+	if helper.ServiceChanged(r.owned.promService, newSVC) {
 		if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
 			return err
 		}
@@ -134,11 +136,11 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 	return nil
 }
 
-func (r *flpIngesterReconciler) reconcileDaemonSet(ctx context.Context, desiredFLP *flpSpec, builder *ingestBuilder, configDigest string) error {
+func (r *flpIngesterReconciler) reconcileDaemonSet(ctx context.Context, desiredDS *appsv1.DaemonSet) error {
 	if !r.nobjMngr.Exists(r.owned.daemonSet) {
-		return r.CreateOwned(ctx, builder.daemonSet(configDigest))
-	} else if daemonSetNeedsUpdate(r.owned.daemonSet, desiredFLP, r.image, configDigest) {
-		return r.UpdateOwned(ctx, r.owned.daemonSet, builder.daemonSet(configDigest))
+		return r.CreateOwned(ctx, desiredDS)
+	} else if helper.PodChanged(&r.owned.daemonSet.Spec.Template, &desiredDS.Spec.Template, constants.FLPName) {
+		return r.UpdateOwned(ctx, r.owned.daemonSet, desiredDS)
 	} else {
 		// DaemonSet up to date, check if it's ready
 		r.CheckDaemonSetInProgress(r.owned.daemonSet)

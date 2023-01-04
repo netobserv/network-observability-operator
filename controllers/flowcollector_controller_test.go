@@ -123,9 +123,9 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, flpKey1, &ds); err != nil {
 					return err
 				}
-				digest = ds.Spec.Template.Annotations[flowlogspipeline.PodConfigurationDigest]
+				digest = ds.Spec.Template.Annotations[constants.PodConfigurationDigest]
 				if digest == "" {
-					return fmt.Errorf("%q annotation can't be empty", flowlogspipeline.PodConfigurationDigest)
+					return fmt.Errorf("%q annotation can't be empty", constants.PodConfigurationDigest)
 				}
 				return nil
 			}, timeout, interval).Should(Succeed())
@@ -646,9 +646,9 @@ func UpdateCR(key types.NamespacedName, updater func(*flowsv1alpha1.FlowCollecto
 }
 
 func checkDigestUpdate(oldDigest *string, annots map[string]string) error {
-	newDigest := annots[flowlogspipeline.PodConfigurationDigest]
+	newDigest := annots[constants.PodConfigurationDigest]
 	if newDigest == "" {
-		return fmt.Errorf("%q annotation can't be empty", flowlogspipeline.PodConfigurationDigest)
+		return fmt.Errorf("%q annotation can't be empty", constants.PodConfigurationDigest)
 	} else if newDigest == *oldDigest {
 		return fmt.Errorf("expect digest to change, but is still %s", *oldDigest)
 	}
