@@ -549,7 +549,7 @@ Required::
 
 | `kafka`
 | `object`
-| kafka describes the kafka configuration (address, topic...) to send enriched flows to.
+| kafka configuration, such as address or topic, to send enriched flows to.
 
 | `type`
 | `string`
@@ -560,7 +560,7 @@ Required::
 Description::
 +
 --
-kafka describes the kafka configuration (address, topic...) to send enriched flows to.
+kafka configuration, such as address or topic, to send enriched flows to.
 --
 
 Type::

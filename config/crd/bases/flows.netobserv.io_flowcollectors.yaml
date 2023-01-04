@@ -973,8 +973,8 @@ spec:
                     to send enriched flows to
                   properties:
                     kafka:
-                      description: kafka describes the kafka configuration (address,
-                        topic...) to send enriched flows to.
+                      description: kafka configuration, such as address or topic,
+                        to send enriched flows to.
                       properties:
                         address:
                           default: ""
