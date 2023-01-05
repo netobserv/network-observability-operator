@@ -1,8 +1,6 @@
 package helper
 
 import (
-	"reflect"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 
@@ -33,14 +31,14 @@ func configChanged(old, new *corev1.PodTemplateSpec) bool {
 }
 
 func volumesChanged(old, new *corev1.PodTemplateSpec) bool {
-	return !reflect.DeepEqual(old.Spec.Volumes, new.Spec.Volumes)
+	return !equality.Semantic.DeepDerivative(new.Spec.Volumes, old.Spec.Volumes)
 }
 
 func containerChanged(old, new *corev1.Container) bool {
 	return new.Image != old.Image ||
 		new.ImagePullPolicy != old.ImagePullPolicy ||
-		!equality.Semantic.DeepDerivative(old.Args, new.Args) ||
-		!equality.Semantic.DeepDerivative(old.Resources, new.Resources) ||
+		!equality.Semantic.DeepDerivative(new.Args, old.Args) ||
+		!equality.Semantic.DeepDerivative(new.Resources, old.Resources) ||
 		!equality.Semantic.DeepEqual(old.LivenessProbe, new.LivenessProbe) ||
 		!equality.Semantic.DeepEqual(old.StartupProbe, new.StartupProbe)
 }
