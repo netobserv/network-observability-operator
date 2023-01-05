@@ -90,7 +90,7 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowsv1a
 		return nil
 	}
 
-	builder := newMonolithBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC)
+	builder := newMonolithBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC, r.CertWatcher)
 	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err
@@ -139,6 +139,10 @@ func (r *flpMonolithReconciler) reconcilePrometheusService(ctx context.Context, 
 }
 
 func (r *flpMonolithReconciler) reconcileDaemonSet(ctx context.Context, desiredDS *appsv1.DaemonSet) error {
+	// Annotate pod with certificate reference so that it is reloaded if modified
+	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &desiredDS.Spec.Template, lokiCerts, kafkaCerts); err != nil {
+		return err
+	}
 	if !r.nobjMngr.Exists(r.owned.daemonSet) {
 		return r.CreateOwned(ctx, desiredDS)
 	} else if helper.PodChanged(&r.owned.daemonSet.Spec.Template, &desiredDS.Spec.Template, constants.FLPName) {

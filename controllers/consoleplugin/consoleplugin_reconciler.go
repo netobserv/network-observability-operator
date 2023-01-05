@@ -90,7 +90,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 	}
 
 	// Create object builder
-	builder := newBuilder(ns, r.image, &desired.Spec.ConsolePlugin, &desired.Spec.Loki)
+	builder := newBuilder(ns, r.image, &desired.Spec.ConsolePlugin, &desired.Spec.Loki, r.CertWatcher)
 
 	if err = r.reconcilePlugin(ctx, builder, &desired.Spec, ns); err != nil {
 		return err
@@ -179,6 +179,10 @@ func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder builder, 
 
 func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, cmDigest string) error {
 	newDepl := builder.deployment(cmDigest)
+	// Annotate pod with certificate reference so that it is reloaded if modified
+	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &newDepl.Spec.Template, lokiCerts); err != nil {
+		return err
+	}
 	if !r.nobjMngr.Exists(r.owned.deployment) {
 		if err := r.CreateOwned(ctx, newDepl); err != nil {
 			return err

@@ -92,7 +92,7 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 		return nil
 	}
 
-	builder := newTransfoBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC)
+	builder := newTransfoBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC, r.CertWatcher)
 	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err
@@ -122,6 +122,11 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder, configDigest string) error {
 	ns := r.nobjMngr.Namespace
 	new := builder.deployment(configDigest)
+
+	// Annotate pod with certificate reference so that it is reloaded if modified
+	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &new.Spec.Template, lokiCerts, kafkaCerts); err != nil {
+		return err
+	}
 
 	if !r.nobjMngr.Exists(r.owned.deployment) {
 		if err := r.CreateOwned(ctx, new); err != nil {

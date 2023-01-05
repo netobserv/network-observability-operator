@@ -85,6 +85,14 @@ rules:
   - list
   - watch
 - apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - flows.netobserv.io
   resources:
   - flowcollectors

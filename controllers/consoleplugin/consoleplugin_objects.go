@@ -17,6 +17,7 @@ import (
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
 const secretName = "console-serving-cert"
@@ -37,9 +38,10 @@ type builder struct {
 	desired     *flowsv1alpha1.FlowCollectorConsolePlugin
 	desiredLoki *flowsv1alpha1.FlowCollectorLoki
 	imageName   string
+	cWatcher    *watchers.CertificatesWatcher
 }
 
-func newBuilder(ns, imageName string, desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki) builder {
+func newBuilder(ns, imageName string, desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki, cWatcher *watchers.CertificatesWatcher) builder {
 	version := helper.ExtractVersion(imageName)
 	return builder{
 		namespace: ns,
@@ -53,6 +55,7 @@ func newBuilder(ns, imageName string, desired *flowsv1alpha1.FlowCollectorConsol
 		desired:     desired,
 		desiredLoki: desiredLoki,
 		imageName:   imageName,
+		cWatcher:    cWatcher,
 	}
 }
 
@@ -215,7 +218,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 
 	args := buildArgs(b.desired, b.desiredLoki)
 	if b.desiredLoki != nil && b.desiredLoki.TLS.Enable && !b.desiredLoki.TLS.InsecureSkipVerify {
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts)
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts, b.cWatcher)
 	}
 
 	if b.desiredLoki.UseHostToken() {
