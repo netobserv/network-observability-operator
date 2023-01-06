@@ -24,7 +24,7 @@ kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents
 
 ### Kafka
 
-[Apache Kafka](https://kafka.apache.org/) can optionnaly be used for a more resilient and scalable architecture. You can use for instance [Strimzi](https://strimzi.io/), an operator-based distribution of Kafka for Kubernetes and OpenShift.
+[Apache Kafka](https://kafka.apache.org/) can optionally be used for a more resilient and scalable architecture. You can use for instance [Strimzi](https://strimzi.io/), an operator-based distribution of Kafka for Kubernetes and OpenShift.
 
 ### Grafana
 
@@ -56,7 +56,7 @@ A couple of settings deserve special attention:
 
 ## Further reading
 
-Please refer to the documentation on GitHub more more information.
+Please refer to the documentation on GitHub for more information.
 
 This documentation includes:
 
