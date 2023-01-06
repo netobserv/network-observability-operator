@@ -1688,7 +1688,7 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to
         <td><b><a href="#flowcollectorspecexportersindexkafka">kafka</a></b></td>
         <td>object</td>
         <td>
-          kafka describes the kafka configuration (address, topic...) to send enriched flows to.<br/>
+          kafka configuration, such as address or topic, to send enriched flows to.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1700,7 +1700,7 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to
 
 
 
-kafka describes the kafka configuration (address, topic...) to send enriched flows to.
+kafka configuration, such as address or topic, to send enriched flows to.
 
 <table>
     <thead>

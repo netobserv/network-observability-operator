@@ -652,7 +652,7 @@ type FlowCollectorExporter struct {
 	// +kubebuilder:validation:Required
 	Type ExporterType `json:"type"`
 
-	// kafka describes the kafka configuration (address, topic...) to send enriched flows to.
+	// kafka configuration, such as address or topic, to send enriched flows to.
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 }
