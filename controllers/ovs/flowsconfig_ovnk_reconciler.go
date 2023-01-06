@@ -15,6 +15,7 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 type FlowsConfigOVNKController struct {
@@ -54,7 +55,7 @@ func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flows
 		return err
 	}
 
-	ovnkubeNode := reconcilers.FindContainer(&ds.Spec.Template.Spec, target.Spec.Agent.IPFIX.OVNKubernetes.ContainerName)
+	ovnkubeNode := helper.FindContainer(&ds.Spec.Template.Spec, target.Spec.Agent.IPFIX.OVNKubernetes.ContainerName)
 	if ovnkubeNode == nil {
 		return errors.New("could not find container ovnkube-node")
 	}

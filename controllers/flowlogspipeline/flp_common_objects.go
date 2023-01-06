@@ -57,10 +57,6 @@ var FlpConfSuffix = map[ConfKind]string{
 	ConfKafkaTransformer: "-transformer",
 }
 
-// PodConfigurationDigest is an annotation name to facilitate pod restart after
-// any external configuration change
-const PodConfigurationDigest = "flows.netobserv.io/configDigest"
-
 type builder struct {
 	namespace       string
 	labels          map[string]string
@@ -236,9 +232,9 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: b.labels,
 			Annotations: map[string]string{
-				PodConfigurationDigest:      configDigest,
-				"prometheus.io/scrape":      "true",
-				"prometheus.io/scrape_port": fmt.Sprint(b.desired.Processor.Metrics.Server.Port),
+				constants.PodConfigurationDigest: configDigest,
+				"prometheus.io/scrape":           "true",
+				"prometheus.io/scrape_port":      fmt.Sprint(b.desired.Processor.Metrics.Server.Port),
 			},
 		},
 		Spec: corev1.PodSpec{

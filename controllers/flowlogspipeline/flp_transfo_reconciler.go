@@ -12,6 +12,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 // flpTransformerReconciler reconciles the current flowlogs-pipeline-transformer state with the desired configuration
@@ -119,13 +121,14 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 
 func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder, configDigest string) error {
 	ns := r.nobjMngr.Namespace
+	new := builder.deployment(configDigest)
 
 	if !r.nobjMngr.Exists(r.owned.deployment) {
-		if err := r.CreateOwned(ctx, builder.deployment(configDigest)); err != nil {
+		if err := r.CreateOwned(ctx, new); err != nil {
 			return err
 		}
-	} else if r.deploymentNeedsUpdate(r.owned.deployment, desiredFLP, configDigest) {
-		if err := r.UpdateOwned(ctx, r.owned.deployment, builder.deployment(configDigest)); err != nil {
+	} else if r.deploymentNeedsUpdate(r.owned.deployment, new, desiredFLP) {
+		if err := r.UpdateOwned(ctx, r.owned.deployment, new); err != nil {
 			return err
 		}
 	} else {
@@ -164,7 +167,7 @@ func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Contex
 		return nil
 	}
 	newSVC := builder.fromPromService(r.owned.promService)
-	if serviceNeedsUpdate(r.owned.promService, newSVC) {
+	if helper.ServiceChanged(r.owned.promService, newSVC) {
 		if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
 			return err
 		}
@@ -184,10 +187,9 @@ func (r *flpTransformerReconciler) reconcilePermissions(ctx context.Context, bui
 	return nil
 }
 
-func (r *flpTransformerReconciler) deploymentNeedsUpdate(depl *appsv1.Deployment, desired *flpSpec, configDigest string) bool {
-	return containerNeedsUpdate(&depl.Spec.Template.Spec, desired, r.image) ||
-		configChanged(&depl.Spec.Template, configDigest) ||
-		(desired.KafkaConsumerAutoscaler.Disabled() && *depl.Spec.Replicas != desired.KafkaConsumerReplicas)
+func (r *flpTransformerReconciler) deploymentNeedsUpdate(old, new *appsv1.Deployment, desired *flpSpec) bool {
+	return helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.FLPName) ||
+		(desired.KafkaConsumerAutoscaler.Disabled() && *old.Spec.Replicas != desired.KafkaConsumerReplicas)
 }
 
 func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired flowsv1alpha1.FlowCollectorHPA, ns string) bool {

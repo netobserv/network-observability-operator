@@ -4,12 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
-
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
 )
@@ -101,36 +96,4 @@ func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Fl
 		}
 	}
 	return nil
-}
-
-func daemonSetNeedsUpdate(ds *appsv1.DaemonSet, desired *flpSpec, image, configDigest string) bool {
-	return containerNeedsUpdate(&ds.Spec.Template.Spec, desired, image) ||
-		configChanged(&ds.Spec.Template, configDigest)
-}
-
-func configChanged(tmpl *corev1.PodTemplateSpec, configDigest string) bool {
-	return tmpl.Annotations == nil || tmpl.Annotations[PodConfigurationDigest] != configDigest
-}
-
-func serviceNeedsUpdate(actual *corev1.Service, desired *corev1.Service) bool {
-	return !equality.Semantic.DeepDerivative(desired.ObjectMeta, actual.ObjectMeta) ||
-		!equality.Semantic.DeepDerivative(desired.Spec, actual.Spec)
-}
-
-func containerNeedsUpdate(podSpec *corev1.PodSpec, desired *flpSpec, image string) bool {
-	// Note, we don't check for changed port / host port here, because that would change also the configmap,
-	//	which also triggers pod update anyway
-	container := reconcilers.FindContainer(podSpec, constants.FLPName)
-	return container == nil ||
-		image != container.Image ||
-		desired.ImagePullPolicy != string(container.ImagePullPolicy) ||
-		probesNeedUpdate(container, desired.EnableKubeProbes) ||
-		!equality.Semantic.DeepDerivative(desired.Resources, container.Resources)
-}
-
-func probesNeedUpdate(container *corev1.Container, enabled bool) bool {
-	if enabled {
-		return container.LivenessProbe == nil || container.StartupProbe == nil
-	}
-	return container.LivenessProbe != nil || container.StartupProbe != nil
 }

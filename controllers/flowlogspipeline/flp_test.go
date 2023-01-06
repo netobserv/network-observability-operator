@@ -30,6 +30,7 @@ import (
 
 	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 var resources = corev1.ResourceRequirements{
@@ -153,8 +154,9 @@ func TestDaemonSetNoChange(t *testing.T) {
 	b = newMonolithBuilder(ns, image, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
+	second := b.daemonSet(digest)
 
-	assert.False(daemonSetNeedsUpdate(first, &cfg.Processor, image, digest))
+	assert.False(helper.PodChanged(&first.Spec.Template, &second.Spec.Template, constants.FLPName))
 }
 
 func TestDaemonSetChanged(t *testing.T) {
@@ -175,7 +177,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.NoError(err)
 	second := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(first, &cfg.Processor, image, digest))
+	assert.True(helper.PodChanged(&first.Spec.Template, &second.Spec.Template, constants.FLPName))
 
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
@@ -184,7 +186,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.NoError(err)
 	third := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(second, &cfg.Processor, image, digest))
+	assert.True(helper.PodChanged(&second.Spec.Template, &third.Spec.Template, constants.FLPName))
 
 	// Check resource change
 	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -196,7 +198,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.NoError(err)
 	fourth := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(third, &cfg.Processor, image, digest))
+	assert.True(helper.PodChanged(&third.Spec.Template, &fourth.Spec.Template, constants.FLPName))
 
 	// Check reverting limits
 	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -206,9 +208,42 @@ func TestDaemonSetChanged(t *testing.T) {
 	b = newMonolithBuilder(ns, image, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
+	fifth := b.daemonSet(digest)
 
-	assert.True(daemonSetNeedsUpdate(fourth, &cfg.Processor, image, digest))
-	assert.False(daemonSetNeedsUpdate(third, &cfg.Processor, image, digest))
+	assert.True(helper.PodChanged(&fourth.Spec.Template, &fifth.Spec.Template, constants.FLPName))
+	assert.False(helper.PodChanged(&third.Spec.Template, &fifth.Spec.Template, constants.FLPName))
+
+	// Check Loki config change
+	cfg.Loki.TLS = v1alpha1.ClientTLS{
+		Enable: true,
+		CACert: v1alpha1.CertificateReference{
+			Type:     "configmap",
+			Name:     "loki-cert",
+			CertFile: "ca.crt",
+		},
+	}
+	b = newMonolithBuilder(ns, image, &cfg, true)
+	_, digest, err = b.configMap()
+	assert.NoError(err)
+	sixth := b.daemonSet(digest)
+
+	assert.True(helper.PodChanged(&fifth.Spec.Template, &sixth.Spec.Template, constants.FLPName))
+
+	// Check volumes change
+	cfg.Loki.TLS = v1alpha1.ClientTLS{
+		Enable: true,
+		CACert: v1alpha1.CertificateReference{
+			Type:     "configmap",
+			Name:     "loki-cert-2",
+			CertFile: "ca.crt",
+		},
+	}
+	b = newMonolithBuilder(ns, image, &cfg, true)
+	_, digest, err = b.configMap()
+	assert.NoError(err)
+	seventh := b.daemonSet(digest)
+
+	assert.True(helper.PodChanged(&sixth.Spec.Template, &seventh.Spec.Template, constants.FLPName))
 }
 
 func TestDeploymentNoChange(t *testing.T) {
@@ -227,9 +262,10 @@ func TestDeploymentNoChange(t *testing.T) {
 	b = newTransfoBuilder(ns, image, &cfg, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
+	second := b.deployment(digest)
 
 	ftr := flpTransformerReconciler{reconcilersCommonInfo: reconcilersCommonInfo{image: image}}
-	assert.False(ftr.deploymentNeedsUpdate(first, &cfg.Processor, digest))
+	assert.False(ftr.deploymentNeedsUpdate(first, second, &cfg.Processor))
 }
 
 func TestDeploymentChanged(t *testing.T) {
@@ -251,7 +287,7 @@ func TestDeploymentChanged(t *testing.T) {
 	second := b.deployment(digest)
 
 	ftr := flpTransformerReconciler{reconcilersCommonInfo: reconcilersCommonInfo{image: image}}
-	assert.True(ftr.deploymentNeedsUpdate(first, &cfg.Processor, digest))
+	assert.True(ftr.deploymentNeedsUpdate(first, second, &cfg.Processor))
 
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
@@ -260,7 +296,7 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	third := b.deployment(digest)
 
-	assert.True(ftr.deploymentNeedsUpdate(second, &cfg.Processor, digest))
+	assert.True(ftr.deploymentNeedsUpdate(second, third, &cfg.Processor))
 
 	// Check resource change
 	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -272,7 +308,7 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	fourth := b.deployment(digest)
 
-	assert.True(ftr.deploymentNeedsUpdate(third, &cfg.Processor, digest))
+	assert.True(ftr.deploymentNeedsUpdate(third, fourth, &cfg.Processor))
 
 	// Check reverting limits
 	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -284,8 +320,8 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	fifth := b.deployment(digest)
 
-	assert.True(ftr.deploymentNeedsUpdate(fourth, &cfg.Processor, digest))
-	assert.False(ftr.deploymentNeedsUpdate(third, &cfg.Processor, digest))
+	assert.True(ftr.deploymentNeedsUpdate(fourth, fifth, &cfg.Processor))
+	assert.False(ftr.deploymentNeedsUpdate(third, fifth, &cfg.Processor))
 
 	// Check replicas didn't change because HPA is used
 	cfg2 := cfg
@@ -293,8 +329,9 @@ func TestDeploymentChanged(t *testing.T) {
 	b = newTransfoBuilder(ns, image, &cfg2, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
+	sixth := b.deployment(digest)
 
-	assert.False(ftr.deploymentNeedsUpdate(fifth, &cfg2.Processor, digest))
+	assert.False(ftr.deploymentNeedsUpdate(fifth, sixth, &cfg2.Processor))
 }
 
 func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
@@ -314,9 +351,10 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	b = newTransfoBuilder(ns, image, &cfg2, true)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
+	second := b.deployment(digest)
 
 	ftr := flpTransformerReconciler{reconcilersCommonInfo: reconcilersCommonInfo{image: image}}
-	assert.True(ftr.deploymentNeedsUpdate(first, &cfg2.Processor, digest))
+	assert.True(ftr.deploymentNeedsUpdate(first, second, &cfg2.Processor))
 }
 
 func TestServiceNoChange(t *testing.T) {
@@ -331,7 +369,7 @@ func TestServiceNoChange(t *testing.T) {
 	// Check no change
 	newService := first.DeepCopy()
 
-	assert.False(serviceNeedsUpdate(first, newService))
+	assert.False(helper.ServiceChanged(first, newService))
 }
 
 func TestServiceChanged(t *testing.T) {
@@ -348,14 +386,14 @@ func TestServiceChanged(t *testing.T) {
 	b = newMonolithBuilder(ns, image, &cfg, true)
 	second := b.fromPromService(first)
 
-	assert.True(serviceNeedsUpdate(first, second))
+	assert.True(helper.ServiceChanged(first, second))
 
 	// Make sure non-service settings doesn't trigger service update
 	cfg.Processor.LogLevel = "error"
 	b = newMonolithBuilder(ns, image, &cfg, true)
 	third := b.fromPromService(first)
 
-	assert.False(serviceNeedsUpdate(second, third))
+	assert.False(helper.ServiceChanged(second, third))
 }
 
 func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {

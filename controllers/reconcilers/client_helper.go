@@ -7,7 +7,6 @@ import (
 
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -82,16 +81,6 @@ func (c *ClientHelper) CheckDaemonSetInProgress(ds *appsv1.DaemonSet) {
 	if ds.Status.NumberAvailable < ds.Status.DesiredNumberScheduled {
 		c.deplInProgress = true
 	}
-}
-
-// FindContainer searches in pod containers one that matches the provided name
-func FindContainer(podSpec *corev1.PodSpec, name string) *corev1.Container {
-	for i := range podSpec.Containers {
-		if podSpec.Containers[i].Name == name {
-			return &podSpec.Containers[i]
-		}
-	}
-	return nil
 }
 
 func (c *ClientHelper) ReconcileClusterRoleBinding(ctx context.Context, desired *rbacv1.ClusterRoleBinding) error {
