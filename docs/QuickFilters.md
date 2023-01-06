@@ -43,6 +43,39 @@ If for some reason this definition does not apply well to your situation, you ca
 
 Note: the filter matching type, "all of" or "any of", is not controlled from there: this is a UI setting that the users can modify from the query options. We recommend designing these filters assuming the default matching type is used, which is "all of" (ie. filters are _ANDed_).
 
+### More filter examples
+
+#### Get all external traffic (ingress+egress)
+
+```yaml
+    - name: External traffic
+      filter:
+        owner_name: '""'
+```
+
+#### Get all external egress traffic
+
+This filter may not be 100% accurate but gives an idea how we can achieve getting cluster-egress traffic only.
+
+It sets common used source ports to filter out, in order to evict ingress responses from the results.
+
+Note that it does not provide the egress response traffic.
+
+```yaml
+    - name: External egress traffic
+      filter:
+        dst_owner_name: '""'
+        src_port!: "443,80"
+```
+
+#### Host-network traffic
+
+```yaml
+    - name: Host-network traffic
+      filter:
+        src_kind: 'Node'
+```
+
 ### Available filter keys
 
 Here is a list of all available filter keys:
