@@ -169,7 +169,7 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:0.2.2
-    createdAt: "2022-12-21T14:33:23Z"
+    createdAt: "2023-01-06T08:27:48Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.25.3
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
@@ -213,7 +213,7 @@ spec:
 
     ### Kafka
 
-    [Apache Kafka](https://kafka.apache.org/) can optionnaly be used for a more resilient and scalable architecture. You can use for instance [Strimzi](https://strimzi.io/), an operator-based distribution of Kafka for Kubernetes and OpenShift.
+    [Apache Kafka](https://kafka.apache.org/) can optionally be used for a more resilient and scalable architecture. You can use for instance [Strimzi](https://strimzi.io/), an operator-based distribution of Kafka for Kubernetes and OpenShift.
 
     ### Grafana
 
@@ -247,7 +247,7 @@ spec:
 
     ## Further reading
 
-    Please refer to the documentation on GitHub more more information.
+    Please refer to the documentation on GitHub for more information.
 
     This documentation includes:
 
