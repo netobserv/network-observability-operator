@@ -169,7 +169,7 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:0.2.2
-    createdAt: "2023-01-06T08:27:48Z"
+    createdAt: "2023-01-09T10:53:16Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.25.3
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
@@ -337,6 +337,14 @@ spec:
           - nodes
           - pods
           - services
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - secrets
           verbs:
           - get
           - list
