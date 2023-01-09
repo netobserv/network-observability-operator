@@ -3,6 +3,7 @@ package permissions
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -26,20 +27,23 @@ var AllowedCapabilities = []v1.Capability{"BPF", "PERFMON", "NET_ADMIN", "SYS_RE
 // - Create netobserv-ebpf-agent service account in the privileged namespace
 // - For Openshift, apply the required SecurityContextConstraints for privileged Pod operation
 type Reconciler struct {
-	client              reconcilers.ClientHelper
-	privilegedNamespace string
-	vendor              *discover.Permissions
+	client                      reconcilers.ClientHelper
+	privilegedNamespace         string
+	previousPrivilegedNamespace string
+	vendor                      *discover.Permissions
 }
 
 func NewReconciler(
 	client reconcilers.ClientHelper,
 	privilegedNamespace string,
+	previousPrivilegedNamespace string,
 	permissionsVendor *discover.Permissions,
 ) Reconciler {
 	return Reconciler{
-		client:              client,
-		privilegedNamespace: privilegedNamespace,
-		vendor:              permissionsVendor,
+		client:                      client,
+		privilegedNamespace:         privilegedNamespace,
+		previousPrivilegedNamespace: previousPrivilegedNamespace,
+		vendor:                      permissionsVendor,
 	}
 }
 
@@ -59,6 +63,11 @@ func (c *Reconciler) Reconcile(ctx context.Context, desired *v1alpha1.FlowCollec
 }
 
 func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
+	if c.previousPrivilegedNamespace != c.privilegedNamespace {
+		if err := c.cleanupPreviousNamespace(ctx); err != nil {
+			return err
+		}
+	}
 	rlog := log.FromContext(ctx, "PrivilegedNamespace", c.privilegedNamespace)
 	actual := &v1.Namespace{}
 	if err := c.client.Get(ctx, client.ObjectKey{Name: c.privilegedNamespace}, actual); err != nil {
@@ -181,5 +190,46 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 		return c.client.UpdateOwned(ctx, actual, scc)
 	}
 	rlog.Info("SecurityContextConstraints already reconciled. Doing nothing")
+	return nil
+}
+
+func (c *Reconciler) cleanupPreviousNamespace(ctx context.Context) error {
+	rlog := log.FromContext(ctx, "PreviousPrivilegedNamespace", c.previousPrivilegedNamespace)
+
+	// Delete service account
+	if err := c.client.Delete(ctx, &v1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.EBPFServiceAccount,
+			Namespace: c.previousPrivilegedNamespace,
+		},
+	}); err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("deleting eBPF agent ServiceAccount: %w", err)
+	}
+	// Do not delete SCC as it's not namespace-scoped (it will be reconciled "as usual")
+
+	previous := &v1.Namespace{}
+	if err := c.client.Get(ctx, client.ObjectKey{Name: c.previousPrivilegedNamespace}, previous); err != nil {
+		if errors.IsNotFound(err) {
+			// Not found => return without error
+			rlog.Info("Previous privileged namespace not found, skipping cleanup")
+			return nil
+		}
+		return fmt.Errorf("can't retrieve previous namespace: %w", err)
+	}
+	// Make sure we own that namespace
+	if len(previous.OwnerReferences) > 0 && strings.HasPrefix(previous.OwnerReferences[0].APIVersion, v1alpha1.GroupVersion.Group) {
+		rlog.Info("Owning previous privileged namespace: deleting it")
+		if err := c.client.Delete(ctx, previous); err != nil {
+			if errors.IsNotFound(err) {
+				return nil
+			}
+			return fmt.Errorf("deleting privileged namespace: %w", err)
+		}
+	} else {
+		rlog.Info("Not owning previous privileged namespace: delete related content only")
+	}
 	return nil
 }

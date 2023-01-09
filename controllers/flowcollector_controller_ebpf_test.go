@@ -27,16 +27,26 @@ func flowCollectorEBPFSpecs() {
 		Name:      "netobserv-ebpf-agent",
 		Namespace: operatorNamespace + "-privileged",
 	}
+	operatorNamespace2 := "namespace-ebpf-specs2"
+	agentKey2 := types.NamespacedName{
+		Name:      "netobserv-ebpf-agent",
+		Namespace: operatorNamespace2 + "-privileged",
+	}
 	crKey := types.NamespacedName{Name: "cluster"}
-	flpKey := types.NamespacedName{
+	flpKey2 := types.NamespacedName{
 		Name:      constants.FLPName,
-		Namespace: operatorNamespace,
+		Namespace: operatorNamespace2,
 	}
 	saKey := types.NamespacedName{
 		Name:      constants.EBPFServiceAccount,
 		Namespace: agentKey.Namespace,
 	}
+	saKey2 := types.NamespacedName{
+		Name:      constants.EBPFServiceAccount,
+		Namespace: agentKey2.Namespace,
+	}
 	nsKey := types.NamespacedName{Name: agentKey.Namespace}
+	nsKey2 := types.NamespacedName{Name: agentKey2.Namespace}
 
 	Context("Netobserv eBPF Agent Reconciler", func() {
 		It("Should deploy when it does not exist", func() {
@@ -163,6 +173,32 @@ func flowCollectorEBPFSpecs() {
 			Expect(container.SecurityContext.Capabilities).To(BeNil())
 		})
 
+		It("Should redeploy all when changing namespace", func() {
+			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+				fc.Spec.Namespace = operatorNamespace2
+			})
+
+			By("Expecting daemonset in previous namespace to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, agentKey, &appsv1.DaemonSet{})
+			}, timeout, interval).Should(MatchError(`daemonsets.apps "netobserv-ebpf-agent" not found`))
+
+			By("Expecting service account in previous namespace to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, saKey, &v1.ServiceAccount{})
+			}, timeout, interval).Should(MatchError(`serviceaccounts "netobserv-ebpf-agent" not found`))
+
+			By("Expecting daemonset to be created in new namespace")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, agentKey2, &appsv1.DaemonSet{})
+			}, timeout, interval).Should(Succeed())
+
+			By("Expecting service account to be created in new namespace")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, saKey2, &v1.ServiceAccount{})
+			}, timeout, interval).Should(Succeed())
+		})
+
 		It("Should undeploy everything when deleted", func() {
 			// Retrieve CR to get its UID
 			flowCR := &flowsv1alpha1.FlowCollector{}
@@ -185,14 +221,14 @@ func flowCollectorEBPFSpecs() {
 
 			By("expecting to delete the flowlogs-pipeline deployment")
 			Eventually(func() error {
-				return k8sClient.Get(ctx, flpKey, &flowsv1alpha1.FlowCollector{})
+				return k8sClient.Get(ctx, flpKey2, &flowsv1alpha1.FlowCollector{})
 			}).WithTimeout(timeout).WithPolling(interval).
 				Should(Satisfy(errors.IsNotFound))
 
 			By("expecting to delete netobserv-ebpf-agent daemonset")
 			Eventually(func() interface{} {
 				ds := &appsv1.DaemonSet{}
-				if err := k8sClient.Get(ctx, agentKey, ds); err != nil {
+				if err := k8sClient.Get(ctx, agentKey2, ds); err != nil {
 					return err
 				}
 				return ds
@@ -202,7 +238,7 @@ func flowCollectorEBPFSpecs() {
 			By("expecting to delete the netobserv-privileged namespace")
 			Eventually(func() interface{} {
 				ns := &v1.Namespace{}
-				if err := k8sClient.Get(ctx, nsKey, ns); err != nil {
+				if err := k8sClient.Get(ctx, nsKey2, ns); err != nil {
 					return err
 				}
 				return ns
@@ -212,7 +248,7 @@ func flowCollectorEBPFSpecs() {
 			By("expecting to delete the netobserv-ebpf-agent service account")
 			Eventually(func() interface{} {
 				sa := &v1.ServiceAccount{}
-				if err := k8sClient.Get(ctx, saKey, sa); err != nil {
+				if err := k8sClient.Get(ctx, saKey2, sa); err != nil {
 					return err
 				}
 				return sa

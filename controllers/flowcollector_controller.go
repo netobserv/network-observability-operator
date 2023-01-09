@@ -147,7 +147,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	// eBPF agent
-	ebpfAgentController := ebpf.NewAgentController(clientHelper, ns, &r.permissions, r.config)
+	ebpfAgentController := ebpf.NewAgentController(clientHelper, ns, previousNamespace, &r.permissions, r.config)
 	if err := ebpfAgentController.Reconcile(ctx, desired); err != nil {
 		return ctrl.Result{}, r.failure(ctx, conditions.ReconcileAgentFailed(err), desired)
 	}
