@@ -16,18 +16,18 @@ import (
 )
 
 type FlowsConfigCNOController struct {
+	reconcilers.Common
 	ovsConfigMapName   string
 	collectorNamespace string
 	cnoNamespace       string
-	client             reconcilers.ClientHelper
 	lookupIP           func(string) ([]net.IP, error)
 }
 
-func NewFlowsConfigCNOController(client reconcilers.ClientHelper,
+func NewFlowsConfigCNOController(cmn reconcilers.Common,
 	collectorNamespace, cnoNamespace, ovsConfigMapName string,
 	lookupIP func(string) ([]net.IP, error)) *FlowsConfigCNOController {
 	return &FlowsConfigCNOController{
-		client:             client,
+		Common:             cmn,
 		collectorNamespace: collectorNamespace,
 		cnoNamespace:       cnoNamespace,
 		ovsConfigMapName:   ovsConfigMapName,
@@ -50,7 +50,7 @@ func (c *FlowsConfigCNOController) Reconcile(ctx context.Context, target *flowsv
 		}
 		// If the user has changed the agent type, we need to manually undeploy the configmap
 		if current != nil {
-			return c.client.Delete(ctx, &corev1.ConfigMap{
+			return c.Client.Delete(ctx, &corev1.ConfigMap{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      c.ovsConfigMapName,
 					Namespace: c.cnoNamespace,
@@ -69,7 +69,7 @@ func (c *FlowsConfigCNOController) Reconcile(ctx context.Context, target *flowsv
 		if err != nil {
 			return err
 		}
-		return c.client.Create(ctx, cm)
+		return c.Client.Create(ctx, cm)
 	}
 
 	if desired != nil && *desired != *current {
@@ -78,7 +78,7 @@ func (c *FlowsConfigCNOController) Reconcile(ctx context.Context, target *flowsv
 		if err != nil {
 			return err
 		}
-		return c.client.Update(ctx, cm)
+		return c.Client.Update(ctx, cm)
 	}
 
 	rlog.Info("No changes needed")
@@ -87,7 +87,7 @@ func (c *FlowsConfigCNOController) Reconcile(ctx context.Context, target *flowsv
 
 func (c *FlowsConfigCNOController) current(ctx context.Context) (*flowsConfig, error) {
 	curr := &corev1.ConfigMap{}
-	if err := c.client.Get(ctx, types.NamespacedName{
+	if err := c.Client.Get(ctx, types.NamespacedName{
 		Name:      c.ovsConfigMapName,
 		Namespace: c.cnoNamespace,
 	}, curr); err != nil {
@@ -132,7 +132,7 @@ func (c *FlowsConfigCNOController) flowsConfigMap(fc *flowsConfig) (*corev1.Conf
 		},
 		Data: data,
 	}
-	if err := c.client.SetControllerReference(cm); err != nil {
+	if err := c.ClientHelper.SetControllerReference(cm); err != nil {
 		return nil, err
 	}
 	return cm, nil

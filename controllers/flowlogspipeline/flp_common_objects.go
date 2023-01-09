@@ -170,12 +170,12 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 	}}
 
 	if b.desired.UseKafka() && b.desired.Kafka.TLS.Enable {
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Kafka.TLS, kafkaCerts, b.cWatcher)
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Kafka.TLS, kafkaCerts, b.cWatcher.SetWatchedCertificate)
 	}
 
 	if hasLokiInterface {
 		if b.desired.Loki.TLS.Enable && !b.desired.Loki.TLS.InsecureSkipVerify {
-			volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts, b.cWatcher)
+			volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts, b.cWatcher.SetWatchedCertificate)
 		}
 		if b.desired.Loki.UseHostToken() || b.desired.Loki.ForwardUserToken() {
 			volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, lokiToken, constants.FLPName)
@@ -183,7 +183,7 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 	}
 
 	if b.desired.Processor.Metrics.Server.TLS.Type != flowsv1alpha1.ServerTLSDisabled {
-		volumes, volumeMounts = helper.AppendSingleCertVolumes(volumes, volumeMounts, b.promTLS, promCerts, b.cWatcher)
+		volumes, volumeMounts = helper.AppendSingleCertVolumes(volumes, volumeMounts, b.promTLS, promCerts, b.cWatcher.SetWatchedCertificate)
 	}
 
 	var envs []corev1.EnvVar

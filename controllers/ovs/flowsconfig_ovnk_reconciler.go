@@ -19,15 +19,15 @@ import (
 )
 
 type FlowsConfigOVNKController struct {
+	reconcilers.Common
 	namespace string
 	config    flowsv1alpha1.OVNKubernetesConfig
-	client    reconcilers.ClientHelper
 	lookupIP  func(string) ([]net.IP, error)
 }
 
-func NewFlowsConfigOVNKController(client reconcilers.ClientHelper, namespace string, config flowsv1alpha1.OVNKubernetesConfig, lookupIP func(string) ([]net.IP, error)) *FlowsConfigOVNKController {
+func NewFlowsConfigOVNKController(cmn reconcilers.Common, namespace string, config flowsv1alpha1.OVNKubernetesConfig, lookupIP func(string) ([]net.IP, error)) *FlowsConfigOVNKController {
 	return &FlowsConfigOVNKController{
-		client:    client,
+		Common:    cmn,
 		namespace: namespace,
 		config:    config,
 		lookupIP:  lookupIP,
@@ -68,7 +68,7 @@ func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flows
 	}
 	if anyUpdate {
 		rlog.Info("Provided IPFIX configuration differs current configuration. Updating")
-		return c.client.Update(ctx, ds)
+		return c.Client.Update(ctx, ds)
 	}
 
 	rlog.Info("No changes needed")
@@ -77,7 +77,7 @@ func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flows
 
 func (c *FlowsConfigOVNKController) getDaemonSet(ctx context.Context) (*appsv1.DaemonSet, error) {
 	curr := &appsv1.DaemonSet{}
-	if err := c.client.Get(ctx, types.NamespacedName{
+	if err := c.Client.Get(ctx, types.NamespacedName{
 		Name:      c.config.DaemonSetName,
 		Namespace: c.config.Namespace,
 	}, curr); err != nil {

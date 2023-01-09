@@ -32,6 +32,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/conditions"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
@@ -108,14 +109,14 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 
-	clientHelper := r.newClientHelper(desired)
+	common := r.newCommonInfo(desired)
 	previousNamespace := desired.Status.Namespace
 
 	// Create reconcilers
-	flpReconciler := flowlogspipeline.NewReconciler(ctx, clientHelper, ns, previousNamespace, r.config.FlowlogsPipelineImage, &r.permissions, r.availableAPIs)
+	flpReconciler := flowlogspipeline.NewReconciler(ctx, common, ns, previousNamespace, r.config.FlowlogsPipelineImage, &r.permissions, r.availableAPIs)
 	var cpReconciler consoleplugin.CPReconciler
 	if r.availableAPIs.HasConsole() {
-		cpReconciler = consoleplugin.NewReconciler(clientHelper, ns, previousNamespace, r.config.ConsolePluginImage, r.availableAPIs)
+		cpReconciler = consoleplugin.NewReconciler(common, ns, previousNamespace, r.config.ConsolePluginImage, r.availableAPIs)
 	}
 
 	// Check namespace changed
@@ -132,7 +133,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	// OVS config map for CNO
 	if r.availableAPIs.HasCNO() {
-		ovsConfigController := ovs.NewFlowsConfigCNOController(clientHelper,
+		ovsConfigController := ovs.NewFlowsConfigCNOController(common,
 			ns,
 			desired.Spec.Agent.IPFIX.ClusterNetworkOperator.Namespace,
 			ovsFlowsConfigMapName,
@@ -141,7 +142,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			return ctrl.Result{}, r.failure(ctx, conditions.ReconcileCNOFailed(err), desired)
 		}
 	} else {
-		ovsConfigController := ovs.NewFlowsConfigOVNKController(clientHelper,
+		ovsConfigController := ovs.NewFlowsConfigOVNKController(common,
 			ns,
 			desired.Spec.Agent.IPFIX.OVNKubernetes,
 			r.lookupIP)
@@ -151,7 +152,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	// eBPF agent
-	ebpfAgentController := ebpf.NewAgentController(clientHelper, ns, previousNamespace, &r.permissions, r.config)
+	ebpfAgentController := ebpf.NewAgentController(common, ns, previousNamespace, &r.permissions, r.config)
 	if err := ebpfAgentController.Reconcile(ctx, desired); err != nil {
 		return ctrl.Result{}, r.failure(ctx, conditions.ReconcileAgentFailed(err), desired)
 	}
@@ -166,9 +167,9 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	// Set readiness status
 	var status *metav1.Condition
-	if clientHelper.DidChange() {
+	if common.DidChange() {
 		status = conditions.Updating()
-	} else if clientHelper.IsInProgress() {
+	} else if common.IsInProgress() {
 		status = conditions.DeploymentInProgress()
 	} else {
 		status = conditions.Ready()
@@ -339,7 +340,7 @@ func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *f
 func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
 	if !r.availableAPIs.HasCNO() {
 		ns := getNamespaceName(desired)
-		clientHelper := r.newClientHelper(desired)
+		clientHelper := r.newCommonInfo(desired)
 		ovsConfigController := ovs.NewFlowsConfigOVNKController(clientHelper,
 			ns,
 			desired.Spec.Agent.IPFIX.OVNKubernetes,
@@ -351,13 +352,15 @@ func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsv1
 	return nil
 }
 
-func (r *FlowCollectorReconciler) newClientHelper(desired *flowsv1alpha1.FlowCollector) reconcilers.ClientHelper {
-	return reconcilers.ClientHelper{
-		CertWatcher: r.certWatcher,
-		Client:      r.Client,
-		SetControllerReference: func(obj client.Object) error {
-			return ctrl.SetControllerReference(desired, obj, r.Scheme)
+func (r *FlowCollectorReconciler) newCommonInfo(desired *flowsv1alpha1.FlowCollector) reconcilers.Common {
+	return reconcilers.Common{
+		ClientHelper: helper.ClientHelper{
+			Client: r.Client,
+			SetControllerReference: func(obj client.Object) error {
+				return ctrl.SetControllerReference(desired, obj, r.Scheme)
+			},
 		},
+		CertWatcher: r.certWatcher,
 	}
 }
 

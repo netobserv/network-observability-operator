@@ -6,22 +6,21 @@ import (
 	"strconv"
 	"strings"
 
+	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
 	"github.com/netobserv/network-observability-operator/controllers/operator"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"k8s.io/apimachinery/pkg/api/equality"
 )
 
 const (
@@ -71,8 +70,7 @@ const (
 // associated objects that are required to bind the proper permissions: namespace, service
 // accounts, SecurityContextConstraints...
 type AgentController struct {
-	client                      reconcilers.ClientHelper
-	baseNamespace               string
+	reconcilers.Common
 	privilegedNamespace         string
 	previousPrivilegedNamespace string
 	permissions                 permissions.Reconciler
@@ -80,7 +78,7 @@ type AgentController struct {
 }
 
 func NewAgentController(
-	client reconcilers.ClientHelper,
+	common reconcilers.Common,
 	baseNamespace string,
 	previousBaseNamespace string,
 	permissionsVendor *discover.Permissions,
@@ -89,11 +87,10 @@ func NewAgentController(
 	pns := baseNamespace + constants.EBPFPrivilegedNSSuffix
 	opns := previousBaseNamespace + constants.EBPFPrivilegedNSSuffix
 	return &AgentController{
-		client:                      client,
-		baseNamespace:               baseNamespace,
+		Common:                      common,
 		privilegedNamespace:         pns,
 		previousPrivilegedNamespace: opns,
-		permissions:                 permissions.NewReconciler(client, pns, opns, permissionsVendor),
+		permissions:                 permissions.NewReconciler(common.ClientHelper, pns, opns, permissionsVendor),
 		config:                      config,
 	}
 }
@@ -116,7 +113,7 @@ func (c *AgentController) Reconcile(
 		// undeploy the agent
 		rlog.Info("user changed the agent type, or the target namespace. Deleting eBPF agent",
 			"currentAgent", target.Spec.Agent)
-		if err := c.client.Delete(ctx, current); err != nil {
+		if err := c.Delete(ctx, current); err != nil {
 			if errors.IsNotFound(err) {
 				return nil
 			}
@@ -132,27 +129,27 @@ func (c *AgentController) Reconcile(
 	desired := c.desired(target)
 
 	// Annotate pod with certificate reference so that it is reloaded if modified
-	if err := c.client.CertWatcher.AnnotatePod(ctx, c.client, &desired.Spec.Template, kafkaCerts); err != nil {
+	if err := c.CertWatcher.PrepareForPod(ctx, c.ClientHelper, &desired.Spec.Template, c.privilegedNamespace, kafkaCerts); err != nil {
 		return err
 	}
 
 	switch c.requiredAction(current, desired) {
 	case actionCreate:
 		rlog.Info("action: create agent")
-		return c.client.CreateOwned(ctx, desired)
+		return c.CreateOwned(ctx, desired)
 	case actionUpdate:
 		rlog.Info("action: update agent")
-		return c.client.UpdateOwned(ctx, current, desired)
+		return c.UpdateOwned(ctx, current, desired)
 	default:
 		rlog.Info("action: nothing to do")
-		c.client.CheckDaemonSetInProgress(current)
+		c.CheckDaemonSetInProgress(current)
 		return nil
 	}
 }
 
 func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 	agentDS := v1.DaemonSet{}
-	if err := c.client.Get(ctx, types.NamespacedName{
+	if err := c.Get(ctx, types.NamespacedName{
 		Name:      constants.EBPFAgentName,
 		Namespace: c.previousPrivilegedNamespace,
 	}, &agentDS); err != nil {
@@ -175,7 +172,7 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 	if coll.Spec.UseKafka() && coll.Spec.Kafka.TLS.Enable {
 		// NOTE: secrets need to be copied from the base netobserv namespace to the privileged one.
 		// This operation must currently be performed manually (run "make fix-ebpf-kafka-tls"). It could be automated here.
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &coll.Spec.Kafka.TLS, kafkaCerts, c.client.CertWatcher)
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &coll.Spec.Kafka.TLS, kafkaCerts, c.CertWatcher.SetWatchedCertificate)
 	}
 
 	return &v1.DaemonSet{

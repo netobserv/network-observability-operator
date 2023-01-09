@@ -1830,6 +1830,13 @@ caCert defines the reference of the certificate for the Certificate Authority
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
@@ -1877,6 +1884,13 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td>string</td>
         <td>
           name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2027,6 +2041,13 @@ caCert defines the reference of the certificate for the Certificate Authority
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
@@ -2074,6 +2095,13 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td>string</td>
         <td>
           name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2315,6 +2343,13 @@ caCert defines the reference of the certificate for the Certificate Authority
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
@@ -2362,6 +2397,13 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td>string</td>
         <td>
           name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3623,6 +3665,13 @@ TLS configuration.
         <td>string</td>
         <td>
           name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
         </td>
         <td>false</td>
       </tr><tr>

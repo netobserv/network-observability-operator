@@ -7,7 +7,6 @@ import (
 
 	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	osv1 "github.com/openshift/api/security/v1"
@@ -27,14 +26,14 @@ var AllowedCapabilities = []v1.Capability{"BPF", "PERFMON", "NET_ADMIN", "SYS_RE
 // - Create netobserv-ebpf-agent service account in the privileged namespace
 // - For Openshift, apply the required SecurityContextConstraints for privileged Pod operation
 type Reconciler struct {
-	client                      reconcilers.ClientHelper
+	client                      helper.ClientHelper
 	privilegedNamespace         string
 	previousPrivilegedNamespace string
 	vendor                      *discover.Permissions
 }
 
 func NewReconciler(
-	client reconcilers.ClientHelper,
+	client helper.ClientHelper,
 	privilegedNamespace string,
 	previousPrivilegedNamespace string,
 	permissionsVendor *discover.Permissions,

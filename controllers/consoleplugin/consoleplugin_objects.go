@@ -218,7 +218,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 
 	args := buildArgs(b.desired, b.desiredLoki)
 	if b.desiredLoki != nil && b.desiredLoki.TLS.Enable && !b.desiredLoki.TLS.InsecureSkipVerify {
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts, b.cWatcher)
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts, b.cWatcher.SetWatchedCertificate)
 	}
 
 	if b.desiredLoki.UseHostToken() {

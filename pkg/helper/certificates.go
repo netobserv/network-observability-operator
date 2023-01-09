@@ -5,40 +5,41 @@ import (
 
 	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/pkg/watchers"
 	corev1 "k8s.io/api/core/v1"
 )
 
+type AddCertCallback = func(string, *v1alpha1.CertificateReference)
+
 // AppendCertVolumes will add a volume + volume mount for a CA cert if defined, and another volume + volume mount for a user cert if defined.
 // It does nothing if neither is defined.
-func AppendCertVolumes(volumes []corev1.Volume, volumeMounts []corev1.VolumeMount, config *v1alpha1.ClientTLS, name string, cWatcher *watchers.CertificatesWatcher) ([]corev1.Volume, []corev1.VolumeMount) {
+func AppendCertVolumes(volumes []corev1.Volume, volumeMounts []corev1.VolumeMount, config *v1alpha1.ClientTLS, name string, onCertAdded AddCertCallback) ([]corev1.Volume, []corev1.VolumeMount) {
 	volOut := volumes
 	vmOut := volumeMounts
 	if config.CACert.Name != "" {
-		vol, vm := buildVolume(config.CACert, constants.CertCAName(name), cWatcher)
+		vol, vm := buildVolume(&config.CACert, constants.CertCAName(name), onCertAdded)
 		volOut = append(volOut, vol)
 		vmOut = append(vmOut, vm)
 	}
 	if config.UserCert.Name != "" {
-		vol, vm := buildVolume(config.UserCert, constants.CertUserName(name), cWatcher)
+		vol, vm := buildVolume(&config.UserCert, constants.CertUserName(name), onCertAdded)
 		volOut = append(volOut, vol)
 		vmOut = append(vmOut, vm)
 	}
 	return volOut, vmOut
 }
 
-func AppendSingleCertVolumes(volumes []corev1.Volume, volumeMounts []corev1.VolumeMount, config *v1alpha1.CertificateReference, name string, cWatcher *watchers.CertificatesWatcher) ([]corev1.Volume, []corev1.VolumeMount) {
+func AppendSingleCertVolumes(volumes []corev1.Volume, volumeMounts []corev1.VolumeMount, config *v1alpha1.CertificateReference, name string, onCertAdded AddCertCallback) ([]corev1.Volume, []corev1.VolumeMount) {
 	volOut := volumes
 	vmOut := volumeMounts
 	if config.Name != "" {
-		vol, vm := buildVolume(*config, name, cWatcher)
+		vol, vm := buildVolume(config, name, onCertAdded)
 		volOut = append(volOut, vol)
 		vmOut = append(vmOut, vm)
 	}
 	return volOut, vmOut
 }
 
-func buildVolume(ref v1alpha1.CertificateReference, name string, cWatcher *watchers.CertificatesWatcher) (corev1.Volume, corev1.VolumeMount) {
+func buildVolume(ref *v1alpha1.CertificateReference, name string, onCertAdded AddCertCallback) (corev1.Volume, corev1.VolumeMount) {
 	var vol corev1.Volume
 	if ref.Type == v1alpha1.CertRefTypeConfigMap {
 		vol = corev1.Volume{
@@ -61,7 +62,7 @@ func buildVolume(ref v1alpha1.CertificateReference, name string, cWatcher *watch
 			},
 		}
 	}
-	cWatcher.SetWatchedCertificate(name, &ref)
+	onCertAdded(name, ref)
 	return vol, corev1.VolumeMount{
 		Name:      name,
 		ReadOnly:  true,

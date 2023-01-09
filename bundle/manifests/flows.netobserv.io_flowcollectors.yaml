@@ -1014,6 +1014,14 @@ spec:
                                   description: name of the config map or secret containing
                                     certificates
                                   type: string
+                                namespace:
+                                  description: namespace of the config map or secret
+                                    containing certificates. If omitted, assumes same
+                                    namespace as where NetObserv is deployed. If the
+                                    namespace is different, the config map or the
+                                    secret will be copied so that it can be mounted
+                                    as required.
+                                  type: string
                                 type:
                                   description: 'type for the certificate reference:
                                     "configmap" or "secret"'
@@ -1049,6 +1057,14 @@ spec:
                                 name:
                                   description: name of the config map or secret containing
                                     certificates
+                                  type: string
+                                namespace:
+                                  description: namespace of the config map or secret
+                                    containing certificates. If omitted, assumes same
+                                    namespace as where NetObserv is deployed. If the
+                                    namespace is different, the config map or the
+                                    secret will be copied so that it can be mounted
+                                    as required.
                                   type: string
                                 type:
                                   description: 'type for the certificate reference:
@@ -1110,6 +1126,13 @@ spec:
                             description: name of the config map or secret containing
                               certificates
                             type: string
+                          namespace:
+                            description: namespace of the config map or secret containing
+                              certificates. If omitted, assumes same namespace as
+                              where NetObserv is deployed. If the namespace is different,
+                              the config map or the secret will be copied so that
+                              it can be mounted as required.
+                            type: string
                           type:
                             description: 'type for the certificate reference: "configmap"
                               or "secret"'
@@ -1145,6 +1168,13 @@ spec:
                           name:
                             description: name of the config map or secret containing
                               certificates
+                            type: string
+                          namespace:
+                            description: namespace of the config map or secret containing
+                              certificates. If omitted, assumes same namespace as
+                              where NetObserv is deployed. If the namespace is different,
+                              the config map or the secret will be copied so that
+                              it can be mounted as required.
                             type: string
                           type:
                             description: 'type for the certificate reference: "configmap"
@@ -1264,6 +1294,13 @@ spec:
                             description: name of the config map or secret containing
                               certificates
                             type: string
+                          namespace:
+                            description: namespace of the config map or secret containing
+                              certificates. If omitted, assumes same namespace as
+                              where NetObserv is deployed. If the namespace is different,
+                              the config map or the secret will be copied so that
+                              it can be mounted as required.
+                            type: string
                           type:
                             description: 'type for the certificate reference: "configmap"
                               or "secret"'
@@ -1299,6 +1336,13 @@ spec:
                           name:
                             description: name of the config map or secret containing
                               certificates
+                            type: string
+                          namespace:
+                            description: namespace of the config map or secret containing
+                              certificates. If omitted, assumes same namespace as
+                              where NetObserv is deployed. If the namespace is different,
+                              the config map or the secret will be copied so that
+                              it can be mounted as required.
                             type: string
                           type:
                             description: 'type for the certificate reference: "configmap"
@@ -1977,6 +2021,14 @@ spec:
                                   name:
                                     description: name of the config map or secret
                                       containing certificates
+                                    type: string
+                                  namespace:
+                                    description: namespace of the config map or secret
+                                      containing certificates. If omitted, assumes
+                                      same namespace as where NetObserv is deployed.
+                                      If the namespace is different, the config map
+                                      or the secret will be copied so that it can
+                                      be mounted as required.
                                     type: string
                                   type:
                                     description: 'type for the certificate reference:

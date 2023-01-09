@@ -608,6 +608,11 @@ type CertificateReference struct {
 	// name of the config map or secret containing certificates
 	Name string `json:"name,omitempty"`
 
+	// namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed.
+	// If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+
 	// certFile defines the path to the certificate file name within the config map or secret
 	CertFile string `json:"certFile,omitempty"`
 

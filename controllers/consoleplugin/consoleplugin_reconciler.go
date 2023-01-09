@@ -26,7 +26,7 @@ type pluginSpec = flowsv1alpha1.FlowCollectorConsolePlugin
 
 // CPReconciler reconciles the current console plugin state with the desired configuration
 type CPReconciler struct {
-	reconcilers.ClientHelper
+	reconcilers.Common
 	nobjMngr      *reconcilers.NamespacedObjectManager
 	owned         ownedObjects
 	image         string
@@ -42,7 +42,7 @@ type ownedObjects struct {
 	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
-func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string, availableAPIs *discover.AvailableAPIs) CPReconciler {
+func NewReconciler(cmn reconcilers.Common, ns, prevNS, imageName string, availableAPIs *discover.AvailableAPIs) CPReconciler {
 	owned := ownedObjects{
 		deployment:     &appsv1.Deployment{},
 		service:        &corev1.Service{},
@@ -51,7 +51,7 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string, av
 		configMap:      &corev1.ConfigMap{},
 		serviceMonitor: &monitoringv1.ServiceMonitor{},
 	}
-	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
+	nobjMngr := reconcilers.NewNamespacedObjectManager(cmn, ns, prevNS)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.deployment)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.service)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.hpa)
@@ -61,7 +61,7 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string, av
 		nobjMngr.AddManagedObject(constants.PluginName, owned.serviceMonitor)
 	}
 
-	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, image: imageName, availableAPIs: availableAPIs}
+	return CPReconciler{Common: cmn, nobjMngr: nobjMngr, owned: owned, image: imageName, availableAPIs: availableAPIs}
 }
 
 // InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
@@ -180,7 +180,7 @@ func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder builder, 
 func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, cmDigest string) error {
 	newDepl := builder.deployment(cmDigest)
 	// Annotate pod with certificate reference so that it is reloaded if modified
-	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &newDepl.Spec.Template, lokiCerts); err != nil {
+	if err := r.CertWatcher.PrepareForPod(ctx, r.ClientHelper, &newDepl.Spec.Template, r.nobjMngr.Namespace, lokiCerts); err != nil {
 		return err
 	}
 	if !r.nobjMngr.Exists(r.owned.deployment) {

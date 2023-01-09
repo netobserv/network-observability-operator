@@ -138,7 +138,7 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 
 func (r *flpIngesterReconciler) reconcileDaemonSet(ctx context.Context, desiredDS *appsv1.DaemonSet) error {
 	// Annotate pod with certificate reference so that it is reloaded if modified
-	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &desiredDS.Spec.Template, lokiCerts, kafkaCerts); err != nil {
+	if err := r.CertWatcher.PrepareForPod(ctx, r.ClientHelper, &desiredDS.Spec.Template, r.nobjMngr.Namespace, lokiCerts, kafkaCerts); err != nil {
 		return err
 	}
 	if !r.nobjMngr.Exists(r.owned.daemonSet) {

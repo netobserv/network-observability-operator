@@ -124,7 +124,7 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 	new := builder.deployment(configDigest)
 
 	// Annotate pod with certificate reference so that it is reloaded if modified
-	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &new.Spec.Template, lokiCerts, kafkaCerts); err != nil {
+	if err := r.CertWatcher.PrepareForPod(ctx, r.ClientHelper, &new.Spec.Template, r.nobjMngr.Namespace, lokiCerts, kafkaCerts); err != nil {
 		return err
 	}
 
