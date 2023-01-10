@@ -1,16 +1,13 @@
-# VERSION defines the project version for the bundle.
-# Update this value when you upgrade the version of your project.
-# To re-generate a bundle for another specific version without changing the standard setup, you can:
-# - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
-# - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
+# VERSION defines the project version for the deploy scripts, not for bundles
 VERSION ?= main
 BUILD_VERSION := $(shell git describe --long HEAD)
 BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
 BUILD_SHA := $(shell git rev-parse --short HEAD)
 
-# Other component versions when building bundle / release
+# Component versions to use in bundle / release (do not use $VERSION for that)
 PREVIOUS_VERSION ?= v0.2.1
 BUNDLE_VERSION ?= 0.2.2
+OPERATOR_VERSION ?= $(BUNDLE_VERSION)
 # console plugin
 export PLG_VERSION ?= v0.1.7
 # flowlogs-pipeline
@@ -58,7 +55,6 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
 
 # Image URL to use all building/pushing image targets
 IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
-IMG_FOR_BUNDLE ?= $(IMAGE_TAG_BASE):$(BUNDLE_VERSION)
 IMG_SHA = $(IMAGE_TAG_BASE):$(BUILD_SHA)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
@@ -242,13 +238,13 @@ endif
 .PHONY: bundle-prepare
 bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPSDK) generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG_FOR_BUNDLE)
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE_TAG_BASE):$(OPERATOR_VERSION)
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:$(FLP_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:.+~console-plugin:$(PLG_VERSION)~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?/~blob/$(BUNDLE_VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
-	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?/~blob/$(BUNDLE_VERSION)/~g' ./config/manifests/bases/description-upstream.md
-	$(SED) -i -r 's~blob/[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?/~blob/$(BUNDLE_VERSION)/~g' ./config/manifests/bases/description-ocp.md
+	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(OPERATOR_VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(OPERATOR_VERSION)/~g' ./config/manifests/bases/description-upstream.md
+	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(OPERATOR_VERSION)/~g' ./config/manifests/bases/description-ocp.md
 	$(SED) -i -r 's~replaces: netobserv-operator\.v.*~replaces: netobserv-operator\.$(PREVIOUS_VERSION)~' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
 	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 
@@ -256,7 +252,7 @@ bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metada
 bundle: bundle-prepare
 	$(SED) -e 's/^/    /' config/manifests/bases/description-upstream.md > tmp-desc
 	$(KUSTOMIZE) build config/manifests \
-		| $(SED) -e 's~:container-image:~$(IMG_FOR_BUNDLE)~' \
+		| $(SED) -e 's~:container-image:~$(IMAGE_TAG_BASE):$(OPERATOR_VERSION)~' \
 		| $(SED) -e 's~:created-at:~$(DATE)~' \
 		| $(SED) -e "/':full-description:'/r tmp-desc" \
 		| $(SED) -e "s/':full-description:'/|\-/" \
