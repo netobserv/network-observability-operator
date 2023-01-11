@@ -8,7 +8,7 @@ The operator provides dashboards, metrics, and keeps flows accessible in a query
 
 [Loki](https://grafana.com/oss/loki/), from GrafanaLabs, is the backend that is used to store all collected flows. The NetObserv Operator does not install Loki directly, however we provide some guidance to help you there.
 
-For a normal usage, we recommend two options:
+For normal usage, we recommend two options:
 
 - Installing the [Loki Operator](https://loki-operator.dev/docs/prologue/quickstart.md/). We have written [a guide](https://github.com/netobserv/documents/blob/main/loki_operator.md) to help you through those steps. Please note that it requires configuring an object storage. Note also that the Loki Operator can also be used for [OpenShift cluster logging](https://docs.openshift.com/container-platform/4.11/logging/cluster-logging.html). If you do so, you should not share the same `LokiStack` for Logging and NetObserv.
 
@@ -65,4 +65,4 @@ This documentation includes:
 - An [overview](https://github.com/netobserv/network-observability-operator#openshift-console) of the features, with screenshots
 - A [performance](https://github.com/netobserv/network-observability-operator#performance-fine-tuning) section, for fine-tuning
 - A [security](https://github.com/netobserv/network-observability-operator#securing-data-and-communications) section
-- A [F.A.Q](https://github.com/netobserv/network-observability-operator#faq--troubleshooting) section
+- An [F.A.Q.](https://github.com/netobserv/network-observability-operator#faq--troubleshooting) section

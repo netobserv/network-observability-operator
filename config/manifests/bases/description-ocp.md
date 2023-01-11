@@ -1,4 +1,4 @@
-Network observability is an OpenShift operator that deploys a monitoring pipeline to collect and enrich network flows that are produced by the Network observability eBPF agent.
+Network Observability is an OpenShift operator that deploys a monitoring pipeline to collect and enrich network flows that are produced by the Network Observability eBPF agent.
 
 The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When a `FlowCollector` instance is created, new views are available in the Console.
 
@@ -8,7 +8,7 @@ The operator provides dashboards, metrics, and keeps flows accessible in a query
 
 [Loki](https://grafana.com/oss/loki/), from GrafanaLabs, is the backend that is used to store all collected flows. The NetObserv Operator does not install Loki directly, however we provide some guidance to help you there.
 
-For a normal usage, we recommend two options:
+For normal usage, we recommend two options:
 
 - Installing the [Loki Operator](https://docs.openshift.com/container-platform/4.11//logging/cluster-logging-loki.html). We have written [a guide](https://github.com/netobserv/documents/blob/main/loki_operator.md) to help you through those steps. Please note that it requires configuring an object storage. Note also that the Loki Operator can also be used for [OpenShift cluster logging](https://docs.openshift.com/container-platform/4.11/logging/cluster-logging.html). If you do so, you should not share the same `LokiStack` for Logging and NetObserv.
 
@@ -17,9 +17,9 @@ For a normal usage, we recommend two options:
 For a quick try that is not suitable for production and not scalable (it deploys a single pod, configures a 1GB storage PVC, with 24 hours of retention), you can simply run the following commands:
 
 ```
-kubectl create namespace netobserv
-kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/252bb624cf0425a1b66f59ce68fb939f246ef77b/examples/zero-click-loki/1-storage.yaml) -n netobserv
-kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/252bb624cf0425a1b66f59ce68fb939f246ef77b/examples/zero-click-loki/2-loki.yaml) -n netobserv
+oc create namespace netobserv
+oc apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/252bb624cf0425a1b66f59ce68fb939f246ef77b/examples/zero-click-loki/1-storage.yaml) -n netobserv
+oc apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/252bb624cf0425a1b66f59ce68fb939f246ef77b/examples/zero-click-loki/2-loki.yaml) -n netobserv
 ```
 
 ### Kafka
@@ -37,7 +37,7 @@ The `FlowCollector` resource is used to configure the operator and its managed c
 To edit configuration in cluster, run:
 
 ```bash
-kubectl edit flowcollector cluster
+oc edit flowcollector cluster
 ```
 
 As it operates cluster-wide, only a single `FlowCollector` is allowed, and it has to be named `cluster`.
@@ -63,4 +63,4 @@ This documentation includes:
 - An [overview](https://github.com/netobserv/network-observability-operator#openshift-console) of the features, with screenshots
 - A [performance](https://github.com/netobserv/network-observability-operator#performance-fine-tuning) section, for fine-tuning
 - A [security](https://github.com/netobserv/network-observability-operator#securing-data-and-communications) section
-- A [F.A.Q](https://github.com/netobserv/network-observability-operator#faq--troubleshooting) section
+- An [F.A.Q.](https://github.com/netobserv/network-observability-operator#faq--troubleshooting) section
