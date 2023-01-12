@@ -156,3 +156,15 @@ Alternatively you can use helper make targets for the same purpose:
 ```bash
 USER=myself VERSION=test make set-agent-image set-flp-image set-plugin-image
 ```
+
+## View flowlogs-pipeline metrics in console
+
+To view the generated flowlogs-pipeline metrics in the Openshift console, perform the following:
+
+```
+cd hack
+./enable-metrics.sh
+```
+
+The metrics will be visible in the Openshift console under the tab `Observe -> Metrics.`
+Look for the metrics that begin with `netobserv_.`

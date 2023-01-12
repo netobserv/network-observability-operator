@@ -71,26 +71,30 @@ const (
 // associated objects that are required to bind the proper permissions: namespace, service
 // accounts, SecurityContextConstraints...
 type AgentController struct {
-	client              reconcilers.ClientHelper
-	baseNamespace       string
-	privilegedNamespace string
-	permissions         permissions.Reconciler
-	config              *operator.Config
+	client                      reconcilers.ClientHelper
+	baseNamespace               string
+	privilegedNamespace         string
+	previousPrivilegedNamespace string
+	permissions                 permissions.Reconciler
+	config                      *operator.Config
 }
 
 func NewAgentController(
 	client reconcilers.ClientHelper,
 	baseNamespace string,
+	previousBaseNamespace string,
 	permissionsVendor *discover.Permissions,
 	config *operator.Config,
 ) *AgentController {
 	pns := baseNamespace + constants.EBPFPrivilegedNSSuffix
+	opns := previousBaseNamespace + constants.EBPFPrivilegedNSSuffix
 	return &AgentController{
-		client:              client,
-		baseNamespace:       baseNamespace,
-		privilegedNamespace: pns,
-		permissions:         permissions.NewReconciler(client, pns, permissionsVendor),
-		config:              config,
+		client:                      client,
+		baseNamespace:               baseNamespace,
+		privilegedNamespace:         pns,
+		previousPrivilegedNamespace: opns,
+		permissions:                 permissions.NewReconciler(client, pns, opns, permissionsVendor),
+		config:                      config,
 	}
 }
 
@@ -102,15 +106,15 @@ func (c *AgentController) Reconcile(
 	if err != nil {
 		return fmt.Errorf("fetching current EBPF Agent: %w", err)
 	}
-	if !target.Spec.UseEBPF() {
+	if !target.Spec.UseEBPF() || c.previousPrivilegedNamespace != c.privilegedNamespace {
 		if current == nil {
 			rlog.Info("nothing to do, as the requested agent is not eBPF",
 				"currentAgent", target.Spec.Agent)
 			return nil
 		}
-		// If the user has changed the agent type, we need to manually
+		// If the user has changed the agent type or changed the target namespace, we need to manually
 		// undeploy the agent
-		rlog.Info("user changed the agent type. Deleting eBPF agent",
+		rlog.Info("user changed the agent type, or the target namespace. Deleting eBPF agent",
 			"currentAgent", target.Spec.Agent)
 		if err := c.client.Delete(ctx, current); err != nil {
 			if errors.IsNotFound(err) {
@@ -118,6 +122,8 @@ func (c *AgentController) Reconcile(
 			}
 			return fmt.Errorf("deleting eBPF agent: %w", err)
 		}
+		// Current now has been deleted. Set it to nil to that it triggers actionCreate if we are changing namespace
+		current = nil
 	}
 
 	if err := c.permissions.Reconcile(ctx, &target.Spec.Agent.EBPF); err != nil {
@@ -148,13 +154,13 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 	agentDS := v1.DaemonSet{}
 	if err := c.client.Get(ctx, types.NamespacedName{
 		Name:      constants.EBPFAgentName,
-		Namespace: c.privilegedNamespace,
+		Namespace: c.previousPrivilegedNamespace,
 	}, &agentDS); err != nil {
 		if errors.IsNotFound(err) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("can't read DaemonSet %s/%s: %w",
-			c.privilegedNamespace, constants.EBPFAgentName, err)
+			c.previousPrivilegedNamespace, constants.EBPFAgentName, err)
 	}
 	return &agentDS, nil
 }
