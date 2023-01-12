@@ -591,6 +591,11 @@ type OVNKubernetesConfig struct {
 	ContainerName string `json:"containerName,omitempty"`
 }
 
+const (
+	CertRefTypeSecret    = "secret"
+	CertRefTypeConfigMap = "configmap"
+)
+
 type CertificateReference struct {
 	//+kubebuilder:validation:Enum=configmap;secret
 	// type for the certificate reference: "configmap" or "secret"

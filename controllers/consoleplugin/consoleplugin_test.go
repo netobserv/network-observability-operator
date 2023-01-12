@@ -13,6 +13,7 @@ import (
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/watchers"
 
 	promConfig "github.com/prometheus/common/config"
 )
@@ -27,6 +28,7 @@ var testResources = corev1.ResourceRequirements{
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	},
 }
+var certWatcher = watchers.NewCertificatesWatcher()
 
 func getPluginConfig() flowsv1alpha1.FlowCollectorConsolePlugin {
 	return flowsv1alpha1.FlowCollectorConsolePlugin{
@@ -108,7 +110,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	//equals specs
 	plugin := getPluginConfig()
 	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
-	builder := newBuilder(testNamespace, testImage, &plugin, loki)
+	builder := newBuilder(testNamespace, testImage, &plugin, loki, &certWatcher)
 	old := builder.deployment("digest")
 	new := builder.deployment("digest")
 	assert.False(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
@@ -149,21 +151,21 @@ func TestContainerUpdateCheck(t *testing.T) {
 			CertFile: "ca.crt",
 		},
 	}}
-	builder = newBuilder(testNamespace, testImage, &plugin, loki)
+	builder = newBuilder(testNamespace, testImage, &plugin, loki, &certWatcher)
 	new = builder.deployment("digest")
 	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
 	old = new
 
 	//new loki cert name
 	loki.TLS.CACert.Name = "cm-name-2"
-	builder = newBuilder(testNamespace, testImage, &plugin, loki)
+	builder = newBuilder(testNamespace, testImage, &plugin, loki, &certWatcher)
 	new = builder.deployment("digest")
 	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
 	old = new
 
 	//test again no change
 	loki.TLS.CACert.Name = "cm-name-2"
-	builder = newBuilder(testNamespace, testImage, &plugin, loki)
+	builder = newBuilder(testNamespace, testImage, &plugin, loki, &certWatcher)
 	new = builder.deployment("digest")
 	assert.False(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
 }
@@ -197,7 +199,7 @@ func TestBuiltService(t *testing.T) {
 
 	//newly created service should not need update
 	plugin := getPluginConfig()
-	builder := newBuilder(testNamespace, testImage, &plugin, nil)
+	builder := newBuilder(testNamespace, testImage, &plugin, nil, &certWatcher)
 	newService := builder.service(nil)
 	assert.Equal(serviceNeedsUpdate(newService, &plugin, testNamespace), false)
 }
@@ -207,7 +209,7 @@ func TestLabels(t *testing.T) {
 
 	plugin := getPluginConfig()
 	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234"}
-	builder := newBuilder(testNamespace, testImage, &plugin, loki)
+	builder := newBuilder(testNamespace, testImage, &plugin, loki, &certWatcher)
 
 	// Deployment
 	depl := builder.deployment("digest")

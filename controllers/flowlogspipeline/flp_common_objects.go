@@ -23,6 +23,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
 const (
@@ -66,9 +67,10 @@ type builder struct {
 	confKind        ConfKind
 	useOpenShiftSCC bool
 	image           string
+	cWatcher        *watchers.CertificatesWatcher
 }
 
-func newBuilder(ns, image string, desired *flowsv1alpha1.FlowCollectorSpec, ck ConfKind, useOpenShiftSCC bool) builder {
+func newBuilder(ns, image string, desired *flowsv1alpha1.FlowCollectorSpec, ck ConfKind, useOpenShiftSCC bool, cWatcher *watchers.CertificatesWatcher) builder {
 	version := helper.ExtractVersion(image)
 	name := name(ck)
 	var promTLS flowsv1alpha1.CertificateReference
@@ -97,6 +99,7 @@ func newBuilder(ns, image string, desired *flowsv1alpha1.FlowCollectorSpec, ck C
 		useOpenShiftSCC: useOpenShiftSCC,
 		promTLS:         &promTLS,
 		image:           image,
+		cWatcher:        cWatcher,
 	}
 }
 
@@ -167,12 +170,12 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 	}}
 
 	if b.desired.UseKafka() && b.desired.Kafka.TLS.Enable {
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Kafka.TLS, kafkaCerts)
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Kafka.TLS, kafkaCerts, b.cWatcher)
 	}
 
 	if hasLokiInterface {
 		if b.desired.Loki.TLS.Enable && !b.desired.Loki.TLS.InsecureSkipVerify {
-			volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts)
+			volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts, b.cWatcher)
 		}
 		if b.desired.Loki.UseHostToken() || b.desired.Loki.ForwardUserToken() {
 			volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, lokiToken, constants.FLPName)
@@ -180,7 +183,7 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 	}
 
 	if b.desired.Processor.Metrics.Server.TLS.Type != flowsv1alpha1.ServerTLSDisabled {
-		volumes, volumeMounts = helper.AppendSingleCertVolumes(volumes, volumeMounts, b.promTLS, promCerts)
+		volumes, volumeMounts = helper.AppendSingleCertVolumes(volumes, volumeMounts, b.promTLS, promCerts, b.cWatcher)
 	}
 
 	var envs []corev1.EnvVar

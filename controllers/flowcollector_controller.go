@@ -32,6 +32,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/conditions"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
+	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
 const (
@@ -46,6 +47,7 @@ type FlowCollectorReconciler struct {
 	availableAPIs *discover.AvailableAPIs
 	Scheme        *runtime.Scheme
 	config        *operator.Config
+	certWatcher   *watchers.CertificatesWatcher
 	lookupIP      func(string) ([]net.IP, error)
 }
 
@@ -60,6 +62,7 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme, co
 
 //+kubebuilder:rbac:groups=apps,resources=deployments;daemonsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=namespaces;services;serviceaccounts;configmaps,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles,verbs=get;create;delete;watch;list
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;create;delete;update;watch
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;delete;update;patch;list;watch
@@ -83,7 +86,7 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme, co
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
-	desired, err := r.getFlowCollector(ctx, req)
+	desired, err := r.getFlowCollector(ctx)
 	if err != nil {
 		log.Error(err, "Failed to get FlowCollector")
 		return ctrl.Result{}, err
@@ -92,6 +95,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	ns := getNamespaceName(desired)
+	r.certWatcher.Reset(ns)
 	// If namespace does not exist, we create it
 	nsExist, err := r.namespaceExist(ctx, ns)
 	if err != nil {
@@ -173,10 +177,10 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{}, nil
 }
 
-func (r *FlowCollectorReconciler) getFlowCollector(ctx context.Context, req ctrl.Request) (*flowsv1alpha1.FlowCollector, error) {
+func (r *FlowCollectorReconciler) getFlowCollector(ctx context.Context) (*flowsv1alpha1.FlowCollector, error) {
 	log := log.FromContext(ctx)
 	desired := &flowsv1alpha1.FlowCollector{}
-	if err := r.Get(ctx, req.NamespacedName, desired); err != nil {
+	if err := r.Get(ctx, constants.FlowCollectorName, desired); err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
@@ -252,6 +256,9 @@ func (r *FlowCollectorReconciler) SetupWithManager(ctx context.Context, mgr ctrl
 	if err := r.setupDiscovery(ctx, mgr, builder); err != nil {
 		return err
 	}
+
+	r.certWatcher = watchers.RegisterCertificatesWatcher(builder)
+
 	return builder.Complete(r)
 }
 
@@ -346,7 +353,8 @@ func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsv1
 
 func (r *FlowCollectorReconciler) newClientHelper(desired *flowsv1alpha1.FlowCollector) reconcilers.ClientHelper {
 	return reconcilers.ClientHelper{
-		Client: r.Client,
+		CertWatcher: r.certWatcher,
+		Client:      r.Client,
 		SetControllerReference: func(obj client.Object) error {
 			return ctrl.SetControllerReference(desired, obj, r.Scheme)
 		},

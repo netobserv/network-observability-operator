@@ -1,6 +1,8 @@
 package helper
 
 import (
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 
@@ -8,7 +10,7 @@ import (
 )
 
 func PodChanged(old, new *corev1.PodTemplateSpec, containerName string) bool {
-	if configChanged(old, new) || volumesChanged(old, new) {
+	if annotationsChanged(old, new) || volumesChanged(old, new) {
 		return true
 	}
 	// Find containers
@@ -23,11 +25,22 @@ func PodChanged(old, new *corev1.PodTemplateSpec, containerName string) bool {
 	return containerChanged(oldContainer, newContainer)
 }
 
-func configChanged(old, new *corev1.PodTemplateSpec) bool {
+func annotationsChanged(old, new *corev1.PodTemplateSpec) bool {
 	if old.Annotations == nil && new.Annotations == nil {
 		return false
 	}
-	return old.Annotations[constants.PodConfigurationDigest] != new.Annotations[constants.PodConfigurationDigest]
+	if old.Annotations == nil {
+		return true
+	}
+	// Check domain annotations (config digest, certificate stamp...)
+	for k, v := range old.Annotations {
+		if strings.HasPrefix(k, constants.AnnotationDomain) {
+			if new.Annotations[k] != v {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func volumesChanged(old, new *corev1.PodTemplateSpec) bool {
