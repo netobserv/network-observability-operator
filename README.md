@@ -1,6 +1,7 @@
 # NetObserv Operator
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/netobserv/network-observability-operator)
+[![Go Report Card](https://goreportcard.com/badge/github.com/netobserv/network-observability-operator)](https://goreportcard.com/report/github.com/netobserv/network-observability-operator)
 
 NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by the NetObserv eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
 
