@@ -404,7 +404,7 @@ func TestServiceMonitorNoChange(t *testing.T) {
 	// Get first
 	ns := "namespace"
 	cfg := getConfig()
-	b := newMonolithBuilder(ns, image, &cfg, true)
+	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
 	first := b.generic.serviceMonitor()
 
 	// Check no change
@@ -419,12 +419,12 @@ func TestServiceMonitorChanged(t *testing.T) {
 	// Get first
 	ns := "namespace"
 	cfg := getConfig()
-	b := newMonolithBuilder(ns, image, &cfg, true)
+	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
 	first := b.generic.serviceMonitor()
 
 	// Check namespace change
 	cfg.Processor.Metrics.Server.Port = 9999
-	b = newMonolithBuilder("namespace2", image, &cfg, true)
+	b = newMonolithBuilder("namespace2", image, &cfg, true, &certWatcher)
 	second := b.generic.serviceMonitor()
 
 	assert.True(helper.ServiceMonitorChanged(first, second))
@@ -436,7 +436,7 @@ func TestPrometheusRuleNoChange(t *testing.T) {
 	// Get first
 	ns := "namespace"
 	cfg := getConfig()
-	b := newMonolithBuilder(ns, image, &cfg, true)
+	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
 	first := b.generic.prometheusRule()
 
 	// Check no change
@@ -451,12 +451,12 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	// Get first
 	ns := "namespace"
 	cfg := getConfig()
-	b := newMonolithBuilder(ns, image, &cfg, true)
+	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
 	first := b.generic.prometheusRule()
 
 	// Check namespace change
 	cfg.Processor.Metrics.Server.Port = 9999
-	b = newMonolithBuilder("namespace2", image, &cfg, true)
+	b = newMonolithBuilder("namespace2", image, &cfg, true, &certWatcher)
 	second := b.generic.prometheusRule()
 
 	assert.True(helper.PrometheusRuleChanged(first, second))
