@@ -3,6 +3,7 @@ package helper
 import (
 	"strings"
 
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 
@@ -57,6 +58,16 @@ func containerChanged(old, new *corev1.Container) bool {
 }
 
 func ServiceChanged(old, new *corev1.Service) bool {
+	return !equality.Semantic.DeepDerivative(new.ObjectMeta, old.ObjectMeta) ||
+		!equality.Semantic.DeepDerivative(new.Spec, old.Spec)
+}
+
+func ServiceMonitorChanged(old, new *monitoringv1.ServiceMonitor) bool {
+	return !equality.Semantic.DeepDerivative(new.ObjectMeta, old.ObjectMeta) ||
+		!equality.Semantic.DeepDerivative(new.Spec, old.Spec)
+}
+
+func PrometheusRuleChanged(old, new *monitoringv1.PrometheusRule) bool {
 	return !equality.Semantic.DeepDerivative(new.ObjectMeta, old.ObjectMeta) ||
 		!equality.Semantic.DeepDerivative(new.Spec, old.Spec)
 }

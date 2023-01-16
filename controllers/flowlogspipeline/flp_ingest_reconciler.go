@@ -29,6 +29,7 @@ type ingestOwnedObjects struct {
 	configMap      *corev1.ConfigMap
 	roleBinding    *rbacv1.ClusterRoleBinding
 	serviceMonitor *monitoringv1.ServiceMonitor
+	prometheusRule *monitoringv1.PrometheusRule
 }
 
 func newIngesterReconciler(info *reconcilersCommonInfo) *flpIngesterReconciler {
@@ -40,6 +41,7 @@ func newIngesterReconciler(info *reconcilersCommonInfo) *flpIngesterReconciler {
 		configMap:      &corev1.ConfigMap{},
 		roleBinding:    &rbacv1.ClusterRoleBinding{},
 		serviceMonitor: &monitoringv1.ServiceMonitor{},
+		prometheusRule: &monitoringv1.PrometheusRule{},
 	}
 	info.nobjMngr.AddManagedObject(name, owned.daemonSet)
 	info.nobjMngr.AddManagedObject(name, owned.serviceAccount)
@@ -48,6 +50,7 @@ func newIngesterReconciler(info *reconcilersCommonInfo) *flpIngesterReconciler {
 	info.nobjMngr.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
 	if info.availableAPIs.HasSvcMonitor() {
 		info.nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaIngester), owned.serviceMonitor)
+		info.nobjMngr.AddManagedObject(prometheusRuleName(ConfKafkaIngester), owned.prometheusRule)
 	}
 
 	return &flpIngesterReconciler{
@@ -124,6 +127,9 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 			if err := r.CreateOwned(ctx, builder.generic.serviceMonitor()); err != nil {
 				return err
 			}
+			if err := r.CreateOwned(ctx, builder.generic.prometheusRule()); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
@@ -131,6 +137,20 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 	if helper.ServiceChanged(r.owned.promService, newSVC) {
 		if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
 			return err
+		}
+	}
+	if r.availableAPIs.HasSvcMonitor() {
+		newMonitorSvc := builder.generic.serviceMonitor()
+		if helper.ServiceMonitorChanged(r.owned.serviceMonitor, newMonitorSvc) {
+			if err := r.UpdateOwned(ctx, r.owned.serviceMonitor, newMonitorSvc); err != nil {
+				return err
+			}
+		}
+		newPromRules := builder.generic.prometheusRule()
+		if helper.PrometheusRuleChanged(r.owned.prometheusRule, newPromRules) {
+			if err := r.UpdateOwned(ctx, r.owned.prometheusRule, newPromRules); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
