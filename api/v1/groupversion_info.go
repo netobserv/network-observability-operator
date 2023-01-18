@@ -17,7 +17,7 @@ limitations under the License.
 // Package v1alpha1 contains API Schema definitions for the flows v1alpha1 API group
 // +kubebuilder:object:generate=true
 // +groupName=flows.netobserv.io
-package v1alpha1
+package v1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
