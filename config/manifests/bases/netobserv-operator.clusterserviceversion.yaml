@@ -21,6 +21,12 @@ spec:
       displayName: Flow Collector
       kind: FlowCollector
       name: flowcollectors.flows.netobserv.io
+      version: v1
+    - description: FlowCollector is the Schema for the flowcollectors API, which pilots
+        and configures netflow collection.
+      displayName: Flow Collector
+      kind: FlowCollector
+      name: flowcollectors.flows.netobserv.io
       version: v1alpha1
   description: ':full-description:'
   displayName: NetObserv Operator
