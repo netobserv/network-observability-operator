@@ -72,12 +72,13 @@ spec:
                         format: int32
                         minimum: 1
                         type: integer
-                      debug:
-                        description: Debug allows setting some aspects of the internal
+                      debugging:
+                        description: 'Debug allows setting some aspects of the internal
                           configuration of the eBPF agent. This section is aimed exclusively
                           for debugging and fine-grained performance optimizations
                           (for example GOGC, GOMAXPROCS env vars). Users setting its
-                          values do it at their own risk.
+                          values do it at their own risk. TODO: this is just a placeholder
+                          to test breaking changes in properties. Revert to "debug"'
                         properties:
                           env:
                             additionalProperties:
@@ -184,9 +185,12 @@ spec:
                             type: object
                         type: object
                       sampling:
-                        default: 50
-                        description: sampling rate of the flow reporter. 100 means
+                        default: 25
+                        description: 'sampling rate of the flow reporter. 100 means
                           one flow on 100 is sent. 0 or 1 means all flows are sampled.
+                          TODO: consider reverting to 50 (as for v1alpha1), as this
+                          is just an example about how to deal with changes in default
+                          values'
                         format: int32
                         minimum: 0
                         type: integer

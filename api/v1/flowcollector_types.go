@@ -163,7 +163,8 @@ type FlowCollectorEBPF struct {
 
 	// sampling rate of the flow reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.
 	//+kubebuilder:validation:Minimum=0
-	//+kubebuilder:default:=50
+	// TODO: consider reverting to 50 (as for v1alpha1), as this is just an example about how to deal with changes in default values
+	//+kubebuilder:default:=25
 	//+optional
 	Sampling *int32 `json:"sampling,omitempty"`
 
@@ -212,7 +213,8 @@ type FlowCollectorEBPF struct {
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations
 	// (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
 	// +optional
-	Debug DebugConfig `json:"debug,omitempty"`
+	// TODO: this is just a placeholder to test breaking changes in properties. Revert to "debug"
+	Debugging DebugConfig `json:"debugging,omitempty"`
 }
 
 // FlowCollectorKafka defines the desired Kafka config of FlowCollector
@@ -703,3 +705,8 @@ type FlowCollectorList struct {
 func init() {
 	SchemeBuilder.Register(&FlowCollector{}, &FlowCollectorList{})
 }
+
+// Hub marks this version as a conversion hub.
+// All the other version need to provide converters from/to this version.
+// https://book.kubebuilder.io/multiversion-tutorial/conversion-concepts.html
+func (*FlowCollector) Hub() {}

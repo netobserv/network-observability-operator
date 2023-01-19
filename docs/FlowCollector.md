@@ -230,10 +230,10 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfdebug">debug</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfdebugging">debugging</a></b></td>
         <td>object</td>
         <td>
-          Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.<br/>
+          Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk. TODO: this is just a placeholder to test breaking changes in properties. Revert to "debug"<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -301,10 +301,10 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          sampling rate of the flow reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.<br/>
+          sampling rate of the flow reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled. TODO: consider reverting to 50 (as for v1alpha1), as this is just an example about how to deal with changes in default values<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 50<br/>
+            <i>Default</i>: 25<br/>
             <i>Minimum</i>: 0<br/>
         </td>
         <td>false</td>
@@ -312,12 +312,12 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.debug
+### FlowCollector.spec.agent.ebpf.debugging
 <sup><sup>[↩ Parent](#flowcollectorspecagentebpf)</sup></sup>
 
 
 
-Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
+Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk. TODO: this is just a placeholder to test breaking changes in properties. Revert to "debug"
 
 <table>
     <thead>
@@ -4001,7 +4001,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfdebug-1">debug</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfdebug">debug</a></b></td>
         <td>object</td>
         <td>
           Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.<br/>
