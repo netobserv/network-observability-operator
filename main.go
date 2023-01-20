@@ -44,6 +44,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	flowsv1 "github.com/netobserv/network-observability-operator/api/v1"
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -61,6 +62,7 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(flowsv1.AddToScheme(scheme))
 	utilruntime.Must(flowsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(ascv2.AddToScheme(scheme))
