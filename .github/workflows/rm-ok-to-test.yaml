@@ -6,7 +6,7 @@ on:
 jobs:
   rm-ok-to-test:
     if: contains(github.event.pull_request.labels.*.name, 'ok-to-test')
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     name: Remove ok-to-test
     steps:
       - uses: actions-ecosystem/action-remove-labels@v1

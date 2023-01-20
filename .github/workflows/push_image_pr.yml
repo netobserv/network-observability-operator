@@ -12,7 +12,7 @@ jobs:
   push-pr-image:
     if: ${{ github.event.label.name == 'ok-to-test' }}
     name: push PR image
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         go: ['1.18']
@@ -20,11 +20,11 @@ jobs:
       - name: install make
         run: sudo apt-get install make
       - name: set up go 1.x
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: "refs/pull/${{ github.event.number }}/merge"
       - name: build images
@@ -36,14 +36,13 @@ jobs:
           password: ${{ secrets.QUAY_SECRET }}
           registry: quay.io
       - name: get short sha
-        id: shortsha
-        run: echo "::set-output name=short_sha::$(git rev-parse --short HEAD)"
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: push to quay.io
         id: push-to-quay
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ env.IMAGE }}
-          tags: ${{ steps.shortsha.outputs.short_sha }}
+          tags: ${{ env.short_sha }}
           registry: ${{ env.REGISTRY }}
       - uses: actions/github-script@v5
         with:
