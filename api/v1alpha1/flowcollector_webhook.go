@@ -43,9 +43,10 @@ func (afc *FlowCollector) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/mutate-flows-netobserv-io-v1alpha1-flowcollector,mutating=true,failurePolicy=fail,sideEffects=None,groups=flows.netobserv.io,resources=flowcollectors,verbs=create;update,versions=v1alpha1,name=mflowcollector.kb.io,admissionReviewVersions={"v1","v1alpha1"}
+//+kubebuilder:webhook:path=/mutate-flows-netobserv-io-v1alpha1-flowcollector,mutating=true,failurePolicy=fail,sideEffects=None,groups=flows.netobserv.io,resources=flowcollectors,verbs=create;update,versions=v1alpha,name=flowcollector.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &FlowCollector{}
+var _ webhook.Validator = &FlowCollector{}
 
 // ConvertTo converts this v1alpha1 FlowCollector to its v1 equivalent (the conversion Hub)
 // https://book.kubebuilder.io/multiversion-tutorial/conversion.html

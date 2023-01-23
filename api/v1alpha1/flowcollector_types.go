@@ -19,6 +19,7 @@ import (
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -688,6 +689,21 @@ type FlowCollector struct {
 
 	Spec   FlowCollectorSpec   `json:"spec,omitempty"`
 	Status FlowCollectorStatus `json:"status,omitempty"`
+}
+
+func (in *FlowCollector) ValidateCreate() error {
+	//TODO implement me
+	return nil
+}
+
+func (in *FlowCollector) ValidateUpdate(old runtime.Object) error {
+	//TODO implement mereturn nil
+	return nil
+}
+
+func (in *FlowCollector) ValidateDelete() error {
+	//TODO implement me
+	return nil
 }
 
 //+kubebuilder:object:root=true

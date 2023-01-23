@@ -13,6 +13,6 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/mmaciasl/network-observability-operator
-  newTag: 1.0.3
+  newTag: 1.0.10
 commonLabels:
   app: netobserv-operator
