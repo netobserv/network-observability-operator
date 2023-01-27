@@ -84,8 +84,9 @@ Check also the "Create a discussion for this release" option, in category "Annou
 Before publishing, we should check that upgrading the operator from a previous version isn't broken. We can use `operator-sdk` for that:
 
 ```bash
-operator-sdk run bundle quay.io/netobserv/network-observability-operator-bundle:$previous --timeout 5m
-operator-sdk run bundle-upgrade quay.io/netobserv/network-observability-operator-bundle:$vv --timeout 5m
+previous=v0.2.2
+bin/operator-sdk run bundle quay.io/netobserv/network-observability-operator-bundle:$previous --timeout 5m
+bin/operator-sdk run bundle-upgrade quay.io/netobserv/network-observability-operator-bundle:$vv --timeout 5m
 ```
 
 Note: currently, [seamless upgrade](https://sdk.operatorframework.io/docs/overview/operator-capabilities/#level-2---seamless-upgrades) is not fully supported because an existing custom resource needs first to be deleted before the operator is upgraded. See also: https://issues.redhat.com/browse/NETOBSERV-521.
