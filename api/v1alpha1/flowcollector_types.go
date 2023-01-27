@@ -168,11 +168,15 @@ type FlowCollectorEBPF struct {
 	Sampling *int32 `json:"sampling,omitempty"`
 
 	// cacheActiveTimeout is the max period during which the reporter will aggregate flows before sending
+	// Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load,
+	// however you can expect higher memory consumption and an increased latency in the flow collection.
 	//+kubebuilder:validation:Pattern:=^\d+(ns|ms|s|m)?$
 	//+kubebuilder:default:="5s"
 	CacheActiveTimeout string `json:"cacheActiveTimeout,omitempty"`
 
-	// cacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows
+	// cacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows.
+	// Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load,
+	// however you can expect higher memory consumption and an increased latency in the flow collection.
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=100000
 	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty"`
