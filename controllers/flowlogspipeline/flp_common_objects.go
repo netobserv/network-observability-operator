@@ -592,10 +592,10 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 					Name: "NetobservFlowLogsPipeline",
 					Rules: []monitoringv1.Rule{
 						{
-							Alert: "NetobservNoFlows",
+							Alert: "NetObservNoFlows",
 							Annotations: map[string]string{
-								"description": "Netobserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
-								"summary":     "Netobserv flowlogs-pipeline is not receiving any flow",
+								"description": "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
+								"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
 							},
 							Expr: intstr.FromString("sum(rate(netobserv_ingest_flows_processed[5m])) == 0"),
 							For:  "10m",
@@ -604,10 +604,10 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 							},
 						},
 						{
-							Alert: "NetobservLokiError",
+							Alert: "NetObservLokiError",
 							Annotations: map[string]string{
-								"description": "Netobserv flowlogs-pipeline is dropping flows because of loki errors, loki may be down or having issues ingesting every flows. Please check loki and flowlogs-pipeline logs.",
-								"summary":     "Netobserv flowlogs-pipeline is dropping flows because of loki errors",
+								"description": "NetObserv flowlogs-pipeline is dropping flows because of loki errors, loki may be down or having issues ingesting every flows. Please check loki and flowlogs-pipeline logs.",
+								"summary":     "NetObserv flowlogs-pipeline is dropping flows because of loki errors",
 							},
 							Expr: intstr.FromString("sum(rate(netobserv_loki_dropped_entries_total[5m])) > 0"),
 							For:  "10m",
