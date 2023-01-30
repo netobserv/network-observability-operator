@@ -64,7 +64,7 @@ spec:
                       cacheActiveTimeout:
                         default: 5s
                         description: cacheActiveTimeout is the max period during which
-                          the reporter will aggregate flows before sending Increasing
+                          the reporter will aggregate flows before sending. Increasing
                           `cacheMaxFlows` and `cacheActiveTimeout` can decrease the
                           network traffic overhead and the CPU load, however you can
                           expect higher memory consumption and an increased latency
