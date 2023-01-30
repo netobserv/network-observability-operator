@@ -212,7 +212,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>cacheActiveTimeout</b></td>
         <td>string</td>
         <td>
-          cacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
+          cacheActiveTimeout is the max period during which the reporter will aggregate flows before sending. Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load, however you can expect higher memory consumption and an increased latency in the flow collection.<br/>
           <br/>
             <i>Default</i>: 5s<br/>
         </td>
@@ -221,7 +221,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>cacheMaxFlows</b></td>
         <td>integer</td>
         <td>
-          cacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
+          cacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows. Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load, however you can expect higher memory consumption and an increased latency in the flow collection.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 100000<br/>
