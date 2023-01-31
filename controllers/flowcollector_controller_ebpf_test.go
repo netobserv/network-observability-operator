@@ -80,7 +80,9 @@ func flowCollectorEBPFSpecs() {
 					},
 				},
 			}
-			Expect(k8sClient.Create(ctx, desired)).Should(Succeed())
+			Eventually(func() interface{} {
+				return k8sClient.Create(ctx, desired)
+			}).WithTimeout(timeout).WithPolling(interval).Should(Succeed())
 
 			ds := appsv1.DaemonSet{}
 			By("Expecting to create the netobserv-ebpf-agent DaemonSet")
