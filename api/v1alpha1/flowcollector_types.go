@@ -452,9 +452,9 @@ type FlowCollectorLoki struct {
 	//+kubebuilder:default:="DISABLED"
 	// AuthToken describe the way to get a token to authenticate to Loki.
 	// DISABLED will not send any token with the request.
-	// HOST will use the local pod service account to authenticate to Loki.
-	// FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode.
-	// When using the Loki Operator, set it to `HOST` or `FORWARD`.
+	// HOST will use the local pod service account to authenticate to Loki, without any check on the RBAC permissions of the logged-in user (hence it is not secure).
+	// FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account.
+	// When using the Loki Operator, we recommend using `FORWARD`.
 	AuthToken string `json:"authToken,omitempty"`
 
 	//+kubebuilder:default:="1s"

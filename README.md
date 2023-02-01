@@ -199,7 +199,7 @@ To make authenticated queries to Loki, when using the Loki Operator, there are t
   - 'get'
 ```
 
-- per-app auth, ie. with NetObserv components having access to the logs using their own service account, regardless of the user permissions. For this mode, set `spec.loki.authToken` to `HOST` and setup `ClusterRole` for `flowlogs-pipeline` and `netobserv-plugin`, e.g: [role.yaml](https://github.com/netobserv/documents/blob/main/examples/loki-stack/role.yaml).
+- per-app auth, ie. with NetObserv components having access to the logs using their own service account, regardless of the user permissions. For this mode, set `spec.loki.authToken` to `HOST` and setup `ClusterRole` for `flowlogs-pipeline` and `netobserv-plugin`, e.g: [role.yaml](https://github.com/netobserv/documents/blob/main/examples/loki-stack/role.yaml). This mode is insecure since non-admin users are able to see all flow logs, unless a Network Policy is set up.
 
 
 ## Development & building from sources
