@@ -23,6 +23,7 @@ import (
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -158,7 +159,9 @@ func TestDaemonSetNoChange(t *testing.T) {
 	assert.NoError(err)
 	second := b.daemonSet(digest)
 
-	assert.False(helper.PodChanged(&first.Spec.Template, &second.Spec.Template, constants.FLPName))
+	report := helper.NewChangeReport("")
+	assert.False(helper.PodChanged(&first.Spec.Template, &second.Spec.Template, constants.FLPName, &report))
+	assert.Contains(report.String(), "no change")
 }
 
 func TestDaemonSetChanged(t *testing.T) {
@@ -179,7 +182,9 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.NoError(err)
 	second := b.daemonSet(digest)
 
-	assert.True(helper.PodChanged(&first.Spec.Template, &second.Spec.Template, constants.FLPName))
+	report := helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&first.Spec.Template, &second.Spec.Template, constants.FLPName, &report))
+	assert.Contains(report.String(), "probe changed")
 
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
@@ -188,7 +193,9 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.NoError(err)
 	third := b.daemonSet(digest)
 
-	assert.True(helper.PodChanged(&second.Spec.Template, &third.Spec.Template, constants.FLPName))
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&second.Spec.Template, &third.Spec.Template, constants.FLPName, &report))
+	assert.Contains(report.String(), "config-digest")
 
 	// Check resource change
 	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -200,7 +207,9 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.NoError(err)
 	fourth := b.daemonSet(digest)
 
-	assert.True(helper.PodChanged(&third.Spec.Template, &fourth.Spec.Template, constants.FLPName))
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&third.Spec.Template, &fourth.Spec.Template, constants.FLPName, &report))
+	assert.Contains(report.String(), "req/limit changed")
 
 	// Check reverting limits
 	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -212,8 +221,12 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.NoError(err)
 	fifth := b.daemonSet(digest)
 
-	assert.True(helper.PodChanged(&fourth.Spec.Template, &fifth.Spec.Template, constants.FLPName))
-	assert.False(helper.PodChanged(&third.Spec.Template, &fifth.Spec.Template, constants.FLPName))
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&fourth.Spec.Template, &fifth.Spec.Template, constants.FLPName, &report))
+	assert.Contains(report.String(), "req/limit changed")
+	report = helper.NewChangeReport("")
+	assert.False(helper.PodChanged(&third.Spec.Template, &fifth.Spec.Template, constants.FLPName, &report))
+	assert.Contains(report.String(), "no change")
 
 	// Check Loki config change
 	cfg.Loki.TLS = flowslatest.ClientTLS{
@@ -229,7 +242,9 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.NoError(err)
 	sixth := b.daemonSet(digest)
 
-	assert.True(helper.PodChanged(&fifth.Spec.Template, &sixth.Spec.Template, constants.FLPName))
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&fifth.Spec.Template, &sixth.Spec.Template, constants.FLPName, &report))
+	assert.Contains(report.String(), "config-digest")
 
 	// Check volumes change
 	cfg.Loki.TLS = flowslatest.ClientTLS{
@@ -245,7 +260,9 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.NoError(err)
 	seventh := b.daemonSet(digest)
 
-	assert.True(helper.PodChanged(&sixth.Spec.Template, &seventh.Spec.Template, constants.FLPName))
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&sixth.Spec.Template, &seventh.Spec.Template, constants.FLPName, &report))
+	assert.Contains(report.String(), "Volumes changed")
 }
 
 func TestDeploymentNoChange(t *testing.T) {
@@ -266,8 +283,9 @@ func TestDeploymentNoChange(t *testing.T) {
 	assert.NoError(err)
 	second := b.deployment(digest)
 
-	ftr := flpTransformerReconciler{reconcilersCommonInfo: reconcilersCommonInfo{image: image}}
-	assert.False(ftr.deploymentNeedsUpdate(first, second, &cfg.Processor))
+	report := helper.NewChangeReport("")
+	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, cfg.Processor.KafkaConsumerAutoscaler.Disabled(), cfg.Processor.KafkaConsumerReplicas, &report))
+	assert.Contains(report.String(), "no change")
 }
 
 func TestDeploymentChanged(t *testing.T) {
@@ -288,8 +306,13 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	second := b.deployment(digest)
 
-	ftr := flpTransformerReconciler{reconcilersCommonInfo: reconcilersCommonInfo{image: image}}
-	assert.True(ftr.deploymentNeedsUpdate(first, second, &cfg.Processor))
+	report := helper.NewChangeReport("")
+	checkChanged := func(old, new *appsv1.Deployment, spec flowslatest.FlowCollectorSpec) bool {
+		return helper.DeploymentChanged(old, new, constants.FLPName, spec.Processor.KafkaConsumerAutoscaler.Disabled(), spec.Processor.KafkaConsumerReplicas, &report)
+	}
+
+	assert.True(checkChanged(first, second, cfg))
+	assert.Contains(report.String(), "probe changed")
 
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
@@ -298,7 +321,9 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	third := b.deployment(digest)
 
-	assert.True(ftr.deploymentNeedsUpdate(second, third, &cfg.Processor))
+	report = helper.NewChangeReport("")
+	assert.True(checkChanged(second, third, cfg))
+	assert.Contains(report.String(), "config-digest")
 
 	// Check resource change
 	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -310,7 +335,9 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	fourth := b.deployment(digest)
 
-	assert.True(ftr.deploymentNeedsUpdate(third, fourth, &cfg.Processor))
+	report = helper.NewChangeReport("")
+	assert.True(checkChanged(third, fourth, cfg))
+	assert.Contains(report.String(), "req/limit changed")
 
 	// Check reverting limits
 	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -322,8 +349,12 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	fifth := b.deployment(digest)
 
-	assert.True(ftr.deploymentNeedsUpdate(fourth, fifth, &cfg.Processor))
-	assert.False(ftr.deploymentNeedsUpdate(third, fifth, &cfg.Processor))
+	report = helper.NewChangeReport("")
+	assert.True(checkChanged(fourth, fifth, cfg))
+	assert.Contains(report.String(), "req/limit changed")
+	report = helper.NewChangeReport("")
+	assert.False(checkChanged(third, fifth, cfg))
+	assert.Contains(report.String(), "no change")
 
 	// Check replicas didn't change because HPA is used
 	cfg2 := cfg
@@ -333,7 +364,9 @@ func TestDeploymentChanged(t *testing.T) {
 	assert.NoError(err)
 	sixth := b.deployment(digest)
 
-	assert.False(ftr.deploymentNeedsUpdate(fifth, sixth, &cfg2.Processor))
+	report = helper.NewChangeReport("")
+	assert.False(checkChanged(fifth, sixth, cfg2))
+	assert.Contains(report.String(), "no change")
 }
 
 func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
@@ -355,8 +388,9 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	assert.NoError(err)
 	second := b.deployment(digest)
 
-	ftr := flpTransformerReconciler{reconcilersCommonInfo: reconcilersCommonInfo{image: image}}
-	assert.True(ftr.deploymentNeedsUpdate(first, second, &cfg2.Processor))
+	report := helper.NewChangeReport("")
+	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, cfg2.Processor.KafkaConsumerAutoscaler.Disabled(), cfg2.Processor.KafkaConsumerReplicas, &report))
+	assert.Contains(report.String(), "Replicas changed")
 }
 
 func TestServiceNoChange(t *testing.T) {
@@ -371,7 +405,9 @@ func TestServiceNoChange(t *testing.T) {
 	// Check no change
 	newService := first.DeepCopy()
 
-	assert.False(helper.ServiceChanged(first, newService))
+	report := helper.NewChangeReport("")
+	assert.False(helper.ServiceChanged(first, newService, &report))
+	assert.Contains(report.String(), "no change")
 }
 
 func TestServiceChanged(t *testing.T) {
@@ -388,14 +424,18 @@ func TestServiceChanged(t *testing.T) {
 	b = newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
 	second := b.fromPromService(first)
 
-	assert.True(helper.ServiceChanged(first, second))
+	report := helper.NewChangeReport("")
+	assert.True(helper.ServiceChanged(first, second, &report))
+	assert.Contains(report.String(), "Service spec changed")
 
 	// Make sure non-service settings doesn't trigger service update
 	cfg.Processor.LogLevel = "error"
 	b = newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
 	third := b.fromPromService(first)
 
-	assert.False(helper.ServiceChanged(second, third))
+	report = helper.NewChangeReport("")
+	assert.False(helper.ServiceChanged(second, third, &report))
+	assert.Contains(report.String(), "no change")
 }
 
 func TestServiceMonitorNoChange(t *testing.T) {
@@ -506,27 +546,30 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 
 	//equals specs
 	autoScalerSpec, hpa := getAutoScalerSpecs()
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, hpa, testNamespace), false)
+	report := helper.NewChangeReport("")
+	assert.False(helper.AutoScalerChanged(&autoScalerSpec, hpa, &report))
+	assert.Contains(report.String(), "no change")
 
 	//wrong max replicas
 	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MaxReplicas = 10
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, hpa, testNamespace), true, &certWatcher)
+	report = helper.NewChangeReport("")
+	assert.True(helper.AutoScalerChanged(&autoScalerSpec, hpa, &report))
+	assert.Contains(report.String(), "Max replicas changed")
 
 	//missing min replicas
 	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MinReplicas = nil
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, hpa, testNamespace), true, &certWatcher)
+	report = helper.NewChangeReport("")
+	assert.True(helper.AutoScalerChanged(&autoScalerSpec, hpa, &report))
+	assert.Contains(report.String(), "Min replicas changed")
 
 	//missing metrics
 	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Spec.Metrics = []ascv2.MetricSpec{}
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, hpa, testNamespace), true, &certWatcher)
-
-	//wrong namespace
-	autoScalerSpec, hpa = getAutoScalerSpecs()
-	autoScalerSpec.Namespace = "NewNamespace"
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, hpa, testNamespace), true, &certWatcher)
+	report = helper.NewChangeReport("")
+	assert.True(helper.AutoScalerChanged(&autoScalerSpec, hpa, &report))
+	assert.Contains(report.String(), "Metrics changed")
 }
 
 func TestLabels(t *testing.T) {
