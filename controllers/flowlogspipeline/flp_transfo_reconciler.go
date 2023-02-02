@@ -120,7 +120,9 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 }
 
 func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder, configDigest string) error {
-	ns := r.nobjMngr.Namespace
+	report := helper.NewChangeReport("FLP Deployment")
+	defer report.LogIfNeeded(ctx)
+
 	new := builder.deployment(configDigest)
 
 	// Annotate pod with certificate reference so that it is reloaded if modified
@@ -132,7 +134,7 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 		if err := r.CreateOwned(ctx, new); err != nil {
 			return err
 		}
-	} else if r.deploymentNeedsUpdate(r.owned.deployment, new, desiredFLP) {
+	} else if helper.DeploymentChanged(r.owned.deployment, new, constants.FLPName, desiredFLP.KafkaConsumerAutoscaler.Disabled(), desiredFLP.KafkaConsumerReplicas, &report) {
 		if err := r.UpdateOwned(ctx, r.owned.deployment, new); err != nil {
 			return err
 		}
@@ -150,7 +152,7 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 			if err := r.CreateOwned(ctx, newASC); err != nil {
 				return err
 			}
-		} else if autoScalerNeedsUpdate(r.owned.hpa, desiredFLP.KafkaConsumerAutoscaler, ns) {
+		} else if helper.AutoScalerChanged(r.owned.hpa, desiredFLP.KafkaConsumerAutoscaler, &report) {
 			if err := r.UpdateOwned(ctx, r.owned.hpa, newASC); err != nil {
 				return err
 			}
@@ -160,6 +162,9 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 }
 
 func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Context, builder *transfoBuilder) error {
+	report := helper.NewChangeReport("FLP prometheus service")
+	defer report.LogIfNeeded(ctx)
+
 	if !r.nobjMngr.Exists(r.owned.promService) {
 		if err := r.CreateOwned(ctx, builder.newPromService()); err != nil {
 			return err
@@ -172,7 +177,7 @@ func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Contex
 		return nil
 	}
 	newSVC := builder.fromPromService(r.owned.promService)
-	if helper.ServiceChanged(r.owned.promService, newSVC) {
+	if helper.ServiceChanged(r.owned.promService, newSVC, &report) {
 		if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
 			return err
 		}
@@ -190,26 +195,4 @@ func (r *flpTransformerReconciler) reconcilePermissions(ctx context.Context, bui
 		return err
 	}
 	return nil
-}
-
-func (r *flpTransformerReconciler) deploymentNeedsUpdate(old, new *appsv1.Deployment, desired *flpSpec) bool {
-	return helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.FLPName) ||
-		(desired.KafkaConsumerAutoscaler.Disabled() && *old.Spec.Replicas != desired.KafkaConsumerReplicas)
-}
-
-func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired flowsv1alpha1.FlowCollectorHPA, ns string) bool {
-	if asc.Namespace != ns {
-		return true
-	}
-	differentPointerValues := func(a, b *int32) bool {
-		return (a == nil && b != nil) || (a != nil && b == nil) || (a != nil && *a != *b)
-	}
-	if asc.Spec.MaxReplicas != desired.MaxReplicas ||
-		differentPointerValues(asc.Spec.MinReplicas, desired.MinReplicas) {
-		return true
-	}
-	if !equality.Semantic.DeepDerivative(desired.Metrics, asc.Spec.Metrics) {
-		return true
-	}
-	return false
 }

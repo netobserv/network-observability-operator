@@ -116,6 +116,9 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowsv1a
 }
 
 func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, builder *ingestBuilder) error {
+	report := helper.NewChangeReport("FLP prometheus service")
+	defer report.LogIfNeeded(ctx)
+
 	if !r.nobjMngr.Exists(r.owned.promService) {
 		if err := r.CreateOwned(ctx, builder.newPromService()); err != nil {
 			return err
@@ -128,7 +131,7 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 		return nil
 	}
 	newSVC := builder.fromPromService(r.owned.promService)
-	if helper.ServiceChanged(r.owned.promService, newSVC) {
+	if helper.ServiceChanged(r.owned.promService, newSVC, &report) {
 		if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
 			return err
 		}
@@ -137,13 +140,16 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 }
 
 func (r *flpIngesterReconciler) reconcileDaemonSet(ctx context.Context, desiredDS *appsv1.DaemonSet) error {
+	report := helper.NewChangeReport("FLP DaemonSet")
+	defer report.LogIfNeeded(ctx)
+
 	// Annotate pod with certificate reference so that it is reloaded if modified
 	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &desiredDS.Spec.Template, lokiCerts, kafkaCerts); err != nil {
 		return err
 	}
 	if !r.nobjMngr.Exists(r.owned.daemonSet) {
 		return r.CreateOwned(ctx, desiredDS)
-	} else if helper.PodChanged(&r.owned.daemonSet.Spec.Template, &desiredDS.Spec.Template, constants.FLPName) {
+	} else if helper.PodChanged(&r.owned.daemonSet.Spec.Template, &desiredDS.Spec.Template, constants.FLPName, &report) {
 		return r.UpdateOwned(ctx, r.owned.daemonSet, desiredDS)
 	} else {
 		// DaemonSet up to date, check if it's ready

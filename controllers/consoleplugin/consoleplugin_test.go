@@ -113,7 +113,9 @@ func TestContainerUpdateCheck(t *testing.T) {
 	builder := newBuilder(testNamespace, testImage, &plugin, loki, &certWatcher)
 	old := builder.deployment("digest")
 	new := builder.deployment("digest")
-	assert.False(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	report := helper.NewChangeReport("")
+	assert.False(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "no change")
 
 	//wrong resources
 	plugin.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
@@ -121,25 +123,33 @@ func TestContainerUpdateCheck(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
 	new = builder.deployment("digest")
-	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "req/limit changed")
 	old = new
 
 	//new image
 	builder.imageName = "quay.io/netobserv/network-observability-console-plugin:latest"
 	new = builder.deployment("digest")
-	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Image changed")
 	old = new
 
 	//new pull policy
 	plugin.ImagePullPolicy = string(corev1.PullAlways)
 	new = builder.deployment("digest")
-	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Pull policy changed")
 	old = new
 
 	//new log level
 	plugin.LogLevel = "debug"
 	new = builder.deployment("digest")
-	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Args changed")
 	old = new
 
 	//new loki config
@@ -153,21 +163,27 @@ func TestContainerUpdateCheck(t *testing.T) {
 	}}
 	builder = newBuilder(testNamespace, testImage, &plugin, loki, &certWatcher)
 	new = builder.deployment("digest")
-	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Volumes changed")
 	old = new
 
 	//new loki cert name
 	loki.TLS.CACert.Name = "cm-name-2"
 	builder = newBuilder(testNamespace, testImage, &plugin, loki, &certWatcher)
 	new = builder.deployment("digest")
-	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Volumes changed")
 	old = new
 
 	//test again no change
 	loki.TLS.CACert.Name = "cm-name-2"
 	builder = newBuilder(testNamespace, testImage, &plugin, loki, &certWatcher)
 	new = builder.deployment("digest")
-	assert.False(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName))
+	report = helper.NewChangeReport("")
+	assert.False(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "no change")
 }
 
 func TestServiceUpdateCheck(t *testing.T) {
@@ -175,23 +191,23 @@ func TestServiceUpdateCheck(t *testing.T) {
 
 	//equals specs
 	serviceSpec, containerConfig := getServiceSpecs()
-	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, testNamespace), false)
+	report := helper.NewChangeReport("")
+	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, &report), false)
+	assert.Contains(report.String(), "no change")
 
 	//wrong port protocol
 	serviceSpec, containerConfig = getServiceSpecs()
 	serviceSpec.Spec.Ports[0].Protocol = "UDP"
-	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, testNamespace), true)
+	report = helper.NewChangeReport("")
+	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, &report), true)
+	assert.Contains(report.String(), "Port change")
 
 	//wrong port number
 	serviceSpec, containerConfig = getServiceSpecs()
 	serviceSpec.Spec.Ports[0].Port = 8080
-	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, testNamespace), true)
-
-	//wrong namespace
-	serviceSpec, containerConfig = getServiceSpecs()
-	serviceSpec.Namespace = "OldNamespace"
-	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, testNamespace), true)
-
+	report = helper.NewChangeReport("")
+	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, &report), true)
+	assert.Contains(report.String(), "Port change")
 }
 
 func TestBuiltService(t *testing.T) {
@@ -201,7 +217,9 @@ func TestBuiltService(t *testing.T) {
 	plugin := getPluginConfig()
 	builder := newBuilder(testNamespace, testImage, &plugin, nil, &certWatcher)
 	newService := builder.service(nil)
-	assert.Equal(serviceNeedsUpdate(newService, &plugin, testNamespace), false)
+	report := helper.NewChangeReport("")
+	assert.Equal(serviceNeedsUpdate(newService, &plugin, &report), false)
+	assert.Contains(report.String(), "no change")
 }
 
 func TestLabels(t *testing.T) {
@@ -231,27 +249,30 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 
 	//equals specs
 	autoScalerSpec, plugin := getAutoScalerSpecs()
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), false)
+	report := helper.NewChangeReport("")
+	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), false)
+	assert.Contains(report.String(), "no change")
 
 	//wrong max replicas
 	autoScalerSpec, plugin = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MaxReplicas = 10
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), true)
+	report = helper.NewChangeReport("")
+	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
+	assert.Contains(report.String(), "Max replicas changed")
 
 	//missing min replicas
 	autoScalerSpec, plugin = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MinReplicas = nil
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), true)
+	report = helper.NewChangeReport("")
+	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
+	assert.Contains(report.String(), "Min replicas changed")
 
 	//missing metrics
 	autoScalerSpec, plugin = getAutoScalerSpecs()
 	autoScalerSpec.Spec.Metrics = []ascv2.MetricSpec{}
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), true)
-
-	//wrong namespace
-	autoScalerSpec, plugin = getAutoScalerSpecs()
-	autoScalerSpec.Namespace = "NewNamespace"
-	assert.Equal(autoScalerNeedsUpdate(&autoScalerSpec, &plugin, testNamespace), true)
+	report = helper.NewChangeReport("")
+	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
+	assert.Contains(report.String(), "Metrics changed")
 }
 
 // ensure HTTPClientConfig Marshal / Unmarshal works as expected for ProxyURL *URL
