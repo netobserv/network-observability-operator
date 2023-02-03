@@ -28,6 +28,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -185,6 +186,26 @@ func TestDaemonSetChanged(t *testing.T) {
 	report := helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&first.Spec.Template, &second.Spec.Template, constants.FLPName, &report))
 	assert.Contains(report.String(), "probe changed")
+
+	// Check probes DON'T change infinitely (bc DeepEqual/Derivative checks won't work there)
+	assert.NoError(err)
+	secondBis := b.daemonSet(digest)
+	secondBis.Spec.Template.Spec.Containers[0].LivenessProbe = &corev1.Probe{
+		FailureThreshold: 3,
+		PeriodSeconds:    10,
+		SuccessThreshold: 1,
+		TimeoutSeconds:   5,
+		ProbeHandler: corev1.ProbeHandler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path:   "/live",
+				Port:   intstr.FromString("health"),
+				Scheme: "http",
+			},
+		},
+	}
+	report = helper.NewChangeReport("")
+	assert.False(helper.PodChanged(&second.Spec.Template, &secondBis.Spec.Template, constants.FLPName, &report))
+	assert.Contains(report.String(), "no change")
 
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
