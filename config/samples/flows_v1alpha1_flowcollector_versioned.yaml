@@ -68,7 +68,7 @@ spec:
       enable: false
       caCert:
         type: configmap
-        name: loki-ca-bundle
+        name: loki-gateway-ca-bundle
         certFile: service-ca.crt
       insecureSkipVerify: false
     batchWait: 1s
