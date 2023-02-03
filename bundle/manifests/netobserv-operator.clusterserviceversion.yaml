@@ -124,7 +124,7 @@ metadata:
               "tls": {
                 "caCert": {
                   "certFile": "service-ca.crt",
-                  "name": "loki-ca-bundle",
+                  "name": "loki-gateway-ca-bundle",
                   "type": "configmap"
                 },
                 "enable": false,
