@@ -66,14 +66,16 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string, av
 
 // InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
 func (r *CPReconciler) InitStaticResources(ctx context.Context) error {
-	return r.CreateOwned(ctx, buildServiceAccount(r.nobjMngr.Namespace))
+	cr := buildClusterRole()
+	return r.ReconcileClusterRole(ctx, cr)
 }
 
 // PrepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
 func (r *CPReconciler) PrepareNamespaceChange(ctx context.Context) error {
 	// Switching namespace => delete everything in the previous namespace
 	r.nobjMngr.CleanupPreviousNamespace(ctx)
-	return r.CreateOwned(ctx, buildServiceAccount(r.nobjMngr.Namespace))
+	cr := buildClusterRole()
+	return r.ReconcileClusterRole(ctx, cr)
 }
 
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
@@ -91,6 +93,10 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 
 	// Create object builder
 	builder := newBuilder(ns, r.image, &desired.Spec.ConsolePlugin, &desired.Spec.Loki, r.CertWatcher)
+
+	if err := r.reconcilePermissions(ctx, &builder); err != nil {
+		return err
+	}
 
 	if err = r.reconcilePlugin(ctx, builder, &desired.Spec); err != nil {
 		return err
@@ -132,6 +138,18 @@ func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.
 	} else if !desired.Spec.ConsolePlugin.Register && registered {
 		console.Spec.Plugins = helper.RemoveAllStrings(console.Spec.Plugins, constants.PluginName)
 		return r.Client.Update(ctx, &console)
+	}
+	return nil
+}
+
+func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builder) error {
+	if !r.nobjMngr.Exists(r.owned.serviceAccount) {
+		return r.CreateOwned(ctx, builder.serviceAccount())
+	} // update not needed for now
+
+	desired := builder.clusterRoleBinding()
+	if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
+		return err
 	}
 	return nil
 }

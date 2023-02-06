@@ -36,6 +36,12 @@ rules:
   - list
   - watch
 - apiGroups:
+  - authentication
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
   - autoscaling
   resources:
   - horizontalpodautoscalers
