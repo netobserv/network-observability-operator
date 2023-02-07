@@ -130,6 +130,10 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "FlowCollector")
 		os.Exit(1)
 	}
+	if err = (&flowsv1beta1.FlowCollector{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create v1beta1 webhook", "webhook", "FlowCollector")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

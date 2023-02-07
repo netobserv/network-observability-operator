@@ -1,5 +1,5 @@
 /*
-Copyright 2021.
+Copyright 2023.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package v1alpha1
+package v1beta1
 
 import (
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -677,15 +677,13 @@ type FlowCollectorStatus struct {
 	Namespace string `json:"namespace,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster
-//+kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.spec.agent.type`
-//+kubebuilder:printcolumn:name="Sampling (EBPF)",type="string",JSONPath=`.spec.agent.ebpf.sampling`
-//+kubebuilder:printcolumn:name="Deployment Model",type="string",JSONPath=`.spec.deploymentModel`
-//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
-// +kubebuilder:storageversion
-
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.spec.agent.type`
+// +kubebuilder:printcolumn:name="Sampling (EBPF)",type="string",JSONPath=`.spec.agent.ebpf.sampling`
+// +kubebuilder:printcolumn:name="Deployment Model",type="string",JSONPath=`.spec.deploymentModel`
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
 // FlowCollector is the Schema for the flowcollectors API, which pilots and configures netflow collection.
 type FlowCollector struct {
 	metav1.TypeMeta   `json:",inline"`

@@ -169,7 +169,11 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.0.1
+<<<<<<< HEAD
     createdAt: "2023-01-30T08:10:44Z"
+=======
+    createdAt: "2023-02-08T14:00:46Z"
+>>>>>>> f12d015 (fix)
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.25.3
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
@@ -610,3 +614,36 @@ spec:
     name: console-plugin
   replaces: netobserv-operator.v0.2.2
   version: 1.0.1
+  webhookdefinitions:
+  - admissionReviewVersions:
+    - v1alpha1
+    - v1beta1
+    containerPort: 443
+    conversionCRDs:
+    - flowcollectors.flows.netobserv.io
+    deploymentName: netobserv-controller-manager
+    generateName: cflowcollectors.kb.io
+    sideEffects: None
+    targetPort: 9443
+    type: ConversionWebhook
+    webhookPath: /convert
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: netobserv-controller-manager
+    failurePolicy: Fail
+    generateName: flowcollectorconversionwebhook.netobserv.io
+    rules:
+    - apiGroups:
+      - netobserv.io
+      apiVersions:
+      - v1alpha1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - flowcollectors
+    sideEffects: None
+    targetPort: 9443
+    type: ValidatingAdmissionWebhook
+    webhookPath: /validate-netobserv-io-v1beta1-flowcollector
