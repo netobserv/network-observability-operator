@@ -8,6 +8,8 @@ configMapGenerator:
 - files:
   - controller_manager_config.yaml
   name: manager-config
+patchesStrategicMerge:
+- manager_webhook_patch.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:

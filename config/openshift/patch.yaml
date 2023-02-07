@@ -1,0 +1,24 @@
+# needed a patch because manifests.yaml gets overwritten by kustomize
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: validating-webhook-configuration
+  annotations:
+    # functionality only works on openshift
+    service.beta.openshift.io/inject-cabundle: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-service
+  namespace: system
+  annotations:
+    # functionality only works on openshift
+    service.beta.openshift.io/serving-cert-secret-name: webhook-server-cert
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    service.beta.openshift.io/inject-cabundle: "true"
+  name: flowcollectors.flows.netobserv.io
