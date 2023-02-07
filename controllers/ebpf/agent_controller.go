@@ -17,7 +17,7 @@ import (
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -99,7 +99,7 @@ func NewAgentController(
 }
 
 func (c *AgentController) Reconcile(
-	ctx context.Context, target *flowsv1alpha1.FlowCollector) error {
+	ctx context.Context, target *flowslatest.FlowCollector) error {
 	rlog := log.FromContext(ctx).WithName("ebpf.AgentController")
 	ctx = log.IntoContext(ctx, rlog)
 	current, err := c.current(ctx)
@@ -165,7 +165,7 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 	return &agentDS, nil
 }
 
-func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonSet {
+func (c *AgentController) desired(coll *flowslatest.FlowCollector) *v1.DaemonSet {
 	if coll == nil || !coll.Spec.UseEBPF() {
 		return nil
 	}
@@ -217,7 +217,7 @@ func (c *AgentController) desired(coll *flowsv1alpha1.FlowCollector) *v1.DaemonS
 	}
 }
 
-func (c *AgentController) envConfig(coll *flowsv1alpha1.FlowCollector) []corev1.EnvVar {
+func (c *AgentController) envConfig(coll *flowslatest.FlowCollector) []corev1.EnvVar {
 	var config []corev1.EnvVar
 	if coll.Spec.Agent.EBPF.CacheActiveTimeout != "" {
 		config = append(config, corev1.EnvVar{
@@ -330,7 +330,7 @@ func (c *AgentController) requiredAction(current, desired *v1.DaemonSet) reconci
 	return actionNone
 }
 
-func (c *AgentController) securityContext(coll *flowsv1alpha1.FlowCollector) *corev1.SecurityContext {
+func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *corev1.SecurityContext {
 	sc := corev1.SecurityContext{
 		RunAsUser: pointer.Int64(0),
 	}

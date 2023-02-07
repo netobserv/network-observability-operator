@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
@@ -79,33 +79,33 @@ func flowCollectorControllerSpecs() {
 		var digest string
 		ds := appsv1.DaemonSet{}
 		It("Should create successfully", func() {
-			created := &flowsv1alpha1.FlowCollector{
+			created := &flowslatest.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: crKey.Name,
 				},
-				Spec: flowsv1alpha1.FlowCollectorSpec{
+				Spec: flowslatest.FlowCollectorSpec{
 					Namespace:       operatorNamespace,
-					DeploymentModel: flowsv1alpha1.DeploymentModelDirect,
-					Processor: flowsv1alpha1.FlowCollectorFLP{
+					DeploymentModel: flowslatest.DeploymentModelDirect,
+					Processor: flowslatest.FlowCollectorFLP{
 						Port:            9999,
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
-						Debug: flowsv1alpha1.DebugConfig{
+						Debug: flowslatest.DebugConfig{
 							Env: map[string]string{
 								"GOGC": "200",
 							},
 						},
 					},
-					Agent: flowsv1alpha1.FlowCollectorAgent{
+					Agent: flowslatest.FlowCollectorAgent{
 						Type: "IPFIX",
-						IPFIX: flowsv1alpha1.FlowCollectorIPFIX{
+						IPFIX: flowslatest.FlowCollectorIPFIX{
 							Sampling: 200,
 						},
 					},
-					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
+					ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
 						Port:            9001,
 						ImagePullPolicy: "Never",
-						PortNaming: flowsv1alpha1.ConsolePluginPortConfig{
+						PortNaming: flowslatest.ConsolePluginPortConfig{
 							Enable: true,
 							PortNames: map[string]string{
 								"3100": "loki",
@@ -193,12 +193,12 @@ func flowCollectorControllerSpecs() {
 		})
 
 		It("Should update successfully", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Processor = flowsv1alpha1.FlowCollectorFLP{
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Processor = flowslatest.FlowCollectorFLP{
 					Port:            7891,
 					ImagePullPolicy: "Never",
 					LogLevel:        "error",
-					Debug: flowsv1alpha1.DebugConfig{
+					Debug: flowslatest.DebugConfig{
 						Env: map[string]string{
 							// we'll test that env vars are sorted, to keep idempotency
 							"GOMAXPROCS": "33",
@@ -206,8 +206,8 @@ func flowCollectorControllerSpecs() {
 						},
 					},
 				}
-				fc.Spec.Loki = flowsv1alpha1.FlowCollectorLoki{}
-				fc.Spec.Agent.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
+				fc.Spec.Loki = flowslatest.FlowCollectorLoki{}
+				fc.Spec.Agent.IPFIX = flowslatest.FlowCollectorIPFIX{
 					Sampling:           400,
 					CacheActiveTimeout: "30s",
 					CacheMaxFlows:      1000,
@@ -275,7 +275,7 @@ func flowCollectorControllerSpecs() {
 		})
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.MaxRetries = 7
 			})
 
@@ -290,7 +290,7 @@ func flowCollectorControllerSpecs() {
 
 		It("Should prevent undesired sampling-everything", func() {
 			Eventually(func() error {
-				fc := flowsv1alpha1.FlowCollector{}
+				fc := flowslatest.FlowCollector{}
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
@@ -301,7 +301,7 @@ func flowCollectorControllerSpecs() {
 			}), "Error expected for invalid sampling value")
 
 			Eventually(func() error {
-				fc := flowsv1alpha1.FlowCollector{}
+				fc := flowslatest.FlowCollector{}
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
@@ -323,13 +323,13 @@ func flowCollectorControllerSpecs() {
 
 	Context("With Kafka", func() {
 		It("Should update kafka config successfully", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.DeploymentModel = flowsv1alpha1.DeploymentModelKafka
-				fc.Spec.Kafka = flowsv1alpha1.FlowCollectorKafka{
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.DeploymentModel = flowslatest.DeploymentModelKafka
+				fc.Spec.Kafka = flowslatest.FlowCollectorKafka{
 					Address: "localhost:9092",
 					Topic:   "FLP",
-					TLS: flowsv1alpha1.ClientTLS{
-						CACert: flowsv1alpha1.CertificateReference{
+					TLS: flowslatest.ClientTLS{
+						CACert: flowslatest.CertificateReference{
 							Type:     "secret",
 							Name:     "some-secret",
 							CertFile: "ca.crt",
@@ -394,9 +394,9 @@ func flowCollectorControllerSpecs() {
 	Context("Adding auto-scaling", func() {
 		hpa := ascv2.HorizontalPodAutoscaler{}
 		It("Should update with HPA", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Processor.KafkaConsumerAutoscaler = flowsv1alpha1.FlowCollectorHPA{
-					Status:      flowsv1alpha1.HPAStatusEnabled,
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Processor.KafkaConsumerAutoscaler = flowslatest.FlowCollectorHPA{
+					Status:      flowslatest.HPAStatusEnabled,
 					MinReplicas: pointer.Int32(1),
 					MaxReplicas: 1,
 					Metrics: []ascv2.MetricSpec{{
@@ -424,7 +424,7 @@ func flowCollectorControllerSpecs() {
 		})
 
 		It("Should autoscale when the HPA options change", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor.KafkaConsumerAutoscaler.MinReplicas = pointer.Int32(2)
 				fc.Spec.Processor.KafkaConsumerAutoscaler.MaxReplicas = 2
 			})
@@ -447,8 +447,8 @@ func flowCollectorControllerSpecs() {
 
 	Context("Back without Kafka", func() {
 		It("Should remove kafka config successfully", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.DeploymentModel = flowsv1alpha1.DeploymentModelDirect
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.DeploymentModel = flowslatest.DeploymentModelDirect
 			})
 		})
 
@@ -483,11 +483,11 @@ func flowCollectorControllerSpecs() {
 					Namespace: operatorNamespace,
 				},
 			})).Should(Succeed())
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Loki.TLS = flowsv1alpha1.ClientTLS{
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Loki.TLS = flowslatest.ClientTLS{
 					Enable: true,
-					CACert: flowsv1alpha1.CertificateReference{
-						Type:     flowsv1alpha1.CertRefTypeConfigMap,
+					CACert: flowslatest.CertificateReference{
+						Type:     flowslatest.CertRefTypeConfigMap,
 						Name:     "loki-ca",
 						CertFile: "ca.crt",
 					},
@@ -533,8 +533,8 @@ func flowCollectorControllerSpecs() {
 		})
 
 		It("Should restore no TLS config", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
-				fc.Spec.Loki.TLS = flowsv1alpha1.ClientTLS{
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Loki.TLS = flowslatest.ClientTLS{
 					Enable: false,
 				}
 			})
@@ -551,10 +551,10 @@ func flowCollectorControllerSpecs() {
 
 	Context("Changing namespace", func() {
 		It("Should update namespace successfully", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor.Port = 9999
 				fc.Spec.Namespace = otherNamespace
-				fc.Spec.Agent.IPFIX = flowsv1alpha1.FlowCollectorIPFIX{
+				fc.Spec.Agent.IPFIX = flowslatest.FlowCollectorIPFIX{
 					Sampling: 200,
 				}
 			})
@@ -622,7 +622,7 @@ func flowCollectorControllerSpecs() {
 
 	Context("Cleanup", func() {
 		// Retrieve CR to get its UID
-		flowCR := flowsv1alpha1.FlowCollector{}
+		flowCR := flowslatest.FlowCollector{}
 		It("Should get CR", func() {
 			Eventually(func() error {
 				return k8sClient.Get(ctx, crKey, &flowCR)
@@ -698,8 +698,8 @@ func flowCollectorControllerSpecs() {
 	})
 }
 
-func GetReadyCR(key types.NamespacedName) *flowsv1alpha1.FlowCollector {
-	cr := flowsv1alpha1.FlowCollector{}
+func GetReadyCR(key types.NamespacedName) *flowslatest.FlowCollector {
+	cr := flowslatest.FlowCollector{}
 	Eventually(func() error {
 		err := k8sClient.Get(ctx, key, &cr)
 		if err != nil {
@@ -714,7 +714,7 @@ func GetReadyCR(key types.NamespacedName) *flowsv1alpha1.FlowCollector {
 	return &cr
 }
 
-func UpdateCR(key types.NamespacedName, updater func(*flowsv1alpha1.FlowCollector)) {
+func UpdateCR(key types.NamespacedName, updater func(*flowslatest.FlowCollector)) {
 	cr := GetReadyCR(key)
 	Eventually(func() error {
 		updater(cr)

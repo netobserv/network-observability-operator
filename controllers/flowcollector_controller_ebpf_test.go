@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -50,26 +50,26 @@ func flowCollectorEBPFSpecs() {
 
 	Context("Netobserv eBPF Agent Reconciler", func() {
 		It("Should deploy when it does not exist", func() {
-			desired := &flowsv1alpha1.FlowCollector{
+			desired := &flowslatest.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
-				Spec: flowsv1alpha1.FlowCollectorSpec{
+				Spec: flowslatest.FlowCollectorSpec{
 					Namespace:       operatorNamespace,
-					DeploymentModel: flowsv1alpha1.DeploymentModelDirect,
-					Processor: flowsv1alpha1.FlowCollectorFLP{
+					DeploymentModel: flowslatest.DeploymentModelDirect,
+					Processor: flowslatest.FlowCollectorFLP{
 						Port:            9999,
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
 					},
-					Agent: flowsv1alpha1.FlowCollectorAgent{
+					Agent: flowslatest.FlowCollectorAgent{
 						Type: "EBPF",
-						EBPF: flowsv1alpha1.FlowCollectorEBPF{
+						EBPF: flowslatest.FlowCollectorEBPF{
 							Sampling:           pointer.Int32Ptr(123),
 							CacheActiveTimeout: "15s",
 							CacheMaxFlows:      100,
 							Interfaces:         []string{"veth0", "/^br-/"},
 							ExcludeInterfaces:  []string{"br-3", "lo"},
 							LogLevel:           "trace",
-							Debug: flowsv1alpha1.DebugConfig{
+							Debug: flowslatest.DebugConfig{
 								Env: map[string]string{
 									// we'll test that multiple variables are reordered
 									"GOGC":           "400",
@@ -147,7 +147,7 @@ func flowCollectorEBPFSpecs() {
 		})
 
 		It("Should update fields that have changed", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				Expect(*fc.Spec.Agent.EBPF.Sampling).To(Equal(int32(123)))
 				*fc.Spec.Agent.EBPF.Sampling = 4
 				fc.Spec.Agent.EBPF.Privileged = true
@@ -176,7 +176,7 @@ func flowCollectorEBPFSpecs() {
 		})
 
 		It("Should redeploy all when changing namespace", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Namespace = operatorNamespace2
 			})
 
@@ -203,12 +203,12 @@ func flowCollectorEBPFSpecs() {
 
 		It("Should undeploy everything when deleted", func() {
 			// Retrieve CR to get its UID
-			flowCR := &flowsv1alpha1.FlowCollector{}
+			flowCR := &flowslatest.FlowCollector{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, crKey, flowCR)
 			}, timeout, interval).Should(Succeed())
 
-			Expect(k8sClient.Delete(ctx, &flowsv1alpha1.FlowCollector{
+			Expect(k8sClient.Delete(ctx, &flowslatest.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 			})).Should(Succeed())
 
@@ -216,14 +216,14 @@ func flowCollectorEBPFSpecs() {
 			Eventually(func() error {
 				return k8sClient.Get(ctx,
 					types.NamespacedName{Name: crKey.Name},
-					&flowsv1alpha1.FlowCollector{},
+					&flowslatest.FlowCollector{},
 				)
 			}).WithTimeout(timeout).WithPolling(interval).
 				Should(Satisfy(errors.IsNotFound))
 
 			By("expecting to delete the flowlogs-pipeline deployment")
 			Eventually(func() error {
-				return k8sClient.Get(ctx, flpKey2, &flowsv1alpha1.FlowCollector{})
+				return k8sClient.Get(ctx, flpKey2, &flowslatest.FlowCollector{})
 			}).WithTimeout(timeout).WithPolling(interval).
 				Should(Satisfy(errors.IsNotFound))
 
@@ -277,13 +277,13 @@ func flowCollectorEBPFKafkaSpecs() {
 	}
 	Context("Netobserv eBPF Agent Reconciler", func() {
 		It("Should deploy the agent with the proper configuration", func() {
-			descriptor := &flowsv1alpha1.FlowCollector{
+			descriptor := &flowslatest.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
-				Spec: flowsv1alpha1.FlowCollectorSpec{
+				Spec: flowslatest.FlowCollectorSpec{
 					Namespace:       operatorNamespace,
-					Agent:           flowsv1alpha1.FlowCollectorAgent{Type: "EBPF"},
-					DeploymentModel: flowsv1alpha1.DeploymentModelKafka,
-					Kafka: flowsv1alpha1.FlowCollectorKafka{
+					Agent:           flowslatest.FlowCollectorAgent{Type: "EBPF"},
+					DeploymentModel: flowslatest.DeploymentModelKafka,
+					Kafka: flowslatest.FlowCollectorKafka{
 						Address: "kafka-cluster-kafka-bootstrap",
 						Topic:   "network-flows",
 					},
@@ -317,12 +317,12 @@ func flowCollectorEBPFKafkaSpecs() {
 		})
 		It("Should correctly undeploy", func() {
 			// Retrieve CR to get its UID
-			flowCR := &flowsv1alpha1.FlowCollector{}
+			flowCR := &flowslatest.FlowCollector{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, crKey, flowCR)
 			}, timeout, interval).Should(Succeed())
 
-			Expect(k8sClient.Delete(ctx, &flowsv1alpha1.FlowCollector{
+			Expect(k8sClient.Delete(ctx, &flowslatest.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 			})).Should(Succeed())
 
@@ -330,7 +330,7 @@ func flowCollectorEBPFKafkaSpecs() {
 			Eventually(func() error {
 				return k8sClient.Get(ctx,
 					types.NamespacedName{Name: crKey.Name},
-					&flowsv1alpha1.FlowCollector{},
+					&flowslatest.FlowCollector{},
 				)
 			}).WithTimeout(timeout).WithPolling(interval).
 				Should(Satisfy(errors.IsNotFound))

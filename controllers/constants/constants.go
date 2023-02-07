@@ -23,9 +23,9 @@ const (
 	AnnotationDomain       = "flows.netobserv.io"
 	PodConfigurationDigest = AnnotationDomain + "/config-digest"
 	PodCertIDSuffix        = AnnotationDomain + "/cert-"
-
-	CertCASuffix   = "ca"
-	CertUserSuffix = "user"
+	ConversionAnnotation   = AnnotationDomain + "/conversion-data"
+	CertCASuffix           = "ca"
+	CertUserSuffix         = "user"
 )
 
 var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}
