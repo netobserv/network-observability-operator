@@ -4,7 +4,7 @@
 
 All components deployed by this operator can be released separatly, at their own pace.
 
-Before releasing, it's a good opportunity to check for image upgrades: [go-toolset](https://catalog.redhat.com/software/containers/ubi8/go-toolset/5ce8713aac3db925c03774d1), [node.js](https://catalog.redhat.com/software/containers/ubi8/nodejs-16/615aee9fc739c0a4123a87e1) and [ubi8-minimal](https://catalog.redhat.com/software/containers/ubi8-minimal/5c64772edd19c77a158ea216).
+Before releasing, it's a good opportunity to check for image upgrades: [go-toolset](https://catalog.redhat.com/software/containers/ubi9/go-toolset/61e5c00b4ec9945c18787690), [node.js](https://catalog.redhat.com/software/containers/ubi9/nodejs-16/61a60604c17162a20c1c6a2e) and [ubi9-minimal](https://catalog.redhat.com/software/containers/ubi9-minimal/61832888c0d15aff4912fe0d).
 
 To release them, a tag in the format "v0.1.2" or "v0.1.2-rc0" must be set on the desired clean HEAD state (generally, up-to-date `main` branch), then pushed. It applies to [the console plugin](https://github.com/netobserv/network-observability-console-plugin/), [flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline) and [netobserv-ebpf-agent](https://github.com/netobserv/netobserv-ebpf-agent).
 
