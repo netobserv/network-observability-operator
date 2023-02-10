@@ -31,6 +31,7 @@ type transfoOwnedObjects struct {
 	configMap      *corev1.ConfigMap
 	roleBinding    *rbacv1.ClusterRoleBinding
 	serviceMonitor *monitoringv1.ServiceMonitor
+	prometheusRule *monitoringv1.PrometheusRule
 }
 
 func newTransformerReconciler(info *reconcilersCommonInfo) *flpTransformerReconciler {
@@ -43,6 +44,7 @@ func newTransformerReconciler(info *reconcilersCommonInfo) *flpTransformerReconc
 		configMap:      &corev1.ConfigMap{},
 		roleBinding:    &rbacv1.ClusterRoleBinding{},
 		serviceMonitor: &monitoringv1.ServiceMonitor{},
+		prometheusRule: &monitoringv1.PrometheusRule{},
 	}
 	info.nobjMngr.AddManagedObject(name, owned.deployment)
 	info.nobjMngr.AddManagedObject(name, owned.hpa)
@@ -52,6 +54,7 @@ func newTransformerReconciler(info *reconcilersCommonInfo) *flpTransformerReconc
 	info.nobjMngr.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
 	if info.availableAPIs.HasSvcMonitor() {
 		info.nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaTransformer), owned.serviceMonitor)
+		info.nobjMngr.AddManagedObject(prometheusRuleName(ConfKafkaTransformer), owned.prometheusRule)
 	}
 
 	return &flpTransformerReconciler{
@@ -168,6 +171,9 @@ func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Contex
 			if err := r.CreateOwned(ctx, builder.generic.serviceMonitor()); err != nil {
 				return err
 			}
+			if err := r.CreateOwned(ctx, builder.generic.prometheusRule()); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
@@ -175,6 +181,20 @@ func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Contex
 	if helper.ServiceChanged(r.owned.promService, newSVC) {
 		if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
 			return err
+		}
+	}
+	if r.availableAPIs.HasSvcMonitor() {
+		newMonitorSvc := builder.generic.serviceMonitor()
+		if helper.ServiceMonitorChanged(r.owned.serviceMonitor, newMonitorSvc) {
+			if err := r.UpdateOwned(ctx, r.owned.serviceMonitor, newMonitorSvc); err != nil {
+				return err
+			}
+		}
+		newPromRules := builder.generic.prometheusRule()
+		if helper.PrometheusRuleChanged(r.owned.prometheusRule, newPromRules) {
+			if err := r.UpdateOwned(ctx, r.owned.prometheusRule, newPromRules); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

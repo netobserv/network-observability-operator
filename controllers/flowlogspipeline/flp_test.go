@@ -398,6 +398,70 @@ func TestServiceChanged(t *testing.T) {
 	assert.False(helper.ServiceChanged(second, third))
 }
 
+func TestServiceMonitorNoChange(t *testing.T) {
+	assert := assert.New(t)
+
+	// Get first
+	ns := "namespace"
+	cfg := getConfig()
+	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
+	first := b.generic.serviceMonitor()
+
+	// Check no change
+	newServiceMonitor := first.DeepCopy()
+
+	assert.False(helper.ServiceMonitorChanged(first, newServiceMonitor))
+}
+
+func TestServiceMonitorChanged(t *testing.T) {
+	assert := assert.New(t)
+
+	// Get first
+	ns := "namespace"
+	cfg := getConfig()
+	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
+	first := b.generic.serviceMonitor()
+
+	// Check namespace change
+	cfg.Processor.Metrics.Server.Port = 9999
+	b = newMonolithBuilder("namespace2", image, &cfg, true, &certWatcher)
+	second := b.generic.serviceMonitor()
+
+	assert.True(helper.ServiceMonitorChanged(first, second))
+}
+
+func TestPrometheusRuleNoChange(t *testing.T) {
+	assert := assert.New(t)
+
+	// Get first
+	ns := "namespace"
+	cfg := getConfig()
+	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
+	first := b.generic.prometheusRule()
+
+	// Check no change
+	newServiceMonitor := first.DeepCopy()
+
+	assert.False(helper.PrometheusRuleChanged(first, newServiceMonitor))
+}
+
+func TestPrometheusRuleChanged(t *testing.T) {
+	assert := assert.New(t)
+
+	// Get first
+	ns := "namespace"
+	cfg := getConfig()
+	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
+	first := b.generic.prometheusRule()
+
+	// Check namespace change
+	cfg.Processor.Metrics.Server.Port = 9999
+	b = newMonolithBuilder("namespace2", image, &cfg, true, &certWatcher)
+	second := b.generic.prometheusRule()
+
+	assert.True(helper.PrometheusRuleChanged(first, second))
+}
+
 func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert := assert.New(t)
 

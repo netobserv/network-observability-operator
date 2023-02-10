@@ -109,10 +109,12 @@ func RoleBindingMonoName(ck ConfKind) string  { return name(ck) + "-role-mono" }
 func promServiceName(ck ConfKind) string      { return name(ck) + "-prom" }
 func configMapName(ck ConfKind) string        { return name(ck) + "-config" }
 func serviceMonitorName(ck ConfKind) string   { return name(ck) + "-monitor" }
+func prometheusRuleName(ck ConfKind) string   { return name(ck) + "-alert" }
 func (b *builder) name() string               { return name(b.confKind) }
 func (b *builder) promServiceName() string    { return promServiceName(b.confKind) }
 func (b *builder) configMapName() string      { return configMapName(b.confKind) }
 func (b *builder) serviceMonitorName() string { return serviceMonitorName(b.confKind) }
+func (b *builder) prometheusRuleName() string { return prometheusRuleName(b.confKind) }
 
 func (b *builder) portProtocol() corev1.Protocol {
 	if b.desired.UseEBPF() {
@@ -575,4 +577,48 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 		},
 	}
 	return &flpServiceMonitorObject
+}
+
+func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
+	flpPrometheusRuleObject := monitoringv1.PrometheusRule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      b.prometheusRuleName(),
+			Labels:    b.labels,
+			Namespace: b.namespace,
+		},
+		Spec: monitoringv1.PrometheusRuleSpec{
+			Groups: []monitoringv1.RuleGroup{
+				{
+					Name: "NetobservFlowLogsPipeline",
+					Rules: []monitoringv1.Rule{
+						{
+							Alert: "NetObservNoFlows",
+							Annotations: map[string]string{
+								"description": "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
+								"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
+							},
+							Expr: intstr.FromString("sum(rate(netobserv_ingest_flows_processed[5m])) == 0"),
+							For:  "10m",
+							Labels: map[string]string{
+								"severity": "warning",
+							},
+						},
+						{
+							Alert: "NetObservLokiError",
+							Annotations: map[string]string{
+								"description": "NetObserv flowlogs-pipeline is dropping flows because of loki errors, loki may be down or having issues ingesting every flows. Please check loki and flowlogs-pipeline logs.",
+								"summary":     "NetObserv flowlogs-pipeline is dropping flows because of loki errors",
+							},
+							Expr: intstr.FromString("sum(rate(netobserv_loki_dropped_entries_total[5m])) > 0"),
+							For:  "10m",
+							Labels: map[string]string{
+								"severity": "warning",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	return &flpPrometheusRuleObject
 }
