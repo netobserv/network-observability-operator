@@ -8,13 +8,16 @@ jobs:
   build-lint-test:
     name: Build, lint, test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ['1.18','1.19']
     steps:
     - name: install make
       run: sudo apt-get install make
     - name: set up go 1.x
       uses: actions/setup-go@v3
       with:
-        go-version: '1.19'
+        go-version: ${{ matrix.go }}
     - name: checkout
       uses: actions/checkout@v3
     - name: check format
