@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: ['1.18']
+        go: ['1.18','1.19']
     steps:
     - name: install make
       run: sudo apt-get install make
@@ -27,9 +27,6 @@ jobs:
 
   bundle-check:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go: ['1.18']
     name: Checking bundle up-to-date
     steps:
     - name: install make

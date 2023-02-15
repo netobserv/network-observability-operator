@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM registry.access.redhat.com/ubi9/go-toolset:1.18 as builder
+FROM docker.io/library/golang:1.19 as builder
 ARG BUILD_VERSION="unknown"
 
 WORKDIR /opt/app-root
