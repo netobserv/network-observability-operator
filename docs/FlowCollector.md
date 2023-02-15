@@ -6166,6 +6166,24 @@ processor defines the settings of the component that receives the flows from the
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>connectionEndTimeout</b></td>
+        <td>string</td>
+        <td>
+          connection end timeout is the duration of time to wait from the last flow log to end a connection<br/>
+          <br/>
+            <i>Default</i>: 10s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>connectionUpdateInterval</b></td>
+        <td>string</td>
+        <td>
+          connection update interval is the duration of time to wait between update reports of a connection<br/>
+          <br/>
+            <i>Default</i>: 30s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessordebug-1">debug</a></b></td>
         <td>object</td>
         <td>

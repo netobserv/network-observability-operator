@@ -21,6 +21,7 @@ import (
 	"github.com/netobserv/network-observability-operator/api/v1beta1"
 	utilconversion "github.com/netobserv/network-observability-operator/pkg/conversion"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiconversion "k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
@@ -69,4 +70,11 @@ func (r *FlowCollectorList) ConvertTo(dstRaw conversion.Hub) error {
 func (r *FlowCollectorList) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*v1beta1.FlowCollectorList)
 	return Convert_v1beta1_FlowCollectorList_To_v1alpha1_FlowCollectorList(src, r, nil)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta1 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta1_FlowCollectorFLP_To_v1alpha1_FlowCollectorFLP(in *v1beta1.FlowCollectorFLP, out *FlowCollectorFLP, s apiconversion.Scope) error {
+	return autoConvert_v1beta1_FlowCollectorFLP_To_v1alpha1_FlowCollectorFLP(in, out, s)
 }
