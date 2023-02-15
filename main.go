@@ -22,8 +22,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/netobserv/network-observability-operator/controllers/operator"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/netobserv/network-observability-operator/controllers/operator"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -44,6 +45,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	//+kubebuilder:scaffold:imports
@@ -61,6 +63,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(flowsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(flowsv1beta1.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(ascv2.AddToScheme(scheme))
 	utilruntime.Must(osv1alpha1.AddToScheme(scheme))
@@ -128,6 +131,10 @@ func main() {
 	if err = controllers.NewFlowCollectorReconciler(mgr.GetClient(), mgr.GetScheme(), &config).
 		SetupWithManager(context.Background(), mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "FlowCollector")
+		os.Exit(1)
+	}
+	if err = (&flowsv1beta1.FlowCollector{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create v1beta1 webhook", "webhook", "FlowCollector")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

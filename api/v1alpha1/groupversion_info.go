@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 // Package v1alpha1 contains API Schema definitions for the flows v1alpha1 API group
-//+kubebuilder:object:generate=true
-//+groupName=flows.netobserv.io
+// +kubebuilder:object:generate=true
+// +groupName=flows.netobserv.io
 package v1alpha1
 
 import (
@@ -32,5 +32,6 @@ var (
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}
 
 	// AddToScheme adds the types in this group-version to the given scheme.
-	AddToScheme = SchemeBuilder.AddToScheme
+	AddToScheme        = SchemeBuilder.AddToScheme
+	localSchemeBuilder = SchemeBuilder.SchemeBuilder
 )

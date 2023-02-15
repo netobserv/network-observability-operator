@@ -3,7 +3,7 @@ package helper
 import (
 	"fmt"
 
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 	corev1 "k8s.io/api/core/v1"
@@ -11,7 +11,7 @@ import (
 
 // AppendCertVolumes will add a volume + volume mount for a CA cert if defined, and another volume + volume mount for a user cert if defined.
 // It does nothing if neither is defined.
-func AppendCertVolumes(volumes []corev1.Volume, volumeMounts []corev1.VolumeMount, config *v1alpha1.ClientTLS, name string, cWatcher *watchers.CertificatesWatcher) ([]corev1.Volume, []corev1.VolumeMount) {
+func AppendCertVolumes(volumes []corev1.Volume, volumeMounts []corev1.VolumeMount, config *flowslatest.ClientTLS, name string, cWatcher *watchers.CertificatesWatcher) ([]corev1.Volume, []corev1.VolumeMount) {
 	volOut := volumes
 	vmOut := volumeMounts
 	if config.CACert.Name != "" {
@@ -27,7 +27,7 @@ func AppendCertVolumes(volumes []corev1.Volume, volumeMounts []corev1.VolumeMoun
 	return volOut, vmOut
 }
 
-func AppendSingleCertVolumes(volumes []corev1.Volume, volumeMounts []corev1.VolumeMount, config *v1alpha1.CertificateReference, name string, cWatcher *watchers.CertificatesWatcher) ([]corev1.Volume, []corev1.VolumeMount) {
+func AppendSingleCertVolumes(volumes []corev1.Volume, volumeMounts []corev1.VolumeMount, config *flowslatest.CertificateReference, name string, cWatcher *watchers.CertificatesWatcher) ([]corev1.Volume, []corev1.VolumeMount) {
 	volOut := volumes
 	vmOut := volumeMounts
 	if config.Name != "" {
@@ -38,9 +38,9 @@ func AppendSingleCertVolumes(volumes []corev1.Volume, volumeMounts []corev1.Volu
 	return volOut, vmOut
 }
 
-func buildVolume(ref v1alpha1.CertificateReference, name string, cWatcher *watchers.CertificatesWatcher) (corev1.Volume, corev1.VolumeMount) {
+func buildVolume(ref flowslatest.CertificateReference, name string, cWatcher *watchers.CertificatesWatcher) (corev1.Volume, corev1.VolumeMount) {
 	var vol corev1.Volume
-	if ref.Type == v1alpha1.CertRefTypeConfigMap {
+	if ref.Type == flowslatest.CertRefTypeConfigMap {
 		vol = corev1.Volume{
 			Name: name,
 			VolumeSource: corev1.VolumeSource{
@@ -78,7 +78,7 @@ func getPath(base, suffix, file string) string {
 
 // GetCACertPath returns the CA cert path that corresponds to a volume/volume mount created with "AppendCertVolumes"
 // When not available, an empty string is returned.
-func GetCACertPath(config *v1alpha1.ClientTLS, name string) string {
+func GetCACertPath(config *flowslatest.ClientTLS, name string) string {
 	if config.CACert.Name != "" {
 		return getPath(name, constants.CertCASuffix, config.CACert.CertFile)
 	}
@@ -87,7 +87,7 @@ func GetCACertPath(config *v1alpha1.ClientTLS, name string) string {
 
 // GetUserCertPath returns the user cert path that corresponds to a volume/volume mount created with "AppendCertVolumes"
 // When not available, an empty string is returned.
-func GetUserCertPath(config *v1alpha1.ClientTLS, name string) string {
+func GetUserCertPath(config *flowslatest.ClientTLS, name string) string {
 	if config.UserCert.Name != "" {
 		return getPath(name, constants.CertUserSuffix, config.UserCert.CertFile)
 	}
@@ -96,21 +96,21 @@ func GetUserCertPath(config *v1alpha1.ClientTLS, name string) string {
 
 // GetUserKeyPath returns the user private key path that corresponds to a volume/volume mount created with "AppendCertVolumes"
 // When not available, an empty string is returned.
-func GetUserKeyPath(config *v1alpha1.ClientTLS, name string) string {
+func GetUserKeyPath(config *flowslatest.ClientTLS, name string) string {
 	if config.UserCert.Name != "" {
 		return getPath(name, constants.CertUserSuffix, config.UserCert.CertKey)
 	}
 	return ""
 }
 
-func GetSingleCertPath(config *v1alpha1.CertificateReference, name string) string {
+func GetSingleCertPath(config *flowslatest.CertificateReference, name string) string {
 	if config.Name != "" {
 		return getPath(name, "", config.CertFile)
 	}
 	return ""
 }
 
-func GetSingleKeyPath(config *v1alpha1.CertificateReference, name string) string {
+func GetSingleKeyPath(config *flowslatest.CertificateReference, name string) string {
 	if config.Name != "" {
 		return getPath(name, "", config.CertKey)
 	}

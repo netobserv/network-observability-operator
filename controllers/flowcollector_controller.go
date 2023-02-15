@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
@@ -177,9 +177,9 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{}, nil
 }
 
-func (r *FlowCollectorReconciler) getFlowCollector(ctx context.Context) (*flowsv1alpha1.FlowCollector, error) {
+func (r *FlowCollectorReconciler) getFlowCollector(ctx context.Context) (*flowslatest.FlowCollector, error) {
 	log := log.FromContext(ctx)
-	desired := &flowsv1alpha1.FlowCollector{}
+	desired := &flowslatest.FlowCollector{}
 	if err := r.Get(ctx, constants.FlowCollectorName, desired); err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -201,7 +201,7 @@ func (r *FlowCollectorReconciler) getFlowCollector(ctx context.Context) (*flowsv
 func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	ctx context.Context,
 	oldNS, newNS string,
-	desired *flowsv1alpha1.FlowCollector,
+	desired *flowslatest.FlowCollector,
 	flpReconciler *flowlogspipeline.FLPReconciler,
 	cpReconciler *consoleplugin.CPReconciler,
 ) error {
@@ -244,7 +244,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 // SetupWithManager sets up the controller with the Manager.
 func (r *FlowCollectorReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	builder := ctrl.NewControllerManagedBy(mgr).
-		For(&flowsv1alpha1.FlowCollector{}).
+		For(&flowslatest.FlowCollector{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&appsv1.DaemonSet{}).
@@ -290,7 +290,7 @@ func (r *FlowCollectorReconciler) setupDiscovery(ctx context.Context, mgr ctrl.M
 	return nil
 }
 
-func getNamespaceName(desired *flowsv1alpha1.FlowCollector) string {
+func getNamespaceName(desired *flowslatest.FlowCollector) string {
 	if desired.Spec.Namespace != "" {
 		return desired.Spec.Namespace
 	}
@@ -310,7 +310,7 @@ func (r *FlowCollectorReconciler) namespaceExist(ctx context.Context, nsName str
 }
 
 // checkFinalizer returns true (and/or error) if the calling function needs to return
-func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *flowsv1alpha1.FlowCollector) (bool, error) {
+func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *flowslatest.FlowCollector) (bool, error) {
 	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
 		if controllerutil.ContainsFinalizer(desired, flowsFinalizer) {
 			// Run finalization logic
@@ -336,7 +336,7 @@ func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *f
 	return false, nil
 }
 
-func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	if !r.availableAPIs.HasCNO() {
 		ns := getNamespaceName(desired)
 		clientHelper := r.newClientHelper(desired)
@@ -351,7 +351,7 @@ func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsv1
 	return nil
 }
 
-func (r *FlowCollectorReconciler) newClientHelper(desired *flowsv1alpha1.FlowCollector) reconcilers.ClientHelper {
+func (r *FlowCollectorReconciler) newClientHelper(desired *flowslatest.FlowCollector) reconcilers.ClientHelper {
 	return reconcilers.ClientHelper{
 		CertWatcher: r.certWatcher,
 		Client:      r.Client,
@@ -361,7 +361,7 @@ func (r *FlowCollectorReconciler) newClientHelper(desired *flowsv1alpha1.FlowCol
 	}
 }
 
-func (r *FlowCollectorReconciler) failure(ctx context.Context, errcond *conditions.ErrorCondition, fc *flowsv1alpha1.FlowCollector) error {
+func (r *FlowCollectorReconciler) failure(ctx context.Context, errcond *conditions.ErrorCondition, fc *flowslatest.FlowCollector) error {
 	log := log.FromContext(ctx)
 	log.Error(errcond.Error, errcond.Message)
 	meta.SetStatusCondition(&fc.Status.Conditions, errcond.Condition)
@@ -371,7 +371,7 @@ func (r *FlowCollectorReconciler) failure(ctx context.Context, errcond *conditio
 	return errcond.Error
 }
 
-func (r *FlowCollectorReconciler) updateCondition(ctx context.Context, cond *metav1.Condition, fc *flowsv1alpha1.FlowCollector) {
+func (r *FlowCollectorReconciler) updateCondition(ctx context.Context, cond *metav1.Condition, fc *flowslatest.FlowCollector) {
 	meta.SetStatusCondition(&fc.Status.Conditions, *cond)
 	if err := r.Status().Update(ctx, fc); err != nil {
 		log.FromContext(ctx).Error(err, "Set conditions failed")

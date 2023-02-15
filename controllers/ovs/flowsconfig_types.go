@@ -8,13 +8,13 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 )
 
 type flowsConfig struct {
-	v1alpha1.FlowCollectorIPFIX `json:",inline" mapstructure:",squash"`
-	SharedTarget                string `json:"sharedTarget,omitempty" mapstructure:"sharedTarget,omitempty"`
-	NodePort                    int32  `json:"nodePort,omitempty" mapstructure:"nodePort,omitempty"`
+	flowslatest.FlowCollectorIPFIX `json:",inline" mapstructure:",squash"`
+	SharedTarget                   string `json:"sharedTarget,omitempty" mapstructure:"sharedTarget,omitempty"`
+	NodePort                       int32  `json:"nodePort,omitempty" mapstructure:"nodePort,omitempty"`
 }
 
 func configFromMap(data map[string]string) (*flowsConfig, error) {
@@ -41,7 +41,7 @@ func (fc *flowsConfig) asStringMap() (map[string]string, error) {
 // getSampling returns the configured sampling, or 1 if ipfix.forceSampleAll is true
 // Note that configured sampling has a minimum value of 2.
 // See also https://bugzilla.redhat.com/show_bug.cgi?id=2103136 , https://bugzilla.redhat.com/show_bug.cgi?id=2104943
-func getSampling(ctx context.Context, cfg *v1alpha1.FlowCollectorIPFIX) int32 {
+func getSampling(ctx context.Context, cfg *flowslatest.FlowCollectorIPFIX) int32 {
 	rlog := log.FromContext(ctx)
 	if cfg.ForceSampleAll {
 		rlog.Info("Warning, sampling is set to 1. This may put cluster stability at risk.")

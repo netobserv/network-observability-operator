@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
@@ -49,27 +49,27 @@ var certWatcher = watchers.NewCertificatesWatcher()
 
 const testNamespace = "flp"
 
-func getConfig() v1alpha1.FlowCollectorSpec {
-	return v1alpha1.FlowCollectorSpec{
-		DeploymentModel: v1alpha1.DeploymentModelDirect,
-		Agent:           v1alpha1.FlowCollectorAgent{Type: v1alpha1.AgentIPFIX},
-		Processor: v1alpha1.FlowCollectorFLP{
+func getConfig() flowslatest.FlowCollectorSpec {
+	return flowslatest.FlowCollectorSpec{
+		DeploymentModel: flowslatest.DeploymentModelDirect,
+		Agent:           flowslatest.FlowCollectorAgent{Type: flowslatest.AgentIPFIX},
+		Processor: flowslatest.FlowCollectorFLP{
 			Port:            2055,
 			ImagePullPolicy: string(pullPolicy),
 			LogLevel:        "trace",
 			Resources:       resources,
 			HealthPort:      8080,
-			Metrics: v1alpha1.FLPMetrics{
-				Server: v1alpha1.MetricsServerConfig{
+			Metrics: flowslatest.FLPMetrics{
+				Server: flowslatest.MetricsServerConfig{
 					Port: 9090,
-					TLS: v1alpha1.ServerTLS{
-						Type: v1alpha1.ServerTLSDisabled,
+					TLS: flowslatest.ServerTLS{
+						Type: flowslatest.ServerTLSDisabled,
 					},
 				},
 			},
 			KafkaConsumerReplicas: 1,
-			KafkaConsumerAutoscaler: v1alpha1.FlowCollectorHPA{
-				Status:      v1alpha1.HPAStatusEnabled,
+			KafkaConsumerAutoscaler: flowslatest.FlowCollectorHPA{
+				Status:      flowslatest.HPAStatusEnabled,
 				MinReplicas: &minReplicas,
 				MaxReplicas: maxReplicas,
 				Metrics: []ascv2.MetricSpec{{
@@ -84,7 +84,7 @@ func getConfig() v1alpha1.FlowCollectorSpec {
 				}},
 			},
 		},
-		Loki: v1alpha1.FlowCollectorLoki{
+		Loki: flowslatest.FlowCollectorLoki{
 			URL: "http://loki:3100/",
 			BatchWait: metav1.Duration{
 				Duration: 1,
@@ -99,20 +99,20 @@ func getConfig() v1alpha1.FlowCollectorSpec {
 			MaxRetries:   10,
 			StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
 		},
-		Kafka: v1alpha1.FlowCollectorKafka{
+		Kafka: flowslatest.FlowCollectorKafka{
 			Address: "kafka",
 			Topic:   "flp",
 		},
 	}
 }
 
-func getConfigNoHPA() v1alpha1.FlowCollectorSpec {
+func getConfigNoHPA() flowslatest.FlowCollectorSpec {
 	cfg := getConfig()
-	cfg.Processor.KafkaConsumerAutoscaler.Status = v1alpha1.HPAStatusDisabled
+	cfg.Processor.KafkaConsumerAutoscaler.Status = flowslatest.HPAStatusDisabled
 	return cfg
 }
 
-func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, v1alpha1.FlowCollectorHPA) {
+func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollectorHPA) {
 	var autoScaler = ascv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: testNamespace,
@@ -216,9 +216,9 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.False(helper.PodChanged(&third.Spec.Template, &fifth.Spec.Template, constants.FLPName))
 
 	// Check Loki config change
-	cfg.Loki.TLS = v1alpha1.ClientTLS{
+	cfg.Loki.TLS = flowslatest.ClientTLS{
 		Enable: true,
-		CACert: v1alpha1.CertificateReference{
+		CACert: flowslatest.CertificateReference{
 			Type:     "configmap",
 			Name:     "loki-cert",
 			CertFile: "ca.crt",
@@ -232,9 +232,9 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.True(helper.PodChanged(&fifth.Spec.Template, &sixth.Spec.Template, constants.FLPName))
 
 	// Check volumes change
-	cfg.Loki.TLS = v1alpha1.ClientTLS{
+	cfg.Loki.TLS = flowslatest.ClientTLS{
 		Enable: true,
-		CACert: v1alpha1.CertificateReference{
+		CACert: flowslatest.CertificateReference{
 			Type:     "configmap",
 			Name:     "loki-cert-2",
 			CertFile: "ca.crt",
@@ -612,7 +612,7 @@ func TestPipelineConfig(t *testing.T) {
 	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 
 	// Kafka Ingester
-	cfg.DeploymentModel = v1alpha1.DeploymentModelKafka
+	cfg.DeploymentModel = flowslatest.DeploymentModelKafka
 	bi := newIngestBuilder(ns, image, &cfg, true, &certWatcher)
 	stages, parameters, err = bi.buildPipelineConfig()
 	assert.NoError(err)
@@ -706,9 +706,9 @@ func TestPipelineWithExporter(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Exporters = append(cfg.Exporters, &v1alpha1.FlowCollectorExporter{
-		Type:  v1alpha1.KafkaExporter,
-		Kafka: v1alpha1.FlowCollectorKafka{Address: "kafka-test", Topic: "topic-test"},
+	cfg.Exporters = append(cfg.Exporters, &flowslatest.FlowCollectorExporter{
+		Type:  flowslatest.KafkaExporter,
+		Kafka: flowslatest.FlowCollectorKafka{Address: "kafka-test", Topic: "topic-test"},
 	})
 
 	b := newMonolithBuilder("namespace", image, &cfg, true, &certWatcher)

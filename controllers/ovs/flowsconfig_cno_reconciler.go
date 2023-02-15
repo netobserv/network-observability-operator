@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 )
 
@@ -37,7 +37,7 @@ func NewFlowsConfigCNOController(client reconcilers.ClientHelper,
 
 // Reconcile reconciles the status of the ovs-flows-config configmap with
 // the target FlowCollector ipfix section map
-func (c *FlowsConfigCNOController) Reconcile(ctx context.Context, target *flowsv1alpha1.FlowCollector) error {
+func (c *FlowsConfigCNOController) Reconcile(ctx context.Context, target *flowslatest.FlowCollector) error {
 	rlog := log.FromContext(ctx, "component", "FlowsConfigCNOController")
 
 	current, err := c.current(ctx)
@@ -105,7 +105,7 @@ func (c *FlowsConfigCNOController) current(ctx context.Context) (*flowsConfig, e
 }
 
 func (c *FlowsConfigCNOController) desired(
-	ctx context.Context, coll *flowsv1alpha1.FlowCollector) *flowsConfig {
+	ctx context.Context, coll *flowslatest.FlowCollector) *flowsConfig {
 
 	corrected := coll.Spec.Agent.IPFIX.DeepCopy()
 	corrected.Sampling = getSampling(ctx, corrected)

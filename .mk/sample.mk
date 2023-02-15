@@ -3,9 +3,9 @@
 deploy-sample-cr:
 	@echo -e "\n==> Deploy sample CR"
 ifeq (main,$(VERSION))
-	kubectl apply -f ./config/samples/flows_v1alpha1_flowcollector.yaml || true
+	kubectl apply -f ./config/samples/flows_v1beta1_flowcollector.yaml || true
 else
-	kubectl apply -f ./config/samples/flows_v1alpha1_flowcollector_versioned.yaml || true
+	kubectl apply -f ./config/samples/flows_v1beta1_flowcollector_versioned.yaml || true
 endif
 
 # Undeploy the sample FlowCollector CR

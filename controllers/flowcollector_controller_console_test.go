@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 )
 
@@ -65,20 +65,20 @@ func flowCollectorConsolePluginSpecs() {
 		})
 
 		It("Should create CR successfully", func() {
-			created := &flowsv1alpha1.FlowCollector{
+			created := &flowslatest.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: crKey.Name,
 				},
-				Spec: flowsv1alpha1.FlowCollectorSpec{
+				Spec: flowslatest.FlowCollectorSpec{
 					Namespace:       cpNamespace,
-					DeploymentModel: flowsv1alpha1.DeploymentModelDirect,
-					Agent:           flowsv1alpha1.FlowCollectorAgent{Type: "IPFIX"},
-					ConsolePlugin: flowsv1alpha1.FlowCollectorConsolePlugin{
+					DeploymentModel: flowslatest.DeploymentModelDirect,
+					Agent:           flowslatest.FlowCollectorAgent{Type: "IPFIX"},
+					ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
 						Port:            9001,
 						ImagePullPolicy: "Never",
 						Register:        true,
-						Autoscaler: flowsv1alpha1.FlowCollectorHPA{
-							Status:      flowsv1alpha1.HPAStatusEnabled,
+						Autoscaler: flowslatest.FlowCollectorHPA{
+							Status:      flowslatest.HPAStatusEnabled,
 							MinReplicas: pointer.Int32(1),
 							MaxReplicas: 1,
 							Metrics: []ascv2.MetricSpec{{
@@ -92,7 +92,7 @@ func flowCollectorConsolePluginSpecs() {
 								},
 							}},
 						},
-						PortNaming: flowsv1alpha1.ConsolePluginPortConfig{
+						PortNaming: flowslatest.ConsolePluginPortConfig{
 							Enable: true,
 							PortNames: map[string]string{
 								"3100": "loki",
@@ -144,13 +144,13 @@ func flowCollectorConsolePluginSpecs() {
 
 		It("Should update successfully", func() {
 			Eventually(func() error {
-				fc := flowsv1alpha1.FlowCollector{}
+				fc := flowslatest.FlowCollector{}
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
 				fc.Spec.ConsolePlugin.Port = 9099
 				fc.Spec.ConsolePlugin.Replicas = 2
-				fc.Spec.ConsolePlugin.Autoscaler.Status = flowsv1alpha1.HPAStatusDisabled
+				fc.Spec.ConsolePlugin.Autoscaler.Status = flowslatest.HPAStatusDisabled
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 
@@ -180,14 +180,14 @@ func flowCollectorConsolePluginSpecs() {
 				timeout, interval).Should(Equal("http://loki:3100/"))
 		})
 		It("Should update the Loki URL in the Console Plugin if it changes in the Spec", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.URL = "http://loki.namespace:8888"
 			})
 			Eventually(getContainerArgumentAfter("netobserv-plugin", "-loki", cpKey),
 				timeout, interval).Should(Equal("http://loki.namespace:8888"))
 		})
 		It("Should use the Loki Querier URL instead of the Loki URL, if the first is defined", func() {
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.QuerierURL = "http://loki-querier:6789"
 			})
 			Eventually(getContainerArgumentAfter("netobserv-plugin", "-loki", cpKey),
@@ -208,7 +208,7 @@ func flowCollectorConsolePluginSpecs() {
 
 		It("Should be unregistered", func() {
 			By("Update CR to unregister")
-			UpdateCR(crKey, func(fc *flowsv1alpha1.FlowCollector) {
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.ConsolePlugin.Register = false
 			})
 
@@ -225,7 +225,7 @@ func flowCollectorConsolePluginSpecs() {
 
 	Context("Cleanup", func() {
 		// Retrieve CR to get its UID
-		flowCR := flowsv1alpha1.FlowCollector{}
+		flowCR := flowslatest.FlowCollector{}
 		It("Should get CR", func() {
 			Eventually(func() error {
 				return k8sClient.Get(ctx, crKey, &flowCR)

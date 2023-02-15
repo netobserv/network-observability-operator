@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
@@ -30,13 +30,13 @@ var testResources = corev1.ResourceRequirements{
 }
 var certWatcher = watchers.NewCertificatesWatcher()
 
-func getPluginConfig() flowsv1alpha1.FlowCollectorConsolePlugin {
-	return flowsv1alpha1.FlowCollectorConsolePlugin{
+func getPluginConfig() flowslatest.FlowCollectorConsolePlugin {
+	return flowslatest.FlowCollectorConsolePlugin{
 		Port:            9001,
 		ImagePullPolicy: string(testPullPolicy),
 		Resources:       testResources,
-		Autoscaler: flowsv1alpha1.FlowCollectorHPA{
-			Status:      flowsv1alpha1.HPAStatusEnabled,
+		Autoscaler: flowslatest.FlowCollectorHPA{
+			Status:      flowslatest.HPAStatusEnabled,
 			MinReplicas: &minReplicas,
 			MaxReplicas: maxReplicas,
 			Metrics: []ascv2.MetricSpec{{
@@ -54,7 +54,7 @@ func getPluginConfig() flowsv1alpha1.FlowCollectorConsolePlugin {
 	}
 }
 
-func getServiceSpecs() (corev1.Service, flowsv1alpha1.FlowCollectorConsolePlugin) {
+func getServiceSpecs() (corev1.Service, flowslatest.FlowCollectorConsolePlugin) {
 	var service = corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: testNamespace,
@@ -76,7 +76,7 @@ var minReplicas = int32(1)
 var maxReplicas = int32(5)
 var targetCPU = int32(75)
 
-func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowsv1alpha1.FlowCollectorConsolePlugin) {
+func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollectorConsolePlugin) {
 	var autoScaler = ascv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: testNamespace,
@@ -109,7 +109,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	//equals specs
 	plugin := getPluginConfig()
-	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
+	loki := &flowslatest.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
 	builder := newBuilder(testNamespace, testImage, &plugin, loki, &certWatcher)
 	old := builder.deployment("digest")
 	new := builder.deployment("digest")
@@ -143,9 +143,9 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = new
 
 	//new loki config
-	loki = &flowsv1alpha1.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv", TLS: flowsv1alpha1.ClientTLS{
+	loki = &flowslatest.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv", TLS: flowslatest.ClientTLS{
 		Enable: true,
-		CACert: flowsv1alpha1.CertificateReference{
+		CACert: flowslatest.CertificateReference{
 			Type:     "configmap",
 			Name:     "cm-name",
 			CertFile: "ca.crt",
@@ -208,7 +208,7 @@ func TestLabels(t *testing.T) {
 	assert := assert.New(t)
 
 	plugin := getPluginConfig()
-	loki := &flowsv1alpha1.FlowCollectorLoki{URL: "http://foo:1234"}
+	loki := &flowslatest.FlowCollectorLoki{URL: "http://foo:1234"}
 	builder := newBuilder(testNamespace, testImage, &plugin, loki, &certWatcher)
 
 	// Deployment

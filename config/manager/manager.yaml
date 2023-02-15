@@ -1,10 +1,3 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    control-plane: controller-manager
-  name: system
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,10 +21,12 @@ spec:
       - command:
         - /manager
         args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         - --ebpf-agent-image=$(RELATED_IMAGE_EBPF_AGENT)
         - --flowlogs-pipeline-image=$(RELATED_IMAGE_FLOWLOGS_PIPELINE)
-        - --console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)"
+        - --console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)
         env:
           - name: RELATED_IMAGE_EBPF_AGENT
             value: quay.io/netobserv/netobserv-ebpf-agent:v0.2.4
@@ -62,5 +57,23 @@ spec:
           requests:
             cpu: 100m
             memory: 100Mi
+      - name: kube-rbac-proxy
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+        args:
+          - "--secure-listen-address=0.0.0.0:8443"
+          - "--upstream=http://127.0.0.1:8080/"
+          - "--logtostderr=true"
+          - "--v=10"
+        ports:
+          - containerPort: 8443
+            protocol: TCP
+            name: https
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 5m
+            memory: 64Mi
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

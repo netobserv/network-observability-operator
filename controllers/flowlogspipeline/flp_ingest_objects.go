@@ -8,7 +8,7 @@ import (
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
@@ -16,7 +16,7 @@ type ingestBuilder struct {
 	generic builder
 }
 
-func newIngestBuilder(ns, image string, desired *flowsv1alpha1.FlowCollectorSpec, useOpenShiftSCC bool, cWatcher *watchers.CertificatesWatcher) ingestBuilder {
+func newIngestBuilder(ns, image string, desired *flowslatest.FlowCollectorSpec, useOpenShiftSCC bool, cWatcher *watchers.CertificatesWatcher) ingestBuilder {
 	gen := newBuilder(ns, image, desired, ConfKafkaIngester, useOpenShiftSCC, cWatcher)
 	return ingestBuilder{
 		generic: gen,

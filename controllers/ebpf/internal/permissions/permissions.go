@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
@@ -47,7 +47,7 @@ func NewReconciler(
 	}
 }
 
-func (c *Reconciler) Reconcile(ctx context.Context, desired *v1alpha1.FlowCollectorEBPF) error {
+func (c *Reconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCollectorEBPF) error {
 	log.IntoContext(ctx, log.FromContext(ctx).WithName("permissions"))
 
 	if err := c.reconcileNamespace(ctx); err != nil {
@@ -134,7 +134,7 @@ func (c *Reconciler) reconcileServiceAccount(ctx context.Context) error {
 }
 
 func (c *Reconciler) reconcileVendorPermissions(
-	ctx context.Context, desired *v1alpha1.FlowCollectorEBPF,
+	ctx context.Context, desired *flowslatest.FlowCollectorEBPF,
 ) error {
 	if c.vendor.Vendor(ctx) == discover.VendorOpenShift {
 		return c.reconcileOpenshiftPermissions(ctx, desired)
@@ -143,7 +143,7 @@ func (c *Reconciler) reconcileVendorPermissions(
 }
 
 func (c *Reconciler) reconcileOpenshiftPermissions(
-	ctx context.Context, desired *v1alpha1.FlowCollectorEBPF,
+	ctx context.Context, desired *flowslatest.FlowCollectorEBPF,
 ) error {
 	rlog := log.FromContext(ctx,
 		"securityContextConstraints", constants.EBPFSecurityContext)
@@ -220,7 +220,7 @@ func (c *Reconciler) cleanupPreviousNamespace(ctx context.Context) error {
 		return fmt.Errorf("can't retrieve previous namespace: %w", err)
 	}
 	// Make sure we own that namespace
-	if len(previous.OwnerReferences) > 0 && strings.HasPrefix(previous.OwnerReferences[0].APIVersion, v1alpha1.GroupVersion.Group) {
+	if len(previous.OwnerReferences) > 0 && strings.HasPrefix(previous.OwnerReferences[0].APIVersion, flowslatest.GroupVersion.Group) {
 		rlog.Info("Owning previous privileged namespace: deleting it")
 		if err := c.client.Delete(ctx, previous); err != nil {
 			if errors.IsNotFound(err) {

@@ -12,8 +12,11 @@ resources:
   domain: netobserv.io
   group: flows
   kind: FlowCollector
-  path: github.com/netobserv/network-observability-operator/api/v1alpha1
-  version: v1alpha1
+  path: github.com/netobserv/network-observability-operator/api/v1beta1
+  version: v1beta1
+  webhooks:
+    conversion: true
+    webhookVersion: v1
 - controller: true
   group: core
   kind: ConfigMap

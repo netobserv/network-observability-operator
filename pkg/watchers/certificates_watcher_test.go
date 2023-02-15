@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	corev1 "k8s.io/api/core/v1"
@@ -63,17 +63,17 @@ func TestWatchingCertificates(t *testing.T) {
 	assert.NotNil(watcher)
 
 	watcher.Reset("ns")
-	watcher.SetWatchedCertificate("loki-certificate-ca", &v1alpha1.CertificateReference{
-		Type:     v1alpha1.CertRefTypeConfigMap,
+	watcher.SetWatchedCertificate("loki-certificate-ca", &flowslatest.CertificateReference{
+		Type:     flowslatest.CertRefTypeConfigMap,
 		Name:     "loki-ca",
 		CertFile: "ca.crt",
 	})
 
 	// isWatched only true for loki-ca in namespace ns
-	assert.True(watcher.isWatched(v1alpha1.CertRefTypeConfigMap, &corev1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "loki-ca", Namespace: "ns"}}))
-	assert.False(watcher.isWatched(v1alpha1.CertRefTypeConfigMap, &corev1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "loki-ca-other", Namespace: "ns"}}))
-	assert.False(watcher.isWatched(v1alpha1.CertRefTypeConfigMap, &corev1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "loki-ca", Namespace: "other-ns"}}))
-	assert.False(watcher.isWatched(v1alpha1.CertRefTypeSecret, &corev1.Secret{ObjectMeta: v1.ObjectMeta{Name: "loki-ca", Namespace: "ns"}}))
+	assert.True(watcher.isWatched(flowslatest.CertRefTypeConfigMap, &corev1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "loki-ca", Namespace: "ns"}}))
+	assert.False(watcher.isWatched(flowslatest.CertRefTypeConfigMap, &corev1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "loki-ca-other", Namespace: "ns"}}))
+	assert.False(watcher.isWatched(flowslatest.CertRefTypeConfigMap, &corev1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "loki-ca", Namespace: "other-ns"}}))
+	assert.False(watcher.isWatched(flowslatest.CertRefTypeSecret, &corev1.Secret{ObjectMeta: v1.ObjectMeta{Name: "loki-ca", Namespace: "ns"}}))
 
 	pod := corev1.PodTemplateSpec{
 		ObjectMeta: v1.ObjectMeta{
@@ -86,14 +86,14 @@ func TestWatchingCertificates(t *testing.T) {
 	// Pod annotated with info from the loki-ca configmap
 	assert.Equal(map[string]string{"flows.netobserv.io/cert-loki-certificate-ca": "abcd/1234"}, pod.Annotations)
 
-	watcher.SetWatchedCertificate("kafka-certificate-ca", &v1alpha1.CertificateReference{
-		Type:     v1alpha1.CertRefTypeConfigMap,
+	watcher.SetWatchedCertificate("kafka-certificate-ca", &flowslatest.CertificateReference{
+		Type:     flowslatest.CertRefTypeConfigMap,
 		Name:     "kafka-ca",
 		CertFile: "ca.crt",
 	})
 
-	watcher.SetWatchedCertificate("kafka-certificate-user", &v1alpha1.CertificateReference{
-		Type:     v1alpha1.CertRefTypeSecret,
+	watcher.SetWatchedCertificate("kafka-certificate-user", &flowslatest.CertificateReference{
+		Type:     flowslatest.CertRefTypeSecret,
 		Name:     "kafka-user",
 		CertFile: "user.crt",
 		CertKey:  "user.key",

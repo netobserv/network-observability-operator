@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowlatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
@@ -35,7 +35,7 @@ func RegisterCertificatesWatcher(builder *builder.Builder) *CertificatesWatcher 
 	builder.Watches(
 		&source.Kind{Type: &corev1.Secret{}},
 		handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
-			if watcher.isWatched(v1alpha1.CertRefTypeSecret, o) {
+			if watcher.isWatched(flowlatest.CertRefTypeSecret, o) {
 				// Trigger FlowCollector reconcile
 				return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
 			}
@@ -45,7 +45,7 @@ func RegisterCertificatesWatcher(builder *builder.Builder) *CertificatesWatcher 
 	builder.Watches(
 		&source.Kind{Type: &corev1.ConfigMap{}},
 		handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
-			if watcher.isWatched(v1alpha1.CertRefTypeConfigMap, o) {
+			if watcher.isWatched(flowlatest.CertRefTypeConfigMap, o) {
 				// Trigger FlowCollector reconcile
 				return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
 			}
@@ -60,7 +60,7 @@ func (w *CertificatesWatcher) Reset(namespace string) {
 	w.watched = make(map[string]watchedObject)
 }
 
-func (w *CertificatesWatcher) SetWatchedCertificate(key string, ref *v1alpha1.CertificateReference) {
+func (w *CertificatesWatcher) SetWatchedCertificate(key string, ref *flowlatest.CertificateReference) {
 	w.watched[key] = watchedObject{
 		nsName: types.NamespacedName{
 			Name:      ref.Name,
@@ -96,7 +96,7 @@ func (w *CertificatesWatcher) AnnotatePod(ctx context.Context, cl client.Client,
 func (w *CertificatesWatcher) AnnotatePodSingleVolume(ctx context.Context, cl client.Client, pod *corev1.PodTemplateSpec, key string) error {
 	if watched, ok := w.watched[key]; ok {
 		var sourceMeta *metav1.ObjectMeta
-		if watched.kind == v1alpha1.CertRefTypeConfigMap {
+		if watched.kind == flowlatest.CertRefTypeConfigMap {
 			var cm corev1.ConfigMap
 			err := cl.Get(ctx, watched.nsName, &cm)
 			if err != nil {

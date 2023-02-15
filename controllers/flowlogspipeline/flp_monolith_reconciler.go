@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
@@ -80,7 +80,7 @@ func (r *flpMonolithReconciler) prepareNamespaceChange(ctx context.Context) erro
 	return nil
 }
 
-func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	// Retrieve current owned objects
 	err := r.nobjMngr.FetchAll(ctx)
 	if err != nil {

@@ -14,7 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
@@ -35,13 +35,13 @@ type builder struct {
 	namespace   string
 	labels      map[string]string
 	selector    map[string]string
-	desired     *flowsv1alpha1.FlowCollectorConsolePlugin
-	desiredLoki *flowsv1alpha1.FlowCollectorLoki
+	desired     *flowslatest.FlowCollectorConsolePlugin
+	desiredLoki *flowslatest.FlowCollectorLoki
 	imageName   string
 	cWatcher    *watchers.CertificatesWatcher
 }
 
-func newBuilder(ns, imageName string, desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki, cWatcher *watchers.CertificatesWatcher) builder {
+func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorConsolePlugin, desiredLoki *flowslatest.FlowCollectorLoki, cWatcher *watchers.CertificatesWatcher) builder {
 	version := helper.ExtractVersion(imageName)
 	return builder{
 		namespace: ns,
@@ -143,14 +143,14 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 	}
 }
 
-func tokenPath(desiredLoki *flowsv1alpha1.FlowCollectorLoki) string {
+func tokenPath(desiredLoki *flowslatest.FlowCollectorLoki) string {
 	if desiredLoki.UseHostToken() {
 		return tokensPath + constants.PluginName
 	}
 	return ""
 }
 
-func buildArgs(desired *flowsv1alpha1.FlowCollectorConsolePlugin, desiredLoki *flowsv1alpha1.FlowCollectorLoki) []string {
+func buildArgs(desired *flowslatest.FlowCollectorConsolePlugin, desiredLoki *flowslatest.FlowCollectorLoki) []string {
 	querierURL := querierURL(desiredLoki)
 	statusURL := statusURL(desiredLoki)
 

@@ -163,15 +163,175 @@ metadata:
               }
             }
           }
+        },
+        {
+          "apiVersion": "flows.netobserv.io/v1beta1",
+          "kind": "FlowCollector",
+          "metadata": {
+            "name": "cluster"
+          },
+          "spec": {
+            "agent": {
+              "ebpf": {
+                "cacheActiveTimeout": "5s",
+                "cacheMaxFlows": 100000,
+                "excludeInterfaces": [
+                  "lo"
+                ],
+                "imagePullPolicy": "IfNotPresent",
+                "interfaces": [],
+                "kafkaBatchSize": 10485760,
+                "logLevel": "info",
+                "resources": {
+                  "limits": {
+                    "memory": "800Mi"
+                  },
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "50Mi"
+                  }
+                },
+                "sampling": 50
+              },
+              "type": "EBPF"
+            },
+            "consolePlugin": {
+              "autoscaler": {
+                "maxReplicas": 3,
+                "metrics": [
+                  {
+                    "resource": {
+                      "name": "cpu",
+                      "target": {
+                        "averageUtilization": 50,
+                        "type": "Utilization"
+                      }
+                    },
+                    "type": "Resource"
+                  }
+                ],
+                "minReplicas": 1,
+                "status": "DISABLED"
+              },
+              "imagePullPolicy": "IfNotPresent",
+              "logLevel": "info",
+              "port": 9001,
+              "portNaming": {
+                "enable": true,
+                "portNames": {
+                  "3100": "loki"
+                }
+              },
+              "quickFilters": [
+                {
+                  "default": true,
+                  "filter": {
+                    "dst_namespace!": "openshift-,netobserv",
+                    "src_namespace!": "openshift-,netobserv"
+                  },
+                  "name": "Applications"
+                },
+                {
+                  "filter": {
+                    "dst_namespace": "openshift-,netobserv",
+                    "src_namespace": "openshift-,netobserv"
+                  },
+                  "name": "Infrastructure"
+                },
+                {
+                  "default": true,
+                  "filter": {
+                    "dst_kind": "Pod",
+                    "src_kind": "Pod"
+                  },
+                  "name": "Pods network"
+                },
+                {
+                  "filter": {
+                    "dst_kind": "Service"
+                  },
+                  "name": "Services network"
+                }
+              ],
+              "register": true
+            },
+            "deploymentModel": "DIRECT",
+            "exporters": [],
+            "kafka": {
+              "address": "kafka-cluster-kafka-bootstrap.netobserv",
+              "tls": {
+                "caCert": {
+                  "certFile": "ca.crt",
+                  "name": "kafka-cluster-cluster-ca-cert",
+                  "type": "secret"
+                },
+                "enable": false,
+                "userCert": {
+                  "certFile": "user.crt",
+                  "certKey": "user.key",
+                  "name": "flp-kafka",
+                  "type": "secret"
+                }
+              },
+              "topic": "network-flows"
+            },
+            "loki": {
+              "batchSize": 10485760,
+              "batchWait": "1s",
+              "maxBackoff": "5s",
+              "maxRetries": 2,
+              "minBackoff": "1s",
+              "tls": {
+                "caCert": {
+                  "certFile": "service-ca.crt",
+                  "name": "loki-ca-bundle",
+                  "type": "configmap"
+                },
+                "enable": false,
+                "insecureSkipVerify": false
+              },
+              "url": "http://loki.netobserv.svc:3100/"
+            },
+            "namespace": "netobserv",
+            "processor": {
+              "dropUnusedFields": true,
+              "imagePullPolicy": "IfNotPresent",
+              "kafkaConsumerAutoscaler": null,
+              "kafkaConsumerBatchSize": 10485760,
+              "kafkaConsumerQueueCapacity": 1000,
+              "kafkaConsumerReplicas": 3,
+              "logLevel": "info",
+              "metrics": {
+                "ignoreTags": [
+                  "egress",
+                  "packets"
+                ],
+                "server": {
+                  "port": 9102
+                }
+              },
+              "port": 2055,
+              "profilePort": 6060,
+              "resources": {
+                "limits": {
+                  "memory": "800Mi"
+                },
+                "requests": {
+                  "cpu": "100m",
+                  "memory": "100Mi"
+                }
+              }
+            }
+          }
         }
       ]
     capabilities: Basic Install
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.0.1
-    createdAt: "2023-01-30T08:10:44Z"
+    createdAt: "2023-02-08T16:56:23Z"
     description: Network flows collector and monitoring solution
-    operators.operatorframework.io/builder: operator-sdk-v1.25.3
+    operators.operatorframework.io/builder: operator-sdk-v1.25.0-ocp
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
   name: netobserv-operator.v1.0.1
@@ -186,6 +346,12 @@ spec:
       kind: FlowCollector
       name: flowcollectors.flows.netobserv.io
       version: v1alpha1
+    - description: FlowCollector is the Schema for the flowcollectors API, which pilots
+        and configures netflow collection.
+      displayName: Flow Collector
+      kind: FlowCollector
+      name: flowcollectors.flows.netobserv.io
+      version: v1beta1
   description: |-
     NetObserv Operator is an OpenShift / Kubernetes operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by the NetObserv eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
 
@@ -492,6 +658,10 @@ spec:
                   initialDelaySeconds: 15
                   periodSeconds: 20
                 name: manager
+                ports:
+                - containerPort: 9443
+                  name: webhook-server
+                  protocol: TCP
                 readinessProbe:
                   httpGet:
                     path: /readyz
@@ -506,6 +676,10 @@ spec:
                     memory: 100Mi
                 securityContext:
                   allowPrivilegeEscalation: false
+                volumeMounts:
+                - mountPath: /tmp/k8s-webhook-server/serving-certs
+                  name: cert
+                  readOnly: true
               - args:
                 - --secure-listen-address=0.0.0.0:8443
                 - --upstream=http://127.0.0.1:8080/
@@ -528,6 +702,11 @@ spec:
                 runAsNonRoot: true
               serviceAccountName: netobserv-controller-manager
               terminationGracePeriodSeconds: 10
+              volumes:
+              - name: cert
+                secret:
+                  defaultMode: 420
+                  secretName: webhook-server-cert
       permissions:
       - rules:
         - apiGroups:
@@ -564,7 +743,7 @@ spec:
         serviceAccountName: netobserv-controller-manager
     strategy: deployment
   installModes:
-  - supported: true
+  - supported: false
     type: OwnNamespace
   - supported: false
     type: SingleNamespace
@@ -611,3 +790,36 @@ spec:
     name: console-plugin
   replaces: netobserv-operator.v0.2.2
   version: 1.0.1
+  webhookdefinitions:
+  - admissionReviewVersions:
+    - v1alpha1
+    - v1beta1
+    containerPort: 443
+    conversionCRDs:
+    - flowcollectors.flows.netobserv.io
+    deploymentName: netobserv-controller-manager
+    generateName: cflowcollectors.kb.io
+    sideEffects: None
+    targetPort: 9443
+    type: ConversionWebhook
+    webhookPath: /convert
+  - admissionReviewVersions:
+    - v1
+    containerPort: 443
+    deploymentName: netobserv-controller-manager
+    failurePolicy: Fail
+    generateName: flowcollectorconversionwebhook.netobserv.io
+    rules:
+    - apiGroups:
+      - netobserv.io
+      apiVersions:
+      - v1alpha1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - flowcollectors
+    sideEffects: None
+    targetPort: 9443
+    type: ValidatingAdmissionWebhook
+    webhookPath: /validate-netobserv-io-v1beta1-flowcollector

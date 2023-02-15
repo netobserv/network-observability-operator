@@ -2,7 +2,7 @@
 # used to generate the 'manifests/' directory in a bundle.
 resources:
 - bases/netobserv-operator.clusterserviceversion.yaml
-- ../default
+- ../openshift
 - ../samples
 
 # [WEBHOOK] To enable webhooks, uncomment all the sections with [WEBHOOK] prefix.

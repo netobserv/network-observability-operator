@@ -15,14 +15,14 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 // Type alias
-type pluginSpec = flowsv1alpha1.FlowCollectorConsolePlugin
+type pluginSpec = flowslatest.FlowCollectorConsolePlugin
 
 // CPReconciler reconciles the current console plugin state with the desired configuration
 type CPReconciler struct {
@@ -77,7 +77,7 @@ func (r *CPReconciler) PrepareNamespaceChange(ctx context.Context) error {
 }
 
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
-func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	ns := r.nobjMngr.Namespace
 	// Retrieve current owned objects
 	err := r.nobjMngr.FetchAll(ctx)
@@ -116,7 +116,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.Flo
 	return nil
 }
 
-func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	console := operatorsv1.Console{}
 	if err := r.Client.Get(ctx, types.NamespacedName{Name: "cluster"}, &console); err != nil {
 		// Console operator CR not found => warn but continue execution
@@ -136,7 +136,7 @@ func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowsv1alpha
 	return nil
 }
 
-func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) error {
+func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec, ns string) error {
 	// Console plugin is cluster-scope (it's not deployed in our namespace) however it must still be updated if our namespace changes
 	oldPlg := osv1alpha1.ConsolePlugin{}
 	pluginExists := true
@@ -163,7 +163,7 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder builder, des
 	return nil
 }
 
-func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) (string, error) {
+func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec, ns string) (string, error) {
 	newCM, configDigest := builder.configMap()
 	if !r.nobjMngr.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
@@ -177,7 +177,7 @@ func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder builder, 
 	return configDigest, nil
 }
 
-func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, cmDigest string) error {
+func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec, cmDigest string) error {
 	newDepl := builder.deployment(cmDigest)
 	// Annotate pod with certificate reference so that it is reloaded if modified
 	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &newDepl.Spec.Template, lokiCerts); err != nil {
@@ -197,7 +197,7 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder,
 	return nil
 }
 
-func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) error {
+func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec, ns string) error {
 	if !r.nobjMngr.Exists(r.owned.service) {
 		newSVC := builder.service(nil)
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
@@ -218,7 +218,7 @@ func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, de
 	return nil
 }
 
-func (r *CPReconciler) reconcileHPA(ctx context.Context, builder builder, desired *flowsv1alpha1.FlowCollectorSpec, ns string) error {
+func (r *CPReconciler) reconcileHPA(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec, ns string) error {
 	// Delete or Create / Update Autoscaler according to HPA option
 	if desired.ConsolePlugin.Autoscaler.Disabled() {
 		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
@@ -246,14 +246,14 @@ func (r *CPReconciler) deploymentNeedsUpdate(old, new *appsv1.Deployment, desire
 		(desired.Autoscaler.Disabled() && *old.Spec.Replicas != desired.Replicas)
 }
 
-func querierURL(loki *flowsv1alpha1.FlowCollectorLoki) string {
+func querierURL(loki *flowslatest.FlowCollectorLoki) string {
 	if loki.QuerierURL != "" {
 		return loki.QuerierURL
 	}
 	return loki.URL
 }
 
-func statusURL(loki *flowsv1alpha1.FlowCollectorLoki) string {
+func statusURL(loki *flowslatest.FlowCollectorLoki) string {
 	if loki.StatusURL != "" {
 		return loki.StatusURL
 	}

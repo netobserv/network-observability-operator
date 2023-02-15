@@ -19,7 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -62,23 +62,23 @@ type builder struct {
 	namespace       string
 	labels          map[string]string
 	selector        map[string]string
-	desired         *flowsv1alpha1.FlowCollectorSpec
-	promTLS         *flowsv1alpha1.CertificateReference
+	desired         *flowslatest.FlowCollectorSpec
+	promTLS         *flowslatest.CertificateReference
 	confKind        ConfKind
 	useOpenShiftSCC bool
 	image           string
 	cWatcher        *watchers.CertificatesWatcher
 }
 
-func newBuilder(ns, image string, desired *flowsv1alpha1.FlowCollectorSpec, ck ConfKind, useOpenShiftSCC bool, cWatcher *watchers.CertificatesWatcher) builder {
+func newBuilder(ns, image string, desired *flowslatest.FlowCollectorSpec, ck ConfKind, useOpenShiftSCC bool, cWatcher *watchers.CertificatesWatcher) builder {
 	version := helper.ExtractVersion(image)
 	name := name(ck)
-	var promTLS flowsv1alpha1.CertificateReference
+	var promTLS flowslatest.CertificateReference
 	switch desired.Processor.Metrics.Server.TLS.Type {
-	case flowsv1alpha1.ServerTLSProvided:
+	case flowslatest.ServerTLSProvided:
 		promTLS = *desired.Processor.Metrics.Server.TLS.Provided
-	case flowsv1alpha1.ServerTLSAuto:
-		promTLS = flowsv1alpha1.CertificateReference{
+	case flowslatest.ServerTLSAuto:
+		promTLS = flowslatest.CertificateReference{
 			Type:     "secret",
 			Name:     promServiceName(ck),
 			CertFile: "tls.crt",
@@ -184,7 +184,7 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		}
 	}
 
-	if b.desired.Processor.Metrics.Server.TLS.Type != flowsv1alpha1.ServerTLSDisabled {
+	if b.desired.Processor.Metrics.Server.TLS.Type != flowslatest.ServerTLSDisabled {
 		volumes, volumeMounts = helper.AppendSingleCertVolumes(volumes, volumeMounts, b.promTLS, promCerts, b.cWatcher)
 	}
 
@@ -393,7 +393,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		Metrics: promMetrics,
 	}
 
-	if b.desired.Processor.Metrics.Server.TLS.Type != flowsv1alpha1.ServerTLSDisabled {
+	if b.desired.Processor.Metrics.Server.TLS.Type != flowslatest.ServerTLSDisabled {
 		promEncode.TLS = &api.PromTLSConf{
 			CertPath: helper.GetSingleCertPath(b.promTLS, promCerts),
 			KeyPath:  helper.GetSingleKeyPath(b.promTLS, promCerts),
@@ -408,13 +408,13 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 
 func (b *builder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage) {
 	for i, exporter := range b.desired.Exporters {
-		if exporter.Type == flowsv1alpha1.KafkaExporter {
+		if exporter.Type == flowslatest.KafkaExporter {
 			createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), &exporter.Kafka, enrichedStage)
 		}
 	}
 }
 
-func createKafkaWriteStage(name string, spec *flowsv1alpha1.FlowCollectorKafka, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
+func createKafkaWriteStage(name string, spec *flowslatest.FlowCollectorKafka, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
 	return fromStage.EncodeKafka(name, api.EncodeKafka{
 		Address: spec.Address,
 		Topic:   spec.Topic,
@@ -422,7 +422,7 @@ func createKafkaWriteStage(name string, spec *flowsv1alpha1.FlowCollectorKafka, 
 	})
 }
 
-func getKafkaTLS(tls *flowsv1alpha1.ClientTLS) *api.ClientTLS {
+func getKafkaTLS(tls *flowslatest.ClientTLS) *api.ClientTLS {
 	if tls.Enable {
 		return &api.ClientTLS{
 			InsecureSkipVerify: tls.InsecureSkipVerify,
@@ -503,7 +503,7 @@ func (b *builder) fillPromService(svc *corev1.Service) {
 		// is equal as the desired service
 		TargetPort: intstr.FromInt(int(b.desired.Processor.Metrics.Server.Port)),
 	}}
-	if b.desired.Processor.Metrics.Server.TLS.Type == flowsv1alpha1.ServerTLSAuto {
+	if b.desired.Processor.Metrics.Server.TLS.Type == flowslatest.ServerTLSAuto {
 		if svc.ObjectMeta.Annotations == nil {
 			svc.ObjectMeta.Annotations = map[string]string{}
 		}

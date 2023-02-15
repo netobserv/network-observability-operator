@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
@@ -82,7 +82,7 @@ func (r *flpTransformerReconciler) prepareNamespaceChange(ctx context.Context) e
 	return r.ReconcileClusterRole(ctx, cr)
 }
 
-func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	// Retrieve current owned objects
 	err := r.nobjMngr.FetchAll(ctx)
 	if err != nil {
@@ -217,7 +217,7 @@ func (r *flpTransformerReconciler) deploymentNeedsUpdate(old, new *appsv1.Deploy
 		(desired.KafkaConsumerAutoscaler.Disabled() && *old.Spec.Replicas != desired.KafkaConsumerReplicas)
 }
 
-func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired flowsv1alpha1.FlowCollectorHPA, ns string) bool {
+func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired flowslatest.FlowCollectorHPA, ns string) bool {
 	if asc.Namespace != ns {
 		return true
 	}

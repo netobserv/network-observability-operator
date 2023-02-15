@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
 )
 
 // Type alias
-type flpSpec = flowsv1alpha1.FlowCollectorFLP
+type flpSpec = flowslatest.FlowCollectorFLP
 
 // FLPReconciler reconciles the current flowlogs-pipeline state with the desired configuration
 type FLPReconciler struct {
@@ -23,7 +23,7 @@ type singleReconciler interface {
 	context(ctx context.Context) context.Context
 	initStaticResources(ctx context.Context) error
 	prepareNamespaceChange(ctx context.Context) error
-	reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error
+	reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error
 }
 
 type reconcilersCommonInfo struct {
@@ -86,7 +86,7 @@ func validateDesired(desired *flpSpec) error {
 	return nil
 }
 
-func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowsv1alpha1.FlowCollector) error {
+func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	if err := validateDesired(&desired.Spec.Processor); err != nil {
 		return err
 	}
