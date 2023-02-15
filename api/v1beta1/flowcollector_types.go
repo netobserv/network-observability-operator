@@ -358,6 +358,16 @@ type FlowCollectorFLP struct {
 	// kafkaConsumerBatchSize indicates to the broker the maximum batch size, in bytes, that the consumer will accept. Ignored when not using Kafka. Default: 10MB.
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
 
+	//+kubebuilder:default:="30s"
+	// connection update interval is the duration of time to wait between update reports of a connection
+	// +optional
+	ConnectionUpdateInterval *metav1.Duration `json:"connectionUpdateInterval,omitempty"`
+
+	//+kubebuilder:default:="10s"
+	// connection end timeout is the duration of time to wait from the last flow log to end a connection
+	// +optional
+	ConnectionEndTimeout *metav1.Duration `json:"connectionEndTimeout,omitempty"`
+
 	// Debug allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations
 	// (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.

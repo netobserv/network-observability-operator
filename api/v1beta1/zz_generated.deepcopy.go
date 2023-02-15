@@ -262,6 +262,16 @@ func (in *FlowCollectorFLP) DeepCopyInto(out *FlowCollectorFLP) {
 	in.Metrics.DeepCopyInto(&out.Metrics)
 	in.Resources.DeepCopyInto(&out.Resources)
 	in.KafkaConsumerAutoscaler.DeepCopyInto(&out.KafkaConsumerAutoscaler)
+	if in.ConnectionUpdateInterval != nil {
+		in, out := &in.ConnectionUpdateInterval, &out.ConnectionUpdateInterval
+		*out = new(v1.Duration)
+		**out = **in
+	}
+	if in.ConnectionEndTimeout != nil {
+		in, out := &in.ConnectionEndTimeout, &out.ConnectionEndTimeout
+		*out = new(v1.Duration)
+		**out = **in
+	}
 	in.Debug.DeepCopyInto(&out.Debug)
 }
 
