@@ -3,7 +3,7 @@ kind: ClusterServiceVersion
 metadata:
   annotations:
     alm-examples: '[]'
-    capabilities: Basic Install
+    capabilities: Seamless Upgrades
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: ':container-image:'

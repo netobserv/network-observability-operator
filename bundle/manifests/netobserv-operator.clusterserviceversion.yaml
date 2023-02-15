@@ -325,11 +325,11 @@ metadata:
           }
         }
       ]
-    capabilities: Basic Install
+    capabilities: Seamless Upgrades
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.0.1
-    createdAt: "2023-02-08T16:56:23Z"
+    createdAt: "2023-02-15T20:46:37Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.25.0-ocp
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
