@@ -31,21 +31,17 @@ ocp-run: ocp-undeploy ocp-deploy ocp-deploy-operator  ## OCP-deploy + run the op
 ocp-deploy-operator: ## run flp from the operator
 	@echo "====> Enable netobserv-plugin in OCP console"
 	oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins", "value": ["netobserv-plugin"]}]'
-	@echo "====> Running the operator locally"
-	go run ./main.go \
-		-ebpf-agent-image=quay.io/netobserv/netobserv-ebpf-agent:main \
-		-flowlogs-pipeline-image=quay.io/netobserv/flowlogs-pipeline:main \
-		-console-plugin-image=quay.io/netobserv/network-observability-console-plugin:main
+	$(MAKE) deploy
 
-.PHONY: undeploy-operator
-undeploy-operator: ## stop the operator locally
-	-PID=$$(pgrep --oldest --full "main.go"); pkill -P $$PID; pkill $$PID
-	kubectl delete service flowlogs-pipeline-prom || true
-	kubectl delete ds flowlogs-pipeline || true
-	kubectl delete servicemonitor flowlogs-pipeline-monitor || true
-	kubectl delete service netobserv-plugin || true
-	kubectl delete deployment netobserv-plugin || true
-	kubectl delete servicemonitor netobserv-console-plugin || true
+.PHONY: ocp-undeploy-operator
+ocp-undeploy-operator: ## stop the operator locally
+	oc delete service flowlogs-pipeline-prom || true
+	oc delete ds flowlogs-pipeline || true
+	oc delete servicemonitor flowlogs-pipeline-monitor || true
+	oc delete service netobserv-plugin || true
+	oc delete deployment netobserv-plugin || true
+	oc delete servicemonitor netobserv-console-plugin || true
+	$(MAKE) undeploy
 
 .PHONY: ocp-refresh-ovs
 ocp-refresh-ovs:
