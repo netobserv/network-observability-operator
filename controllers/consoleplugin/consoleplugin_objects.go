@@ -32,16 +32,15 @@ const lokiCerts = "loki-certs"
 const tokensPath = "/var/run/secrets/tokens/"
 
 type builder struct {
-	namespace   string
-	labels      map[string]string
-	selector    map[string]string
-	desired     *flowslatest.FlowCollectorConsolePlugin
-	desiredLoki *flowslatest.FlowCollectorLoki
-	imageName   string
-	cWatcher    *watchers.CertificatesWatcher
+	namespace string
+	labels    map[string]string
+	selector  map[string]string
+	desired   *flowslatest.FlowCollectorSpec
+	imageName string
+	cWatcher  *watchers.CertificatesWatcher
 }
 
-func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorConsolePlugin, desiredLoki *flowslatest.FlowCollectorLoki, cWatcher *watchers.CertificatesWatcher) builder {
+func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec, cWatcher *watchers.CertificatesWatcher) builder {
 	version := helper.ExtractVersion(imageName)
 	return builder{
 		namespace: ns,
@@ -52,10 +51,9 @@ func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorConsoleP
 		selector: map[string]string{
 			"app": constants.PluginName,
 		},
-		desired:     desired,
-		desiredLoki: desiredLoki,
-		imageName:   imageName,
-		cWatcher:    cWatcher,
+		desired:   desired,
+		imageName: imageName,
+		cWatcher:  cWatcher,
 	}
 }
 
@@ -69,7 +67,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 			Service: osv1alpha1.ConsolePluginService{
 				Name:      constants.PluginName,
 				Namespace: b.namespace,
-				Port:      b.desired.Port,
+				Port:      b.desired.ConsolePlugin.Port,
 				BasePath:  "/",
 			},
 			Proxy: []osv1alpha1.ConsolePluginProxy{{
@@ -79,7 +77,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 				Service: osv1alpha1.ConsolePluginProxyServiceConfig{
 					Name:      constants.PluginName,
 					Namespace: b.namespace,
-					Port:      b.desired.Port,
+					Port:      b.desired.ConsolePlugin.Port,
 				},
 			}},
 		},
@@ -134,7 +132,7 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 			Labels:    b.labels,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &b.desired.Replicas,
+			Replicas: &b.desired.ConsolePlugin.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: b.selector,
 			},
@@ -216,12 +214,12 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 	},
 	}
 
-	args := buildArgs(b.desired, b.desiredLoki)
-	if b.desiredLoki != nil && b.desiredLoki.TLS.Enable && !b.desiredLoki.TLS.InsecureSkipVerify {
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desiredLoki.TLS, lokiCerts, b.cWatcher)
+	args := buildArgs(&b.desired.ConsolePlugin, &b.desired.Loki)
+	if b.desired != nil && b.desired.Loki.TLS.Enable && !b.desired.Loki.TLS.InsecureSkipVerify {
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts, b.cWatcher)
 	}
 
-	if b.desiredLoki.UseHostToken() {
+	if b.desired.Loki.UseHostToken() {
 		volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, constants.PluginName, constants.PluginName)
 	}
 
@@ -236,8 +234,8 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 			Containers: []corev1.Container{{
 				Name:            constants.PluginName,
 				Image:           b.imageName,
-				ImagePullPolicy: corev1.PullPolicy(b.desired.ImagePullPolicy),
-				Resources:       *b.desired.Resources.DeepCopy(),
+				ImagePullPolicy: corev1.PullPolicy(b.desired.ConsolePlugin.ImagePullPolicy),
+				Resources:       *b.desired.ConsolePlugin.Resources.DeepCopy(),
 				VolumeMounts:    volumeMounts,
 				Args:            args,
 			}},
@@ -260,9 +258,9 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 				Kind:       "Deployment",
 				Name:       constants.PluginName,
 			},
-			MinReplicas: b.desired.Autoscaler.MinReplicas,
-			MaxReplicas: b.desired.Autoscaler.MaxReplicas,
-			Metrics:     b.desired.Autoscaler.Metrics,
+			MinReplicas: b.desired.ConsolePlugin.Autoscaler.MinReplicas,
+			MaxReplicas: b.desired.ConsolePlugin.Autoscaler.MaxReplicas,
+			Metrics:     b.desired.ConsolePlugin.Autoscaler.Metrics,
 		},
 	}
 }
@@ -281,7 +279,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 			Spec: corev1.ServiceSpec{
 				Selector: b.selector,
 				Ports: []corev1.ServicePort{{
-					Port:     b.desired.Port,
+					Port:     b.desired.ConsolePlugin.Port,
 					Protocol: "TCP",
 					Name:     "main",
 				}},
@@ -291,7 +289,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 	// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
 	newService := old.DeepCopy()
 	newService.Spec.Ports = []corev1.ServicePort{{
-		Port:     b.desired.Port,
+		Port:     b.desired.ConsolePlugin.Port,
 		Protocol: corev1.ProtocolUDP,
 	}}
 	return newService
@@ -313,9 +311,10 @@ func buildServiceAccount(ns string) *corev1.ServiceAccount {
 // detect any configuration change
 func (b *builder) configMap() (*corev1.ConfigMap, string) {
 	config := map[string]interface{}{
-		"portNaming":      b.desired.PortNaming,
-		"quickFilters":    b.desired.QuickFilters,
+		"portNaming":      b.desired.ConsolePlugin.PortNaming,
+		"quickFilters":    b.desired.ConsolePlugin.QuickFilters,
 		"alertNamespaces": []string{b.namespace},
+		"sampling":        b.desired.GetSampling(),
 	}
 
 	configStr := "{}"

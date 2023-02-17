@@ -90,7 +90,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 	}
 
 	// Create object builder
-	builder := newBuilder(ns, r.image, &desired.Spec.ConsolePlugin, &desired.Spec.Loki, r.CertWatcher)
+	builder := newBuilder(ns, r.image, &desired.Spec, r.CertWatcher)
 
 	if err = r.reconcilePlugin(ctx, builder, &desired.Spec); err != nil {
 		return err

@@ -34,6 +34,13 @@ func (spec *FlowCollectorSpec) UseEBPF() bool  { return spec.Agent.Type == Agent
 func (spec *FlowCollectorSpec) UseIPFIX() bool { return spec.Agent.Type == AgentIPFIX }
 func (spec *FlowCollectorSpec) UseKafka() bool { return spec.DeploymentModel == DeploymentModelKafka }
 
+func (spec *FlowCollectorSpec) GetSampling() int {
+	if spec.UseEBPF() {
+		return int(*spec.Agent.EBPF.Sampling)
+	}
+	return int(spec.Agent.IPFIX.Sampling)
+}
+
 // Please notice that the FlowCollectorSpec's properties MUST redefine one of the default
 // values to force the definition of the section when it is not provided by the manifest.
 // This will cause that the remaining default fields will be set according to their definition.
