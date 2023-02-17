@@ -341,7 +341,7 @@ func (b *builder) serviceAccount() *corev1.ServiceAccount {
 }
 
 // The operator needs to have at least the same permissions as flowlogs-pipeline in order to grant them
-//+kubebuilder:rbac:groups=authentication,resources=tokenreviews,verbs=create
+//+kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
 
 func buildClusterRole() *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{
@@ -349,7 +349,7 @@ func buildClusterRole() *rbacv1.ClusterRole {
 			Name: constants.PluginName,
 		},
 		Rules: []rbacv1.PolicyRule{{
-			APIGroups: []string{"authentication"},
+			APIGroups: []string{"authentication.k8s.io"},
 			Verbs:     []string{"create"},
 			Resources: []string{"tokenreviews"},
 		}},
