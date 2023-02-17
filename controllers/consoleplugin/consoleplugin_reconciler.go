@@ -92,11 +92,11 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 	// Create object builder
 	builder := newBuilder(ns, r.image, &desired.Spec.ConsolePlugin, &desired.Spec.Loki, r.CertWatcher)
 
-	if err = r.reconcilePlugin(ctx, builder, &desired.Spec, ns); err != nil {
+	if err = r.reconcilePlugin(ctx, builder, &desired.Spec); err != nil {
 		return err
 	}
 
-	cmDigest, err := r.reconcileConfigMap(ctx, builder, &desired.Spec, ns)
+	cmDigest, err := r.reconcileConfigMap(ctx, builder, &desired.Spec)
 	if err != nil {
 		return err
 	}
@@ -105,11 +105,11 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 		return err
 	}
 
-	if err = r.reconcileService(ctx, builder, &desired.Spec, ns); err != nil {
+	if err = r.reconcileService(ctx, builder, &desired.Spec); err != nil {
 		return err
 	}
 
-	if err = r.reconcileHPA(ctx, builder, &desired.Spec, ns); err != nil {
+	if err = r.reconcileHPA(ctx, builder, &desired.Spec); err != nil {
 		return err
 	}
 
@@ -136,7 +136,7 @@ func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.
 	return nil
 }
 
-func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec, ns string) error {
+func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec) error {
 	// Console plugin is cluster-scope (it's not deployed in our namespace) however it must still be updated if our namespace changes
 	oldPlg := osv1alpha1.ConsolePlugin{}
 	pluginExists := true
@@ -163,7 +163,7 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder builder, des
 	return nil
 }
 
-func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec, ns string) (string, error) {
+func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec) (string, error) {
 	newCM, configDigest := builder.configMap()
 	if !r.nobjMngr.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
@@ -178,6 +178,9 @@ func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder builder, 
 }
 
 func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec, cmDigest string) error {
+	report := helper.NewChangeReport("Console deployment")
+	defer report.LogIfNeeded(ctx)
+
 	newDepl := builder.deployment(cmDigest)
 	// Annotate pod with certificate reference so that it is reloaded if modified
 	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &newDepl.Spec.Template, lokiCerts); err != nil {
@@ -187,7 +190,7 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder,
 		if err := r.CreateOwned(ctx, newDepl); err != nil {
 			return err
 		}
-	} else if r.deploymentNeedsUpdate(r.owned.deployment, newDepl, &desired.ConsolePlugin) {
+	} else if helper.DeploymentChanged(r.owned.deployment, newDepl, constants.PluginName, desired.ConsolePlugin.Autoscaler.Disabled(), desired.ConsolePlugin.Replicas, &report) {
 		if err := r.UpdateOwned(ctx, r.owned.deployment, newDepl); err != nil {
 			return err
 		}
@@ -197,7 +200,10 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder,
 	return nil
 }
 
-func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec, ns string) error {
+func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec) error {
+	report := helper.NewChangeReport("Console service")
+	defer report.LogIfNeeded(ctx)
+
 	if !r.nobjMngr.Exists(r.owned.service) {
 		newSVC := builder.service(nil)
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
@@ -209,7 +215,7 @@ func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, de
 				return err
 			}
 		}
-	} else if serviceNeedsUpdate(r.owned.service, &desired.ConsolePlugin, ns) {
+	} else if serviceNeedsUpdate(r.owned.service, &desired.ConsolePlugin, &report) {
 		newSVC := builder.service(r.owned.service)
 		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
 			return err
@@ -218,7 +224,10 @@ func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, de
 	return nil
 }
 
-func (r *CPReconciler) reconcileHPA(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec, ns string) error {
+func (r *CPReconciler) reconcileHPA(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec) error {
+	report := helper.NewChangeReport("Console autoscaler")
+	defer report.LogIfNeeded(ctx)
+
 	// Delete or Create / Update Autoscaler according to HPA option
 	if desired.ConsolePlugin.Autoscaler.Disabled() {
 		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
@@ -228,7 +237,7 @@ func (r *CPReconciler) reconcileHPA(ctx context.Context, builder builder, desire
 			if err := r.CreateOwned(ctx, newASC); err != nil {
 				return err
 			}
-		} else if autoScalerNeedsUpdate(r.owned.hpa, &desired.ConsolePlugin, ns) {
+		} else if helper.AutoScalerChanged(r.owned.hpa, desired.ConsolePlugin.Autoscaler, &report) {
 			if err := r.UpdateOwned(ctx, r.owned.hpa, newASC); err != nil {
 				return err
 			}
@@ -239,11 +248,6 @@ func (r *CPReconciler) reconcileHPA(ctx context.Context, builder builder, desire
 
 func pluginNeedsUpdate(plg *osv1alpha1.ConsolePlugin, desired *pluginSpec) bool {
 	return plg.Spec.Service.Port != desired.Port
-}
-
-func (r *CPReconciler) deploymentNeedsUpdate(old, new *appsv1.Deployment, desired *pluginSpec) bool {
-	return helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName) ||
-		(desired.Autoscaler.Disabled() && *old.Spec.Replicas != desired.Replicas)
 }
 
 func querierURL(loki *flowslatest.FlowCollectorLoki) string {
@@ -260,31 +264,12 @@ func statusURL(loki *flowslatest.FlowCollectorLoki) string {
 	return querierURL(loki)
 }
 
-func serviceNeedsUpdate(svc *corev1.Service, desired *pluginSpec, ns string) bool {
-	if svc.Namespace != ns {
-		return true
-	}
+func serviceNeedsUpdate(svc *corev1.Service, desired *pluginSpec, report *helper.ChangeReport) bool {
 	for _, port := range svc.Spec.Ports {
 		if port.Port == desired.Port && port.Protocol == "TCP" {
 			return false
 		}
 	}
+	report.Add("Port changed")
 	return true
-}
-
-func autoScalerNeedsUpdate(asc *ascv2.HorizontalPodAutoscaler, desired *pluginSpec, ns string) bool {
-	if asc.Namespace != ns {
-		return true
-	}
-	differentPointerValues := func(a, b *int32) bool {
-		return (a == nil && b != nil) || (a != nil && b == nil) || (a != nil && *a != *b)
-	}
-	if asc.Spec.MaxReplicas != desired.Autoscaler.MaxReplicas ||
-		differentPointerValues(asc.Spec.MinReplicas, desired.Autoscaler.MinReplicas) {
-		return true
-	}
-	if !reflect.DeepEqual(asc.Spec.Metrics, desired.Autoscaler.Metrics) {
-		return true
-	}
-	return false
 }
