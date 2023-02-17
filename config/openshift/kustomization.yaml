@@ -17,6 +17,7 @@ bases:
 - ../rbac
 - ../manager
 - ../webhook
+- ../prometheus
 - namespace.yaml
 patchesStrategicMerge:
 - patch.yaml
