@@ -109,9 +109,9 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	//equals specs
 	plugin := getPluginConfig()
-	loki := &flowslatest.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
-	spec := &flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: *loki}
-	builder := newBuilder(testNamespace, testImage, spec, &certWatcher)
+	loki := flowslatest.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
+	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder := newBuilder(testNamespace, testImage, &spec, &certWatcher)
 	old := builder.deployment("digest")
 	new := builder.deployment("digest")
 	report := helper.NewChangeReport("")
@@ -154,7 +154,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = new
 
 	//new loki config
-	loki = &flowslatest.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv", TLS: flowslatest.ClientTLS{
+	loki = flowslatest.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv", TLS: flowslatest.ClientTLS{
 		Enable: true,
 		CACert: flowslatest.CertificateReference{
 			Type:     "configmap",
@@ -162,8 +162,8 @@ func TestContainerUpdateCheck(t *testing.T) {
 			CertFile: "ca.crt",
 		},
 	}}
-	spec = &flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: *loki}
-	builder = newBuilder(testNamespace, testImage, spec, &certWatcher)
+	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder = newBuilder(testNamespace, testImage, &spec, &certWatcher)
 	new = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
@@ -172,8 +172,8 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	//new loki cert name
 	loki.TLS.CACert.Name = "cm-name-2"
-	spec = &flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: *loki}
-	builder = newBuilder(testNamespace, testImage, spec, &certWatcher)
+	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder = newBuilder(testNamespace, testImage, &spec, &certWatcher)
 	new = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
@@ -182,8 +182,8 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	//test again no change
 	loki.TLS.CACert.Name = "cm-name-2"
-	spec = &flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: *loki}
-	builder = newBuilder(testNamespace, testImage, spec, &certWatcher)
+	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder = newBuilder(testNamespace, testImage, &spec, &certWatcher)
 	new = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.False(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
@@ -219,9 +219,9 @@ func TestBuiltService(t *testing.T) {
 
 	//newly created service should not need update
 	plugin := getPluginConfig()
-	loki := &flowslatest.FlowCollectorLoki{URL: "http://foo:1234"}
-	spec := &flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: *loki}
-	builder := newBuilder(testNamespace, testImage, spec, &certWatcher)
+	loki := flowslatest.FlowCollectorLoki{URL: "http://foo:1234"}
+	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder := newBuilder(testNamespace, testImage, &spec, &certWatcher)
 	newService := builder.service(nil)
 	report := helper.NewChangeReport("")
 	assert.Equal(serviceNeedsUpdate(newService, &plugin, &report), false)
@@ -232,9 +232,9 @@ func TestLabels(t *testing.T) {
 	assert := assert.New(t)
 
 	plugin := getPluginConfig()
-	loki := &flowslatest.FlowCollectorLoki{URL: "http://foo:1234"}
-	spec := &flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: *loki}
-	builder := newBuilder(testNamespace, testImage, spec, &certWatcher)
+	loki := flowslatest.FlowCollectorLoki{URL: "http://foo:1234"}
+	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder := newBuilder(testNamespace, testImage, &spec, &certWatcher)
 
 	// Deployment
 	depl := builder.deployment("digest")
