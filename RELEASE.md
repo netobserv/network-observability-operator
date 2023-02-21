@@ -36,7 +36,7 @@ Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, 
 make bundle
 
 # Set desired operator version - CAREFUL, no leading "v" here
-version="1.0.1"
+version="1.0.2"
 vv=v$version
 test_branch=test-$vv
 
@@ -84,7 +84,7 @@ Check also the "Create a discussion for this release" option, in category "Annou
 Before publishing, we should check that upgrading the operator from a previous version isn't broken. We can use `operator-sdk` for that:
 
 ```bash
-previous=v0.2.2
+previous=v1.0.1
 bin/operator-sdk run bundle quay.io/netobserv/network-observability-operator-bundle:$previous --timeout 5m
 bin/operator-sdk run bundle-upgrade quay.io/netobserv/network-observability-operator-bundle:$vv --timeout 5m
 ```

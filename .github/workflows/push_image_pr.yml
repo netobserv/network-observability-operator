@@ -28,7 +28,7 @@ jobs:
         with:
           ref: "refs/pull/${{ github.event.number }}/merge"
       - name: build images
-        run: VERSION=temp make ci-images-build
+        run: IMG=${{ env.REGISTRY }}/${{ env.IMAGE }}:temp make ci-images-build
       - name: podman login to quay.io
         uses: redhat-actions/podman-login@v1
         with:

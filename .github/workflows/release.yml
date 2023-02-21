@@ -37,7 +37,7 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - name: build operator
-        run: VERSION=${{ env.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make image-build
+        run: IMG=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make image-build
       - name: podman login to quay.io
         uses: redhat-actions/podman-login@v1
         with:
