@@ -112,15 +112,13 @@ help: ## Display this help.
 # Directories.
 
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-BIN_DIR := bin
-TOOLS_DIR := hack/tools
-TOOLS_BIN_DIR := $(abspath $(TOOLS_DIR)/$(BIN_DIR))
+BIN_DIR := $(abspath bin)
 GO_INSTALL := ./scripts/go_install.sh
 CONVERSION_GEN_VER := v0.25.0
 CONVERSION_GEN_BIN := conversion-gen
 # We are intentionally using the binary without version suffix, to avoid the version
 # in generated files.
-CONVERSION_GEN := $(abspath $(TOOLS_BIN_DIR)/$(CONVERSION_GEN_BIN))
+CONVERSION_GEN := $(BIN_DIR)/$(CONVERSION_GEN_BIN)
 CONVERSION_GEN_PKG := k8s.io/code-generator/cmd/conversion-gen
 # Set --output-base for conversion-gen if we are not within GOPATH
 ifneq ($(abspath $(ROOT_DIR)),$(shell go env GOPATH)/src/network-observability-operator)
@@ -171,7 +169,7 @@ lint: prereqs
 	@echo "### Linting code"
 	golangci-lint run --timeout 5m ./...
 
-test: generate envtest ## Run tests.
+test: envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverpkg=./... -coverprofile cover.out
 
 coverage-report:
@@ -189,11 +187,11 @@ $(CONVERSION_GEN_BIN): $(CONVERSION_GEN) ## Build a local copy of conversion-gen
 ## We can't use a versioned name for the binary, because that would be reflected in generated files.
 .PHONY: $(CONVERSION_GEN)
 $(CONVERSION_GEN): # Build conversion-gen from tools folder.
-	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(CONVERSION_GEN_PKG) $(CONVERSION_GEN_BIN) $(CONVERSION_GEN_VER)
+	GOBIN=$(BIN_DIR) $(GO_INSTALL) $(CONVERSION_GEN_PKG) $(CONVERSION_GEN_BIN) $(CONVERSION_GEN_VER)
 
 ##@ Build
 
-build: generate fmt lint ## Build manager binary.
+build: fmt lint ## Build manager binary.
 	go build -ldflags "-X 'main.buildVersion=${BUILD_VERSION}' -X 'main.buildDate=${BUILD_DATE}'" -mod vendor -o bin/manager main.go
 
 image-build:
@@ -211,13 +209,13 @@ endif
 
 ##@ Deployment
 
-install: generate kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+install: kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
-uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
+uninstall: kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl --ignore-not-found=true delete -f - || true
 
-deploy: generate kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
@@ -227,7 +225,7 @@ deploy: generate kustomize ## Deploy controller to the K8s cluster specified in 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/openshift | kubectl --ignore-not-found=true delete -f - || true
 
-run: generate fmt lint ## Run a controller from your host.
+run: fmt lint ## Run a controller from your host.
 	go run ./main.go
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
@@ -263,8 +261,7 @@ endef
 .PHONY: operator-sdk
 OPSDK = ./bin/operator-sdk
 OPSDK: ## Download opm locally if necessary.
-ifeq (,$(wildcard $(OPSDK)))
-ifeq (,$(shell which operator-sdk 2>/dev/null))
+ifeq (,$(shell which $(OPSDK) 2>/dev/null))
 	@{ \
 	echo "### Downloading operator-sdk"; \
 	set -e ;\
@@ -273,9 +270,6 @@ ifeq (,$(shell which operator-sdk 2>/dev/null))
 	curl -sSLo $(OPSDK) https://github.com/operator-framework/operator-sdk/releases/download/v1.25.3/operator-sdk_$${OS}_$${ARCH} ;\
 	chmod +x $(OPSDK) ;\
 	}
-else
-OPSDK = $(shell which operator-sdk)
-endif
 endif
 
 .PHONY: bundle-prepare

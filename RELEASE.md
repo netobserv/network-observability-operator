@@ -94,7 +94,7 @@ Note: currently, [seamless upgrade](https://sdk.operatorframework.io/docs/overvi
 If you need to repeat the operation several times, make sure to cleanup between attempts:
 
 ```bash
-operator-sdk cleanup netobserv-operator
+bin/operator-sdk cleanup netobserv-operator
 ```
 
 

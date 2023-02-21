@@ -102,7 +102,7 @@ make bundle bundle-build bundle-push
 Optionally, you might validate the bundle:
 
 ```bash
-operator-sdk bundle validate $BUNDLE_IMG
+bin/operator-sdk bundle validate $BUNDLE_IMG
 ```
 
 > Note: the base64 logo can be generated with: `base64 -w 0 <image file>`, then manually pasted in the [CSV manifest file](./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml) under `spec.icon`.
@@ -112,7 +112,7 @@ operator-sdk bundle validate $BUNDLE_IMG
 This mode is recommended to quickly test the operator during its development:
 
 ```bash
-operator-sdk run bundle $BUNDLE_IMG
+bin/operator-sdk run bundle $BUNDLE_IMG
 ```
 
 ### Deploy as bundle from the Console's OperatorHub page
