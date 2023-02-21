@@ -361,6 +361,20 @@ catalog-deploy:
 catalog-undeploy:
 	kubectl delete -f ./config/samples/catalog/catalog.yaml
 
+# Grab release notes for related components (to be inserted in operator's release note upstream, cf RELEASE.md)
+.PHONY: related-release-notes
+related-release-notes:
+	echo -e "## Related components\n\n" > /tmp/related.md
+	echo -e "### eBPF Agent\n\n" >> /tmp/related.md
+	curl -s  https://api.github.com/repos/netobserv/netobserv-ebpf-agent/releases/tags/$(BPF_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/####/" >> /tmp/related.md
+	echo -e "### Flowlogs-Pipeline\n\n" >> /tmp/related.md
+	curl -s  https://api.github.com/repos/netobserv/flowlogs-pipeline/releases/tags/$(FLP_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/####/" >> /tmp/related.md
+	echo -e "### Console Plugin\n\n" >> /tmp/related.md
+	curl -s  https://api.github.com/repos/netobserv/network-observability-console-plugin/releases/tags/$(PLG_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/####/" >> /tmp/related.md
+	wl-copy < /tmp/related.md
+	cat /tmp/related.md
+	echo -e "\nText has been copied to the clipboard.\n"
+
 include .mk/sample.mk
 include .mk/development.mk
 include .mk/local.mk
