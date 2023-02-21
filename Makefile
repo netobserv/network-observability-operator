@@ -118,7 +118,7 @@ CONVERSION_GEN_VER := v0.25.0
 CONVERSION_GEN_BIN := conversion-gen
 # We are intentionally using the binary without version suffix, to avoid the version
 # in generated files.
-CONVERSION_GEN := $(abspath $(BIN_DIR)/$(CONVERSION_GEN_BIN))
+CONVERSION_GEN := $(BIN_DIR)/$(CONVERSION_GEN_BIN)
 CONVERSION_GEN_PKG := k8s.io/code-generator/cmd/conversion-gen
 # Set --output-base for conversion-gen if we are not within GOPATH
 ifneq ($(abspath $(ROOT_DIR)),$(shell go env GOPATH)/src/network-observability-operator)
