@@ -29,11 +29,11 @@ spec:
         - --console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)
         env:
           - name: RELATED_IMAGE_EBPF_AGENT
-            value: quay.io/netobserv/netobserv-ebpf-agent:v0.3.0-rc0
+            value: quay.io/netobserv/netobserv-ebpf-agent:v0.3.0
           - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
-            value: quay.io/netobserv/flowlogs-pipeline:v0.1.8-rc1
+            value: quay.io/netobserv/flowlogs-pipeline:v0.1.8
           - name: RELATED_IMAGE_CONSOLE_PLUGIN
-            value: quay.io/netobserv/network-observability-console-plugin:v0.1.9-rc1
+            value: quay.io/netobserv/network-observability-console-plugin:v0.1.9-rc2
         image: controller:latest
         name: manager
         imagePullPolicy: Always

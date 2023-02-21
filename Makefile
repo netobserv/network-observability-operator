@@ -7,14 +7,14 @@ BUILD_SHA := $(shell git rev-parse --short HEAD)
 REPO ?= quay.io/netobserv
 # Component versions to use in bundle / release (do not use $VERSION for that)
 PREVIOUS_VERSION ?= v1.0.1
-BUNDLE_VERSION ?= 1.0.2-rc2
+BUNDLE_VERSION ?= 1.0.2-rc3
 OPERATOR_VERSION ?= $(BUNDLE_VERSION)
 # console plugin
-export PLG_VERSION ?= v0.1.9-rc1
+export PLG_VERSION ?= v0.1.9-rc2
 # flowlogs-pipeline
-export FLP_VERSION ?= v0.1.8-rc1
+export FLP_VERSION ?= v0.1.8
 # eBPF agent
-export BPF_VERSION ?= v0.3.0-rc0
+export BPF_VERSION ?= v0.3.0
 
 # Allows building bundles in Mac replacing BSD 'sed' command by GNU-compatible 'gsed'
 SED ?= sed
