@@ -7,10 +7,10 @@ BUILD_SHA := $(shell git rev-parse --short HEAD)
 REPO ?= quay.io/netobserv
 # Component versions to use in bundle / release (do not use $VERSION for that)
 PREVIOUS_VERSION ?= v1.0.1
-BUNDLE_VERSION ?= 1.0.2-rc3
+BUNDLE_VERSION ?= 1.0.2
 OPERATOR_VERSION ?= $(BUNDLE_VERSION)
 # console plugin
-export PLG_VERSION ?= v0.1.9-rc2
+export PLG_VERSION ?= v0.1.9
 # flowlogs-pipeline
 export FLP_VERSION ?= v0.1.8
 # eBPF agent

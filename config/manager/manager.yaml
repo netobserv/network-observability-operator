@@ -33,7 +33,7 @@ spec:
           - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
             value: quay.io/netobserv/flowlogs-pipeline:v0.1.8
           - name: RELATED_IMAGE_CONSOLE_PLUGIN
-            value: quay.io/netobserv/network-observability-console-plugin:v0.1.9-rc2
+            value: quay.io/netobserv/network-observability-console-plugin:v0.1.9
         image: controller:latest
         name: manager
         imagePullPolicy: Always
