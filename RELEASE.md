@@ -36,7 +36,7 @@ Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, 
 make bundle
 
 # Set desired operator version - CAREFUL, no leading "v" here
-version="1.0.2-rc1"
+version="1.0.2-rc2"
 vv=v$version
 test_branch=test-$vv
 
