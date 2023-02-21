@@ -90,7 +90,7 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 	}
 
 	// Transformer only used with Kafka
-	if !desired.Spec.UseKafka() {
+	if !helper.UseKafka(&desired.Spec) {
 		r.nobjMngr.TryDeleteAll(ctx)
 		return nil
 	}
@@ -137,7 +137,7 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 		if err := r.CreateOwned(ctx, new); err != nil {
 			return err
 		}
-	} else if helper.DeploymentChanged(r.owned.deployment, new, constants.FLPName, desiredFLP.KafkaConsumerAutoscaler.Disabled(), desiredFLP.KafkaConsumerReplicas, &report) {
+	} else if helper.DeploymentChanged(r.owned.deployment, new, constants.FLPName, helper.HPADisabled(&desiredFLP.KafkaConsumerAutoscaler), desiredFLP.KafkaConsumerReplicas, &report) {
 		if err := r.UpdateOwned(ctx, r.owned.deployment, new); err != nil {
 			return err
 		}
@@ -147,7 +147,7 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 	}
 
 	// Delete or Create / Update Autoscaler according to HPA option
-	if desiredFLP.KafkaConsumerAutoscaler.Disabled() {
+	if helper.HPADisabled(&desiredFLP.KafkaConsumerAutoscaler) {
 		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
 	} else {
 		newASC := builder.autoScaler()

@@ -13,6 +13,7 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 type FlowsConfigCNOController struct {
@@ -44,7 +45,7 @@ func (c *FlowsConfigCNOController) Reconcile(ctx context.Context, target *flowsl
 	if err != nil {
 		return err
 	}
-	if !target.Spec.UseIPFIX() {
+	if !helper.UseIPFIX(&target.Spec) {
 		if current == nil {
 			return nil
 		}

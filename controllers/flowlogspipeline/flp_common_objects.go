@@ -117,7 +117,7 @@ func (b *builder) serviceMonitorName() string { return serviceMonitorName(b.conf
 func (b *builder) prometheusRuleName() string { return prometheusRuleName(b.confKind) }
 
 func (b *builder) portProtocol() corev1.Protocol {
-	if b.desired.UseEBPF() {
+	if helper.UseEBPF(b.desired) {
 		return corev1.ProtocolTCP
 	}
 	return corev1.ProtocolUDP
@@ -171,7 +171,7 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		},
 	}}
 
-	if b.desired.UseKafka() && b.desired.Kafka.TLS.Enable {
+	if helper.UseKafka(b.desired) && b.desired.Kafka.TLS.Enable {
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Kafka.TLS, kafkaCerts, b.cWatcher)
 	}
 
@@ -179,7 +179,7 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		if b.desired.Loki.TLS.Enable && !b.desired.Loki.TLS.InsecureSkipVerify {
 			volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts, b.cWatcher)
 		}
-		if b.desired.Loki.UseHostToken() || b.desired.Loki.ForwardUserToken() {
+		if helper.LokiUseHostToken(&b.desired.Loki) || helper.LokiForwardUserToken(&b.desired.Loki) {
 			volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, lokiToken, constants.FLPName)
 		}
 	}
@@ -295,7 +295,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	lastStage := *stage
 	// Filter-out unused fields?
 	if b.desired.Processor.DropUnusedFields {
-		if b.desired.UseIPFIX() {
+		if helper.UseIPFIX(b.desired) {
 			lastStage = lastStage.TransformFilter("filter", api.TransformFilter{
 				Rules: filters.GetOVSGoflowUnusedRules(),
 			})
@@ -345,7 +345,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	}
 
 	var authorization *promConfig.Authorization
-	if b.desired.Loki.UseHostToken() || b.desired.Loki.ForwardUserToken() {
+	if helper.LokiUseHostToken(&b.desired.Loki) || helper.LokiForwardUserToken(&b.desired.Loki) {
 		authorization = &promConfig.Authorization{
 			Type:            "Bearer",
 			CredentialsFile: helper.TokensPath + constants.FLPName,

@@ -305,7 +305,7 @@ func TestDeploymentNoChange(t *testing.T) {
 	second := b.deployment(digest)
 
 	report := helper.NewChangeReport("")
-	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, cfg.Processor.KafkaConsumerAutoscaler.Disabled(), cfg.Processor.KafkaConsumerReplicas, &report))
+	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, helper.HPADisabled(&cfg.Processor.KafkaConsumerAutoscaler), cfg.Processor.KafkaConsumerReplicas, &report))
 	assert.Contains(report.String(), "no change")
 }
 
@@ -329,7 +329,7 @@ func TestDeploymentChanged(t *testing.T) {
 
 	report := helper.NewChangeReport("")
 	checkChanged := func(old, new *appsv1.Deployment, spec flowslatest.FlowCollectorSpec) bool {
-		return helper.DeploymentChanged(old, new, constants.FLPName, spec.Processor.KafkaConsumerAutoscaler.Disabled(), spec.Processor.KafkaConsumerReplicas, &report)
+		return helper.DeploymentChanged(old, new, constants.FLPName, helper.HPADisabled(&spec.Processor.KafkaConsumerAutoscaler), spec.Processor.KafkaConsumerReplicas, &report)
 	}
 
 	assert.True(checkChanged(first, second, cfg))
@@ -410,7 +410,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	second := b.deployment(digest)
 
 	report := helper.NewChangeReport("")
-	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, cfg2.Processor.KafkaConsumerAutoscaler.Disabled(), cfg2.Processor.KafkaConsumerReplicas, &report))
+	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, helper.HPADisabled(&cfg2.Processor.KafkaConsumerAutoscaler), cfg2.Processor.KafkaConsumerReplicas, &report))
 	assert.Contains(report.String(), "Replicas changed")
 }
 

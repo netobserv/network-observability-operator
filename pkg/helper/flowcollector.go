@@ -1,0 +1,42 @@
+package helper
+
+import (
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+)
+
+func GetSampling(spec *flowslatest.FlowCollectorSpec) int {
+	if UseEBPF(spec) {
+		return int(*spec.Agent.EBPF.Sampling)
+	}
+	return int(spec.Agent.IPFIX.Sampling)
+}
+
+func UseEBPF(spec *flowslatest.FlowCollectorSpec) bool {
+	return spec.Agent.Type == flowslatest.AgentEBPF
+}
+func UseIPFIX(spec *flowslatest.FlowCollectorSpec) bool {
+	return spec.Agent.Type == flowslatest.AgentIPFIX
+}
+func UseKafka(spec *flowslatest.FlowCollectorSpec) bool {
+	return spec.DeploymentModel == flowslatest.DeploymentModelKafka
+}
+
+func HPADisabled(spec *flowslatest.FlowCollectorHPA) bool {
+	return spec.Status == flowslatest.HPAStatusDisabled
+}
+
+func HPAEnabled(spec *flowslatest.FlowCollectorHPA) bool {
+	return spec.Status == flowslatest.HPAStatusEnabled
+}
+
+func LokiNoAuthToken(spec *flowslatest.FlowCollectorLoki) bool {
+	return spec.AuthToken == flowslatest.LokiAuthDisabled
+}
+
+func LokiUseHostToken(spec *flowslatest.FlowCollectorLoki) bool {
+	return spec.AuthToken == flowslatest.LokiAuthUseHostToken
+}
+
+func LokiForwardUserToken(spec *flowslatest.FlowCollectorLoki) bool {
+	return spec.AuthToken == flowslatest.LokiAuthForwardUserToken
+}

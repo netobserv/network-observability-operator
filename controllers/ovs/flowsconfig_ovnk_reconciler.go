@@ -100,7 +100,7 @@ func (c *FlowsConfigOVNKController) desiredEnv(ctx context.Context, coll *flowsl
 		"OVN_IPFIX_SAMPLING":             strconv.Itoa(int(sampling)),
 	}
 
-	if !coll.Spec.UseIPFIX() {
+	if !helper.UseIPFIX(&coll.Spec) {
 		// No IPFIX => leave target empty and return
 		return envs, nil
 	}

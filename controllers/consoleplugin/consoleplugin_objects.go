@@ -142,7 +142,7 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 }
 
 func tokenPath(desiredLoki *flowslatest.FlowCollectorLoki) string {
-	if desiredLoki.UseHostToken() {
+	if helper.LokiUseHostToken(desiredLoki) {
 		return tokensPath + constants.PluginName
 	}
 	return ""
@@ -162,7 +162,7 @@ func buildArgs(desired *flowslatest.FlowCollectorConsolePlugin, desiredLoki *flo
 		"-frontend-config", filepath.Join(configPath, configFile),
 	}
 
-	if desiredLoki.ForwardUserToken() {
+	if helper.LokiForwardUserToken(desiredLoki) {
 		args = append(args, "-loki-forward-user-token")
 	}
 
@@ -177,7 +177,7 @@ func buildArgs(desired *flowslatest.FlowCollectorConsolePlugin, desiredLoki *flo
 			args = append(args, "--loki-ca-path", helper.GetCACertPath(&desiredLoki.TLS, lokiCerts))
 		}
 	}
-	if desiredLoki.UseHostToken() {
+	if helper.LokiUseHostToken(desiredLoki) {
 		args = append(args, "-loki-token-path", tokenPath(desiredLoki))
 	}
 	return args
@@ -219,7 +219,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts, b.cWatcher)
 	}
 
-	if b.desired.Loki.UseHostToken() {
+	if helper.LokiUseHostToken(&b.desired.Loki) {
 		volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, constants.PluginName, constants.PluginName)
 	}
 
@@ -314,7 +314,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		"portNaming":      b.desired.ConsolePlugin.PortNaming,
 		"quickFilters":    b.desired.ConsolePlugin.QuickFilters,
 		"alertNamespaces": []string{b.namespace},
-		"sampling":        b.desired.GetSampling(),
+		"sampling":        helper.GetSampling(b.desired),
 	}
 
 	configStr := "{}"

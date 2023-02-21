@@ -106,7 +106,7 @@ func (c *AgentController) Reconcile(
 	if err != nil {
 		return fmt.Errorf("fetching current EBPF Agent: %w", err)
 	}
-	if !target.Spec.UseEBPF() || c.previousPrivilegedNamespace != c.privilegedNamespace {
+	if !helper.UseEBPF(&target.Spec) || c.previousPrivilegedNamespace != c.privilegedNamespace {
 		if current == nil {
 			rlog.Info("nothing to do, as the requested agent is not eBPF",
 				"currentAgent", target.Spec.Agent)
@@ -166,13 +166,13 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 }
 
 func (c *AgentController) desired(coll *flowslatest.FlowCollector) *v1.DaemonSet {
-	if coll == nil || !coll.Spec.UseEBPF() {
+	if coll == nil || !helper.UseEBPF(&coll.Spec) {
 		return nil
 	}
 	version := helper.ExtractVersion(c.config.EBPFAgentImage)
 	volumeMounts := []corev1.VolumeMount{}
 	volumes := []corev1.Volume{}
-	if coll.Spec.UseKafka() && coll.Spec.Kafka.TLS.Enable {
+	if helper.UseKafka(&coll.Spec) && coll.Spec.Kafka.TLS.Enable {
 		// NOTE: secrets need to be copied from the base netobserv namespace to the privileged one.
 		// This operation must currently be performed manually (run "make fix-ebpf-kafka-tls"). It could be automated here.
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &coll.Spec.Kafka.TLS, kafkaCerts, c.client.CertWatcher)
@@ -273,7 +273,7 @@ func (c *AgentController) envConfig(coll *flowslatest.FlowCollector) []corev1.En
 	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
 	config = append(config, corev1.EnvVar{Name: envDedupeJustMark, Value: dedupJustMark})
 
-	if coll.Spec.UseKafka() {
+	if helper.UseKafka(&coll.Spec) {
 		config = append(config,
 			corev1.EnvVar{Name: envExport, Value: exportKafka},
 			corev1.EnvVar{Name: envKafkaBrokers, Value: coll.Spec.Kafka.Address},
