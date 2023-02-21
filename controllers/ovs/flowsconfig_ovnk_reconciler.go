@@ -10,6 +10,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	kerr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -50,9 +51,16 @@ func (c *FlowsConfigOVNKController) Reconcile(
 func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flowslatest.FlowCollector, desiredEnv map[string]string) error {
 	rlog := log.FromContext(ctx, "component", "FlowsConfigOVNKController")
 
-	ds, err := c.getDaemonSet(ctx)
-	if err != nil {
-		return err
+	ds := &appsv1.DaemonSet{}
+	if err := c.client.Get(ctx, types.NamespacedName{
+		Name:      c.config.DaemonSetName,
+		Namespace: c.config.Namespace,
+	}, ds); err != nil {
+		if kerr.IsNotFound(err) && !target.Spec.UseIPFIX() {
+			// If we don't want IPFIX and ovn-k daemonset is not found, assume there no ovn-k, just succeed silently
+			return nil
+		}
+		return fmt.Errorf("retrieving %s/%s daemonset: %w", c.config.Namespace, c.config.DaemonSetName, err)
 	}
 
 	ovnkubeNode := helper.FindContainer(&ds.Spec.Template.Spec, target.Spec.Agent.IPFIX.OVNKubernetes.ContainerName)
@@ -73,17 +81,6 @@ func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flows
 
 	rlog.Info("No changes needed")
 	return nil
-}
-
-func (c *FlowsConfigOVNKController) getDaemonSet(ctx context.Context) (*appsv1.DaemonSet, error) {
-	curr := &appsv1.DaemonSet{}
-	if err := c.client.Get(ctx, types.NamespacedName{
-		Name:      c.config.DaemonSetName,
-		Namespace: c.config.Namespace,
-	}, curr); err != nil {
-		return nil, fmt.Errorf("retrieving %s/%s daemonset: %w", c.config.Namespace, c.config.DaemonSetName, err)
-	}
-	return curr, nil
 }
 
 func (c *FlowsConfigOVNKController) desiredEnv(ctx context.Context, coll *flowslatest.FlowCollector) (map[string]string, error) {
