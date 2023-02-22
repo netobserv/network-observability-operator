@@ -88,7 +88,7 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslat
 	}
 
 	// Monolith only used without Kafka
-	if desired.Spec.UseKafka() {
+	if helper.UseKafka(&desired.Spec) {
 		r.nobjMngr.TryDeleteAll(ctx)
 		return nil
 	}

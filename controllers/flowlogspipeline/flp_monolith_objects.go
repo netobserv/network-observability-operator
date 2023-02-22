@@ -9,6 +9,7 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
@@ -50,7 +51,7 @@ func (b *monolithBuilder) configMap() (*corev1.ConfigMap, string, error) {
 
 func (b *monolithBuilder) buildPipelineConfig() ([]config.Stage, []config.StageParam, error) {
 	var pipeline config.PipelineBuilderStage
-	if b.generic.desired.UseIPFIX() {
+	if helper.UseIPFIX(b.generic.desired) {
 		// IPFIX collector
 		pipeline = config.NewCollectorPipeline("ipfix", api.IngestCollector{
 			Port:     int(b.generic.desired.Processor.Port),

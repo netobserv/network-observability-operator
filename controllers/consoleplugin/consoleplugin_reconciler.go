@@ -90,7 +90,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 	}
 
 	// Create object builder
-	builder := newBuilder(ns, r.image, &desired.Spec.ConsolePlugin, &desired.Spec.Loki, r.CertWatcher)
+	builder := newBuilder(ns, r.image, &desired.Spec, r.CertWatcher)
 
 	if err = r.reconcilePlugin(ctx, builder, &desired.Spec); err != nil {
 		return err
@@ -190,7 +190,7 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder,
 		if err := r.CreateOwned(ctx, newDepl); err != nil {
 			return err
 		}
-	} else if helper.DeploymentChanged(r.owned.deployment, newDepl, constants.PluginName, desired.ConsolePlugin.Autoscaler.Disabled(), desired.ConsolePlugin.Replicas, &report) {
+	} else if helper.DeploymentChanged(r.owned.deployment, newDepl, constants.PluginName, helper.HPADisabled(&desired.ConsolePlugin.Autoscaler), desired.ConsolePlugin.Replicas, &report) {
 		if err := r.UpdateOwned(ctx, r.owned.deployment, newDepl); err != nil {
 			return err
 		}
@@ -229,7 +229,7 @@ func (r *CPReconciler) reconcileHPA(ctx context.Context, builder builder, desire
 	defer report.LogIfNeeded(ctx)
 
 	// Delete or Create / Update Autoscaler according to HPA option
-	if desired.ConsolePlugin.Autoscaler.Disabled() {
+	if helper.HPADisabled(&desired.ConsolePlugin.Autoscaler) {
 		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
 	} else {
 		newASC := builder.autoScaler()

@@ -10,6 +10,7 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
@@ -55,7 +56,7 @@ func (b *transfoBuilder) buildPipelineConfig() ([]config.Stage, []config.StagePa
 	// For now, we leave this communication via JSON and just setup protobuf ingestion when
 	// the transformer is communicating directly via eBPF agent
 	decoder := api.Decoder{Type: "protobuf"}
-	if b.generic.desired.UseIPFIX() {
+	if helper.UseIPFIX(b.generic.desired) {
 		decoder = api.Decoder{Type: "json"}
 	}
 	pipeline := config.NewKafkaPipeline("kafka-read", api.IngestKafka{

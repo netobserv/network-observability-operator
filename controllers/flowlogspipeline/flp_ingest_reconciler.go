@@ -86,7 +86,7 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowslat
 	}
 
 	// Ingester only used with Kafka and without eBPF
-	if !desired.Spec.UseKafka() || desired.Spec.UseEBPF() {
+	if !helper.UseKafka(&desired.Spec) || helper.UseEBPF(&desired.Spec) {
 		r.nobjMngr.TryDeleteAll(ctx)
 		return nil
 	}
