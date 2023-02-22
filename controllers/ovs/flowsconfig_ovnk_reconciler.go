@@ -57,7 +57,8 @@ func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flows
 		Namespace: c.config.Namespace,
 	}, ds); err != nil {
 		if kerr.IsNotFound(err) && !target.Spec.UseIPFIX() {
-			// If we don't want IPFIX and ovn-k daemonset is not found, assume there no ovn-k, just succeed silently
+			// If we don't want IPFIX and ovn-k daemonset is not found, assume there no ovn-k, just succeed
+			rlog.Info("Skip reconciling OVN: OVN DaemonSet not found")
 			return nil
 		}
 		return fmt.Errorf("retrieving %s/%s daemonset: %w", c.config.Namespace, c.config.DaemonSetName, err)
