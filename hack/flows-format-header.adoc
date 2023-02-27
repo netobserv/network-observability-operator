@@ -1,0 +1,11 @@
+:_content-type: REFERENCE
+[id="network-observability-flows-format-specifications_{context}"]
+= Network Flows format specifications
+
+Description::
++
+This is the specification of the network flows format, used both internally and in exporter feature such as Kafka export.
++
+The document is organized in two main categories: _Labels_ and regular _Fields_. This distinction only matters when querying Loki, as _Labels_ must be used in link:https://grafana.com/docs/loki/latest/logql/log_queries/#log-stream-selector[stream selectors], whereas _Fields_ don't.
++
+Outside of Loki context, for instance when reading this specification as a documentation for the Kafka export feature, you must disregard this distinction about _Labels_ and _Fields_, and consider all fields at the same level in the JSON structure.
