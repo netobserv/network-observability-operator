@@ -67,17 +67,17 @@ When the last release candidate is accepted and the final release tag is pushed 
 
 Click the "Auto-generate release note" button.
 
-Add links to sub-component release notes, e.g:
+Grab related components release notes by running:
 
-```md
-## Sub-component release notes:
-
-* eBPF Agent: https://github.com/netobserv/netobserv-ebpf-agent/releases/tag/v0.1.2
-* Flowlogs-pipeline: https://github.com/netobserv/flowlogs-pipeline/releases/tag/v0.1.3
-* Console plugin: https://github.com/netobserv/network-observability-console-plugin/releases/tag/v0.1.4
+```bash
+make related-release-notes
 ```
 
-Check also the "Create a discussion for this release" option, in category "Announcements".
+Then paste content following the auto-generated release note in GitHub.
+
+Check the "Create a discussion for this release" option, in category "Announcements".
+
+Click on "Publish release".
 
 ### Testing the upgrade path
 

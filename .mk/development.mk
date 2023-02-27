@@ -1,4 +1,4 @@
-##@ Development
+##@ Development helpers
 
 # use default cluster storage class
 DEFAULT_SC := $(shell kubectl get storageclass -o=jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
