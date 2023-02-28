@@ -6166,6 +6166,24 @@ processor defines the settings of the component that receives the flows from the
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>connectionEndTimeout</b></td>
+        <td>string</td>
+        <td>
+          connection end timeout is the duration of time to wait from the last flow log to end a connection<br/>
+          <br/>
+            <i>Default</i>: 10s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>connectionHeartbeatInterval</b></td>
+        <td>string</td>
+        <td>
+          connection heartbeat interval is the duration of time to wait between heartbeat reports of a connection<br/>
+          <br/>
+            <i>Default</i>: 30s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessordebug-1">debug</a></b></td>
         <td>object</td>
         <td>
@@ -6263,6 +6281,16 @@ processor defines the settings of the component that receives the flows from the
         <td>object</td>
         <td>
           Metrics define the processor configuration regarding metrics<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>outputRecordTypes</b></td>
+        <td>enum</td>
+        <td>
+          outputRecordTypes defines the desired record types to generate. Possible values are "FLOWS" (default) to export flowLogs, or "ALL" to generate both flowLogs and newConnection, heartbeat, endConnection events<br/>
+          <br/>
+            <i>Enum</i>: FLOWS, ALL<br/>
+            <i>Default</i>: FLOWS<br/>
         </td>
         <td>false</td>
       </tr><tr>

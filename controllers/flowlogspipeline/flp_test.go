@@ -48,6 +48,7 @@ var minReplicas = int32(1)
 var maxReplicas = int32(5)
 var targetCPU = int32(75)
 var certWatcher = watchers.NewCertificatesWatcher()
+var outputRecordTypes = flowslatest.OutputRecordAll
 
 const testNamespace = "flp"
 
@@ -84,6 +85,13 @@ func getConfig() flowslatest.FlowCollectorSpec {
 						},
 					},
 				}},
+			},
+			OutputRecordTypes: &outputRecordTypes,
+			ConnectionHeartbeatInterval: &metav1.Duration{
+				Duration: conntrackHeartbeatInterval,
+			},
+			ConnectionEndTimeout: &metav1.Duration{
+				Duration: conntrackEndTimeout,
 			},
 		},
 		Loki: flowslatest.FlowCollectorLoki{
@@ -546,20 +554,20 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.Equal("trace", decoded.LogLevel)
 
 	params := decoded.Parameters
-	assert.Len(params, 5)
+	assert.Len(params, 6)
 	assert.Equal(cfg.Processor.Port, int32(params[0].Ingest.Collector.Port))
 
-	lokiCfg := params[2].Write.Loki
+	lokiCfg := params[3].Write.Loki
 	assert.Equal(loki.URL, lokiCfg.URL)
 	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg.BatchWait)
 	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg.MinBackoff)
 	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
 	assert.EqualValues(loki.MaxRetries, lokiCfg.MaxRetries)
 	assert.EqualValues(loki.BatchSize, lokiCfg.BatchSize)
-	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}, lokiCfg.Labels)
+	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection", "_RecordType"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
-	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(params[4].Encode.Prom.Port))
+	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(params[5].Encode.Prom.Port))
 }
 
 func TestAutoScalerUpdateCheck(t *testing.T) {
@@ -673,7 +681,7 @@ func TestPipelineConfig(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 
 	// Kafka Ingester
 	cfg.DeploymentModel = flowslatest.DeploymentModelKafka
@@ -690,7 +698,7 @@ func TestPipelineConfig(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
-	assert.Equal(`[{"name":"kafka-read"},{"name":"enrich","follows":"kafka-read"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"kafka-read"},{"name":"extract_conntrack","follows":"kafka-read"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 }
 
 func TestPipelineConfigDropUnused(t *testing.T) {
@@ -706,7 +714,7 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"filter","follows":"ipfix"},{"name":"enrich","follows":"filter"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"ipfix"},{"name":"filter","follows":"ipfix"},{"name":"extract_conntrack","follows":"filter"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 
 	jsonParams, _ := json.Marshal(parameters[1].Transform.Filter)
 	assert.Contains(string(jsonParams), `{"input":"CustomBytes1","type":"remove_field"}`)
@@ -724,7 +732,7 @@ func TestPipelineTraceStage(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 }
 
 func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
@@ -737,16 +745,16 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
-	assert.Len(parameters[4].Encode.Prom.Metrics, 7)
-	assert.Equal("namespace_flows_total", parameters[4].Encode.Prom.Metrics[0].Name)
-	assert.Equal("node_egress_bytes_total", parameters[4].Encode.Prom.Metrics[1].Name)
-	assert.Equal("node_ingress_bytes_total", parameters[4].Encode.Prom.Metrics[2].Name)
-	assert.Equal("workload_egress_bytes_total", parameters[4].Encode.Prom.Metrics[3].Name)
-	assert.Equal("workload_egress_packets_total", parameters[4].Encode.Prom.Metrics[4].Name)
-	assert.Equal("workload_ingress_bytes_total", parameters[4].Encode.Prom.Metrics[5].Name)
-	assert.Equal("workload_ingress_packets_total", parameters[4].Encode.Prom.Metrics[6].Name)
-	assert.Equal("netobserv_", parameters[4].Encode.Prom.Prefix)
+	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	assert.Len(parameters[5].Encode.Prom.Metrics, 7)
+	assert.Equal("namespace_flows_total", parameters[5].Encode.Prom.Metrics[0].Name)
+	assert.Equal("node_egress_bytes_total", parameters[5].Encode.Prom.Metrics[1].Name)
+	assert.Equal("node_ingress_bytes_total", parameters[5].Encode.Prom.Metrics[2].Name)
+	assert.Equal("workload_egress_bytes_total", parameters[5].Encode.Prom.Metrics[3].Name)
+	assert.Equal("workload_egress_packets_total", parameters[5].Encode.Prom.Metrics[4].Name)
+	assert.Equal("workload_ingress_bytes_total", parameters[5].Encode.Prom.Metrics[5].Name)
+	assert.Equal("workload_ingress_packets_total", parameters[5].Encode.Prom.Metrics[6].Name)
+	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
 }
 
 func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
@@ -760,10 +768,10 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
-	assert.Len(parameters[4].Encode.Prom.Metrics, 5)
-	assert.Equal("namespace_flows_total", parameters[4].Encode.Prom.Metrics[0].Name)
-	assert.Equal("netobserv_", parameters[4].Encode.Prom.Prefix)
+	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	assert.Len(parameters[5].Encode.Prom.Metrics, 5)
+	assert.Equal("namespace_flows_total", parameters[5].Encode.Prom.Metrics[0].Name)
+	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
 }
 
 func TestPipelineWithExporter(t *testing.T) {
@@ -780,8 +788,8 @@ func TestPipelineWithExporter(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"enrich","follows":"ipfix"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"kafka-export-0","follows":"enrich"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"kafka-export-0","follows":"enrich"}]`, string(jsonStages))
 
-	assert.Equal("kafka-test", parameters[5].Encode.Kafka.Address)
-	assert.Equal("topic-test", parameters[5].Encode.Kafka.Topic)
+	assert.Equal("kafka-test", parameters[6].Encode.Kafka.Address)
+	assert.Equal("topic-test", parameters[6].Encode.Kafka.Topic)
 }

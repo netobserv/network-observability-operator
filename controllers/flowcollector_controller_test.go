@@ -24,8 +24,14 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/conditions"
 )
 
-const timeout = time.Second * 10
-const interval = 50 * time.Millisecond
+const (
+	timeout                    = time.Second * 10
+	interval                   = 50 * time.Millisecond
+	conntrackEndTimeout        = 10 * time.Second
+	conntrackHeartbeatInterval = 30 * time.Second
+)
+
+var outputRecordTypes = flowslatest.OutputRecordAll
 
 // nolint:cyclop
 func flowCollectorControllerSpecs() {
@@ -94,6 +100,13 @@ func flowCollectorControllerSpecs() {
 							Env: map[string]string{
 								"GOGC": "200",
 							},
+						},
+						OutputRecordTypes: &outputRecordTypes,
+						ConnectionHeartbeatInterval: &metav1.Duration{
+							Duration: conntrackHeartbeatInterval,
+						},
+						ConnectionEndTimeout: &metav1.Duration{
+							Duration: conntrackEndTimeout,
 						},
 					},
 					Agent: flowslatest.FlowCollectorAgent{
@@ -204,6 +217,13 @@ func flowCollectorControllerSpecs() {
 							"GOMAXPROCS": "33",
 							"GOGC":       "400",
 						},
+					},
+					OutputRecordTypes: &outputRecordTypes,
+					ConnectionHeartbeatInterval: &metav1.Duration{
+						Duration: conntrackHeartbeatInterval,
+					},
+					ConnectionEndTimeout: &metav1.Duration{
+						Duration: conntrackEndTimeout,
 					},
 				}
 				fc.Spec.Loki = flowslatest.FlowCollectorLoki{}

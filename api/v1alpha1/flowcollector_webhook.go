@@ -18,9 +18,11 @@ package v1alpha1
 
 import (
 	"fmt"
+
 	"github.com/netobserv/network-observability-operator/api/v1beta1"
 	utilconversion "github.com/netobserv/network-observability-operator/pkg/conversion"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiconversion "k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
@@ -36,9 +38,19 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	copy(dst.Status.Conditions, r.Status.Conditions)
 
 	// Manually restore data.
-	restored := &FlowCollector{}
+	restored := &v1beta1.FlowCollector{}
 	if ok, err := utilconversion.UnmarshalData(r, restored); err != nil || !ok {
 		return err
+	}
+
+	dst.Spec.Processor.OutputRecordTypes = restored.Spec.Processor.OutputRecordTypes
+
+	if restored.Spec.Processor.ConnectionHeartbeatInterval != nil {
+		dst.Spec.Processor.ConnectionHeartbeatInterval = restored.Spec.Processor.ConnectionHeartbeatInterval
+	}
+
+	if restored.Spec.Processor.ConnectionEndTimeout != nil {
+		dst.Spec.Processor.ConnectionEndTimeout = restored.Spec.Processor.ConnectionEndTimeout
 	}
 
 	return nil
@@ -69,4 +81,11 @@ func (r *FlowCollectorList) ConvertTo(dstRaw conversion.Hub) error {
 func (r *FlowCollectorList) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*v1beta1.FlowCollectorList)
 	return Convert_v1beta1_FlowCollectorList_To_v1alpha1_FlowCollectorList(src, r, nil)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta1 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta1_FlowCollectorFLP_To_v1alpha1_FlowCollectorFLP(in *v1beta1.FlowCollectorFLP, out *FlowCollectorFLP, s apiconversion.Scope) error {
+	return autoConvert_v1beta1_FlowCollectorFLP_To_v1alpha1_FlowCollectorFLP(in, out, s)
 }

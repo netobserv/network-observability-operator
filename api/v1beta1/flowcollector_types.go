@@ -282,6 +282,11 @@ type FLPMetrics struct {
 	IgnoreTags []string `json:"ignoreTags,omitempty"`
 }
 
+const (
+	OutputRecordFlows = "FLOWS"
+	OutputRecordAll   = "ALL"
+)
+
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector
 type FlowCollectorFLP struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
@@ -353,6 +358,23 @@ type FlowCollectorFLP struct {
 	// +optional
 	// kafkaConsumerBatchSize indicates to the broker the maximum batch size, in bytes, that the consumer will accept. Ignored when not using Kafka. Default: 10MB.
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
+
+	// outputRecordTypes defines the desired record types to generate. Possible values are "FLOWS" (default) to export
+	// flowLogs, or "ALL" to generate both flowLogs and newConnection, heartbeat, endConnection events
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum:="FLOWS";"ALL"
+	// +kubebuilder:default:=FLOWS
+	OutputRecordTypes *string `json:"outputRecordTypes,omitempty"`
+
+	//+kubebuilder:default:="30s"
+	// +optional
+	// connection heartbeat interval is the duration of time to wait between heartbeat reports of a connection
+	ConnectionHeartbeatInterval *metav1.Duration `json:"connectionHeartbeatInterval,omitempty"`
+
+	//+kubebuilder:default:="10s"
+	// +optional
+	// connection end timeout is the duration of time to wait from the last flow log to end a connection
+	ConnectionEndTimeout *metav1.Duration `json:"connectionEndTimeout,omitempty"`
 
 	// Debug allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations

@@ -44,6 +44,9 @@ spec:
     kafkaConsumerAutoscaler: null
     kafkaConsumerQueueCapacity: 1000
     kafkaConsumerBatchSize: 10485760
+    outputRecordTypes: FLOWS
+    connectionHeartbeatInterval: 30s
+    connectionEndTimeout: 10s
   kafka:
     address: "kafka-cluster-kafka-bootstrap.netobserv"
     topic: network-flows
