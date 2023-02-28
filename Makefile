@@ -17,7 +17,11 @@ export FLP_VERSION ?= v0.1.8
 export BPF_VERSION ?= v0.3.0
 
 # Allows building bundles in Mac replacing BSD 'sed' command by GNU-compatible 'gsed'
+ifeq (,$(shell which gsed 2>/dev/null))
 SED ?= sed
+else
+SED ?= gsed
+endif
 
 # Port-forward (for loki/grafana deployments)
 PORT_FWD ?= true
@@ -278,7 +282,7 @@ deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/c
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/openshift | kubectl apply -f -
 
-deploy-latest: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy-latest: kustomize ## Deploy latest controller, configured with all latest related images using "main" tag
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE_TAG_BASE):main
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
