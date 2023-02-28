@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
@@ -47,7 +48,7 @@ type Aggregate struct {
 	Definition api.AggregateDefinition
 	cache      *utils.TimedCache
 	mutex      *sync.Mutex
-	expiryTime int64
+	expiryTime time.Duration
 }
 
 type GroupState struct {
@@ -115,7 +116,7 @@ func getInitValue(operation string) float64 {
 		// Actually, in OperationRawValues the value is ignored.
 		return 0
 	default:
-		log.Panicf("unkown operation %v", operation)
+		log.Panicf("unknown operation %v", operation)
 		return 0
 	}
 }

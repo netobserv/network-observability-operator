@@ -27,11 +27,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var defaultExpiryTime = 60 * 10 // 10 minutes
+var defaultExpiryTime = 10 * time.Minute
 
 type Aggregates struct {
 	Aggregates []Aggregate
-	expiryTime int64
+	expiryTime time.Duration
 }
 
 type Definitions []api.AggregateDefinition
@@ -61,7 +61,7 @@ func (aggregates *Aggregates) GetMetrics() []config.GenericMap {
 func (aggregates *Aggregates) AddAggregate(aggregateDefinition api.AggregateDefinition) []Aggregate {
 	aggregate := Aggregate{
 		Definition: aggregateDefinition,
-		cache:      utils.NewTimedCache(),
+		cache:      utils.NewTimedCache(0),
 		mutex:      &sync.Mutex{},
 		expiryTime: aggregates.expiryTime,
 	}
@@ -72,7 +72,7 @@ func (aggregates *Aggregates) AddAggregate(aggregateDefinition api.AggregateDefi
 
 func (aggregates *Aggregates) cleanupExpiredEntriesLoop() {
 
-	ticker := time.NewTicker(time.Duration(aggregates.expiryTime) * time.Second)
+	ticker := time.NewTicker(aggregates.expiryTime)
 	go func() {
 		for {
 			select {
@@ -86,18 +86,16 @@ func (aggregates *Aggregates) cleanupExpiredEntriesLoop() {
 }
 
 func (aggregates *Aggregates) cleanupExpiredEntries() {
-
 	for _, aggregate := range aggregates.Aggregates {
 		aggregate.mutex.Lock()
-		aggregate.cache.CleanupExpiredEntries(aggregate.expiryTime, aggregate)
+		aggregate.cache.CleanupExpiredEntries(aggregate.expiryTime, aggregate.Cleanup)
 		aggregate.mutex.Unlock()
 	}
-
 }
 
 func NewAggregatesFromConfig(definitions []api.AggregateDefinition) (Aggregates, error) {
 	aggregates := Aggregates{
-		expiryTime: int64(defaultExpiryTime),
+		expiryTime: defaultExpiryTime,
 	}
 
 	for _, aggregateDefinition := range definitions {

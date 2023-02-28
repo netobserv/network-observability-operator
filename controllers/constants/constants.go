@@ -26,9 +26,15 @@ const (
 	ConversionAnnotation   = AnnotationDomain + "/conversion-data"
 	CertCASuffix           = "ca"
 	CertUserSuffix         = "user"
+
+	FlowLogRecordType       = "flowLog"
+	NewConnectionRecordType = "newConnection"
+	HeartbeatRecordType     = "heartbeat"
+	EndConnectionRecordType = "endConnection"
 )
 
 var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}
+var LokiConnectionIndexFields = []string{"_RecordType"}
 var FlowCollectorName = types.NamespacedName{Name: "cluster"}
 
 func CertCAName(prefix string) string   { return prefix + "-" + CertCASuffix }
