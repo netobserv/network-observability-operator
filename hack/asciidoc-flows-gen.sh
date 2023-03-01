@@ -27,3 +27,5 @@ echo -e "\n" >> $ADOC
 kramdoc -o - <(curl -fsSL ${MD_SOURCE}/enums/FlowDirection.md) \
   | sed -r 's/^= /== /' \
   | sed -r '/Enumeration Members/d' >> $ADOC
+
+sed -i -r "s/^=== (.+)/\1::/" $ADOC

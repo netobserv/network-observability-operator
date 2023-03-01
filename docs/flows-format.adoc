@@ -15,7 +15,7 @@ When using this specification as a reference for exporting flows to Kafka, you m
 == Labels
 
 
-=== SrcK8S_Namespace
+SrcK8S_Namespace::
 
 • `Optional` *SrcK8S_Namespace*: `string`
 
@@ -23,7 +23,7 @@ Source namespace
 
 '''
 
-=== DstK8S_Namespace
+DstK8S_Namespace::
 
 • `Optional` *DstK8S_Namespace*: `string`
 
@@ -31,7 +31,7 @@ Destination namespace
 
 '''
 
-=== SrcK8S_OwnerName
+SrcK8S_OwnerName::
 
 • `Optional` *SrcK8S_OwnerName*: `string`
 
@@ -39,7 +39,7 @@ Source owner, such as Deployment, StatefulSet, etc.
 
 '''
 
-=== DstK8S_OwnerName
+DstK8S_OwnerName::
 
 • `Optional` *DstK8S_OwnerName*: `string`
 
@@ -47,7 +47,7 @@ Destination owner, such as Deployment, StatefulSet, etc.
 
 '''
 
-=== FlowDirection
+FlowDirection::
 
 • *FlowDirection*: <<Enumeration: FlowDirection,`FlowDirection`>>
 
@@ -57,7 +57,7 @@ Flow direction from the node observation point
 == Fields
 
 
-=== SrcAddr
+SrcAddr::
 
 • *SrcAddr*: `string`
 
@@ -65,7 +65,7 @@ Source IP address (ipv4 or ipv6)
 
 '''
 
-=== DstAddr
+DstAddr::
 
 • *DstAddr*: `string`
 
@@ -73,7 +73,7 @@ Destination IP address (ipv4 or ipv6)
 
 '''
 
-=== SrcMac
+SrcMac::
 
 • *SrcMac*: `string`
 
@@ -81,7 +81,7 @@ Source MAC address
 
 '''
 
-=== DstMac
+DstMac::
 
 • *DstMac*: `string`
 
@@ -89,7 +89,7 @@ Destination MAC address
 
 '''
 
-=== SrcK8S_Name
+SrcK8S_Name::
 
 • `Optional` *SrcK8S_Name*: `string`
 
@@ -97,7 +97,7 @@ Name of the source matched Kubernetes object, such as Pod name, Service name, et
 
 '''
 
-=== DstK8S_Name
+DstK8S_Name::
 
 • `Optional` *DstK8S_Name*: `string`
 
@@ -105,7 +105,7 @@ Name of the destination matched Kubernetes object, such as Pod name, Service nam
 
 '''
 
-=== SrcK8S_Type
+SrcK8S_Type::
 
 • `Optional` *SrcK8S_Type*: `string`
 
@@ -113,7 +113,7 @@ Kind of the source matched Kubernetes object, such as Pod, Service, etc.
 
 '''
 
-=== DstK8S_Type
+DstK8S_Type::
 
 • `Optional` *DstK8S_Type*: `string`
 
@@ -121,7 +121,7 @@ Kind of the destination matched Kubernetes object, such as Pod name, Service nam
 
 '''
 
-=== SrcPort
+SrcPort::
 
 • *SrcPort*: `number`
 
@@ -129,7 +129,7 @@ Source port
 
 '''
 
-=== DstPort
+DstPort::
 
 • *DstPort*: `number`
 
@@ -137,7 +137,7 @@ Destination port
 
 '''
 
-=== SrcK8S_OwnerType
+SrcK8S_OwnerType::
 
 • `Optional` *SrcK8S_OwnerType*: `string`
 
@@ -145,7 +145,7 @@ Kind of the source Kubernetes owner, such as Deployment, StatefulSet, etc.
 
 '''
 
-=== DstK8S_OwnerType
+DstK8S_OwnerType::
 
 • `Optional` *DstK8S_OwnerType*: `string`
 
@@ -153,7 +153,7 @@ Kind of the destination Kubernetes owner, such as Deployment, StatefulSet, etc.
 
 '''
 
-=== SrcK8S_HostIP
+SrcK8S_HostIP::
 
 • `Optional` *SrcK8S_HostIP*: `string`
 
@@ -161,7 +161,7 @@ Source node IP
 
 '''
 
-=== DstK8S_HostIP
+DstK8S_HostIP::
 
 • `Optional` *DstK8S_HostIP*: `string`
 
@@ -169,7 +169,7 @@ Destination node IP
 
 '''
 
-=== SrcK8S_HostName
+SrcK8S_HostName::
 
 • `Optional` *SrcK8S_HostName*: `string`
 
@@ -177,7 +177,7 @@ Source node name
 
 '''
 
-=== DstK8S_HostName
+DstK8S_HostName::
 
 • `Optional` *DstK8S_HostName*: `string`
 
@@ -185,7 +185,7 @@ Destination node name
 
 '''
 
-=== Proto
+Proto::
 
 • *Proto*: `number`
 
@@ -193,7 +193,7 @@ L4 protocol
 
 '''
 
-=== Packets
+Packets::
 
 • *Packets*: `number`
 
@@ -201,7 +201,7 @@ Number of packets in this flow
 
 '''
 
-=== Bytes
+Bytes::
 
 • *Bytes*: `number`
 
@@ -209,7 +209,7 @@ Number of bytes in this flow
 
 '''
 
-=== TimeFlowStartMs
+TimeFlowStartMs::
 
 • *TimeFlowStartMs*: `number`
 
@@ -217,7 +217,7 @@ Start timestamp of this flow, in milliseconds
 
 '''
 
-=== TimeFlowEndMs
+TimeFlowEndMs::
 
 • *TimeFlowEndMs*: `number`
 
@@ -225,7 +225,7 @@ End timestamp of this flow, in milliseconds
 
 '''
 
-=== TimeReceived
+TimeReceived::
 
 • *TimeReceived*: `number`
 
@@ -235,7 +235,7 @@ Timestamp when this flow was received and processed by the flow collector, in se
 == Enumeration: FlowDirection
 
 
-=== Ingress
+Ingress::
 
 • *Ingress* = `"0"`
 
@@ -243,7 +243,7 @@ Incoming traffic, from node observation point
 
 '''
 
-=== Egress
+Egress::
 
 • *Egress* = `"1"`
 
