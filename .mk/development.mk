@@ -64,7 +64,7 @@ deploy-kafka-tls:
 	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
 	kubectl apply -f "https://strimzi.io/install/latest?namespace="$(NAMESPACE) -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/metrics-config.yaml" -n $(NAMESPACE)
-	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/tls.yaml" | envsubst | kubectl apply -n $(NAMESPACE) -f - 
+	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/tls.yaml" | envsubst | kubectl apply -n $(NAMESPACE) -f -
 	@echo -e "\n==>Using storage class ${DEFAULT_SC}"
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/topic.yaml" -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/user.yaml" -n $(NAMESPACE)
@@ -164,3 +164,10 @@ set-plugin-image:
 	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
 	kubectl rollout status -n $(NAMESPACE) --timeout=60s deployment netobserv-plugin
 	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-plugin
+
+.PHONY: set-release-kind-downstream
+set-release-kind-downstream:
+	kubectl  -n $(NAMESPACE) set env deployment netobserv-controller-manager -c "manager" DOWNSTREAM_DEPLOYMENT=true
+	@echo -e "\n==> Redeploying..."
+	kubectl rollout status -n $(NAMESPACE) --timeout=60s deployment netobserv-controller-manager
+	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager

@@ -32,6 +32,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/conditions"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
@@ -62,9 +63,9 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme, co
 
 //+kubebuilder:rbac:groups=apps,resources=deployments;daemonsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=namespaces;services;serviceaccounts;configmaps,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
-//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles,verbs=get;create;delete;watch;list
-//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;create;delete;update;watch
+//+kubebuilder:rbac:groups=core,resources=secrets;endpoints,verbs=get;list;watch
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;roles,verbs=get;create;delete;watch;list
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings;rolebindings,verbs=get;list;create;delete;update;watch
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;delete;update;patch;list;watch
 //+kubebuilder:rbac:groups=operator.openshift.io,resources=consoles,verbs=get;update;list;update;watch
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors,verbs=get;list;watch;create;update;patch;delete
@@ -96,20 +97,14 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	ns := getNamespaceName(desired)
 	r.certWatcher.Reset(ns)
-	// If namespace does not exist, we create it
-	nsExist, err := r.namespaceExist(ctx, ns)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-	if !nsExist {
-		err = r.Create(ctx, buildNamespace(ns))
-		if err != nil {
-			return ctrl.Result{}, r.failure(ctx, conditions.CannotCreateNamespace(err), desired)
-		}
-	}
 
 	clientHelper := r.newClientHelper(desired)
 	previousNamespace := desired.Status.Namespace
+
+	err = r.reconcileOperator(ctx, clientHelper, ns, desired)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	// Create reconcilers
 	flpReconciler := flowlogspipeline.NewReconciler(ctx, clientHelper, ns, previousNamespace, r.config.FlowlogsPipelineImage, &r.permissions, r.availableAPIs)
@@ -297,16 +292,48 @@ func getNamespaceName(desired *flowslatest.FlowCollector) string {
 	return constants.DefaultOperatorNamespace
 }
 
-func (r *FlowCollectorReconciler) namespaceExist(ctx context.Context, nsName string) (bool, error) {
-	err := r.Get(ctx, types.NamespacedName{Name: nsName}, &corev1.Namespace{})
+func (r *FlowCollectorReconciler) namespaceExist(ctx context.Context, nsName string) (*corev1.Namespace, error) {
+	ns := &corev1.Namespace{}
+	err := r.Get(ctx, types.NamespacedName{Name: nsName}, ns)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return false, nil
+			return nil, nil
 		}
 		log.FromContext(ctx).Error(err, "Failed to get namespace")
-		return false, err
+		return nil, err
 	}
-	return true, nil
+	return ns, nil
+}
+
+func (r *FlowCollectorReconciler) reconcileOperator(ctx context.Context, clientHelper reconcilers.ClientHelper, ns string, desired *flowslatest.FlowCollector) error {
+	// If namespace does not exist, we create it
+	nsExist, err := r.namespaceExist(ctx, ns)
+	if err != nil {
+		return err
+	}
+	desiredNs := buildNamespace(ns, r.config.DownstreamDeployment)
+	if nsExist == nil {
+		err = r.Create(ctx, desiredNs)
+		if err != nil {
+			return r.failure(ctx, conditions.CannotCreateNamespace(err), desired)
+		}
+	} else if !helper.IsSubSet(nsExist.ObjectMeta.Labels, desiredNs.ObjectMeta.Labels) {
+		err = r.Update(ctx, desiredNs)
+		if err != nil {
+			return err
+		}
+	}
+	if r.config.DownstreamDeployment {
+		desiredRole := buildRoleMonitoringReader(ns)
+		if err := clientHelper.ReconcileRole(ctx, desiredRole); err != nil {
+			return err
+		}
+		desiredBinding := buildRoleBindingMonitoringReader(ns)
+		if err := clientHelper.ReconcileRoleBinding(ctx, desiredBinding); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // checkFinalizer returns true (and/or error) if the calling function needs to return
