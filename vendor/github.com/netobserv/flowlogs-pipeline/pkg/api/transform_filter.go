@@ -24,9 +24,10 @@ type TransformFilter struct {
 type TransformFilterOperationEnum struct {
 	RemoveField              string `yaml:"remove_field" json:"remove_field" doc:"removes the field from the entry"`
 	RemoveEntryIfExists      string `yaml:"remove_entry_if_exists" json:"remove_entry_if_exists" doc:"removes the entry if the field exists"`
-	RemoveEntryIfDoesntExist string `yaml:"remove_entry_if_doesnt_exist" json:"remove_entry_if_doesnt_exist" doc:"removes the entry if the field doesnt exist"`
+	RemoveEntryIfDoesntExist string `yaml:"remove_entry_if_doesnt_exist" json:"remove_entry_if_doesnt_exist" doc:"removes the entry if the field does not exist"`
 	RemoveEntryIfEqual       string `yaml:"remove_entry_if_equal" json:"remove_entry_if_equal" doc:"removes the entry if the field value equals specified value"`
 	RemoveEntryIfNotEqual    string `yaml:"remove_entry_if_not_equal" json:"remove_entry_if_not_equal" doc:"removes the entry if the field value does not equal specified value"`
+	AddFieldIfDoesntExist    string `yaml:"add_field_if_doesnt_exist" json:"add_field_if_doesnt_exist" doc:"adds a field to the entry if the field does not exist"`
 }
 
 func TransformFilterOperationName(operation string) string {

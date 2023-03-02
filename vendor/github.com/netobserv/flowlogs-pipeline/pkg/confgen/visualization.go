@@ -25,6 +25,7 @@ import (
 
 type VisualizationGrafana struct {
 	Expr      string `yaml:"expr"`
+	Legend    string `yaml:"legendFormat"`
 	Type      string `yaml:"type"`
 	Title     string `yaml:"title"`
 	Dashboard string `yaml:"dashboard"`

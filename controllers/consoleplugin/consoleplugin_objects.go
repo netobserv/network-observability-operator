@@ -149,21 +149,27 @@ func tokenPath(desiredLoki *flowslatest.FlowCollectorLoki) string {
 	return ""
 }
 
-func buildArgs(desired *flowslatest.FlowCollectorConsolePlugin, desiredLoki *flowslatest.FlowCollectorLoki) []string {
-	querierURL := querierURL(desiredLoki)
-	statusURL := statusURL(desiredLoki)
+func buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
+	querierURL := querierURL(&desired.Loki)
+	statusURL := statusURL(&desired.Loki)
+
+	// check for connection traking to list indexes
+	indexFields := constants.LokiIndexFields
+	if desired.Processor.OutputRecordTypes != nil && *desired.Processor.OutputRecordTypes == flowslatest.OutputRecordAll {
+		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
+	}
 
 	args := []string{
 		"-cert", "/var/serving-cert/tls.crt",
 		"-key", "/var/serving-cert/tls.key",
 		"-loki", querierURL,
-		"-loki-labels", strings.Join(constants.LokiIndexFields, ","),
-		"-loki-tenant-id", desiredLoki.TenantID,
-		"-loglevel", desired.LogLevel,
+		"-loki-labels", strings.Join(indexFields, ","),
+		"-loki-tenant-id", desired.Loki.TenantID,
+		"-loglevel", desired.ConsolePlugin.LogLevel,
 		"-frontend-config", filepath.Join(configPath, configFile),
 	}
 
-	if helper.LokiForwardUserToken(desiredLoki) {
+	if helper.LokiForwardUserToken(&desired.Loki) {
 		args = append(args, "-loki-forward-user-token")
 	}
 
@@ -171,15 +177,15 @@ func buildArgs(desired *flowslatest.FlowCollectorConsolePlugin, desiredLoki *flo
 		args = append(args, "-loki-status", statusURL)
 	}
 
-	if desiredLoki.TLS.Enable {
-		if desiredLoki.TLS.InsecureSkipVerify {
+	if desired.Loki.TLS.Enable {
+		if desired.Loki.TLS.InsecureSkipVerify {
 			args = append(args, "-loki-skip-tls")
 		} else {
-			args = append(args, "--loki-ca-path", helper.GetCACertPath(&desiredLoki.TLS, lokiCerts))
+			args = append(args, "--loki-ca-path", helper.GetCACertPath(&desired.Loki.TLS, lokiCerts))
 		}
 	}
-	if helper.LokiUseHostToken(desiredLoki) {
-		args = append(args, "-loki-token-path", tokenPath(desiredLoki))
+	if helper.LokiUseHostToken(&desired.Loki) {
+		args = append(args, "-loki-token-path", tokenPath(&desired.Loki))
 	}
 	return args
 }
@@ -215,7 +221,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 	},
 	}
 
-	args := buildArgs(&b.desired.ConsolePlugin, &b.desired.Loki)
+	args := buildArgs(b.desired)
 	if b.desired != nil && b.desired.Loki.TLS.Enable && !b.desired.Loki.TLS.InsecureSkipVerify {
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts, b.cWatcher)
 	}
@@ -299,7 +305,18 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
 func (b *builder) configMap() (*corev1.ConfigMap, string) {
+	outputRecordTypes := []string{constants.FlowLogRecordType}
+	if b.desired.Processor.OutputRecordTypes != nil && *b.desired.Processor.OutputRecordTypes == flowslatest.OutputRecordAll {
+		outputRecordTypes = []string{
+			constants.FlowLogRecordType,
+			constants.NewConnectionRecordType,
+			constants.HeartbeatRecordType,
+			constants.EndConnectionRecordType,
+		}
+	}
+
 	config := map[string]interface{}{
+		"recordTypes":     outputRecordTypes,
 		"portNaming":      b.desired.ConsolePlugin.PortNaming,
 		"quickFilters":    b.desired.ConsolePlugin.QuickFilters,
 		"alertNamespaces": []string{b.namespace},

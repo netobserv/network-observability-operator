@@ -29,18 +29,18 @@ const (
 
 type ConnTrack struct {
 	// TODO: should by a pointer instead?
-	KeyDefinition            KeyDefinition `yaml:"keyDefinition,omitempty" doc:"fields that are used to identify the connection"`
-	OutputRecordTypes        []string      `yaml:"outputRecordTypes,omitempty" enum:"ConnTrackOutputRecordTypeEnum" doc:"output record types to emit"`
-	OutputFields             []OutputField `yaml:"outputFields,omitempty" doc:"list of output fields"`
-	EndConnectionTimeout     Duration      `yaml:"endConnectionTimeout,omitempty" doc:"duration of time to wait from the last flow log to end a connection"`
-	UpdateConnectionInterval Duration      `yaml:"updateConnectionInterval,omitempty" doc:"duration of time to wait between update reports of a connection"`
+	KeyDefinition         KeyDefinition              `yaml:"keyDefinition,omitempty" doc:"fields that are used to identify the connection"`
+	OutputRecordTypes     []string                   `yaml:"outputRecordTypes,omitempty" enum:"ConnTrackOutputRecordTypeEnum" doc:"output record types to emit"`
+	OutputFields          []OutputField              `yaml:"outputFields,omitempty" doc:"list of output fields"`
+	Scheduling            []ConnTrackSchedulingGroup `yaml:"scheduling,omitempty" doc:"list of timeouts and intervals to apply per selector"`
+	MaxConnectionsTracked int                        `yaml:"maxConnectionsTracked,omitempty" doc:"maximum number of connections we keep in our cache (0 means no limit)"`
 }
 
 type ConnTrackOutputRecordTypeEnum struct {
-	NewConnection    string `yaml:"newConnection" doc:"New connection"`
-	EndConnection    string `yaml:"endConnection" doc:"End connection"`
-	UpdateConnection string `yaml:"updateConnection" doc:"Update connection"`
-	FlowLog          string `yaml:"flowLog" doc:"Flow log"`
+	NewConnection string `yaml:"newConnection" doc:"New connection"`
+	EndConnection string `yaml:"endConnection" doc:"End connection"`
+	Heartbeat     string `yaml:"heartbeat" doc:"Heartbeat"`
+	FlowLog       string `yaml:"flowLog" doc:"Flow log"`
 }
 
 func ConnTrackOutputRecordTypeName(operation string) string {
@@ -81,6 +81,12 @@ type ConnTrackOperationEnum struct {
 	Count string `yaml:"count" doc:"count"`
 	Min   string `yaml:"min" doc:"min"`
 	Max   string `yaml:"max" doc:"max"`
+}
+
+type ConnTrackSchedulingGroup struct {
+	Selector             map[string]interface{} `yaml:"selector,omitempty" doc:"key-value map to match against connection fields to apply this scheduling"`
+	EndConnectionTimeout Duration               `yaml:"endConnectionTimeout,omitempty" doc:"duration of time to wait from the last flow log to end a connection"`
+	HeartbeatInterval    Duration               `yaml:"heartbeatInterval,omitempty" doc:"duration of time to wait between heartbeat reports of a connection"`
 }
 
 func ConnTrackOperationName(operation string) string {
@@ -161,6 +167,40 @@ func (ct *ConnTrack) Validate() error {
 				msg: fmt.Errorf("undefined output record type %q", ort)}
 		}
 	}
+
+	definedKeys := map[string]struct{}{}
+	for _, fg := range ct.KeyDefinition.FieldGroups {
+		for _, k := range fg.Fields {
+			addToSet(definedKeys, k)
+		}
+	}
+	for i, group := range ct.Scheduling {
+		for k := range group.Selector {
+			if _, found := definedKeys[k]; !found {
+				return conntrackInvalidError{undefinedSelectorKey: true,
+					msg: fmt.Errorf("selector key %q in scheduling group %v is not defined in the keys", k, i)}
+			}
+		}
+	}
+
+	numOfDefault := 0
+	for i, group := range ct.Scheduling {
+		isDefaultSelector := (len(group.Selector) == 0)
+		isLastGroup := (i == len(ct.Scheduling)-1)
+		if isDefaultSelector {
+			numOfDefault++
+		}
+		if isDefaultSelector && !isLastGroup {
+			return conntrackInvalidError{defaultGroupAndNotLast: true,
+				msg: fmt.Errorf("scheduling group %v has a default selector but is not the last scheduling group", i)}
+		}
+	}
+
+	if numOfDefault != 1 {
+		return conntrackInvalidError{exactlyOneDefaultSelector: true,
+			msg: fmt.Errorf("found %v default selectors. There should be exactly 1", numOfDefault)}
+	}
+
 	return nil
 }
 
@@ -191,7 +231,7 @@ func isOutputRecordTypeValid(value string) bool {
 	switch value {
 	case ConnTrackOutputRecordTypeName("NewConnection"):
 	case ConnTrackOutputRecordTypeName("EndConnection"):
-	case ConnTrackOutputRecordTypeName("UpdateConnection"):
+	case ConnTrackOutputRecordTypeName("Heartbeat"):
 	case ConnTrackOutputRecordTypeName("FlowLog"):
 	default:
 		valid = false
@@ -210,6 +250,9 @@ type conntrackInvalidError struct {
 	undefinedFieldGroupBRef   bool
 	undefinedFieldGroupRef    bool
 	unknownOutputRecord       bool
+	undefinedSelectorKey      bool
+	defaultGroupAndNotLast    bool
+	exactlyOneDefaultSelector bool
 }
 
 func (err conntrackInvalidError) Error() string {
@@ -219,7 +262,7 @@ func (err conntrackInvalidError) Error() string {
 	return ""
 }
 
-// Is makes 2 conntrackInvalidError objects equal if all their fields except for `msg` are the equal.
+// Is makes 2 conntrackInvalidError objects equal if all their fields except for `msg` are equal.
 // This is useful in the tests where we don't want to repeat the error message.
 // Is() is invoked by errors.Is() which is invoked by require.ErrorIs().
 func (err conntrackInvalidError) Is(target error) bool {

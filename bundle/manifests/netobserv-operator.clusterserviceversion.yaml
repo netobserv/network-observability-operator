@@ -294,6 +294,8 @@ metadata:
             },
             "namespace": "netobserv",
             "processor": {
+              "connectionEndTimeout": "10s",
+              "connectionHeartbeatInterval": "30s",
               "dropUnusedFields": true,
               "imagePullPolicy": "IfNotPresent",
               "kafkaConsumerAutoscaler": null,
@@ -310,6 +312,7 @@ metadata:
                   "port": 9102
                 }
               },
+              "outputRecordTypes": "FLOWS",
               "port": 2055,
               "profilePort": 6060,
               "resources": {
@@ -329,7 +332,7 @@ metadata:
     categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.0.2
-    createdAt: "2023-02-21T08:20:07Z"
+    createdAt: "2023-02-28T08:36:03Z"
     description: Network flows collector and monitoring solution
     operators.operatorframework.io/builder: operator-sdk-v1.25.3
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3

@@ -30,6 +30,7 @@ type Options struct {
 	DestConfFile             string
 	DestDocFile              string
 	DestGrafanaJsonnetFolder string
+	DestDashboardFolder      string
 	SrcFolder                string
 	SkipWithTags             []string
 	GenerateStages           []string

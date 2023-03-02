@@ -7,6 +7,7 @@ import (
 	"hash/fnv"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/confgen"
@@ -27,21 +28,23 @@ import (
 )
 
 const (
-	configVolume            = "config-volume"
-	configPath              = "/etc/flowlogs-pipeline"
-	configFile              = "config.json"
-	metricsConfigDir        = "metrics_definitions"
-	kafkaCerts              = "kafka-certs"
-	lokiCerts               = "loki-certs"
-	promCerts               = "prom-certs"
-	lokiToken               = "loki-token"
-	healthServiceName       = "health"
-	prometheusServiceName   = "prometheus"
-	profilePortName         = "pprof"
-	healthTimeoutSeconds    = 5
-	livenessPeriodSeconds   = 10
-	startupFailureThreshold = 5
-	startupPeriodSeconds    = 10
+	configVolume               = "config-volume"
+	configPath                 = "/etc/flowlogs-pipeline"
+	configFile                 = "config.json"
+	metricsConfigDir           = "metrics_definitions"
+	kafkaCerts                 = "kafka-certs"
+	lokiCerts                  = "loki-certs"
+	promCerts                  = "prom-certs"
+	lokiToken                  = "loki-token"
+	healthServiceName          = "health"
+	prometheusServiceName      = "prometheus"
+	profilePortName            = "pprof"
+	healthTimeoutSeconds       = 5
+	livenessPeriodSeconds      = 10
+	startupFailureThreshold    = 5
+	startupPeriodSeconds       = 10
+	conntrackEndTimeout        = 10 * time.Second
+	conntrackHeartbeatInterval = 30 * time.Second
 )
 
 type ConfKind string
@@ -293,6 +296,8 @@ func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, error) {
 
 func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	lastStage := *stage
+	indexFields := constants.LokiIndexFields
+
 	// Filter-out unused fields?
 	if b.desired.Processor.DropUnusedFields {
 		if helper.UseIPFIX(b.desired) {
@@ -302,6 +307,84 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		}
 		// Else: nothing for eBPF at the moment
 	}
+
+	// Connection tracking stage (only if OutputRecordTypes is set to ALL)
+	if b.desired.Processor.OutputRecordTypes != nil && *b.desired.Processor.OutputRecordTypes == flowslatest.OutputRecordAll {
+		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
+
+		endTimeout := conntrackEndTimeout
+		if b.desired.Processor.ConnectionEndTimeout != nil {
+			endTimeout = b.desired.Processor.ConnectionEndTimeout.Duration
+		}
+
+		heartbeatInterval := conntrackHeartbeatInterval
+		if b.desired.Processor.ConnectionHeartbeatInterval != nil {
+			heartbeatInterval = b.desired.Processor.ConnectionHeartbeatInterval.Duration
+		}
+
+		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{
+			KeyDefinition: api.KeyDefinition{
+				FieldGroups: []api.FieldGroup{
+					{Name: "src", Fields: []string{"SrcAddr", "SrcPort"}},
+					{Name: "dst", Fields: []string{"DstAddr", "DstPort"}},
+					{Name: "common", Fields: []string{"Proto"}},
+				},
+				Hash: api.ConnTrackHash{
+					FieldGroupRefs: []string{
+						"common",
+					},
+					FieldGroupARef: "src",
+					FieldGroupBRef: "dst",
+				},
+			},
+			OutputRecordTypes: []string{
+				constants.FlowLogRecordType,
+				constants.NewConnectionRecordType,
+				constants.HeartbeatRecordType,
+				constants.EndConnectionRecordType,
+			},
+			OutputFields: []api.OutputField{
+				{
+					Name:      "Bytes",
+					Operation: "sum",
+				},
+				{
+					Name:      "Bytes",
+					Operation: "sum",
+					SplitAB:   true,
+				},
+				{
+					Name:      "Packets",
+					Operation: "sum",
+				},
+				{
+					Name:      "Packets",
+					Operation: "sum",
+					SplitAB:   true,
+				},
+				{
+					Name:      "numFlowLogs",
+					Operation: "count",
+				},
+				{
+					Name:      "TimeFlowStartMs",
+					Operation: "min",
+				},
+				{
+					Name:      "TimeFlowEndMs",
+					Operation: "max",
+				},
+			},
+			Scheduling: []api.ConnTrackSchedulingGroup{
+				{
+					Selector:             nil, // Default group. Match all flowlogs
+					HeartbeatInterval:    api.Duration{Duration: heartbeatInterval},
+					EndConnectionTimeout: api.Duration{Duration: endTimeout},
+				},
+			},
+		})
+	}
+
 	// enrich stage (transform) configuration
 	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
 		Rules: api.NetworkTransformRules{{
@@ -315,7 +398,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		}, {
 			Type: api.ReinterpretDirectionRuleType,
 		}},
-		DirectionInfo: api.DirectionInfo{
+		DirectionInfo: api.NetworkTransformDirectionInfo{
 			ReporterIPField:    "AgentIP",
 			SrcHostField:       "SrcK8S_HostIP",
 			DstHostField:       "DstK8S_HostIP",
@@ -326,7 +409,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 
 	// loki stage (write) configuration
 	lokiWrite := api.WriteLoki{
-		Labels:         constants.LokiIndexFields,
+		Labels:         indexFields,
 		BatchSize:      int(b.desired.Loki.BatchSize),
 		BatchWait:      b.desired.Loki.BatchWait.ToUnstructured().(string),
 		MaxBackoff:     b.desired.Loki.MaxBackoff.ToUnstructured().(string),
