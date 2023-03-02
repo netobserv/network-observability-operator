@@ -24,6 +24,12 @@ jobs:
       run: make fmt && git diff --exit-code
     - name: build, lint, test
       run: make build lint test
+    - name: Report coverage
+      uses: codecov/codecov-action@v2.1.0
+      with:
+        files: ./cover.out
+        flags: unittests
+        fail_ci_if_error: true        
 
   bundle-check:
     runs-on: ubuntu-latest
