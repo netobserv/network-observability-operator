@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
 	"github.com/netobserv/network-observability-operator/controllers/operator"
@@ -13,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -22,6 +24,8 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"k8s.io/apimachinery/pkg/api/equality"
+
+	bpfdHelpers "github.com/redhat-et/bpfd/bpfd-operator/pkg/helpers"
 )
 
 const (
@@ -106,6 +110,9 @@ func (c *AgentController) Reconcile(
 	if err != nil {
 		return fmt.Errorf("fetching current EBPF Agent: %w", err)
 	}
+
+	bpfdEnabled := bpfdHelpers.IsBpfdDeployed()
+
 	if !helper.UseEBPF(&target.Spec) || c.previousPrivilegedNamespace != c.privilegedNamespace {
 		if current == nil {
 			rlog.Info("nothing to do, as the requested agent is not eBPF",
@@ -122,6 +129,18 @@ func (c *AgentController) Reconcile(
 			}
 			return fmt.Errorf("deleting eBPF agent: %w", err)
 		}
+
+		// Delete any bpfProgConfigs with the label app=netobserv
+		labelSelector := metav1.LabelSelector{MatchLabels: map[string]string{"app": "netobserv"}}
+		if bpfdEnabled {
+			rlog.Info("bpfd is enabled, deploying bpfProgramConfigs")
+			if err := c.desiredBpfdState(target.Spec.Agent.EBPF.Interfaces, &labelSelector, target); err != nil {
+				return err
+			}
+		} else {
+			rlog.Info("bpfd isn't enabled, not deploying bpfProgramConfigs")
+		}
+
 		// Current now has been deleted. Set it to nil to that it triggers actionCreate if we are changing namespace
 		current = nil
 	}
@@ -129,7 +148,7 @@ func (c *AgentController) Reconcile(
 	if err := c.permissions.Reconcile(ctx, &target.Spec.Agent.EBPF); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
-	desired := c.desired(target)
+	desired := c.desired(target, bpfdEnabled)
 
 	// Annotate pod with certificate reference so that it is reloaded if modified
 	if err := c.client.CertWatcher.AnnotatePod(ctx, c.client, &desired.Spec.Template, kafkaCerts); err != nil {
@@ -139,9 +158,27 @@ func (c *AgentController) Reconcile(
 	switch c.requiredAction(current, desired) {
 	case actionCreate:
 		rlog.Info("action: create agent")
+		// Create bpfdProgramConfig if bpfd is enabled
+		// TODO(astoycos) not enabled for exclude interfaces
+		if bpfdEnabled {
+			rlog.Info("bpfd is enabled, deploying bpfProgramConfigs")
+			if err := c.desiredBpfdState(target.Spec.Agent.EBPF.Interfaces, nil, target); err != nil {
+				return err
+			}
+		} else {
+			rlog.Info("bpfd isn't enabled, not deploying bpfProgramConfigs")
+		}
 		return c.client.CreateOwned(ctx, desired)
 	case actionUpdate:
 		rlog.Info("action: update agent")
+		if bpfdEnabled {
+			rlog.Info("bpfd is enabled, deploying bpfProgramConfigs")
+			if err := c.desiredBpfdState(target.Spec.Agent.EBPF.Interfaces, nil, target); err != nil {
+				return err
+			}
+		} else {
+			rlog.Info("bpfd isn't enabled, not deploying bpfProgramConfigs")
+		}
 		return c.client.UpdateOwned(ctx, current, desired)
 	default:
 		rlog.Info("action: nothing to do")
@@ -165,13 +202,94 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 	return &agentDS, nil
 }
 
-func (c *AgentController) desired(coll *flowslatest.FlowCollector) *v1.DaemonSet {
+func (c *AgentController) desiredBpfdState(interfaces []string, deleteLabels *metav1.LabelSelector, target *flowslatest.FlowCollector) error {
+	bpfdClient := bpfdHelpers.GetClientOrDie()
+	flowCollectorScheme := k8sruntime.NewScheme()
+	if err := flowslatest.AddToScheme(flowCollectorScheme); err != nil {
+		return fmt.Errorf("failed to build flowcollector Scheme: %w", err)
+	}
+
+	if deleteLabels != nil {
+		return bpfdHelpers.DeleteBpfProgConfLabels(bpfdClient, deleteLabels)
+	}
+
+	for _, intf := range interfaces {
+		progConfEgr := bpfdHelpers.NewBpfProgramConfig(fmt.Sprintf("netobserv-flow-monitor-egress-%s", intf), bpfdHelpers.Tc)
+
+		// Add app label to make deletion easier
+		progConfEgr.Labels = map[string]string{"app": "netobserv"}
+		// Must match section name
+		progConfEgr.Spec.Name = "egress_flow_parse"
+		// Empty label selector selects all nodes
+		progConfEgr.Spec.NodeSelector = metav1.LabelSelector{}
+		// Attatch to the specified interface
+		progConfEgr.Spec.AttachPoint.NetworkMultiAttach.Interface = intf
+		// Set bytecode container image
+		progConfEgr.Spec.ByteCode = "image://quay.io/bpfd-bytecode/netobserv_egress:latest"
+		// Load on int Egress
+		progConfEgr.Spec.AttachPoint.NetworkMultiAttach.Direction = "EGRESS"
+		// Set Priority
+		progConfEgr.Spec.AttachPoint.NetworkMultiAttach.Priority = 50
+
+		err := bpfdHelpers.CreateOrUpdateOwnedBpfProgConf(bpfdClient, progConfEgr, target, flowCollectorScheme)
+		if err != nil {
+			return fmt.Errorf("failed to create bpfProgramConfig: %w", err)
+		}
+
+		if err := bpfdHelpers.WaitForBpfProgConfLoad(bpfdClient, progConfEgr.Name, 10*time.Second); err != nil {
+			return fmt.Errorf("failed to wait bpfProgramConfig readiness: %w", err)
+		}
+
+		progConfIng := bpfdHelpers.NewBpfProgramConfig(fmt.Sprintf("netobserv-flow-monitor-ingress-%s", intf), bpfdHelpers.Tc)
+
+		// add app label to make deletion easier
+		progConfIng.Labels = map[string]string{"app": "netobserv"}
+		// Must match section name
+		progConfIng.Spec.Name = "ingress_flow_parse"
+		// Empty label selector selects all nodes
+		progConfIng.Spec.NodeSelector = metav1.LabelSelector{}
+		// Attatch to the specified interface
+		progConfIng.Spec.AttachPoint.NetworkMultiAttach.Interface = intf
+		// Set bytecode container image
+		progConfIng.Spec.ByteCode = "image://quay.io/bpfd-bytecode/netobserv_ingress:latest"
+		// Load on int Ingress
+		progConfIng.Spec.AttachPoint.NetworkMultiAttach.Direction = "INGRESS"
+		// Set Priority
+		progConfIng.Spec.AttachPoint.NetworkMultiAttach.Priority = 50
+
+		err = bpfdHelpers.CreateOrUpdateOwnedBpfProgConf(bpfdClient, progConfIng, target, flowCollectorScheme)
+		if err != nil {
+			return fmt.Errorf("failed to create bpfProgramConfig: %w", err)
+		}
+
+		if err := bpfdHelpers.WaitForBpfProgConfLoad(bpfdClient, progConfIng.Name, 10*time.Second); err != nil {
+			return fmt.Errorf("failed to wait bpfProgramConfig readiness: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (c *AgentController) desired(coll *flowslatest.FlowCollector, bpfdEnabled bool) *v1.DaemonSet {
 	if coll == nil || !helper.UseEBPF(&coll.Spec) {
 		return nil
 	}
 	version := helper.ExtractVersion(c.config.EBPFAgentImage)
 	volumeMounts := []corev1.VolumeMount{}
 	volumes := []corev1.Volume{}
+	if bpfdEnabled {
+		volumes = append(volumes, corev1.Volume{
+			Name: "bpfd-fs",
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{Path: "/run/bpfd/fs/maps"},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "bpfd-fs",
+			MountPath: "/run/bpfd/fs/maps",
+		})
+	}
 	if helper.UseKafka(&coll.Spec) && coll.Spec.Kafka.TLS.Enable {
 		// NOTE: secrets need to be copied from the base netobserv namespace to the privileged one.
 		// This operation must currently be performed manually (run "make fix-ebpf-kafka-tls"). It could be automated here.
@@ -219,6 +337,10 @@ func (c *AgentController) desired(coll *flowslatest.FlowCollector) *v1.DaemonSet
 
 func (c *AgentController) envConfig(coll *flowslatest.FlowCollector) []corev1.EnvVar {
 	var config []corev1.EnvVar
+	config = append(config, corev1.EnvVar{
+		Name:      "NODENAME",
+		ValueFrom: &corev1.EnvVarSource{FieldRef: &corev1.ObjectFieldSelector{FieldPath: "spec.nodeName"}},
+	})
 	if coll.Spec.Agent.EBPF.CacheActiveTimeout != "" {
 		config = append(config, corev1.EnvVar{
 			Name:  envCacheActiveTimeout,

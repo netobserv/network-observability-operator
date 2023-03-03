@@ -356,6 +356,15 @@ resources are the compute resources required by this container. More info: https
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+ This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+ This field is immutable.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -369,6 +378,33 @@ resources are the compute resources required by this container. More info: https
           Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.resources.claims[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfresources)</sup></sup>
+
+
+
+ResourceClaim references one entry in PodSpec.ResourceClaims.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -1092,7 +1128,7 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
         <td><b>kind</b></td>
         <td>string</td>
         <td>
-          Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"<br/>
+          Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -1643,6 +1679,15 @@ resources, in terms of compute resources, required by this container. More info:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+ This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+ This field is immutable.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -1656,6 +1701,33 @@ resources, in terms of compute resources, required by this container. More info:
           Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.resources.claims[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginresources)</sup></sup>
+
+
+
+ResourceClaim references one entry in PodSpec.ResourceClaims.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -3020,7 +3092,7 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
         <td><b>kind</b></td>
         <td>string</td>
         <td>
-          Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"<br/>
+          Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -3656,6 +3728,15 @@ resources are the compute resources required by this container. More info: https
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessorresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+ This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+ This field is immutable.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -3669,6 +3750,33 @@ resources are the compute resources required by this container. More info: https
           Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.resources.claims[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorresources)</sup></sup>
+
+
+
+ResourceClaim references one entry in PodSpec.ResourceClaims.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -3712,8 +3820,9 @@ FlowCollectorStatus defines the observed state of FlowCollector
 
 
 
-Condition contains details for one aspect of the current state of this API Resource. --- This struct is intended for direct use as an array at the field path .status.conditions.  For example, type FooStatus struct{     // Represents the observations of a foo's current state.     // Known .status.conditions.type are: "Available", "Progressing", and "Degraded"     // +patchMergeKey=type     // +patchStrategy=merge     // +listType=map     // +listMapKey=type     Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"` 
-     // other fields }
+Condition contains details for one aspect of the current state of this API Resource. --- This struct is intended for direct use as an array at the field path .status.conditions.  For example, 
+ 	type FooStatus struct{ 	    // Represents the observations of a foo's current state. 	    // Known .status.conditions.type are: "Available", "Progressing", and "Degraded" 	    // +patchMergeKey=type 	    // +patchStrategy=merge 	    // +listType=map 	    // +listMapKey=type 	    Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"` 
+ 	    // other fields 	}
 
 <table>
     <thead>
@@ -4127,6 +4236,15 @@ resources are the compute resources required by this container. More info: https
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfresourcesclaimsindex-1">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+ This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+ This field is immutable.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -4140,6 +4258,33 @@ resources are the compute resources required by this container. More info: https
           Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.resources.claims[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfresources-1)</sup></sup>
+
+
+
+ResourceClaim references one entry in PodSpec.ResourceClaims.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -4863,7 +5008,7 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
         <td><b>kind</b></td>
         <td>string</td>
         <td>
-          Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"<br/>
+          Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -5414,6 +5559,15 @@ resources, in terms of compute resources, required by this container. More info:
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginresourcesclaimsindex-1">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+ This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+ This field is immutable.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -5427,6 +5581,33 @@ resources, in terms of compute resources, required by this container. More info:
           Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.resources.claims[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginresources-1)</sup></sup>
+
+
+
+ResourceClaim references one entry in PodSpec.ResourceClaims.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -6819,7 +7000,7 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
         <td><b>kind</b></td>
         <td>string</td>
         <td>
-          Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"<br/>
+          Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -7455,6 +7636,15 @@ resources are the compute resources required by this container. More info: https
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessorresourcesclaimsindex-1">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
+ This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
+ This field is immutable.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>limits</b></td>
         <td>map[string]int or string</td>
         <td>
@@ -7468,6 +7658,33 @@ resources are the compute resources required by this container. More info: https
           Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.resources.claims[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorresources-1)</sup></sup>
+
+
+
+ResourceClaim references one entry in PodSpec.ResourceClaims.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -7511,8 +7728,9 @@ FlowCollectorStatus defines the observed state of FlowCollector
 
 
 
-Condition contains details for one aspect of the current state of this API Resource. --- This struct is intended for direct use as an array at the field path .status.conditions.  For example, type FooStatus struct{     // Represents the observations of a foo's current state.     // Known .status.conditions.type are: "Available", "Progressing", and "Degraded"     // +patchMergeKey=type     // +patchStrategy=merge     // +listType=map     // +listMapKey=type     Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"` 
-     // other fields }
+Condition contains details for one aspect of the current state of this API Resource. --- This struct is intended for direct use as an array at the field path .status.conditions.  For example, 
+ 	type FooStatus struct{ 	    // Represents the observations of a foo's current state. 	    // Known .status.conditions.type are: "Available", "Progressing", and "Degraded" 	    // +patchMergeKey=type 	    // +patchStrategy=merge 	    // +listType=map 	    // +listMapKey=type 	    Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"` 
+ 	    // other fields 	}
 
 <table>
     <thead>
