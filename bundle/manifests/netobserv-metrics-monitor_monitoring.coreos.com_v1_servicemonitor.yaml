@@ -13,7 +13,7 @@ spec:
     scheme: https
     tlsConfig:
       caFile: /etc/prometheus/configmaps/serving-certs-ca-bundle/service-ca.crt
-      serverName: netobserv-metrics-service.openshift-operators.svc
+      serverName: netobserv-metrics-service.openshift-netobserv-operator.svc
   selector:
     matchLabels:
       control-plane: controller-manager
