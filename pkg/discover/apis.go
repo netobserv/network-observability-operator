@@ -3,6 +3,7 @@ package discover
 import (
 	"strings"
 
+	configv1 "github.com/openshift/api/config/v1"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	operatorv1 "github.com/openshift/api/operator/v1"
 	monitoring "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"
@@ -10,9 +11,10 @@ import (
 )
 
 var (
-	console    = "consoleplugins." + osv1alpha1.GroupName
-	cno        = "networks." + operatorv1.GroupName
-	svcMonitor = "servicemonitors." + monitoring.GroupName
+	consolePlugin = "consoleplugins." + osv1alpha1.GroupName
+	consoleConfig = "consoles." + configv1.GroupName
+	cno           = "networks." + operatorv1.GroupName
+	svcMonitor    = "servicemonitors." + monitoring.GroupName
 )
 
 // AvailableAPIs discovers the available APIs in the running cluster
@@ -22,9 +24,10 @@ type AvailableAPIs struct {
 
 func NewAvailableAPIs(client *discovery.DiscoveryClient) (*AvailableAPIs, error) {
 	apiMap := map[string]bool{
-		console:    false,
-		cno:        false,
-		svcMonitor: false,
+		consolePlugin: false,
+		consoleConfig: false,
+		cno:           false,
+		svcMonitor:    false,
 	}
 	_, resources, err := client.ServerGroupsAndResources()
 	if err != nil {
@@ -45,9 +48,14 @@ func NewAvailableAPIs(client *discovery.DiscoveryClient) (*AvailableAPIs, error)
 	return &AvailableAPIs{apisMap: apiMap}, nil
 }
 
-// HasConsole returns true if "consoleplugins.console.openshift.io" API was found
-func (c *AvailableAPIs) HasConsole() bool {
-	return c.apisMap[console]
+// HasConsolePlugin returns true if "consoleplugins.console.openshift.io" API was found
+func (c *AvailableAPIs) HasConsolePlugin() bool {
+	return c.apisMap[consolePlugin]
+}
+
+// HasConsoleConfig returns true if "consoles.config.openshift.io" API was found
+func (c *AvailableAPIs) HasConsoleConfig() bool {
+	return c.apisMap[consoleConfig]
 }
 
 // HasCNO returns true if "networks.operator.openshift.io" API was found
