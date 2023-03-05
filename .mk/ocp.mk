@@ -45,7 +45,10 @@ undeploy-operator: ## stop the operator locally
 	kubectl delete servicemonitor flowlogs-pipeline-monitor || true
 	kubectl delete service netobserv-plugin || true
 	kubectl delete deployment netobserv-plugin || true
-	kubectl delete servicemonitor netobserv-console-plugin || true
+	kubectl delete servicemonitor netobserv-plugin || true
+	kubectl delete configmap -n openshift-config-managed flowlogs-pipeline-metrics-dashboard || true
+	kubectl delete configmap -n netobserv flowlogs-pipeline-config || true
+	kubectl delete configmap -n netobserv console-plugin-config || true
 
 .PHONY: ocp-refresh-ovs
 ocp-refresh-ovs:
