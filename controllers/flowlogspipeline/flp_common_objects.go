@@ -55,6 +55,12 @@ const (
 	ConfKafkaTransformer ConfKind = "kafkaTransformer"
 )
 
+const (
+	dashboardName  = "netobserv"
+	dashboardTitle = "Netobserv Metrics"
+	dashboardTags  = "['netobserv','grafana','dashboard','flp']"
+)
+
 var FlpConfSuffix = map[ConfKind]string{
 	ConfMonolith:         "",
 	ConfKafkaIngester:    "-ingester",
@@ -111,11 +117,13 @@ func RoleBindingName(ck ConfKind) string      { return name(ck) + "-role" }
 func RoleBindingMonoName(ck ConfKind) string  { return name(ck) + "-role-mono" }
 func promServiceName(ck ConfKind) string      { return name(ck) + "-prom" }
 func configMapName(ck ConfKind) string        { return name(ck) + "-config" }
+func dbConfigMapName(ck ConfKind) string      { return name(ck) + "-metrics-dashboard" }
 func serviceMonitorName(ck ConfKind) string   { return name(ck) + "-monitor" }
 func prometheusRuleName(ck ConfKind) string   { return name(ck) + "-alert" }
 func (b *builder) name() string               { return name(b.confKind) }
 func (b *builder) promServiceName() string    { return promServiceName(b.confKind) }
 func (b *builder) configMapName() string      { return configMapName(b.confKind) }
+func (b *builder) dbConfigMapName() string    { return dbConfigMapName(b.confKind) }
 func (b *builder) serviceMonitorName() string { return serviceMonitorName(b.confKind) }
 func (b *builder) prometheusRuleName() string { return prometheusRuleName(b.confKind) }
 
@@ -259,10 +267,12 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 //go:embed metrics_definitions
 var metricsConfigEmbed embed.FS
 
-func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, error) {
+// obtainMetricsConfiguration returns the configuration info for the prometheus stage needed to
+// supply the metrics and also the dashboards for those metrics
+func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, string, error) {
 	entries, err := metricsConfigEmbed.ReadDir(metricsConfigDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to access metrics_definitions directory: %w", err)
+		return nil, "", fmt.Errorf("failed to access metrics_definitions directory: %w", err)
 	}
 
 	cg := confgen.NewConfGen(&confgen.Options{
@@ -270,31 +280,52 @@ func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, error) {
 		SkipWithTags:   b.desired.Processor.Metrics.IgnoreTags,
 	})
 
+	config := confgen.Config{
+		Visualization: confgen.ConfigVisualization{
+			Grafana: confgen.ConfigVisualizationGrafana{
+				Dashboards: []confgen.ConfigVisualizationGrafanaDashboard{
+					{
+						Name:          dashboardName,
+						Title:         dashboardTitle,
+						TimeFrom:      "now",
+						Tags:          dashboardTags,
+						SchemaVersion: "16",
+					},
+				},
+			},
+		},
+	}
+	cg.SetConfig(&config)
+
 	for _, entry := range entries {
 		fileName := entry.Name()
+		if fileName == "config.yaml" {
+			continue
+		}
 		srcPath := filepath.Join(metricsConfigDir, fileName)
 
 		input, err := metricsConfigEmbed.ReadFile(srcPath)
 		if err != nil {
-			return nil, fmt.Errorf("error reading metrics file %s; %w", srcPath, err)
+			return nil, "", fmt.Errorf("error reading metrics file %s; %w", srcPath, err)
 		}
 		err = cg.ParseDefinition(fileName, input)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing metrics file %s; %w", srcPath, err)
+			return nil, "", fmt.Errorf("error parsing metrics file %s; %w", srcPath, err)
 		}
 	}
 
 	stages := cg.GenerateTruncatedConfig()
 	if len(stages) != 1 {
-		return nil, fmt.Errorf("error generating truncated config, 1 stage expected in %v", stages)
+		return nil, "", fmt.Errorf("error generating truncated config, 1 stage expected in %v", stages)
 	}
 	if stages[0].Encode == nil || stages[0].Encode.Prom == nil {
-		return nil, fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
+		return nil, "", fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
 	}
-	return stages[0].Encode.Prom.Metrics, nil
+	jsonStr, _ := cg.GenerateGrafanaJson()
+	return stages[0].Encode.Prom.Metrics, jsonStr, nil
 }
 
-func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
+func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev1.ConfigMap, error) {
 	lastStage := *stage
 	indexFields := constants.LokiIndexFields
 
@@ -464,9 +495,9 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	}
 
 	// obtain encode_prometheus stage from metrics_definitions
-	promMetrics, err := b.obtainMetricsConfiguration()
+	promMetrics, dashboard, err := b.obtainMetricsConfiguration()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// prometheus stage (encode) configuration
@@ -486,9 +517,25 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	enrichedStage.EncodePrometheus("prometheus", promEncode)
 	b.addCustomExportStages(&enrichedStage)
 
-	return nil
+	dashboardConfigMap := b.makeMetricsDashboardConfigMap(dashboard)
+	return dashboardConfigMap, nil
 }
 
+func (b *builder) makeMetricsDashboardConfigMap(dashboard string) *corev1.ConfigMap {
+	configMap := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      b.dbConfigMapName(),
+			Namespace: "openshift-config-managed",
+			Labels: map[string]string{
+				"console.openshift.io/dashboard": "true",
+			},
+		},
+		Data: map[string]string{
+			"netobserv-metrics.json": dashboard,
+		},
+	}
+	return &configMap
+}
 func (b *builder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage) {
 	for i, exporter := range b.desired.Exporters {
 		if exporter.Type == flowslatest.KafkaExporter {

@@ -3,6 +3,10 @@ package flowlogspipeline
 import (
 	"context"
 	"fmt"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
@@ -94,6 +98,23 @@ func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowslatest.Flow
 		if err := sr.reconcile(sr.context(ctx), desired); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (r *reconcilersCommonInfo) reconcileDashboardConfig(ctx context.Context, dbConfigMap *corev1.ConfigMap) error {
+	curr := &corev1.ConfigMap{}
+	if err := r.Get(ctx, types.NamespacedName{
+		Name:      dbConfigMap.Name,
+		Namespace: dbConfigMap.Namespace,
+	}, curr); err != nil {
+		if errors.IsNotFound(err) {
+			return r.CreateOwned(ctx, dbConfigMap)
+		}
+		return err
+	}
+	if !equality.Semantic.DeepDerivative(dbConfigMap.Data, curr.Data) {
+		return r.UpdateOwned(ctx, curr, dbConfigMap)
 	}
 	return nil
 }

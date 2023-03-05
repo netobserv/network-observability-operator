@@ -94,7 +94,7 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslat
 	}
 
 	builder := newMonolithBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC, r.CertWatcher)
-	newCM, configDigest, err := builder.configMap()
+	newCM, configDigest, dbConfigMap, err := builder.configMap()
 	if err != nil {
 		return err
 	}
@@ -104,6 +104,11 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslat
 		}
 	} else if !equality.Semantic.DeepDerivative(newCM.Data, r.owned.configMap.Data) {
 		if err := r.UpdateOwned(ctx, r.owned.configMap, newCM); err != nil {
+			return err
+		}
+	}
+	if r.reconcilersCommonInfo.availableAPIs.HasConsoleConfig() {
+		if err := r.reconcileDashboardConfig(ctx, dbConfigMap); err != nil {
 			return err
 		}
 	}

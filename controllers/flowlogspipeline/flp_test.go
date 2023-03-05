@@ -157,14 +157,14 @@ func TestDaemonSetNoChange(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err := b.configMap()
+	_, digest, _, err := b.configMap()
 	assert.NoError(err)
 	first := b.daemonSet(digest)
 
 	// Check no change
 	cfg = getConfig()
 	b = newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	second := b.daemonSet(digest)
 
@@ -180,14 +180,14 @@ func TestDaemonSetChanged(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err := b.configMap()
+	_, digest, _, err := b.configMap()
 	assert.NoError(err)
 	first := b.daemonSet(digest)
 
 	// Check probes enabled change
 	cfg.Processor.EnableKubeProbes = true
 	b = newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	second := b.daemonSet(digest)
 
@@ -218,7 +218,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
 	b = newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	third := b.daemonSet(digest)
 
@@ -232,7 +232,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
 	b = newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	fourth := b.daemonSet(digest)
 
@@ -246,7 +246,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
 	b = newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	fifth := b.daemonSet(digest)
 
@@ -267,7 +267,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		},
 	}
 	b = newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	sixth := b.daemonSet(digest)
 
@@ -285,7 +285,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		},
 	}
 	b = newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	seventh := b.daemonSet(digest)
 
@@ -301,14 +301,14 @@ func TestDeploymentNoChange(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := newTransfoBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err := b.configMap()
+	_, digest, _, err := b.configMap()
 	assert.NoError(err)
 	first := b.deployment(digest)
 
 	// Check no change
 	cfg = getConfig()
 	b = newTransfoBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	second := b.deployment(digest)
 
@@ -324,14 +324,14 @@ func TestDeploymentChanged(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := newTransfoBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err := b.configMap()
+	_, digest, _, err := b.configMap()
 	assert.NoError(err)
 	first := b.deployment(digest)
 
 	// Check probes enabled change
 	cfg.Processor.EnableKubeProbes = true
 	b = newTransfoBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	second := b.deployment(digest)
 
@@ -346,7 +346,7 @@ func TestDeploymentChanged(t *testing.T) {
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
 	b = newTransfoBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	third := b.deployment(digest)
 
@@ -360,7 +360,7 @@ func TestDeploymentChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
 	b = newTransfoBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	fourth := b.deployment(digest)
 
@@ -374,7 +374,7 @@ func TestDeploymentChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
 	b = newTransfoBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	fifth := b.deployment(digest)
 
@@ -389,7 +389,7 @@ func TestDeploymentChanged(t *testing.T) {
 	cfg2 := cfg
 	cfg2.Processor.KafkaConsumerReplicas = 5
 	b = newTransfoBuilder(ns, image, &cfg2, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	sixth := b.deployment(digest)
 
@@ -405,7 +405,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfigNoHPA()
 	b := newTransfoBuilder(ns, image, &cfg, true, &certWatcher)
-	_, digest, err := b.configMap()
+	_, digest, _, err := b.configMap()
 	assert.NoError(err)
 	first := b.deployment(digest)
 
@@ -413,7 +413,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	cfg2 := cfg
 	cfg2.Processor.KafkaConsumerReplicas = 5
 	b = newTransfoBuilder(ns, image, &cfg2, true, &certWatcher)
-	_, digest, err = b.configMap()
+	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	second := b.deployment(digest)
 
@@ -538,7 +538,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	cfg := getConfig()
 	loki := cfg.Loki
 	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
-	cm, digest, err := b.configMap()
+	cm, digest, _, err := b.configMap()
 	assert.NoError(err)
 	assert.NotEmpty(t, digest)
 
@@ -677,7 +677,7 @@ func TestPipelineConfig(t *testing.T) {
 	cfg := getConfig()
 	cfg.Processor.LogLevel = "info"
 	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
-	stages, parameters, err := b.buildPipelineConfig()
+	stages, parameters, _, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
@@ -694,7 +694,7 @@ func TestPipelineConfig(t *testing.T) {
 
 	// Kafka Transformer
 	bt := newTransfoBuilder(ns, image, &cfg, true, &certWatcher)
-	stages, parameters, err = bt.buildPipelineConfig()
+	stages, parameters, _, err = bt.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
@@ -710,7 +710,7 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 	cfg.Processor.LogLevel = "info"
 	cfg.Processor.DropUnusedFields = true
 	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
-	stages, parameters, err := b.buildPipelineConfig()
+	stages, parameters, _, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
@@ -728,7 +728,7 @@ func TestPipelineTraceStage(t *testing.T) {
 	cfg := getConfig()
 
 	b := newMonolithBuilder("namespace", image, &cfg, true, &certWatcher)
-	stages, parameters, err := b.buildPipelineConfig()
+	stages, parameters, _, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
@@ -741,7 +741,7 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	cfg := getConfig()
 
 	b := newMonolithBuilder("namespace", image, &cfg, true, &certWatcher)
-	stages, parameters, err := b.buildPipelineConfig()
+	stages, parameters, _, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
@@ -764,7 +764,7 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	cfg.Processor.Metrics.IgnoreTags = []string{"nodes"}
 
 	b := newMonolithBuilder("namespace", image, &cfg, true, &certWatcher)
-	stages, parameters, err := b.buildPipelineConfig()
+	stages, parameters, _, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
@@ -784,7 +784,7 @@ func TestPipelineWithExporter(t *testing.T) {
 	})
 
 	b := newMonolithBuilder("namespace", image, &cfg, true, &certWatcher)
-	stages, parameters, err := b.buildPipelineConfig()
+	stages, parameters, _, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)

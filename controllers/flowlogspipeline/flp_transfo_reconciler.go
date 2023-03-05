@@ -96,7 +96,7 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 	}
 
 	builder := newTransfoBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC, r.CertWatcher)
-	newCM, configDigest, err := builder.configMap()
+	newCM, configDigest, dbConfigMap, err := builder.configMap()
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,11 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 			return err
 		}
 	}
-
+	if r.reconcilersCommonInfo.availableAPIs.HasConsoleConfig() {
+		if err := r.reconcileDashboardConfig(ctx, dbConfigMap); err != nil {
+			return err
+		}
+	}
 	if err := r.reconcilePermissions(ctx, &builder); err != nil {
 		return err
 	}
