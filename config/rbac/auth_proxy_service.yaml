@@ -3,6 +3,8 @@ kind: Service
 metadata:
   labels:
     control-plane: controller-manager
+  annotations:
+        service.beta.openshift.io/serving-cert-secret-name: manager-metrics-tls
   name: metrics-service
   namespace: system
 spec:

@@ -28,30 +28,34 @@ func buildNamespace(ns string, isDownstream bool) *corev1.Namespace {
 	}
 }
 
-func buildRoleMonitoringReader(ns string) *rbacv1.Role {
-	cr := rbacv1.Role{
+func buildRoleMonitoringReader(ns string) *rbacv1.ClusterRole {
+	cr := rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.OperatorName + roleSuffix,
-			Namespace: ns,
+			Name: constants.OperatorName + roleSuffix,
 		},
-		Rules: []rbacv1.PolicyRule{{APIGroups: []string{""},
-			Verbs:     []string{"get", "list", "watch"},
-			Resources: []string{"pods", "services", "endpoints"},
-		},
+		Rules: []rbacv1.PolicyRule{
+			{APIGroups: []string{""},
+				Verbs:     []string{"get", "list", "watch"},
+				Resources: []string{"pods", "services", "endpoints"},
+			},
+			{
+				NonResourceURLs: []string{"/metrics"},
+				Verbs:           []string{"get"},
+			},
 		},
 	}
 	return &cr
 }
 
-func buildRoleBindingMonitoringReader(ns string) *rbacv1.RoleBinding {
-	return &rbacv1.RoleBinding{
+func buildRoleBindingMonitoringReader(ns string) *rbacv1.ClusterRoleBinding {
+	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.OperatorName + roleSuffix,
 			Namespace: ns,
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "Role",
+			Kind:     "ClusterRole",
 			Name:     constants.OperatorName + roleSuffix,
 		},
 		Subjects: []rbacv1.Subject{{
