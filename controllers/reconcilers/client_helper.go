@@ -112,6 +112,33 @@ func (c *ClientHelper) ReconcileClusterRoleBinding(ctx context.Context, desired 
 	return c.UpdateOwned(ctx, &actual, desired)
 }
 
+func (c *ClientHelper) ReconcileRoleBinding(ctx context.Context, desired *rbacv1.RoleBinding) error {
+	actual := rbacv1.RoleBinding{}
+	if err := c.Get(ctx, types.NamespacedName{Name: desired.ObjectMeta.Name}, &actual); err != nil {
+		if errors.IsNotFound(err) {
+			return c.CreateOwned(ctx, desired)
+		}
+		return fmt.Errorf("can't reconcile RoleBinding %s: %w", desired.Name, err)
+	}
+	if helper.IsSubSet(actual.Labels, desired.Labels) &&
+		actual.RoleRef == desired.RoleRef &&
+		reflect.DeepEqual(actual.Subjects, desired.Subjects) {
+		if actual.RoleRef != desired.RoleRef {
+			//Roleref cannot be updated deleting and creating a new rolebinding
+			log := log.FromContext(ctx)
+			log.Info("Deleting old RoleBinding", "Namespace", actual.GetNamespace(), "Name", actual.GetName())
+			err := c.Delete(ctx, &actual)
+			if err != nil {
+				log.Error(err, "error deleting old RoleBinding", "Namespace", actual.GetNamespace(), "Name", actual.GetName())
+			}
+			return c.CreateOwned(ctx, desired)
+		}
+		// role binding already reconciled. Exiting
+		return nil
+	}
+	return c.UpdateOwned(ctx, &actual, desired)
+}
+
 func (c *ClientHelper) ReconcileClusterRole(ctx context.Context, desired *rbacv1.ClusterRole) error {
 	actual := rbacv1.ClusterRole{}
 	if err := c.Get(ctx, types.NamespacedName{Name: desired.Name}, &actual); err != nil {
@@ -124,6 +151,24 @@ func (c *ClientHelper) ReconcileClusterRole(ctx context.Context, desired *rbacv1
 	if helper.IsSubSet(actual.Labels, desired.Labels) &&
 		reflect.DeepEqual(actual.Rules, desired.Rules) {
 		// cluster role already reconciled. Exiting
+		return nil
+	}
+
+	return c.UpdateOwned(ctx, &actual, desired)
+}
+
+func (c *ClientHelper) ReconcileRole(ctx context.Context, desired *rbacv1.Role) error {
+	actual := rbacv1.Role{}
+	if err := c.Get(ctx, types.NamespacedName{Name: desired.Name}, &actual); err != nil {
+		if errors.IsNotFound(err) {
+			return c.CreateOwned(ctx, desired)
+		}
+		return fmt.Errorf("can't reconcile Role %s: %w", desired.Name, err)
+	}
+
+	if helper.IsSubSet(actual.Labels, desired.Labels) &&
+		reflect.DeepEqual(actual.Rules, desired.Rules) {
+		// role already reconciled. Exiting
 		return nil
 	}
 

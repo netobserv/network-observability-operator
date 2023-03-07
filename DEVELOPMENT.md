@@ -176,3 +176,13 @@ cd hack
 
 The metrics will be visible in the Openshift console under the tab `Observe -> Metrics.`
 Look for the metrics that begin with `netobserv_.`
+
+## Simulating a downstream deployment
+
+To configure the operator to run as a downstream deployment run this command:
+
+```
+make set-release-kind-downstream
+```
+
+Most notably change will concern the monitoring part which will use the platoform monitoring stack instead of the user workload monitoring stack.

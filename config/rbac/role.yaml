@@ -83,9 +83,8 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - nodes
-  - pods
-  - services
+  - endpoints
+  - secrets
   verbs:
   - get
   - list
@@ -93,7 +92,9 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - secrets
+  - nodes
+  - pods
+  - services
   verbs:
   - get
   - list
@@ -150,6 +151,7 @@ rules:
   - rbac.authorization.k8s.io
   resources:
   - clusterrolebindings
+  - rolebindings
   verbs:
   - create
   - delete
@@ -161,6 +163,7 @@ rules:
   - rbac.authorization.k8s.io
   resources:
   - clusterroles
+  - roles
   verbs:
   - create
   - delete

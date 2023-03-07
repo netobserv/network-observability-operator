@@ -10,6 +10,8 @@ type Config struct {
 	FlowlogsPipelineImage string
 	// ConsolePluginImage is the image of the Console Plugin that is managed by the operator
 	ConsolePluginImage string
+	// Release kind is either upstream or downstream
+	DownstreamDeployment bool
 }
 
 func (cfg *Config) Validate() error {
