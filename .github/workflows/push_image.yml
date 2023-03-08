@@ -67,3 +67,27 @@ jobs:
       - name: print images reference
         run: |
           echo "Images: ${{ steps.push-to-quay.outputs.registry-paths }}, ${{ steps.push-bundle.outputs.registry-paths }}, ${{ steps.push-catalog.outputs.registry-paths }}"
+
+  codecov:
+    name: Codecov upload
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ['1.19']
+    steps:
+    - name: install make
+      run: sudo apt-get install make
+    - name: set up go 1.x
+      uses: actions/setup-go@v3
+      with:
+        go-version: ${{ matrix.go }}
+    - name: checkout
+      uses: actions/checkout@v3
+    - name: Test
+      run: make test
+    - name: Report coverage
+      uses: codecov/codecov-action@v2.1.0
+      with:
+        files: ./cover.out
+        flags: unittests
+        fail_ci_if_error: false
