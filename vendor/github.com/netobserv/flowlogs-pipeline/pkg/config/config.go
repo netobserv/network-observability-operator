@@ -36,9 +36,9 @@ type Options struct {
 
 type ConfigFileStruct struct {
 	LogLevel        string          `yaml:"log-level,omitempty" json:"log-level,omitempty"`
+	MetricsSettings MetricsSettings `yaml:"metricsSettings,omitempty" json:"metricsSettings,omitempty"`
 	Pipeline        []Stage         `yaml:"pipeline,omitempty" json:"pipeline,omitempty"`
 	Parameters      []StageParam    `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	MetricsSettings MetricsSettings `yaml:"metricsSettings,omitempty" json:"metricsSettings,omitempty"`
 	PerfSettings    PerfSettings    `yaml:"perfSettings,omitempty" json:"perfSettings,omitempty"`
 }
 
@@ -55,12 +55,11 @@ type Profile struct {
 // Also, currently FLP doesn't support defining more than one PromEncode stage. If this feature is added later, these global settings
 // will help configuring common setting for all PromEncode stages - PromEncode settings would then act as overrides.
 type MetricsSettings struct {
-	// TODO: manage global metrics server, ie. not coupled to PromEncode, cf https://github.com/netobserv/flowlogs-pipeline/issues/302
-	// Port       int              `yaml:"port,omitempty" json:"port,omitempty" doc:"port number to expose \"/metrics\" endpoint"`
-	// TLS        *PromTLSConf     `yaml:"tls,omitempty" json:"tls,omitempty" doc:"TLS configuration for the prometheus endpoint"`
-	// ExpiryTime int              `yaml:"expiryTime,omitempty" json:"expiryTime,omitempty" doc:"seconds of no-flow to wait before deleting prometheus data item"`
-	Prefix  string `yaml:"prefix,omitempty" json:"prefix,omitempty"`
-	NoPanic bool   `yaml:"noPanic,omitempty" json:"noPanic,omitempty"`
+	Address string           `yaml:"address,omitempty" json:"address,omitempty" doc:"address to expose \"/metrics\" endpoint"`
+	Port    int              `yaml:"port,omitempty" json:"port,omitempty" doc:"port number to expose \"/metrics\" endpoint"`
+	TLS     *api.PromTLSConf `yaml:"tls,omitempty" json:"tls,omitempty" doc:"TLS configuration for the prometheus endpoint"`
+	Prefix  string           `yaml:"prefix,omitempty" json:"prefix,omitempty"`
+	NoPanic bool             `yaml:"noPanic,omitempty" json:"noPanic,omitempty"`
 }
 
 // PerfSettings allows setting some internal configuration parameters

@@ -567,7 +567,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection", "_RecordType"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
-	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(params[5].Encode.Prom.Port))
+	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))
 }
 
 func TestAutoScalerUpdateCheck(t *testing.T) {

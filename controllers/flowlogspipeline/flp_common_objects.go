@@ -471,16 +471,8 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 
 	// prometheus stage (encode) configuration
 	promEncode := api.PromEncode{
-		Port:    int(b.desired.Processor.Metrics.Server.Port),
 		Prefix:  "netobserv_",
 		Metrics: promMetrics,
-	}
-
-	if b.desired.Processor.Metrics.Server.TLS.Type != flowslatest.ServerTLSDisabled {
-		promEncode.TLS = &api.PromTLSConf{
-			CertPath: helper.GetSingleCertPath(b.promTLS, promCerts),
-			KeyPath:  helper.GetSingleKeyPath(b.promTLS, promCerts),
-		}
 	}
 
 	enrichedStage.EncodePrometheus("prometheus", promEncode)
@@ -520,14 +512,25 @@ func getKafkaTLS(tls *flowslatest.ClientTLS) *api.ClientTLS {
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
 func (b *builder) configMap(stages []config.Stage, parameters []config.StageParam) (*corev1.ConfigMap, string, error) {
+	metricsSettings := config.MetricsSettings{
+		Port:    int(b.desired.Processor.Metrics.Server.Port),
+		Prefix:  "netobserv_",
+		NoPanic: true,
+	}
+	if b.desired.Processor.Metrics.Server.TLS.Type != flowslatest.ServerTLSDisabled {
+		metricsSettings.TLS = &api.PromTLSConf{
+			CertPath: helper.GetSingleCertPath(b.promTLS, promCerts),
+			KeyPath:  helper.GetSingleKeyPath(b.promTLS, promCerts),
+		}
+	}
 	config := map[string]interface{}{
 		"log-level": b.desired.Processor.LogLevel,
 		"health": map[string]interface{}{
 			"port": b.desired.Processor.HealthPort,
 		},
-		"pipeline":         stages,
-		"parameters":       parameters,
-		"metrics-settings": config.MetricsSettings{Prefix: "netobserv_", NoPanic: true},
+		"pipeline":        stages,
+		"parameters":      parameters,
+		"metricsSettings": metricsSettings,
 	}
 	if b.desired.Processor.ProfilePort > 0 {
 		config["profile"] = map[string]interface{}{
