@@ -805,7 +805,7 @@ func UpdateCR(key types.NamespacedName, updater func(*flowslatest.FlowCollector)
 	Eventually(func() error {
 		updater(cr)
 		return k8sClient.Update(ctx, cr)
-	}).Should(Succeed())
+	}, timeout, interval).Should(Succeed())
 }
 
 func checkDigestUpdate(oldDigest *string, annots map[string]string) error {
