@@ -221,6 +221,8 @@ func ConvertToBool(unk interface{}) (bool, error) {
 	switch i := unk.(type) {
 	case string:
 		return strconv.ParseBool(i)
+	case bool:
+		return i, nil
 	default:
 		v := reflect.ValueOf(unk)
 		v = reflect.Indirect(v)

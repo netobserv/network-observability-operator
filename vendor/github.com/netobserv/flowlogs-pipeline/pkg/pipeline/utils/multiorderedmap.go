@@ -111,6 +111,21 @@ func (mom MultiOrderedMap) MoveToBack(key Key, orderID OrderID) error {
 	return nil
 }
 
+// MoveToFront moves the record of key `key` to the front of orderID. If the key or the orderID doesn't exist, an error
+// is returned.
+func (mom MultiOrderedMap) MoveToFront(key Key, orderID OrderID) error {
+	rw, found := mom.m[key]
+	if !found {
+		return fmt.Errorf("can't MoveToFront non-existing key %x (order id %q)", key, orderID)
+	}
+	elem, found := rw.orderID2element[orderID]
+	if !found {
+		return fmt.Errorf("can't MoveToFront non-existing order id %q (key %x)", orderID, key)
+	}
+	mom.orders[orderID].MoveToFront(elem)
+	return nil
+}
+
 // IterateFrontToBack iterates over the records by orderID. It applies function f() on each record.
 // f() returns two booleans `delete` and `stop` that control whether to remove the record from the multi-ordered map
 // and whether to stop the iteration respectively.

@@ -56,8 +56,6 @@ func (cg *ConfGen) GenerateFlowlogs2PipelineConfig() *config.ConfigFileStruct {
 	}
 	if len(cg.promMetrics) > 0 {
 		metricsNode.EncodePrometheus("encode_prom", api.PromEncode{
-			Address: cg.config.Encode.Prom.Address,
-			Port:    cg.config.Encode.Prom.Port,
 			Prefix:  cg.config.Encode.Prom.Prefix,
 			Metrics: cg.promMetrics,
 		})
@@ -69,6 +67,10 @@ func (cg *ConfGen) GenerateFlowlogs2PipelineConfig() *config.ConfigFileStruct {
 		LogLevel:   "error",
 		Pipeline:   pipeline.GetStages(),
 		Parameters: pipeline.GetStageParams(),
+		MetricsSettings: config.MetricsSettings{
+			Port:   9102,
+			Prefix: "flp_op",
+		},
 	}
 }
 

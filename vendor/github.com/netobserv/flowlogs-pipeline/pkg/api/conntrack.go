@@ -28,19 +28,19 @@ const (
 )
 
 type ConnTrack struct {
-	// TODO: should by a pointer instead?
-	KeyDefinition         KeyDefinition              `yaml:"keyDefinition,omitempty" doc:"fields that are used to identify the connection"`
-	OutputRecordTypes     []string                   `yaml:"outputRecordTypes,omitempty" enum:"ConnTrackOutputRecordTypeEnum" doc:"output record types to emit"`
-	OutputFields          []OutputField              `yaml:"outputFields,omitempty" doc:"list of output fields"`
-	Scheduling            []ConnTrackSchedulingGroup `yaml:"scheduling,omitempty" doc:"list of timeouts and intervals to apply per selector"`
-	MaxConnectionsTracked int                        `yaml:"maxConnectionsTracked,omitempty" doc:"maximum number of connections we keep in our cache (0 means no limit)"`
+	KeyDefinition         KeyDefinition              `yaml:"keyDefinition,omitempty" json:"keyDefinition,omitempty" doc:"fields that are used to identify the connection"`
+	OutputRecordTypes     []string                   `yaml:"outputRecordTypes,omitempty" json:"outputRecordTypes,omitempty" enum:"ConnTrackOutputRecordTypeEnum" doc:"output record types to emit"`
+	OutputFields          []OutputField              `yaml:"outputFields,omitempty" json:"outputFields,omitempty" doc:"list of output fields"`
+	Scheduling            []ConnTrackSchedulingGroup `yaml:"scheduling,omitempty" json:"scheduling,omitempty" doc:"list of timeouts and intervals to apply per selector"`
+	MaxConnectionsTracked int                        `yaml:"maxConnectionsTracked,omitempty" json:"maxConnectionsTracked,omitempty" doc:"maximum number of connections we keep in our cache (0 means no limit)"`
+	TCPFlags              ConnTrackTCPFlags          `yaml:"tcpFlags,omitempty" json:"tcpFlags,omitempty" doc:"settings for handling TCP flags"`
 }
 
 type ConnTrackOutputRecordTypeEnum struct {
-	NewConnection string `yaml:"newConnection" doc:"New connection"`
-	EndConnection string `yaml:"endConnection" doc:"End connection"`
-	Heartbeat     string `yaml:"heartbeat" doc:"Heartbeat"`
-	FlowLog       string `yaml:"flowLog" doc:"Flow log"`
+	NewConnection string `yaml:"newConnection" json:"newConnection" doc:"New connection"`
+	EndConnection string `yaml:"endConnection" json:"endConnection" doc:"End connection"`
+	Heartbeat     string `yaml:"heartbeat" json:"heartbeat" doc:"Heartbeat"`
+	FlowLog       string `yaml:"flowLog" json:"flowLog" doc:"Flow log"`
 }
 
 func ConnTrackOutputRecordTypeName(operation string) string {
@@ -48,13 +48,13 @@ func ConnTrackOutputRecordTypeName(operation string) string {
 }
 
 type KeyDefinition struct {
-	FieldGroups []FieldGroup  `yaml:"fieldGroups,omitempty" doc:"list of field group definitions"`
-	Hash        ConnTrackHash `yaml:"hash,omitempty" doc:"how to build the connection hash"`
+	FieldGroups []FieldGroup  `yaml:"fieldGroups,omitempty" json:"fieldGroups,omitempty" doc:"list of field group definitions"`
+	Hash        ConnTrackHash `yaml:"hash,omitempty" json:"hash,omitempty" doc:"how to build the connection hash"`
 }
 
 type FieldGroup struct {
-	Name   string   `yaml:"name,omitempty" doc:"field group name"`
-	Fields []string `yaml:"fields" doc:"list of fields in the group"`
+	Name   string   `yaml:"name,omitempty" json:"name,omitempty" doc:"field group name"`
+	Fields []string `yaml:"fields" json:"fields" doc:"list of fields in the group"`
 }
 
 // ConnTrackHash determines how to compute the connection hash.
@@ -64,33 +64,39 @@ type FieldGroup struct {
 // When they are not set, a different hash will be computed for A->B and B->A,
 // and they are tracked as different connections.
 type ConnTrackHash struct {
-	FieldGroupRefs []string `yaml:"fieldGroupRefs,omitempty" doc:"list of field group names to build the hash"`
-	FieldGroupARef string   `yaml:"fieldGroupARef,omitempty" doc:"field group name of endpoint A"`
-	FieldGroupBRef string   `yaml:"fieldGroupBRef,omitempty" doc:"field group name of endpoint B"`
+	FieldGroupRefs []string `yaml:"fieldGroupRefs,omitempty" json:"fieldGroupRefs,omitempty" doc:"list of field group names to build the hash"`
+	FieldGroupARef string   `yaml:"fieldGroupARef,omitempty" json:"fieldGroupARef,omitempty" doc:"field group name of endpoint A"`
+	FieldGroupBRef string   `yaml:"fieldGroupBRef,omitempty" json:"fieldGroupBRef,omitempty" doc:"field group name of endpoint B"`
 }
 
 type OutputField struct {
-	Name      string `yaml:"name,omitempty" doc:"output field name"`
-	Operation string `yaml:"operation,omitempty" enum:"ConnTrackOperationEnum" doc:"aggregate operation on the field value"`
-	SplitAB   bool   `yaml:"splitAB,omitempty" doc:"When true, 2 output fields will be created. One for A->B and one for B->A flows."`
-	Input     string `yaml:"input,omitempty" doc:"The input field to base the operation on. When omitted, 'name' is used"`
+	Name      string `yaml:"name,omitempty" json:"name,omitempty" doc:"output field name"`
+	Operation string `yaml:"operation,omitempty" json:"operation,omitempty" enum:"ConnTrackOperationEnum" doc:"aggregate operation on the field value"`
+	SplitAB   bool   `yaml:"splitAB,omitempty" json:"splitAB,omitempty" doc:"When true, 2 output fields will be created. One for A->B and one for B->A flows."`
+	Input     string `yaml:"input,omitempty" json:"input,omitempty" doc:"The input field to base the operation on. When omitted, 'name' is used"`
 }
 
 type ConnTrackOperationEnum struct {
-	Sum   string `yaml:"sum" doc:"sum"`
-	Count string `yaml:"count" doc:"count"`
-	Min   string `yaml:"min" doc:"min"`
-	Max   string `yaml:"max" doc:"max"`
+	Sum   string `yaml:"sum" json:"sum" doc:"sum"`
+	Count string `yaml:"count" json:"count" doc:"count"`
+	Min   string `yaml:"min" json:"min" doc:"min"`
+	Max   string `yaml:"max" json:"max" doc:"max"`
 }
 
 type ConnTrackSchedulingGroup struct {
-	Selector             map[string]interface{} `yaml:"selector,omitempty" doc:"key-value map to match against connection fields to apply this scheduling"`
-	EndConnectionTimeout Duration               `yaml:"endConnectionTimeout,omitempty" doc:"duration of time to wait from the last flow log to end a connection"`
-	HeartbeatInterval    Duration               `yaml:"heartbeatInterval,omitempty" doc:"duration of time to wait between heartbeat reports of a connection"`
+	Selector             map[string]interface{} `yaml:"selector,omitempty" json:"selector,omitempty" doc:"key-value map to match against connection fields to apply this scheduling"`
+	EndConnectionTimeout Duration               `yaml:"endConnectionTimeout,omitempty" json:"endConnectionTimeout,omitempty" doc:"duration of time to wait from the last flow log to end a connection"`
+	HeartbeatInterval    Duration               `yaml:"heartbeatInterval,omitempty" json:"heartbeatInterval,omitempty" doc:"duration of time to wait between heartbeat reports of a connection"`
 }
 
 func ConnTrackOperationName(operation string) string {
 	return GetEnumName(ConnTrackOperationEnum{}, operation)
+}
+
+type ConnTrackTCPFlags struct {
+	FieldName           string `yaml:"fieldName,omitempty" json:"fieldName,omitempty" doc:"name of the field containing TCP flags"`
+	DetectEndConnection bool   `yaml:"detectEndConnection,omitempty" json:"detectEndConnection,omitempty" doc:"detect end connections by FIN_ACK flag"`
+	SwapAB              bool   `yaml:"swapAB,omitempty" json:"swapAB,omitempty" doc:"swap source and destination when the first flowlog contains the SYN_ACK flag"`
 }
 
 func (ct *ConnTrack) Validate() error {
@@ -201,7 +207,38 @@ func (ct *ConnTrack) Validate() error {
 			msg: fmt.Errorf("found %v default selectors. There should be exactly 1", numOfDefault)}
 	}
 
+	if len(ct.TCPFlags.FieldName) == 0 && (ct.TCPFlags.DetectEndConnection || ct.TCPFlags.SwapAB) {
+		return conntrackInvalidError{emptyTCPFlagsField: true,
+			msg: fmt.Errorf("TCPFlags.FieldName is empty although DetectEndConnection or SwapAB are enabled")}
+	}
+	if ct.TCPFlags.SwapAB && !isBidi {
+		return conntrackInvalidError{swapABWithNoBidi: true,
+			msg: fmt.Errorf("SwapAB is enabled although bidirection is not enabled (fieldGroupARef is empty)")}
+	}
+
+	fieldsA, fieldsB := ct.GetABFields()
+	if len(fieldsA) != len(fieldsB) {
+		return conntrackInvalidError{mismatchABFieldsCount: true,
+			msg: fmt.Errorf("mismatch between the field count of fieldGroupARef %v and fieldGroupBRef %v", len(fieldsA), len(fieldsB))}
+	}
+
 	return nil
+}
+
+func (ct *ConnTrack) GetABFields() ([]string, []string) {
+	endpointAFieldGroupName := ct.KeyDefinition.Hash.FieldGroupARef
+	endpointBFieldGroupName := ct.KeyDefinition.Hash.FieldGroupBRef
+	var endpointAFields []string
+	var endpointBFields []string
+	for _, fg := range ct.KeyDefinition.FieldGroups {
+		if fg.Name == endpointAFieldGroupName {
+			endpointAFields = fg.Fields
+		}
+		if fg.Name == endpointBFieldGroupName {
+			endpointBFields = fg.Fields
+		}
+	}
+	return endpointAFields, endpointBFields
 }
 
 // addToSet adds an item to a set and returns true if it's a new item. Otherwise, it returns false.
@@ -253,6 +290,9 @@ type conntrackInvalidError struct {
 	undefinedSelectorKey      bool
 	defaultGroupAndNotLast    bool
 	exactlyOneDefaultSelector bool
+	swapABWithNoBidi          bool
+	emptyTCPFlagsField        bool
+	mismatchABFieldsCount     bool
 }
 
 func (err conntrackInvalidError) Error() string {
