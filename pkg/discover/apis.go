@@ -15,6 +15,7 @@ var (
 	consoleConfig = "consoles." + configv1.GroupName
 	cno           = "networks." + operatorv1.GroupName
 	svcMonitor    = "servicemonitors." + monitoring.GroupName
+	promRule      = "prometheusrules." + monitoring.GroupName
 )
 
 // AvailableAPIs discovers the available APIs in the running cluster
@@ -28,6 +29,7 @@ func NewAvailableAPIs(client *discovery.DiscoveryClient) (*AvailableAPIs, error)
 		consoleConfig: false,
 		cno:           false,
 		svcMonitor:    false,
+		promRule:      false,
 	}
 	_, resources, err := client.ServerGroupsAndResources()
 	if err != nil {
@@ -66,4 +68,9 @@ func (c *AvailableAPIs) HasCNO() bool {
 // HasSvcMonitor returns true if "servicemonitors.monitoring.coreos.com" API was found
 func (c *AvailableAPIs) HasSvcMonitor() bool {
 	return c.apisMap[svcMonitor]
+}
+
+// HasPromRule returns true if "prometheusrules.monitoring.coreos.com" API was found
+func (c *AvailableAPIs) HasPromRule() bool {
+	return c.apisMap[promRule]
 }

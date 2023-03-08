@@ -227,15 +227,15 @@ func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, de
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
 			return err
 		}
-		if r.availableAPIs.HasSvcMonitor() {
-			serviceMonitor := builder.serviceMonitor()
-			if err := r.CreateOwned(ctx, serviceMonitor); err != nil {
-				return err
-			}
-		}
 	} else if serviceNeedsUpdate(r.owned.service, &desired.ConsolePlugin, &report) {
 		newSVC := builder.service(r.owned.service)
 		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
+			return err
+		}
+	}
+	if r.availableAPIs.HasSvcMonitor() {
+		serviceMonitor := builder.serviceMonitor()
+		if err := reconcilers.GenericReconcile(ctx, r.nobjMngr, &r.ClientHelper, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}

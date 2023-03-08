@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	operatorsv1 "github.com/openshift/api/operator/v1"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
@@ -171,6 +172,36 @@ func flowCollectorConsolePluginSpecs() {
 				}
 				return svc.Spec.Ports[0].Port
 			}, timeout, interval).Should(Equal(int32(9099)))
+		})
+
+		It("Should create desired objects when they're not found (e.g. case of an operator upgrade)", func() {
+			sm := monitoringv1.ServiceMonitor{}
+
+			By("Expecting ServiceMonitor to exist")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "netobserv-plugin",
+					Namespace: cpNamespace,
+				}, &sm)
+			}, timeout, interval).Should(Succeed())
+
+			// Manually delete ServiceMonitor
+			By("Deleting ServiceMonitor")
+			Eventually(func() error {
+				return k8sClient.Delete(ctx, &sm)
+			}, timeout, interval).Should(Succeed())
+
+			// Do a dummy change that will trigger reconcile, and make sure SM is created again
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Processor.LogLevel = "info"
+			})
+			By("Expecting ServiceMonitor to exist")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "netobserv-plugin",
+					Namespace: cpNamespace,
+				}, &sm)
+			}, timeout, interval).Should(Succeed())
 		})
 	})
 
