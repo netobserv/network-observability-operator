@@ -8,13 +8,14 @@ spec:
   agent:
     type: EBPF
     ebpf:
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       sampling: 50
       cacheActiveTimeout: 5s
       cacheMaxFlows: 100000
-      interfaces: [ ]
-      excludeInterfaces: [ "lo" ]
-      logLevel: info
+      interfaces: [ "eth0", "veth5871bad5" ]
+      excludeInterfaces: [ ]
+      logLevel: debug
+      privileged: true      
       resources:
         requests:
           memory: 50Mi
@@ -22,9 +23,11 @@ spec:
         limits:
           memory: 800Mi
       kafkaBatchSize: 10485760
+      privileged: true
   processor:
     port: 2055
     imagePullPolicy: IfNotPresent
+    healthPort: 8989
     logLevel: info
     profilePort: 6060
     metrics:

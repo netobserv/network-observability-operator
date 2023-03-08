@@ -19,8 +19,8 @@ type ClientMock struct {
 	client.Client
 }
 
-func (o *ClientMock) Get(ctx context.Context, nsname types.NamespacedName, obj client.Object) error {
-	args := o.Called(ctx, nsname, obj)
+func (o *ClientMock) Get(ctx context.Context, key types.NamespacedName, obj client.Object, opts ...client.GetOption) error {
+	args := o.Called(ctx, key, obj)
 	return args.Error(0)
 }
 

@@ -63,7 +63,7 @@ func flowCollectorEBPFSpecs() {
 					Agent: flowslatest.FlowCollectorAgent{
 						Type: "EBPF",
 						EBPF: flowslatest.FlowCollectorEBPF{
-							Sampling:           pointer.Int32Ptr(123),
+							Sampling:           pointer.Int32(123),
 							CacheActiveTimeout: "15s",
 							CacheMaxFlows:      100,
 							Interfaces:         []string{"veth0", "/^br-/"},
