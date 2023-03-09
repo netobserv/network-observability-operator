@@ -59,7 +59,7 @@ IMAGE_TAG_BASE ?= $(REPO)/network-observability-operator
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
 
 # Image URL to use all building/pushing image targets
-IMG ?= $(IMAGE_TAG_BASE):$(OPERATOR_VERSION)
+IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
 IMG_SHA = $(IMAGE_TAG_BASE):$(BUILD_SHA)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
@@ -281,10 +281,6 @@ uninstall: kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube
 
 deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/openshift | kubectl apply -f -
-
-deploy-latest: kustomize ## Deploy latest controller, configured with all latest related images using "main" tag
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE_TAG_BASE):main
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:.+~console-plugin:main~' ./config/manager/manager.yaml
@@ -315,8 +311,7 @@ bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metada
 bundle: bundle-prepare ## Generate final bundle files.
 	$(SED) -e 's/^/    /' config/manifests/bases/description-upstream.md > tmp-desc
 	$(KUSTOMIZE) build config/manifests \
-		| $(SED) -e 's~:container-image:~$(IMAGE_TAG_BASE):$(OPERATOR_VERSION)~' \
-		| $(SED) -e 's~:created-at:~$(DATE)~' \
+		| $(SED) -e 's~:container-image:~$(IMG)~' \
 		| $(SED) -e "/':full-description:'/r tmp-desc" \
 		| $(SED) -e "s/':full-description:'/|\-/" \
 		| $(OPSDK) generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
@@ -327,9 +322,16 @@ bundle: bundle-prepare ## Generate final bundle files.
 	if [ $$(echo $${VALIDATION_OUTPUT} | grep -i 'warning' | wc -c) -gt 0 ]; then echo "please correct warnings and errors first"; exit -1 ; fi \
 	'
 
+.PHONY: update-bundle
+update-bundle: IMG=$(IMAGE_TAG_BASE):$(OPERATOR_VERSION)
+update-bundle: bundle ## Prepare a clean bundle to be commited
+
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
+	cp ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml tmp-bundle
+	$(SED) -i -r 's~:created-at:~$(DATE)~' ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
 	$(OCI_BIN) build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	mv tmp-bundle ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.

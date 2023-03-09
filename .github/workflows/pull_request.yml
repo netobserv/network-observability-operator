@@ -40,6 +40,6 @@ jobs:
     - name: checkout
       uses: actions/checkout@v3
     - name: generate bundle
-      run: make generate bundle
+      run: make update-bundle
     - name: check bundle clean state
-      run: git diff HEAD -I "createdAt" -I "operator-sdk-v" --exit-code
+      run: git diff HEAD -I "operator-sdk-v" --exit-code
