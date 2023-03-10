@@ -71,9 +71,9 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `New images:
-            * ${{ steps.push-to-quay.outputs.registry-paths[0] }}
-            * ${{ steps.push-bundle.outputs.registry-paths[0] }}
-            * ${{ steps.push-catalog.outputs.registry-paths[0] }}
+            * ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.short_sha }}
+            * ${{ env.REGISTRY }}/${{ env.IMAGE }}-bundle:v0.0.0-${{ env.short_sha }}
+            * ${{ env.REGISTRY }}/${{ env.IMAGE }}-catalog:v0.0.0-${{ env.short_sha }}
 
             They will expire after two weeks.
             
@@ -86,7 +86,7 @@ jobs:
               namespace: openshift-marketplace
             spec:
               sourceType: grpc
-              image: ${{ steps.push-catalog.outputs.registry-paths[0] }}
+              image: ${{ env.REGISTRY }}/${{ env.IMAGE }}-catalog:v0.0.0-${{ env.short_sha }}
               displayName: NetObserv development catalog
               publisher: Me
               updateStrategy:
