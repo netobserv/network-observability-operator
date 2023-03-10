@@ -46,20 +46,26 @@ You can refer to existing commits using their short-SHA as the image tag, or ref
 
 ```bash
 # By commit SHA
-OPERATOR_VERSION="960766c" make deploy
+VERSION="960766c" make deploy
 # By release
-OPERATOR_VERSION="0.1.2" make deploy
+VERSION="0.1.2" make deploy
 ```
 
 It is recommended to switch to the corresponding release Git tag before deploying an old version to make sure the underlying components refer to the correct versions.
 
-When `OPERATOR_VERSION` is not provided, it defaults to the latest released version.
+When `VERSION` is not provided, it defaults to the latest build on `main` branch.
 
-To deploy all components on their `main` image tag (which correspond to their `main` branches, ie. their latest builds), you can simply run:
+You can also provide any custom `IMG` to `make deploy`.
+
+## Before commiting, make sure bundle is correct
+
+The github CI will fail if it finds the bundle isn't in a clean state. To update the bundle, simply run:
 
 ```bash
-make deploy-latest
+make update-bundle
 ```
+
+This is necessary when the changes you did end up affecting the bundle manifests or metadata (e.g. adding new fields in the CRD, updating some documentation, etc.). When unsure, just run the command mentioned above.
 
 ## Installing Kafka
 
