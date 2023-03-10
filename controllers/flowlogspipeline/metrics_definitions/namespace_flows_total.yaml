@@ -17,3 +17,12 @@ encode:
         labels:
           - SrcK8S_Namespace
           - DstK8S_Namespace
+visualization:
+  type: grafana
+  grafana:
+    - expr: 'topk(5,rate(netobserv_namespace_flows_total[1m]))'
+      legendFormat: '{{pod}} : ({{SrcK8S_Namespace}}) -> ({{DstK8S_Namespace}})'
+      type: graphPanel
+      dashboard: netobserv
+      title:
+        Top 5 flows rates per minute per Namespace

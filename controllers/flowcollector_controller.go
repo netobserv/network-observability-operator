@@ -109,7 +109,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	// Create reconcilers
 	flpReconciler := flowlogspipeline.NewReconciler(ctx, clientHelper, ns, previousNamespace, r.config.FlowlogsPipelineImage, &r.permissions, r.availableAPIs)
 	var cpReconciler consoleplugin.CPReconciler
-	if r.availableAPIs.HasConsole() {
+	if r.availableAPIs.HasConsolePlugin() {
 		cpReconciler = consoleplugin.NewReconciler(clientHelper, ns, previousNamespace, r.config.ConsolePluginImage, r.availableAPIs)
 	}
 
@@ -152,7 +152,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	// Console plugin
-	if r.availableAPIs.HasConsole() {
+	if r.availableAPIs.HasConsolePlugin() {
 		err := cpReconciler.Reconcile(ctx, desired)
 		if err != nil {
 			return ctrl.Result{}, r.failure(ctx, conditions.ReconcileConsolePluginFailed(err), desired)
@@ -208,7 +208,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 		if err != nil {
 			return err
 		}
-		if r.availableAPIs.HasConsole() {
+		if r.availableAPIs.HasConsolePlugin() {
 			err := cpReconciler.InitStaticResources(ctx)
 			if err != nil {
 				return err
@@ -221,7 +221,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 		if err != nil {
 			return err
 		}
-		if r.availableAPIs.HasConsole() {
+		if r.availableAPIs.HasConsolePlugin() {
 			err := cpReconciler.PrepareNamespaceChange(ctx)
 			if err != nil {
 				return err
@@ -274,7 +274,7 @@ func (r *FlowCollectorReconciler) setupDiscovery(ctx context.Context, mgr ctrl.M
 		return fmt.Errorf("can't discover available APIs: %w", err)
 	}
 	r.availableAPIs = apis
-	if apis.HasConsole() {
+	if apis.HasConsolePlugin() {
 		builder.Owns(&osv1alpha1.ConsolePlugin{})
 	} else {
 		log.Info("Console not detected: the console plugin is not available")

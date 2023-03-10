@@ -26,3 +26,12 @@ encode:
           - DstK8S_OwnerName
           - SrcK8S_OwnerType
           - DstK8S_OwnerType
+visualization:
+  type: grafana
+  grafana:
+    - expr: 'topk(5,netobserv_workload_ingress_packets_total)'
+      legendFormat: '{{pod}} : ({{SrcK8S_Namespace}},{{SrcK8S_OwnerName}}) -> ({{DstK8S_Namespace}},{{DstK8S_OwnerName}})'
+      type: graphPanel
+      dashboard: netobserv
+      title:
+        Top 5 Ingress Packets Total per source and destination namespaces and owners

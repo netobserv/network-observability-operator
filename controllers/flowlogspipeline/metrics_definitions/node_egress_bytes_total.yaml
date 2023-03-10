@@ -22,3 +22,12 @@ encode:
         labels:
           - SrcK8S_HostName
           - DstK8S_HostName
+visualization:
+  type: grafana
+  grafana:
+    - expr: 'topk(5,rate(netobserv_node_egress_bytes_total[1m]))'
+      legendFormat: '{{pod}} : ({{SrcK8S_HostName}}) -> ({{DstK8S_HostName}})'
+      type: graphPanel
+      dashboard: netobserv
+      title:
+        Top 5 Flows rate egress per source and destination nodes
