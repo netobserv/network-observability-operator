@@ -71,11 +71,12 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `New images:
-            * ${{ steps.push-to-quay.outputs.registry-paths }}
-            * ${{ steps.push-bundle.outputs.registry-paths }}
-            * ${{ steps.push-catalog.outputs.registry-paths }}
-            They will expire after two weeks.
+            * ${{ steps.push-to-quay.outputs.registry-paths[0] }}
+            * ${{ steps.push-bundle.outputs.registry-paths[0] }}
+            * ${{ steps.push-catalog.outputs.registry-paths[0] }}
 
+            They will expire after two weeks.
+            
             Catalog source:
             \`\`\`yaml
             apiVersion: operators.coreos.com/v1alpha1
@@ -85,7 +86,7 @@ jobs:
               namespace: openshift-marketplace
             spec:
               sourceType: grpc
-              image: ${{ steps.push-catalog.outputs.registry-paths }}
+              image: ${{ steps.push-catalog.outputs.registry-paths[0] }}
               displayName: NetObserv development catalog
               publisher: Me
               updateStrategy:
