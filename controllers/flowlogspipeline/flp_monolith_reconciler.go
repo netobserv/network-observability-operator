@@ -70,17 +70,9 @@ func (r *flpMonolithReconciler) context(ctx context.Context) context.Context {
 	return log.IntoContext(ctx, l)
 }
 
-// initStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
-func (r *flpMonolithReconciler) initStaticResources(ctx context.Context) error {
-	// Nothing to do here: monolith FLP uses cluster roles defined by Transformer and Ingester reconcilers
-	return nil
-}
-
-// prepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
-func (r *flpMonolithReconciler) prepareNamespaceChange(ctx context.Context) error {
-	// Switching namespace => delete everything in the previous namespace
+// cleanupNamespace cleans up old namespace
+func (r *flpMonolithReconciler) cleanupNamespace(ctx context.Context) {
 	r.nobjMngr.CleanupPreviousNamespace(ctx)
-	return nil
 }
 
 func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
@@ -183,6 +175,14 @@ func (r *flpMonolithReconciler) reconcilePermissions(ctx context.Context, builde
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 
+	cr := buildClusterRoleIngester(r.useOpenShiftSCC)
+	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
+		return err
+	}
+	cr = buildClusterRoleTransformer()
+	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
+		return err
+	}
 	// Monolith uses ingester + transformer cluster roles
 	for _, kind := range []ConfKind{ConfKafkaIngester, ConfKafkaTransformer} {
 		desired := builder.clusterRoleBinding(kind)
