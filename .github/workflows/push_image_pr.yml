@@ -44,6 +44,24 @@ jobs:
           image: ${{ env.IMAGE }}
           tags: ${{ env.short_sha }}
           registry: ${{ env.REGISTRY }}
+      - name: build bundle
+        run: OPERATOR_VERSION=${{ env.short_sha }} PLG_VERSION=main FLP_VERSION=main BPF_VERSION=main BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle shortlived-bundle-build
+      - name: push bundle to quay.io
+        id: push-bundle
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.IMAGE }}-bundle
+          tags: v0.0.0-${{ env.short_sha }}
+          registry: ${{ env.REGISTRY }}
+      - name: build catalog
+        run: BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make shortlived-catalog-build
+      - name: push catalog to quay.io
+        id: push-catalog
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.IMAGE }}-catalog
+          tags: v0.0.0-${{ env.short_sha }}
+          registry: ${{ env.REGISTRY }}
       - uses: actions/github-script@v5
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -52,5 +70,28 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'New image: ${{ steps.push-to-quay.outputs.registry-paths }}. It will expire after two weeks.'
+              body: `New images:
+            * ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.short_sha }}
+            * ${{ env.REGISTRY }}/${{ env.IMAGE }}-bundle:v0.0.0-${{ env.short_sha }}
+            * ${{ env.REGISTRY }}/${{ env.IMAGE }}-catalog:v0.0.0-${{ env.short_sha }}
+
+            They will expire after two weeks.
+            
+            Catalog source:
+            \`\`\`yaml
+            apiVersion: operators.coreos.com/v1alpha1
+            kind: CatalogSource
+            metadata:
+              name: netobserv-dev
+              namespace: openshift-marketplace
+            spec:
+              sourceType: grpc
+              image: ${{ env.REGISTRY }}/${{ env.IMAGE }}-catalog:v0.0.0-${{ env.short_sha }}
+              displayName: NetObserv development catalog
+              publisher: Me
+              updateStrategy:
+                registryPoll:
+                  interval: 1m
+            \`\`\`
+            `
             })

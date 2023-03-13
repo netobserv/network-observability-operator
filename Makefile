@@ -331,6 +331,10 @@ bundle: bundle-prepare ## Generate final bundle files.
 bundle-build: ## Build the bundle image.
 	$(OCI_BIN) build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
+shortlived-bundle-build: ## Build a temporary bundle image, expiring after 2 weeks on quay
+	$(MAKE) bundle-build BUNDLE_IMG=$(IMAGE_TAG_BASE)-bundle:tmp
+	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMAGE_TAG_BASE)-bundle:tmp -t $(BUNDLE_IMG) -f ./shortlived.Dockerfile .
+
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
 	$(MAKE) image-push IMG=$(BUNDLE_IMG)
@@ -353,6 +357,10 @@ endif
 .PHONY: catalog-build
 catalog-build: opm ## Build a catalog image.
 	$(OPM) index add --container-tool ${OCI_BIN} --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT)
+
+shortlived-catalog-build: ## Build a temporary catalog image, expiring after 2 weeks on quay
+	$(MAKE) catalog-build CATALOG_IMG=$(IMAGE_TAG_BASE)-catalog:tmp
+	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMAGE_TAG_BASE)-catalog:tmp -t $(CATALOG_IMG) -f ./shortlived.Dockerfile .
 
 # Push the catalog image.
 .PHONY: catalog-push
