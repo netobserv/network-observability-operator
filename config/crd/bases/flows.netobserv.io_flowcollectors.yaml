@@ -4069,6 +4069,12 @@ spec:
                     description: Metrics define the processor configuration regarding
                       metrics
                     properties:
+                      disableAlerts:
+                        description: disableAlerts is a list of alerts related to
+                          FLP that should not be created
+                        items:
+                          type: string
+                        type: array
                       ignoreTags:
                         default:
                         - egress

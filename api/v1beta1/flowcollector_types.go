@@ -280,6 +280,10 @@ type FLPMetrics struct {
 	// ignoreTags is a list of tags to specify which metrics to ignore
 	//+kubebuilder:default:={"egress","packets"}
 	IgnoreTags []string `json:"ignoreTags,omitempty"`
+
+	// disableAlerts is a list of alerts related to FLP that should not be created
+	// +optional
+	DisableAlerts []string `json:"disableAlerts,omitempty"`
 }
 
 const (
