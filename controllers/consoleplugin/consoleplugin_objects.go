@@ -155,7 +155,7 @@ func buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 
 	// check for connection traking to list indexes
 	indexFields := constants.LokiIndexFields
-	if desired.Processor.OutputRecordTypes != nil && *desired.Processor.OutputRecordTypes == flowslatest.OutputRecordAll {
+	if desired.Processor.OutputRecordTypes != nil && *desired.Processor.OutputRecordTypes != flowslatest.OutputRecordFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
 	}
 
@@ -305,15 +305,7 @@ func (b *builder) service(old *corev1.Service) *corev1.Service {
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
 func (b *builder) configMap() (*corev1.ConfigMap, string) {
-	outputRecordTypes := []string{constants.FlowLogRecordType}
-	if b.desired.Processor.OutputRecordTypes != nil && *b.desired.Processor.OutputRecordTypes == flowslatest.OutputRecordAll {
-		outputRecordTypes = []string{
-			constants.FlowLogRecordType,
-			constants.NewConnectionRecordType,
-			constants.HeartbeatRecordType,
-			constants.EndConnectionRecordType,
-		}
-	}
+	outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
 
 	config := map[string]interface{}{
 		"recordTypes":     outputRecordTypes,

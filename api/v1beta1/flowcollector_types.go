@@ -283,8 +283,10 @@ type FLPMetrics struct {
 }
 
 const (
-	OutputRecordFlows = "FLOWS"
-	OutputRecordAll   = "ALL"
+	OutputRecordFlows            = "FLOWS"
+	OutputRecordConnections      = "CONNECTIONS"
+	OutputRecordEndedConnections = "ENDED_CONNECTIONS"
+	OutputRecordAll              = "ALL"
 )
 
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector
@@ -360,9 +362,10 @@ type FlowCollectorFLP struct {
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
 
 	// outputRecordTypes defines the desired record types to generate. Possible values are "FLOWS" (default) to export
-	// flowLogs, or "ALL" to generate both flowLogs and newConnection, heartbeat, endConnection events
+	// flowLogs, "CONNECTIONS" to generate newConnection, heartbeat, endConnection events, "ENDED_CONNECTIONS" to generate
+	// only endConnection events or "ALL" to generate both flowLogs and connection events
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Enum:="FLOWS";"ALL"
+	// +kubebuilder:validation:Enum:="FLOWS";"CONNECTIONS";"ENDED_CONNECTIONS";"ALL"
 	// +kubebuilder:default:=FLOWS
 	OutputRecordTypes *string `json:"outputRecordTypes,omitempty"`
 

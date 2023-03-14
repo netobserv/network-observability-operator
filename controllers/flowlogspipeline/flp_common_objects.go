@@ -339,9 +339,10 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 		// Else: nothing for eBPF at the moment
 	}
 
-	// Connection tracking stage (only if OutputRecordTypes is set to ALL)
-	if b.desired.Processor.OutputRecordTypes != nil && *b.desired.Processor.OutputRecordTypes == flowslatest.OutputRecordAll {
+	// Connection tracking stage (only if OutputRecordTypes is not FLOWS)
+	if b.desired.Processor.OutputRecordTypes != nil && *b.desired.Processor.OutputRecordTypes != flowslatest.OutputRecordFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
+		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
 
 		endTimeout := conntrackEndTimeout
 		if b.desired.Processor.ConnectionEndTimeout != nil {
@@ -368,12 +369,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 					FieldGroupBRef: "dst",
 				},
 			},
-			OutputRecordTypes: []string{
-				constants.FlowLogRecordType,
-				constants.NewConnectionRecordType,
-				constants.HeartbeatRecordType,
-				constants.EndConnectionRecordType,
-			},
+			OutputRecordTypes: outputRecordTypes,
 			OutputFields: []api.OutputField{
 				{
 					Name:      "Bytes",
