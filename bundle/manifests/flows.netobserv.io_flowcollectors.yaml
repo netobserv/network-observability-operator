@@ -4084,14 +4084,13 @@ spec:
                     properties:
                       disableAlerts:
                         description: disableAlerts is a list of alerts that should
-                          not be created.
+                          be disabled.
                         items:
-                          description: 'Name of a processor alert Possible values
+                          description: 'Name of a processor alert. Possible values
                             are: `NetObservNoFlows`, which is triggered when no flows
-                            are being observed for a certain period, and `NetObservLokiError`,
+                            are being observed for a certain period. `NetObservLokiError`,
                             which is triggered when flows are being dropped due to
-                            Loki errors.disableAlerts is a list of alerts related
-                            to FLP that should not be created'
+                            Loki errors.'
                           enum:
                           - NetObservNoFlows
                           - NetObservLokiError

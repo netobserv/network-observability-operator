@@ -276,8 +276,10 @@ const (
 	AlertLokiError = "NetObservLokiError"
 )
 
-// Name of a processor alert
-// Possible values are: `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period, and `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.disableAlerts is a list of alerts related to FLP that should not be created
+// Name of a processor alert.
+// Possible values are:
+// `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.
+// `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.
 // +kubebuilder:validation:Enum:="NetObservNoFlows";"NetObservLokiError"
 type FLPAlert string
 
@@ -291,7 +293,7 @@ type FLPMetrics struct {
 	//+kubebuilder:default:={"egress","packets"}
 	IgnoreTags []string `json:"ignoreTags,omitempty"`
 
-	// disableAlerts is a list of alerts that should not be created.
+	// disableAlerts is a list of alerts that should be disabled.
 	// +optional
 	DisableAlerts []FLPAlert `json:"disableAlerts,omitempty"`
 }

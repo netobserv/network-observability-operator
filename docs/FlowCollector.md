@@ -7296,7 +7296,7 @@ Metrics define the processor configuration regarding metrics
         <td><b>disableAlerts</b></td>
         <td>[]enum</td>
         <td>
-          disableAlerts is a list of alerts that should not be created.<br/>
+          disableAlerts is a list of alerts that should be disabled.<br/>
         </td>
         <td>false</td>
       </tr><tr>
