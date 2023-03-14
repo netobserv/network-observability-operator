@@ -8,10 +8,14 @@ namespace: netobserv
 # field above.
 namePrefix: netobserv-
 
-# Labels to add to all resources and selectors.
-#commonLabels:
-#  someName: someValue
+resources:
+- monitor.yaml
 
+patches:
+  - path: ./monitoring-patch.yaml
+    target:
+      kind: Deployment
+      name: controller-manager
 bases:
 - ../crd
 - ../rbac
