@@ -7294,9 +7294,9 @@ Metrics define the processor configuration regarding metrics
     </thead>
     <tbody><tr>
         <td><b>disableAlerts</b></td>
-        <td>[]string</td>
+        <td>[]enum</td>
         <td>
-          disableAlerts is a list of alerts related to FLP that should not be created<br/>
+          disableAlerts is a list of alerts that should not be created.<br/>
         </td>
         <td>false</td>
       </tr><tr>

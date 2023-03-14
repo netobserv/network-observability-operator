@@ -712,7 +712,7 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 	return &flpServiceMonitorObject
 }
 
-func shouldAddAlert(name string, disabledList []string) bool {
+func shouldAddAlert(name flowslatest.FLPAlert, disabledList []flowslatest.FLPAlert) bool {
 	for _, disabledAlert := range disabledList {
 		if name == disabledAlert {
 			return false
@@ -725,9 +725,9 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 	rules := []monitoringv1.Rule{}
 
 	// Not receiving flows
-	if shouldAddAlert("NetObservNoFlows", b.desired.Processor.Metrics.DisableAlerts) {
+	if shouldAddAlert(flowslatest.AlertNoFlows, b.desired.Processor.Metrics.DisableAlerts) {
 		rules = append(rules, monitoringv1.Rule{
-			Alert: "NetObservNoFlows",
+			Alert: flowslatest.AlertNoFlows,
 			Annotations: map[string]string{
 				"description": "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
 				"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
@@ -741,9 +741,9 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 	}
 
 	// Flows getting dropped by loki library
-	if shouldAddAlert("NetObservLokiError", b.desired.Processor.Metrics.DisableAlerts) {
+	if shouldAddAlert(flowslatest.AlertLokiError, b.desired.Processor.Metrics.DisableAlerts) {
 		rules = append(rules, monitoringv1.Rule{
-			Alert: "NetObservLokiError",
+			Alert: flowslatest.AlertLokiError,
 			Annotations: map[string]string{
 				"description": "NetObserv flowlogs-pipeline is dropping flows because of loki errors, loki may be down or having issues ingesting every flows. Please check loki and flowlogs-pipeline logs.",
 				"summary":     "NetObserv flowlogs-pipeline is dropping flows because of loki errors",

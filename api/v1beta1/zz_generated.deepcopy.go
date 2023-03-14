@@ -129,7 +129,7 @@ func (in *FLPMetrics) DeepCopyInto(out *FLPMetrics) {
 	}
 	if in.DisableAlerts != nil {
 		in, out := &in.DisableAlerts, &out.DisableAlerts
-		*out = make([]string, len(*in))
+		*out = make([]FLPAlert, len(*in))
 		copy(*out, *in)
 	}
 }
