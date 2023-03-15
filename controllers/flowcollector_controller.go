@@ -315,6 +315,12 @@ func (r *FlowCollectorReconciler) reconcileOperator(ctx context.Context, clientH
 			return err
 		}
 	}
+	if r.availableAPIs.HasSvcMonitor() {
+		desiredHealthDashboardCM := buildHealthDashboard()
+		if err := clientHelper.ReconcileConfigMap(ctx, desiredHealthDashboardCM); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

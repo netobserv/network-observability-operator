@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	_ "embed"
+
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -64,4 +66,30 @@ func buildRoleBindingMonitoringReader(ns string) *rbacv1.ClusterRoleBinding {
 			Namespace: monitoringNamespace,
 		}},
 	}
+}
+
+//go:embed infra_health_dashboard.json
+var healthDashboardEmbed string
+
+const (
+	healthDashboardCMName       = "grafana-dashboard-netobserv-health"
+	healthDashboardCMNamespace  = "openshift-config-managed"
+	healthDashboardCMAnnotation = "console.openshift.io/dashboard"
+	healthDashboardCMFile       = "netobserv-health-metrics.json"
+)
+
+func buildHealthDashboard() *corev1.ConfigMap {
+	configMap := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      healthDashboardCMName,
+			Namespace: healthDashboardCMNamespace,
+			Labels: map[string]string{
+				healthDashboardCMAnnotation: "true",
+			},
+		},
+		Data: map[string]string{
+			healthDashboardCMFile: string(healthDashboardEmbed),
+		},
+	}
+	return &configMap
 }
