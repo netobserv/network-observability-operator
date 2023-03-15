@@ -500,7 +500,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 
 	report := helper.NewChangeReport("")
 	assert.True(helper.ServiceMonitorChanged(first, second, &report))
-	assert.Contains(report.String(), "ServiceMonitor meta changed")
+	assert.Contains(report.String(), "ServiceMonitor spec changed")
 }
 
 func TestPrometheusRuleNoChange(t *testing.T) {
@@ -524,19 +524,18 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	assert := assert.New(t)
 
 	// Get first
-	ns := "namespace"
 	cfg := getConfig()
-	b := newMonolithBuilder(ns, image, &cfg, true, &certWatcher)
+	b := newMonolithBuilder("namespace", image, &cfg, true, &certWatcher)
 	first := b.generic.prometheusRule()
 
 	// Check namespace change
-	cfg.Processor.Metrics.Server.Port = 9999
-	b = newMonolithBuilder("namespace2", image, &cfg, true, &certWatcher)
+	cfg.Processor.Metrics.DisableAlerts = []flowslatest.FLPAlert{flowslatest.AlertNoFlows}
+	b = newMonolithBuilder("namespace", image, &cfg, true, &certWatcher)
 	second := b.generic.prometheusRule()
 
 	report := helper.NewChangeReport("")
 	assert.True(helper.PrometheusRuleChanged(first, second, &report))
-	assert.Contains(report.String(), "PrometheusRule meta changed")
+	assert.Contains(report.String(), "PrometheusRule spec changed")
 }
 
 func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
