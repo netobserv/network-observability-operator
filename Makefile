@@ -8,7 +8,6 @@ REPO ?= quay.io/netobserv
 # Component versions to use in bundle / release (do not use $VERSION for that)
 PREVIOUS_VERSION ?= v1.0.1
 BUNDLE_VERSION ?= 1.0.2
-OPERATOR_VERSION ?= $(BUNDLE_VERSION)
 # console plugin
 export PLG_VERSION ?= v0.1.9
 # flowlogs-pipeline
@@ -301,9 +300,9 @@ bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metada
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:$(FLP_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:.+~console-plugin:$(PLG_VERSION)~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(OPERATOR_VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
-	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(OPERATOR_VERSION)/~g' ./config/manifests/bases/description-upstream.md
-	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(OPERATOR_VERSION)/~g' ./config/manifests/bases/description-ocp.md
+	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/manifests/bases/description-upstream.md
+	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/manifests/bases/description-ocp.md
 	$(SED) -i -r 's~replaces: netobserv-operator\.v.*~replaces: netobserv-operator\.$(PREVIOUS_VERSION)~' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
 	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 
@@ -323,7 +322,7 @@ bundle: bundle-prepare ## Generate final bundle files.
 	'
 
 .PHONY: update-bundle
-update-bundle: IMG=$(IMAGE_TAG_BASE):$(OPERATOR_VERSION)
+update-bundle: VERSION=$(BUNDLE_VERSION)
 update-bundle: bundle ## Prepare a clean bundle to be commited
 
 .PHONY: bundle-build
