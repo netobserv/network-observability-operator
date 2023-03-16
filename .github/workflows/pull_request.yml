@@ -25,11 +25,12 @@ jobs:
     - name: build, lint, test
       run: make build lint test
     - name: Report coverage
+      if: ${{ matrix.go == '1.19' }}
       uses: codecov/codecov-action@v2.1.0
       with:
         files: ./cover.out
         flags: unittests
-        fail_ci_if_error: false
+        fail_ci_if_error: false        
 
   bundle-check:
     runs-on: ubuntu-latest
