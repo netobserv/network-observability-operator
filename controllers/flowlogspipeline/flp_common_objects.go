@@ -739,6 +739,7 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 			For:  "10m",
 			Labels: map[string]string{
 				"severity": "warning",
+				"app":      "netobserv",
 			},
 		})
 	}
@@ -755,6 +756,7 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 			For:  "10m",
 			Labels: map[string]string{
 				"severity": "warning",
+				"app":      "netobserv",
 			},
 		})
 	}

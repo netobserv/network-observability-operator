@@ -88,7 +88,7 @@ func buildHealthDashboard() *corev1.ConfigMap {
 			},
 		},
 		Data: map[string]string{
-			healthDashboardCMFile: string(healthDashboardEmbed),
+			healthDashboardCMFile: healthDashboardEmbed,
 		},
 	}
 	return &configMap
