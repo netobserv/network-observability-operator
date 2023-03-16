@@ -271,6 +271,18 @@ type MetricsServerConfig struct {
 	TLS ServerTLS `json:"tls"`
 }
 
+const (
+	AlertNoFlows   = "NetObservNoFlows"
+	AlertLokiError = "NetObservLokiError"
+)
+
+// Name of a processor alert.
+// Possible values are:
+// `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.
+// `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.
+// +kubebuilder:validation:Enum:="NetObservNoFlows";"NetObservLokiError"
+type FLPAlert string
+
 // FLPMetrics define the desired FLP configuration regarding metrics
 type FLPMetrics struct {
 	// metricsServer endpoint configuration for Prometheus scraper
@@ -280,6 +292,10 @@ type FLPMetrics struct {
 	// ignoreTags is a list of tags to specify which metrics to ignore
 	//+kubebuilder:default:={"egress","packets"}
 	IgnoreTags []string `json:"ignoreTags,omitempty"`
+
+	// disableAlerts is a list of alerts that should be disabled.
+	// +optional
+	DisableAlerts []FLPAlert `json:"disableAlerts,omitempty"`
 }
 
 const (

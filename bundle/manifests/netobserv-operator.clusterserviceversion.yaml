@@ -304,6 +304,7 @@ metadata:
               "kafkaConsumerReplicas": 3,
               "logLevel": "info",
               "metrics": {
+                "disableAlerts": [],
                 "ignoreTags": [
                   "egress",
                   "packets"
