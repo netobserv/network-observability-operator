@@ -64,18 +64,9 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string, av
 	return CPReconciler{ClientHelper: cl, nobjMngr: nobjMngr, owned: owned, image: imageName, availableAPIs: availableAPIs}
 }
 
-// InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
-func (r *CPReconciler) InitStaticResources(ctx context.Context) error {
-	cr := buildClusterRole()
-	return r.ReconcileClusterRole(ctx, cr)
-}
-
-// PrepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
-func (r *CPReconciler) PrepareNamespaceChange(ctx context.Context) error {
-	// Switching namespace => delete everything in the previous namespace
+// CleanupNamespace cleans up old namespace
+func (r *CPReconciler) CleanupNamespace(ctx context.Context) {
 	r.nobjMngr.CleanupPreviousNamespace(ctx)
-	cr := buildClusterRole()
-	return r.ReconcileClusterRole(ctx, cr)
 }
 
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
@@ -146,6 +137,11 @@ func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builde
 	if !r.nobjMngr.Exists(r.owned.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // update not needed for now
+
+	cr := buildClusterRole()
+	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
+		return err
+	}
 
 	desired := builder.clusterRoleBinding()
 	if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
@@ -227,15 +223,15 @@ func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, de
 		if err := r.CreateOwned(ctx, newSVC); err != nil {
 			return err
 		}
-		if r.availableAPIs.HasSvcMonitor() {
-			serviceMonitor := builder.serviceMonitor()
-			if err := r.CreateOwned(ctx, serviceMonitor); err != nil {
-				return err
-			}
-		}
 	} else if serviceNeedsUpdate(r.owned.service, &desired.ConsolePlugin, &report) {
 		newSVC := builder.service(r.owned.service)
 		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
+			return err
+		}
+	}
+	if r.availableAPIs.HasSvcMonitor() {
+		serviceMonitor := builder.serviceMonitor()
+		if err := reconcilers.GenericReconcile(ctx, r.nobjMngr, &r.ClientHelper, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}

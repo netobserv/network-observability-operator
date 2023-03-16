@@ -26,6 +26,7 @@ import (
 	. "github.com/onsi/gomega"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/stretchr/testify/mock"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -40,10 +41,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/netobserv/network-observability-operator/controllers/operator"
-
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/v1beta1"
+	"github.com/netobserv/network-observability-operator/controllers/operator"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -86,6 +86,7 @@ var _ = BeforeSuite(func() {
 			// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
 			filepath.Join("..", "vendor", "github.com", "openshift", "api", "console", "v1alpha1"),
 			filepath.Join("..", "vendor", "github.com", "openshift", "api", "operator", "v1"),
+			filepath.Join("..", "test-assets"),
 		},
 		ErrorIfCRDPathMissing: true,
 	}
@@ -115,7 +116,7 @@ var _ = BeforeSuite(func() {
 	err = operatorsv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = flowsv1beta1.AddToScheme(scheme.Scheme)
+	err = monitoringv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme

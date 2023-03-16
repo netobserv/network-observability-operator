@@ -12,6 +12,7 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -50,6 +51,8 @@ func newIngesterReconciler(info *reconcilersCommonInfo) *flpIngesterReconciler {
 	info.nobjMngr.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
 	if info.availableAPIs.HasSvcMonitor() {
 		info.nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaIngester), owned.serviceMonitor)
+	}
+	if info.availableAPIs.HasPromRule() {
 		info.nobjMngr.AddManagedObject(prometheusRuleName(ConfKafkaIngester), owned.prometheusRule)
 	}
 
@@ -64,18 +67,9 @@ func (r *flpIngesterReconciler) context(ctx context.Context) context.Context {
 	return log.IntoContext(ctx, l)
 }
 
-// initStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
-func (r *flpIngesterReconciler) initStaticResources(ctx context.Context) error {
-	cr := buildClusterRoleIngester(r.useOpenShiftSCC)
-	return r.ReconcileClusterRole(ctx, cr)
-}
-
-// PrepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
-func (r *flpIngesterReconciler) prepareNamespaceChange(ctx context.Context) error {
-	// Switching namespace => delete everything in the previous namespace
+// cleanupNamespace cleans up old namespace
+func (r *flpIngesterReconciler) cleanupNamespace(ctx context.Context) {
 	r.nobjMngr.CleanupPreviousNamespace(ctx)
-	cr := buildClusterRoleIngester(r.useOpenShiftSCC)
-	return r.ReconcileClusterRole(ctx, cr)
 }
 
 func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
@@ -126,34 +120,24 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 		if err := r.CreateOwned(ctx, builder.newPromService()); err != nil {
 			return err
 		}
-		if r.availableAPIs.HasSvcMonitor() {
-			if err := r.CreateOwned(ctx, builder.generic.serviceMonitor()); err != nil {
+	} else {
+		newSVC := builder.fromPromService(r.owned.promService)
+		if helper.ServiceChanged(r.owned.promService, newSVC, &report) {
+			if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
 				return err
 			}
-			if err := r.CreateOwned(ctx, builder.generic.prometheusRule()); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-	newSVC := builder.fromPromService(r.owned.promService)
-	if helper.ServiceChanged(r.owned.promService, newSVC, &report) {
-		if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
-			return err
 		}
 	}
 	if r.availableAPIs.HasSvcMonitor() {
-		newMonitorSvc := builder.generic.serviceMonitor()
-		if helper.ServiceMonitorChanged(r.owned.serviceMonitor, newMonitorSvc) {
-			if err := r.UpdateOwned(ctx, r.owned.serviceMonitor, newMonitorSvc); err != nil {
-				return err
-			}
+		serviceMonitor := builder.generic.serviceMonitor()
+		if err := reconcilers.GenericReconcile(ctx, r.nobjMngr, &r.ClientHelper, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
+			return err
 		}
-		newPromRules := builder.generic.prometheusRule()
-		if helper.PrometheusRuleChanged(r.owned.prometheusRule, newPromRules) {
-			if err := r.UpdateOwned(ctx, r.owned.prometheusRule, newPromRules); err != nil {
-				return err
-			}
+	}
+	if r.availableAPIs.HasPromRule() {
+		promRules := builder.generic.prometheusRule()
+		if err := reconcilers.GenericReconcile(ctx, r.nobjMngr, &r.ClientHelper, r.owned.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -182,6 +166,11 @@ func (r *flpIngesterReconciler) reconcilePermissions(ctx context.Context, builde
 	if !r.nobjMngr.Exists(r.owned.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
+
+	cr := buildClusterRoleIngester(r.useOpenShiftSCC)
+	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
+		return err
+	}
 
 	desired := builder.clusterRoleBinding()
 	if err := r.ClientHelper.ReconcileClusterRoleBinding(ctx, desired); err != nil {
