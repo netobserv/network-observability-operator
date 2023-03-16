@@ -7,6 +7,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
@@ -338,6 +339,71 @@ func flowCollectorControllerSpecs() {
 				}
 				return ofc.Data["sampling"]
 			}, timeout, interval).Should(Equal("1"))
+		})
+
+		It("Should create desired objects when they're not found (e.g. case of an operator upgrade)", func() {
+			psvc := v1.Service{}
+			sm := monitoringv1.ServiceMonitor{}
+			pr := monitoringv1.PrometheusRule{}
+			By("Expecting prometheus service to exist")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "flowlogs-pipeline-prom",
+					Namespace: operatorNamespace,
+				}, &psvc)
+			}, timeout, interval).Should(Succeed())
+
+			By("Expecting ServiceMonitor to exist")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "flowlogs-pipeline-monitor",
+					Namespace: operatorNamespace,
+				}, &sm)
+			}, timeout, interval).Should(Succeed())
+
+			By("Expecting PrometheusRule to exist")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "flowlogs-pipeline-alert",
+					Namespace: operatorNamespace,
+				}, &pr)
+			}, timeout, interval).Should(Succeed())
+
+			// Manually delete ServiceMonitor
+			By("Deleting ServiceMonitor")
+			Eventually(func() error {
+				return k8sClient.Delete(ctx, &sm)
+			}, timeout, interval).Should(Succeed())
+
+			// Do a dummy change that will trigger reconcile, and make sure SM is created again
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Processor.LogLevel = "info"
+			})
+			By("Expecting ServiceMonitor to exist")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "flowlogs-pipeline-monitor",
+					Namespace: operatorNamespace,
+				}, &sm)
+			}, timeout, interval).Should(Succeed())
+
+			// Manually delete Rule
+			By("Deleting prom rule")
+			Eventually(func() error {
+				return k8sClient.Delete(ctx, &pr)
+			}, timeout, interval).Should(Succeed())
+
+			// Do a dummy change that will trigger reconcile, and make sure Rule is created again
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Processor.LogLevel = "debug"
+			})
+			By("Expecting PrometheusRule to exist")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "flowlogs-pipeline-alert",
+					Namespace: operatorNamespace,
+				}, &pr)
+			}, timeout, interval).Should(Succeed())
 		})
 	})
 
@@ -739,7 +805,7 @@ func UpdateCR(key types.NamespacedName, updater func(*flowslatest.FlowCollector)
 	Eventually(func() error {
 		updater(cr)
 		return k8sClient.Update(ctx, cr)
-	}).Should(Succeed())
+	}, timeout, interval).Should(Succeed())
 }
 
 func checkDigestUpdate(oldDigest *string, annots map[string]string) error {

@@ -202,31 +202,12 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	cpReconciler *consoleplugin.CPReconciler,
 ) error {
 	log := log.FromContext(ctx)
-	if oldNS == "" {
-		// First install: create one-shot resources
-		log.Info("FlowCollector first install: creating initial resources")
-		err := flpReconciler.InitStaticResources(ctx)
-		if err != nil {
-			return err
-		}
-		if r.availableAPIs.HasConsolePlugin() {
-			err := cpReconciler.InitStaticResources(ctx)
-			if err != nil {
-				return err
-			}
-		}
-	} else {
+	if oldNS != "" {
 		// Namespace updated, clean up previous namespace
-		log.Info("FlowCollector namespace change detected: cleaning up previous namespace and preparing next one", "old namespace", oldNS, "new namepace", newNS)
-		err := flpReconciler.PrepareNamespaceChange(ctx)
-		if err != nil {
-			return err
-		}
+		log.Info("FlowCollector namespace change detected: cleaning up previous namespace", "old namespace", oldNS, "new namepace", newNS)
+		flpReconciler.CleanupNamespace(ctx)
 		if r.availableAPIs.HasConsolePlugin() {
-			err := cpReconciler.PrepareNamespaceChange(ctx)
-			if err != nil {
-				return err
-			}
+			cpReconciler.CleanupNamespace(ctx)
 		}
 	}
 

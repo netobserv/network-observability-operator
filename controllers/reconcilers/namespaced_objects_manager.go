@@ -9,6 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 // NamespacedObjectManager provides some helpers to manage (fetch, delete) namespace-scoped objects
@@ -122,4 +124,14 @@ func (m *NamespacedObjectManager) Exists(obj client.Object) bool {
 		}
 	}
 	return false
+}
+
+func GenericReconcile[K client.Object](ctx context.Context, m *NamespacedObjectManager, cl *ClientHelper, old, new K, report *helper.ChangeReport, changeFunc func(old, new K, report *helper.ChangeReport) bool) error {
+	if !m.Exists(old) {
+		return cl.CreateOwned(ctx, new)
+	}
+	if changeFunc(old, new, report) {
+		return cl.UpdateOwned(ctx, old, new)
+	}
+	return nil
 }
