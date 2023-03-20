@@ -267,18 +267,18 @@ func (in *FlowCollectorFLP) DeepCopyInto(out *FlowCollectorFLP) {
 	in.Metrics.DeepCopyInto(&out.Metrics)
 	in.Resources.DeepCopyInto(&out.Resources)
 	in.KafkaConsumerAutoscaler.DeepCopyInto(&out.KafkaConsumerAutoscaler)
-	if in.OutputRecordTypes != nil {
-		in, out := &in.OutputRecordTypes, &out.OutputRecordTypes
+	if in.LogTypes != nil {
+		in, out := &in.LogTypes, &out.LogTypes
 		*out = new(string)
 		**out = **in
 	}
-	if in.ConnectionHeartbeatInterval != nil {
-		in, out := &in.ConnectionHeartbeatInterval, &out.ConnectionHeartbeatInterval
+	if in.ConversationHeartbeatInterval != nil {
+		in, out := &in.ConversationHeartbeatInterval, &out.ConversationHeartbeatInterval
 		*out = new(v1.Duration)
 		**out = **in
 	}
-	if in.ConnectionEndTimeout != nil {
-		in, out := &in.ConnectionEndTimeout, &out.ConnectionEndTimeout
+	if in.ConversationEndTimeout != nil {
+		in, out := &in.ConversationEndTimeout, &out.ConversationEndTimeout
 		*out = new(v1.Duration)
 		**out = **in
 	}

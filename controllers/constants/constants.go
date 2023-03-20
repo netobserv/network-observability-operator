@@ -27,10 +27,10 @@ const (
 	CertCASuffix           = "ca"
 	CertUserSuffix         = "user"
 
-	FlowLogRecordType       = "flowLog"
-	NewConnectionRecordType = "newConnection"
-	HeartbeatRecordType     = "heartbeat"
-	EndConnectionRecordType = "endConnection"
+	FlowLogType       = "flowLog"
+	NewConnectionType = "newConnection"
+	HeartbeatType     = "heartbeat"
+	EndConnectionType = "endConnection"
 )
 
 var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}

@@ -155,7 +155,7 @@ func buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 
 	// check for connection traking to list indexes
 	indexFields := constants.LokiIndexFields
-	if desired.Processor.OutputRecordTypes != nil && *desired.Processor.OutputRecordTypes != flowslatest.OutputRecordFlows {
+	if desired.Processor.LogTypes != nil && *desired.Processor.LogTypes != flowslatest.LogTypeFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
 	}
 

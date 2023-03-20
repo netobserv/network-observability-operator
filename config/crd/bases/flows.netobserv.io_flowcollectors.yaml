@@ -3447,15 +3447,15 @@ spec:
                   receives the flows from the agent, enriches them, and forwards them
                   to the Loki persistence layer.
                 properties:
-                  connectionEndTimeout:
+                  conversationEndTimeout:
                     default: 10s
-                    description: connection end timeout is the duration of time to
-                      wait from the last flow log to end a connection
+                    description: conversation end timeout is the duration of time
+                      to wait from the last flow log to end a conversation
                     type: string
-                  connectionHeartbeatInterval:
+                  conversationHeartbeatInterval:
                     default: 30s
-                    description: connection heartbeat interval is the duration of
-                      time to wait between heartbeat reports of a connection
+                    description: conversation heartbeat interval is the duration of
+                      time to wait between heartbeat reports of a conversation
                     type: string
                   debug:
                     description: Debug allows setting some aspects of the internal
@@ -4065,6 +4065,19 @@ spec:
                     - fatal
                     - panic
                     type: string
+                  logTypes:
+                    default: FLOWS
+                    description: logTypes defines the desired record types to generate.
+                      Possible values are "FLOWS" (default) to export flowLogs, "CONVERSATIONS"
+                      to generate newConnection, heartbeat, endConnection events,
+                      "ENDED_CONVERSATIONS" to generate only endConnection events
+                      or "ALL" to generate both flow logs and conversations events
+                    enum:
+                    - FLOWS
+                    - CONVERSATIONS
+                    - ENDED_CONVERSATIONS
+                    - ALL
+                    type: string
                   metrics:
                     description: Metrics define the processor configuration regarding
                       metrics
@@ -4146,19 +4159,6 @@ spec:
                             type: object
                         type: object
                     type: object
-                  outputRecordTypes:
-                    default: FLOWS
-                    description: outputRecordTypes defines the desired record types
-                      to generate. Possible values are "FLOWS" (default) to export
-                      flowLogs, "CONNECTIONS" to generate newConnection, heartbeat,
-                      endConnection events, "ENDED_CONNECTIONS" to generate only endConnection
-                      events or "ALL" to generate both flowLogs and connection events
-                    enum:
-                    - FLOWS
-                    - CONNECTIONS
-                    - ENDED_CONNECTIONS
-                    - ALL
-                    type: string
                   port:
                     default: 2055
                     description: 'port of the flow collector (host port) By conventions,

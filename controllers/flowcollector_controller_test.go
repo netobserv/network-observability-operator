@@ -32,7 +32,7 @@ const (
 	conntrackHeartbeatInterval = 30 * time.Second
 )
 
-var outputRecordTypes = flowslatest.OutputRecordAll
+var outputRecordTypes = flowslatest.LogTypeAll
 
 // nolint:cyclop
 func flowCollectorControllerSpecs() {
@@ -102,11 +102,11 @@ func flowCollectorControllerSpecs() {
 								"GOGC": "200",
 							},
 						},
-						OutputRecordTypes: &outputRecordTypes,
-						ConnectionHeartbeatInterval: &metav1.Duration{
+						LogTypes: &outputRecordTypes,
+						ConversationHeartbeatInterval: &metav1.Duration{
 							Duration: conntrackHeartbeatInterval,
 						},
-						ConnectionEndTimeout: &metav1.Duration{
+						ConversationEndTimeout: &metav1.Duration{
 							Duration: conntrackEndTimeout,
 						},
 					},
@@ -219,11 +219,11 @@ func flowCollectorControllerSpecs() {
 							"GOGC":       "400",
 						},
 					},
-					OutputRecordTypes: &outputRecordTypes,
-					ConnectionHeartbeatInterval: &metav1.Duration{
+					LogTypes: &outputRecordTypes,
+					ConversationHeartbeatInterval: &metav1.Duration{
 						Duration: conntrackHeartbeatInterval,
 					},
-					ConnectionEndTimeout: &metav1.Duration{
+					ConversationEndTimeout: &metav1.Duration{
 						Duration: conntrackEndTimeout,
 					},
 				}

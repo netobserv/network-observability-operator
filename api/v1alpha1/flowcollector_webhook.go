@@ -43,14 +43,14 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 		return err
 	}
 
-	dst.Spec.Processor.OutputRecordTypes = restored.Spec.Processor.OutputRecordTypes
+	dst.Spec.Processor.LogTypes = restored.Spec.Processor.LogTypes
 
-	if restored.Spec.Processor.ConnectionHeartbeatInterval != nil {
-		dst.Spec.Processor.ConnectionHeartbeatInterval = restored.Spec.Processor.ConnectionHeartbeatInterval
+	if restored.Spec.Processor.ConversationHeartbeatInterval != nil {
+		dst.Spec.Processor.ConversationHeartbeatInterval = restored.Spec.Processor.ConversationHeartbeatInterval
 	}
 
-	if restored.Spec.Processor.ConnectionEndTimeout != nil {
-		dst.Spec.Processor.ConnectionEndTimeout = restored.Spec.Processor.ConnectionEndTimeout
+	if restored.Spec.Processor.ConversationEndTimeout != nil {
+		dst.Spec.Processor.ConversationEndTimeout = restored.Spec.Processor.ConversationEndTimeout
 	}
 
 	if restored.Spec.Processor.Metrics.DisableAlerts != nil {

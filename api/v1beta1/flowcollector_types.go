@@ -299,10 +299,10 @@ type FLPMetrics struct {
 }
 
 const (
-	OutputRecordFlows            = "FLOWS"
-	OutputRecordConnections      = "CONNECTIONS"
-	OutputRecordEndedConnections = "ENDED_CONNECTIONS"
-	OutputRecordAll              = "ALL"
+	LogTypeFlows              = "FLOWS"
+	LogTypeConversations      = "CONVERSATIONS"
+	LogTypeEndedConversations = "ENDED_CONVERSATIONS"
+	LogTypeAll                = "ALL"
 )
 
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector
@@ -377,23 +377,23 @@ type FlowCollectorFLP struct {
 	// kafkaConsumerBatchSize indicates to the broker the maximum batch size, in bytes, that the consumer will accept. Ignored when not using Kafka. Default: 10MB.
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
 
-	// outputRecordTypes defines the desired record types to generate. Possible values are "FLOWS" (default) to export
-	// flowLogs, "CONNECTIONS" to generate newConnection, heartbeat, endConnection events, "ENDED_CONNECTIONS" to generate
-	// only endConnection events or "ALL" to generate both flowLogs and connection events
+	// logTypes defines the desired record types to generate. Possible values are "FLOWS" (default) to export
+	// flowLogs, "CONVERSATIONS" to generate newConnection, heartbeat, endConnection events, "ENDED_CONVERSATIONS" to generate
+	// only endConnection events or "ALL" to generate both flow logs and conversations events
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Enum:="FLOWS";"CONNECTIONS";"ENDED_CONNECTIONS";"ALL"
+	// +kubebuilder:validation:Enum:="FLOWS";"CONVERSATIONS";"ENDED_CONVERSATIONS";"ALL"
 	// +kubebuilder:default:=FLOWS
-	OutputRecordTypes *string `json:"outputRecordTypes,omitempty"`
+	LogTypes *string `json:"logTypes,omitempty"`
 
 	//+kubebuilder:default:="30s"
 	// +optional
-	// connection heartbeat interval is the duration of time to wait between heartbeat reports of a connection
-	ConnectionHeartbeatInterval *metav1.Duration `json:"connectionHeartbeatInterval,omitempty"`
+	// conversation heartbeat interval is the duration of time to wait between heartbeat reports of a conversation
+	ConversationHeartbeatInterval *metav1.Duration `json:"conversationHeartbeatInterval,omitempty"`
 
 	//+kubebuilder:default:="10s"
 	// +optional
-	// connection end timeout is the duration of time to wait from the last flow log to end a connection
-	ConnectionEndTimeout *metav1.Duration `json:"connectionEndTimeout,omitempty"`
+	// conversation end timeout is the duration of time to wait from the last flow log to end a conversation
+	ConversationEndTimeout *metav1.Duration `json:"conversationEndTimeout,omitempty"`
 
 	// Debug allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations
