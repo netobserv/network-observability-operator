@@ -2,6 +2,7 @@ package helper
 
 import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
 func GetSampling(spec *flowslatest.FlowCollectorSpec) int {
@@ -39,4 +40,34 @@ func LokiUseHostToken(spec *flowslatest.FlowCollectorLoki) bool {
 
 func LokiForwardUserToken(spec *flowslatest.FlowCollectorLoki) bool {
 	return spec.AuthToken == flowslatest.LokiAuthForwardUserToken
+}
+
+func GetRecordTypes(processor *flowslatest.FlowCollectorFLP) []string {
+	outputRecordTypes := []string{constants.FlowLogRecordType}
+	if processor.OutputRecordTypes != nil {
+		switch *processor.OutputRecordTypes {
+		case flowslatest.OutputRecordFlows:
+			outputRecordTypes = []string{
+				constants.FlowLogRecordType,
+			}
+		case flowslatest.OutputRecordConnections:
+			outputRecordTypes = []string{
+				constants.NewConnectionRecordType,
+				constants.HeartbeatRecordType,
+				constants.EndConnectionRecordType,
+			}
+		case flowslatest.OutputRecordEndedConnections:
+			outputRecordTypes = []string{
+				constants.EndConnectionRecordType,
+			}
+		case flowslatest.OutputRecordAll:
+			outputRecordTypes = []string{
+				constants.FlowLogRecordType,
+				constants.NewConnectionRecordType,
+				constants.HeartbeatRecordType,
+				constants.EndConnectionRecordType,
+			}
+		}
+	}
+	return outputRecordTypes
 }
