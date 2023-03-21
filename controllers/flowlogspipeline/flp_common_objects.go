@@ -344,19 +344,19 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 		// Else: nothing for eBPF at the moment
 	}
 
-	// Connection tracking stage (only if OutputRecordTypes is not FLOWS)
-	if b.desired.Processor.OutputRecordTypes != nil && *b.desired.Processor.OutputRecordTypes != flowslatest.OutputRecordFlows {
+	// Connection tracking stage (only if LogTypes is not FLOWS)
+	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
 		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
 
 		endTimeout := conntrackEndTimeout
-		if b.desired.Processor.ConnectionEndTimeout != nil {
-			endTimeout = b.desired.Processor.ConnectionEndTimeout.Duration
+		if b.desired.Processor.ConversationEndTimeout != nil {
+			endTimeout = b.desired.Processor.ConversationEndTimeout.Duration
 		}
 
 		heartbeatInterval := conntrackHeartbeatInterval
-		if b.desired.Processor.ConnectionHeartbeatInterval != nil {
-			heartbeatInterval = b.desired.Processor.ConnectionHeartbeatInterval.Duration
+		if b.desired.Processor.ConversationHeartbeatInterval != nil {
+			heartbeatInterval = b.desired.Processor.ConversationHeartbeatInterval.Duration
 		}
 
 		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{

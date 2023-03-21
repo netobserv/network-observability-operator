@@ -48,7 +48,7 @@ var minReplicas = int32(1)
 var maxReplicas = int32(5)
 var targetCPU = int32(75)
 var certWatcher = watchers.NewCertificatesWatcher()
-var outputRecordTypes = flowslatest.OutputRecordAll
+var outputRecordTypes = flowslatest.LogTypeAll
 
 const testNamespace = "flp"
 
@@ -86,11 +86,11 @@ func getConfig() flowslatest.FlowCollectorSpec {
 					},
 				}},
 			},
-			OutputRecordTypes: &outputRecordTypes,
-			ConnectionHeartbeatInterval: &metav1.Duration{
+			LogTypes: &outputRecordTypes,
+			ConversationHeartbeatInterval: &metav1.Duration{
 				Duration: conntrackHeartbeatInterval,
 			},
-			ConnectionEndTimeout: &metav1.Duration{
+			ConversationEndTimeout: &metav1.Duration{
 				Duration: conntrackEndTimeout,
 			},
 		},

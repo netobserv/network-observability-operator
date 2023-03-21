@@ -43,29 +43,29 @@ func LokiForwardUserToken(spec *flowslatest.FlowCollectorLoki) bool {
 }
 
 func GetRecordTypes(processor *flowslatest.FlowCollectorFLP) []string {
-	outputRecordTypes := []string{constants.FlowLogRecordType}
-	if processor.OutputRecordTypes != nil {
-		switch *processor.OutputRecordTypes {
-		case flowslatest.OutputRecordFlows:
+	outputRecordTypes := []string{constants.FlowLogType}
+	if processor.LogTypes != nil {
+		switch *processor.LogTypes {
+		case flowslatest.LogTypeFlows:
 			outputRecordTypes = []string{
-				constants.FlowLogRecordType,
+				constants.FlowLogType,
 			}
-		case flowslatest.OutputRecordConnections:
+		case flowslatest.LogTypeConversations:
 			outputRecordTypes = []string{
-				constants.NewConnectionRecordType,
-				constants.HeartbeatRecordType,
-				constants.EndConnectionRecordType,
+				constants.NewConnectionType,
+				constants.HeartbeatType,
+				constants.EndConnectionType,
 			}
-		case flowslatest.OutputRecordEndedConnections:
+		case flowslatest.LogTypeEndedConversations:
 			outputRecordTypes = []string{
-				constants.EndConnectionRecordType,
+				constants.EndConnectionType,
 			}
-		case flowslatest.OutputRecordAll:
+		case flowslatest.LogTypeAll:
 			outputRecordTypes = []string{
-				constants.FlowLogRecordType,
-				constants.NewConnectionRecordType,
-				constants.HeartbeatRecordType,
-				constants.EndConnectionRecordType,
+				constants.FlowLogType,
+				constants.NewConnectionType,
+				constants.HeartbeatType,
+				constants.EndConnectionType,
 			}
 		}
 	}

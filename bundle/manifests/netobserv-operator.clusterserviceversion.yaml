@@ -295,8 +295,8 @@ metadata:
             },
             "namespace": "netobserv",
             "processor": {
-              "connectionEndTimeout": "10s",
-              "connectionHeartbeatInterval": "30s",
+              "conversationEndTimeout": "10s",
+              "conversationHeartbeatInterval": "30s",
               "dropUnusedFields": true,
               "imagePullPolicy": "IfNotPresent",
               "kafkaConsumerAutoscaler": null,
@@ -304,6 +304,7 @@ metadata:
               "kafkaConsumerQueueCapacity": 1000,
               "kafkaConsumerReplicas": 3,
               "logLevel": "info",
+              "logTypes": "FLOWS",
               "metrics": {
                 "disableAlerts": [],
                 "ignoreTags": [
@@ -314,7 +315,6 @@ metadata:
                   "port": 9102
                 }
               },
-              "outputRecordTypes": "FLOWS",
               "port": 2055,
               "profilePort": 6060,
               "resources": {
