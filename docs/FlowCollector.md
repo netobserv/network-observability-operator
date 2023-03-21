@@ -6287,9 +6287,9 @@ processor defines the settings of the component that receives the flows from the
         <td><b>outputRecordTypes</b></td>
         <td>enum</td>
         <td>
-          outputRecordTypes defines the desired record types to generate. Possible values are "FLOWS" (default) to export flowLogs, or "ALL" to generate both flowLogs and newConnection, heartbeat, endConnection events<br/>
+          outputRecordTypes defines the desired record types to generate. Possible values are "FLOWS" (default) to export flowLogs, "CONNECTIONS" to generate newConnection, heartbeat, endConnection events, "ENDED_CONNECTIONS" to generate only endConnection events or "ALL" to generate both flowLogs and connection events<br/>
           <br/>
-            <i>Enum</i>: FLOWS, ALL<br/>
+            <i>Enum</i>: FLOWS, CONNECTIONS, ENDED_CONNECTIONS, ALL<br/>
             <i>Default</i>: FLOWS<br/>
         </td>
         <td>false</td>
@@ -7293,6 +7293,13 @@ Metrics define the processor configuration regarding metrics
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>disableAlerts</b></td>
+        <td>[]enum</td>
+        <td>
+          disableAlerts is a list of alerts that should be disabled.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>ignoreTags</b></td>
         <td>[]string</td>
         <td>

@@ -344,9 +344,10 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 		// Else: nothing for eBPF at the moment
 	}
 
-	// Connection tracking stage (only if OutputRecordTypes is set to ALL)
-	if b.desired.Processor.OutputRecordTypes != nil && *b.desired.Processor.OutputRecordTypes == flowslatest.OutputRecordAll {
+	// Connection tracking stage (only if OutputRecordTypes is not FLOWS)
+	if b.desired.Processor.OutputRecordTypes != nil && *b.desired.Processor.OutputRecordTypes != flowslatest.OutputRecordFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
+		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
 
 		endTimeout := conntrackEndTimeout
 		if b.desired.Processor.ConnectionEndTimeout != nil {
@@ -373,12 +374,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 					FieldGroupBRef: "dst",
 				},
 			},
-			OutputRecordTypes: []string{
-				constants.FlowLogRecordType,
-				constants.NewConnectionRecordType,
-				constants.HeartbeatRecordType,
-				constants.EndConnectionRecordType,
-			},
+			OutputRecordTypes: outputRecordTypes,
 			OutputFields: []api.OutputField{
 				{
 					Name:      "Bytes",
@@ -719,7 +715,50 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 	return &flpServiceMonitorObject
 }
 
+func shouldAddAlert(name flowslatest.FLPAlert, disabledList []flowslatest.FLPAlert) bool {
+	for _, disabledAlert := range disabledList {
+		if name == disabledAlert {
+			return false
+		}
+	}
+	return true
+}
+
 func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
+	rules := []monitoringv1.Rule{}
+
+	// Not receiving flows
+	if shouldAddAlert(flowslatest.AlertNoFlows, b.desired.Processor.Metrics.DisableAlerts) {
+		rules = append(rules, monitoringv1.Rule{
+			Alert: flowslatest.AlertNoFlows,
+			Annotations: map[string]string{
+				"description": "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
+				"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
+			},
+			Expr: intstr.FromString("sum(rate(netobserv_ingest_flows_processed[5m])) == 0"),
+			For:  "10m",
+			Labels: map[string]string{
+				"severity": "warning",
+			},
+		})
+	}
+
+	// Flows getting dropped by loki library
+	if shouldAddAlert(flowslatest.AlertLokiError, b.desired.Processor.Metrics.DisableAlerts) {
+		rules = append(rules, monitoringv1.Rule{
+			Alert: flowslatest.AlertLokiError,
+			Annotations: map[string]string{
+				"description": "NetObserv flowlogs-pipeline is dropping flows because of loki errors, loki may be down or having issues ingesting every flows. Please check loki and flowlogs-pipeline logs.",
+				"summary":     "NetObserv flowlogs-pipeline is dropping flows because of loki errors",
+			},
+			Expr: intstr.FromString("sum(rate(netobserv_loki_dropped_entries_total[5m])) > 0"),
+			For:  "10m",
+			Labels: map[string]string{
+				"severity": "warning",
+			},
+		})
+	}
+
 	flpPrometheusRuleObject := monitoringv1.PrometheusRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.prometheusRuleName(),
@@ -729,33 +768,8 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 		Spec: monitoringv1.PrometheusRuleSpec{
 			Groups: []monitoringv1.RuleGroup{
 				{
-					Name: "NetobservFlowLogsPipeline",
-					Rules: []monitoringv1.Rule{
-						{
-							Alert: "NetObservNoFlows",
-							Annotations: map[string]string{
-								"description": "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
-								"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
-							},
-							Expr: intstr.FromString("sum(rate(netobserv_ingest_flows_processed[5m])) == 0"),
-							For:  "10m",
-							Labels: map[string]string{
-								"severity": "warning",
-							},
-						},
-						{
-							Alert: "NetObservLokiError",
-							Annotations: map[string]string{
-								"description": "NetObserv flowlogs-pipeline is dropping flows because of loki errors, loki may be down or having issues ingesting every flows. Please check loki and flowlogs-pipeline logs.",
-								"summary":     "NetObserv flowlogs-pipeline is dropping flows because of loki errors",
-							},
-							Expr: intstr.FromString("sum(rate(netobserv_loki_dropped_entries_total[5m])) > 0"),
-							For:  "10m",
-							Labels: map[string]string{
-								"severity": "warning",
-							},
-						},
-					},
+					Name:  "NetobservFlowLogsPipeline",
+					Rules: rules,
 				},
 			},
 		},

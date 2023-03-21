@@ -479,7 +479,9 @@ func TestServiceMonitorNoChange(t *testing.T) {
 	// Check no change
 	newServiceMonitor := first.DeepCopy()
 
-	assert.False(helper.ServiceMonitorChanged(first, newServiceMonitor))
+	report := helper.NewChangeReport("")
+	assert.False(helper.ServiceMonitorChanged(first, newServiceMonitor, &report))
+	assert.Contains(report.String(), "no change")
 }
 
 func TestServiceMonitorChanged(t *testing.T) {
@@ -496,7 +498,9 @@ func TestServiceMonitorChanged(t *testing.T) {
 	b = newMonolithBuilder("namespace2", image, &cfg, true, &certWatcher)
 	second := b.generic.serviceMonitor()
 
-	assert.True(helper.ServiceMonitorChanged(first, second))
+	report := helper.NewChangeReport("")
+	assert.True(helper.ServiceMonitorChanged(first, second, &report))
+	assert.Contains(report.String(), "ServiceMonitor meta changed")
 }
 
 func TestPrometheusRuleNoChange(t *testing.T) {
@@ -511,7 +515,9 @@ func TestPrometheusRuleNoChange(t *testing.T) {
 	// Check no change
 	newServiceMonitor := first.DeepCopy()
 
-	assert.False(helper.PrometheusRuleChanged(first, newServiceMonitor))
+	report := helper.NewChangeReport("")
+	assert.False(helper.PrometheusRuleChanged(first, newServiceMonitor, &report))
+	assert.Contains(report.String(), "no change")
 }
 
 func TestPrometheusRuleChanged(t *testing.T) {
@@ -528,7 +534,9 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	b = newMonolithBuilder("namespace2", image, &cfg, true, &certWatcher)
 	second := b.generic.prometheusRule()
 
-	assert.True(helper.PrometheusRuleChanged(first, second))
+	report := helper.NewChangeReport("")
+	assert.True(helper.PrometheusRuleChanged(first, second, &report))
+	assert.Contains(report.String(), "PrometheusRule meta changed")
 }
 
 func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {

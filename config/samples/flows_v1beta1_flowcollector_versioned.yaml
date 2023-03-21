@@ -33,6 +33,7 @@ spec:
       ignoreTags:
         - egress
         - packets
+      disableAlerts: []
     dropUnusedFields: true
     resources:
       requests:

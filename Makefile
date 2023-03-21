@@ -8,7 +8,6 @@ REPO ?= quay.io/netobserv
 # Component versions to use in bundle / release (do not use $VERSION for that)
 PREVIOUS_VERSION ?= v1.0.1
 BUNDLE_VERSION ?= 1.0.2
-OPERATOR_VERSION ?= $(BUNDLE_VERSION)
 # console plugin
 export PLG_VERSION ?= v0.1.9
 # flowlogs-pipeline
@@ -59,7 +58,7 @@ IMAGE_TAG_BASE ?= $(REPO)/network-observability-operator
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
 
 # Image URL to use all building/pushing image targets
-IMG ?= $(IMAGE_TAG_BASE):$(OPERATOR_VERSION)
+IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
 IMG_SHA = $(IMAGE_TAG_BASE):$(BUILD_SHA)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
@@ -281,10 +280,6 @@ uninstall: kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube
 
 deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/openshift | kubectl apply -f -
-
-deploy-latest: kustomize ## Deploy latest controller, configured with all latest related images using "main" tag
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE_TAG_BASE):main
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:.+~console-plugin:main~' ./config/manager/manager.yaml
@@ -305,9 +300,9 @@ bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metada
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:$(FLP_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:.+~console-plugin:$(PLG_VERSION)~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(OPERATOR_VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
-	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(OPERATOR_VERSION)/~g' ./config/manifests/bases/description-upstream.md
-	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(OPERATOR_VERSION)/~g' ./config/manifests/bases/description-ocp.md
+	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/manifests/bases/description-upstream.md
+	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/manifests/bases/description-ocp.md
 	$(SED) -i -r 's~replaces: netobserv-operator\.v.*~replaces: netobserv-operator\.$(PREVIOUS_VERSION)~' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
 	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 
@@ -315,8 +310,7 @@ bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metada
 bundle: bundle-prepare ## Generate final bundle files.
 	$(SED) -e 's/^/    /' config/manifests/bases/description-upstream.md > tmp-desc
 	$(KUSTOMIZE) build config/manifests \
-		| $(SED) -e 's~:container-image:~$(IMAGE_TAG_BASE):$(OPERATOR_VERSION)~' \
-		| $(SED) -e 's~:created-at:~$(DATE)~' \
+		| $(SED) -e 's~:container-image:~$(IMG)~' \
 		| $(SED) -e "/':full-description:'/r tmp-desc" \
 		| $(SED) -e "s/':full-description:'/|\-/" \
 		| $(OPSDK) generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
@@ -327,9 +321,16 @@ bundle: bundle-prepare ## Generate final bundle files.
 	if [ $$(echo $${VALIDATION_OUTPUT} | grep -i 'warning' | wc -c) -gt 0 ]; then echo "please correct warnings and errors first"; exit -1 ; fi \
 	'
 
+.PHONY: update-bundle
+update-bundle: VERSION=$(BUNDLE_VERSION)
+update-bundle: bundle ## Prepare a clean bundle to be commited
+
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
-	$(OCI_BIN) build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	cp ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml tmp-bundle
+	$(SED) -i -r 's~:created-at:~$(DATE)~' ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
+	-$(OCI_BIN) build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	mv tmp-bundle ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
 
 shortlived-bundle-build: ## Build a temporary bundle image, expiring after 2 weeks on quay
 	$(MAKE) bundle-build BUNDLE_IMG=$(IMAGE_TAG_BASE)-bundle:tmp

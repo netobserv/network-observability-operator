@@ -27,8 +27,7 @@ const contextReconcilerName = "FLP kind"
 
 type singleReconciler interface {
 	context(ctx context.Context) context.Context
-	initStaticResources(ctx context.Context) error
-	prepareNamespaceChange(ctx context.Context) error
+	cleanupNamespace(ctx context.Context)
 	reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error
 }
 
@@ -62,24 +61,11 @@ func NewReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS,
 	}
 }
 
-// InitStaticResources inits some "static" / one-shot resources, usually not subject to reconciliation
-func (r *FLPReconciler) InitStaticResources(ctx context.Context) error {
+// CleanupNamespace cleans up old namespace
+func (r *FLPReconciler) CleanupNamespace(ctx context.Context) {
 	for _, sr := range r.reconcilers {
-		if err := sr.initStaticResources(sr.context(ctx)); err != nil {
-			return err
-		}
+		sr.cleanupNamespace(sr.context(ctx))
 	}
-	return nil
-}
-
-// PrepareNamespaceChange cleans up old namespace and restore the relevant "static" resources
-func (r *FLPReconciler) PrepareNamespaceChange(ctx context.Context) error {
-	for _, sr := range r.reconcilers {
-		if err := sr.prepareNamespaceChange(sr.context(ctx)); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func validateDesired(desired *flpSpec) error {

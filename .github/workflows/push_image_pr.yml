@@ -45,7 +45,7 @@ jobs:
           tags: ${{ env.short_sha }}
           registry: ${{ env.REGISTRY }}
       - name: build bundle
-        run: OPERATOR_VERSION=${{ env.short_sha }} PLG_VERSION=main FLP_VERSION=main BPF_VERSION=main BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle shortlived-bundle-build
+        run: VERSION=${{ env.short_sha }} PLG_VERSION=main FLP_VERSION=main BPF_VERSION=main BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle shortlived-bundle-build
       - name: push bundle to quay.io
         id: push-bundle
         uses: redhat-actions/push-to-registry@v2

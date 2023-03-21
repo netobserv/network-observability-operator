@@ -4086,6 +4086,20 @@ spec:
                     description: Metrics define the processor configuration regarding
                       metrics
                     properties:
+                      disableAlerts:
+                        description: disableAlerts is a list of alerts that should
+                          be disabled.
+                        items:
+                          description: 'Name of a processor alert. Possible values
+                            are: `NetObservNoFlows`, which is triggered when no flows
+                            are being observed for a certain period. `NetObservLokiError`,
+                            which is triggered when flows are being dropped due to
+                            Loki errors.'
+                          enum:
+                          - NetObservNoFlows
+                          - NetObservLokiError
+                          type: string
+                        type: array
                       ignoreTags:
                         default:
                         - egress
@@ -4153,10 +4167,13 @@ spec:
                     default: FLOWS
                     description: outputRecordTypes defines the desired record types
                       to generate. Possible values are "FLOWS" (default) to export
-                      flowLogs, or "ALL" to generate both flowLogs and newConnection,
-                      heartbeat, endConnection events
+                      flowLogs, "CONNECTIONS" to generate newConnection, heartbeat,
+                      endConnection events, "ENDED_CONNECTIONS" to generate only endConnection
+                      events or "ALL" to generate both flowLogs and connection events
                     enum:
                     - FLOWS
+                    - CONNECTIONS
+                    - ENDED_CONNECTIONS
                     - ALL
                     type: string
                   port:

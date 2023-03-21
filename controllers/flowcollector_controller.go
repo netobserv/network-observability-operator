@@ -75,6 +75,7 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme, co
 //+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=list;create;update;watch
 //+kubebuilder:rbac:groups=apiregistration.k8s.io,resources=apiservices,verbs=list;get;watch
 //+kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors;prometheusrules,verbs=get;create;delete;update;patch;list;watch
+//+kubebuilder:rbac:urls="/metrics",verbs=get
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -201,31 +202,12 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	cpReconciler *consoleplugin.CPReconciler,
 ) error {
 	log := log.FromContext(ctx)
-	if oldNS == "" {
-		// First install: create one-shot resources
-		log.Info("FlowCollector first install: creating initial resources")
-		err := flpReconciler.InitStaticResources(ctx)
-		if err != nil {
-			return err
-		}
-		if r.availableAPIs.HasConsolePlugin() {
-			err := cpReconciler.InitStaticResources(ctx)
-			if err != nil {
-				return err
-			}
-		}
-	} else {
+	if oldNS != "" {
 		// Namespace updated, clean up previous namespace
-		log.Info("FlowCollector namespace change detected: cleaning up previous namespace and preparing next one", "old namespace", oldNS, "new namepace", newNS)
-		err := flpReconciler.PrepareNamespaceChange(ctx)
-		if err != nil {
-			return err
-		}
+		log.Info("FlowCollector namespace change detected: cleaning up previous namespace", "old namespace", oldNS, "new namepace", newNS)
+		flpReconciler.CleanupNamespace(ctx)
 		if r.availableAPIs.HasConsolePlugin() {
-			err := cpReconciler.PrepareNamespaceChange(ctx)
-			if err != nil {
-				return err
-			}
+			cpReconciler.CleanupNamespace(ctx)
 		}
 	}
 
@@ -325,11 +307,11 @@ func (r *FlowCollectorReconciler) reconcileOperator(ctx context.Context, clientH
 	}
 	if r.config.DownstreamDeployment {
 		desiredRole := buildRoleMonitoringReader(ns)
-		if err := clientHelper.ReconcileRole(ctx, desiredRole); err != nil {
+		if err := clientHelper.ReconcileClusterRole(ctx, desiredRole); err != nil {
 			return err
 		}
 		desiredBinding := buildRoleBindingMonitoringReader(ns)
-		if err := clientHelper.ReconcileRoleBinding(ctx, desiredBinding); err != nil {
+		if err := clientHelper.ReconcileClusterRoleBinding(ctx, desiredBinding); err != nil {
 			return err
 		}
 	}

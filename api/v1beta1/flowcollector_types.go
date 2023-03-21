@@ -271,6 +271,18 @@ type MetricsServerConfig struct {
 	TLS ServerTLS `json:"tls"`
 }
 
+const (
+	AlertNoFlows   = "NetObservNoFlows"
+	AlertLokiError = "NetObservLokiError"
+)
+
+// Name of a processor alert.
+// Possible values are:
+// `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.
+// `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.
+// +kubebuilder:validation:Enum:="NetObservNoFlows";"NetObservLokiError"
+type FLPAlert string
+
 // FLPMetrics define the desired FLP configuration regarding metrics
 type FLPMetrics struct {
 	// metricsServer endpoint configuration for Prometheus scraper
@@ -280,11 +292,17 @@ type FLPMetrics struct {
 	// ignoreTags is a list of tags to specify which metrics to ignore
 	//+kubebuilder:default:={"egress","packets"}
 	IgnoreTags []string `json:"ignoreTags,omitempty"`
+
+	// disableAlerts is a list of alerts that should be disabled.
+	// +optional
+	DisableAlerts []FLPAlert `json:"disableAlerts,omitempty"`
 }
 
 const (
-	OutputRecordFlows = "FLOWS"
-	OutputRecordAll   = "ALL"
+	OutputRecordFlows            = "FLOWS"
+	OutputRecordConnections      = "CONNECTIONS"
+	OutputRecordEndedConnections = "ENDED_CONNECTIONS"
+	OutputRecordAll              = "ALL"
 )
 
 // FlowCollectorFLP defines the desired flowlogs-pipeline state of FlowCollector
@@ -360,9 +378,10 @@ type FlowCollectorFLP struct {
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
 
 	// outputRecordTypes defines the desired record types to generate. Possible values are "FLOWS" (default) to export
-	// flowLogs, or "ALL" to generate both flowLogs and newConnection, heartbeat, endConnection events
+	// flowLogs, "CONNECTIONS" to generate newConnection, heartbeat, endConnection events, "ENDED_CONNECTIONS" to generate
+	// only endConnection events or "ALL" to generate both flowLogs and connection events
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Enum:="FLOWS";"ALL"
+	// +kubebuilder:validation:Enum:="FLOWS";"CONNECTIONS";"ENDED_CONNECTIONS";"ALL"
 	// +kubebuilder:default:=FLOWS
 	OutputRecordTypes *string `json:"outputRecordTypes,omitempty"`
 

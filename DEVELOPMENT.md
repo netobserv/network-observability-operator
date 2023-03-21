@@ -46,20 +46,26 @@ You can refer to existing commits using their short-SHA as the image tag, or ref
 
 ```bash
 # By commit SHA
-OPERATOR_VERSION="960766c" make deploy
+VERSION="960766c" make deploy
 # By release
-OPERATOR_VERSION="0.1.2" make deploy
+VERSION="0.1.2" make deploy
 ```
 
 It is recommended to switch to the corresponding release Git tag before deploying an old version to make sure the underlying components refer to the correct versions.
 
-When `OPERATOR_VERSION` is not provided, it defaults to the latest released version.
+When `VERSION` is not provided, it defaults to the latest build on `main` branch.
 
-To deploy all components on their `main` image tag (which correspond to their `main` branches, ie. their latest builds), you can simply run:
+You can also provide any custom `IMG` to `make deploy`.
+
+## Before commiting, make sure bundle is correct
+
+The github CI will fail if it finds the bundle isn't in a clean state. To update the bundle, simply run:
 
 ```bash
-make deploy-latest
+make update-bundle
 ```
+
+This is necessary when the changes you did end up affecting the bundle manifests or metadata (e.g. adding new fields in the CRD, updating some documentation, etc.). When unsure, just run the command mentioned above.
 
 ## Installing Kafka
 
@@ -100,9 +106,8 @@ bundle for local testing, you should execute the following commands:
 
 ```bash
 export USER=<container-registry-username>
-export VERSION=0.0.1
-export IMG=quay.io/$USER/network-observability-operator:v$VERSION
-export BUNDLE_IMG=quay.io/$USER/network-observability-operator-bundle:v$VERSION
+export IMG=quay.io/$USER/network-observability-operator:v0.0.1
+export BUNDLE_IMG=quay.io/$USER/network-observability-operator-bundle:v0.0.1
 make image-build image-push
 make bundle bundle-build bundle-push
 ```
@@ -111,6 +116,8 @@ Optionally, you might validate the bundle:
 
 ```bash
 bin/operator-sdk bundle validate $BUNDLE_IMG
+# or for podman
+bin/operator-sdk bundle validate -b podman $BUNDLE_IMG
 ```
 
 > Note: the base64 logo can be generated with: `base64 -w 0 <image file>`, then manually pasted in the [CSV manifest file](./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml) under `spec.icon`.
@@ -121,6 +128,12 @@ This mode is recommended to quickly test the operator during its development:
 
 ```bash
 bin/operator-sdk run bundle $BUNDLE_IMG
+```
+
+To cleanup:
+
+```bash
+bin/operator-sdk cleanup netobserv-operator
 ```
 
 ### Deploy as bundle from the Console's OperatorHub page
