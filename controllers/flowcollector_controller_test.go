@@ -219,6 +219,15 @@ func flowCollectorControllerSpecs() {
 				}
 				return ofc.Data["netobserv-metrics.json"]
 			}, timeout, interval).Should(ContainSubstring(`"panels": [`))
+
+			By("Expecting the infra health dashboards configmap to be created")
+			Eventually(func() interface{} {
+				cm := v1.ConfigMap{}
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "grafana-dashboard-netobserv-health",
+					Namespace: "openshift-config-managed",
+				}, &cm)
+			}, timeout, interval).Should(Succeed())
 		})
 
 		It("Should update successfully", func() {
