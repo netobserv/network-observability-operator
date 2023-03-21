@@ -24,6 +24,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	configv1 "github.com/openshift/api/config/v1"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -85,6 +86,7 @@ var _ = BeforeSuite(func() {
 			filepath.Join("..", "config", "crd", "bases"),
 			// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
 			filepath.Join("..", "vendor", "github.com", "openshift", "api", "console", "v1alpha1"),
+			filepath.Join("..", "vendor", "github.com", "openshift", "api", "config", "v1"),
 			filepath.Join("..", "vendor", "github.com", "openshift", "api", "operator", "v1"),
 			filepath.Join("..", "test-assets"),
 		},
@@ -105,6 +107,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	err = osv1alpha1.Install(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = configv1.Install(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = apiregv1.AddToScheme(scheme.Scheme)
@@ -151,10 +156,19 @@ var _ = AfterSuite(func() {
 })
 
 func prepareNamespaces() error {
-	return k8sClient.Create(ctx, &corev1.Namespace{
+	if err := k8sClient.Create(ctx, &corev1.Namespace{
 		TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: testCnoNamespace},
-	})
+	}); err != nil {
+		return err
+	}
+	if err := k8sClient.Create(ctx, &corev1.Namespace{
+		TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "openshift-config-managed"},
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 // NewTestFlowCollectorReconciler allows mocking the IP resolutor of a

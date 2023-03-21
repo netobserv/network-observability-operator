@@ -749,8 +749,9 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	cfg := getConfig()
 
 	b := newMonolithBuilder("namespace", image, &cfg, true, &certWatcher)
-	stages, parameters, _, err := b.buildPipelineConfig()
+	stages, parameters, cm, err := b.buildPipelineConfig()
 	assert.NoError(err)
+	assert.NotNil(cm)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
@@ -763,6 +764,11 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	assert.Equal("workload_ingress_bytes_total", parameters[5].Encode.Prom.Metrics[5].Name)
 	assert.Equal("workload_ingress_packets_total", parameters[5].Encode.Prom.Metrics[6].Name)
 	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
+
+	var grafanaDashboard map[string]interface{}
+	err = json.Unmarshal([]byte(cm.Data[dashboardCMFile]), &grafanaDashboard)
+	assert.NoError(err)
+	assert.Len(grafanaDashboard["panels"], 7)
 }
 
 func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
@@ -772,14 +778,36 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	cfg.Processor.Metrics.IgnoreTags = []string{"nodes"}
 
 	b := newMonolithBuilder("namespace", image, &cfg, true, &certWatcher)
-	stages, parameters, _, err := b.buildPipelineConfig()
+	stages, parameters, cm, err := b.buildPipelineConfig()
 	assert.NoError(err)
+	assert.NotNil(cm)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 	assert.Len(parameters[5].Encode.Prom.Metrics, 5)
 	assert.Equal("namespace_flows_total", parameters[5].Encode.Prom.Metrics[0].Name)
 	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
+
+	var grafanaDashboard map[string]interface{}
+	err = json.Unmarshal([]byte(cm.Data[dashboardCMFile]), &grafanaDashboard)
+	assert.NoError(err)
+	assert.Len(grafanaDashboard["panels"], 5)
+}
+
+func TestMergeMetricsConfigurationIgnoreAll(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := getConfig()
+	cfg.Processor.Metrics.IgnoreTags = []string{"nodes", "namespaces", "workloads"}
+
+	b := newMonolithBuilder("namespace", image, &cfg, true, &certWatcher)
+	stages, parameters, cm, err := b.buildPipelineConfig()
+	assert.NoError(err)
+	assert.Nil(cm)
+	assert.True(validatePipelineConfig(stages, parameters))
+	jsonStages, _ := json.Marshal(stages)
+	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"}]`, string(jsonStages))
+	assert.Len(parameters, 5)
 }
 
 func TestPipelineWithExporter(t *testing.T) {

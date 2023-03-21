@@ -56,9 +56,13 @@ const (
 )
 
 const (
-	dashboardName  = "netobserv"
-	dashboardTitle = "Netobserv Metrics"
-	dashboardTags  = "['netobserv','grafana','dashboard','flp']"
+	dashboardName         = "netobserv"
+	dashboardTitle        = "NetObserv"
+	dashboardTags         = "['netobserv-mixin']"
+	dashboardCMNamespace  = "openshift-config-managed"
+	dashboardCMAnnotation = "console.openshift.io/dashboard"
+	dashboardCMName       = "grafana-dashboard-netobserv"
+	dashboardCMFile       = "netobserv-metrics.json"
 )
 
 var FlpConfSuffix = map[ConfKind]string{
@@ -117,13 +121,11 @@ func RoleBindingName(ck ConfKind) string      { return name(ck) + "-role" }
 func RoleBindingMonoName(ck ConfKind) string  { return name(ck) + "-role-mono" }
 func promServiceName(ck ConfKind) string      { return name(ck) + "-prom" }
 func configMapName(ck ConfKind) string        { return name(ck) + "-config" }
-func dbConfigMapName(ck ConfKind) string      { return name(ck) + "-metrics-dashboard" }
 func serviceMonitorName(ck ConfKind) string   { return name(ck) + "-monitor" }
 func prometheusRuleName(ck ConfKind) string   { return name(ck) + "-alert" }
 func (b *builder) name() string               { return name(b.confKind) }
 func (b *builder) promServiceName() string    { return promServiceName(b.confKind) }
 func (b *builder) configMapName() string      { return configMapName(b.confKind) }
-func (b *builder) dbConfigMapName() string    { return dbConfigMapName(b.confKind) }
 func (b *builder) serviceMonitorName() string { return serviceMonitorName(b.confKind) }
 func (b *builder) prometheusRuleName() string { return prometheusRuleName(b.confKind) }
 
@@ -321,7 +323,10 @@ func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, string, er
 	if stages[0].Encode == nil || stages[0].Encode.Prom == nil {
 		return nil, "", fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
 	}
-	jsonStr, _ := cg.GenerateGrafanaJson()
+	jsonStr, err := cg.GenerateGrafanaJson()
+	if err != nil {
+		return nil, "", fmt.Errorf("error generating grafana dashboard: %w", err)
+	}
 	return stages[0].Encode.Prom.Metrics, jsonStr, nil
 }
 
@@ -496,30 +501,32 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 		return nil, err
 	}
 
-	// prometheus stage (encode) configuration
-	promEncode := api.PromEncode{
-		Prefix:  "netobserv_",
-		Metrics: promMetrics,
+	var dashboardConfigMap *corev1.ConfigMap
+	if len(promMetrics) > 0 {
+		// prometheus stage (encode) configuration
+		promEncode := api.PromEncode{
+			Prefix:  "netobserv_",
+			Metrics: promMetrics,
+		}
+		enrichedStage.EncodePrometheus("prometheus", promEncode)
+		dashboardConfigMap = b.makeMetricsDashboardConfigMap(dashboard)
 	}
 
-	enrichedStage.EncodePrometheus("prometheus", promEncode)
 	b.addCustomExportStages(&enrichedStage)
-
-	dashboardConfigMap := b.makeMetricsDashboardConfigMap(dashboard)
 	return dashboardConfigMap, nil
 }
 
 func (b *builder) makeMetricsDashboardConfigMap(dashboard string) *corev1.ConfigMap {
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.dbConfigMapName(),
-			Namespace: "openshift-config-managed",
+			Name:      dashboardCMName,
+			Namespace: dashboardCMNamespace,
 			Labels: map[string]string{
-				"console.openshift.io/dashboard": "true",
+				dashboardCMAnnotation: "true",
 			},
 		},
 		Data: map[string]string{
-			"netobserv-metrics.json": dashboard,
+			dashboardCMFile: dashboard,
 		},
 	}
 	return &configMap

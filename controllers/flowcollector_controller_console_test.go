@@ -133,7 +133,8 @@ func flowCollectorConsolePluginSpecs() {
 				}
 				return svc.Spec.Ports[0].Port
 			}, timeout, interval).Should(Equal(int32(9001)))
-			By("Creating the ovn-flows-configmap with the configuration from the FlowCollector")
+
+			By("Creating the console plugin configmap")
 			Eventually(func() interface{} {
 				ofc := v1.ConfigMap{}
 				if err := k8sClient.Get(ctx, configKey, &ofc); err != nil {

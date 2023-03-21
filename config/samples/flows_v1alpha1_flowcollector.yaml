@@ -31,7 +31,8 @@ spec:
       server:
         port: 9102
       ignoreTags:
-        - egress
+        - flows
+        - bytes
         - packets
     dropUnusedFields: true
     resources:

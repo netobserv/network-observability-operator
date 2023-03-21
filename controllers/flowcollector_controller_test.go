@@ -109,6 +109,9 @@ func flowCollectorControllerSpecs() {
 						ConnectionEndTimeout: &metav1.Duration{
 							Duration: conntrackEndTimeout,
 						},
+						Metrics: flowslatest.FLPMetrics{
+							IgnoreTags: []string{"flows"},
+						},
 					},
 					Agent: flowslatest.FlowCollectorAgent{
 						Type: "IPFIX",
@@ -204,6 +207,18 @@ func flowCollectorControllerSpecs() {
 					Namespace: operatorNamespace,
 				}, &cm)
 			}, timeout, interval).Should(Succeed())
+
+			By("Expecting the monitoring dashboards configmap to be created")
+			Eventually(func() interface{} {
+				ofc := v1.ConfigMap{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "grafana-dashboard-netobserv",
+					Namespace: "openshift-config-managed",
+				}, &ofc); err != nil {
+					return err
+				}
+				return ofc.Data["netobserv-metrics.json"]
+			}, timeout, interval).Should(ContainSubstring(`"panels": [`))
 		})
 
 		It("Should update successfully", func() {
@@ -225,6 +240,9 @@ func flowCollectorControllerSpecs() {
 					},
 					ConnectionEndTimeout: &metav1.Duration{
 						Duration: conntrackEndTimeout,
+					},
+					Metrics: flowslatest.FLPMetrics{
+						IgnoreTags: []string{"flows", "bytes", "packets"},
 					},
 				}
 				fc.Spec.Loki = flowslatest.FlowCollectorLoki{}
@@ -293,6 +311,14 @@ func flowCollectorControllerSpecs() {
 				Expect(ds.Spec.Template.Spec.Tolerations).
 					To(ContainElement(v1.Toleration{Operator: v1.TolerationOpExists}))
 			})
+
+			By("Expecting the monitoring dashboards configmap to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "grafana-dashboard-netobserv",
+					Namespace: "openshift-config-managed",
+				}, &v1.ConfigMap{})
+			}, timeout, interval).Should(MatchError(`configmaps "grafana-dashboard-netobserv" not found`))
 		})
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {

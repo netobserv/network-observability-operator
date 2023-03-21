@@ -143,7 +143,8 @@ metadata:
               "logLevel": "info",
               "metrics": {
                 "ignoreTags": [
-                  "egress",
+                  "flows",
+                  "bytes",
                   "packets"
                 ],
                 "server": {

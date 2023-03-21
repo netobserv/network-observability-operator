@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
@@ -90,10 +91,24 @@ func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowslatest.Flow
 }
 
 func (r *reconcilersCommonInfo) reconcileDashboardConfig(ctx context.Context, dbConfigMap *corev1.ConfigMap) error {
+	if dbConfigMap == nil {
+		// Dashboard config not desired => delete if exists
+		if err := r.Delete(ctx, &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      dashboardCMName,
+				Namespace: dashboardCMNamespace,
+			},
+		}); err != nil {
+			if !errors.IsNotFound(err) {
+				return fmt.Errorf("deleting %s ConfigMap: %w", dashboardCMName, err)
+			}
+		}
+		return nil
+	}
 	curr := &corev1.ConfigMap{}
 	if err := r.Get(ctx, types.NamespacedName{
-		Name:      dbConfigMap.Name,
-		Namespace: dbConfigMap.Namespace,
+		Name:      dashboardCMName,
+		Namespace: dashboardCMNamespace,
 	}, curr); err != nil {
 		if errors.IsNotFound(err) {
 			return r.CreateOwned(ctx, dbConfigMap)
