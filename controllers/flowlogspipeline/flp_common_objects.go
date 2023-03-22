@@ -693,6 +693,7 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.serviceMonitorName(),
 			Namespace: b.namespace,
+			Labels:    b.labels,
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Endpoints: []monitoringv1.Endpoint{
