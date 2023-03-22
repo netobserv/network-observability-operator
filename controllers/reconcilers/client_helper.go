@@ -8,6 +8,7 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -169,6 +170,24 @@ func (c *ClientHelper) ReconcileRole(ctx context.Context, desired *rbacv1.Role) 
 	if helper.IsSubSet(actual.Labels, desired.Labels) &&
 		reflect.DeepEqual(actual.Rules, desired.Rules) {
 		// role already reconciled. Exiting
+		return nil
+	}
+
+	return c.UpdateOwned(ctx, &actual, desired)
+}
+
+func (c *ClientHelper) ReconcileConfigMap(ctx context.Context, desired *corev1.ConfigMap) error {
+	actual := corev1.ConfigMap{}
+	if err := c.Get(ctx, types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, &actual); err != nil {
+		if errors.IsNotFound(err) {
+			return c.CreateOwned(ctx, desired)
+		}
+		return fmt.Errorf("can't reconcile Configmap %s: %w", desired.Name, err)
+	}
+
+	if helper.IsSubSet(actual.Labels, desired.Labels) &&
+		reflect.DeepEqual(actual.Data, desired.Data) {
+		// configmap already reconciled. Exiting
 		return nil
 	}
 
