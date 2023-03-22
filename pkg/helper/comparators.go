@@ -80,11 +80,13 @@ func ServiceChanged(old, new *corev1.Service, report *ChangeReport) bool {
 }
 
 func ServiceMonitorChanged(old, new *monitoringv1.ServiceMonitor, report *ChangeReport) bool {
-	return report.Check("ServiceMonitor spec changed", !equality.Semantic.DeepDerivative(new.Spec, old.Spec))
+	return report.Check("ServiceMonitor spec changed", !equality.Semantic.DeepDerivative(new.Spec, old.Spec)) ||
+		report.Check("ServiceMonitor labels changed", !IsSubSet(old.Labels, new.Labels))
 }
 
 func PrometheusRuleChanged(old, new *monitoringv1.PrometheusRule, report *ChangeReport) bool {
-	return report.Check("PrometheusRule spec changed", !equality.Semantic.DeepDerivative(new.Spec, old.Spec))
+	return report.Check("PrometheusRule spec changed", !equality.Semantic.DeepDerivative(new.Spec, old.Spec)) ||
+		report.Check("PrometheusRule labels changed", !IsSubSet(old.Labels, new.Labels))
 }
 
 // FindContainer searches in pod containers one that matches the provided name
