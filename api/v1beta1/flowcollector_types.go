@@ -289,11 +289,15 @@ type FLPMetrics struct {
 	// +optional
 	Server MetricsServerConfig `json:"server,omitempty"`
 
-	// ignoreTags is a list of tags to specify which metrics to ignore
-	//+kubebuilder:default:={"egress","packets"}
+	// ignoreTags is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions .
+	// Available tags are: egress, ingress, flows, bytes, packets, namespaces, nodes, workloads
+	//+kubebuilder:default:={"flows","bytes","packets"}
 	IgnoreTags []string `json:"ignoreTags,omitempty"`
 
 	// disableAlerts is a list of alerts that should be disabled.
+	// Possible values are:
+	// `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.
+	// `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.
 	// +optional
 	DisableAlerts []FLPAlert `json:"disableAlerts,omitempty"`
 }

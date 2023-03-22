@@ -7296,16 +7296,16 @@ Metrics define the processor configuration regarding metrics
         <td><b>disableAlerts</b></td>
         <td>[]enum</td>
         <td>
-          disableAlerts is a list of alerts that should be disabled.<br/>
+          disableAlerts is a list of alerts that should be disabled. Possible values are: `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period. `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>ignoreTags</b></td>
         <td>[]string</td>
         <td>
-          ignoreTags is a list of tags to specify which metrics to ignore<br/>
+          ignoreTags is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions . Available tags are: egress, ingress, flows, bytes, packets, namespaces, nodes, workloads<br/>
           <br/>
-            <i>Default</i>: [egress packets]<br/>
+            <i>Default</i>: [flows bytes packets]<br/>
         </td>
         <td>false</td>
       </tr><tr>

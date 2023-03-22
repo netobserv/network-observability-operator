@@ -6,4 +6,4 @@ apiMap:
   resources:
   - kind: FlowCollector
     group: flows.netobserv.io
-    version: v1alpha1
+    version: v1beta1
