@@ -414,6 +414,11 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 					EndConnectionTimeout: api.Duration{Duration: endTimeout},
 				},
 			},
+			TCPFlags: api.ConnTrackTCPFlags{
+				FieldName:           "Flags",
+				DetectEndConnection: true,
+				SwapAB:              true,
+			},
 		})
 	}
 
