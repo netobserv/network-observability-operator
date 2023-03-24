@@ -304,7 +304,6 @@ bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metada
 	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/manifests/bases/description-upstream.md
 	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/manifests/bases/description-ocp.md
 	$(SED) -i -r 's~replaces: netobserv-operator\.v.*~replaces: netobserv-operator\.$(PREVIOUS_VERSION)~' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
-	cp config/samples/flows_v1alpha1_flowcollector.yaml config/samples/flows_v1alpha1_flowcollector_versioned.yaml
 
 .PHONY: bundle
 bundle: bundle-prepare ## Generate final bundle files.

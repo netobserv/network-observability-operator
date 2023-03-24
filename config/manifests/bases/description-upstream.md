@@ -32,7 +32,7 @@ kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents
 
 ## Configuration
 
-The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/1.0.2/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/1.0.2/config/samples/flows_v1alpha1_flowcollector.yaml).
+The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/1.0.2/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/1.0.2/config/samples/flows_v1beta1_flowcollector.yaml).
 
 To edit configuration in cluster, run:
 
