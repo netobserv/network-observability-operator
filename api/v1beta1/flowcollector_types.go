@@ -705,6 +705,8 @@ type FlowCollectorStatus struct {
 // +kubebuilder:printcolumn:name="Sampling (EBPF)",type="string",JSONPath=`.spec.agent.ebpf.sampling`
 // +kubebuilder:printcolumn:name="Deployment Model",type="string",JSONPath=`.spec.deploymentModel`
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
+// +kubebuilder:storageversion
+
 // FlowCollector is the Schema for the flowcollectors API, which pilots and configures netflow collection.
 type FlowCollector struct {
 	metav1.TypeMeta   `json:",inline"`
