@@ -5953,6 +5953,13 @@ loki, the flow store, client settings.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspeclokistatustls">statusTls</a></b></td>
+        <td>object</td>
+        <td>
+          tls client configuration for status URL. fallback on tls if not set<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>statusUrl</b></td>
         <td>string</td>
         <td>
@@ -5991,6 +5998,158 @@ loki, the flow store, client settings.
           url is the address of an existing Loki service to push the flows to. When using the Loki Operator, set it to the Loki gateway service with the `network` tenant set in path, for example https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.<br/>
           <br/>
             <i>Default</i>: http://loki:3100/<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.statusTls
+<sup><sup>[↩ Parent](#flowcollectorspecloki-1)</sup></sup>
+
+
+
+tls client configuration for status URL. fallback on tls if not set
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeclokistatustlscacert">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          caCert defines the reference of the certificate for the Certificate Authority<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          insecureSkipVerify allows skipping client-side verification of the server certificate If set to true, CACert field will be ignored<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeclokistatustlsusercert">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.statusTls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspeclokistatustls)</sup></sup>
+
+
+
+caCert defines the reference of the certificate for the Certificate Authority
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          certFile defines the path to the certificate file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type for the certificate reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.statusTls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspeclokistatustls)</sup></sup>
+
+
+
+userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          certFile defines the path to the certificate file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type for the certificate reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>

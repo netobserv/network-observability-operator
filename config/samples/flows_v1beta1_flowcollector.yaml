@@ -68,7 +68,18 @@ spec:
     # Uncomment lines below for typical installation with loki-operator (5.6+ needed)
     # url: 'https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network/'
     # statusUrl: 'https://loki-query-frontend-http.netobserv.svc:3100/'
-    # authToken: HOST
+    # authToken: FORWARD
+    # statusTls:
+    #   enable: true
+    #   caCert:
+    #     certFile: service-ca.crt
+    #     name: loki-ca-bundle
+    #     type: configmap
+    #   userCert:
+    #     certFile: tls.crt
+    #     certKey: tls.key
+    #     name: loki-query-frontend-http
+    #     type: secret
     tls:
       enable: false
       caCert:

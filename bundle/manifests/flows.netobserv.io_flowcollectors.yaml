@@ -3363,6 +3363,72 @@ spec:
                     description: staticLabels is a map of common labels to set on
                       each flow.
                     type: object
+                  statusTls:
+                    description: tls client configuration for status URL. fallback
+                      on tls if not set
+                    properties:
+                      caCert:
+                        description: caCert defines the reference of the certificate
+                          for the Certificate Authority
+                        properties:
+                          certFile:
+                            description: certFile defines the path to the certificate
+                              file name within the config map or secret
+                            type: string
+                          certKey:
+                            description: certKey defines the path to the certificate
+                              private key file name within the config map or secret.
+                              Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: name of the config map or secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'type for the certificate reference: "configmap"
+                              or "secret"'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      enable:
+                        default: false
+                        description: enable TLS
+                        type: boolean
+                      insecureSkipVerify:
+                        default: false
+                        description: insecureSkipVerify allows skipping client-side
+                          verification of the server certificate If set to true, CACert
+                          field will be ignored
+                        type: boolean
+                      userCert:
+                        description: userCert defines the user certificate reference,
+                          used for mTLS (you can ignore it when using regular, one-way
+                          TLS)
+                        properties:
+                          certFile:
+                            description: certFile defines the path to the certificate
+                              file name within the config map or secret
+                            type: string
+                          certKey:
+                            description: certKey defines the path to the certificate
+                              private key file name within the config map or secret.
+                              Omit when the key is not necessary.
+                            type: string
+                          name:
+                            description: name of the config map or secret containing
+                              certificates
+                            type: string
+                          type:
+                            description: 'type for the certificate reference: "configmap"
+                              or "secret"'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                    type: object
                   statusUrl:
                     description: statusURL specifies the address of the Loki /ready
                       /metrics /config endpoints, in case it is different from the

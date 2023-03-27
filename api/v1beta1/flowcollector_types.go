@@ -512,6 +512,11 @@ type FlowCollectorLoki struct {
 	// tls client configuration.
 	// +optional
 	TLS ClientTLS `json:"tls"`
+
+	// tls client configuration for status URL.
+	// fallback on tls if not set
+	// +optional
+	StatusTLS *ClientTLS `json:"statusTls"`
 }
 
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector

@@ -30,6 +30,7 @@ const configFile = "config.yaml"
 const configVolume = "config-volume"
 const configPath = "/opt/app-root/"
 const lokiCerts = "loki-certs"
+const lokiStatusCerts = "loki-status-certs"
 const tokensPath = "/var/run/secrets/tokens/"
 
 type builder struct {
@@ -184,6 +185,18 @@ func buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 			args = append(args, "--loki-ca-path", helper.GetCACertPath(&desired.Loki.TLS, lokiCerts))
 		}
 	}
+
+	statusTLS := helper.LokiStatusTLS(&desired.Loki)
+	if statusTLS.Enable {
+		if statusTLS.InsecureSkipVerify {
+			args = append(args, "-loki-status-skip-tls")
+		} else {
+			args = append(args, "--loki-status-ca-path", helper.GetCACertPath(&statusTLS, lokiStatusCerts))
+			args = append(args, "--loki-status-user-cert-path", helper.GetUserCertPath(&statusTLS, lokiStatusCerts))
+			args = append(args, "--loki-status-user-key-path", helper.GetUserKeyPath(&statusTLS, lokiStatusCerts))
+		}
+	}
+
 	if helper.LokiUseHostToken(&desired.Loki) {
 		args = append(args, "-loki-token-path", tokenPath(&desired.Loki))
 	}
@@ -224,6 +237,11 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 	args := buildArgs(b.desired)
 	if b.desired != nil && b.desired.Loki.TLS.Enable && !b.desired.Loki.TLS.InsecureSkipVerify {
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts, b.cWatcher)
+	}
+
+	statusTLS := helper.LokiStatusTLS(&b.desired.Loki)
+	if b.desired != nil && statusTLS.Enable && !statusTLS.InsecureSkipVerify {
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &statusTLS, lokiStatusCerts, b.cWatcher)
 	}
 
 	if helper.LokiUseHostToken(&b.desired.Loki) {
