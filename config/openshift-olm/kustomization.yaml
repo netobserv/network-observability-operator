@@ -25,6 +25,5 @@ bases:
 - ../rbac
 - ../manager
 - ../webhook
-- namespace.yaml
 patchesStrategicMerge:
 - patch.yaml
