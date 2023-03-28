@@ -1,6 +1,7 @@
 package consoleplugin
 
 import (
+	"fmt"
 	"hash/fnv"
 	"path/filepath"
 	"strconv"
@@ -84,6 +85,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 }
 
 func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
+	serverName := fmt.Sprintf("%s.%s.svc", constants.PluginName, b.namespace)
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.PluginName,
@@ -97,6 +99,15 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 					Scheme:   "https",
 					TLSConfig: &monitoringv1.TLSConfig{
 						SafeTLSConfig: monitoringv1.SafeTLSConfig{
+							ServerName: serverName,
+							CA: monitoringv1.SecretOrConfigMap{
+								ConfigMap: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "openshift-service-ca.crt",
+									},
+									Key: "service-ca.crt",
+								},
+							},
 							Cert: monitoringv1.SecretOrConfigMap{
 								Secret: &corev1.SecretKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
@@ -104,6 +115,12 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 									},
 									Key: "tls.crt",
 								},
+							},
+							KeySecret: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: secretName,
+								},
+								Key: "tls.key",
 							},
 						},
 					},
