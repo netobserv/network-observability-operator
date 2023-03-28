@@ -182,18 +182,18 @@ func buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 		if desired.Loki.TLS.InsecureSkipVerify {
 			args = append(args, "-loki-skip-tls")
 		} else {
-			args = append(args, "--loki-ca-path", helper.GetCACertPath(&desired.Loki.TLS, lokiCerts))
+			args = append(args, "-loki-ca-path", helper.GetCACertPath(&desired.Loki.TLS, lokiCerts))
 		}
 	}
 
-	statusTLS := helper.LokiStatusTLS(&desired.Loki)
+	statusTLS := helper.GetLokiStatusTLS(&desired.Loki)
 	if statusTLS.Enable {
 		if statusTLS.InsecureSkipVerify {
 			args = append(args, "-loki-status-skip-tls")
 		} else {
-			args = append(args, "--loki-status-ca-path", helper.GetCACertPath(&statusTLS, lokiStatusCerts))
-			args = append(args, "--loki-status-user-cert-path", helper.GetUserCertPath(&statusTLS, lokiStatusCerts))
-			args = append(args, "--loki-status-user-key-path", helper.GetUserKeyPath(&statusTLS, lokiStatusCerts))
+			args = append(args, "-loki-status-ca-path", helper.GetCACertPath(&statusTLS, lokiStatusCerts))
+			args = append(args, "-loki-status-user-cert-path", helper.GetUserCertPath(&statusTLS, lokiStatusCerts))
+			args = append(args, "-loki-status-user-key-path", helper.GetUserKeyPath(&statusTLS, lokiStatusCerts))
 		}
 	}
 
@@ -239,7 +239,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts, b.cWatcher)
 	}
 
-	statusTLS := helper.LokiStatusTLS(&b.desired.Loki)
+	statusTLS := helper.GetLokiStatusTLS(&b.desired.Loki)
 	if b.desired != nil && statusTLS.Enable && !statusTLS.InsecureSkipVerify {
 		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &statusTLS, lokiStatusCerts, b.cWatcher)
 	}

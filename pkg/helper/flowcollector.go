@@ -42,7 +42,7 @@ func LokiForwardUserToken(spec *flowslatest.FlowCollectorLoki) bool {
 	return spec.AuthToken == flowslatest.LokiAuthForwardUserToken
 }
 
-func LokiStatusTLS(spec *flowslatest.FlowCollectorLoki) flowslatest.ClientTLS {
+func GetLokiStatusTLS(spec *flowslatest.FlowCollectorLoki) flowslatest.ClientTLS {
 	if spec.StatusTLS != nil {
 		return *spec.StatusTLS
 	}
