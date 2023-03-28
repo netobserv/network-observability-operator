@@ -57,9 +57,7 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
 	}
 
-	if restored.Spec.Loki.StatusTLS != nil {
-		dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS
-	}
+	dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS
 
 	return nil
 }

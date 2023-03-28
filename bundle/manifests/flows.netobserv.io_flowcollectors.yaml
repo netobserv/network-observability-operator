@@ -3364,8 +3364,7 @@ spec:
                       each flow.
                     type: object
                   statusTls:
-                    description: tls client configuration for status URL. fallback
-                      on tls if not set
+                    description: tls client configuration for loki status URL.
                     properties:
                       caCert:
                         description: caCert defines the reference of the certificate
@@ -3436,6 +3435,7 @@ spec:
                       This is useful to show error messages and some context in the
                       frontend. When using the Loki Operator, set it to the Loki HTTP
                       query frontend service, for example https://loki-query-frontend-http.netobserv.svc:3100/.
+                      statusTLS configuration will be used when statusUrl is set.
                     type: string
                   tenantID:
                     default: netobserv
@@ -3449,7 +3449,7 @@ spec:
                       limit. A Timeout of zero means no timeout.
                     type: string
                   tls:
-                    description: tls client configuration.
+                    description: tls client configuration for loki URL.
                     properties:
                       caCert:
                         description: caCert defines the reference of the certificate

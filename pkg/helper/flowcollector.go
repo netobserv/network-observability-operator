@@ -43,8 +43,8 @@ func LokiForwardUserToken(spec *flowslatest.FlowCollectorLoki) bool {
 }
 
 func GetLokiStatusTLS(spec *flowslatest.FlowCollectorLoki) flowslatest.ClientTLS {
-	if spec.StatusTLS != nil {
-		return *spec.StatusTLS
+	if spec.StatusURL != "" {
+		return spec.StatusTLS
 	}
 	return spec.TLS
 }

@@ -5956,14 +5956,14 @@ loki, the flow store, client settings.
         <td><b><a href="#flowcollectorspeclokistatustls">statusTls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration for status URL. fallback on tls if not set<br/>
+          tls client configuration for loki status URL.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>statusUrl</b></td>
         <td>string</td>
         <td>
-          statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend. When using the Loki Operator, set it to the Loki HTTP query frontend service, for example https://loki-query-frontend-http.netobserv.svc:3100/.<br/>
+          statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend. When using the Loki Operator, set it to the Loki HTTP query frontend service, for example https://loki-query-frontend-http.netobserv.svc:3100/. statusTLS configuration will be used when statusUrl is set.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5988,7 +5988,7 @@ loki, the flow store, client settings.
         <td><b><a href="#flowcollectorspeclokitls-1">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration.<br/>
+          tls client configuration for loki URL.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6009,7 +6009,7 @@ loki, the flow store, client settings.
 
 
 
-tls client configuration for status URL. fallback on tls if not set
+tls client configuration for loki status URL.
 
 <table>
     <thead>
@@ -6161,7 +6161,7 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
 
 
 
-tls client configuration.
+tls client configuration for loki URL.
 
 <table>
     <thead>
