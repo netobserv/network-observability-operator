@@ -42,6 +42,13 @@ func LokiForwardUserToken(spec *flowslatest.FlowCollectorLoki) bool {
 	return spec.AuthToken == flowslatest.LokiAuthForwardUserToken
 }
 
+func GetLokiStatusTLS(spec *flowslatest.FlowCollectorLoki) flowslatest.ClientTLS {
+	if spec.StatusURL != "" {
+		return spec.StatusTLS
+	}
+	return spec.TLS
+}
+
 func GetRecordTypes(processor *flowslatest.FlowCollectorFLP) []string {
 	outputRecordTypes := []string{constants.FlowLogType}
 	if processor.LogTypes != nil {
