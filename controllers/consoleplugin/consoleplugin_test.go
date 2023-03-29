@@ -51,7 +51,7 @@ func getPluginConfig() flowslatest.FlowCollectorConsolePlugin {
 	}
 }
 
-func getServiceSpecs() (corev1.Service, flowslatest.FlowCollectorConsolePlugin) {
+func getServiceSpecs() corev1.Service {
 	var service = corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: testNamespace,
@@ -66,7 +66,7 @@ func getServiceSpecs() (corev1.Service, flowslatest.FlowCollectorConsolePlugin) 
 		},
 	}
 
-	return service, getPluginConfig()
+	return service
 }
 
 var minReplicas = int32(1)
@@ -232,26 +232,27 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 func TestServiceUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
+	old := getServiceSpecs()
 
 	//equals specs
-	serviceSpec, containerConfig := getServiceSpecs()
+	serviceSpec := getServiceSpecs()
 	report := helper.NewChangeReport("")
-	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, &report), false)
+	assert.Equal(helper.ServiceChanged(&old, &serviceSpec, &report), false)
 	assert.Contains(report.String(), "no change")
 
 	//wrong port protocol
-	serviceSpec, containerConfig = getServiceSpecs()
+	serviceSpec = getServiceSpecs()
 	serviceSpec.Spec.Ports[0].Protocol = "UDP"
 	report = helper.NewChangeReport("")
-	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, &report), true)
-	assert.Contains(report.String(), "Port change")
+	assert.Equal(helper.ServiceChanged(&old, &serviceSpec, &report), true)
+	assert.Contains(report.String(), "Service spec changed")
 
 	//wrong port number
-	serviceSpec, containerConfig = getServiceSpecs()
+	serviceSpec = getServiceSpecs()
 	serviceSpec.Spec.Ports[0].Port = 8080
 	report = helper.NewChangeReport("")
-	assert.Equal(serviceNeedsUpdate(&serviceSpec, &containerConfig, &report), true)
-	assert.Contains(report.String(), "Port change")
+	assert.Equal(helper.ServiceChanged(&old, &serviceSpec, &report), true)
+	assert.Contains(report.String(), "Service spec changed")
 }
 
 func TestBuiltService(t *testing.T) {
@@ -262,9 +263,10 @@ func TestBuiltService(t *testing.T) {
 	loki := flowslatest.FlowCollectorLoki{URL: "http://foo:1234"}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
 	builder := newBuilder(testNamespace, testImage, &spec)
-	newService := builder.service(nil)
+	old := builder.mainService()
+	new := builder.mainService()
 	report := helper.NewChangeReport("")
-	assert.Equal(serviceNeedsUpdate(newService, &plugin, &report), false)
+	assert.Equal(helper.ServiceChanged(old, new, &report), false)
 	assert.Contains(report.String(), "no change")
 }
 
@@ -284,7 +286,7 @@ func TestLabels(t *testing.T) {
 	assert.Equal("dev", depl.Spec.Template.Labels["version"])
 
 	// Service
-	svc := builder.service(nil)
+	svc := builder.mainService()
 	assert.Equal("netobserv-plugin", svc.Labels["app"])
 	assert.Equal("netobserv-plugin", svc.Spec.Selector["app"])
 	assert.Equal("dev", svc.Labels["version"])

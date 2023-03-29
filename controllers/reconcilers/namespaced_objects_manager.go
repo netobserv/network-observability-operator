@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -132,6 +133,22 @@ func GenericReconcile[K client.Object](ctx context.Context, m *NamespacedObjectM
 	}
 	if changeFunc(old, new, report) {
 		return cl.UpdateOwned(ctx, old, new)
+	}
+	return nil
+}
+
+func ReconcileService(ctx context.Context, m *NamespacedObjectManager, cl *ClientHelper, old, new *corev1.Service, report *helper.ChangeReport) error {
+	if !m.Exists(old) {
+		if err := cl.CreateOwned(ctx, new); err != nil {
+			return err
+		}
+	} else if helper.ServiceChanged(old, new, report) {
+		// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
+		newSVC := old.DeepCopy()
+		newSVC.Spec.Ports = new.Spec.Ports
+		if err := cl.UpdateOwned(ctx, old, newSVC); err != nil {
+			return err
+		}
 	}
 	return nil
 }

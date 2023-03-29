@@ -161,17 +161,8 @@ func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Contex
 	report := helper.NewChangeReport("FLP prometheus service")
 	defer report.LogIfNeeded(ctx)
 
-	if !r.nobjMngr.Exists(r.owned.promService) {
-		if err := r.CreateOwned(ctx, builder.newPromService()); err != nil {
-			return err
-		}
-	} else {
-		newSVC := builder.fromPromService(r.owned.promService)
-		if helper.ServiceChanged(r.owned.promService, newSVC, &report) {
-			if err := r.UpdateOwned(ctx, r.owned.promService, newSVC); err != nil {
-				return err
-			}
-		}
+	if err := reconcilers.ReconcileService(ctx, r.nobjMngr, &r.ClientHelper, r.owned.promService, builder.promService(), &report); err != nil {
+		return err
 	}
 	if r.availableAPIs.HasSvcMonitor() {
 		serviceMonitor := builder.generic.serviceMonitor()

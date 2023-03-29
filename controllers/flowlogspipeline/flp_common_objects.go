@@ -612,43 +612,32 @@ func (b *builder) configMap(stages []config.Stage, parameters []config.StagePara
 	return &configMap, digest, nil
 }
 
-func (b *builder) newPromService() *corev1.Service {
-	service := corev1.Service{
+func (b *builder) promService() *corev1.Service {
+	svc := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.promServiceName(),
 			Namespace: b.namespace,
 			Labels:    b.labels,
 		},
-		Spec: corev1.ServiceSpec{Selector: b.selector},
+		Spec: corev1.ServiceSpec{
+			Selector: b.selector,
+			Ports: []corev1.ServicePort{{
+				Name:     prometheusServiceName,
+				Port:     b.desired.Processor.Metrics.Server.Port,
+				Protocol: corev1.ProtocolTCP,
+				// Some Kubernetes versions might automatically set TargetPort to Port. We need to
+				// explicitly set it here so the reconcile loop verifies that the owned service
+				// is equal as the desired service
+				TargetPort: intstr.FromInt(int(b.desired.Processor.Metrics.Server.Port)),
+			}},
+		},
 	}
-	b.fillPromService(&service)
-	return &service
-}
-
-func (b *builder) fromPromService(old *corev1.Service) *corev1.Service {
-	svc := old.DeepCopy()
-	b.fillPromService(svc)
-	return svc
-}
-
-func (b *builder) fillPromService(svc *corev1.Service) {
-	svc.Spec.Ports = []corev1.ServicePort{{
-		Name:     prometheusServiceName,
-		Port:     b.desired.Processor.Metrics.Server.Port,
-		Protocol: corev1.ProtocolTCP,
-		// Some Kubernetes versions might automatically set TargetPort to Port. We need to
-		// explicitly set it here so the reconcile loop verifies that the owned service
-		// is equal as the desired service
-		TargetPort: intstr.FromInt(int(b.desired.Processor.Metrics.Server.Port)),
-	}}
 	if b.desired.Processor.Metrics.Server.TLS.Type == flowslatest.ServerTLSAuto {
-		if svc.ObjectMeta.Annotations == nil {
-			svc.ObjectMeta.Annotations = map[string]string{}
+		svc.ObjectMeta.Annotations = map[string]string{
+			constants.OpenShiftCertificateAnnotation: b.promServiceName(),
 		}
-		svc.ObjectMeta.Annotations[constants.OpenShiftCertificateAnnotation] = b.promServiceName()
-	} else if svc.ObjectMeta.Annotations != nil {
-		delete(svc.ObjectMeta.Annotations, constants.OpenShiftCertificateAnnotation)
 	}
+	return &svc
 }
 
 func (b *builder) serviceAccount() *corev1.ServiceAccount {
