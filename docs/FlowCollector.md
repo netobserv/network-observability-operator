@@ -4341,7 +4341,7 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          port is the plugin service port<br/>
+          port is the plugin service port. Do not use 9002, which is reserved for metrics.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 9001<br/>

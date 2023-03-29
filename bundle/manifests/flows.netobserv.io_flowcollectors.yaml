@@ -2978,7 +2978,8 @@ spec:
                     type: string
                   port:
                     default: 9001
-                    description: port is the plugin service port
+                    description: port is the plugin service port. Do not use 9002,
+                      which is reserved for metrics.
                     format: int32
                     maximum: 65535
                     minimum: 1
