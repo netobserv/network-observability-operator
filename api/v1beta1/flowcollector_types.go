@@ -462,6 +462,7 @@ type FlowCollectorLoki struct {
 	// This is useful to show error messages and some context in the frontend.
 	// When using the Loki Operator, set it to the Loki HTTP query frontend service, for example
 	// https://loki-query-frontend-http.netobserv.svc:3100/.
+	// statusTLS configuration will be used when statusUrl is set.
 	StatusURL string `json:"statusUrl,omitempty"`
 
 	//+kubebuilder:default:="netobserv"
@@ -509,9 +510,13 @@ type FlowCollectorLoki struct {
 	// staticLabels is a map of common labels to set on each flow.
 	StaticLabels map[string]string `json:"staticLabels,omitempty"`
 
-	// tls client configuration.
+	// tls client configuration for loki URL.
 	// +optional
 	TLS ClientTLS `json:"tls"`
+
+	// tls client configuration for loki status URL.
+	// +optional
+	StatusTLS ClientTLS `json:"statusTls"`
 }
 
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector

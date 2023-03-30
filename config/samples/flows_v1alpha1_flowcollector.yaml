@@ -62,6 +62,7 @@ spec:
   loki:
     url: 'http://loki.netobserv.svc:3100/'
     # Uncomment lines below for typical installation with loki-operator (5.6+ needed)
+    # and ensure tls is enabled
     # url: 'https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network/'
     # statusUrl: 'https://loki-query-frontend-http.netobserv.svc:3100/'
     # authToken: HOST
