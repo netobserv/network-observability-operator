@@ -10,15 +10,14 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
 type monolithBuilder struct {
 	generic builder
 }
 
-func newMonolithBuilder(ns, image string, desired *flowslatest.FlowCollectorSpec, useOpenShiftSCC bool, cWatcher *watchers.CertificatesWatcher) monolithBuilder {
-	gen := newBuilder(ns, image, desired, ConfMonolith, useOpenShiftSCC, cWatcher)
+func newMonolithBuilder(ns, image string, desired *flowslatest.FlowCollectorSpec, useOpenShiftSCC bool) monolithBuilder {
+	gen := newBuilder(ns, image, desired, ConfMonolith, useOpenShiftSCC)
 	return monolithBuilder{
 		generic: gen,
 	}

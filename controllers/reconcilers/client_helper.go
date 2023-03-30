@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/netobserv/network-observability-operator/pkg/watchers"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -22,7 +21,6 @@ type ClientHelper struct {
 	SetControllerReference func(client.Object) error
 	changed                bool
 	deplInProgress         bool
-	CertWatcher            *watchers.CertificatesWatcher
 }
 
 // CreateOwned is an helper function that creates an object, sets owner reference and writes info & errors logs
