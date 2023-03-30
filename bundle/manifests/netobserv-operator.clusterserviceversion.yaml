@@ -282,6 +282,21 @@ metadata:
               "maxBackoff": "5s",
               "maxRetries": 2,
               "minBackoff": "1s",
+              "statusTls": {
+                "caCert": {
+                  "certFile": "service-ca.crt",
+                  "name": "loki-ca-bundle",
+                  "type": "configmap"
+                },
+                "enable": false,
+                "insecureSkipVerify": false,
+                "userCert": {
+                  "certFile": "tls.crt",
+                  "certKey": "tls.key",
+                  "name": "loki-query-frontend-http",
+                  "type": "secret"
+                }
+              },
               "tls": {
                 "caCert": {
                   "certFile": "service-ca.crt",
