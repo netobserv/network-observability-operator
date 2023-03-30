@@ -194,7 +194,7 @@ func flowCollectorConsolePluginSpecs() {
 
 			// Do a dummy change that will trigger reconcile, and make sure SM is created again
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Processor.LogLevel = "info"
+				fc.Spec.Processor.LogLevel = "trace"
 			})
 			By("Expecting ServiceMonitor to exist")
 			Eventually(func() interface{} {
