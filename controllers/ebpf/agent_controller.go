@@ -131,11 +131,6 @@ func (c *AgentController) Reconcile(
 	}
 	desired := c.desired(target)
 
-	// Annotate pod with certificate reference so that it is reloaded if modified
-	if err := c.client.CertWatcher.AnnotatePod(ctx, c.client, &desired.Spec.Template, kafkaCerts); err != nil {
-		return err
-	}
-
 	switch c.requiredAction(current, desired) {
 	case actionCreate:
 		rlog.Info("action: create agent")
@@ -175,7 +170,7 @@ func (c *AgentController) desired(coll *flowslatest.FlowCollector) *v1.DaemonSet
 	if helper.UseKafka(&coll.Spec) && coll.Spec.Kafka.TLS.Enable {
 		// NOTE: secrets need to be copied from the base netobserv namespace to the privileged one.
 		// This operation must currently be performed manually (run "make fix-ebpf-kafka-tls"). It could be automated here.
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &coll.Spec.Kafka.TLS, kafkaCerts, c.client.CertWatcher)
+		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &coll.Spec.Kafka.TLS, kafkaCerts)
 	}
 
 	return &v1.DaemonSet{

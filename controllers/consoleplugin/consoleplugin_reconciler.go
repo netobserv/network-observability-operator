@@ -83,7 +83,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 	}
 
 	// Create object builder
-	builder := newBuilder(ns, r.image, &desired.Spec, r.CertWatcher)
+	builder := newBuilder(ns, r.image, &desired.Spec)
 
 	if err := r.reconcilePermissions(ctx, &builder); err != nil {
 		return err
@@ -196,10 +196,6 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder,
 	defer report.LogIfNeeded(ctx)
 
 	newDepl := builder.deployment(cmDigest)
-	// Annotate pod with certificate reference so that it is reloaded if modified
-	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &newDepl.Spec.Template, lokiCerts, lokiStatusCerts); err != nil {
-		return err
-	}
 	if !r.nobjMngr.Exists(r.owned.deployment) {
 		if err := r.CreateOwned(ctx, newDepl); err != nil {
 			return err
