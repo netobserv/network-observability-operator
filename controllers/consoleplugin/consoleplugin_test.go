@@ -188,6 +188,49 @@ func TestContainerUpdateCheck(t *testing.T) {
 	report = helper.NewChangeReport("")
 	assert.False(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "no change")
+	old = new
+
+	//set status url and enable default tls
+	loki.StatusURL = "http://loki.status:3100/"
+	loki.StatusTLS.Enable = true
+
+	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder = newBuilder(testNamespace, testImage, &spec, &certWatcher)
+	new = builder.deployment("digest")
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Container changed")
+	old = new
+
+	//update status ca cert
+	loki.StatusTLS.CACert = flowslatest.CertificateReference{
+		Type:     "configmap",
+		Name:     "status-cm-name",
+		CertFile: "status-ca.crt",
+	}
+
+	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder = newBuilder(testNamespace, testImage, &spec, &certWatcher)
+	new = builder.deployment("digest")
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Volumes changed")
+	old = new
+
+	//update status user cert
+	loki.StatusTLS.UserCert = flowslatest.CertificateReference{
+		Type:     "secret",
+		Name:     "sec-name",
+		CertFile: "tls.crt",
+		CertKey:  "tls.key",
+	}
+
+	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder = newBuilder(testNamespace, testImage, &spec, &certWatcher)
+	new = builder.deployment("digest")
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &new.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Volumes changed")
 }
 
 func TestServiceUpdateCheck(t *testing.T) {

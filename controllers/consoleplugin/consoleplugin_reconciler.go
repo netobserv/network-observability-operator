@@ -197,7 +197,7 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder,
 
 	newDepl := builder.deployment(cmDigest)
 	// Annotate pod with certificate reference so that it is reloaded if modified
-	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &newDepl.Spec.Template, lokiCerts); err != nil {
+	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &newDepl.Spec.Template, lokiCerts, lokiStatusCerts); err != nil {
 		return err
 	}
 	if !r.nobjMngr.Exists(r.owned.deployment) {
