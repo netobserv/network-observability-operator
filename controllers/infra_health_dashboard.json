@@ -66,21 +66,21 @@
                     "steppedLine":false,
                     "targets":[
                         {
-                            "expr":"sum(rate(netobserv_ingest_flows_processed[5m]))",
+                            "expr":"sum(rate(netobserv_ingest_flows_processed[1m]))",
                             "format":"time_series",
                             "intervalFactor":2,
                             "legendFormat":"Flows ingested",
                             "refId":"A"
                         },
                         {
-                            "expr":"sum(rate(netobserv_loki_sent_entries_total[5m]))",
+                            "expr":"sum(rate(netobserv_loki_sent_entries_total[1m]))",
                             "format":"time_series",
                             "intervalFactor":2,
                             "legendFormat":"Flows sent to loki",
                             "refId":"A"
                         },
 			{
-                            "expr":"sum(rate(netobserv_loki_dropped_entries_total[5m]))",
+                            "expr":"sum(rate(netobserv_loki_dropped_entries_total[1m]))",
                             "format":"time_series",
                             "intervalFactor":2,
                             "legendFormat":"Flows dropped due to loki error",
