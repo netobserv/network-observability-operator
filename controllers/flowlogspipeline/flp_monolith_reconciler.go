@@ -88,7 +88,7 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslat
 		return nil
 	}
 
-	builder := newMonolithBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC, r.CertWatcher)
+	builder := newMonolithBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC)
 	newCM, configDigest, dbConfigMap, err := builder.configMap()
 	if err != nil {
 		return err
@@ -155,10 +155,6 @@ func (r *flpMonolithReconciler) reconcileDaemonSet(ctx context.Context, desiredD
 	report := helper.NewChangeReport("FLP DaemonSet")
 	defer report.LogIfNeeded(ctx)
 
-	// Annotate pod with certificate reference so that it is reloaded if modified
-	if err := r.CertWatcher.AnnotatePod(ctx, r.Client, &desiredDS.Spec.Template, lokiCerts, kafkaCerts); err != nil {
-		return err
-	}
 	if !r.nobjMngr.Exists(r.owned.daemonSet) {
 		return r.CreateOwned(ctx, desiredDS)
 	} else if helper.PodChanged(&r.owned.daemonSet.Spec.Template, &desiredDS.Spec.Template, constants.FLPName, &report) {
