@@ -593,9 +593,8 @@ func flowCollectorControllerSpecs() {
 		})
 	})
 
-	Context("Using and watching certificates", func() {
+	Context("Using certificates", func() {
 		flpDS := appsv1.DaemonSet{}
-		var certStamp1, certStamp2 string
 		It("Should update Loki to use TLS", func() {
 			// Create CM certificate
 			Expect(k8sClient.Create(ctx, &v1.ConfigMap{
@@ -622,33 +621,8 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
 					return err
 				}
-				certStamp1 = flpDS.Spec.Template.Annotations["flows.netobserv.io/cert-loki-certs-ca"]
-				return certStamp1
-			}, timeout, interval).Should(Not(BeEmpty()))
-			Expect(flpDS.Spec.Template.Spec.Volumes).To(HaveLen(2))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
-		})
-
-		It("Should watch certificate update", func() {
-			By("Updating certificate")
-			Expect(k8sClient.Update(ctx, &v1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "loki-ca",
-					Namespace: operatorNamespace,
-				},
-				Data: map[string]string{"test": "test"},
-			})).Should(Succeed())
-
-			Eventually(func() interface{} {
-				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
-					return err
-				}
-				certStamp2 = flpDS.Spec.Template.Annotations["flows.netobserv.io/cert-loki-certs-ca"]
-				return certStamp2
-			}, timeout, interval).Should(Not(Equal(certStamp1)))
-			Expect(certStamp2).To(Not(BeEmpty()))
-			Expect(flpDS.Spec.Template.Spec.Volumes).To(HaveLen(2))
+				return flpDS.Spec.Template.Spec.Volumes
+			}, timeout, interval).Should(HaveLen(2))
 			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
 			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
 		})
@@ -663,9 +637,8 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
 					return err
 				}
-				return flpDS.Spec.Template.Annotations
-			}, timeout, interval).Should(Not(HaveKey("flows.netobserv.io/cert-loki-certs-ca")))
-			Expect(flpDS.Spec.Template.Spec.Volumes).To(HaveLen(1))
+				return flpDS.Spec.Template.Spec.Volumes
+			}, timeout, interval).Should(HaveLen(1))
 			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
 		})
 	})

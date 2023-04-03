@@ -368,8 +368,7 @@ func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsla
 
 func (r *FlowCollectorReconciler) newClientHelper(desired *flowslatest.FlowCollector) reconcilers.ClientHelper {
 	return reconcilers.ClientHelper{
-		CertWatcher: r.certWatcher,
-		Client:      r.Client,
+		Client: r.Client,
 		SetControllerReference: func(obj client.Object) error {
 			return ctrl.SetControllerReference(desired, obj, r.Scheme)
 		},
