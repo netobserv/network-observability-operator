@@ -6530,6 +6530,15 @@ processor defines the settings of the component that receives the flows from the
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>conversationTerminatingTimeout</b></td>
+        <td>string</td>
+        <td>
+          conversation terminating timeout is the duration of time to wait from detected FIN flag to end a connection<br/>
+          <br/>
+            <i>Default</i>: 5s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessordebug-1">debug</a></b></td>
         <td>object</td>
         <td>

@@ -3673,6 +3673,11 @@ spec:
                     description: conversation heartbeat interval is the duration of
                       time to wait between heartbeat reports of a conversation
                     type: string
+                  conversationTerminatingTimeout:
+                    default: 5s
+                    description: conversation terminating timeout is the duration
+                      of time to wait from detected FIN flag to end a connection
+                    type: string
                   debug:
                     description: Debug allows setting some aspects of the internal
                       configuration of the flow processor. This section is aimed exclusively

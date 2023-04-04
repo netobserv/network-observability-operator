@@ -417,6 +417,11 @@ type FlowCollectorFLP struct {
 	// conversation end timeout is the duration of time to wait from the last flow log to end a conversation
 	ConversationEndTimeout *metav1.Duration `json:"conversationEndTimeout,omitempty"`
 
+	//+kubebuilder:default:="5s"
+	// +optional
+	// conversation terminating timeout is the duration of time to wait from detected FIN flag to end a connection
+	ConversationTerminatingTimeout *metav1.Duration `json:"conversationTerminatingTimeout,omitempty"`
+
 	// Debug allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations
 	// (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.

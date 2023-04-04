@@ -54,6 +54,10 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.Processor.ConversationEndTimeout = restored.Spec.Processor.ConversationEndTimeout
 	}
 
+	if restored.Spec.Processor.ConversationTerminatingTimeout != nil {
+		dst.Spec.Processor.ConversationTerminatingTimeout = restored.Spec.Processor.ConversationTerminatingTimeout
+	}
+
 	if restored.Spec.Processor.Metrics.DisableAlerts != nil {
 		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
 	}
