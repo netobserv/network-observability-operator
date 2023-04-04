@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -12,7 +13,7 @@ import (
 	ascv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -123,7 +124,7 @@ func flowCollectorControllerSpecs() {
 						Port:            9001,
 						ImagePullPolicy: "Never",
 						PortNaming: flowslatest.ConsolePluginPortConfig{
-							Enable: true,
+							Enable: &tRue,
 							PortNames: map[string]string{
 								"3100": "loki",
 							},
@@ -333,7 +334,8 @@ func flowCollectorControllerSpecs() {
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.MaxRetries = 7
+				val := int32(7)
+				fc.Spec.Loki.MaxRetries = &val
 			})
 
 			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
@@ -789,7 +791,7 @@ func flowCollectorControllerSpecs() {
 		It("Should not get CR", func() {
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, crKey, &flowCR)
-				return errors.IsNotFound(err)
+				return kerr.IsNotFound(err)
 			}, timeout, interval).Should(BeTrue())
 		})
 	})
@@ -803,6 +805,9 @@ func GetReadyCR(key types.NamespacedName) *flowslatest.FlowCollector {
 			return err
 		}
 		cond := meta.FindStatusCondition(cr.Status.Conditions, conditions.TypeReady)
+		if cond == nil {
+			return errors.New("CR is not ready: condition is nil")
+		}
 		if cond.Status == metav1.ConditionFalse {
 			return fmt.Errorf("CR is not ready: %s - %v", cond.Reason, cond.Message)
 		}

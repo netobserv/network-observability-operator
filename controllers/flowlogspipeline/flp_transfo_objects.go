@@ -33,7 +33,7 @@ func (b *transfoBuilder) deployment(configDigest string) *appsv1.Deployment {
 			Labels:    b.generic.labels,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &b.generic.desired.Processor.KafkaConsumerReplicas,
+			Replicas: b.generic.desired.Processor.KafkaConsumerReplicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: b.generic.selector,
 			},

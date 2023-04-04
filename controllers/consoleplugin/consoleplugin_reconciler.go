@@ -115,18 +115,19 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 
 func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	console := operatorsv1.Console{}
+	reg := helper.PtrBool(desired.Spec.ConsolePlugin.Register)
 	if err := r.Client.Get(ctx, types.NamespacedName{Name: "cluster"}, &console); err != nil {
 		// Console operator CR not found => warn but continue execution
-		if desired.Spec.ConsolePlugin.Register {
+		if reg {
 			log.FromContext(ctx).Error(err, "Could not get the Console Operator resource for plugin registration. Please register manually.")
 		}
 		return nil
 	}
 	registered := helper.ContainsString(console.Spec.Plugins, constants.PluginName)
-	if desired.Spec.ConsolePlugin.Register && !registered {
+	if reg && !registered {
 		console.Spec.Plugins = append(console.Spec.Plugins, constants.PluginName)
 		return r.Client.Update(ctx, &console)
-	} else if !desired.Spec.ConsolePlugin.Register && registered {
+	} else if !reg && registered {
 		console.Spec.Plugins = helper.RemoveAllStrings(console.Spec.Plugins, constants.PluginName)
 		return r.Client.Update(ctx, &console)
 	}
@@ -200,7 +201,7 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder,
 		if err := r.CreateOwned(ctx, newDepl); err != nil {
 			return err
 		}
-	} else if helper.DeploymentChanged(r.owned.deployment, newDepl, constants.PluginName, helper.HPADisabled(&desired.ConsolePlugin.Autoscaler), desired.ConsolePlugin.Replicas, &report) {
+	} else if helper.DeploymentChanged(r.owned.deployment, newDepl, constants.PluginName, helper.HPADisabled(&desired.ConsolePlugin.Autoscaler), helper.PtrInt32(desired.ConsolePlugin.Replicas), &report) {
 		if err := r.UpdateOwned(ctx, r.owned.deployment, newDepl); err != nil {
 			return err
 		}

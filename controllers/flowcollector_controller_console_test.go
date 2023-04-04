@@ -23,6 +23,9 @@ import (
 // For simplicity, we'll use a different namespace
 const cpNamespace = "namespace-console-specs"
 
+var tRue = true
+var fAlse = false
+
 // nolint:cyclop
 func flowCollectorConsolePluginSpecs() {
 	cpKey := types.NamespacedName{
@@ -77,7 +80,7 @@ func flowCollectorConsolePluginSpecs() {
 					ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
 						Port:            9001,
 						ImagePullPolicy: "Never",
-						Register:        true,
+						Register:        &tRue,
 						Autoscaler: flowslatest.FlowCollectorHPA{
 							Status:      flowslatest.HPAStatusEnabled,
 							MinReplicas: pointer.Int32(1),
@@ -94,7 +97,7 @@ func flowCollectorConsolePluginSpecs() {
 							}},
 						},
 						PortNaming: flowslatest.ConsolePluginPortConfig{
-							Enable: true,
+							Enable: &tRue,
 							PortNames: map[string]string{
 								"3100": "loki",
 							},
@@ -150,8 +153,9 @@ func flowCollectorConsolePluginSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
+				two := int32(2)
 				fc.Spec.ConsolePlugin.Port = 9099
-				fc.Spec.ConsolePlugin.Replicas = 2
+				fc.Spec.ConsolePlugin.Replicas = &two
 				fc.Spec.ConsolePlugin.Autoscaler.Status = flowslatest.HPAStatusDisabled
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
@@ -241,7 +245,7 @@ func flowCollectorConsolePluginSpecs() {
 		It("Should be unregistered", func() {
 			By("Update CR to unregister")
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.ConsolePlugin.Register = false
+				fc.Spec.ConsolePlugin.Register = &fAlse
 			})
 
 			By("Expecting the Console CR to not have plugin registered")

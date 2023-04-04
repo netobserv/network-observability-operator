@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	promConfig "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -13,8 +14,6 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-
-	promConfig "github.com/prometheus/common/config"
 )
 
 const testImage = "quay.io/netobserv/network-observability-console-plugin:dev"

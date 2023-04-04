@@ -74,6 +74,7 @@ var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
 	flowCollectorConsolePluginSpecs()
 	flowCollectorEBPFSpecs()
 	flowCollectorEBPFKafkaSpecs()
+	flowCollectorIsoSpecs()
 })
 
 var _ = BeforeSuite(func() {
