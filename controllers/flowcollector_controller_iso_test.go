@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/pointer"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -76,8 +77,8 @@ func flowCollectorIsoSpecs() {
 					IgnoreTags:    []string{},
 					DisableAlerts: []flowslatest.FLPAlert{},
 				},
-				EnableKubeProbes: &fAlse,
-				DropUnusedFields: &fAlse,
+				EnableKubeProbes: pointer.Bool(false),
+				DropUnusedFields: pointer.Bool(false),
 			},
 			Agent: flowslatest.FlowCollectorAgent{
 				Type: "EBPF",
@@ -110,7 +111,7 @@ func flowCollectorIsoSpecs() {
 				},
 			},
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
-				Register:        &fAlse,
+				Register:        pointer.Bool(false),
 				Replicas:        &zero,
 				Port:            12345,
 				ImagePullPolicy: "Always",
@@ -118,7 +119,7 @@ func flowCollectorIsoSpecs() {
 				LogLevel:        "trace",
 				Autoscaler:      flowslatest.FlowCollectorHPA{Status: "DISABLED", MinReplicas: &zero, MaxReplicas: zero, Metrics: []ascv2.MetricSpec{}},
 				PortNaming: flowslatest.ConsolePluginPortConfig{
-					Enable:    &fAlse,
+					Enable:    pointer.Bool(false),
 					PortNames: map[string]string{},
 				},
 				QuickFilters: []flowslatest.QuickFilter{},
@@ -137,8 +138,8 @@ func flowCollectorIsoSpecs() {
 				MaxRetries:   &zero,
 				StaticLabels: map[string]string{},
 				TLS: flowslatest.ClientTLS{
-					Enable:             fAlse,
-					InsecureSkipVerify: fAlse,
+					Enable:             false,
+					InsecureSkipVerify: false,
 					CACert: flowslatest.CertificateReference{
 						Type:     "configmap",
 						Name:     "",
@@ -153,8 +154,8 @@ func flowCollectorIsoSpecs() {
 					},
 				},
 				StatusTLS: flowslatest.ClientTLS{
-					Enable:             fAlse,
-					InsecureSkipVerify: fAlse,
+					Enable:             false,
+					InsecureSkipVerify: false,
 					CACert: flowslatest.CertificateReference{
 						Type:     "configmap",
 						Name:     "",
@@ -173,8 +174,8 @@ func flowCollectorIsoSpecs() {
 				Address: "http://kafka",
 				Topic:   "topic",
 				TLS: flowslatest.ClientTLS{
-					Enable:             fAlse,
-					InsecureSkipVerify: fAlse,
+					Enable:             false,
+					InsecureSkipVerify: false,
 					CACert: flowslatest.CertificateReference{
 						Type:     "configmap",
 						Name:     "",

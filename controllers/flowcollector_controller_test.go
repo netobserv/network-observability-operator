@@ -124,7 +124,7 @@ func flowCollectorControllerSpecs() {
 						Port:            9001,
 						ImagePullPolicy: "Never",
 						PortNaming: flowslatest.ConsolePluginPortConfig{
-							Enable: &tRue,
+							Enable: pointer.Bool(true),
 							PortNames: map[string]string{
 								"3100": "loki",
 							},
@@ -334,8 +334,7 @@ func flowCollectorControllerSpecs() {
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				val := int32(7)
-				fc.Spec.Loki.MaxRetries = &val
+				fc.Spec.Loki.MaxRetries = pointer.Int32(7)
 			})
 
 			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
