@@ -179,7 +179,10 @@ func buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 		if desired.Loki.TLS.InsecureSkipVerify {
 			args = append(args, "-loki-skip-tls")
 		} else {
-			args = append(args, "-loki-ca-path", helper.GetCACertPath(&desired.Loki.TLS, lokiCerts))
+			caPath := helper.GetCACertPath(&desired.Loki.TLS, lokiCerts)
+			if caPath != "" {
+				args = append(args, "-loki-ca-path", caPath)
+			}
 		}
 	}
 
@@ -188,9 +191,16 @@ func buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 		if statusTLS.InsecureSkipVerify {
 			args = append(args, "-loki-status-skip-tls")
 		} else {
-			args = append(args, "-loki-status-ca-path", helper.GetCACertPath(&statusTLS, lokiStatusCerts))
-			args = append(args, "-loki-status-user-cert-path", helper.GetUserCertPath(&statusTLS, lokiStatusCerts))
-			args = append(args, "-loki-status-user-key-path", helper.GetUserKeyPath(&statusTLS, lokiStatusCerts))
+			statusCaPath := helper.GetCACertPath(&statusTLS, lokiStatusCerts)
+			if statusCaPath != "" {
+				args = append(args, "-loki-status-ca-path", statusCaPath)
+			}
+			userCertPath := helper.GetUserCertPath(&statusTLS, lokiStatusCerts)
+			userKeyPath := helper.GetUserKeyPath(&statusTLS, lokiStatusCerts)
+			if userCertPath != "" && userKeyPath != "" {
+				args = append(args, "-loki-status-user-cert-path", userCertPath)
+				args = append(args, "-loki-status-user-key-path", userKeyPath)
+			}
 		}
 	}
 
