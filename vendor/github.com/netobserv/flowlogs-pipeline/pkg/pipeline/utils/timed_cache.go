@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -45,10 +46,11 @@ type TimedCacheMap map[string]*cacheEntry
 // If maxEntries is non-zero, this limits the number of entries in the cache to the number specified.
 // If maxEntries is zero, the cache has no size limit.
 type TimedCache struct {
-	mu         sync.RWMutex
-	cacheList  *list.List
-	cacheMap   TimedCacheMap
-	maxEntries int
+	mu             sync.RWMutex
+	cacheList      *list.List
+	cacheMap       TimedCacheMap
+	maxEntries     int
+	cacheLenMetric prometheus.Gauge
 }
 
 func (tc *TimedCache) GetCacheEntry(key string) (interface{}, bool) {
@@ -90,6 +92,9 @@ func (tc *TimedCache) UpdateCacheEntry(key string, entry interface{}) (*cacheEnt
 		// place at end of list
 		cEntry.e = tc.cacheList.PushBack(cEntry)
 		tc.cacheMap[key] = cEntry
+		if tc.cacheLenMetric != nil {
+			tc.cacheLenMetric.Inc()
+		}
 	}
 	return cEntry, true
 }
@@ -140,14 +145,18 @@ func (tc *TimedCache) CleanupExpiredEntries(expiry time.Duration, callback Cache
 		callback(pCacheInfo.SourceEntry)
 		delete(tc.cacheMap, pCacheInfo.key)
 		tc.cacheList.Remove(listEntry)
+		if tc.cacheLenMetric != nil {
+			tc.cacheLenMetric.Dec()
+		}
 	}
 }
 
-func NewTimedCache(maxEntries int) *TimedCache {
+func NewTimedCache(maxEntries int, cacheLenMetric prometheus.Gauge) *TimedCache {
 	l := &TimedCache{
-		cacheList:  list.New(),
-		cacheMap:   make(TimedCacheMap),
-		maxEntries: maxEntries,
+		cacheList:      list.New(),
+		cacheMap:       make(TimedCacheMap),
+		maxEntries:     maxEntries,
+		cacheLenMetric: cacheLenMetric,
 	}
 	return l
 }

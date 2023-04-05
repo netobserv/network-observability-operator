@@ -5453,14 +5453,73 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to
         <td>
           type selects the type of exporters. Only "KAFKA" is available at the moment.<br/>
           <br/>
-            <i>Enum</i>: KAFKA<br/>
+            <i>Enum</i>: KAFKA, IPFIX<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexipfix">ipfix</a></b></td>
+        <td>object</td>
+        <td>
+          ipfix configuration, such as ip address and port to send ipfix flows to.<br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindexkafka-1">kafka</a></b></td>
         <td>object</td>
         <td>
           kafka configuration, such as address or topic, to send enriched flows to.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].ipfix
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindex-1)</sup></sup>
+
+
+
+ipfix configuration, such as ip address and port to send ipfix flows to.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>targetHost</b></td>
+        <td>string</td>
+        <td>
+          address of the ipfix external receiver<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>targetPort</b></td>
+        <td>integer</td>
+        <td>
+          port for the ipfix external receiver<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>enterpriseId</b></td>
+        <td>integer</td>
+        <td>
+          EnterpriseId,omitempty" doc:"Enterprise ID for exporting transformations<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>transport</b></td>
+        <td>enum</td>
+        <td>
+          Transport protocol (tcp/udp) to be used for the IPFIX connection, defaults to tcp<br/>
+          <br/>
+            <i>Enum</i>: TCP, UDP<br/>
         </td>
         <td>false</td>
       </tr></tbody>

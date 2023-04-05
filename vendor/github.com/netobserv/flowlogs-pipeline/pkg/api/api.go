@@ -21,6 +21,7 @@ const (
 	FileType                     = "file"
 	FileLoopType                 = "file_loop"
 	FileChunksType               = "file_chunks"
+	SyntheticType                = "synthetic"
 	CollectorType                = "collector"
 	GRPCType                     = "grpc"
 	FakeType                     = "fake"

@@ -55,11 +55,12 @@ type Profile struct {
 // Also, currently FLP doesn't support defining more than one PromEncode stage. If this feature is added later, these global settings
 // will help configuring common setting for all PromEncode stages - PromEncode settings would then act as overrides.
 type MetricsSettings struct {
-	Address string           `yaml:"address,omitempty" json:"address,omitempty" doc:"address to expose \"/metrics\" endpoint"`
-	Port    int              `yaml:"port,omitempty" json:"port,omitempty" doc:"port number to expose \"/metrics\" endpoint"`
-	TLS     *api.PromTLSConf `yaml:"tls,omitempty" json:"tls,omitempty" doc:"TLS configuration for the prometheus endpoint"`
-	Prefix  string           `yaml:"prefix,omitempty" json:"prefix,omitempty"`
-	NoPanic bool             `yaml:"noPanic,omitempty" json:"noPanic,omitempty"`
+	Address           string           `yaml:"address,omitempty" json:"address,omitempty" doc:"address to expose \"/metrics\" endpoint"`
+	Port              int              `yaml:"port,omitempty" json:"port,omitempty" doc:"port number to expose \"/metrics\" endpoint"`
+	TLS               *api.PromTLSConf `yaml:"tls,omitempty" json:"tls,omitempty" doc:"TLS configuration for the prometheus endpoint"`
+	Prefix            string           `yaml:"prefix,omitempty" json:"prefix,omitempty" doc:"prefix for names of the operational metrics"`
+	NoPanic           bool             `yaml:"noPanic,omitempty" json:"noPanic,omitempty"`
+	SuppressGoMetrics bool             `yaml:"suppressGoMetrics,omitempty" json:"suppressGoMetrics,omitempty" doc:"filter out Go and process metrics"`
 }
 
 // PerfSettings allows setting some internal configuration parameters
@@ -89,6 +90,7 @@ type Ingest struct {
 	Collector *api.IngestCollector `yaml:"collector,omitempty" json:"collector,omitempty"`
 	Kafka     *api.IngestKafka     `yaml:"kafka,omitempty" json:"kafka,omitempty"`
 	GRPC      *api.IngestGRPCProto `yaml:"grpc,omitempty" json:"grpc,omitempty"`
+	Synthetic *api.IngestSynthetic `yaml:"synthetic,omitempty" json:"synthetic,omitempty"`
 }
 
 type File struct {
@@ -152,6 +154,8 @@ func ParseConfig(opts Options) (ConfigFileStruct, error) {
 			return out, err
 		}
 		logrus.Debugf("metrics settings = %v ", out.MetricsSettings)
+	} else {
+		logrus.Errorf("metrics settings missing")
 	}
 
 	return out, nil

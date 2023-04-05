@@ -76,6 +76,7 @@ type FlowCollectorSpec struct {
 
 	// exporters defines additional optional exporters for custom consumption or storage. This is an experimental feature. Currently, only KAFKA exporter is available.
 	// +optional
+	// +k8s:conversion-gen=false
 	Exporters []*FlowCollectorExporter `json:"exporters"`
 }
 
@@ -231,6 +232,25 @@ type FlowCollectorKafka struct {
 	// Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 	// +optional
 	TLS ClientTLS `json:"tls"`
+}
+
+type FlowCollectorIPFIXReceiver struct {
+	//+kubebuilder:default:=""
+	// address of the ipfix external receiver
+	TargetHost string `json:"targetHost"`
+
+	// port for the ipfix external receiver
+	TargetPort int `json:"targetPort"`
+
+	// Transport protocol (tcp/udp) to be used for the IPFIX connection, defaults to tcp
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="TCP";"UDP"
+	// +optional
+	Transport string `json:"transport,omitempty"`
+
+	// EnterpriseId,omitempty" doc:"Enterprise ID for exporting transformations
+	//+optional
+	EnterpriseID int `json:"enterpriseId,omitempty"`
 }
 
 const (
@@ -677,19 +697,24 @@ type ExporterType string
 
 const (
 	KafkaExporter ExporterType = "KAFKA"
+	IpfixExporter ExporterType = "IPFIX"
 )
 
 // FlowCollectorExporter defines an additional exporter to send enriched flows to
 type FlowCollectorExporter struct {
 	// type selects the type of exporters. Only "KAFKA" is available at the moment.
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="KAFKA"
+	// +kubebuilder:validation:Enum:="KAFKA";"IPFIX"
 	// +kubebuilder:validation:Required
 	Type ExporterType `json:"type"`
 
 	// kafka configuration, such as address or topic, to send enriched flows to.
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
+
+	// ipfix configuration, such as ip address and port to send ipfix flows to.
+	// +optional
+	IPFIX FlowCollectorIPFIXReceiver `json:"ipfix,omitempty"`
 }
 
 // FlowCollectorStatus defines the observed state of FlowCollector

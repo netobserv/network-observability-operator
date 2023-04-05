@@ -538,6 +538,9 @@ func (b *builder) addCustomExportStages(enrichedStage *config.PipelineBuilderSta
 		if exporter.Type == flowslatest.KafkaExporter {
 			createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), &exporter.Kafka, enrichedStage)
 		}
+		if exporter.Type == flowslatest.IpfixExporter {
+			createIPFIXWriteStage(fmt.Sprintf("IPFIX-export-%d", i), &exporter.IPFIX, enrichedStage)
+		}
 	}
 }
 
@@ -547,6 +550,16 @@ func createKafkaWriteStage(name string, spec *flowslatest.FlowCollectorKafka, fr
 		Topic:   spec.Topic,
 		TLS:     getKafkaTLS(&spec.TLS),
 	})
+}
+
+func createIPFIXWriteStage(name string, spec *flowslatest.FlowCollectorIPFIXReceiver, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
+	return fromStage.WriteIpfix(name, api.WriteIpfix{
+		TargetHost:   spec.TargetHost,
+		TargetPort:   spec.TargetPort,
+		Transport:    spec.Transport,
+		EnterpriseID: spec.EnterpriseID,
+	})
+
 }
 
 func getKafkaTLS(tls *flowslatest.ClientTLS) *api.ClientTLS {

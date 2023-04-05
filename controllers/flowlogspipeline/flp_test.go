@@ -832,13 +832,28 @@ func TestPipelineWithExporter(t *testing.T) {
 		Kafka: flowslatest.FlowCollectorKafka{Address: "kafka-test", Topic: "topic-test"},
 	})
 
+	cfg.Exporters = append(cfg.Exporters, &flowslatest.FlowCollectorExporter{
+		Type: flowslatest.IpfixExporter,
+		IPFIX: flowslatest.FlowCollectorIPFIXReceiver{
+			TargetHost:   "ipfix-receiver-test",
+			TargetPort:   9999,
+			Transport:    "tcp",
+			EnterpriseID: 1,
+		},
+	})
+
 	b := newMonolithBuilder("namespace", image, &cfg, true)
 	stages, parameters, _, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"kafka-export-0","follows":"enrich"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"kafka-export-0","follows":"enrich"},{"name":"IPFIX-export-1","follows":"enrich"}]`, string(jsonStages))
 
 	assert.Equal("kafka-test", parameters[6].Encode.Kafka.Address)
 	assert.Equal("topic-test", parameters[6].Encode.Kafka.Topic)
+
+	assert.Equal("ipfix-receiver-test", parameters[7].Write.Ipfix.TargetHost)
+	assert.Equal(9999, parameters[7].Write.Ipfix.TargetPort)
+	assert.Equal("tcp", parameters[7].Write.Ipfix.Transport)
+	assert.Equal(1, parameters[7].Write.Ipfix.EnterpriseID)
 }
