@@ -3107,6 +3107,32 @@ spec:
                   description: FlowCollectorExporter defines an additional exporter
                     to send enriched flows to
                   properties:
+                    ipfix:
+                      description: ipfix configuration, such as ip address and port
+                        to send ipfix flows to.
+                      properties:
+                        enterpriseId:
+                          description: EnterpriseId,omitempty" doc:"Enterprise ID
+                            for exporting transformations
+                          type: integer
+                        targetHost:
+                          default: ""
+                          description: address of the ipfix external receiver
+                          type: string
+                        targetPort:
+                          description: port for the ipfix external receiver
+                          type: integer
+                        transport:
+                          description: Transport protocol (tcp/udp) to be used for
+                            the IPFIX connection, defaults to tcp
+                          enum:
+                          - TCP
+                          - UDP
+                          type: string
+                      required:
+                      - targetHost
+                      - targetPort
+                      type: object
                     kafka:
                       description: kafka configuration, such as address or topic,
                         to send enriched flows to.
@@ -3198,6 +3224,7 @@ spec:
                         is available at the moment.
                       enum:
                       - KAFKA
+                      - IPFIX
                       type: string
                   required:
                   - type

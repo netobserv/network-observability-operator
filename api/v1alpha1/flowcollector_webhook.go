@@ -57,6 +57,11 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
 	}
 
+	if restored.Spec.Exporters != nil {
+		dst.Spec.Exporters = make([]*v1beta1.FlowCollectorExporter, len(restored.Spec.Exporters))
+		copy(dst.Spec.Exporters, restored.Spec.Exporters)
+	}
+
 	dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS
 
 	return nil
@@ -108,4 +113,11 @@ func Convert_v1beta1_FLPMetrics_To_v1alpha1_FLPMetrics(in *v1beta1.FLPMetrics, o
 // nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1beta1.FlowCollectorLoki, out *FlowCollectorLoki, s apiconversion.Scope) error {
 	return autoConvert_v1beta1_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta1 not in v1alpha1
+// nolint:golint,stylecheck,revive,typecheck
+func Convert_v1beta1_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(in *v1beta1.FlowCollectorExporter, out *FlowCollectorExporter, s apiconversion.Scope) error {
+	return autoConvert_v1beta1_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(in, out, s)
 }
