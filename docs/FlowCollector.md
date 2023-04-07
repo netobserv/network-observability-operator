@@ -4060,6 +4060,15 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>profilePort</b></td>
+        <td>integer</td>
+        <td>
+          ProfilePort sets the listening port for Go's Pprof tool. If it is not set, profile is disabled<br/>
+          <br/>
+            <i>Default</i>: 6060<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfresources-1">resources</a></b></td>
         <td>object</td>
         <td>

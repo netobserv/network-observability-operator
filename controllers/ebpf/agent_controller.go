@@ -49,6 +49,7 @@ const (
 	dedupeJustMarkDefault         = "true"
 
 	envListSeparator = ","
+	envProfilePort   = "PROFILE_PORT"
 )
 
 const (
@@ -249,6 +250,13 @@ func (c *AgentController) envConfig(coll *flowslatest.FlowCollector) []corev1.En
 		config = append(config, corev1.EnvVar{
 			Name:  envSampling,
 			Value: strconv.Itoa(int(*sampling)),
+		})
+	}
+	profPort := coll.Spec.Agent.EBPF.ProfilePort
+	if *profPort != 0 {
+		config = append(config, corev1.EnvVar{
+			Name:  envProfilePort,
+			Value: strconv.Itoa(*profPort),
 		})
 	}
 	dedup := dedupeDefault

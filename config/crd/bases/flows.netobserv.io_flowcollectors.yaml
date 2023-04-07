@@ -2284,6 +2284,11 @@ spec:
                           not knowing CAP_BPF) then you can turn on this mode for
                           more global privileges.'
                         type: boolean
+                      profilePort:
+                        default: 6060
+                        description: ProfilePort sets the listening port for Go's
+                          Pprof tool. If it is not set, profile is disabled
+                        type: integer
                       resources:
                         default:
                           limits:

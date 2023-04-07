@@ -213,6 +213,11 @@ type FlowCollectorEBPF struct {
 	// (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
+
+	//+kubebuilder:default:=6060
+	// +optional
+	// ProfilePort sets the listening port for Go's Pprof tool. If it is not set, profile is disabled
+	ProfilePort *int `json:"profilePort,omitempty"`
 }
 
 // FlowCollectorKafka defines the desired Kafka config of FlowCollector

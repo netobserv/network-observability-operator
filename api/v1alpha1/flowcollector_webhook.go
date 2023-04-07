@@ -58,6 +58,7 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS
+	dst.Spec.Agent.EBPF.ProfilePort = restored.Spec.Agent.EBPF.ProfilePort
 
 	return nil
 }
@@ -108,4 +109,11 @@ func Convert_v1beta1_FLPMetrics_To_v1alpha1_FLPMetrics(in *v1beta1.FLPMetrics, o
 // nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1beta1.FlowCollectorLoki, out *FlowCollectorLoki, s apiconversion.Scope) error {
 	return autoConvert_v1beta1_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta1 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta1_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1beta1.FlowCollectorEBPF, out *FlowCollectorEBPF, s apiconversion.Scope) error {
+	return autoConvert_v1beta1_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in, out, s)
 }
