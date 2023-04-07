@@ -3214,12 +3214,54 @@ spec:
                           default: ""
                           description: address of the Kafka server
                           type: string
+                        sasl:
+                          description: SASL authentication configuration.
+                          properties:
+                            clientIDKey:
+                              description: key for client ID within the provided `reference`
+                              type: string
+                            clientSecretKey:
+                              description: key for client secret within the provided
+                                `reference`
+                              type: string
+                            reference:
+                              description: reference to the secret or config map containing
+                                the client ID and secret
+                              properties:
+                                name:
+                                  description: name of the config map or secret to
+                                    reference
+                                  type: string
+                                namespace:
+                                  default: ""
+                                  description: namespace of the config map or secret.
+                                    If omitted, assumes same namespace as where NetObserv
+                                    is deployed. If the namespace is different, the
+                                    config map or the secret will be copied so that
+                                    it can be mounted as required.
+                                  type: string
+                                type:
+                                  description: 'type for the reference: "configmap"
+                                    or "secret"'
+                                  enum:
+                                  - configmap
+                                  - secret
+                                  type: string
+                              type: object
+                            type:
+                              default: DISABLED
+                              description: type is the type of SASL authentication
+                                to use, or `DISABLED` if SASL is not used
+                              enum:
+                              - DISABLED
+                              - PLAIN
+                              - SCRAM-SHA512
+                              type: string
+                          type: object
                         tls:
-                          description: tls client configuration. When using TLS, verify
+                          description: TLS client configuration. When using TLS, verify
                             that the address matches the Kafka port used for TLS,
-                            generally 9093. Note that, when eBPF agents are used,
-                            Kafka certificate needs to be copied in the agent namespace
-                            (by default it's netobserv-privileged).
+                            generally 9093.
                           properties:
                             caCert:
                               description: caCert defines the reference of the certificate
@@ -3331,11 +3373,51 @@ spec:
                     default: ""
                     description: address of the Kafka server
                     type: string
+                  sasl:
+                    description: SASL authentication configuration.
+                    properties:
+                      clientIDKey:
+                        description: key for client ID within the provided `reference`
+                        type: string
+                      clientSecretKey:
+                        description: key for client secret within the provided `reference`
+                        type: string
+                      reference:
+                        description: reference to the secret or config map containing
+                          the client ID and secret
+                        properties:
+                          name:
+                            description: name of the config map or secret to reference
+                            type: string
+                          namespace:
+                            default: ""
+                            description: namespace of the config map or secret. If
+                              omitted, assumes same namespace as where NetObserv is
+                              deployed. If the namespace is different, the config
+                              map or the secret will be copied so that it can be mounted
+                              as required.
+                            type: string
+                          type:
+                            description: 'type for the reference: "configmap" or "secret"'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      type:
+                        default: DISABLED
+                        description: type is the type of SASL authentication to use,
+                          or `DISABLED` if SASL is not used
+                        enum:
+                        - DISABLED
+                        - PLAIN
+                        - SCRAM-SHA512
+                        type: string
+                    type: object
                   tls:
-                    description: tls client configuration. When using TLS, verify
+                    description: TLS client configuration. When using TLS, verify
                       that the address matches the Kafka port used for TLS, generally
-                      9093. Note that, when eBPF agents are used, Kafka certificate
-                      needs to be copied in the agent namespace (by default it's netobserv-privileged).
+                      9093.
                     properties:
                       caCert:
                         description: caCert defines the reference of the certificate

@@ -21,11 +21,10 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
-	"github.com/netobserv/flowlogs-pipeline/pkg/pipeline/extract/aggregate"
 	log "github.com/sirupsen/logrus"
 )
 
-func (cg *ConfGen) parseExtract(extract *map[string]interface{}) (*aggregate.Definitions, *api.ExtractTimebased, error) {
+func (cg *ConfGen) parseExtract(extract *map[string]interface{}) (*api.Aggregates, *api.ExtractTimebased, error) {
 	var jsoniterJson = jsoniter.ConfigCompatibleWithStandardLibrary
 	aggregateExtract := (*extract)["aggregates"]
 	b, err := jsoniterJson.Marshal(&aggregateExtract)
@@ -34,14 +33,14 @@ func (cg *ConfGen) parseExtract(extract *map[string]interface{}) (*aggregate.Def
 		return nil, nil, err
 	}
 
-	var jsonNetworkAggregate aggregate.Definitions
+	var jsonNetworkAggregate api.Aggregates
 	err = config.JsonUnmarshalStrict(b, &jsonNetworkAggregate)
 	if err != nil {
 		log.Errorf("Unmarshal aggregate.Definitions err: %v ", err)
 		return nil, nil, err
 	}
 
-	cg.aggregateDefinitions = append(cg.aggregateDefinitions, jsonNetworkAggregate...)
+	cg.aggregates.Rules = append(cg.aggregates.Rules, jsonNetworkAggregate.Rules...)
 
 	timebasedExtract, ok := (*extract)["timebased"]
 	if !ok {

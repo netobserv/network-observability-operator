@@ -46,8 +46,8 @@ func (cg *ConfGen) GenerateFlowlogs2PipelineConfig() *config.ConfigFileStruct {
 		})
 	}
 	metricsNode := forkedNode
-	if len(cg.aggregateDefinitions) > 0 {
-		metricsNode = metricsNode.Aggregate("extract_aggregate", cg.aggregateDefinitions)
+	if len(cg.aggregates.Rules) > 0 {
+		metricsNode = metricsNode.Aggregate("extract_aggregate", cg.aggregates)
 		if len(cg.timebasedTopKs.Rules) > 0 {
 			metricsNode = metricsNode.ExtractTimebased("extract_timebased", api.ExtractTimebased{
 				Rules: cg.timebasedTopKs.Rules,
@@ -85,7 +85,7 @@ func (cg *ConfGen) GenerateTruncatedConfig() []config.StageParam {
 		case "transform_network":
 			parameters[i] = config.NewTransformNetworkParams("transform_network", *cg.config.Transform.Network)
 		case "extract_aggregate":
-			parameters[i] = config.NewAggregateParams("extract_aggregate", cg.aggregateDefinitions)
+			parameters[i] = config.NewAggregateParams("extract_aggregate", cg.aggregates)
 		case "extract_timebased":
 			parameters[i] = config.NewTimbasedParams("extract_timebased", cg.timebasedTopKs)
 		case "encode_prom":

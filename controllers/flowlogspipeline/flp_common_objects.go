@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
+	"path"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -548,6 +549,7 @@ func (b *builder) createKafkaWriteStage(name string, spec *flowslatest.FlowColle
 		Address: spec.Address,
 		Topic:   spec.Topic,
 		TLS:     b.getKafkaTLS(&spec.TLS, name),
+		SASL:    b.getKafkaSASL(&spec.SASL, name),
 	})
 }
 
@@ -571,6 +573,22 @@ func (b *builder) getKafkaTLS(tls *flowslatest.ClientTLS, volumeName string) *ap
 		}
 	}
 	return nil
+}
+
+func (b *builder) getKafkaSASL(sasl *flowslatest.SASLConfig, volumePrefix string) *api.SASLConfig {
+	if !helper.UseSASL(sasl) {
+		return nil
+	}
+	t := "plain"
+	if sasl.Type == flowslatest.SASLScramSHA512 {
+		t = "scramSHA512"
+	}
+	basePath := b.volumes.AddVolume(&sasl.Reference, volumePrefix+"-sasl")
+	return &api.SASLConfig{
+		Type:             t,
+		ClientIDPath:     path.Join(basePath, sasl.ClientIDKey),
+		ClientSecretPath: path.Join(basePath, sasl.ClientSecretKey),
+	}
 }
 
 func getIPFIXTransport(transport string) string {

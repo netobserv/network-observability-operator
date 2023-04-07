@@ -66,6 +66,7 @@ func (b *transfoBuilder) buildPipelineConfig() ([]config.Stage, []config.StagePa
 		GroupId:           b.generic.name(), // Without groupid, each message is delivered to each consumers
 		Decoder:           decoder,
 		TLS:               b.generic.getKafkaTLS(&b.generic.desired.Kafka.TLS, "kafka-cert"),
+		SASL:              b.generic.getKafkaSASL(&b.generic.desired.Kafka.SASL, "kafka-ingest"),
 		PullQueueCapacity: b.generic.desired.Processor.KafkaConsumerQueueCapacity,
 		PullMaxBytes:      b.generic.desired.Processor.KafkaConsumerBatchSize,
 	})

@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
-	"github.com/netobserv/flowlogs-pipeline/pkg/pipeline/extract/aggregate"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
@@ -35,29 +34,29 @@ const (
 )
 
 type Definition struct {
-	FileName             string
-	Description          string
-	Details              string
-	Usage                string
-	Tags                 []string
-	TransformNetwork     *api.TransformNetwork
-	AggregateDefinitions *aggregate.Definitions
-	ExtractTimebased     *api.ExtractTimebased
-	PromEncode           *api.PromEncode
-	Visualization        *Visualization
+	FileName         string
+	Description      string
+	Details          string
+	Usage            string
+	Tags             []string
+	TransformNetwork *api.TransformNetwork
+	Aggregates       *api.Aggregates
+	ExtractTimebased *api.ExtractTimebased
+	PromEncode       *api.PromEncode
+	Visualization    *Visualization
 }
 
 type Definitions []Definition
 
 type ConfGen struct {
-	opts                 *Options
-	config               *Config
-	transformRules       api.NetworkTransformRules
-	aggregateDefinitions aggregate.Definitions
-	timebasedTopKs       api.ExtractTimebased
-	promMetrics          api.PromMetricsItems
-	visualizations       Visualizations
-	definitions          Definitions
+	opts           *Options
+	config         *Config
+	transformRules api.NetworkTransformRules
+	aggregates     api.Aggregates
+	timebasedTopKs api.ExtractTimebased
+	promMetrics    api.PromMetricsItems
+	visualizations Visualizations
+	definitions    Definitions
 }
 
 type DefFile struct {
@@ -190,14 +189,14 @@ func (cg *ConfGen) ParseDefinition(name string, bytes []byte) error {
 	}
 
 	// parse extract
-	definition.AggregateDefinitions, definition.ExtractTimebased, err = cg.parseExtract(&defFile.Extract)
+	definition.Aggregates, definition.ExtractTimebased, err = cg.parseExtract(&defFile.Extract)
 	if err != nil {
 		log.Debugf("parseExtract err: %v ", err)
 		return err
 	}
 
 	// parse encode
-	definition.PromEncode, err = cg.parseEncode(&defFile.Encode, len(*definition.AggregateDefinitions) > 0)
+	definition.PromEncode, err = cg.parseEncode(&defFile.Encode, len(definition.Aggregates.Rules) > 0)
 	if err != nil {
 		log.Debugf("parseEncode err: %v ", err)
 		return err
@@ -237,11 +236,11 @@ func getDefinitionFiles(rootPath string) []string {
 
 func NewConfGen(opts *Options) *ConfGen {
 	return &ConfGen{
-		opts:                 opts,
-		transformRules:       api.NetworkTransformRules{},
-		aggregateDefinitions: aggregate.Definitions{},
-		definitions:          Definitions{},
-		visualizations:       Visualizations{},
+		opts:           opts,
+		transformRules: api.NetworkTransformRules{},
+		aggregates:     api.Aggregates{},
+		definitions:    Definitions{},
+		visualizations: Visualizations{},
 	}
 }
 

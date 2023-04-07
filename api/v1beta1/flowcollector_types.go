@@ -234,10 +234,14 @@ type FlowCollectorKafka struct {
 	// kafka topic to use. It must exist, NetObserv will not create it.
 	Topic string `json:"topic"`
 
-	// tls client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
-	// Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
+	// TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
 	// +optional
 	TLS ClientTLS `json:"tls"`
+
+	// SASL authentication configuration.
+	// +optional
+	// +k8s:conversion-gen=false
+	SASL SASLConfig `json:"sasl"`
 }
 
 type FlowCollectorIPFIXReceiver struct {
@@ -697,6 +701,47 @@ type ClientTLS struct {
 	// userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)
 	// +optional
 	UserCert CertificateReference `json:"userCert,omitempty"`
+}
+
+type SASLType string
+
+const (
+	SASLDisabled    SASLType = "DISABLED"
+	SASLPlain       SASLType = "PLAIN"
+	SASLScramSHA512 SASLType = "SCRAM-SHA512"
+)
+
+// SASLConfig defines SASL configuration
+type SASLConfig struct {
+	//+kubebuilder:validation:Enum=DISABLED;PLAIN;SCRAM-SHA512
+	//+kubebuilder:default:=DISABLED
+	// type is the type of SASL authentication to use, or `DISABLED` if SASL is not used
+	Type SASLType `json:"type,omitempty"`
+
+	// reference to the secret or config map containing the client ID and secret
+	Reference ConfigOrSecret `json:"reference,omitempty"`
+
+	// key for client ID within the provided `reference`
+	ClientIDKey string `json:"clientIDKey,omitempty"`
+
+	// key for client secret within the provided `reference`
+	ClientSecretKey string `json:"clientSecretKey,omitempty"`
+}
+
+// This should replace CertificateReference in the next CRD version (breaking change)
+type ConfigOrSecret struct {
+	//+kubebuilder:validation:Enum=configmap;secret
+	// type for the reference: "configmap" or "secret"
+	Type MountableType `json:"type,omitempty"`
+
+	// name of the config map or secret to reference
+	Name string `json:"name,omitempty"`
+
+	// namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed.
+	// If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+	// +optional
+	//+kubebuilder:default:=""
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // DebugConfig allows tweaking some aspects of the internal configuration of the agent and FLP.

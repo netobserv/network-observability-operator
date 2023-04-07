@@ -11,10 +11,17 @@ type objectRef struct {
 	keys      []string
 }
 
-type ConfigOrSecret struct {
-	Type      flowslatest.MountableType
-	Name      string
-	Namespace string
+func (w *Watcher) refFromConfigOrSecret(cos *flowslatest.ConfigOrSecret, keys []string) objectRef {
+	ns := cos.Namespace
+	if ns == "" {
+		ns = w.defaultNamespace
+	}
+	return objectRef{
+		kind:      cos.Type,
+		name:      cos.Name,
+		namespace: ns,
+		keys:      keys,
+	}
 }
 
 func (w *Watcher) refFromCert(cert *flowslatest.CertificateReference) objectRef {

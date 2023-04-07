@@ -178,6 +178,16 @@ func flowCollectorIsoSpecs() {
 						CertKey:  "",
 					},
 				},
+				SASL: flowslatest.SASLConfig{
+					Type: "DISABLED",
+					Reference: flowslatest.ConfigOrSecret{
+						Type:      "configmap",
+						Name:      "",
+						Namespace: "",
+					},
+					ClientIDKey:     "",
+					ClientSecretKey: "",
+				},
 			},
 			Exporters: []*flowslatest.FlowCollectorExporter{},
 		}

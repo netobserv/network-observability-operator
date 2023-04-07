@@ -21,13 +21,12 @@ import (
 	"reflect"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
-	"github.com/netobserv/flowlogs-pipeline/pkg/pipeline/extract/aggregate"
 	log "github.com/sirupsen/logrus"
 )
 
 func (cg *ConfGen) dedupe() {
 	cg.transformRules = dedupeNetworkTransformRules(cg.transformRules)
-	cg.aggregateDefinitions = dedupeAggregateDefinitions(cg.aggregateDefinitions)
+	cg.aggregates.Rules = dedupeAggregateDefinitions(cg.aggregates.Rules)
 }
 
 type void struct{}
@@ -53,7 +52,7 @@ func dedupeNetworkTransformRules(rules api.NetworkTransformRules) api.NetworkTra
 
 // dedupeAggregateDefinitions is inefficient because we can't use a map to look for duplicates.
 // The reason is that aggregate.AggregateDefinition is not hashable due to its AggregateBy field which is a slice.
-func dedupeAggregateDefinitions(aggregateDefinitions aggregate.Definitions) aggregate.Definitions {
+func dedupeAggregateDefinitions(aggregateDefinitions api.AggregateDefinitions) api.AggregateDefinitions {
 	var dedupeSlice []api.AggregateDefinition
 	for i, aggregateDefinition := range aggregateDefinitions {
 		if containsAggregateDefinitions(dedupeSlice, aggregateDefinition) {

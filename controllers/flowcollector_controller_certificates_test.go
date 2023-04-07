@@ -82,6 +82,17 @@ func flowCollectorCertificatesSpecs() {
 		},
 	}
 	expectedKafka2Hash, _ := cmw.GetDigest(&kafka2Cert, []string{"cert.crt"})
+	kafka2Sasl := v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kafka-exporter-sasl",
+			Namespace: operatorNamespace,
+		},
+		Data: map[string][]byte{
+			"username": []byte("aiapaec"),
+			"password": []byte("azerty"),
+		},
+	}
+	expectedKafkaSaslHash, _ := sw.GetDigest(&kafka2Sasl, []string{"username", "password"})
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
@@ -103,10 +114,10 @@ func flowCollectorCertificatesSpecs() {
 			cmEmpty, _ := cmw.GetDigest(&v1.ConfigMap{}, []string{"any"})
 			sEmpty, _ := sw.GetDigest(&v1.Secret{}, []string{"any"})
 			allKeys := map[string]interface{}{}
-			for _, hash := range []string{"", cmEmpty, sEmpty, expectedLokiHash, expectedKafkaHash, expectedKafka2Hash, expectedKafkaUserHash} {
+			for _, hash := range []string{"", cmEmpty, sEmpty, expectedLokiHash, expectedKafkaHash, expectedKafka2Hash, expectedKafkaUserHash, expectedKafkaSaslHash} {
 				allKeys[hash] = nil
 			}
-			Expect(allKeys).To(HaveLen(7))
+			Expect(allKeys).To(HaveLen(8))
 		})
 	})
 
@@ -120,6 +131,8 @@ func flowCollectorCertificatesSpecs() {
 			Eventually(func() interface{} { return k8sClient.Create(ctx, &kafkaUserCert) }, timeout, interval).Should(Succeed())
 			By("Creating Kafka-export CA certificate")
 			Eventually(func() interface{} { return k8sClient.Create(ctx, &kafka2Cert) }, timeout, interval).Should(Succeed())
+			By("Creating Kafka-export SASL key")
+			Eventually(func() interface{} { return k8sClient.Create(ctx, &kafka2Sasl) }, timeout, interval).Should(Succeed())
 		})
 
 		flowSpec := flowslatest.FlowCollectorSpec{
@@ -169,6 +182,15 @@ func flowCollectorCertificatesSpecs() {
 							Namespace: kafka2Cert.Namespace,
 							CertFile:  "cert.crt",
 						},
+					},
+					SASL: flowslatest.SASLConfig{
+						Type: "PLAIN",
+						Reference: flowslatest.ConfigOrSecret{
+							Type: flowslatest.RefTypeSecret,
+							Name: kafka2Sasl.Name,
+						},
+						ClientIDKey:     "username",
+						ClientSecretKey: "password",
 					},
 				},
 			}},
@@ -257,17 +279,19 @@ func flowCollectorCertificatesSpecs() {
 					return err
 				}
 				return flp.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(6))
-			Expect(flp.Spec.Template.Annotations).To(HaveLen(6))
+			}, timeout, interval).Should(HaveLen(7))
+			Expect(flp.Spec.Template.Annotations).To(HaveLen(7))
 			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-ca"]).To(Equal(expectedKafkaHash))
 			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-user"]).To(Equal(expectedKafkaUserHash))
 			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-export-0-ca"]).To(Equal(expectedKafka2Hash))
+			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-export-0-sd"]).To(Equal(expectedKafkaSaslHash))
 			Expect(flp.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
 			Expect(flp.Spec.Template.Spec.Volumes[1].Name).To(Equal("kafka-cert-ca"))
 			Expect(flp.Spec.Template.Spec.Volumes[2].Name).To(Equal("kafka-cert-user"))
 			Expect(flp.Spec.Template.Spec.Volumes[3].Name).To(Equal("flowlogs-pipeline")) // token
 			Expect(flp.Spec.Template.Spec.Volumes[4].Name).To(Equal("loki-certs-ca"))
 			Expect(flp.Spec.Template.Spec.Volumes[5].Name).To(Equal("kafka-export-0-ca"))
+			Expect(flp.Spec.Template.Spec.Volumes[6].Name).To(Equal("kafka-export-0-sasl"))
 			lastFLPAnnots = flp.Spec.Template.Annotations
 		})
 	})

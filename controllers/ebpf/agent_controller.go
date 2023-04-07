@@ -3,6 +3,7 @@ package ebpf
 import (
 	"context"
 	"fmt"
+	"path"
 	"strconv"
 	"strings"
 
@@ -43,6 +44,10 @@ const (
 	envKafkaTLSCACertPath         = "KAFKA_TLS_CA_CERT_PATH"
 	envKafkaTLSUserCertPath       = "KAFKA_TLS_USER_CERT_PATH"
 	envKafkaTLSUserKeyPath        = "KAFKA_TLS_USER_KEY_PATH"
+	envKafkaEnableSASL            = "KAFKA_ENABLE_SASL"
+	envKafkaSASLType              = "KAFKA_SASL_TYPE"
+	envKafkaSASLIDPath            = "KAFKA_SASL_CLIENT_ID_PATH"
+	envKafkaSASLSecretPath        = "KAFKA_SASL_CLIENT_SECRET_PATH"
 	envLogLevel                   = "LOG_LEVEL"
 	envDedupe                     = "DEDUPER"
 	dedupeDefault                 = "firstCome"
@@ -283,6 +288,27 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 				corev1.EnvVar{Name: envKafkaTLSCACertPath, Value: caPath},
 				corev1.EnvVar{Name: envKafkaTLSUserCertPath, Value: userCertPath},
 				corev1.EnvVar{Name: envKafkaTLSUserKeyPath, Value: userKeyPath},
+			)
+		}
+		if helper.UseSASL(&coll.Spec.Kafka.SASL) {
+			sasl := &coll.Spec.Kafka.SASL
+			// Annotate pod with secret reference so that it is reloaded if modified
+			digest, err := c.Watcher.ProcessSASL(ctx, c.Client, sasl, c.PrivilegedNamespace())
+			if err != nil {
+				return nil, err
+			}
+			annots[watchers.Annotation("kafka-sd")] = digest
+
+			t := "plain"
+			if coll.Spec.Kafka.SASL.Type == flowslatest.SASLScramSHA512 {
+				t = "scramSHA512"
+			}
+			basePath := c.volumes.AddVolume(&sasl.Reference, "kafka-sasl")
+			config = append(config,
+				corev1.EnvVar{Name: envKafkaEnableSASL, Value: "true"},
+				corev1.EnvVar{Name: envKafkaSASLType, Value: t},
+				corev1.EnvVar{Name: envKafkaSASLIDPath, Value: path.Join(basePath, sasl.ClientIDKey)},
+				corev1.EnvVar{Name: envKafkaSASLSecretPath, Value: path.Join(basePath, sasl.ClientSecretKey)},
 			)
 		}
 	} else {

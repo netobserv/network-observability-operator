@@ -756,6 +756,7 @@ func autoConvert_v1beta1_FlowCollectorKafka_To_v1alpha1_FlowCollectorKafka(in *v
 	if err := Convert_v1beta1_ClientTLS_To_v1alpha1_ClientTLS(&in.TLS, &out.TLS, s); err != nil {
 		return err
 	}
+	// INFO: in.SASL opted out of conversion generation
 	return nil
 }
 

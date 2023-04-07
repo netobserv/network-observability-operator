@@ -96,6 +96,14 @@ var kafkaSaslSecret = corev1.Secret{
 		"token": []byte("ssssaaaaassssslllll"),
 	},
 }
+var kafkaSaslConfig = flowslatest.SASLConfig{
+	Reference: flowslatest.ConfigOrSecret{
+		Type: flowslatest.RefTypeSecret,
+		Name: kafkaSaslSecret.Name,
+	},
+	ClientIDKey:     "id",
+	ClientSecretKey: "token",
+}
 
 func TestGenDigests(t *testing.T) {
 	assert := assert.New(t)
@@ -126,6 +134,11 @@ func TestGenDigests(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal("EPFv4Q==", dig1)
 	assert.Equal("bNKS0Q==", dig2)
+
+	// Different output for sasl via watcher.Process
+	dig1, err = watcher.ProcessSASL(context.Background(), cl, &kafkaSaslConfig, baseNamespace)
+	assert.NoError(err)
+	assert.Equal("8aAMRw==", dig1)
 
 	// Update object, verify the digest has changed
 	copy := lokiCA

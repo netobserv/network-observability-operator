@@ -7,7 +7,6 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
 type VolumeInfo struct {
@@ -46,7 +45,7 @@ func (b *Builder) AddCertificate(ref *flowslatest.CertificateReference, volumeNa
 	return
 }
 
-func (b *Builder) AddVolume(config *watchers.ConfigOrSecret, volumeName string) string {
+func (b *Builder) AddVolume(config *flowslatest.ConfigOrSecret, volumeName string) string {
 	vol, vm := buildVolumeAndMount(config.Type, config.Name, volumeName)
 	b.info = append(b.info, VolumeInfo{Volume: vol, Mount: vm})
 	return "/var/" + volumeName

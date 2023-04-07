@@ -87,6 +87,10 @@ func GetRecordTypes(processor *flowslatest.FlowCollectorFLP) []string {
 	return outputRecordTypes
 }
 
+func UseSASL(cfg *flowslatest.SASLConfig) bool {
+	return cfg.Type == flowslatest.SASLPlain || cfg.Type == flowslatest.SASLScramSHA512
+}
+
 func PtrBool(b *bool) bool {
 	if b == nil {
 		return false
