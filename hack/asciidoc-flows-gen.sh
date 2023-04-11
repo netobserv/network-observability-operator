@@ -13,7 +13,7 @@ kramdoc -o - <(curl -fsSL ${MD_SOURCE}/interfaces/Labels.md) \
   | sed -r 's/^= /== /' \
   | sed -r 's/Interface: //' \
   | sed -r '/Properties/d' \
-  | sed -r 's~xref:.*FlowDirection\.adoc\[`FlowDirection`\]~<<Enumeration: FlowDirection,`FlowDirection`>>~' >> $ADOC
+  | sed -r 's~xref:.*FlowDirection\.adoc\[`FlowDirection`\]~`FlowDirection` (see the following section, Enumeration: FlowDirection)~' >> $ADOC
 
 # Fields
 echo -e "\n" >> $ADOC

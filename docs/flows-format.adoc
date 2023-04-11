@@ -47,9 +47,18 @@ Destination owner, such as Deployment, StatefulSet, etc.
 
 FlowDirection::
 
-• *FlowDirection*: <<Enumeration: FlowDirection,`FlowDirection`>>
+• *FlowDirection*: `FlowDirection` (see the following section, Enumeration: FlowDirection)
 
 Flow direction from the node observation point
+
+'''
+
+_RecordType::
+
+• `Optional` *_RecordType*: `RecordType`
+
+Type of record: 'flowLog' for regular flow logs, or 'allConnections',
+'newConnection', 'heartbeat', 'endConnection' for conversation tracking
 
 
 == Fields
@@ -191,6 +200,14 @@ L4 protocol
 
 '''
 
+Interface::
+
+• `Optional` *Interface*: `string`
+
+Network interface
+
+'''
+
 Packets::
 
 • *Packets*: `number`
@@ -199,11 +216,43 @@ Number of packets in this flow
 
 '''
 
+Packets_AB::
+
+• `Optional` *Packets_AB*: `number`
+
+In conversation tracking, A to B packets counter per conversation
+
+'''
+
+Packets_BA::
+
+• `Optional` *Packets_BA*: `number`
+
+In conversation tracking, B to A packets counter per conversation
+
+'''
+
 Bytes::
 
 • *Bytes*: `number`
 
 Number of bytes in this flow
+
+'''
+
+Bytes_AB::
+
+• `Optional` *Bytes_AB*: `number`
+
+In conversation tracking, A to B bytes counter per conversation
+
+'''
+
+Bytes_BA::
+
+• `Optional` *Bytes_BA*: `number`
+
+In conversation tracking, B to A bytes counter per conversation
 
 '''
 
@@ -228,6 +277,30 @@ TimeReceived::
 • *TimeReceived*: `number`
 
 Timestamp when this flow was received and processed by the flow collector, in seconds
+
+'''
+
+_HashId::
+
+• `Optional` *_HashId*: `string`
+
+In conversation tracking, the conversation identifier
+
+'''
+
+_IsFirst::
+
+• `Optional` *_IsFirst*: `string`
+
+In conversation tracking, a flag identifying the first flow
+
+'''
+
+numFlowLogs::
+
+• `Optional` *numFlowLogs*: `number`
+
+In conversation tracking, a counter of flow logs per conversation
 
 
 == Enumeration: FlowDirection
