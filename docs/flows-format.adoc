@@ -47,7 +47,7 @@ Destination owner, such as Deployment, StatefulSet, etc.
 
 FlowDirection::
 
-• *FlowDirection*: <<Enumeration: FlowDirection,`FlowDirection`>>
+• *FlowDirection*: `FlowDirection` (see the following section, Enumeration: FlowDirection)
 
 Flow direction from the node observation point
 
