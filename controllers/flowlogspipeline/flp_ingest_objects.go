@@ -9,6 +9,7 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -16,19 +17,19 @@ type ingestBuilder struct {
 	generic builder
 }
 
-func newIngestBuilder(ns, image string, desired *flowslatest.FlowCollectorSpec, useOpenShiftSCC bool) ingestBuilder {
-	gen := newBuilder(ns, image, desired, ConfKafkaIngester, useOpenShiftSCC)
+func newIngestBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) ingestBuilder {
+	gen := newBuilder(info, desired, ConfKafkaIngester)
 	return ingestBuilder{
 		generic: gen,
 	}
 }
 
-func (b *ingestBuilder) daemonSet(configDigest string) *appsv1.DaemonSet {
-	pod := b.generic.podTemplate(true /*listens*/, false /*loki itf*/, !b.generic.useOpenShiftSCC, configDigest)
+func (b *ingestBuilder) daemonSet(annotations map[string]string) *appsv1.DaemonSet {
+	pod := b.generic.podTemplate(true /*listens*/, false /*loki itf*/, !b.generic.info.UseOpenShiftSCC, annotations)
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.generic.name(),
-			Namespace: b.generic.namespace,
+			Namespace: b.generic.info.Namespace,
 			Labels:    b.generic.labels,
 		},
 		Spec: appsv1.DaemonSetSpec{
@@ -63,7 +64,7 @@ func (b *ingestBuilder) buildPipelineConfig() ([]config.Stage, []config.StagePar
 		})
 	}
 
-	pipeline = createKafkaWriteStage("kafka-write", &b.generic.desired.Kafka, &pipeline)
+	pipeline = b.generic.createKafkaWriteStage("kafka-write", &b.generic.desired.Kafka, &pipeline)
 
 	return pipeline.GetStages(), pipeline.GetStageParams(), nil
 }

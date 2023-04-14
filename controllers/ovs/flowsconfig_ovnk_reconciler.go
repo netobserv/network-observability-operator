@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"strconv"
 	"time"
 
@@ -20,18 +19,14 @@ import (
 )
 
 type FlowsConfigOVNKController struct {
-	namespace string
-	config    flowslatest.OVNKubernetesConfig
-	client    reconcilers.ClientHelper
-	lookupIP  func(string) ([]net.IP, error)
+	*reconcilers.Common
+	config flowslatest.OVNKubernetesConfig
 }
 
-func NewFlowsConfigOVNKController(client reconcilers.ClientHelper, namespace string, config flowslatest.OVNKubernetesConfig, lookupIP func(string) ([]net.IP, error)) *FlowsConfigOVNKController {
+func NewFlowsConfigOVNKController(common *reconcilers.Common, config flowslatest.OVNKubernetesConfig) *FlowsConfigOVNKController {
 	return &FlowsConfigOVNKController{
-		client:    client,
-		namespace: namespace,
-		config:    config,
-		lookupIP:  lookupIP,
+		Common: common,
+		config: config,
 	}
 }
 
@@ -52,7 +47,7 @@ func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flows
 	rlog := log.FromContext(ctx, "component", "FlowsConfigOVNKController")
 
 	ds := &appsv1.DaemonSet{}
-	if err := c.client.Get(ctx, types.NamespacedName{
+	if err := c.Get(ctx, types.NamespacedName{
 		Name:      c.config.DaemonSetName,
 		Namespace: c.config.Namespace,
 	}, ds); err != nil {
@@ -77,7 +72,7 @@ func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flows
 	}
 	if anyUpdate {
 		rlog.Info("Provided IPFIX configuration differs current configuration. Updating")
-		return c.client.Update(ctx, ds)
+		return c.Update(ctx, ds)
 	}
 
 	rlog.Info("No changes needed")

@@ -5,13 +5,10 @@ import (
 	"reflect"
 	"strings"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 // NamespacedObjectManager provides some helpers to manage (fetch, delete) namespace-scoped objects
@@ -29,11 +26,11 @@ type managedObject struct {
 	found       bool
 }
 
-func NewNamespacedObjectManager(cl client.Client, ns, prevNS string) *NamespacedObjectManager {
+func NewNamespacedObjectManager(cmn *Common) *NamespacedObjectManager {
 	return &NamespacedObjectManager{
-		client:            cl,
-		Namespace:         ns,
-		PreviousNamespace: prevNS,
+		client:            cmn.Client,
+		Namespace:         cmn.Namespace,
+		PreviousNamespace: cmn.PreviousNamespace,
 	}
 }
 
@@ -125,30 +122,4 @@ func (m *NamespacedObjectManager) Exists(obj client.Object) bool {
 		}
 	}
 	return false
-}
-
-func GenericReconcile[K client.Object](ctx context.Context, m *NamespacedObjectManager, cl *ClientHelper, old, new K, report *helper.ChangeReport, changeFunc func(old, new K, report *helper.ChangeReport) bool) error {
-	if !m.Exists(old) {
-		return cl.CreateOwned(ctx, new)
-	}
-	if changeFunc(old, new, report) {
-		return cl.UpdateOwned(ctx, old, new)
-	}
-	return nil
-}
-
-func ReconcileService(ctx context.Context, m *NamespacedObjectManager, cl *ClientHelper, old, new *corev1.Service, report *helper.ChangeReport) error {
-	if !m.Exists(old) {
-		if err := cl.CreateOwned(ctx, new); err != nil {
-			return err
-		}
-	} else if helper.ServiceChanged(old, new, report) {
-		// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
-		newSVC := old.DeepCopy()
-		newSVC.Spec.Ports = new.Spec.Ports
-		if err := cl.UpdateOwned(ctx, old, newSVC); err != nil {
-			return err
-		}
-	}
-	return nil
 }

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/discover"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-	appsv1 "k8s.io/api/apps/v1"
+	"github.com/netobserv/network-observability-operator/pkg/watchers"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -15,76 +17,39 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// ClientHelper includes a kube client with some additional helper functions
-type ClientHelper struct {
-	client.Client
-	SetControllerReference func(client.Object) error
-	changed                bool
-	deplInProgress         bool
+type Common struct {
+	helper.Client
+	Watcher           *watchers.Watcher
+	Namespace         string
+	PreviousNamespace string
+	UseOpenShiftSCC   bool
+	AvailableAPIs     *discover.AvailableAPIs
 }
 
-// CreateOwned is an helper function that creates an object, sets owner reference and writes info & errors logs
-func (c *ClientHelper) CreateOwned(ctx context.Context, obj client.Object) error {
-	log := log.FromContext(ctx)
-	c.changed = true
-	err := c.SetControllerReference(obj)
-	if err != nil {
-		log.Error(err, "Failed to set controller reference")
-		return err
-	}
-	kind := reflect.TypeOf(obj).String()
-	log.Info("Creating a new "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
-	err = c.Create(ctx, obj)
-	if err != nil {
-		log.Error(err, "Failed to create new "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
-		return err
-	}
-	return nil
+func (c *Common) PrivilegedNamespace() string {
+	return c.Namespace + constants.EBPFPrivilegedNSSuffix
 }
 
-// UpdateOwned is an helper function that updates an object, sets owner reference and writes info & errors logs
-func (c *ClientHelper) UpdateOwned(ctx context.Context, old, obj client.Object) error {
-	log := log.FromContext(ctx)
-	c.changed = true
-	if old != nil {
-		obj.SetResourceVersion(old.GetResourceVersion())
-	}
-	err := c.SetControllerReference(obj)
-	if err != nil {
-		log.Error(err, "Failed to set controller reference")
-		return err
-	}
-	kind := reflect.TypeOf(obj).String()
-	log.Info("Updating "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
-	err = c.Update(ctx, obj)
-	if err != nil {
-		log.Error(err, "Failed to update "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
-		return err
-	}
-	return nil
+func (c *Common) PreviousPrivilegedNamespace() string {
+	return c.PreviousNamespace + constants.EBPFPrivilegedNSSuffix
 }
 
-func (c *ClientHelper) DidChange() bool {
-	return c.changed
+type Instance struct {
+	*Common
+	Managed *NamespacedObjectManager
+	Image   string
 }
 
-func (c *ClientHelper) IsInProgress() bool {
-	return c.deplInProgress
-}
-
-func (c *ClientHelper) CheckDeploymentInProgress(d *appsv1.Deployment) {
-	if d.Status.AvailableReplicas < d.Status.Replicas {
-		c.deplInProgress = true
+func (c *Common) NewInstance(image string) *Instance {
+	managed := NewNamespacedObjectManager(c)
+	return &Instance{
+		Common:  c,
+		Managed: managed,
+		Image:   image,
 	}
 }
 
-func (c *ClientHelper) CheckDaemonSetInProgress(ds *appsv1.DaemonSet) {
-	if ds.Status.NumberAvailable < ds.Status.DesiredNumberScheduled {
-		c.deplInProgress = true
-	}
-}
-
-func (c *ClientHelper) ReconcileClusterRoleBinding(ctx context.Context, desired *rbacv1.ClusterRoleBinding) error {
+func (c *Common) ReconcileClusterRoleBinding(ctx context.Context, desired *rbacv1.ClusterRoleBinding) error {
 	actual := rbacv1.ClusterRoleBinding{}
 	if err := c.Get(ctx, types.NamespacedName{Name: desired.ObjectMeta.Name}, &actual); err != nil {
 		if errors.IsNotFound(err) {
@@ -111,7 +76,7 @@ func (c *ClientHelper) ReconcileClusterRoleBinding(ctx context.Context, desired 
 	return c.UpdateOwned(ctx, &actual, desired)
 }
 
-func (c *ClientHelper) ReconcileRoleBinding(ctx context.Context, desired *rbacv1.RoleBinding) error {
+func (c *Common) ReconcileRoleBinding(ctx context.Context, desired *rbacv1.RoleBinding) error {
 	actual := rbacv1.RoleBinding{}
 	if err := c.Get(ctx, types.NamespacedName{Name: desired.ObjectMeta.Name}, &actual); err != nil {
 		if errors.IsNotFound(err) {
@@ -138,7 +103,7 @@ func (c *ClientHelper) ReconcileRoleBinding(ctx context.Context, desired *rbacv1
 	return c.UpdateOwned(ctx, &actual, desired)
 }
 
-func (c *ClientHelper) ReconcileClusterRole(ctx context.Context, desired *rbacv1.ClusterRole) error {
+func (c *Common) ReconcileClusterRole(ctx context.Context, desired *rbacv1.ClusterRole) error {
 	actual := rbacv1.ClusterRole{}
 	if err := c.Get(ctx, types.NamespacedName{Name: desired.Name}, &actual); err != nil {
 		if errors.IsNotFound(err) {
@@ -156,7 +121,7 @@ func (c *ClientHelper) ReconcileClusterRole(ctx context.Context, desired *rbacv1
 	return c.UpdateOwned(ctx, &actual, desired)
 }
 
-func (c *ClientHelper) ReconcileRole(ctx context.Context, desired *rbacv1.Role) error {
+func (c *Common) ReconcileRole(ctx context.Context, desired *rbacv1.Role) error {
 	actual := rbacv1.Role{}
 	if err := c.Get(ctx, types.NamespacedName{Name: desired.Name}, &actual); err != nil {
 		if errors.IsNotFound(err) {
@@ -174,7 +139,7 @@ func (c *ClientHelper) ReconcileRole(ctx context.Context, desired *rbacv1.Role) 
 	return c.UpdateOwned(ctx, &actual, desired)
 }
 
-func (c *ClientHelper) ReconcileConfigMap(ctx context.Context, desired *corev1.ConfigMap) error {
+func (c *Common) ReconcileConfigMap(ctx context.Context, desired *corev1.ConfigMap) error {
 	actual := corev1.ConfigMap{}
 	if err := c.Get(ctx, types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, &actual); err != nil {
 		if errors.IsNotFound(err) {
@@ -190,4 +155,30 @@ func (c *ClientHelper) ReconcileConfigMap(ctx context.Context, desired *corev1.C
 	}
 
 	return c.UpdateOwned(ctx, &actual, desired)
+}
+
+func (i *Instance) ReconcileService(ctx context.Context, old, new *corev1.Service, report *helper.ChangeReport) error {
+	if !i.Managed.Exists(old) {
+		if err := i.CreateOwned(ctx, new); err != nil {
+			return err
+		}
+	} else if helper.ServiceChanged(old, new, report) {
+		// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
+		newSVC := old.DeepCopy()
+		newSVC.Spec.Ports = new.Spec.Ports
+		if err := i.UpdateOwned(ctx, old, newSVC); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func GenericReconcile[K client.Object](ctx context.Context, m *NamespacedObjectManager, cl *helper.Client, old, new K, report *helper.ChangeReport, changeFunc func(old, new K, report *helper.ChangeReport) bool) error {
+	if !m.Exists(old) {
+		return cl.CreateOwned(ctx, new)
+	}
+	if changeFunc(old, new, report) {
+		return cl.UpdateOwned(ctx, old, new)
+	}
+	return nil
 }

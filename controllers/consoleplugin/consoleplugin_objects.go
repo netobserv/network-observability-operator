@@ -20,6 +20,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
 
 const secretName = "console-serving-cert"
@@ -30,9 +31,6 @@ const configMapName = "console-plugin-config"
 const configFile = "config.yaml"
 const configVolume = "config-volume"
 const configPath = "/opt/app-root/"
-const lokiCerts = "loki-certs"
-const lokiStatusCerts = "loki-status-certs"
-const tokensPath = "/var/run/secrets/tokens/"
 const metricsSvcName = constants.PluginName + "-metrics"
 const metricsPort = 9002
 const metricsPortName = "metrics"
@@ -43,6 +41,7 @@ type builder struct {
 	selector  map[string]string
 	desired   *flowslatest.FlowCollectorSpec
 	imageName string
+	volumes   volumes.Builder
 }
 
 func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec) builder {
@@ -161,14 +160,7 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 	}
 }
 
-func tokenPath(desiredLoki *flowslatest.FlowCollectorLoki) string {
-	if helper.LokiUseHostToken(desiredLoki) {
-		return tokensPath + constants.PluginName
-	}
-	return ""
-}
-
-func buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
+func (b *builder) buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 	querierURL := querierURL(&desired.Loki)
 	statusURL := statusURL(&desired.Loki)
 
@@ -200,7 +192,7 @@ func buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 		if desired.Loki.TLS.InsecureSkipVerify {
 			args = append(args, "-loki-skip-tls")
 		} else {
-			caPath := helper.GetCACertPath(&desired.Loki.TLS, lokiCerts)
+			caPath := b.volumes.AddCACertificate(&desired.Loki.TLS, "loki-certs")
 			if caPath != "" {
 				args = append(args, "-loki-ca-path", caPath)
 			}
@@ -212,12 +204,10 @@ func buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 		if statusTLS.InsecureSkipVerify {
 			args = append(args, "-loki-status-skip-tls")
 		} else {
-			statusCaPath := helper.GetCACertPath(&statusTLS, lokiStatusCerts)
+			statusCaPath, userCertPath, userKeyPath := b.volumes.AddMutualTLSCertificates(&statusTLS, "loki-status-certs")
 			if statusCaPath != "" {
 				args = append(args, "-loki-status-ca-path", statusCaPath)
 			}
-			userCertPath := helper.GetUserCertPath(&statusTLS, lokiStatusCerts)
-			userKeyPath := helper.GetUserKeyPath(&statusTLS, lokiStatusCerts)
 			if userCertPath != "" && userKeyPath != "" {
 				args = append(args, "-loki-status-user-cert-path", userCertPath)
 				args = append(args, "-loki-status-user-key-path", userKeyPath)
@@ -226,7 +216,8 @@ func buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 	}
 
 	if helper.LokiUseHostToken(&desired.Loki) {
-		args = append(args, "-loki-token-path", tokenPath(&desired.Loki))
+		tokenPath := b.volumes.AddToken(constants.PluginName)
+		args = append(args, "-loki-token-path", tokenPath)
 	}
 	return args
 }
@@ -262,19 +253,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 	},
 	}
 
-	args := buildArgs(b.desired)
-	if b.desired != nil && b.desired.Loki.TLS.Enable && !b.desired.Loki.TLS.InsecureSkipVerify {
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &b.desired.Loki.TLS, lokiCerts)
-	}
-
-	statusTLS := helper.GetLokiStatusTLS(&b.desired.Loki)
-	if b.desired != nil && statusTLS.Enable && !statusTLS.InsecureSkipVerify {
-		volumes, volumeMounts = helper.AppendCertVolumes(volumes, volumeMounts, &statusTLS, lokiStatusCerts)
-	}
-
-	if helper.LokiUseHostToken(&b.desired.Loki) {
-		volumes, volumeMounts = helper.AppendTokenVolume(volumes, volumeMounts, constants.PluginName, constants.PluginName)
-	}
+	args := b.buildArgs(b.desired)
 
 	return &corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -289,10 +268,10 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 				Image:           b.imageName,
 				ImagePullPolicy: corev1.PullPolicy(b.desired.ConsolePlugin.ImagePullPolicy),
 				Resources:       *b.desired.ConsolePlugin.Resources.DeepCopy(),
-				VolumeMounts:    volumeMounts,
+				VolumeMounts:    b.volumes.AppendMounts(volumeMounts),
 				Args:            args,
 			}},
-			Volumes:            volumes,
+			Volumes:            b.volumes.AppendVolumes(volumes),
 			ServiceAccountName: constants.PluginName,
 		},
 	}

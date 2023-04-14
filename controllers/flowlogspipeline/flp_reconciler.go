@@ -12,7 +12,8 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/discover"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
 // Type alias
@@ -31,32 +32,12 @@ type singleReconciler interface {
 	reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error
 }
 
-type reconcilersCommonInfo struct {
-	reconcilers.ClientHelper
-	nobjMngr        *reconcilers.NamespacedObjectManager
-	useOpenShiftSCC bool
-	image           string
-	availableAPIs   *discover.AvailableAPIs
-}
-
-func createCommonInfo(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions, availableAPIs *discover.AvailableAPIs) *reconcilersCommonInfo {
-	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
-	openshift := permissionsVendor.Vendor(ctx) == discover.VendorOpenShift
-	return &reconcilersCommonInfo{
-		ClientHelper:    cl,
-		nobjMngr:        nobjMngr,
-		useOpenShiftSCC: openshift,
-		image:           image,
-		availableAPIs:   availableAPIs,
-	}
-}
-
-func NewReconciler(ctx context.Context, cl reconcilers.ClientHelper, ns, prevNS, image string, permissionsVendor *discover.Permissions, availableAPIs *discover.AvailableAPIs) FLPReconciler {
+func NewReconciler(cmn *reconcilers.Common, image string) FLPReconciler {
 	return FLPReconciler{
 		reconcilers: []singleReconciler{
-			newMonolithReconciler(createCommonInfo(ctx, cl, ns, prevNS, image, permissionsVendor, availableAPIs)),
-			newTransformerReconciler(createCommonInfo(ctx, cl, ns, prevNS, image, permissionsVendor, availableAPIs)),
-			newIngesterReconciler(createCommonInfo(ctx, cl, ns, prevNS, image, permissionsVendor, availableAPIs)),
+			newMonolithReconciler(cmn.NewInstance(image)),
+			newTransformerReconciler(cmn.NewInstance(image)),
+			newIngesterReconciler(cmn.NewInstance(image)),
 		},
 	}
 }
@@ -90,10 +71,10 @@ func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowslatest.Flow
 	return nil
 }
 
-func (r *reconcilersCommonInfo) reconcileDashboardConfig(ctx context.Context, dbConfigMap *corev1.ConfigMap) error {
+func reconcileDashboardConfig(ctx context.Context, cl *helper.Client, dbConfigMap *corev1.ConfigMap) error {
 	if dbConfigMap == nil {
 		// Dashboard config not desired => delete if exists
-		if err := r.Delete(ctx, &corev1.ConfigMap{
+		if err := cl.Delete(ctx, &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      dashboardCMName,
 				Namespace: dashboardCMNamespace,
@@ -106,17 +87,42 @@ func (r *reconcilersCommonInfo) reconcileDashboardConfig(ctx context.Context, db
 		return nil
 	}
 	curr := &corev1.ConfigMap{}
-	if err := r.Get(ctx, types.NamespacedName{
+	if err := cl.Get(ctx, types.NamespacedName{
 		Name:      dashboardCMName,
 		Namespace: dashboardCMNamespace,
 	}, curr); err != nil {
 		if errors.IsNotFound(err) {
-			return r.CreateOwned(ctx, dbConfigMap)
+			return cl.CreateOwned(ctx, dbConfigMap)
 		}
 		return err
 	}
 	if !equality.Semantic.DeepDerivative(dbConfigMap.Data, curr.Data) {
-		return r.UpdateOwned(ctx, curr, dbConfigMap)
+		return cl.UpdateOwned(ctx, curr, dbConfigMap)
+	}
+	return nil
+}
+
+func annotateKafkaExporterCerts(ctx context.Context, info *reconcilers.Common, exp []*flowslatest.FlowCollectorExporter, annotations map[string]string) error {
+	for i, exporter := range exp {
+		if exporter.Type == flowslatest.KafkaExporter {
+			if err := annotateKafkaCerts(ctx, info, &exporter.Kafka, fmt.Sprintf("kafka-export-%d", i), annotations); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func annotateKafkaCerts(ctx context.Context, info *reconcilers.Common, spec *flowslatest.FlowCollectorKafka, prefix string, annotations map[string]string) error {
+	caDigest, userDigest, err := info.Watcher.ProcessMTLSCerts(ctx, info.Client, &spec.TLS, info.Namespace)
+	if err != nil {
+		return err
+	}
+	if caDigest != "" {
+		annotations[watchers.Annotation(prefix+"-ca")] = caDigest
+	}
+	if userDigest != "" {
+		annotations[watchers.Annotation(prefix+"-user")] = userDigest
 	}
 	return nil
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -17,19 +18,19 @@ type transfoBuilder struct {
 	generic builder
 }
 
-func newTransfoBuilder(ns, image string, desired *flowslatest.FlowCollectorSpec, useOpenShiftSCC bool) transfoBuilder {
-	gen := newBuilder(ns, image, desired, ConfKafkaTransformer, useOpenShiftSCC)
+func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) transfoBuilder {
+	gen := newBuilder(info, desired, ConfKafkaTransformer)
 	return transfoBuilder{
 		generic: gen,
 	}
 }
 
-func (b *transfoBuilder) deployment(configDigest string) *appsv1.Deployment {
-	pod := b.generic.podTemplate(false /*no listen*/, true /*loki itf*/, false /*no host network*/, configDigest)
+func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deployment {
+	pod := b.generic.podTemplate(false /*no listen*/, true /*loki itf*/, false /*no host network*/, annotations)
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.generic.name(),
-			Namespace: b.generic.namespace,
+			Namespace: b.generic.info.Namespace,
 			Labels:    b.generic.labels,
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -64,7 +65,7 @@ func (b *transfoBuilder) buildPipelineConfig() ([]config.Stage, []config.StagePa
 		Topic:             b.generic.desired.Kafka.Topic,
 		GroupId:           b.generic.name(), // Without groupid, each message is delivered to each consumers
 		Decoder:           decoder,
-		TLS:               getKafkaTLS(&b.generic.desired.Kafka.TLS),
+		TLS:               b.generic.getKafkaTLS(&b.generic.desired.Kafka.TLS, "kafka-cert"),
 		PullQueueCapacity: b.generic.desired.Processor.KafkaConsumerQueueCapacity,
 		PullMaxBytes:      b.generic.desired.Processor.KafkaConsumerBatchSize,
 	})
@@ -84,7 +85,7 @@ func (b *transfoBuilder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 	return &ascv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.generic.name(),
-			Namespace: b.generic.namespace,
+			Namespace: b.generic.info.Namespace,
 			Labels:    b.generic.labels,
 		},
 		Spec: ascv2.HorizontalPodAutoscalerSpec{

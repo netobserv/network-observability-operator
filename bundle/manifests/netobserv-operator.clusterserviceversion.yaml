@@ -522,6 +522,7 @@ spec:
           resources:
           - configmaps
           - namespaces
+          - secrets
           - serviceaccounts
           - services
           verbs:
@@ -536,7 +537,6 @@ spec:
           - ""
           resources:
           - endpoints
-          - secrets
           verbs:
           - get
           - list

@@ -8,7 +8,6 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/discover"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	osv1 "github.com/openshift/api/security/v1"
 	v1 "k8s.io/api/core/v1"
@@ -27,24 +26,11 @@ var AllowedCapabilities = []v1.Capability{"BPF", "PERFMON", "NET_ADMIN", "SYS_RE
 // - Create netobserv-ebpf-agent service account in the privileged namespace
 // - For Openshift, apply the required SecurityContextConstraints for privileged Pod operation
 type Reconciler struct {
-	client                      reconcilers.ClientHelper
-	privilegedNamespace         string
-	previousPrivilegedNamespace string
-	vendor                      *discover.Permissions
+	reconcilers.Common
 }
 
-func NewReconciler(
-	client reconcilers.ClientHelper,
-	privilegedNamespace string,
-	previousPrivilegedNamespace string,
-	permissionsVendor *discover.Permissions,
-) Reconciler {
-	return Reconciler{
-		client:                      client,
-		privilegedNamespace:         privilegedNamespace,
-		previousPrivilegedNamespace: previousPrivilegedNamespace,
-		vendor:                      permissionsVendor,
-	}
+func NewReconciler(cmn *reconcilers.Common) Reconciler {
+	return Reconciler{Common: *cmn}
 }
 
 func (c *Reconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCollectorEBPF) error {
@@ -63,14 +49,15 @@ func (c *Reconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCol
 }
 
 func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
-	if c.previousPrivilegedNamespace != c.privilegedNamespace {
+	ns := c.PrivilegedNamespace()
+	if ns != c.PreviousPrivilegedNamespace() {
 		if err := c.cleanupPreviousNamespace(ctx); err != nil {
 			return err
 		}
 	}
-	rlog := log.FromContext(ctx, "PrivilegedNamespace", c.privilegedNamespace)
+	rlog := log.FromContext(ctx, "PrivilegedNamespace", ns)
 	actual := &v1.Namespace{}
-	if err := c.client.Get(ctx, client.ObjectKey{Name: c.privilegedNamespace}, actual); err != nil {
+	if err := c.Get(ctx, client.ObjectKey{Name: ns}, actual); err != nil {
 		if errors.IsNotFound(err) {
 			actual = nil
 		} else {
@@ -79,7 +66,7 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 	}
 	desired := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: c.privilegedNamespace,
+			Name: ns,
 			Labels: map[string]string{
 				"app":                                constants.OperatorName,
 				"pod-security.kubernetes.io/enforce": "privileged",
@@ -89,7 +76,7 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 	}
 	if actual == nil && desired != nil {
 		rlog.Info("creating namespace")
-		return c.client.CreateOwned(ctx, desired)
+		return c.CreateOwned(ctx, desired)
 	}
 	if actual != nil && desired != nil {
 		// We noticed that audit labels are automatically removed
@@ -101,7 +88,7 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 				"pod-security.kubernetes.io/enforce": "privileged",
 			}) {
 			rlog.Info("updating namespace")
-			return c.client.UpdateOwned(ctx, actual, desired)
+			return c.UpdateOwned(ctx, actual, desired)
 		}
 	}
 	rlog.Info("namespace is already reconciled. Doing nothing")
@@ -114,11 +101,11 @@ func (c *Reconciler) reconcileServiceAccount(ctx context.Context) error {
 	sAcc := &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFServiceAccount,
-			Namespace: c.privilegedNamespace,
+			Namespace: c.PrivilegedNamespace(),
 		},
 	}
 	actual := &v1.ServiceAccount{}
-	if err := c.client.Get(ctx, client.ObjectKeyFromObject(sAcc), actual); err != nil {
+	if err := c.Get(ctx, client.ObjectKeyFromObject(sAcc), actual); err != nil {
 		if errors.IsNotFound(err) {
 			actual = nil
 		} else {
@@ -127,7 +114,7 @@ func (c *Reconciler) reconcileServiceAccount(ctx context.Context) error {
 	}
 	if actual == nil {
 		rlog.Info("creating service account")
-		return c.client.CreateOwned(ctx, sAcc)
+		return c.CreateOwned(ctx, sAcc)
 	}
 	rlog.Info("service account already reconciled. Doing nothing")
 	return nil
@@ -136,7 +123,7 @@ func (c *Reconciler) reconcileServiceAccount(ctx context.Context) error {
 func (c *Reconciler) reconcileVendorPermissions(
 	ctx context.Context, desired *flowslatest.FlowCollectorEBPF,
 ) error {
-	if c.vendor.Vendor(ctx) == discover.VendorOpenShift {
+	if c.UseOpenShiftSCC {
 		return c.reconcileOpenshiftPermissions(ctx, desired)
 	}
 	return nil
@@ -159,7 +146,7 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 			Type: osv1.SELinuxStrategyRunAsAny,
 		},
 		Users: []string{
-			"system:serviceaccount:" + c.privilegedNamespace + ":" + constants.EBPFServiceAccount,
+			"system:serviceaccount:" + c.PrivilegedNamespace() + ":" + constants.EBPFServiceAccount,
 		},
 	}
 	if desired.Privileged {
@@ -168,7 +155,7 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 		scc.AllowedCapabilities = AllowedCapabilities
 	}
 	actual := &osv1.SecurityContextConstraints{}
-	if err := c.client.Get(ctx, client.ObjectKeyFromObject(scc), actual); err != nil {
+	if err := c.Get(ctx, client.ObjectKeyFromObject(scc), actual); err != nil {
 		if errors.IsNotFound(err) {
 			actual = nil
 		} else {
@@ -177,7 +164,7 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 	}
 	if actual == nil {
 		rlog.Info("creating SecurityContextConstraints")
-		return c.client.CreateOwned(ctx, scc)
+		return c.CreateOwned(ctx, scc)
 	}
 	if scc.AllowHostNetwork != actual.AllowHostNetwork ||
 		!equality.Semantic.DeepDerivative(&scc.RunAsUser, &actual.RunAsUser) ||
@@ -187,20 +174,20 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 		!equality.Semantic.DeepDerivative(&scc.AllowedCapabilities, &actual.AllowedCapabilities) {
 
 		rlog.Info("updating SecurityContextConstraints")
-		return c.client.UpdateOwned(ctx, actual, scc)
+		return c.UpdateOwned(ctx, actual, scc)
 	}
 	rlog.Info("SecurityContextConstraints already reconciled. Doing nothing")
 	return nil
 }
 
 func (c *Reconciler) cleanupPreviousNamespace(ctx context.Context) error {
-	rlog := log.FromContext(ctx, "PreviousPrivilegedNamespace", c.previousPrivilegedNamespace)
+	rlog := log.FromContext(ctx, "PreviousPrivilegedNamespace", c.PreviousPrivilegedNamespace())
 
 	// Delete service account
-	if err := c.client.Delete(ctx, &v1.ServiceAccount{
+	if err := c.Delete(ctx, &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFServiceAccount,
-			Namespace: c.previousPrivilegedNamespace,
+			Namespace: c.PreviousPrivilegedNamespace(),
 		},
 	}); err != nil {
 		if errors.IsNotFound(err) {
@@ -211,7 +198,7 @@ func (c *Reconciler) cleanupPreviousNamespace(ctx context.Context) error {
 	// Do not delete SCC as it's not namespace-scoped (it will be reconciled "as usual")
 
 	previous := &v1.Namespace{}
-	if err := c.client.Get(ctx, client.ObjectKey{Name: c.previousPrivilegedNamespace}, previous); err != nil {
+	if err := c.Get(ctx, client.ObjectKey{Name: c.PreviousPrivilegedNamespace()}, previous); err != nil {
 		if errors.IsNotFound(err) {
 			// Not found => return without error
 			rlog.Info("Previous privileged namespace not found, skipping cleanup")
@@ -222,7 +209,7 @@ func (c *Reconciler) cleanupPreviousNamespace(ctx context.Context) error {
 	// Make sure we own that namespace
 	if len(previous.OwnerReferences) > 0 && strings.HasPrefix(previous.OwnerReferences[0].APIVersion, flowslatest.GroupVersion.Group) {
 		rlog.Info("Owning previous privileged namespace: deleting it")
-		if err := c.client.Delete(ctx, previous); err != nil {
+		if err := c.Delete(ctx, previous); err != nil {
 			if errors.IsNotFound(err) {
 				return nil
 			}

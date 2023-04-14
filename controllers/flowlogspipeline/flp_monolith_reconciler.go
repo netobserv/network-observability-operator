@@ -19,7 +19,7 @@ import (
 // flpMonolithReconciler reconciles the current flowlogs-pipeline monolith state with the desired configuration
 type flpMonolithReconciler struct {
 	singleReconciler
-	reconcilersCommonInfo
+	*reconcilers.Instance
 	owned monolithOwnedObjects
 }
 
@@ -34,7 +34,7 @@ type monolithOwnedObjects struct {
 	prometheusRule *monitoringv1.PrometheusRule
 }
 
-func newMonolithReconciler(info *reconcilersCommonInfo) *flpMonolithReconciler {
+func newMonolithReconciler(cmn *reconcilers.Instance) *flpMonolithReconciler {
 	name := name(ConfMonolith)
 	owned := monolithOwnedObjects{
 		daemonSet:      &appsv1.DaemonSet{},
@@ -46,22 +46,22 @@ func newMonolithReconciler(info *reconcilersCommonInfo) *flpMonolithReconciler {
 		serviceMonitor: &monitoringv1.ServiceMonitor{},
 		prometheusRule: &monitoringv1.PrometheusRule{},
 	}
-	info.nobjMngr.AddManagedObject(name, owned.daemonSet)
-	info.nobjMngr.AddManagedObject(name, owned.serviceAccount)
-	info.nobjMngr.AddManagedObject(promServiceName(ConfMonolith), owned.promService)
-	info.nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaIngester), owned.roleBindingIn)
-	info.nobjMngr.AddManagedObject(RoleBindingMonoName(ConfKafkaTransformer), owned.roleBindingTr)
-	info.nobjMngr.AddManagedObject(configMapName(ConfMonolith), owned.configMap)
-	if info.availableAPIs.HasSvcMonitor() {
-		info.nobjMngr.AddManagedObject(serviceMonitorName(ConfMonolith), owned.serviceMonitor)
+	cmn.Managed.AddManagedObject(name, owned.daemonSet)
+	cmn.Managed.AddManagedObject(name, owned.serviceAccount)
+	cmn.Managed.AddManagedObject(promServiceName(ConfMonolith), owned.promService)
+	cmn.Managed.AddManagedObject(RoleBindingMonoName(ConfKafkaIngester), owned.roleBindingIn)
+	cmn.Managed.AddManagedObject(RoleBindingMonoName(ConfKafkaTransformer), owned.roleBindingTr)
+	cmn.Managed.AddManagedObject(configMapName(ConfMonolith), owned.configMap)
+	if cmn.AvailableAPIs.HasSvcMonitor() {
+		cmn.Managed.AddManagedObject(serviceMonitorName(ConfMonolith), owned.serviceMonitor)
 	}
-	if info.availableAPIs.HasPromRule() {
-		info.nobjMngr.AddManagedObject(prometheusRuleName(ConfMonolith), owned.prometheusRule)
+	if cmn.AvailableAPIs.HasPromRule() {
+		cmn.Managed.AddManagedObject(prometheusRuleName(ConfMonolith), owned.prometheusRule)
 	}
 
 	return &flpMonolithReconciler{
-		reconcilersCommonInfo: *info,
-		owned:                 owned,
+		Instance: cmn,
+		owned:    owned,
 	}
 }
 
@@ -72,28 +72,31 @@ func (r *flpMonolithReconciler) context(ctx context.Context) context.Context {
 
 // cleanupNamespace cleans up old namespace
 func (r *flpMonolithReconciler) cleanupNamespace(ctx context.Context) {
-	r.nobjMngr.CleanupPreviousNamespace(ctx)
+	r.Managed.CleanupPreviousNamespace(ctx)
 }
 
 func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	// Retrieve current owned objects
-	err := r.nobjMngr.FetchAll(ctx)
+	err := r.Managed.FetchAll(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Monolith only used without Kafka
 	if helper.UseKafka(&desired.Spec) {
-		r.nobjMngr.TryDeleteAll(ctx)
+		r.Managed.TryDeleteAll(ctx)
 		return nil
 	}
 
-	builder := newMonolithBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC)
+	builder := newMonolithBuilder(r.Instance, &desired.Spec)
 	newCM, configDigest, dbConfigMap, err := builder.configMap()
 	if err != nil {
 		return err
 	}
-	if !r.nobjMngr.Exists(r.owned.configMap) {
+	annotations := map[string]string{
+		constants.PodConfigurationDigest: configDigest,
+	}
+	if !r.Managed.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
 			return err
 		}
@@ -102,8 +105,8 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslat
 			return err
 		}
 	}
-	if r.reconcilersCommonInfo.availableAPIs.HasConsoleConfig() {
-		if err := r.reconcileDashboardConfig(ctx, dbConfigMap); err != nil {
+	if r.AvailableAPIs.HasConsoleConfig() {
+		if err := reconcileDashboardConfig(ctx, &r.Client, dbConfigMap); err != nil {
 			return err
 		}
 	}
@@ -117,25 +120,36 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslat
 		return err
 	}
 
-	return r.reconcileDaemonSet(ctx, builder.daemonSet(configDigest))
+	// Watch for Loki certificate if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
+	// because certificate is always reloaded from file
+	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &desired.Spec.Loki.TLS, r.Namespace); err != nil {
+		return err
+	}
+
+	// Watch for Kafka exporter certificate if necessary; need to restart pods in case of cert rotation
+	if err = annotateKafkaExporterCerts(ctx, r.Common, desired.Spec.Exporters, annotations); err != nil {
+		return err
+	}
+
+	return r.reconcileDaemonSet(ctx, builder.daemonSet(annotations))
 }
 
 func (r *flpMonolithReconciler) reconcilePrometheusService(ctx context.Context, builder *monolithBuilder) error {
 	report := helper.NewChangeReport("FLP prometheus service")
 	defer report.LogIfNeeded(ctx)
 
-	if err := reconcilers.ReconcileService(ctx, r.nobjMngr, &r.ClientHelper, r.owned.promService, builder.promService(), &report); err != nil {
+	if err := r.ReconcileService(ctx, r.owned.promService, builder.promService(), &report); err != nil {
 		return err
 	}
-	if r.availableAPIs.HasSvcMonitor() {
+	if r.AvailableAPIs.HasSvcMonitor() {
 		serviceMonitor := builder.generic.serviceMonitor()
-		if err := reconcilers.GenericReconcile(ctx, r.nobjMngr, &r.ClientHelper, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}
-	if r.availableAPIs.HasPromRule() {
+	if r.AvailableAPIs.HasPromRule() {
 		promRules := builder.generic.prometheusRule()
-		if err := reconcilers.GenericReconcile(ctx, r.nobjMngr, &r.ClientHelper, r.owned.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
 		}
 	}
@@ -146,7 +160,7 @@ func (r *flpMonolithReconciler) reconcileDaemonSet(ctx context.Context, desiredD
 	report := helper.NewChangeReport("FLP DaemonSet")
 	defer report.LogIfNeeded(ctx)
 
-	if !r.nobjMngr.Exists(r.owned.daemonSet) {
+	if !r.Managed.Exists(r.owned.daemonSet) {
 		return r.CreateOwned(ctx, desiredDS)
 	} else if helper.PodChanged(&r.owned.daemonSet.Spec.Template, &desiredDS.Spec.Template, constants.FLPName, &report) {
 		return r.UpdateOwned(ctx, r.owned.daemonSet, desiredDS)
@@ -158,11 +172,11 @@ func (r *flpMonolithReconciler) reconcileDaemonSet(ctx context.Context, desiredD
 }
 
 func (r *flpMonolithReconciler) reconcilePermissions(ctx context.Context, builder *monolithBuilder) error {
-	if !r.nobjMngr.Exists(r.owned.serviceAccount) {
+	if !r.Managed.Exists(r.owned.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 
-	cr := buildClusterRoleIngester(r.useOpenShiftSCC)
+	cr := buildClusterRoleIngester(r.UseOpenShiftSCC)
 	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
 		return err
 	}
@@ -173,7 +187,7 @@ func (r *flpMonolithReconciler) reconcilePermissions(ctx context.Context, builde
 	// Monolith uses ingester + transformer cluster roles
 	for _, kind := range []ConfKind{ConfKafkaIngester, ConfKafkaTransformer} {
 		desired := builder.clusterRoleBinding(kind)
-		if err := r.ClientHelper.ReconcileClusterRoleBinding(ctx, desired); err != nil {
+		if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
 			return err
 		}
 	}

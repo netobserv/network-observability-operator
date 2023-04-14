@@ -20,12 +20,13 @@ const (
 
 	// PodConfigurationDigest is an annotation name to facilitate pod restart after
 	// any external configuration change
-	AnnotationDomain       = "flows.netobserv.io"
-	PodConfigurationDigest = AnnotationDomain + "/config-digest"
-	PodCertIDSuffix        = AnnotationDomain + "/cert-"
-	ConversionAnnotation   = AnnotationDomain + "/conversion-data"
-	CertCASuffix           = "ca"
-	CertUserSuffix         = "user"
+	AnnotationDomain        = "flows.netobserv.io"
+	PodConfigurationDigest  = AnnotationDomain + "/config-digest"
+	PodWatchedSuffix        = AnnotationDomain + "/watched-"
+	ConversionAnnotation    = AnnotationDomain + "/conversion-data"
+	NamespaceCopyAnnotation = AnnotationDomain + "/copied-from"
+
+	TokensPath = "/var/run/secrets/tokens/"
 
 	FlowLogType       = "flowLog"
 	NewConnectionType = "newConnection"
@@ -36,6 +37,3 @@ const (
 var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}
 var LokiConnectionIndexFields = []string{"_RecordType"}
 var FlowCollectorName = types.NamespacedName{Name: "cluster"}
-
-func CertCAName(prefix string) string   { return prefix + "-" + CertCASuffix }
-func CertUserName(prefix string) string { return prefix + "-" + CertUserSuffix }

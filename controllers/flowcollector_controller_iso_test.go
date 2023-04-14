@@ -205,7 +205,7 @@ func flowCollectorIsoSpecs() {
 		})
 
 		It("Should not have modified input CR values", func() {
-			cr := GetReadyCR(crKey)
+			cr := GetCR(crKey)
 
 			// For easier debugging, we check CR parts one by one
 			Expect(cr.Spec.Processor).Should(Equal(specInput.Processor))
