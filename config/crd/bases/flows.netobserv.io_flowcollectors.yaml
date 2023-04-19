@@ -1938,8 +1938,7 @@ spec:
                     properties:
                       ignoreTags:
                         default:
-                        - flows
-                        - bytes
+                        - egress
                         - packets
                         description: 'ignoreTags is a list of tags to specify which
                           metrics to ignore. Each metric is associated with a list
@@ -4171,8 +4170,7 @@ spec:
                         type: array
                       ignoreTags:
                         default:
-                        - flows
-                        - bytes
+                        - egress
                         - packets
                         description: 'ignoreTags is a list of tags to specify which
                           metrics to ignore. Each metric is associated with a list

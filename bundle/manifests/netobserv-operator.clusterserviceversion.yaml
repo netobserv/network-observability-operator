@@ -143,8 +143,7 @@ metadata:
               "logLevel": "info",
               "metrics": {
                 "ignoreTags": [
-                  "flows",
-                  "bytes",
+                  "egress",
                   "packets"
                 ],
                 "server": {
@@ -323,8 +322,7 @@ metadata:
               "metrics": {
                 "disableAlerts": [],
                 "ignoreTags": [
-                  "flows",
-                  "bytes",
+                  "egress",
                   "packets"
                 ],
                 "server": {

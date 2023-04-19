@@ -3499,7 +3499,7 @@ Metrics define the processor configuration regarding metrics
         <td>
           ignoreTags is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions . Available tags are: egress, ingress, flows, bytes, packets, namespaces, nodes, workloads<br/>
           <br/>
-            <i>Default</i>: [flows bytes packets]<br/>
+            <i>Default</i>: [egress packets]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7464,7 +7464,7 @@ Metrics define the processor configuration regarding metrics
         <td>
           ignoreTags is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions . Available tags are: egress, ingress, flows, bytes, packets, namespaces, nodes, workloads<br/>
           <br/>
-            <i>Default</i>: [flows bytes packets]<br/>
+            <i>Default</i>: [egress packets]<br/>
         </td>
         <td>false</td>
       </tr><tr>
