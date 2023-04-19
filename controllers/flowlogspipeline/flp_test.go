@@ -534,7 +534,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	b := newMonolithBuilder("namespace", image, &cfg, true)
 	first := b.generic.prometheusRule()
 
-	// Check namespace change
+	// Check enabled rule change
 	cfg.Processor.Metrics.DisableAlerts = []flowslatest.FLPAlert{flowslatest.AlertNoFlows}
 	b = newMonolithBuilder("namespace", image, &cfg, true)
 	second := b.generic.prometheusRule()

@@ -85,7 +85,8 @@ func ServiceMonitorChanged(old, new *monitoringv1.ServiceMonitor, report *Change
 }
 
 func PrometheusRuleChanged(old, new *monitoringv1.PrometheusRule, report *ChangeReport) bool {
-	return report.Check("PrometheusRule spec changed", !equality.Semantic.DeepDerivative(new.Spec, old.Spec)) ||
+	// Note: DeepDerivative misses changes in Spec.Groups.Rules (covered by test "Expecting PrometheusRule to exist and be updated")
+	return report.Check("PrometheusRule spec changed", !equality.Semantic.DeepEqual(new.Spec, old.Spec)) ||
 		report.Check("PrometheusRule labels changed", !IsSubSet(old.Labels, new.Labels))
 }
 
