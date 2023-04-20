@@ -8,8 +8,6 @@ env:
   REGISTRY_PASSWORD: ${{ secrets.QUAY_SECRET }}
   REGISTRY: quay.io/netobserv
   IMAGE: network-observability-operator
-  TAGS: main
-  BUNDLE_VERSION: 0.0.0-main
 
 jobs:
   push-image:
@@ -28,7 +26,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
       - name: build images
-        run: IMG=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.TAGS }} make ci-images-build
+        run: IMG=${{ env.REGISTRY }}/${{ env.IMAGE }}:main make ci-images-build
       - name: podman login to quay.io
         uses: redhat-actions/podman-login@v1
         with:
@@ -42,27 +40,27 @@ jobs:
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ env.IMAGE }}
-          tags: ${{ env.TAGS }} ${{ env.short_sha }}
+          tags: main ${{ env.short_sha }}
           registry: ${{ env.REGISTRY }}
       - name: print image url
         run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
       - name: build bundle
-        run: VERSION=${{ env.TAGS }} PLG_VERSION=${{ env.TAGS }} FLP_VERSION=${{ env.TAGS }} BPF_VERSION=${{ env.TAGS }} BUNDLE_VERSION=${{ env.BUNDLE_VERSION }} make bundle bundle-build
+        run: VERSION=main PLG_VERSION=main FLP_VERSION=main BPF_VERSION=main BUNDLE_VERSION=0.0.0-main make bundle bundle-build
       - name: push bundle to quay.io
         id: push-bundle
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ env.IMAGE }}-bundle
-          tags: v${{ env.BUNDLE_VERSION }}
+          tags: v0.0.0-main
           registry: ${{ env.REGISTRY }}
       - name: build catalog
-        run: BUNDLE_VERSION=${{ env.BUNDLE_VERSION }} make catalog-build
+        run: BUNDLE_VERSION=0.0.0-main make catalog-build
       - name: push catalog to quay.io
         id: push-catalog
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ env.IMAGE }}-catalog
-          tags: v${{ env.BUNDLE_VERSION }}
+          tags: v0.0.0-main
           registry: ${{ env.REGISTRY }}
       - name: print images reference
         run: |

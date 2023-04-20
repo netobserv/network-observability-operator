@@ -356,7 +356,7 @@ endif
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
 .PHONY: catalog-build
 catalog-build: opm ## Build a catalog image.
-	$(OPM) index add --container-tool ${OCI_BIN} --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT)
+	$(OPM) index add --container-tool ${OCI_BIN} --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT) $(OPM_OPTS)
 
 shortlived-catalog-build: ## Build a temporary catalog image, expiring after 2 weeks on quay
 	$(MAKE) catalog-build CATALOG_IMG=$(IMAGE_TAG_BASE)-catalog:tmp
@@ -378,6 +378,10 @@ catalog-undeploy: ## Undeploy a catalog image.
 	kubectl delete -f ./config/samples/catalog/catalog.yaml
 
 ##@ Misc
+
+.PHONY: test-workflow
+test-workflow: ## Run some tests on this Makefile and the github workflow
+	hack/test-workflow.sh
 
 .PHONY: related-release-notes
 related-release-notes: ## Grab release notes for related components (to be inserted in operator's release note upstream, cf RELEASE.md)
