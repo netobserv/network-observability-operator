@@ -247,10 +247,6 @@ type FlowCollectorIPFIXReceiver struct {
 	// +kubebuilder:validation:Enum:="TCP";"UDP"
 	// +optional
 	Transport string `json:"transport,omitempty"`
-
-	// EnterpriseId,omitempty" doc:"Enterprise ID for exporting transformations
-	//+optional
-	EnterpriseID int `json:"enterpriseId,omitempty"`
 }
 
 const (

@@ -3111,10 +3111,6 @@ spec:
                       description: ipfix configuration, such as ip address and port
                         to send ipfix flows to.
                       properties:
-                        enterpriseId:
-                          description: EnterpriseId,omitempty" doc:"Enterprise ID
-                            for exporting transformations
-                          type: integer
                         targetHost:
                           default: ""
                           description: address of the ipfix external receiver

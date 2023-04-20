@@ -557,9 +557,8 @@ func createIPFIXWriteStage(name string, spec *flowslatest.FlowCollectorIPFIXRece
 		TargetHost:   spec.TargetHost,
 		TargetPort:   spec.TargetPort,
 		Transport:    spec.Transport,
-		EnterpriseID: spec.EnterpriseID,
+		EnterpriseID: 27027,
 	})
-
 }
 
 func getKafkaTLS(tls *flowslatest.ClientTLS) *api.ClientTLS {

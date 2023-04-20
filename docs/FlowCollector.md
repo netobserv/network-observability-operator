@@ -5507,13 +5507,6 @@ ipfix configuration, such as ip address and port to send ipfix flows to.
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>enterpriseId</b></td>
-        <td>integer</td>
-        <td>
-          EnterpriseId,omitempty" doc:"Enterprise ID for exporting transformations<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>transport</b></td>
         <td>enum</td>
         <td>

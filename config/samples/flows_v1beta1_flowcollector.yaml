@@ -143,4 +143,3 @@ spec:
     #     targetHost: "ipfix-collector.ipfix.svc.cluster.local"
     #     targetPort: 4739
     #     transport: tcp or udp (optional - defaults to tcp)
-    #     enterpriseId: integer number (optional) 
