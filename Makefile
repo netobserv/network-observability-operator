@@ -1,10 +1,27 @@
 # VERSION defines the project version for the deploy scripts, not for bundles
 VERSION ?= main
-BUILD_VERSION := $(shell git describe --long HEAD)
 BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
+TAG_COMMIT := $(shell git rev-list --abbrev-commit --tags --max-count=1)
+TAG := $(shell git describe --abbrev=0 --tags ${TAG_COMMIT} 2>/dev/null || true)
 BUILD_SHA := $(shell git rev-parse --short HEAD)
+BUILD_VERSION := $(TAG:v%=%)
+ifneq ($(COMMIT), $(TAG_COMMIT))
+	BUILD_VERSION := $(BUILD_VERSION)-$(BUILD_SHA)
+endif
+ifneq ($(shell git status --porcelain),)
+	BUILD_VERSION := $(BUILD_VERSION)-dirty
+endif
+
+# Go architecture and targets images to build
+GOARCH ?= amd64
+MULTIARCH_TARGETS := amd64 arm64 ppc64le
+
+# In CI, to be replaced by `netobserv`
+IMAGE_ORG ?= $(USER)
+
 # Default image repo
-REPO ?= quay.io/netobserv
+REPO ?= quay.io/$(IMAGE_ORG)
+
 # Component versions to use in bundle / release (do not use $VERSION for that)
 PREVIOUS_VERSION ?= v1.0.1
 BUNDLE_VERSION ?= 1.0.2
@@ -49,17 +66,17 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # IMAGE_TAG_BASE defines the namespace and part of the image name for remote images.
 # This variable is used to construct full image tags for bundle and catalog images.
 #
-# For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
+# For example, running 'make bundle-push catalog-push' will build and push both
 # netobserv/network-observability-operator-bundle:$BUNDLE_VERSION and netobserv/network-observability-operator-catalog:$BUNDLE_VERSION.
 IMAGE_TAG_BASE ?= $(REPO)/network-observability-operator
 
-# BUNDLE_IMG defines the image:tag used for the bundle.
-# You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
-BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
+# BUNDLE_IMAGE defines the image:tag used for the bundle.
+# You can use it as an arg. (E.g make bundle-build BUNDLE_IMAGE=<some-registry>/<project-name-bundle>:<tag>)
+BUNDLE_IMAGE ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
 
 # Image URL to use all building/pushing image targets
-IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
-IMG_SHA = $(IMAGE_TAG_BASE):$(BUILD_SHA)
+IMAGE ?= $(IMAGE_TAG_BASE):$(VERSION)
+IMAGE_SHA = $(IMAGE_TAG_BASE):$(BUILD_SHA)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
@@ -74,13 +91,8 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 # Image building tool (docker / podman)
-ifndef OCI_BIN
-ifeq (,$(shell which podman 2>/dev/null))
-OCI_BIN=docker
-else
-OCI_BIN=podman
-endif
-endif
+OCI_BIN_PATH = $(shell which podman  || which docker)
+OCI_BIN ?= $(shell v='$(OCI_BIN_PATH)'; echo "$${v##*/}")
 
 DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
@@ -95,6 +107,18 @@ NAMESPACE ?= netobserv
 all: help
 
 include .bingo/Variables.mk
+
+# build a single arch target provided as argument
+define build_target
+	echo 'building image for arch $(1)'; \
+	DOCKER_BUILDKIT=1 $(OCI_BIN) buildx build --load --build-arg TARGETPLATFORM=linux/$(1) --build-arg TARGETARCH=$(1) --build-arg BUILDPLATFORM=linux/amd64 -t ${IMAGE}-$(1) -f Dockerfile .;
+endef
+
+# push a single arch target image
+define push_target
+	echo 'pushing image ${IMAGE}-$(1)'; \
+	DOCKER_BUILDKIT=1 $(OCI_BIN) push ${IMAGE}-$(1);
+endef
 
 ##@ General
 
@@ -248,26 +272,57 @@ lint: prereqs ## Run linter (golangci-lint).
 test: envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverpkg=./... -coverprofile cover.out
 
-coverage-report:
+coverage-report: ## Generate coverage report
 	go tool cover --func=./cover.out
 
-coverage-report-html:
+coverage-report-html: ## Generate HTML coverage report
 	go tool cover --html=./cover.out
 
 build: fmt lint ## Build manager binary.
-	go build -ldflags "-X 'main.buildVersion=${BUILD_VERSION}' -X 'main.buildDate=${BUILD_DATE}'" -mod vendor -o bin/manager main.go
+	GOARCH=${GOARCH} go build -ldflags "-X 'main.buildVersion=${BUILD_VERSION}' -X 'main.buildDate=${BUILD_DATE}'" -mod vendor -o bin/manager main.go
 
-image-build: ## Build operator OCI image.
-	$(OCI_BIN) build --build-arg BUILD_VERSION="${BUILD_VERSION}" -t ${IMG} .
+##@ Images
 
-ci-images-build: image-build
-	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMG) -t $(IMG_SHA) -f ./shortlived.Dockerfile .
+# note: to build and push custom image tag use: IMAGE_ORG=myuser VERSION=dev make images
+.PHONY: image-build
+image-build: ## Build MULTIARCH_TARGETS images
+	trap 'exit' INT; \
+	$(foreach target,$(MULTIARCH_TARGETS),$(call build_target,$(target)))
 
-image-push: ## Push OCI image with the manager.
-ifneq (,$(findstring quay.io/netobserv/,$(IMG)))
-	$(error Do not push to quay.io/netobserv)
+.PHONY: image-push
+image-push: ## Push MULTIARCH_TARGETS images
+	trap 'exit' INT; \
+	$(foreach target,$(MULTIARCH_TARGETS),$(call push_target,$(target)))
+
+.PHONY: manifest-build
+manifest-build: ## Build MULTIARCH_TARGETS manifest
+	@echo 'building manifest $(IMAGE)'
+	DOCKER_BUILDKIT=1 $(OCI_BIN) manifest create ${IMAGE} $(foreach target,$(MULTIARCH_TARGETS),--amend ${IMAGE}-$(target));
+
+.PHONY: manifest-push
+manifest-push: ## Push MULTIARCH_TARGETS manifest
+	@echo 'publish manifest $(IMAGE)'
+ifeq (${OCI_BIN}, docker)
+	DOCKER_BUILDKIT=1 $(OCI_BIN) manifest push ${IMAGE};
 else
-	$(OCI_BIN) push ${IMG}
+	DOCKER_BUILDKIT=1 $(OCI_BIN) manifest push ${IMAGE} docker://${IMAGE};
+endif
+
+.PHONY: ci-manifest-build
+ci-manifest-build: manifest-build ## Build CI manifest
+	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMAGE) -t $(IMAGE_SHA) -f shortlived.Dockerfile .
+ifeq ($(VERSION), main)
+# Also tag "latest" only for branch "main"
+	$(OCI_BIN) build -t $(IMAGE) -t $(IMAGE_TAG_BASE):latest .
+endif
+
+.PHONY: ci-manifest-push
+ci-manifest-push: ## Push CI manifest
+	$(OCI_BIN) push $(IMAGE_SHA)
+ifeq ($(VERSION), main)
+# Also tag "latest" only for branch "main"
+	$(OCI_BIN) push ${IMAGE}
+	$(OCI_BIN) push $(IMAGE_TAG_BASE):latest
 endif
 
 ##@ Deployment
@@ -279,7 +334,7 @@ uninstall: kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube
 	$(KUSTOMIZE) build config/crd | kubectl --ignore-not-found=true delete -f - || true
 
 deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMAGE}
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:.+~console-plugin:main~' ./config/manager/manager.yaml
@@ -296,7 +351,7 @@ run: fmt lint ## Run a controller from your host.
 .PHONY: bundle-prepare
 bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPSDK) generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:$(FLP_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:.+~console-plugin:$(PLG_VERSION)~' ./config/manager/manager.yaml
@@ -309,7 +364,7 @@ bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metada
 bundle: bundle-prepare ## Generate final bundle files.
 	$(SED) -e 's/^/    /' config/manifests/bases/description-upstream.md > tmp-desc
 	$(KUSTOMIZE) build config/manifests \
-		| $(SED) -e 's~:container-image:~$(IMG)~' \
+		| $(SED) -e 's~:container-image:~$(IMAGE)~' \
 		| $(SED) -e "/':full-description:'/r tmp-desc" \
 		| $(SED) -e "s/':full-description:'/|\-/" \
 		| $(OPSDK) generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
@@ -322,33 +377,34 @@ bundle: bundle-prepare ## Generate final bundle files.
 
 .PHONY: update-bundle
 update-bundle: VERSION=$(BUNDLE_VERSION)
+update-bundle: IMAGE_ORG=netobserv
 update-bundle: bundle ## Prepare a clean bundle to be commited
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
 	cp ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml tmp-bundle
 	$(SED) -i -r 's~:created-at:~$(DATE)~' ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
-	-$(OCI_BIN) build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	-$(OCI_BIN) build -f bundle.Dockerfile -t $(BUNDLE_IMAGE) .
 	mv tmp-bundle ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
 
 shortlived-bundle-build: ## Build a temporary bundle image, expiring after 2 weeks on quay
-	$(MAKE) bundle-build BUNDLE_IMG=$(IMAGE_TAG_BASE)-bundle:tmp
-	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMAGE_TAG_BASE)-bundle:tmp -t $(BUNDLE_IMG) -f ./shortlived.Dockerfile .
+	$(MAKE) bundle-build BUNDLE_IMAGE=$(IMAGE_TAG_BASE)-bundle:tmp
+	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMAGE_TAG_BASE)-bundle:tmp -t $(BUNDLE_IMAGE) -f ./shortlived.Dockerfile .
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
-	$(MAKE) image-push IMG=$(BUNDLE_IMG)
+	$(MAKE) image-push IMAGE=$(BUNDLE_IMAGE)
 
-# A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
+# A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMAGES=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
-BUNDLE_IMGS ?= $(BUNDLE_IMG)
+BUNDLE_IMAGES ?= $(BUNDLE_IMAGE)
 
-# The image tag given to the resulting catalog image (e.g. make catalog-build CATALOG_IMG=example.com/operator-catalog:v0.2.0).
-CATALOG_IMG ?= $(IMAGE_TAG_BASE)-catalog:v$(BUNDLE_VERSION)
+# The image tag given to the resulting catalog image (e.g. make catalog-build CATALOG_IMAGE=example.com/operator-catalog:v0.2.0).
+CATALOG_IMAGE ?= $(IMAGE_TAG_BASE)-catalog:v$(BUNDLE_VERSION)
 
-# Set CATALOG_BASE_IMG to an existing catalog image tag to add $BUNDLE_IMGS to that image.
-ifneq ($(origin CATALOG_BASE_IMG), undefined)
-FROM_INDEX_OPT := --from-index $(CATALOG_BASE_IMG)
+# Set CATALOG_BASE_IMAGE to an existing catalog image tag to add $BUNDLE_IMAGES to that image.
+ifneq ($(origin CATALOG_BASE_IMAGE), undefined)
+FROM_INDEX_OPT := --from-index $(CATALOG_BASE_IMAGE)
 endif
 
 # Build a catalog image by adding bundle images to an empty catalog using the operator package manager tool, 'opm'.
@@ -356,21 +412,21 @@ endif
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
 .PHONY: catalog-build
 catalog-build: opm ## Build a catalog image.
-	$(OPM) index add --container-tool ${OCI_BIN} --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT) $(OPM_OPTS)
+	$(OPM) index add --container-tool ${OCI_BIN} --mode semver --tag $(CATALOG_IMAGE) --bundles $(BUNDLE_IMAGES) $(FROM_INDEX_OPT) $(OPM_OPTS)
 
 shortlived-catalog-build: ## Build a temporary catalog image, expiring after 2 weeks on quay
-	$(MAKE) catalog-build CATALOG_IMG=$(IMAGE_TAG_BASE)-catalog:tmp
-	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMAGE_TAG_BASE)-catalog:tmp -t $(CATALOG_IMG) -f ./shortlived.Dockerfile .
+	$(MAKE) catalog-build CATALOG_IMAGE=$(IMAGE_TAG_BASE)-catalog:tmp
+	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMAGE_TAG_BASE)-catalog:tmp -t $(CATALOG_IMAGE) -f ./shortlived.Dockerfile .
 
 # Push the catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
-	$(MAKE) image-push IMG=$(CATALOG_IMG)
+	$(MAKE) image-push IMAGE=$(CATALOG_IMAGE)
 
 # Deploy the catalog.
 .PHONY: catalog-deploy
 catalog-deploy: ## Deploy a catalog image.
-	$(SED) -e 's~<IMG>~$(CATALOG_IMG)~' ./config/samples/catalog/catalog.yaml | kubectl apply -f -
+	$(SED) -e 's~<IMAGE>~$(CATALOG_IMAGE)~' ./config/samples/catalog/catalog.yaml | kubectl apply -f -
 
 # Undeploy the catalog.
 .PHONY: catalog-undeploy
@@ -400,3 +456,4 @@ include .mk/sample.mk
 include .mk/development.mk
 include .mk/local.mk
 include .mk/ocp.mk
+include .mk/shortcuts.mk

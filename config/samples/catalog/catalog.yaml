@@ -5,7 +5,7 @@ metadata:
   namespace: openshift-marketplace
 spec:
   sourceType: grpc
-  image: <IMG>
+  image: <IMAGE>
   displayName: Network observability development catalog
   publisher: Me
   updateStrategy:
