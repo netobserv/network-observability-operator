@@ -557,7 +557,7 @@ func createIPFIXWriteStage(name string, spec *flowslatest.FlowCollectorIPFIXRece
 		TargetHost:   spec.TargetHost,
 		TargetPort:   spec.TargetPort,
 		Transport:    spec.Transport,
-		EnterpriseID: 27027,
+		EnterpriseID: 2,
 	})
 }
 

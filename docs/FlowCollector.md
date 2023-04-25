@@ -5451,7 +5451,7 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type selects the type of exporters. Only "KAFKA" is available at the moment.<br/>
+          type selects the type of exporters. "KAFKA" and "IPFIX" are the available options at this moment.<br/>
           <br/>
             <i>Enum</i>: KAFKA, IPFIX<br/>
         </td>

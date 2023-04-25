@@ -698,7 +698,7 @@ const (
 
 // FlowCollectorExporter defines an additional exporter to send enriched flows to
 type FlowCollectorExporter struct {
-	// type selects the type of exporters. Only "KAFKA" is available at the moment.
+	// type selects the type of exporters. "KAFKA" and "IPFIX" are the available options at this moment.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="KAFKA";"IPFIX"
 	// +kubebuilder:validation:Required
