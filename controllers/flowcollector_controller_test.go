@@ -251,7 +251,8 @@ func flowCollectorControllerSpecs() {
 						Duration: conntrackEndTimeout,
 					},
 					Metrics: flowslatest.FLPMetrics{
-						IgnoreTags: []string{"flows", "bytes", "packets"},
+						IgnoreTags:    []string{"flows", "bytes", "packets"},
+						DisableAlerts: []flowslatest.FLPAlert{flowslatest.AlertLokiError},
 					},
 				}
 				fc.Spec.Loki = flowslatest.FlowCollectorLoki{}
@@ -396,13 +397,15 @@ func flowCollectorControllerSpecs() {
 				}, &sm)
 			}, timeout, interval).Should(Succeed())
 
-			By("Expecting PrometheusRule to exist")
+			By("Expecting PrometheusRule to exist and be updated")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, types.NamespacedName{
 					Name:      "flowlogs-pipeline-alert",
 					Namespace: operatorNamespace,
 				}, &pr)
 			}, timeout, interval).Should(Succeed())
+			Expect(pr.Spec.Groups).Should(HaveLen(1))
+			Expect(pr.Spec.Groups[0].Rules).Should(HaveLen(1))
 
 			// Manually delete ServiceMonitor
 			By("Deleting ServiceMonitor")
