@@ -78,3 +78,17 @@ func GetRecordTypes(processor *flowslatest.FlowCollectorFLP) []string {
 	}
 	return outputRecordTypes
 }
+
+func PtrBool(b *bool) bool {
+	if b == nil {
+		return false
+	}
+	return *b
+}
+
+func PtrInt32(i *int32) int32 {
+	if i == nil {
+		return 0
+	}
+	return *i
+}

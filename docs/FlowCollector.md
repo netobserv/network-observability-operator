@@ -4311,15 +4311,6 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>register</b></td>
-        <td>boolean</td>
-        <td>
-          register allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator. When set to false, you can still register it manually by editing console.operator.openshift.io/cluster. E.g: oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'<br/>
-          <br/>
-            <i>Default</i>: true<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscaler-1">autoscaler</a></b></td>
         <td>object</td>
         <td>
@@ -4374,6 +4365,15 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
           quickFilters configures quick filter presets for the Console plugin<br/>
           <br/>
             <i>Default</i>: [map[default:true filter:map[dst_namespace!:openshift-,netobserv src_namespace!:openshift-,netobserv] name:Applications] map[filter:map[dst_namespace:openshift-,netobserv src_namespace:openshift-,netobserv] name:Infrastructure] map[default:true filter:map[dst_kind:Pod src_kind:Pod] name:Pods network] map[filter:map[dst_kind:Service] name:Services network]]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>register</b></td>
+        <td>boolean</td>
+        <td>
+          register allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator. When set to false, you can still register it manually by editing console.operator.openshift.io/cluster. E.g: oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'<br/>
+          <br/>
+            <i>Default</i>: true<br/>
         </td>
         <td>false</td>
       </tr><tr>

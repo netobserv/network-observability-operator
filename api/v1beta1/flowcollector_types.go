@@ -182,13 +182,14 @@ type FlowCollectorEBPF struct {
 	// If an entry is enclosed by slashes (such as `/br-/`), it will match as regular expression,
 	// otherwise it will be matched as a case-sensitive string.
 	//+optional
-	Interfaces []string `json:"interfaces,omitempty"`
+	Interfaces []string `json:"interfaces"`
 
 	// excludeInterfaces contains the interface names that will be excluded from flow tracing.
 	// If an entry is enclosed by slashes (such as `/br-/`), it will match as regular expression,
 	// otherwise it will be matched as a case-sensitive string.
 	//+kubebuilder:default=lo;
-	ExcludeInterfaces []string `json:"excludeInterfaces,omitempty"`
+	//+optional
+	ExcludeInterfaces []string `json:"excludeInterfaces"`
 
 	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic
 	//+kubebuilder:default:=info
@@ -292,14 +293,15 @@ type FLPMetrics struct {
 	// ignoreTags is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions .
 	// Available tags are: egress, ingress, flows, bytes, packets, namespaces, nodes, workloads
 	//+kubebuilder:default:={"egress","packets"}
-	IgnoreTags []string `json:"ignoreTags,omitempty"`
+	// +optional
+	IgnoreTags []string `json:"ignoreTags"`
 
 	// disableAlerts is a list of alerts that should be disabled.
 	// Possible values are:
 	// `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.
 	// `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.
 	// +optional
-	DisableAlerts []FLPAlert `json:"disableAlerts,omitempty"`
+	DisableAlerts []FLPAlert `json:"disableAlerts"`
 }
 
 const (
@@ -354,17 +356,17 @@ type FlowCollectorFLP struct {
 
 	//+kubebuilder:default:=true
 	// enableKubeProbes is a flag to enable or disable Kubernetes liveness and readiness probes
-	EnableKubeProbes bool `json:"enableKubeProbes,omitempty"`
+	EnableKubeProbes *bool `json:"enableKubeProbes,omitempty"`
 
 	//+kubebuilder:default:=true
 	// dropUnusedFields allows, when set to true, to drop fields that are known to be unused by OVS, in order to save storage space.
-	DropUnusedFields bool `json:"dropUnusedFields,omitempty"`
+	DropUnusedFields *bool `json:"dropUnusedFields,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=3
 	// kafkaConsumerReplicas defines the number of replicas (pods) to start for flowlogs-pipeline-transformer, which consumes Kafka messages.
 	// This setting is ignored when Kafka is disabled.
-	KafkaConsumerReplicas int32 `json:"kafkaConsumerReplicas,omitempty"`
+	KafkaConsumerReplicas *int32 `json:"kafkaConsumerReplicas,omitempty"`
 
 	// kafkaConsumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlogs-pipeline-transformer, which consumes Kafka messages.
 	// This setting is ignored when Kafka is disabled.
@@ -504,11 +506,12 @@ type FlowCollectorLoki struct {
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=2
 	// maxRetries is the maximum number of retries for client connections.
-	MaxRetries int32 `json:"maxRetries,omitempty"`
+	MaxRetries *int32 `json:"maxRetries,omitempty"`
 
 	//+kubebuilder:default:={"app":"netobserv-flowcollector"}
+	// +optional
 	// staticLabels is a map of common labels to set on each flow.
-	StaticLabels map[string]string `json:"staticLabels,omitempty"`
+	StaticLabels map[string]string `json:"staticLabels"`
 
 	// tls client configuration for loki URL.
 	// +optional
@@ -527,12 +530,12 @@ type FlowCollectorConsolePlugin struct {
 	// register allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator.
 	// When set to false, you can still register it manually by editing console.operator.openshift.io/cluster.
 	// E.g: oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'
-	Register bool `json:"register"`
+	Register *bool `json:"register,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=1
 	// replicas defines the number of replicas (pods) to start.
-	Replicas int32 `json:"replicas,omitempty"`
+	Replicas *int32 `json:"replicas,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
@@ -565,20 +568,21 @@ type FlowCollectorConsolePlugin struct {
 	PortNaming ConsolePluginPortConfig `json:"portNaming,omitempty"`
 
 	//+kubebuilder:default:={{name:"Applications",filter:{"src_namespace!":"openshift-,netobserv","dst_namespace!":"openshift-,netobserv"},default:true},{name:"Infrastructure",filter:{"src_namespace":"openshift-,netobserv","dst_namespace":"openshift-,netobserv"}},{name:"Pods network",filter:{"src_kind":"Pod","dst_kind":"Pod"},default:true},{name:"Services network",filter:{"dst_kind":"Service"}}}
+	// +optional
 	// quickFilters configures quick filter presets for the Console plugin
-	QuickFilters []QuickFilter `json:"quickFilters,omitempty"`
+	QuickFilters []QuickFilter `json:"quickFilters"`
 }
 
 // Configuration of the port to service name translation feature of the console plugin
 type ConsolePluginPortConfig struct {
 	//+kubebuilder:default:=true
 	// enable the console plugin port-to-service name translation
-	Enable bool `json:"enable,omitempty"`
+	Enable *bool `json:"enable,omitempty"`
 
 	// portNames defines additional port names to use in the console.
 	// Example: portNames: {"3100": "loki"}
 	// +optional
-	PortNames map[string]string `json:"portNames,omitempty" yaml:"portNames,omitempty"`
+	PortNames map[string]string `json:"portNames" yaml:"portNames"`
 }
 
 // QuickFilter defines preset configuration for Console's quick filters

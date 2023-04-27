@@ -77,7 +77,7 @@ func flowCollectorConsolePluginSpecs() {
 					ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
 						Port:            9001,
 						ImagePullPolicy: "Never",
-						Register:        true,
+						Register:        pointer.Bool(true),
 						Autoscaler: flowslatest.FlowCollectorHPA{
 							Status:      flowslatest.HPAStatusEnabled,
 							MinReplicas: pointer.Int32(1),
@@ -94,7 +94,7 @@ func flowCollectorConsolePluginSpecs() {
 							}},
 						},
 						PortNaming: flowslatest.ConsolePluginPortConfig{
-							Enable: true,
+							Enable: pointer.Bool(true),
 							PortNames: map[string]string{
 								"3100": "loki",
 							},
@@ -151,7 +151,7 @@ func flowCollectorConsolePluginSpecs() {
 					return err
 				}
 				fc.Spec.ConsolePlugin.Port = 9099
-				fc.Spec.ConsolePlugin.Replicas = 2
+				fc.Spec.ConsolePlugin.Replicas = pointer.Int32(2)
 				fc.Spec.ConsolePlugin.Autoscaler.Status = flowslatest.HPAStatusDisabled
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
@@ -241,7 +241,7 @@ func flowCollectorConsolePluginSpecs() {
 		It("Should be unregistered", func() {
 			By("Update CR to unregister")
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.ConsolePlugin.Register = false
+				fc.Spec.ConsolePlugin.Register = pointer.Bool(false)
 			})
 
 			By("Expecting the Console CR to not have plugin registered")

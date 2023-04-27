@@ -131,7 +131,7 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 			Labels:    b.labels,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &b.desired.ConsolePlugin.Replicas,
+			Replicas: b.desired.ConsolePlugin.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: b.selector,
 			},

@@ -215,7 +215,7 @@ func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, c
 		Ports:           ports,
 		Env:             envs,
 	}
-	if b.desired.Processor.EnableKubeProbes {
+	if helper.PtrBool(b.desired.Processor.EnableKubeProbes) {
 		container.LivenessProbe = &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
@@ -332,7 +332,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 	indexFields := constants.LokiIndexFields
 
 	// Filter-out unused fields?
-	if b.desired.Processor.DropUnusedFields {
+	if helper.PtrBool(b.desired.Processor.DropUnusedFields) {
 		if helper.UseIPFIX(b.desired) {
 			lastStage = lastStage.TransformFilter("filter", api.TransformFilter{
 				Rules: filters.GetOVSGoflowUnusedRules(),
@@ -447,7 +447,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 		BatchSize:      int(b.desired.Loki.BatchSize),
 		BatchWait:      b.desired.Loki.BatchWait.ToUnstructured().(string),
 		MaxBackoff:     b.desired.Loki.MaxBackoff.ToUnstructured().(string),
-		MaxRetries:     int(b.desired.Loki.MaxRetries),
+		MaxRetries:     int(helper.PtrInt32(b.desired.Loki.MaxRetries)),
 		MinBackoff:     b.desired.Loki.MinBackoff.ToUnstructured().(string),
 		StaticLabels:   model.LabelSet{},
 		Timeout:        b.desired.Loki.Timeout.ToUnstructured().(string),

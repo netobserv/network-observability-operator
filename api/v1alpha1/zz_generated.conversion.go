@@ -352,7 +352,9 @@ func Convert_v1beta1_ClusterNetworkOperatorConfig_To_v1alpha1_ClusterNetworkOper
 }
 
 func autoConvert_v1alpha1_ConsolePluginPortConfig_To_v1beta1_ConsolePluginPortConfig(in *ConsolePluginPortConfig, out *v1beta1.ConsolePluginPortConfig, s conversion.Scope) error {
-	out.Enable = in.Enable
+	if err := v1.Convert_bool_To_Pointer_bool(&in.Enable, &out.Enable, s); err != nil {
+		return err
+	}
 	out.PortNames = *(*map[string]string)(unsafe.Pointer(&in.PortNames))
 	return nil
 }
@@ -363,7 +365,9 @@ func Convert_v1alpha1_ConsolePluginPortConfig_To_v1beta1_ConsolePluginPortConfig
 }
 
 func autoConvert_v1beta1_ConsolePluginPortConfig_To_v1alpha1_ConsolePluginPortConfig(in *v1beta1.ConsolePluginPortConfig, out *ConsolePluginPortConfig, s conversion.Scope) error {
-	out.Enable = in.Enable
+	if err := v1.Convert_Pointer_bool_To_bool(&in.Enable, &out.Enable, s); err != nil {
+		return err
+	}
 	out.PortNames = *(*map[string]string)(unsafe.Pointer(&in.PortNames))
 	return nil
 }
@@ -480,8 +484,12 @@ func Convert_v1beta1_FlowCollectorAgent_To_v1alpha1_FlowCollectorAgent(in *v1bet
 }
 
 func autoConvert_v1alpha1_FlowCollectorConsolePlugin_To_v1beta1_FlowCollectorConsolePlugin(in *FlowCollectorConsolePlugin, out *v1beta1.FlowCollectorConsolePlugin, s conversion.Scope) error {
-	out.Register = in.Register
-	out.Replicas = in.Replicas
+	if err := v1.Convert_bool_To_Pointer_bool(&in.Register, &out.Register, s); err != nil {
+		return err
+	}
+	if err := v1.Convert_int32_To_Pointer_int32(&in.Replicas, &out.Replicas, s); err != nil {
+		return err
+	}
 	out.Port = in.Port
 	out.ImagePullPolicy = in.ImagePullPolicy
 	out.Resources = in.Resources
@@ -502,8 +510,12 @@ func Convert_v1alpha1_FlowCollectorConsolePlugin_To_v1beta1_FlowCollectorConsole
 }
 
 func autoConvert_v1beta1_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorConsolePlugin(in *v1beta1.FlowCollectorConsolePlugin, out *FlowCollectorConsolePlugin, s conversion.Scope) error {
-	out.Register = in.Register
-	out.Replicas = in.Replicas
+	if err := v1.Convert_Pointer_bool_To_bool(&in.Register, &out.Register, s); err != nil {
+		return err
+	}
+	if err := v1.Convert_Pointer_int32_To_int32(&in.Replicas, &out.Replicas, s); err != nil {
+		return err
+	}
 	out.Port = in.Port
 	out.ImagePullPolicy = in.ImagePullPolicy
 	out.Resources = in.Resources
@@ -603,9 +615,15 @@ func autoConvert_v1alpha1_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(in *FlowC
 	}
 	out.LogLevel = in.LogLevel
 	out.Resources = in.Resources
-	out.EnableKubeProbes = in.EnableKubeProbes
-	out.DropUnusedFields = in.DropUnusedFields
-	out.KafkaConsumerReplicas = in.KafkaConsumerReplicas
+	if err := v1.Convert_bool_To_Pointer_bool(&in.EnableKubeProbes, &out.EnableKubeProbes, s); err != nil {
+		return err
+	}
+	if err := v1.Convert_bool_To_Pointer_bool(&in.DropUnusedFields, &out.DropUnusedFields, s); err != nil {
+		return err
+	}
+	if err := v1.Convert_int32_To_Pointer_int32(&in.KafkaConsumerReplicas, &out.KafkaConsumerReplicas, s); err != nil {
+		return err
+	}
 	if err := Convert_v1alpha1_FlowCollectorHPA_To_v1beta1_FlowCollectorHPA(&in.KafkaConsumerAutoscaler, &out.KafkaConsumerAutoscaler, s); err != nil {
 		return err
 	}
@@ -632,9 +650,15 @@ func autoConvert_v1beta1_FlowCollectorFLP_To_v1alpha1_FlowCollectorFLP(in *v1bet
 	}
 	out.LogLevel = in.LogLevel
 	out.Resources = in.Resources
-	out.EnableKubeProbes = in.EnableKubeProbes
-	out.DropUnusedFields = in.DropUnusedFields
-	out.KafkaConsumerReplicas = in.KafkaConsumerReplicas
+	if err := v1.Convert_Pointer_bool_To_bool(&in.EnableKubeProbes, &out.EnableKubeProbes, s); err != nil {
+		return err
+	}
+	if err := v1.Convert_Pointer_bool_To_bool(&in.DropUnusedFields, &out.DropUnusedFields, s); err != nil {
+		return err
+	}
+	if err := v1.Convert_Pointer_int32_To_int32(&in.KafkaConsumerReplicas, &out.KafkaConsumerReplicas, s); err != nil {
+		return err
+	}
 	if err := Convert_v1beta1_FlowCollectorHPA_To_v1alpha1_FlowCollectorHPA(&in.KafkaConsumerAutoscaler, &out.KafkaConsumerAutoscaler, s); err != nil {
 		return err
 	}
@@ -794,7 +818,9 @@ func autoConvert_v1alpha1_FlowCollectorLoki_To_v1beta1_FlowCollectorLoki(in *Flo
 	out.Timeout = in.Timeout
 	out.MinBackoff = in.MinBackoff
 	out.MaxBackoff = in.MaxBackoff
-	out.MaxRetries = in.MaxRetries
+	if err := v1.Convert_int32_To_Pointer_int32(&in.MaxRetries, &out.MaxRetries, s); err != nil {
+		return err
+	}
 	out.StaticLabels = *(*map[string]string)(unsafe.Pointer(&in.StaticLabels))
 	if err := Convert_v1alpha1_ClientTLS_To_v1beta1_ClientTLS(&in.TLS, &out.TLS, s); err != nil {
 		return err
@@ -818,7 +844,9 @@ func autoConvert_v1beta1_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1b
 	out.Timeout = in.Timeout
 	out.MinBackoff = in.MinBackoff
 	out.MaxBackoff = in.MaxBackoff
-	out.MaxRetries = in.MaxRetries
+	if err := v1.Convert_Pointer_int32_To_int32(&in.MaxRetries, &out.MaxRetries, s); err != nil {
+		return err
+	}
 	out.StaticLabels = *(*map[string]string)(unsafe.Pointer(&in.StaticLabels))
 	if err := Convert_v1beta1_ClientTLS_To_v1alpha1_ClientTLS(&in.TLS, &out.TLS, s); err != nil {
 		return err

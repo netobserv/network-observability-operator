@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -69,7 +70,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 					},
 				},
 			},
-			KafkaConsumerReplicas: 1,
+			KafkaConsumerReplicas: pointer.Int32(1),
 			KafkaConsumerAutoscaler: flowslatest.FlowCollectorHPA{
 				Status:      flowslatest.HPAStatusEnabled,
 				MinReplicas: &minReplicas,
@@ -105,7 +106,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 			MaxBackoff: metav1.Duration{
 				Duration: 300,
 			},
-			MaxRetries:   10,
+			MaxRetries:   pointer.Int32(10),
 			StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
 		},
 		Kafka: flowslatest.FlowCollectorKafka{
@@ -184,7 +185,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	first := b.daemonSet(digest)
 
 	// Check probes enabled change
-	cfg.Processor.EnableKubeProbes = true
+	cfg.Processor.EnableKubeProbes = pointer.Bool(true)
 	b = newMonolithBuilder(ns, image, &cfg, true)
 	_, digest, _, err = b.configMap()
 	assert.NoError(err)
@@ -312,7 +313,7 @@ func TestDeploymentNoChange(t *testing.T) {
 	second := b.deployment(digest)
 
 	report := helper.NewChangeReport("")
-	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, helper.HPADisabled(&cfg.Processor.KafkaConsumerAutoscaler), cfg.Processor.KafkaConsumerReplicas, &report))
+	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, helper.HPADisabled(&cfg.Processor.KafkaConsumerAutoscaler), *cfg.Processor.KafkaConsumerReplicas, &report))
 	assert.Contains(report.String(), "no change")
 }
 
@@ -328,7 +329,7 @@ func TestDeploymentChanged(t *testing.T) {
 	first := b.deployment(digest)
 
 	// Check probes enabled change
-	cfg.Processor.EnableKubeProbes = true
+	cfg.Processor.EnableKubeProbes = pointer.Bool(true)
 	b = newTransfoBuilder(ns, image, &cfg, true)
 	_, digest, _, err = b.configMap()
 	assert.NoError(err)
@@ -336,7 +337,7 @@ func TestDeploymentChanged(t *testing.T) {
 
 	report := helper.NewChangeReport("")
 	checkChanged := func(old, new *appsv1.Deployment, spec flowslatest.FlowCollectorSpec) bool {
-		return helper.DeploymentChanged(old, new, constants.FLPName, helper.HPADisabled(&spec.Processor.KafkaConsumerAutoscaler), spec.Processor.KafkaConsumerReplicas, &report)
+		return helper.DeploymentChanged(old, new, constants.FLPName, helper.HPADisabled(&spec.Processor.KafkaConsumerAutoscaler), *spec.Processor.KafkaConsumerReplicas, &report)
 	}
 
 	assert.True(checkChanged(first, second, cfg))
@@ -386,7 +387,7 @@ func TestDeploymentChanged(t *testing.T) {
 
 	// Check replicas didn't change because HPA is used
 	cfg2 := cfg
-	cfg2.Processor.KafkaConsumerReplicas = 5
+	cfg2.Processor.KafkaConsumerReplicas = pointer.Int32(5)
 	b = newTransfoBuilder(ns, image, &cfg2, true)
 	_, digest, _, err = b.configMap()
 	assert.NoError(err)
@@ -410,14 +411,14 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 
 	// Check replicas changed (need to copy flp, as Spec.Replicas stores a pointer)
 	cfg2 := cfg
-	cfg2.Processor.KafkaConsumerReplicas = 5
+	cfg2.Processor.KafkaConsumerReplicas = pointer.Int32(5)
 	b = newTransfoBuilder(ns, image, &cfg2, true)
 	_, digest, _, err = b.configMap()
 	assert.NoError(err)
 	second := b.deployment(digest)
 
 	report := helper.NewChangeReport("")
-	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, helper.HPADisabled(&cfg2.Processor.KafkaConsumerAutoscaler), cfg2.Processor.KafkaConsumerReplicas, &report))
+	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, helper.HPADisabled(&cfg2.Processor.KafkaConsumerAutoscaler), *cfg2.Processor.KafkaConsumerReplicas, &report))
 	assert.Contains(report.String(), "Replicas changed")
 }
 
@@ -583,7 +584,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg.BatchWait)
 	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg.MinBackoff)
 	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
-	assert.EqualValues(loki.MaxRetries, lokiCfg.MaxRetries)
+	assert.EqualValues(*loki.MaxRetries, lokiCfg.MaxRetries)
 	assert.EqualValues(loki.BatchSize, lokiCfg.BatchSize)
 	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection", "_RecordType"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
@@ -729,7 +730,7 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	cfg.Processor.LogLevel = "info"
-	cfg.Processor.DropUnusedFields = true
+	cfg.Processor.DropUnusedFields = pointer.Bool(true)
 	b := newMonolithBuilder(ns, image, &cfg, true)
 	stages, parameters, _, err := b.buildPipelineConfig()
 	assert.NoError(err)
