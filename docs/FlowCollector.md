@@ -4071,6 +4071,15 @@ Agent configuration for flows extraction.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>enableTCPDrop</b></td>
+        <td>boolean</td>
+        <td>
+          enable TCP drop flows logging feature, this feature requires mounting kernel debug filesystem hence the ebpf pod has to run as privileged if privileged isn't set an error will be reported.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>excludeInterfaces</b></td>
         <td>[]string</td>
         <td>

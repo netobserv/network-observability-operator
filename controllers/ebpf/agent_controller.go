@@ -54,16 +54,19 @@ const (
 	envDedupeJustMark             = "DEDUPER_JUST_MARK"
 	dedupeJustMarkDefault         = "true"
 	envGoMemLimit                 = "GOMEMLIMIT"
+	envEnableTCPDrop              = "ENABLE_TCP_DROPS"
 
 	envListSeparator = ","
 )
 
 const (
-	exportKafka = "kafka"
-	exportGRPC  = "grpc"
+	exportKafka        = "kafka"
+	exportGRPC         = "grpc"
+	kafkaCerts         = "kafka-certs"
+	averageMessageSize = 100
+	bpfTraceMountName  = "bpf-kernel-debug"
+	bpfTraceMountPath  = "/sys/kernel/debug"
 )
-
-const averageMessageSize = 100
 
 type reconcileAction int
 
@@ -156,6 +159,18 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 	return &agentDS, nil
 }
 
+func newHostPathType(pathType corev1.HostPathType) *corev1.HostPathType {
+	hostPathType := new(corev1.HostPathType)
+	*hostPathType = corev1.HostPathType(pathType)
+	return hostPathType
+}
+
+func newMountPropagationMode(m corev1.MountPropagationMode) *corev1.MountPropagationMode {
+	mode := new(corev1.MountPropagationMode)
+	*mode = corev1.MountPropagationMode(m)
+	return mode
+}
+
 func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector) (*v1.DaemonSet, error) {
 	if coll == nil || !helper.UseEBPF(&coll.Spec) {
 		return nil, nil
@@ -165,6 +180,30 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	env, err := c.envConfig(ctx, coll, annotations)
 	if err != nil {
 		return nil, err
+	}
+	volumeMounts := c.volumes.GetMounts()
+	volumes := c.volumes.GetVolumes()
+
+	if helper.IsTCPDropEnabled(&coll.Spec) {
+		if !coll.Spec.Agent.EBPF.Privileged {
+			return nil, fmt.Errorf("to use TCPDrop feature privileged mode need to be enabled")
+		}
+		volume := corev1.Volume{
+			Name: bpfTraceMountName,
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
+					Type: newHostPathType(corev1.HostPathDirectory),
+					Path: bpfTraceMountPath,
+				},
+			},
+		}
+		volumes = append(volumes, volume)
+		volumeMount := corev1.VolumeMount{
+			Name:             bpfTraceMountName,
+			MountPath:        bpfTraceMountPath,
+			MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+		}
+		volumeMounts = append(volumeMounts, volumeMount)
 	}
 
 	return &v1.DaemonSet{
@@ -191,7 +230,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 					ServiceAccountName: constants.EBPFServiceAccount,
 					HostNetwork:        true,
 					DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
-					Volumes:            c.volumes.GetVolumes(),
+					Volumes:            volumes,
 					Containers: []corev1.Container{{
 						Name:            constants.EBPFAgentName,
 						Image:           c.config.EBPFAgentImage,
@@ -199,7 +238,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 						Resources:       coll.Spec.Agent.EBPF.Resources,
 						SecurityContext: c.securityContext(coll),
 						Env:             env,
-						VolumeMounts:    c.volumes.GetMounts(),
+						VolumeMounts:    volumeMounts,
 					}},
 				},
 			},
@@ -256,6 +295,13 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			memLimit -= int64(float64(memLimit) * 0.1)
 			config = append(config, corev1.EnvVar{Name: envGoMemLimit, Value: fmt.Sprint(memLimit)})
 		}
+	}
+
+	if coll.Spec.Agent.EBPF.EnableTCPDrop != nil && *coll.Spec.Agent.EBPF.EnableTCPDrop {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableTCPDrop,
+			Value: "true",
+		})
 	}
 
 	dedup := dedupeDefault

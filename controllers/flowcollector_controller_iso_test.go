@@ -97,6 +97,7 @@ func flowCollectorIsoSpecs() {
 					ExcludeInterfaces:  []string{},
 					Privileged:         false,
 					KafkaBatchSize:     0,
+					EnableTCPDrop:      pointer.Bool(false),
 				},
 			},
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{

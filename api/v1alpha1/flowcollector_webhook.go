@@ -63,6 +63,10 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
+	if restored.Spec.Agent.EBPF.EnableTCPDrop != nil {
+		*dst.Spec.Agent.EBPF.EnableTCPDrop = *restored.Spec.Agent.EBPF.EnableTCPDrop
+	}
+
 	dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS
 	dst.Spec.Kafka.SASL = restored.Spec.Kafka.SASL
 
@@ -146,4 +150,11 @@ func Convert_v1beta1_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorConsole
 // nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(in *v1beta1.FlowCollectorExporter, out *FlowCollectorExporter, s apiconversion.Scope) error {
 	return autoConvert_v1beta1_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta1 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta1_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1beta1.FlowCollectorEBPF, out *FlowCollectorEBPF, s apiconversion.Scope) error {
+	return autoConvert_v1beta1_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in, out, s)
 }

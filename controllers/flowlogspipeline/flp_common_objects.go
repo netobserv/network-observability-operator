@@ -320,6 +320,74 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 		// Else: nothing for eBPF at the moment
 	}
 
+	outputFields := []api.OutputField{
+		{
+			Name:      "Bytes",
+			Operation: "sum",
+		},
+		{
+			Name:      "Bytes",
+			Operation: "sum",
+			SplitAB:   true,
+		},
+		{
+			Name:      "Packets",
+			Operation: "sum",
+		},
+		{
+			Name:      "Packets",
+			Operation: "sum",
+			SplitAB:   true,
+		},
+		{
+			Name:      "numFlowLogs",
+			Operation: "count",
+		},
+		{
+			Name:      "TimeFlowStartMs",
+			Operation: "min",
+		},
+		{
+			Name:      "TimeFlowEndMs",
+			Operation: "max",
+		},
+		{
+			Name:      "FlowDirection",
+			Operation: "first",
+		},
+		{
+			Name:      "IfDirection",
+			Operation: "first",
+		},
+		{
+			Name:      "AgentIP",
+			Operation: "first",
+		},
+	}
+
+	if helper.IsTCPDropEnabled(b.desired) {
+		outputTCPDropFields := []api.OutputField{
+			{
+				Name:      "TCPDropBytes",
+				Operation: "sum",
+			},
+			{
+				Name:      "TCPDropBytes",
+				Operation: "sum",
+				SplitAB:   true,
+			},
+			{
+				Name:      "TCPDropPackets",
+				Operation: "sum",
+			},
+			{
+				Name:      "TCPDropPackets",
+				Operation: "sum",
+				SplitAB:   true,
+			},
+		}
+		outputFields = append(outputFields, outputTCPDropFields...)
+	}
 	// Connection tracking stage (only if LogTypes is not FLOWS)
 	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
@@ -356,50 +424,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 				},
 			},
 			OutputRecordTypes: outputRecordTypes,
-			OutputFields: []api.OutputField{
-				{
-					Name:      "Bytes",
-					Operation: "sum",
-				},
-				{
-					Name:      "Bytes",
-					Operation: "sum",
-					SplitAB:   true,
-				},
-				{
-					Name:      "Packets",
-					Operation: "sum",
-				},
-				{
-					Name:      "Packets",
-					Operation: "sum",
-					SplitAB:   true,
-				},
-				{
-					Name:      "numFlowLogs",
-					Operation: "count",
-				},
-				{
-					Name:      "TimeFlowStartMs",
-					Operation: "min",
-				},
-				{
-					Name:      "TimeFlowEndMs",
-					Operation: "max",
-				},
-				{
-					Name:      "FlowDirection",
-					Operation: "first",
-				},
-				{
-					Name:      "IfDirection",
-					Operation: "first",
-				},
-				{
-					Name:      "AgentIP",
-					Operation: "first",
-				},
-			},
+			OutputFields:      outputFields,
 			Scheduling: []api.ConnTrackSchedulingGroup{
 				{
 					Selector:             nil, // Default group. Match all flowlogs
@@ -414,6 +439,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 				SwapAB:              true,
 			},
 		})
+
 	}
 
 	// enrich stage (transform) configuration

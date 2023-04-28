@@ -221,6 +221,13 @@ type FlowCollectorEBPF struct {
 	// such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
+
+	// enable TCP drop flows logging feature, this feature requires mounting
+	// kernel debug filesystem hence the ebpf pod has to run as privileged
+	// if privileged isn't set an error will be reported.
+	//+kubebuilder:default:=false
+	//+optional
+	EnableTCPDrop *bool `json:"enableTCPDrop,omitempty"`
 }
 
 // `FlowCollectorKafka` defines the desired Kafka config of FlowCollector

@@ -2289,6 +2289,13 @@ spec:
                               they are only useful in edge debug or support scenarios.'
                             type: object
                         type: object
+                      enableTCPDrop:
+                        default: false
+                        description: enable TCP drop flows logging feature, this feature
+                          requires mounting kernel debug filesystem hence the ebpf
+                          pod has to run as privileged if privileged isn't set an
+                          error will be reported.
+                        type: boolean
                       excludeInterfaces:
                         default:
                         - lo
