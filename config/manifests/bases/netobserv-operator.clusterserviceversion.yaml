@@ -64,14 +64,20 @@ spec:
   - name: Discussion board
     url: https://github.com/netobserv/network-observability-operator/discussions
   maintainers:
-  - email: jtakvori@redhat.com
-    name: Joel Takvorian
   - email: jpinsonn@redhat.com
     name: Julien Pinsonneau
-  - email: mmaciasl@redhat.com
-    name: Mario Macias
+  - email: jtakvori@redhat.com
+    name: Joel Takvorian
+  - email: kmeth@redhat.com
+    name: Kalman Meth
+  - email: mmahmoud@redhat.com
+    name: Mohamed S. Mahmoud
   - email: ocazade@redhat.com
     name: Olivier Cazade
+  - email: rschaffe@redhat.com
+    name: Ronen Schaffer
+  - email: stlee@redhat.com
+    name: Steven Lee
   maturity: alpha
   minKubeVersion: 1.23.0
   provider:
