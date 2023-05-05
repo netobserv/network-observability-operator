@@ -68,12 +68,8 @@ func (b *ingestBuilder) buildPipelineConfig() ([]config.Stage, []config.StagePar
 	return pipeline.GetStages(), pipeline.GetStageParams(), nil
 }
 
-func (b *ingestBuilder) newPromService() *corev1.Service {
-	return b.generic.newPromService()
-}
-
-func (b *ingestBuilder) fromPromService(old *corev1.Service) *corev1.Service {
-	return b.generic.fromPromService(old)
+func (b *ingestBuilder) promService() *corev1.Service {
+	return b.generic.promService()
 }
 
 func buildClusterRoleIngester(useOpenShiftSCC bool) *rbacv1.ClusterRole {

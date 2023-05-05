@@ -1,6 +1,7 @@
 package consoleplugin
 
 import (
+	"fmt"
 	"hash/fnv"
 	"path/filepath"
 	"strconv"
@@ -14,6 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -31,6 +33,9 @@ const configPath = "/opt/app-root/"
 const lokiCerts = "loki-certs"
 const lokiStatusCerts = "loki-status-certs"
 const tokensPath = "/var/run/secrets/tokens/"
+const metricsSvcName = constants.PluginName + "-metrics"
+const metricsPort = 9002
+const metricsPortName = "metrics"
 
 type builder struct {
 	namespace string
@@ -84,6 +89,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 }
 
 func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
+	serverName := fmt.Sprintf("%s.%s.svc", constants.PluginName, b.namespace)
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.PluginName,
@@ -92,11 +98,20 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Endpoints: []monitoringv1.Endpoint{
 				{
-					Port:     "main",
+					Port:     metricsPortName,
 					Interval: "15s",
 					Scheme:   "https",
 					TLSConfig: &monitoringv1.TLSConfig{
 						SafeTLSConfig: monitoringv1.SafeTLSConfig{
+							ServerName: serverName,
+							CA: monitoringv1.SecretOrConfigMap{
+								ConfigMap: &corev1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "openshift-service-ca.crt",
+									},
+									Key: "service-ca.crt",
+								},
+							},
 							Cert: monitoringv1.SecretOrConfigMap{
 								Secret: &corev1.SecretKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
@@ -104,6 +119,12 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 									},
 									Key: "tls.crt",
 								},
+							},
+							KeySecret: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: secretName,
+								},
+								Key: "tls.key",
 							},
 						},
 					},
@@ -297,34 +318,50 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 	}
 }
 
-func (b *builder) service(old *corev1.Service) *corev1.Service {
-	if old == nil {
-		return &corev1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      constants.PluginName,
-				Namespace: b.namespace,
-				Labels:    b.labels,
-				Annotations: map[string]string{
-					constants.OpenShiftCertificateAnnotation: "console-serving-cert",
-				},
+func (b *builder) mainService() *corev1.Service {
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.PluginName,
+			Namespace: b.namespace,
+			Labels:    b.labels,
+			Annotations: map[string]string{
+				constants.OpenShiftCertificateAnnotation: "console-serving-cert",
 			},
-			Spec: corev1.ServiceSpec{
-				Selector: b.selector,
-				Ports: []corev1.ServicePort{{
-					Port:     b.desired.ConsolePlugin.Port,
-					Protocol: "TCP",
-					Name:     "main",
-				}},
-			},
-		}
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: b.selector,
+			Ports: []corev1.ServicePort{{
+				Port:     b.desired.ConsolePlugin.Port,
+				Protocol: corev1.ProtocolTCP,
+				// Some Kubernetes versions might automatically set TargetPort to Port. We need to
+				// explicitly set it here so the reconcile loop verifies that the owned service
+				// is equal as the desired service
+				TargetPort: intstr.FromInt(int(b.desired.ConsolePlugin.Port)),
+			}},
+		},
 	}
-	// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
-	newService := old.DeepCopy()
-	newService.Spec.Ports = []corev1.ServicePort{{
-		Port:     b.desired.ConsolePlugin.Port,
-		Protocol: corev1.ProtocolUDP,
-	}}
-	return newService
+}
+
+func (b *builder) metricsService() *corev1.Service {
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      metricsSvcName,
+			Namespace: b.namespace,
+			Labels:    b.labels,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: b.selector,
+			Ports: []corev1.ServicePort{{
+				Port:     metricsPort,
+				Protocol: corev1.ProtocolTCP,
+				Name:     metricsPortName,
+				// Some Kubernetes versions might automatically set TargetPort to Port. We need to
+				// explicitly set it here so the reconcile loop verifies that the owned service
+				// is equal as the desired service
+				TargetPort: intstr.FromInt(metricsPort),
+			}},
+		},
+	}
 }
 
 // returns a configmap with a digest of its configuration contents, which will be used to

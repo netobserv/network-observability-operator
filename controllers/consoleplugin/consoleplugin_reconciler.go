@@ -36,6 +36,7 @@ type CPReconciler struct {
 type ownedObjects struct {
 	deployment     *appsv1.Deployment
 	service        *corev1.Service
+	metricsService *corev1.Service
 	hpa            *ascv2.HorizontalPodAutoscaler
 	serviceAccount *corev1.ServiceAccount
 	configMap      *corev1.ConfigMap
@@ -46,6 +47,7 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string, av
 	owned := ownedObjects{
 		deployment:     &appsv1.Deployment{},
 		service:        &corev1.Service{},
+		metricsService: &corev1.Service{},
 		hpa:            &ascv2.HorizontalPodAutoscaler{},
 		serviceAccount: &corev1.ServiceAccount{},
 		configMap:      &corev1.ConfigMap{},
@@ -54,6 +56,7 @@ func NewReconciler(cl reconcilers.ClientHelper, ns, prevNS, imageName string, av
 	nobjMngr := reconcilers.NewNamespacedObjectManager(cl, ns, prevNS)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.deployment)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.service)
+	nobjMngr.AddManagedObject(metricsSvcName, owned.metricsService)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.hpa)
 	nobjMngr.AddManagedObject(constants.PluginName, owned.serviceAccount)
 	nobjMngr.AddManagedObject(configMapName, owned.configMap)
@@ -102,7 +105,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 		return err
 	}
 
-	if err = r.reconcileService(ctx, builder, &desired.Spec); err != nil {
+	if err = r.reconcileServices(ctx, builder, &desired.Spec); err != nil {
 		return err
 	}
 
@@ -211,20 +214,15 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder builder,
 	return nil
 }
 
-func (r *CPReconciler) reconcileService(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec) error {
-	report := helper.NewChangeReport("Console service")
+func (r *CPReconciler) reconcileServices(ctx context.Context, builder builder, desired *flowslatest.FlowCollectorSpec) error {
+	report := helper.NewChangeReport("Console services")
 	defer report.LogIfNeeded(ctx)
 
-	if !r.nobjMngr.Exists(r.owned.service) {
-		newSVC := builder.service(nil)
-		if err := r.CreateOwned(ctx, newSVC); err != nil {
-			return err
-		}
-	} else if serviceNeedsUpdate(r.owned.service, &desired.ConsolePlugin, &report) {
-		newSVC := builder.service(r.owned.service)
-		if err := r.UpdateOwned(ctx, r.owned.service, newSVC); err != nil {
-			return err
-		}
+	if err := reconcilers.ReconcileService(ctx, r.nobjMngr, &r.ClientHelper, r.owned.service, builder.mainService(), &report); err != nil {
+		return err
+	}
+	if err := reconcilers.ReconcileService(ctx, r.nobjMngr, &r.ClientHelper, r.owned.metricsService, builder.metricsService(), &report); err != nil {
+		return err
 	}
 	if r.availableAPIs.HasSvcMonitor() {
 		serviceMonitor := builder.serviceMonitor()
@@ -273,14 +271,4 @@ func statusURL(loki *flowslatest.FlowCollectorLoki) string {
 		return loki.StatusURL
 	}
 	return querierURL(loki)
-}
-
-func serviceNeedsUpdate(svc *corev1.Service, desired *pluginSpec, report *helper.ChangeReport) bool {
-	for _, port := range svc.Spec.Ports {
-		if port.Port == desired.Port && port.Protocol == "TCP" {
-			return false
-		}
-	}
-	report.Add("Port changed")
-	return true
 }

@@ -540,7 +540,7 @@ type FlowCollectorConsolePlugin struct {
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=9001
-	// port is the plugin service port
+	// port is the plugin service port. Do not use 9002, which is reserved for metrics.
 	Port int32 `json:"port,omitempty"`
 
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never

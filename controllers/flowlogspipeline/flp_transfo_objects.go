@@ -76,12 +76,8 @@ func (b *transfoBuilder) buildPipelineConfig() ([]config.Stage, []config.StagePa
 	return pipeline.GetStages(), pipeline.GetStageParams(), dashboardConfigMap, nil
 }
 
-func (b *transfoBuilder) newPromService() *corev1.Service {
-	return b.generic.newPromService()
-}
-
-func (b *transfoBuilder) fromPromService(old *corev1.Service) *corev1.Service {
-	return b.generic.fromPromService(old)
+func (b *transfoBuilder) promService() *corev1.Service {
+	return b.generic.promService()
 }
 
 func (b *transfoBuilder) autoScaler() *ascv2.HorizontalPodAutoscaler {

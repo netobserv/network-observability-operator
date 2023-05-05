@@ -429,7 +429,7 @@ func TestServiceNoChange(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := newMonolithBuilder(ns, image, &cfg, true)
-	first := b.newPromService()
+	first := b.promService()
 
 	// Check no change
 	newService := first.DeepCopy()
@@ -446,12 +446,12 @@ func TestServiceChanged(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := newMonolithBuilder(ns, image, &cfg, true)
-	first := b.newPromService()
+	first := b.promService()
 
 	// Check port changed
 	cfg.Processor.Metrics.Server.Port = 9999
 	b = newMonolithBuilder(ns, image, &cfg, true)
-	second := b.fromPromService(first)
+	second := b.promService()
 
 	report := helper.NewChangeReport("")
 	assert.True(helper.ServiceChanged(first, second, &report))
@@ -460,7 +460,7 @@ func TestServiceChanged(t *testing.T) {
 	// Make sure non-service settings doesn't trigger service update
 	cfg.Processor.LogLevel = "error"
 	b = newMonolithBuilder(ns, image, &cfg, true)
-	third := b.fromPromService(first)
+	third := b.promService()
 
 	report = helper.NewChangeReport("")
 	assert.False(helper.ServiceChanged(second, third, &report))
@@ -653,7 +653,7 @@ func TestLabels(t *testing.T) {
 	assert.Equal("dev", ds2.Spec.Template.Labels["version"])
 
 	// Service
-	svc := builder.newPromService()
+	svc := builder.promService()
 	assert.Equal("flowlogs-pipeline", svc.Labels["app"])
 	assert.Equal("flowlogs-pipeline", svc.Spec.Selector["app"])
 	assert.Equal("dev", svc.Labels["version"])

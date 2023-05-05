@@ -71,12 +71,8 @@ func (b *monolithBuilder) buildPipelineConfig() ([]config.Stage, []config.StageP
 	return pipeline.GetStages(), pipeline.GetStageParams(), dashboardConfigMap, nil
 }
 
-func (b *monolithBuilder) newPromService() *corev1.Service {
-	return b.generic.newPromService()
-}
-
-func (b *monolithBuilder) fromPromService(old *corev1.Service) *corev1.Service {
-	return b.generic.fromPromService(old)
+func (b *monolithBuilder) promService() *corev1.Service {
+	return b.generic.promService()
 }
 
 func (b *monolithBuilder) serviceAccount() *corev1.ServiceAccount {
