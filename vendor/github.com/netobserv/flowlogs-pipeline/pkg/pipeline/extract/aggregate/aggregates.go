@@ -61,7 +61,7 @@ func (aggregates *Aggregates) GetMetrics() []config.GenericMap {
 func (aggregates *Aggregates) AddAggregate(aggregateDefinition api.AggregateDefinition) []Aggregate {
 	aggregate := Aggregate{
 		Definition: aggregateDefinition,
-		cache:      utils.NewTimedCache(0),
+		cache:      utils.NewTimedCache(0, nil),
 		mutex:      &sync.Mutex{},
 		expiryTime: aggregates.expiryTime,
 	}

@@ -145,6 +145,11 @@ func (b *PipelineBuilderStage) WriteLoki(name string, loki api.WriteLoki) Pipeli
 	return b.next(name, NewWriteLokiParams(name, loki))
 }
 
+// WriteIpfix chains the current stage with a WriteIpfix stage and returns that new stage
+func (b *PipelineBuilderStage) WriteIpfix(name string, ipfix api.WriteIpfix) PipelineBuilderStage {
+	return b.next(name, NewWriteIpfixParams(name, ipfix))
+}
+
 // GetStages returns the current pipeline stages. It can be called from any of the stages, they share the same pipeline reference.
 func (b *PipelineBuilderStage) GetStages() []Stage {
 	return b.pipeline.stages

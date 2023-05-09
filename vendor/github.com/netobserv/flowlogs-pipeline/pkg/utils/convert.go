@@ -226,12 +226,19 @@ func ConvertToBool(unk interface{}) (bool, error) {
 	default:
 		v := reflect.ValueOf(unk)
 		v = reflect.Indirect(v)
-		if v.Type().ConvertibleTo(stringType) {
-			sv := v.Convert(stringType)
-			s := sv.String()
-			return strconv.ParseBool(s)
+		if v.Type().ConvertibleTo(intType) {
+			sv := v.Convert(intType)
+			s := sv.Int()
+			switch s {
+			case 0:
+				return false, nil
+			case 1:
+				return true, nil
+			default:
+				return false, fmt.Errorf("can't convert %v (%v) to bool", s, v.Type())
+			}
 		} else {
-			return false, fmt.Errorf("can't convert %v to int", v.Type())
+			return false, fmt.Errorf("can't convert %v (%v) to bool", unk, v.Type())
 		}
 	}
 }

@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/netobserv/network-observability-operator/api/v1beta1"
 	utilconversion "github.com/netobserv/network-observability-operator/pkg/conversion"
@@ -59,7 +60,25 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 
 	dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS
 
+	if restored.Spec.Exporters != nil {
+		for _, restoredExp := range restored.Spec.Exporters {
+			if !isExporterIn(restoredExp, dst.Spec.Exporters) {
+				dst.Spec.Exporters = append(dst.Spec.Exporters, restoredExp)
+			}
+		}
+	}
+
 	return nil
+}
+
+func isExporterIn(restoredExporter *v1beta1.FlowCollectorExporter, dstExporters []*v1beta1.FlowCollectorExporter) bool {
+
+	for _, dstExp := range dstExporters {
+		if reflect.DeepEqual(restoredExporter, dstExp) {
+			return true
+		}
+	}
+	return false
 }
 
 // ConvertFrom converts the hub version v1beta1 FlowCollector object to v1alpha1
@@ -108,4 +127,11 @@ func Convert_v1beta1_FLPMetrics_To_v1alpha1_FLPMetrics(in *v1beta1.FLPMetrics, o
 // nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1beta1.FlowCollectorLoki, out *FlowCollectorLoki, s apiconversion.Scope) error {
 	return autoConvert_v1beta1_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta1 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta1_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(in *v1beta1.FlowCollectorExporter, out *FlowCollectorExporter, s apiconversion.Scope) error {
+	return autoConvert_v1beta1_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(in, out, s)
 }

@@ -72,3 +72,7 @@ func NewWriteStdoutParams(name string, stdout api.WriteStdout) StageParam {
 func NewWriteLokiParams(name string, loki api.WriteLoki) StageParam {
 	return StageParam{Name: name, Write: &Write{Type: api.LokiType, Loki: &loki}}
 }
+
+func NewWriteIpfixParams(name string, ipfix api.WriteIpfix) StageParam {
+	return StageParam{Name: name, Write: &Write{Type: api.IpfixType, Ipfix: &ipfix}}
+}

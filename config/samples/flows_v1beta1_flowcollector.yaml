@@ -136,3 +136,9 @@ spec:
     #   kafka:
     #     address: "kafka-cluster-kafka-bootstrap.netobserv"
     #     topic: netobserv-flows-export
+    # or
+    # - type: IPFIX
+    #   ipfix:
+    #     targetHost: "ipfix-collector.ipfix.svc.cluster.local"
+    #     targetPort: 4739
+    #     transport: tcp or udp (optional - defaults to tcp)
