@@ -9,6 +9,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+
 	osv1 "github.com/openshift/api/security/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -151,6 +152,10 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 	}
 	if desired.Privileged {
 		scc.AllowPrivilegedContainer = true
+		if (desired.EnableTCPDrop != nil && *desired.EnableTCPDrop) ||
+			(desired.EnableDNSTracking != nil && *desired.EnableDNSTracking) {
+			scc.AllowHostDirVolumePlugin = true
+		}
 	} else {
 		scc.AllowedCapabilities = AllowedCapabilities
 	}
