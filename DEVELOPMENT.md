@@ -156,6 +156,10 @@ See [RELEASE.md](./RELEASE.md#publishing-on-operatorhub).
 
 ## Using custom operand image
 
+### With operator unmanaged deployment
+
+This section is relevant when the operator was deployed directly as a Deployment, e.g. using `make deploy`. If it was deployed via OLM, refer to the next section.
+
 In the `manager` container of the `netobserv-controller-manager` Deployment, set any of the
 following the environment variables with your custom operand image with `kubectl set env` or
 `oc set env`:
@@ -176,6 +180,16 @@ Alternatively you can use helper make targets for the same purpose:
 
 ```bash
 USER=myself VERSION=test make set-agent-image set-flp-image set-plugin-image
+```
+
+### With operator managed via OLM
+
+When the operator was deployed via OLM, hence is managed through its CSV, the "related images" are defined in the CSV. The same `make` targets can be used to modify them, with an additional `CSV` argument to target a CSV file. It is assumed to be deployed in namespace `openshift-netobserv-operator`.
+
+E.g:
+
+```bash
+CSV=network-observability-operator.v1.2.0 USER=myself VERSION=test make set-agent-image set-flp-image set-plugin-image
 ```
 
 ## View flowlogs-pipeline metrics in console
