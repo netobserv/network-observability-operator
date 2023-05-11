@@ -10,10 +10,10 @@ make build test
 
 ## Build and deploy a Docker image
 
-A way to test code changes is to build a Docker image from local sources, push it to your own Docker repository, and deploy it to an existing cluster. Do the following, but replace IMG value with your own registry and account:
+A way to test code changes is to build a Docker image from local sources, push it to your own Docker repository, and deploy it to an existing cluster. Do the following, but replace IMAGE value with your own registry and account:
 
 ```bash
-IMG="quay.io/youraccount/network-observability-operator:test" make image-build image-push deploy
+IMAGE="quay.io/youraccount/network-observability-operator:test" make image-build image-push deploy
 ```
 
 After the operator is deployed, set up Loki, which is used to store flows, install a `FlowCollector` custom resource to collect network flows, and optionally install Grafana to provide a user interface and dashboards.
@@ -55,7 +55,7 @@ It is recommended to switch to the corresponding release Git tag before deployin
 
 When `VERSION` is not provided, it defaults to the latest build on `main` branch.
 
-You can also provide any custom `IMG` to `make deploy`.
+You can also provide any custom `IMAGE` to `make deploy`.
 
 ## Before commiting, make sure bundle is correct
 
@@ -106,18 +106,18 @@ bundle for local testing, you should execute the following commands:
 
 ```bash
 export USER=<container-registry-username>
-export IMG=quay.io/$USER/network-observability-operator:v0.0.1
-export BUNDLE_IMG=quay.io/$USER/network-observability-operator-bundle:v0.0.1
+export IMAGE=quay.io/$USER/network-observability-operator:v0.0.1
+export BUNDLE_IMAGE=quay.io/$USER/network-observability-operator-bundle:v0.0.1
 make image-build image-push
-make bundle bundle-build bundle-push
+make bundle-push
 ```
 
 Optionally, you might validate the bundle:
 
 ```bash
-bin/operator-sdk bundle validate $BUNDLE_IMG
+bin/operator-sdk bundle validate $BUNDLE_IMAGE
 # or for podman
-bin/operator-sdk bundle validate -b podman $BUNDLE_IMG
+bin/operator-sdk bundle validate -b podman $BUNDLE_IMAGE
 ```
 
 > Note: the base64 logo can be generated with: `base64 -w 0 <image file>`, then manually pasted in the [CSV manifest file](./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml) under `spec.icon`.
@@ -127,7 +127,7 @@ bin/operator-sdk bundle validate -b podman $BUNDLE_IMG
 This mode is recommended to quickly test the operator during its development:
 
 ```bash
-bin/operator-sdk run bundle $BUNDLE_IMG
+bin/operator-sdk run bundle $BUNDLE_IMAGE
 ```
 
 To cleanup:
@@ -144,7 +144,7 @@ operators' catalog and installing/configuring it manually through the UI.
 First, create and push a catalog image:
 
 ```bash
-export CATALOG_IMG=quay.io/$USER/network-observability-operator-catalog:v$VERSION
+export CATALOG_IMAGE=quay.io/$USER/network-observability-operator-catalog:v$VERSION
 make catalog-build catalog-push catalog-deploy
 ```
 

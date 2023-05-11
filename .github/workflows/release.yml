@@ -19,6 +19,12 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
+      - name: docker login to quay.io
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ env.REGISTRY_PASSWORD }}
+          registry: quay.io
       - name: validate tag
         run: |
           tag=`git describe --exact-match --tags 2> /dev/null`
@@ -37,20 +43,13 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - name: build operator
-        run: IMG=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make image-build
-      - name: podman login to quay.io
-        uses: redhat-actions/podman-login@v1
-        with:
-          username: ${{ env.REGISTRY_USER }}
-          password: ${{ env.REGISTRY_PASSWORD }}
-          registry: quay.io
-      - name: push operator to quay.io
-        id: push-operator
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ env.IMAGE }}
-          tags: ${{ env.tag }}
-          registry: ${{ env.REGISTRY }}
+        run: IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make image-build
+      - name: push operator
+        run: IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make image-push
+      - name: build manifest
+        run: IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make manifest-build
+      - name: push manifest
+        run: IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make manifest-push
       - name: build bundle
         run: BUNDLE_VERSION=${{ env.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make bundle-build
       - name: push bundle to quay.io

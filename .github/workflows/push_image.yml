@@ -5,9 +5,10 @@ on:
 
 env:
   REGISTRY_USER: netobserv+github_ci
-  REGISTRY_PASSWORD: ${{ secrets.QUAY_SECRET }}
   REGISTRY: quay.io/netobserv
   IMAGE: network-observability-operator
+  ORG: netobserv
+  VERSION: main
 
 jobs:
   push-image:
@@ -25,42 +26,39 @@ jobs:
           go-version: ${{ matrix.go }}
       - name: checkout
         uses: actions/checkout@v3
-      - name: build images
-        run: IMG=${{ env.REGISTRY }}/${{ env.IMAGE }}:main make ci-images-build
-      - name: podman login to quay.io
-        uses: redhat-actions/podman-login@v1
+      - name: docker login to quay.io
+        uses: docker/login-action@v2
         with:
           username: ${{ env.REGISTRY_USER }}
-          password: ${{ env.REGISTRY_PASSWORD }}
+          password: ${{ secrets.QUAY_SECRET }}
           registry: quay.io
       - name: get short sha
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-      - name: push to quay.io
-        id: push-to-quay
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ env.IMAGE }}
-          tags: main ${{ env.short_sha }}
-          registry: ${{ env.REGISTRY }}
+      - name: build images
+        run: IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }} make image-build
+      - name: push images
+        run: IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }} make image-push
+      - name: build and push manifest
+        run: IMAGE_ORG=${{ env.ORG }} VERSION=${{ env.VERSION }} make ci-manifest
       - name: print image url
         run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
       - name: build bundle
-        run: VERSION=main PLG_VERSION=main FLP_VERSION=main BPF_VERSION=main BUNDLE_VERSION=0.0.0-main make bundle bundle-build
+        run: IMAGE_ORG=${{ env.ORG }} VERSION=${{ env.VERSION }} PLG_VERSION=${{ env.VERSION }} FLP_VERSION=${{ env.VERSION }} BPF_VERSION=${{ env.VERSION }} BUNDLE_VERSION=0.0.0-${{ env.VERSION }} make bundle bundle-build
       - name: push bundle to quay.io
         id: push-bundle
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ env.IMAGE }}-bundle
-          tags: v0.0.0-main
+          tags: v0.0.0-${{ env.VERSION }}
           registry: ${{ env.REGISTRY }}
       - name: build catalog
-        run: BUNDLE_VERSION=0.0.0-main make catalog-build
+        run: IMAGE_ORG=${{ env.ORG }} BUNDLE_VERSION=0.0.0-${{ env.VERSION }} make catalog-build
       - name: push catalog to quay.io
         id: push-catalog
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ env.IMAGE }}-catalog
-          tags: v0.0.0-main
+          tags: v0.0.0-${{ env.VERSION }}
           registry: ${{ env.REGISTRY }}
       - name: print images reference
         run: |

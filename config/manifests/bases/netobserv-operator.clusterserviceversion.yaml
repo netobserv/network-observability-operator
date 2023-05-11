@@ -11,6 +11,11 @@ metadata:
     description: Network flows collector and monitoring solution
     operatorframework.io/suggested-namespace: openshift-netobserv-operator
     repository: https://github.com/netobserv/network-observability-operator
+  labels:
+    operatorframework.io/arch.amd64: supported
+    operatorframework.io/arch.arm64: supported
+    operatorframework.io/arch.ppc64le: supported
+    operatorframework.io/os.linux: supported
   name: netobserv-operator.v0.0.0
   namespace: placeholder
 spec:
