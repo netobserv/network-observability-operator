@@ -42,7 +42,7 @@ jobs:
       - name: push images
         run: IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.short_sha }} make image-push
       - name: build and push manifest
-        run: IMAGE_ORG=${{ env.ORG }} VERSION=${{ env.VERSION }} make ci-manifest
+        run: IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.short_sha }} make ci-manifes
       - name: build bundle
         run: IMAGE_ORG=${{ env.ORG }} VERSION=${{ env.short_sha }} PLG_VERSION=main FLP_VERSION=main BPF_VERSION=main BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle shortlived-bundle-build
       - name: push bundle to quay.io
