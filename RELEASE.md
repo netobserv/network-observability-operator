@@ -33,7 +33,7 @@ Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, 
 
 ```bash
 
-make bundle
+make update-bundle
 
 # Set desired operator version - CAREFUL, no leading "v" here
 version="1.0.2"
