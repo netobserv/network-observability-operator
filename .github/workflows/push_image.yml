@@ -1,7 +1,7 @@
 name: Build and push to quay.io
 on:
   push:
-    branches: [ main ]
+    branches: [ main, workflow-test ]
 
 env:
   WF_REGISTRY_USER: netobserv+github_ci
@@ -9,7 +9,7 @@ env:
   WF_IMAGE: network-observability-operator
   WF_ORG: netobserv
   WF_MULTIARCH_TARGETS: amd64 arm64 ppc64le
-  WF_VERSION: main
+  WF_VERSION: ${{ github.ref_name }}
 
 jobs:
   push-image:
