@@ -14,18 +14,6 @@ push-manifest: manifest-push ## Push MULTIARCH_TARGETS manifest
 .PHONY: images
 images: image-build image-push manifest-build manifest-push ## Build and push MULTIARCH_TARGETS images and related manifest
 
-.PHONY: build-ci-manifest
-build-ci-manifest: ci-manifest-build ## Build CI manifest
-
-.PHONY: push-ci-manifest
-push-ci-manifest: ci-manifest-push ## Push CI manifest
-
-.PHONY: ci-manifest
-ci-manifest: ci-manifest-build ci-manifest-push ## Build and push CI manifest
-
-.PHONY: ci
-ci: images ci-manifest ## Build and push CI images and manifest
-
 .PHONY: build-catalog
 build-catalog: catalog-build ## Build a catalog image
 

@@ -8,6 +8,7 @@ env:
   REGISTRY: quay.io/netobserv
   IMAGE: network-observability-operator
   ORG: netobserv
+  MULTIARCH_TARGETS: amd64 arm64 ppc64le
   VERSION: main
 
 jobs:
@@ -35,13 +36,17 @@ jobs:
       - name: get short sha
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: build images
-        run: IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }} make image-build
+        run: |
+          MULTIARCH_TARGETS=${{ env.MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }} make image-build
+          MULTIARCH_TARGETS=${{ env.MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.short_sha }} OCI_BUILD_OPTS="--label quay.expires-after=2w" make image-build
       - name: push images
-        run: IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }} make image-push
+        run: |
+          MULTIARCH_TARGETS=${{ env.MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }} make image-push
+          MULTIARCH_TARGETS=${{ env.MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.short_sha }} make image-push
       - name: build and push manifest
-        run: IMAGE_ORG=${{ env.ORG }} VERSION=${{ env.VERSION }} make ci-manifest
-      - name: print image url
-        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
+        run: |
+          IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }} make manifest-build manifest-push
+          IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.short_sha }} make manifest-build manifest-push
       - name: build bundle
         run: IMAGE_ORG=${{ env.ORG }} VERSION=${{ env.VERSION }} PLG_VERSION=${{ env.VERSION }} FLP_VERSION=${{ env.VERSION }} BPF_VERSION=${{ env.VERSION }} BUNDLE_VERSION=0.0.0-${{ env.VERSION }} make bundle bundle-build
       - name: push bundle to quay.io
@@ -60,9 +65,6 @@ jobs:
           image: ${{ env.IMAGE }}-catalog
           tags: v0.0.0-${{ env.VERSION }}
           registry: ${{ env.REGISTRY }}
-      - name: print images reference
-        run: |
-          echo "Images: ${{ steps.push-to-quay.outputs.registry-paths }}, ${{ steps.push-bundle.outputs.registry-paths }}, ${{ steps.push-catalog.outputs.registry-paths }}"
 
   codecov:
     name: Codecov upload

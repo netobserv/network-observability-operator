@@ -5,9 +5,10 @@ on:
 
 env:
   REGISTRY_USER: netobserv+github_ci
-  REGISTRY_PASSWORD: ${{ secrets.QUAY_SECRET }}
   REGISTRY: quay.io/netobserv
   IMAGE: network-observability-operator
+  ORG: netobserv
+  MULTIARCH_TARGETS: amd64 arm64 ppc64le
 
 jobs:
   push-image:
@@ -23,7 +24,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           username: ${{ env.REGISTRY_USER }}
-          password: ${{ env.REGISTRY_PASSWORD }}
+          password: ${{ secrets.QUAY_SECRET }}
           registry: quay.io
       - name: validate tag
         run: |
@@ -43,15 +44,16 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - name: build operator
-        run: IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make image-build
+        run: |
+          MULTIARCH_TARGETS=${{ env.MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make image-build
       - name: push operator
-        run: IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make image-push
-      - name: build manifest
-        run: IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make manifest-build
-      - name: push manifest
-        run: IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make manifest-push
+        run: |
+          MULTIARCH_TARGETS=${{ env.MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make image-push
+      - name: build and push manifest
+        run: |
+          IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make manifest-build manifest-push
       - name: build bundle
-        run: BUNDLE_VERSION=${{ env.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make bundle-build
+        run: IMAGE_ORG=${{ env.ORG }} BUNDLE_VERSION=${{ env.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make bundle-build
       - name: push bundle to quay.io
         id: push-bundle
         uses: redhat-actions/push-to-registry@v2

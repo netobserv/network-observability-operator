@@ -20,12 +20,12 @@ run_step() {
 
   version=$(cat .github/workflows/$file | yq ".env.VERSION")
   step=$(cat .github/workflows/$file | yq ".jobs.$job.steps[] | select(.name==\"$name\").run")
-  step=$(echo $step | sed -r "s~\\$\{\{ env\.ORG \}\}~netobserv~g" | sed -r "s~\\$\{\{ env\.VERSION \}\}~$version~g" | sed -r "s~\\$\{\{ env\.REGISTRY \}\}~quay.io/netobserv~g" | sed -r "s~\\$\{\{ env\.IMAGE \}\}~network-observability-operator~g" | sed -r "s~\\$\{\{ env\.short_sha \}\}~$short_sha~g" | sed -r "s~\\$\{\{ env\.tag \}\}~$fake_tag~g")
+  step=$(echo "$step" | sed -r "s~\\$\{\{ env\.ORG \}\}~netobserv~g" | sed -r "s~\\$\{\{ env\.VERSION \}\}~$version~g" | sed -r "s~\\$\{\{ env\.REGISTRY \}\}~quay.io/netobserv~g" | sed -r "s~\\$\{\{ env\.IMAGE \}\}~network-observability-operator~g" | sed -r "s~\\$\{\{ env\.MULTIARCH_TARGETS \}\}~\"amd64 arm64 ppc64le\"~g" | sed -r "s~\\$\{\{ env\.short_sha \}\}~$short_sha~g" | sed -r "s~\\$\{\{ env\.tag \}\}~$fake_tag~g")
   step="$opts $step"
 
   echo "↘️  Running step '$name' ($file)"
-  echo $step
-  eval $step > $test_out 2>&1
+  echo "$step"
+  eval "$step" > $test_out 2>&1
 
   if [ $? -ne 0 ]; then
       echo "❌ Step failed"
@@ -67,10 +67,8 @@ expect_occurrences_at_least() {
 echo -e "🥁🥁🥁 TESTING push_image_pr.yml 🥁🥁🥁"
 
 # we only test images here as manifest-build need images to be pushed
-run_step "push_image_pr.yml" "push-pr-image" "build images"
+run_step "push_image_pr.yml" "push-pr-image" "build image"
 expect_image_tagged "quay.io/netobserv/network-observability-operator:$short_sha-amd64"
-expect_image_tagged "quay.io/netobserv/network-observability-operator:$short_sha-arm64"
-expect_image_tagged "quay.io/netobserv/network-observability-operator:$short_sha-ppc64le"
 
 run_step "push_image_pr.yml" "push-pr-image" "build bundle"
 expect_image_tagged "quay.io/netobserv/network-observability-operator-bundle:v0.0.0-$short_sha"
@@ -91,6 +89,9 @@ run_step "push_image.yml" "push-image" "build images"
 expect_image_tagged "quay.io/netobserv/network-observability-operator:main-amd64"
 expect_image_tagged "quay.io/netobserv/network-observability-operator:main-arm64"
 expect_image_tagged "quay.io/netobserv/network-observability-operator:main-ppc64le"
+expect_image_tagged "quay.io/netobserv/network-observability-operator:$short_sha-amd64"
+expect_image_tagged "quay.io/netobserv/network-observability-operator:$short_sha-arm64"
+expect_image_tagged "quay.io/netobserv/network-observability-operator:$short_sha-ppc64le"
 
 run_step "push_image.yml" "push-image" "build bundle"
 expect_image_tagged "quay.io/netobserv/network-observability-operator-bundle:v0.0.0-main"
