@@ -213,3 +213,15 @@ make set-release-kind-downstream
 ```
 
 Most notably change will concern the monitoring part which will use the platoform monitoring stack instead of the user workload monitoring stack.
+
+## Testing the github workflow
+
+Testing github workflows can sometimes be tricky as it's not always possible to run everything locally, and they depend on triggers such as merging a commit, or pushing a tag on the upstream.
+
+One thing you should do if you modified the workflows and/or the Makefiles, is to run the `hack/test-workflow.sh` script. It is not a silver bullet, but it will test a bunch of things in the workflows, such as expecting some images to be built, and correctly referenced in the CSV. But it cannot cover everything, like it won't push anything to the image registry.
+
+The second thing you can do is to push your commits to the upstream `workflow-test` branch. The `push_image.yml` workflow is triggered on that branch, just like when something is merged on the `main` branch. So, you can open the [corresponding page](https://github.com/netobserv/network-observability-operator/actions/workflows/push_image.yml) in Github to monitor the jobs triggered. Make sure on Quay that you get the expected images for the [Operator](https://quay.io/repository/netobserv/network-observability-operator?tab=tags), the [bundle](https://quay.io/repository/netobserv/network-observability-operator-bundle?tab=tags) and the [catalog](https://quay.io/repository/netobserv/network-observability-operator-catalog?tab=tags).
+
+Then, you can test the upstream release process by [following the doc](./RELEASE.md). Don't do a full release of course, but just create a release candidate (e.g. set version to 1.0.3-rc0). When the tag is pushed, it will trigger the corresponding workflow ([view on github](https://github.com/netobserv/network-observability-operator/actions/workflows/release.yml)). As above, you should check that the images are well created in Quay.. It's fine if you tag from the `workflow-test` branch (or any branch). You can remove the tag after you tested.
+
+Finally, to test the per-PR workflow (pre-merge testing), just open a dummy PR against the upstream branch `workflow-test` (where you pushed your workflow changes), and add the usual `ok-to-test` label. This will trigger the corresponding `push_image_pr.yml` workflow ([view on github](https://github.com/netobserv/network-observability-operator/actions/workflows/push_image_pr.yml)). As above, you should check that the images are well created in Quay.
