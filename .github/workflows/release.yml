@@ -8,7 +8,7 @@ env:
   WF_REGISTRY: quay.io/netobserv
   WF_IMAGE: network-observability-operator
   WF_ORG: netobserv
-  WF_MULTIARCH_TARGETS: "amd64 arm64 ppc64le"
+  WF_MULTIARCH_TARGETS: amd64 arm64 ppc64le
 
 jobs:
   push-image:
@@ -45,10 +45,10 @@ jobs:
           go-version: ${{ matrix.go }}
       - name: build operator
         run: |
-          MULTIARCH_TARGETS=${{ env.WF_MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make image-build
+          MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make image-build
       - name: push operator
         run: |
-          MULTIARCH_TARGETS=${{ env.WF_MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make image-push
+          MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make image-push
       - name: build and push manifest
         run: |
           IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make manifest-build manifest-push

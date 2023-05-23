@@ -8,7 +8,7 @@ env:
   WF_REGISTRY: quay.io/netobserv
   WF_IMAGE: network-observability-operator
   WF_ORG: netobserv
-  WF_MULTIARCH_TARGETS: "amd64 arm64 ppc64le"
+  WF_MULTIARCH_TARGETS: amd64 arm64 ppc64le
   WF_VERSION: main
 
 jobs:
@@ -37,12 +37,12 @@ jobs:
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: build images
         run: |
-          MULTIARCH_TARGETS=${{ env.WF_MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.WF_VERSION }} make image-build
-          MULTIARCH_TARGETS=${{ env.WF_MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} OCI_BUILD_OPTS="--label quay.expires-after=2w" make image-build
+          MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.WF_VERSION }} make image-build
+          MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} OCI_BUILD_OPTS="--label quay.expires-after=2w" make image-build
       - name: push images
         run: |
-          MULTIARCH_TARGETS=${{ env.WF_MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.WF_VERSION }} make image-push
-          MULTIARCH_TARGETS=${{ env.WF_MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make image-push
+          MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.WF_VERSION }} make image-push
+          MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make image-push
       - name: build and push manifest
         run: |
           IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.WF_VERSION }} make manifest-build manifest-push
