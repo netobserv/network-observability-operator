@@ -3,7 +3,7 @@ VERSION ?= main
 BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
 TAG_COMMIT := $(shell git rev-list --abbrev-commit --tags --max-count=1)
 TAG := $(shell git describe --abbrev=0 --tags ${TAG_COMMIT} 2>/dev/null || true)
-BUILD_SHA := $(shell git rev-parse --short HEAD)
+BUILD_SHA ?= $(shell git rev-parse --short HEAD)
 BUILD_VERSION := $(TAG:v%=%)
 ifneq ($(COMMIT), $(TAG_COMMIT))
 	BUILD_VERSION := $(BUILD_VERSION)-$(BUILD_SHA)
@@ -316,7 +316,7 @@ else
 endif
 
 .PHONY: ci-manifest-build
-ci-manifest-build: manifest-build ## Build CI manifest
+ci-manifest-build: ## Build CI manifest
 	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMAGE) -t $(IMAGE_SHA) -f shortlived.Dockerfile .
 ifeq ($(VERSION), main)
 # Also tag "latest" only for branch "main"

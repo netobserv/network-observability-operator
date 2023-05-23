@@ -39,7 +39,7 @@ jobs:
       - name: push images
         run: IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }} make image-push
       - name: build and push manifest
-        run: IMAGE_ORG=${{ env.ORG }} VERSION=${{ env.VERSION }} make ci-manifest
+        run: IMAGE_ORG=${{ env.ORG }} VERSION=${{ env.VERSION }} make manifest-build ci-manifest
       - name: print image url
         run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
       - name: build bundle
