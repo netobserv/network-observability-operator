@@ -18,9 +18,9 @@ run_step() {
   name=$3
   opts=$4
 
-  version=$(cat .github/workflows/$file | yq ".env.VERSION")
+  version=$(cat .github/workflows/$file | yq ".env.WF_VERSION")
   step=$(cat .github/workflows/$file | yq ".jobs.$job.steps[] | select(.name==\"$name\").run")
-  step=$(echo "$step" | sed -r "s~\\$\{\{ env\.ORG \}\}~netobserv~g" | sed -r "s~\\$\{\{ env\.VERSION \}\}~$version~g" | sed -r "s~\\$\{\{ env\.REGISTRY \}\}~quay.io/netobserv~g" | sed -r "s~\\$\{\{ env\.IMAGE \}\}~network-observability-operator~g" | sed -r "s~\\$\{\{ env\.MULTIARCH_TARGETS \}\}~\"amd64 arm64 ppc64le\"~g" | sed -r "s~\\$\{\{ env\.short_sha \}\}~$short_sha~g" | sed -r "s~\\$\{\{ env\.tag \}\}~$fake_tag~g")
+  step=$(echo "$step" | sed -r "s~\\$\{\{ env\.WF_ORG \}\}~netobserv~g" | sed -r "s~\\$\{\{ env\.WF_VERSION \}\}~$version~g" | sed -r "s~\\$\{\{ env\.WF_REGISTRY \}\}~quay.io/netobserv~g" | sed -r "s~\\$\{\{ env\.WF_IMAGE \}\}~network-observability-operator~g" | sed -r "s~\\$\{\{ env\.WF_MULTIARCH_TARGETS \}\}~\"amd64 arm64 ppc64le\"~g" | sed -r "s~\\$\{\{ env\.short_sha \}\}~$short_sha~g" | sed -r "s~\\$\{\{ env\.tag \}\}~$fake_tag~g")
   step="$opts $step"
 
   echo "↘️  Running step '$name' ($file)"

@@ -4,11 +4,11 @@ on:
     tags: ['*']
 
 env:
-  REGISTRY_USER: netobserv+github_ci
-  REGISTRY: quay.io/netobserv
-  IMAGE: network-observability-operator
-  ORG: netobserv
-  MULTIARCH_TARGETS: amd64 arm64 ppc64le
+  WF_REGISTRY_USER: netobserv+github_ci
+  WF_REGISTRY: quay.io/netobserv
+  WF_IMAGE: network-observability-operator
+  WF_ORG: netobserv
+  WF_MULTIARCH_TARGETS: amd64 arm64 ppc64le
 
 jobs:
   push-image:
@@ -23,7 +23,7 @@ jobs:
       - name: docker login to quay.io
         uses: docker/login-action@v2
         with:
-          username: ${{ env.REGISTRY_USER }}
+          username: ${{ env.WF_REGISTRY_USER }}
           password: ${{ secrets.QUAY_SECRET }}
           registry: quay.io
       - name: validate tag
@@ -45,31 +45,28 @@ jobs:
           go-version: ${{ matrix.go }}
       - name: build operator
         run: |
-          MULTIARCH_TARGETS=${{ env.MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make image-build
+          MULTIARCH_TARGETS=${{ env.WF_MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make image-build
       - name: push operator
         run: |
-          MULTIARCH_TARGETS=${{ env.MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make image-push
+          MULTIARCH_TARGETS=${{ env.WF_MULTIARCH_TARGETS }} IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make image-push
       - name: build and push manifest
         run: |
-          IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.tag }} make manifest-build manifest-push
+          IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make manifest-build manifest-push
       - name: build bundle
-        run: IMAGE_ORG=${{ env.ORG }} BUNDLE_VERSION=${{ env.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make bundle-build
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=${{ env.tag }} IMAGE_TAG_BASE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }} make bundle-build
       - name: push bundle to quay.io
         id: push-bundle
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: ${{ env.IMAGE }}-bundle
+          image: ${{ env.WF_IMAGE }}-bundle
           tags: v${{ env.tag }}
-          registry: ${{ env.REGISTRY }}
+          registry: ${{ env.WF_REGISTRY }}
       - name: build catalog
-        run: BUNDLE_VERSION=${{ env.tag }} IMAGE_TAG_BASE=${{ env.REGISTRY }}/${{ env.IMAGE }} make catalog-build
+        run: BUNDLE_VERSION=${{ env.tag }} IMAGE_TAG_BASE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }} make catalog-build
       - name: push catalog to quay.io
         id: push-catalog
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: ${{ env.IMAGE }}-catalog
+          image: ${{ env.WF_IMAGE }}-catalog
           tags: v${{ env.tag }}
-          registry: ${{ env.REGISTRY }}
-      - name: print images reference
-        run: |
-          echo "Images: ${{ steps.push-operator.outputs.registry-paths }}, ${{ steps.push-bundle.outputs.registry-paths }}, ${{ steps.push-catalog.outputs.registry-paths }}"
+          registry: ${{ env.WF_REGISTRY }}
