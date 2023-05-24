@@ -4,11 +4,10 @@ on:
     types: [labeled]
 
 env:
-  REGISTRY_USER: netobserv+github_ci
-  REGISTRY: quay.io/netobserv
-  IMAGE: network-observability-operator
-  ORG: netobserv
-  VERSION: temp
+  WF_REGISTRY_USER: netobserv+github_ci
+  WF_REGISTRY: quay.io/netobserv
+  WF_IMAGE: network-observability-operator
+  WF_ORG: netobserv
 
 jobs:
   push-pr-image:
@@ -32,35 +31,35 @@ jobs:
       - name: docker login to quay.io
         uses: docker/login-action@v2
         with:
-          username: ${{ env.REGISTRY_USER }}
+          username: ${{ env.WF_REGISTRY_USER }}
           password: ${{ secrets.QUAY_SECRET }}
           registry: quay.io
       - name: get short sha
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-      - name: build images
-        run: IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.short_sha }} make image-build
-      - name: push images
-        run: IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.short_sha }} make image-push
+      - name: build image
+        run: OCI_BUILD_OPTS="--label quay.expires-after=2w" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make image-build
+      - name: push image
+        run: IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make image-push
       - name: build and push manifest
-        run: IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.short_sha }} make ci-manifest
+        run: IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make manifest-build manifest-push
       - name: build bundle
-        run: IMAGE_ORG=${{ env.ORG }} VERSION=${{ env.short_sha }} PLG_VERSION=main FLP_VERSION=main BPF_VERSION=main BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle shortlived-bundle-build
+        run: IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} PLG_VERSION=main FLP_VERSION=main BPF_VERSION=main BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle shortlived-bundle-build
       - name: push bundle to quay.io
         id: push-bundle
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: ${{ env.IMAGE }}-bundle
+          image: ${{ env.WF_IMAGE }}-bundle
           tags: v0.0.0-${{ env.short_sha }}
-          registry: ${{ env.REGISTRY }}
+          registry: ${{ env.WF_REGISTRY }}
       - name: build catalog
-        run: IMAGE_ORG=${{ env.ORG }} BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make shortlived-catalog-build
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make shortlived-catalog-build
       - name: push catalog to quay.io
         id: push-catalog
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: ${{ env.IMAGE }}-catalog
+          image: ${{ env.WF_IMAGE }}-catalog
           tags: v0.0.0-${{ env.short_sha }}
-          registry: ${{ env.REGISTRY }}
+          registry: ${{ env.WF_REGISTRY }}
       - uses: actions/github-script@v5
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -70,9 +69,9 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `New images:
-            * ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.short_sha }}
-            * ${{ env.REGISTRY }}/${{ env.IMAGE }}-bundle:v0.0.0-${{ env.short_sha }}
-            * ${{ env.REGISTRY }}/${{ env.IMAGE }}-catalog:v0.0.0-${{ env.short_sha }}
+            * ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }}
+            * ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-${{ env.short_sha }}
+            * ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-${{ env.short_sha }}
 
             They will expire after two weeks.
             
@@ -85,7 +84,7 @@ jobs:
               namespace: openshift-marketplace
             spec:
               sourceType: grpc
-              image: ${{ env.REGISTRY }}/${{ env.IMAGE }}-catalog:v0.0.0-${{ env.short_sha }}
+              image: ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-${{ env.short_sha }}
               displayName: NetObserv development catalog
               publisher: Me
               updateStrategy:

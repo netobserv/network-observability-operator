@@ -1,14 +1,15 @@
 name: Build and push to quay.io
 on:
   push:
-    branches: [ main ]
+    branches: [ main, workflow-test ]
 
 env:
-  REGISTRY_USER: netobserv+github_ci
-  REGISTRY: quay.io/netobserv
-  IMAGE: network-observability-operator
-  ORG: netobserv
-  VERSION: main
+  WF_REGISTRY_USER: netobserv+github_ci
+  WF_REGISTRY: quay.io/netobserv
+  WF_IMAGE: network-observability-operator
+  WF_ORG: netobserv
+  WF_MULTIARCH_TARGETS: amd64 arm64 ppc64le
+  WF_VERSION: ${{ github.ref_name }}
 
 jobs:
   push-image:
@@ -29,40 +30,41 @@ jobs:
       - name: docker login to quay.io
         uses: docker/login-action@v2
         with:
-          username: ${{ env.REGISTRY_USER }}
+          username: ${{ env.WF_REGISTRY_USER }}
           password: ${{ secrets.QUAY_SECRET }}
           registry: quay.io
       - name: get short sha
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: build images
-        run: IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }} make image-build
+        run: |
+          MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.WF_VERSION }} make image-build
+          MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} OCI_BUILD_OPTS="--label quay.expires-after=2w" make image-build
       - name: push images
-        run: IMAGE_ORG=${{ env.ORG }} IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }} make image-push
+        run: |
+          MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.WF_VERSION }} make image-push
+          MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make image-push
       - name: build and push manifest
-        run: IMAGE_ORG=${{ env.ORG }} VERSION=${{ env.VERSION }} make ci-manifest
-      - name: print image url
-        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
+        run: |
+          IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.WF_VERSION }} make manifest-build manifest-push
+          IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make manifest-build manifest-push
       - name: build bundle
-        run: IMAGE_ORG=${{ env.ORG }} VERSION=${{ env.VERSION }} PLG_VERSION=${{ env.VERSION }} FLP_VERSION=${{ env.VERSION }} BPF_VERSION=${{ env.VERSION }} BUNDLE_VERSION=0.0.0-${{ env.VERSION }} make bundle bundle-build
+        run: IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.WF_VERSION }} PLG_VERSION=${{ env.WF_VERSION }} FLP_VERSION=${{ env.WF_VERSION }} BPF_VERSION=${{ env.WF_VERSION }} BUNDLE_VERSION=0.0.0-${{ env.WF_VERSION }} make bundle bundle-build
       - name: push bundle to quay.io
         id: push-bundle
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: ${{ env.IMAGE }}-bundle
-          tags: v0.0.0-${{ env.VERSION }}
-          registry: ${{ env.REGISTRY }}
+          image: ${{ env.WF_IMAGE }}-bundle
+          tags: v0.0.0-${{ env.WF_VERSION }}
+          registry: ${{ env.WF_REGISTRY }}
       - name: build catalog
-        run: IMAGE_ORG=${{ env.ORG }} BUNDLE_VERSION=0.0.0-${{ env.VERSION }} make catalog-build
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-${{ env.WF_VERSION }} make catalog-build
       - name: push catalog to quay.io
         id: push-catalog
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: ${{ env.IMAGE }}-catalog
-          tags: v0.0.0-${{ env.VERSION }}
-          registry: ${{ env.REGISTRY }}
-      - name: print images reference
-        run: |
-          echo "Images: ${{ steps.push-to-quay.outputs.registry-paths }}, ${{ steps.push-bundle.outputs.registry-paths }}, ${{ steps.push-catalog.outputs.registry-paths }}"
+          image: ${{ env.WF_IMAGE }}-catalog
+          tags: v0.0.0-${{ env.WF_VERSION }}
+          registry: ${{ env.WF_REGISTRY }}
 
   codecov:
     name: Codecov upload
