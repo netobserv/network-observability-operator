@@ -76,7 +76,6 @@ BUNDLE_IMAGE ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
 
 # Image URL to use all building/pushing image targets
 IMAGE ?= $(IMAGE_TAG_BASE):$(VERSION)
-IMAGE_SHA = $(IMAGE_TAG_BASE):$(BUILD_SHA)
 OCI_BUILD_OPTS ?=
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
@@ -91,8 +90,8 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-# Image building tool (docker / podman)
-OCI_BIN_PATH := $(shell which podman  || which docker)
+# Image building tool (docker / podman) - docker is preferred in CI
+OCI_BIN_PATH := $(shell which docker || which podman)
 OCI_BIN ?= $(shell basename ${OCI_BIN_PATH})
 
 DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
