@@ -46,12 +46,20 @@ jobs:
         run: IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} PLG_VERSION=main FLP_VERSION=main BPF_VERSION=main BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle shortlived-bundle-build
       - name: push bundle to quay.io
         id: push-bundle
-        run:  IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-${{ env.short_sha }} make bundle-push
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.WF_IMAGE }}-bundle
+          tags: v0.0.0-${{ env.short_sha }}
+          registry: ${{ env.WF_REGISTRY }}
       - name: build catalog
         run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make shortlived-catalog-build
       - name: push catalog to quay.io
         id: push-catalog
-        run:  IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-${{ env.short_sha }} make catalog-push
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.WF_IMAGE }}-catalog
+          tags: v0.0.0-${{ env.short_sha }}
+          registry: ${{ env.WF_REGISTRY }}
       - uses: actions/github-script@v5
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
