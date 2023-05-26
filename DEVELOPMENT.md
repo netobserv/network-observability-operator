@@ -216,12 +216,67 @@ Most notably change will concern the monitoring part which will use the platofor
 
 ## Testing the github workflow
 
-Testing github workflows can sometimes be tricky as it's not always possible to run everything locally, and they depend on triggers such as merging a commit, or pushing a tag on the upstream.
+You should test the workflows when you modify files in `.github/workflows` or the `Makefile` targets used in these workflows. Be aware that the `Makefile` is used not only by developers or QEs on their local machines, but also in this github workflows files.
 
-One thing you should do if you modified the workflows and/or the Makefiles, is to run the `hack/test-workflow.sh` script. It is not a silver bullet, but it will test a bunch of things in the workflows, such as expecting some images to be built, and correctly referenced in the CSV. But it cannot cover everything, like it won't push anything to the image registry.
+Testing github workflows can sometimes be tricky as it's not always possible to run everything locally, and they depend on triggers such as merging a commit, or pushing a tag on the upstream. Here's a guide about how to test that:
 
-The second thing you can do is to push your commits to the upstream `workflow-test` branch. The `push_image.yml` workflow is triggered on that branch, just like when something is merged on the `main` branch. So, you can open the [corresponding page](https://github.com/netobserv/network-observability-operator/actions/workflows/push_image.yml) in Github to monitor the jobs triggered. Make sure on Quay that you get the expected images for the [Operator](https://quay.io/repository/netobserv/network-observability-operator?tab=tags), the [bundle](https://quay.io/repository/netobserv/network-observability-operator-bundle?tab=tags) and the [catalog](https://quay.io/repository/netobserv/network-observability-operator-catalog?tab=tags).
+### test-workflow.sh
 
-Then, you can test the upstream release process by [following the doc](./RELEASE.md). Don't do a full release of course, but just create a release candidate (e.g. set version to 1.0.3-rc0). When the tag is pushed, it will trigger the corresponding workflow ([view on github](https://github.com/netobserv/network-observability-operator/actions/workflows/release.yml)). As above, you should check that the images are well created in Quay.. It's fine if you tag from the `workflow-test` branch (or any branch). You can remove the tag after you tested.
+Run the `hack/test-workflow.sh` script. It is not a silver bullet, but it will test a bunch of things in the workflows, such as expecting some images to be built, and correctly referenced in the CSV. Be aware that it has some biases and doesn't cover everything, like it won't push anything to the image registry, so it's still necessary to run through the next items.
 
-Finally, to test the per-PR workflow (pre-merge testing), just open a dummy PR against the upstream branch `workflow-test` (where you pushed your workflow changes), and add the usual `ok-to-test` label. This will trigger the corresponding `push_image_pr.yml` workflow ([view on github](https://github.com/netobserv/network-observability-operator/actions/workflows/push_image_pr.yml)). As above, you should check that the images are well created in Quay.
+### push_image.yml workflow
+
+This workflow is triggered when something is merged into `main`, to push new images to Quay. For testing, it is also configured to be triggered when something is merged on the `workflow-test` branch. So, push your changes to that branch and monitor the triggered actions (assuming `upstream` refers to this remote GIT repo).
+
+```bash
+# You might need to force-push since this test branch may contain past garbage...
+git push upstream HEAD:workflow-test -f
+```
+
+Then, open the [action page](https://github.com/netobserv/network-observability-operator/actions/workflows/push_image.yml) in Github to monitor the jobs triggered. Make sure on Quay that you get the expected images for the [Operator](https://quay.io/repository/netobserv/network-observability-operator?tab=tags), the [bundle](https://quay.io/repository/netobserv/network-observability-operator-bundle?tab=tags) and the [catalog](https://quay.io/repository/netobserv/network-observability-operator-catalog?tab=tags).
+
+Expected images:
+- Operator's tagged "workflow-test" manifest + every support archs
+- Operator's tagged with SHA manifest + every support archs (make sure they expire)
+- Bundle and Catalog v0.0.0-workflow-test
+- Bundle and Catalog v0.0.0-SHA (make sure they expire)
+
+### push_image_pr.yml
+
+This workflow is triggered by the "ok-to-test" label on a PR, however the workflow that is run is the one from the base branch, so you cannot test it from a PR opened against `main`. You need to open a new PR against `workflow-test` (assuming you pushed directly on that branch already, as described in the previous step):
+
+```bash
+touch dummy && git add dummy && git commit -m "dummy"
+git push origin HEAD:dummy
+```
+
+Then, open a PR in github, making sure to select `workflow-test` as the base branch and not `main`.
+On the PR, add the `ok-to-test` label.
+
+This will trigger the corresponding `push_image_pr.yml` workflow ([view on github](https://github.com/netobserv/network-observability-operator/actions/workflows/push_image_pr.yml)). As above, you should check that the images are well created in Quay:
+
+Expected images:
+- Operator's tagged with SHA manifest + single arch amd64 (make sure they expire)
+- Bundle and Catalog v0.0.0-SHA (make sure they expire)
+
+### release.yml
+
+Finally there's the upstream release process. Just create a fake version tag such as `0.0.0-rc0` and push it:
+
+```bash
+git tag -a "0.0.0-rc0" -m "0.0.0-rc0"
+git push upstream --tags
+```
+
+When the tag is pushed, it will trigger the corresponding workflow ([view on github](https://github.com/netobserv/network-observability-operator/actions/workflows/release.yml)). As above, you should check that the images are well created in Quay. It's fine if you tag from the `workflow-test` branch (or any branch).
+
+Expected images:
+- Operator's tagged 0.0.0-rc0 manifest + every support archs
+- Bundle and Catalog v0.0.0-rc0
+
+Remove the tag after you tested:
+ 
+```bash
+git tag -d "0.0.0-rc0"
+git push --delete upstream 0.0.0-rc0
+```
