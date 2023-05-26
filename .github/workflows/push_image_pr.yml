@@ -43,13 +43,13 @@ jobs:
       - name: build and push manifest
         run: IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make manifest-build manifest-push
       - name: build bundle
-        run: IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} PLG_VERSION=main FLP_VERSION=main BPF_VERSION=main BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle shortlived-bundle-build
+        run: OCI_BUILD_OPTS="--label quay.expires-after=2w" IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} PLG_VERSION=main FLP_VERSION=main BPF_VERSION=main BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle bundle-build
       - name: push bundle to quay.io
-        run:  IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-${{ env.short_sha }} make bundle-push
+        run: IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle-push
       - name: build catalog
         run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make shortlived-catalog-build
       - name: push catalog to quay.io
-        run:  IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-${{ env.short_sha }} make catalog-push
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make catalog-push
       - uses: actions/github-script@v5
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}

@@ -50,21 +50,11 @@ jobs:
       - name: build bundle
         run: IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.WF_VERSION }} PLG_VERSION=${{ env.WF_VERSION }} FLP_VERSION=${{ env.WF_VERSION }} BPF_VERSION=${{ env.WF_VERSION }} BUNDLE_VERSION=0.0.0-${{ env.WF_VERSION }} make bundle bundle-build
       - name: push bundle to quay.io
-        id: push-bundle
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ env.WF_IMAGE }}-bundle
-          tags: v0.0.0-${{ env.WF_VERSION }}
-          registry: ${{ env.WF_REGISTRY }}
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-${{ env.WF_VERSION }} make bundle-push
       - name: build catalog
         run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-${{ env.WF_VERSION }} make catalog-build
       - name: push catalog to quay.io
-        id: push-catalog
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ env.WF_IMAGE }}-catalog
-          tags: v0.0.0-${{ env.WF_VERSION }}
-          registry: ${{ env.WF_REGISTRY }}
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-${{ env.WF_VERSION }} make catalog-push
 
   codecov:
     name: Codecov upload

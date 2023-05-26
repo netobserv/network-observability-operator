@@ -379,16 +379,12 @@ update-bundle: bundle ## Prepare a clean bundle to be commited
 bundle-build: ## Build the bundle image.
 	cp ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml tmp-bundle
 	$(SED) -i -r 's~:created-at:~$(DATE)~' ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
-	-$(OCI_BIN) build -f bundle.Dockerfile -t $(BUNDLE_IMAGE) .
+	-$(OCI_BIN) build $(OCI_BUILD_OPTS) -f bundle.Dockerfile -t $(BUNDLE_IMAGE) .
 	mv tmp-bundle ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
-
-shortlived-bundle-build: ## Build a temporary bundle image, expiring after 2 weeks on quay
-	$(MAKE) bundle-build BUNDLE_IMAGE=$(IMAGE_TAG_BASE)-bundle:tmp
-	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMAGE_TAG_BASE)-bundle:tmp -t $(BUNDLE_IMAGE) -f ./shortlived.Dockerfile .
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
-	$(MAKE) image-push IMAGE=$(BUNDLE_IMAGE)
+	$(OCI_BIN) push ${BUNDLE_IMAGE};
 
 # A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMAGES=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
@@ -410,13 +406,13 @@ catalog-build: opm ## Build a catalog image.
 	$(OPM) index add --container-tool ${OCI_BIN} --mode semver --tag $(CATALOG_IMAGE) --bundles $(BUNDLE_IMAGES) $(FROM_INDEX_OPT) $(OPM_OPTS)
 
 shortlived-catalog-build: ## Build a temporary catalog image, expiring after 2 weeks on quay
-	$(MAKE) catalog-build CATALOG_IMAGE=$(IMAGE_TAG_BASE)-catalog:tmp
-	$(OCI_BIN) build --build-arg BASE_IMAGE=$(IMAGE_TAG_BASE)-catalog:tmp -t $(CATALOG_IMAGE) -f ./shortlived.Dockerfile .
+	$(MAKE) catalog-build CATALOG_IMAGE=temp-catalog
+	echo "FROM temp-catalog" | $(OCI_BIN) build --label quay.expires-after=2w -t $(CATALOG_IMAGE) -
 
 # Push the catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
-	$(MAKE) image-push IMAGE=$(CATALOG_IMAGE)
+	$(OCI_BIN) push ${CATALOG_IMAGE};
 
 # Deploy the catalog.
 .PHONY: catalog-deploy
