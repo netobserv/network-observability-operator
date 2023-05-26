@@ -21,7 +21,7 @@ jobs:
     - name: checkout
       uses: actions/checkout@v3
     - name: check format
-      run: make fmt && git diff --exit-code
+      run: make fmt && git add -A && git diff --exit-code
     - name: build, lint, test
       run: make build lint test
     - name: Report coverage
@@ -43,4 +43,4 @@ jobs:
     - name: generate bundle
       run: make update-bundle
     - name: check bundle clean state
-      run: git diff HEAD -I "operator-sdk-v" --exit-code
+      run: git add -A && git diff HEAD -I "operator-sdk-v" --exit-code
