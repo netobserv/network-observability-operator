@@ -575,12 +575,10 @@ func getKafkaTLS(tls *flowslatest.ClientTLS) *api.ClientTLS {
 
 func getIPFIXTransport(transport string) string {
 	switch transport {
-	case "TCP":
-		return "tcp"
 	case "UDP":
 		return "udp"
 	default:
-		return "" //empty value will fallback on default (tcp)
+		return "tcp" //always fallback on tcp
 	}
 }
 
