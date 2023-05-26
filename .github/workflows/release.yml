@@ -51,22 +51,12 @@ jobs:
           MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make image-push
       - name: build and push manifest
         run: |
-          IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make manifest-build manifest-push
+          MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make manifest-build manifest-push
       - name: build bundle
-        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=${{ env.tag }} IMAGE_TAG_BASE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }} make bundle-build
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=${{ env.tag }} make bundle-build
       - name: push bundle to quay.io
-        id: push-bundle
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ env.WF_IMAGE }}-bundle
-          tags: v${{ env.tag }}
-          registry: ${{ env.WF_REGISTRY }}
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=${{ env.tag }} make bundle-push
       - name: build catalog
-        run: BUNDLE_VERSION=${{ env.tag }} IMAGE_TAG_BASE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }} make catalog-build
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=${{ env.tag }} make catalog-build
       - name: push catalog to quay.io
-        id: push-catalog
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ env.WF_IMAGE }}-catalog
-          tags: v${{ env.tag }}
-          registry: ${{ env.WF_REGISTRY }}
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=${{ env.tag }} make catalog-push
