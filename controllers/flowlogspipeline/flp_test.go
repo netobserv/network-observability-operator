@@ -838,7 +838,7 @@ func TestPipelineWithExporter(t *testing.T) {
 		IPFIX: flowslatest.FlowCollectorIPFIXReceiver{
 			TargetHost: "ipfix-receiver-test",
 			TargetPort: 9999,
-			Transport:  "tcp",
+			Transport:  "TCP",
 		},
 	})
 
