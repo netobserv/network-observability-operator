@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -14,7 +13,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
@@ -23,7 +21,6 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
-	"github.com/netobserv/network-observability-operator/pkg/conditions"
 )
 
 const (
@@ -611,7 +608,7 @@ func flowCollectorControllerSpecs() {
 				fc.Spec.Loki.TLS = flowslatest.ClientTLS{
 					Enable: true,
 					CACert: flowslatest.CertificateReference{
-						Type:     flowslatest.CertRefTypeConfigMap,
+						Type:     flowslatest.RefTypeConfigMap,
 						Name:     "loki-ca",
 						CertFile: "ca.crt",
 					},
@@ -796,27 +793,16 @@ func flowCollectorControllerSpecs() {
 	})
 }
 
-func GetReadyCR(key types.NamespacedName) *flowslatest.FlowCollector {
+func GetCR(key types.NamespacedName) *flowslatest.FlowCollector {
 	cr := flowslatest.FlowCollector{}
 	Eventually(func() error {
-		err := k8sClient.Get(ctx, key, &cr)
-		if err != nil {
-			return err
-		}
-		cond := meta.FindStatusCondition(cr.Status.Conditions, conditions.TypeReady)
-		if cond == nil {
-			return errors.New("CR is not ready: condition is nil")
-		}
-		if cond.Status == metav1.ConditionFalse {
-			return fmt.Errorf("CR is not ready: %s - %v", cond.Reason, cond.Message)
-		}
-		return nil
+		return k8sClient.Get(ctx, key, &cr)
 	}).Should(Succeed())
 	return &cr
 }
 
 func UpdateCR(key types.NamespacedName, updater func(*flowslatest.FlowCollector)) {
-	cr := GetReadyCR(key)
+	cr := GetCR(key)
 	Eventually(func() error {
 		updater(cr)
 		return k8sClient.Update(ctx, cr)

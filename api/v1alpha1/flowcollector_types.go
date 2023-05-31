@@ -573,15 +573,17 @@ type OVNKubernetesConfig struct {
 	ContainerName string `json:"containerName,omitempty"`
 }
 
+type MountableType string
+
 const (
-	CertRefTypeSecret    = "secret"
-	CertRefTypeConfigMap = "configmap"
+	CertRefTypeSecret    MountableType = "secret"
+	CertRefTypeConfigMap MountableType = "configmap"
 )
 
 type CertificateReference struct {
 	//+kubebuilder:validation:Enum=configmap;secret
 	// type for the certificate reference: "configmap" or "secret"
-	Type string `json:"type,omitempty"`
+	Type MountableType `json:"type,omitempty"`
 
 	// name of the config map or secret containing certificates
 	Name string `json:"name,omitempty"`
@@ -592,6 +594,12 @@ type CertificateReference struct {
 	// certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.
 	// +optional
 	CertKey string `json:"certKey,omitempty"`
+
+	// namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed.
+	// If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+	// +optional
+	//+kubebuilder:default:=""
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // ClientTLS defines TLS client configuration

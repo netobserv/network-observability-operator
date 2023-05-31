@@ -21,6 +21,14 @@ func UseIPFIX(spec *flowslatest.FlowCollectorSpec) bool {
 func UseKafka(spec *flowslatest.FlowCollectorSpec) bool {
 	return spec.DeploymentModel == flowslatest.DeploymentModelKafka
 }
+func HasKafkaExporter(spec *flowslatest.FlowCollectorSpec) bool {
+	for _, ex := range spec.Exporters {
+		if ex.Type == flowslatest.KafkaExporter {
+			return true
+		}
+	}
+	return false
+}
 
 func HPADisabled(spec *flowslatest.FlowCollectorHPA) bool {
 	return spec.Status == flowslatest.HPAStatusDisabled

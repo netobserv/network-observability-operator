@@ -19,7 +19,7 @@ import (
 // flpIngesterReconciler reconciles the current flowlogs-pipeline-ingester state with the desired configuration
 type flpIngesterReconciler struct {
 	singleReconciler
-	reconcilersCommonInfo
+	*reconcilers.Instance
 	owned ingestOwnedObjects
 }
 
@@ -33,7 +33,7 @@ type ingestOwnedObjects struct {
 	prometheusRule *monitoringv1.PrometheusRule
 }
 
-func newIngesterReconciler(info *reconcilersCommonInfo) *flpIngesterReconciler {
+func newIngesterReconciler(cmn *reconcilers.Instance) *flpIngesterReconciler {
 	name := name(ConfKafkaIngester)
 	owned := ingestOwnedObjects{
 		daemonSet:      &appsv1.DaemonSet{},
@@ -44,21 +44,21 @@ func newIngesterReconciler(info *reconcilersCommonInfo) *flpIngesterReconciler {
 		serviceMonitor: &monitoringv1.ServiceMonitor{},
 		prometheusRule: &monitoringv1.PrometheusRule{},
 	}
-	info.nobjMngr.AddManagedObject(name, owned.daemonSet)
-	info.nobjMngr.AddManagedObject(name, owned.serviceAccount)
-	info.nobjMngr.AddManagedObject(promServiceName(ConfKafkaIngester), owned.promService)
-	info.nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaIngester), owned.roleBinding)
-	info.nobjMngr.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
-	if info.availableAPIs.HasSvcMonitor() {
-		info.nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaIngester), owned.serviceMonitor)
+	cmn.Managed.AddManagedObject(name, owned.daemonSet)
+	cmn.Managed.AddManagedObject(name, owned.serviceAccount)
+	cmn.Managed.AddManagedObject(promServiceName(ConfKafkaIngester), owned.promService)
+	cmn.Managed.AddManagedObject(RoleBindingName(ConfKafkaIngester), owned.roleBinding)
+	cmn.Managed.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
+	if cmn.AvailableAPIs.HasSvcMonitor() {
+		cmn.Managed.AddManagedObject(serviceMonitorName(ConfKafkaIngester), owned.serviceMonitor)
 	}
-	if info.availableAPIs.HasPromRule() {
-		info.nobjMngr.AddManagedObject(prometheusRuleName(ConfKafkaIngester), owned.prometheusRule)
+	if cmn.AvailableAPIs.HasPromRule() {
+		cmn.Managed.AddManagedObject(prometheusRuleName(ConfKafkaIngester), owned.prometheusRule)
 	}
 
 	return &flpIngesterReconciler{
-		reconcilersCommonInfo: *info,
-		owned:                 owned,
+		Instance: cmn,
+		owned:    owned,
 	}
 }
 
@@ -69,28 +69,31 @@ func (r *flpIngesterReconciler) context(ctx context.Context) context.Context {
 
 // cleanupNamespace cleans up old namespace
 func (r *flpIngesterReconciler) cleanupNamespace(ctx context.Context) {
-	r.nobjMngr.CleanupPreviousNamespace(ctx)
+	r.Managed.CleanupPreviousNamespace(ctx)
 }
 
 func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	// Retrieve current owned objects
-	err := r.nobjMngr.FetchAll(ctx)
+	err := r.Managed.FetchAll(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Ingester only used with Kafka and without eBPF
 	if !helper.UseKafka(&desired.Spec) || helper.UseEBPF(&desired.Spec) {
-		r.nobjMngr.TryDeleteAll(ctx)
+		r.Managed.TryDeleteAll(ctx)
 		return nil
 	}
 
-	builder := newIngestBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC)
+	builder := newIngestBuilder(r.Instance, &desired.Spec)
 	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err
 	}
-	if !r.nobjMngr.Exists(r.owned.configMap) {
+	annotations := map[string]string{
+		constants.PodConfigurationDigest: configDigest,
+	}
+	if !r.Managed.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
 			return err
 		}
@@ -109,25 +112,30 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowslat
 		return err
 	}
 
-	return r.reconcileDaemonSet(ctx, builder.daemonSet(configDigest))
+	// Watch for Kafka certificate if necessary; need to restart pods in case of cert rotation
+	if err = annotateKafkaCerts(ctx, r.Common, &desired.Spec.Kafka, "kafka", annotations); err != nil {
+		return err
+	}
+
+	return r.reconcileDaemonSet(ctx, builder.daemonSet(annotations))
 }
 
 func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, builder *ingestBuilder) error {
 	report := helper.NewChangeReport("FLP prometheus service")
 	defer report.LogIfNeeded(ctx)
 
-	if err := reconcilers.ReconcileService(ctx, r.nobjMngr, &r.ClientHelper, r.owned.promService, builder.promService(), &report); err != nil {
+	if err := r.ReconcileService(ctx, r.owned.promService, builder.promService(), &report); err != nil {
 		return err
 	}
-	if r.availableAPIs.HasSvcMonitor() {
+	if r.AvailableAPIs.HasSvcMonitor() {
 		serviceMonitor := builder.generic.serviceMonitor()
-		if err := reconcilers.GenericReconcile(ctx, r.nobjMngr, &r.ClientHelper, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}
-	if r.availableAPIs.HasPromRule() {
+	if r.AvailableAPIs.HasPromRule() {
 		promRules := builder.generic.prometheusRule()
-		if err := reconcilers.GenericReconcile(ctx, r.nobjMngr, &r.ClientHelper, r.owned.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
 		}
 	}
@@ -138,7 +146,7 @@ func (r *flpIngesterReconciler) reconcileDaemonSet(ctx context.Context, desiredD
 	report := helper.NewChangeReport("FLP DaemonSet")
 	defer report.LogIfNeeded(ctx)
 
-	if !r.nobjMngr.Exists(r.owned.daemonSet) {
+	if !r.Managed.Exists(r.owned.daemonSet) {
 		return r.CreateOwned(ctx, desiredDS)
 	} else if helper.PodChanged(&r.owned.daemonSet.Spec.Template, &desiredDS.Spec.Template, constants.FLPName, &report) {
 		return r.UpdateOwned(ctx, r.owned.daemonSet, desiredDS)
@@ -150,17 +158,17 @@ func (r *flpIngesterReconciler) reconcileDaemonSet(ctx context.Context, desiredD
 }
 
 func (r *flpIngesterReconciler) reconcilePermissions(ctx context.Context, builder *ingestBuilder) error {
-	if !r.nobjMngr.Exists(r.owned.serviceAccount) {
+	if !r.Managed.Exists(r.owned.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 
-	cr := buildClusterRoleIngester(r.useOpenShiftSCC)
+	cr := buildClusterRoleIngester(r.UseOpenShiftSCC)
 	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
 		return err
 	}
 
 	desired := builder.clusterRoleBinding()
-	if err := r.ClientHelper.ReconcileClusterRoleBinding(ctx, desired); err != nil {
+	if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
 		return err
 	}
 	return nil

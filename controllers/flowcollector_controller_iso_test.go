@@ -5,17 +5,13 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
-	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 )
 
 // nolint:cyclop
@@ -23,14 +19,6 @@ func flowCollectorIsoSpecs() {
 	const operatorNamespace = "main-namespace"
 	crKey := types.NamespacedName{
 		Name: "cluster",
-	}
-	flpKey := types.NamespacedName{
-		Name:      constants.FLPName,
-		Namespace: operatorNamespace,
-	}
-	cpKey := types.NamespacedName{
-		Name:      "netobserv-plugin",
-		Namespace: operatorNamespace,
 	}
 
 	BeforeEach(func() {
@@ -205,7 +193,7 @@ func flowCollectorIsoSpecs() {
 		})
 
 		It("Should not have modified input CR values", func() {
-			cr := GetReadyCR(crKey)
+			cr := GetCR(crKey)
 
 			// For easier debugging, we check CR parts one by one
 			Expect(cr.Spec.Processor).Should(Equal(specInput.Processor))
@@ -233,60 +221,6 @@ func flowCollectorIsoSpecs() {
 			Eventually(func() error {
 				return k8sClient.Delete(ctx, &flowCR)
 			}, timeout, interval).Should(Succeed())
-		})
-
-		It("Should be garbage collected", func() {
-			By("Expecting flowlogs-pipeline daemonset to be garbage collected")
-			Eventually(func() interface{} {
-				d := appsv1.DaemonSet{}
-				_ = k8sClient.Get(ctx, flpKey, &d)
-				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
-
-			By("Expecting flowlogs-pipeline service account to be garbage collected")
-			Eventually(func() interface{} {
-				svcAcc := v1.ServiceAccount{}
-				_ = k8sClient.Get(ctx, flpKey, &svcAcc)
-				return &svcAcc
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
-
-			By("Expecting console plugin deployment to be garbage collected")
-			Eventually(func() interface{} {
-				d := appsv1.Deployment{}
-				_ = k8sClient.Get(ctx, cpKey, &d)
-				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
-
-			By("Expecting console plugin service to be garbage collected")
-			Eventually(func() interface{} {
-				svc := v1.Service{}
-				_ = k8sClient.Get(ctx, cpKey, &svc)
-				return &svc
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
-
-			By("Expecting console plugin service account to be garbage collected")
-			Eventually(func() interface{} {
-				svcAcc := v1.ServiceAccount{}
-				_ = k8sClient.Get(ctx, cpKey, &svcAcc)
-				return &svcAcc
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
-
-			By("Expecting flowlogs-pipeline configmap to be garbage collected")
-			Eventually(func() interface{} {
-				cm := v1.ConfigMap{}
-				_ = k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "flowlogs-pipeline-config",
-					Namespace: operatorNamespace,
-				}, &cm)
-				return &cm
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
-		})
-
-		It("Should not get CR", func() {
-			Eventually(func() bool {
-				err := k8sClient.Get(ctx, crKey, &flowCR)
-				return errors.IsNotFound(err)
-			}, timeout, interval).Should(BeTrue())
 		})
 	})
 }

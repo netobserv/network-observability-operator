@@ -53,6 +53,8 @@ import (
 
 const testCnoNamespace = "openshift-network-operator"
 
+var namespacesToPrepare = []string{testCnoNamespace, "openshift-config-managed", "loki-namespace", "kafka-exporter-namespace", "main-namespace", "main-namespace-privileged"}
+
 var (
 	ctx        context.Context
 	k8sManager manager.Manager
@@ -75,6 +77,7 @@ var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
 	flowCollectorEBPFSpecs()
 	flowCollectorEBPFKafkaSpecs()
 	flowCollectorIsoSpecs()
+	flowCollectorCertificatesSpecs()
 })
 
 var _ = BeforeSuite(func() {
@@ -157,17 +160,13 @@ var _ = AfterSuite(func() {
 })
 
 func prepareNamespaces() error {
-	if err := k8sClient.Create(ctx, &corev1.Namespace{
-		TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
-		ObjectMeta: metav1.ObjectMeta{Name: testCnoNamespace},
-	}); err != nil {
-		return err
-	}
-	if err := k8sClient.Create(ctx, &corev1.Namespace{
-		TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
-		ObjectMeta: metav1.ObjectMeta{Name: "openshift-config-managed"},
-	}); err != nil {
-		return err
+	for _, ns := range namespacesToPrepare {
+		if err := k8sClient.Create(ctx, &corev1.Namespace{
+			TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+			ObjectMeta: metav1.ObjectMeta{Name: ns},
+		}); err != nil {
+			return err
+		}
 	}
 	return nil
 }

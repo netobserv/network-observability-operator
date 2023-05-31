@@ -272,10 +272,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 }
 
 func autoConvert_v1alpha1_CertificateReference_To_v1beta1_CertificateReference(in *CertificateReference, out *v1beta1.CertificateReference, s conversion.Scope) error {
-	out.Type = in.Type
+	out.Type = v1beta1.MountableType(in.Type)
 	out.Name = in.Name
 	out.CertFile = in.CertFile
 	out.CertKey = in.CertKey
+	out.Namespace = in.Namespace
 	return nil
 }
 
@@ -285,8 +286,9 @@ func Convert_v1alpha1_CertificateReference_To_v1beta1_CertificateReference(in *C
 }
 
 func autoConvert_v1beta1_CertificateReference_To_v1alpha1_CertificateReference(in *v1beta1.CertificateReference, out *CertificateReference, s conversion.Scope) error {
-	out.Type = in.Type
+	out.Type = MountableType(in.Type)
 	out.Name = in.Name
+	out.Namespace = in.Namespace
 	out.CertFile = in.CertFile
 	out.CertKey = in.CertKey
 	return nil

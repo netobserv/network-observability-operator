@@ -20,7 +20,7 @@ import (
 // flpTransformerReconciler reconciles the current flowlogs-pipeline-transformer state with the desired configuration
 type flpTransformerReconciler struct {
 	singleReconciler
-	reconcilersCommonInfo
+	*reconcilers.Instance
 	owned transfoOwnedObjects
 }
 
@@ -35,7 +35,7 @@ type transfoOwnedObjects struct {
 	prometheusRule *monitoringv1.PrometheusRule
 }
 
-func newTransformerReconciler(info *reconcilersCommonInfo) *flpTransformerReconciler {
+func newTransformerReconciler(cmn *reconcilers.Instance) *flpTransformerReconciler {
 	name := name(ConfKafkaTransformer)
 	owned := transfoOwnedObjects{
 		deployment:     &appsv1.Deployment{},
@@ -47,22 +47,22 @@ func newTransformerReconciler(info *reconcilersCommonInfo) *flpTransformerReconc
 		serviceMonitor: &monitoringv1.ServiceMonitor{},
 		prometheusRule: &monitoringv1.PrometheusRule{},
 	}
-	info.nobjMngr.AddManagedObject(name, owned.deployment)
-	info.nobjMngr.AddManagedObject(name, owned.hpa)
-	info.nobjMngr.AddManagedObject(name, owned.serviceAccount)
-	info.nobjMngr.AddManagedObject(promServiceName(ConfKafkaTransformer), owned.promService)
-	info.nobjMngr.AddManagedObject(RoleBindingName(ConfKafkaTransformer), owned.roleBinding)
-	info.nobjMngr.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
-	if info.availableAPIs.HasSvcMonitor() {
-		info.nobjMngr.AddManagedObject(serviceMonitorName(ConfKafkaTransformer), owned.serviceMonitor)
+	cmn.Managed.AddManagedObject(name, owned.deployment)
+	cmn.Managed.AddManagedObject(name, owned.hpa)
+	cmn.Managed.AddManagedObject(name, owned.serviceAccount)
+	cmn.Managed.AddManagedObject(promServiceName(ConfKafkaTransformer), owned.promService)
+	cmn.Managed.AddManagedObject(RoleBindingName(ConfKafkaTransformer), owned.roleBinding)
+	cmn.Managed.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
+	if cmn.AvailableAPIs.HasSvcMonitor() {
+		cmn.Managed.AddManagedObject(serviceMonitorName(ConfKafkaTransformer), owned.serviceMonitor)
 	}
-	if info.availableAPIs.HasPromRule() {
-		info.nobjMngr.AddManagedObject(prometheusRuleName(ConfKafkaTransformer), owned.prometheusRule)
+	if cmn.AvailableAPIs.HasPromRule() {
+		cmn.Managed.AddManagedObject(prometheusRuleName(ConfKafkaTransformer), owned.prometheusRule)
 	}
 
 	return &flpTransformerReconciler{
-		reconcilersCommonInfo: *info,
-		owned:                 owned,
+		Instance: cmn,
+		owned:    owned,
 	}
 }
 
@@ -73,28 +73,31 @@ func (r *flpTransformerReconciler) context(ctx context.Context) context.Context 
 
 // cleanupNamespace cleans up old namespace
 func (r *flpTransformerReconciler) cleanupNamespace(ctx context.Context) {
-	r.nobjMngr.CleanupPreviousNamespace(ctx)
+	r.Managed.CleanupPreviousNamespace(ctx)
 }
 
 func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	// Retrieve current owned objects
-	err := r.nobjMngr.FetchAll(ctx)
+	err := r.Managed.FetchAll(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Transformer only used with Kafka
 	if !helper.UseKafka(&desired.Spec) {
-		r.nobjMngr.TryDeleteAll(ctx)
+		r.Managed.TryDeleteAll(ctx)
 		return nil
 	}
 
-	builder := newTransfoBuilder(r.nobjMngr.Namespace, r.image, &desired.Spec, r.useOpenShiftSCC)
+	builder := newTransfoBuilder(r.Instance, &desired.Spec)
 	newCM, configDigest, dbConfigMap, err := builder.configMap()
 	if err != nil {
 		return err
 	}
-	if !r.nobjMngr.Exists(r.owned.configMap) {
+	annotations := map[string]string{
+		constants.PodConfigurationDigest: configDigest,
+	}
+	if !r.Managed.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
 			return err
 		}
@@ -103,8 +106,8 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 			return err
 		}
 	}
-	if r.reconcilersCommonInfo.availableAPIs.HasConsoleConfig() {
-		if err := r.reconcileDashboardConfig(ctx, dbConfigMap); err != nil {
+	if r.AvailableAPIs.HasConsoleConfig() {
+		if err := reconcileDashboardConfig(ctx, &r.Client, dbConfigMap); err != nil {
 			return err
 		}
 	}
@@ -117,16 +120,31 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 		return err
 	}
 
-	return r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, configDigest)
+	// Watch for Loki certificate if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
+	// because certificate is always reloaded from file
+	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &desired.Spec.Loki.TLS, r.Namespace); err != nil {
+		return err
+	}
+
+	// Watch for Kafka certificate if necessary; need to restart pods in case of cert rotation
+	if err = annotateKafkaCerts(ctx, r.Common, &desired.Spec.Kafka, "kafka", annotations); err != nil {
+		return err
+	}
+	// Same for Kafka exporters
+	if err = annotateKafkaExporterCerts(ctx, r.Common, desired.Spec.Exporters, annotations); err != nil {
+		return err
+	}
+
+	return r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, annotations)
 }
 
-func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder, configDigest string) error {
+func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder, annotations map[string]string) error {
 	report := helper.NewChangeReport("FLP Deployment")
 	defer report.LogIfNeeded(ctx)
 
-	new := builder.deployment(configDigest)
+	new := builder.deployment(annotations)
 
-	if !r.nobjMngr.Exists(r.owned.deployment) {
+	if !r.Managed.Exists(r.owned.deployment) {
 		if err := r.CreateOwned(ctx, new); err != nil {
 			return err
 		}
@@ -141,10 +159,10 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 
 	// Delete or Create / Update Autoscaler according to HPA option
 	if helper.HPADisabled(&desiredFLP.KafkaConsumerAutoscaler) {
-		r.nobjMngr.TryDelete(ctx, r.owned.hpa)
+		r.Managed.TryDelete(ctx, r.owned.hpa)
 	} else {
 		newASC := builder.autoScaler()
-		if !r.nobjMngr.Exists(r.owned.hpa) {
+		if !r.Managed.Exists(r.owned.hpa) {
 			if err := r.CreateOwned(ctx, newASC); err != nil {
 				return err
 			}
@@ -161,18 +179,18 @@ func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Contex
 	report := helper.NewChangeReport("FLP prometheus service")
 	defer report.LogIfNeeded(ctx)
 
-	if err := reconcilers.ReconcileService(ctx, r.nobjMngr, &r.ClientHelper, r.owned.promService, builder.promService(), &report); err != nil {
+	if err := r.ReconcileService(ctx, r.owned.promService, builder.promService(), &report); err != nil {
 		return err
 	}
-	if r.availableAPIs.HasSvcMonitor() {
+	if r.AvailableAPIs.HasSvcMonitor() {
 		serviceMonitor := builder.generic.serviceMonitor()
-		if err := reconcilers.GenericReconcile(ctx, r.nobjMngr, &r.ClientHelper, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}
-	if r.availableAPIs.HasPromRule() {
+	if r.AvailableAPIs.HasPromRule() {
 		promRules := builder.generic.prometheusRule()
-		if err := reconcilers.GenericReconcile(ctx, r.nobjMngr, &r.ClientHelper, r.owned.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
 		}
 	}
@@ -180,7 +198,7 @@ func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Contex
 }
 
 func (r *flpTransformerReconciler) reconcilePermissions(ctx context.Context, builder *transfoBuilder) error {
-	if !r.nobjMngr.Exists(r.owned.serviceAccount) {
+	if !r.Managed.Exists(r.owned.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 

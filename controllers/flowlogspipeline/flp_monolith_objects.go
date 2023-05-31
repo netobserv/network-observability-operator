@@ -9,6 +9,7 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -16,19 +17,19 @@ type monolithBuilder struct {
 	generic builder
 }
 
-func newMonolithBuilder(ns, image string, desired *flowslatest.FlowCollectorSpec, useOpenShiftSCC bool) monolithBuilder {
-	gen := newBuilder(ns, image, desired, ConfMonolith, useOpenShiftSCC)
+func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) monolithBuilder {
+	gen := newBuilder(info, desired, ConfMonolith)
 	return monolithBuilder{
 		generic: gen,
 	}
 }
 
-func (b *monolithBuilder) daemonSet(configDigest string) *appsv1.DaemonSet {
-	pod := b.generic.podTemplate(true /*listens*/, true /*loki itf*/, !b.generic.useOpenShiftSCC, configDigest)
+func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.DaemonSet {
+	pod := b.generic.podTemplate(true /*listens*/, true /*loki itf*/, !b.generic.info.UseOpenShiftSCC, annotations)
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.generic.name(),
-			Namespace: b.generic.namespace,
+			Namespace: b.generic.info.Namespace,
 			Labels:    b.generic.labels,
 		},
 		Spec: appsv1.DaemonSetSpec{
