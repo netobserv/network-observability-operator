@@ -81,41 +81,80 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 		return err
 	}
 
-	// Create object builder
-	builder := newBuilder(ns, r.Instance.Image, &desired.Spec)
+	if helper.UseConsolePlugin(&desired.Spec) {
+		// Create object builder
+		builder := newBuilder(ns, r.Instance.Image, &desired.Spec)
 
-	if err := r.reconcilePermissions(ctx, &builder); err != nil {
-		return err
-	}
+		if err := r.reconcilePermissions(ctx, &builder); err != nil {
+			return err
+		}
 
-	if err = r.reconcilePlugin(ctx, &builder, &desired.Spec); err != nil {
-		return err
-	}
+		if err = r.reconcilePlugin(ctx, &builder, &desired.Spec); err != nil {
+			return err
+		}
 
-	cmDigest, err := r.reconcileConfigMap(ctx, &builder, &desired.Spec)
-	if err != nil {
-		return err
-	}
+		cmDigest, err := r.reconcileConfigMap(ctx, &builder, &desired.Spec)
+		if err != nil {
+			return err
+		}
 
-	if err = r.reconcileDeployment(ctx, &builder, &desired.Spec, cmDigest); err != nil {
-		return err
-	}
+		if err = r.reconcileDeployment(ctx, &builder, &desired.Spec, cmDigest); err != nil {
+			return err
+		}
 
-	if err = r.reconcileServices(ctx, &builder, &desired.Spec); err != nil {
-		return err
-	}
+		if err = r.reconcileServices(ctx, &builder, &desired.Spec); err != nil {
+			return err
+		}
 
-	if err = r.reconcileHPA(ctx, &builder, &desired.Spec); err != nil {
-		return err
-	}
+		if err = r.reconcileHPA(ctx, &builder, &desired.Spec); err != nil {
+			return err
+		}
 
-	// Watch for Loki certificates if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
-	// because certificate is always reloaded from file
-	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &desired.Spec.Loki.TLS, r.Namespace); err != nil {
-		return err
-	}
-	if _, _, err = r.Watcher.ProcessMTLSCerts(ctx, r.Client, &desired.Spec.Loki.StatusTLS, r.Namespace); err != nil {
-		return err
+		// Watch for Loki certificates if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
+		// because certificate is always reloaded from file
+		if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &desired.Spec.Loki.TLS, r.Namespace); err != nil {
+			return err
+		}
+		if _, _, err = r.Watcher.ProcessMTLSCerts(ctx, r.Client, &desired.Spec.Loki.StatusTLS, r.Namespace); err != nil {
+			return err
+		}
+	} else {
+		// delete any existing owned object
+		if r.Managed.Exists(r.owned.deployment) {
+			if err := r.Delete(ctx, r.owned.deployment); err != nil {
+				return err
+			}
+		}
+		if r.Managed.Exists(r.owned.service) {
+			if err := r.Delete(ctx, r.owned.service); err != nil {
+				return err
+			}
+		}
+		if r.Managed.Exists(r.owned.metricsService) {
+			if err := r.Delete(ctx, r.owned.metricsService); err != nil {
+				return err
+			}
+		}
+		if r.Managed.Exists(r.owned.hpa) {
+			if err := r.Delete(ctx, r.owned.hpa); err != nil {
+				return err
+			}
+		}
+		if r.Managed.Exists(r.owned.serviceAccount) {
+			if err := r.Delete(ctx, r.owned.serviceAccount); err != nil {
+				return err
+			}
+		}
+		if r.Managed.Exists(r.owned.configMap) {
+			if err := r.Delete(ctx, r.owned.configMap); err != nil {
+				return err
+			}
+		}
+		if r.Managed.Exists(r.owned.serviceMonitor) {
+			if err := r.Delete(ctx, r.owned.serviceMonitor); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -123,7 +162,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 
 func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	console := operatorsv1.Console{}
-	reg := helper.PtrBool(desired.Spec.ConsolePlugin.Register)
+	reg := helper.UseConsolePlugin(&desired.Spec) && helper.PtrBool(desired.Spec.ConsolePlugin.Register)
 	if err := r.Client.Get(ctx, types.NamespacedName{Name: "cluster"}, &console); err != nil {
 		// Console operator CR not found => warn but continue execution
 		if reg {

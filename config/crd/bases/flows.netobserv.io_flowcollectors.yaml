@@ -3010,6 +3010,11 @@ spec:
                         - ENABLED
                         type: string
                     type: object
+                  enable:
+                    default: true
+                    description: enable the console plugin deployment. spec.Loki.enable
+                      must be true
+                    type: boolean
                   imagePullPolicy:
                     default: IfNotPresent
                     description: '`imagePullPolicy` is the Kubernetes pull policy
@@ -3526,6 +3531,10 @@ spec:
                     description: '`batchWait` is the maximum time to wait before sending
                       a batch.'
                     type: string
+                  enable:
+                    default: true
+                    description: enable the processor LokiWrite stage.
+                    type: boolean
                   maxBackoff:
                     default: 5s
                     description: '`maxBackoff` is the maximum backoff time for client

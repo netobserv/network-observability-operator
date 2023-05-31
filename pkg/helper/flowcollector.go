@@ -91,6 +91,10 @@ func UseSASL(cfg *flowslatest.SASLConfig) bool {
 	return cfg.Type == flowslatest.SASLPlain || cfg.Type == flowslatest.SASLScramSHA512
 }
 
+func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
+	return PtrBool(spec.Loki.Enable) && PtrBool(spec.ConsolePlugin.Enable)
+}
+
 func PtrBool(b *bool) bool {
 	if b == nil {
 		return false

@@ -64,6 +64,7 @@ spec:
         certFile: user.crt
         certKey: user.key
   loki:
+    enable: true
     url: 'http://loki.netobserv.svc:3100/'
     # Uncomment lines below for typical installation with loki-operator (5.6+ needed)
     # and ensure tls and statusTls are enabled
@@ -95,6 +96,7 @@ spec:
     maxBackoff: 5s
     maxRetries: 2
   consolePlugin:
+    enable: true
     register: true
     imagePullPolicy: IfNotPresent
     port: 9001

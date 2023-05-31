@@ -62,8 +62,11 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
 	}
 
+	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
 	dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS
 	dst.Spec.Kafka.SASL = restored.Spec.Kafka.SASL
+
+	dst.Spec.ConsolePlugin.Enable = restored.Spec.ConsolePlugin.Enable
 
 	if restored.Spec.Exporters != nil {
 		for _, restoredExp := range restored.Spec.Exporters {
@@ -132,6 +135,13 @@ func Convert_v1beta1_FLPMetrics_To_v1alpha1_FLPMetrics(in *v1beta1.FLPMetrics, o
 // nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1beta1.FlowCollectorLoki, out *FlowCollectorLoki, s apiconversion.Scope) error {
 	return autoConvert_v1beta1_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta1 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta1_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorConsolePlugin(in *v1beta1.FlowCollectorConsolePlugin, out *FlowCollectorConsolePlugin, s apiconversion.Scope) error {
+	return autoConvert_v1beta1_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorConsolePlugin(in, out, s)
 }
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because

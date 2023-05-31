@@ -4381,6 +4381,15 @@ Agent configuration for flows extraction.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          enable the console plugin deployment. spec.Loki.enable must be true<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
@@ -6262,6 +6271,15 @@ Loki, the flow store, client settings.
           `batchWait` is the maximum time to wait before sending a batch.<br/>
           <br/>
             <i>Default</i>: 1s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          enable the processor LokiWrite stage.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
         </td>
         <td>false</td>
       </tr><tr>
