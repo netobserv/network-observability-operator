@@ -99,7 +99,8 @@ func getConfig() flowslatest.FlowCollectorSpec {
 			},
 		},
 		Loki: flowslatest.FlowCollectorLoki{
-			URL: "http://loki:3100/",
+			Enable: pointer.Bool(true),
+			URL:    "http://loki:3100/",
 			BatchWait: metav1.Duration{
 				Duration: 1,
 			},

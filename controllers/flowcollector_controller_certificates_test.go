@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/pointer"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -142,6 +143,7 @@ func flowCollectorCertificatesSpecs() {
 				Type: "EBPF",
 			},
 			Loki: flowslatest.FlowCollectorLoki{
+				Enable:    pointer.Bool(true),
 				AuthToken: flowslatest.LokiAuthForwardUserToken,
 				TLS: flowslatest.ClientTLS{
 					Enable: true,

@@ -100,6 +100,7 @@ func flowCollectorIsoSpecs() {
 				},
 			},
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
+				Enable:          pointer.Bool(true),
 				Register:        pointer.Bool(false),
 				Replicas:        &zero,
 				Port:            12345,
@@ -114,6 +115,7 @@ func flowCollectorIsoSpecs() {
 				QuickFilters: []flowslatest.QuickFilter{},
 			},
 			Loki: flowslatest.FlowCollectorLoki{
+				Enable:       pointer.Bool(true),
 				URL:          "http://loki",
 				QuerierURL:   "",
 				StatusURL:    "",

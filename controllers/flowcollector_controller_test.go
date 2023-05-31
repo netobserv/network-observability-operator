@@ -122,6 +122,7 @@ func flowCollectorControllerSpecs() {
 						},
 					},
 					ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
+						Enable:          pointer.Bool(true),
 						Port:            9001,
 						ImagePullPolicy: "Never",
 						PortNaming: flowslatest.ConsolePluginPortConfig{

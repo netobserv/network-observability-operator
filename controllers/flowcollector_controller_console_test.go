@@ -75,6 +75,7 @@ func flowCollectorConsolePluginSpecs() {
 					DeploymentModel: flowslatest.DeploymentModelDirect,
 					Agent:           flowslatest.FlowCollectorAgent{Type: "IPFIX"},
 					ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
+						Enable:          pointer.Bool(true),
 						Port:            9001,
 						ImagePullPolicy: "Never",
 						Register:        pointer.Bool(true),
