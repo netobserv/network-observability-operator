@@ -29,9 +29,9 @@ encode:
 visualization:
   type: grafana
   grafana:
-    - expr: 'topk(5,rate(netobserv_workload_egress_bytes_total[1m]))'
-      legendFormat: '{{pod}} : ({{SrcK8S_Namespace}},{{SrcK8S_OwnerName}}) -> ({{DstK8S_Namespace}},{{DstK8S_OwnerName}})'
+    - expr: 'topk(5,sum(rate(netobserv_workload_egress_bytes_total[1m])) by (SrcK8S_Namespace, SrcK8S_OwnerName, DstK8S_Namespace, DstK8S_OwnerName))'
+      legendFormat: '({{SrcK8S_Namespace}},{{SrcK8S_OwnerName}}) -> ({{DstK8S_Namespace}},{{DstK8S_OwnerName}})'
       type: graphPanel
       dashboard: netobserv
       title:
-        Top 5 Egress Bandwidth per source and destination namespaces and owners
+        Top byte rates emitted per source and destination workloads (1min rates)

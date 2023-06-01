@@ -151,7 +151,7 @@ set-agent-image:
 ifeq ("", "$(CSV)")
 	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_EBPF_AGENT=quay.io/$(USER)/netobserv-ebpf-agent:$(VERSION)
 else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) ebpf_agent RELATED_IMAGE_EBPF_AGENT quay.io/$(USER)/netobserv-ebpf-agent:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) ebpf-agent RELATED_IMAGE_EBPF_AGENT quay.io/$(USER)/netobserv-ebpf-agent:$(VERSION)
 endif
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
@@ -163,7 +163,7 @@ set-flp-image:
 ifeq ("", "$(CSV)")
 	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_FLOWLOGS_PIPELINE=quay.io/$(USER)/flowlogs-pipeline:$(VERSION)
 else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) flowlogs_pipeline RELATED_IMAGE_FLOWLOGS_PIPELINE quay.io/$(USER)/flowlogs-pipeline:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) flowlogs-pipeline RELATED_IMAGE_FLOWLOGS_PIPELINE quay.io/$(USER)/flowlogs-pipeline:$(VERSION)
 endif
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
@@ -175,7 +175,7 @@ set-plugin-image:
 ifeq ("", "$(CSV)")
 	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN=quay.io/$(USER)/network-observability-console-plugin:$(VERSION)
 else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console_plugin RELATED_IMAGE_CONSOLE_PLUGIN quay.io/$(USER)/network-observability-console-plugin:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_CONSOLE_PLUGIN quay.io/$(USER)/network-observability-console-plugin:$(VERSION)
 endif
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
