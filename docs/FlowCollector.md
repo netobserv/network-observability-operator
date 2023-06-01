@@ -6277,7 +6277,7 @@ Loki, the flow store, client settings.
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          enable the processor LokiWrite stage.<br/>
+          enable storing flows to Loki. It is required for the OpenShift Console plugin installation.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>

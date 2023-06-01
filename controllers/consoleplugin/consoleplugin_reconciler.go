@@ -120,48 +120,9 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 		}
 	} else {
 		// delete any existing owned object
-		return r.deleteOwned(ctx)
+		r.Managed.TryDeleteAll(ctx)
 	}
 
-	return nil
-}
-
-func (r *CPReconciler) deleteOwned(ctx context.Context) error {
-	if r.Managed.Exists(r.owned.deployment) {
-		if err := r.Delete(ctx, r.owned.deployment); err != nil {
-			return err
-		}
-	}
-	if r.Managed.Exists(r.owned.service) {
-		if err := r.Delete(ctx, r.owned.service); err != nil {
-			return err
-		}
-	}
-	if r.Managed.Exists(r.owned.metricsService) {
-		if err := r.Delete(ctx, r.owned.metricsService); err != nil {
-			return err
-		}
-	}
-	if r.Managed.Exists(r.owned.hpa) {
-		if err := r.Delete(ctx, r.owned.hpa); err != nil {
-			return err
-		}
-	}
-	if r.Managed.Exists(r.owned.serviceAccount) {
-		if err := r.Delete(ctx, r.owned.serviceAccount); err != nil {
-			return err
-		}
-	}
-	if r.Managed.Exists(r.owned.configMap) {
-		if err := r.Delete(ctx, r.owned.configMap); err != nil {
-			return err
-		}
-	}
-	if r.Managed.Exists(r.owned.serviceMonitor) {
-		if err := r.Delete(ctx, r.owned.serviceMonitor); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 

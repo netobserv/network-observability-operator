@@ -902,3 +902,17 @@ func TestPipelineWithExporter(t *testing.T) {
 	assert.Equal(9999, parameters[7].Write.Ipfix.TargetPort)
 	assert.Equal("tcp", parameters[7].Write.Ipfix.Transport)
 }
+
+func TestPipelineWithoutLoki(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := getConfig()
+	cfg.Loki.Enable = pointer.Bool(false)
+
+	b := monoBuilder("namespace", &cfg)
+	stages, parameters, _, err := b.buildPipelineConfig()
+	assert.NoError(err)
+	assert.True(validatePipelineConfig(stages, parameters))
+	jsonStages, _ := json.Marshal(stages)
+	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+}

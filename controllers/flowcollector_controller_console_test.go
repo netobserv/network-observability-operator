@@ -10,6 +10,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
@@ -253,6 +254,60 @@ func flowCollectorConsolePluginSpecs() {
 				}
 				return cr.Spec.Plugins
 			}, timeout, interval).Should(BeEmpty())
+		})
+	})
+
+	Context("Update enable option", func() {
+		It("Should be initially enabled", func() {
+			Eventually(func() interface{} {
+				fc := flowslatest.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
+					return err
+				}
+				return *fc.Spec.ConsolePlugin.Enable
+			}, timeout, interval).Should(Equal(true))
+		})
+
+		It("Should cleanup console plugin if disabled", func() {
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.ConsolePlugin.Enable = pointer.Bool(false)
+			})
+			Eventually(func() error {
+				d := appsv1.Deployment{}
+				return k8sClient.Get(ctx, cpKey, &d)
+			}).WithTimeout(timeout).WithPolling(interval).
+				Should(Satisfy(errors.IsNotFound))
+			Eventually(func() error {
+				d := v1.Service{}
+				return k8sClient.Get(ctx, cpKey, &d)
+			}).WithTimeout(timeout).WithPolling(interval).
+				Should(Satisfy(errors.IsNotFound))
+			Eventually(func() error {
+				d := v1.ServiceAccount{}
+				return k8sClient.Get(ctx, cpKey, &d)
+			}).WithTimeout(timeout).WithPolling(interval).
+				Should(Satisfy(errors.IsNotFound))
+		})
+
+		It("Should recreate console plugin if enabled back", func() {
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.ConsolePlugin.Enable = pointer.Bool(true)
+			})
+			Eventually(func() error {
+				d := appsv1.Deployment{}
+				return k8sClient.Get(ctx, cpKey, &d)
+			}).WithTimeout(timeout).WithPolling(interval).
+				Should(Succeed())
+			Eventually(func() error {
+				d := v1.Service{}
+				return k8sClient.Get(ctx, cpKey, &d)
+			}).WithTimeout(timeout).WithPolling(interval).
+				Should(Succeed())
+			Eventually(func() error {
+				d := v1.ServiceAccount{}
+				return k8sClient.Get(ctx, cpKey, &d)
+			}).WithTimeout(timeout).WithPolling(interval).
+				Should(Succeed())
 		})
 	})
 

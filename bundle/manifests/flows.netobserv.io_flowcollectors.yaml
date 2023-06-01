@@ -3546,7 +3546,8 @@ spec:
                     type: string
                   enable:
                     default: true
-                    description: enable the processor LokiWrite stage.
+                    description: enable storing flows to Loki. It is required for
+                      the OpenShift Console plugin installation.
                     type: boolean
                   maxBackoff:
                     default: 5s

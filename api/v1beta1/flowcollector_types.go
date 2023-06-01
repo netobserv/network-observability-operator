@@ -483,7 +483,7 @@ const (
 // `FlowCollectorLoki` defines the desired state for FlowCollector's Loki client.
 type FlowCollectorLoki struct {
 	//+kubebuilder:default:=true
-	// enable the processor LokiWrite stage.
+	// enable storing flows to Loki. It is required for the OpenShift Console plugin installation.
 	Enable *bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:="http://loki:3100/"
