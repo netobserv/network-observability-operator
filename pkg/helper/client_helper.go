@@ -29,7 +29,7 @@ func UnmanagedClient(cl client.Client) Client {
 // CreateOwned is an helper function that creates an object, sets owner reference and writes info & errors logs
 func (c *Client) CreateOwned(ctx context.Context, obj client.Object) error {
 	log := log.FromContext(ctx)
-	c.SetChanged(true)
+	c.SetChanged(false)
 	err := c.SetControllerReference(obj)
 	if err != nil {
 		log.Error(err, "Failed to set controller reference")
