@@ -20,9 +20,16 @@ encode:
 visualization:
   type: grafana
   grafana:
-    - expr: 'topk(5,rate(netobserv_namespace_flows_total[1m]))'
-      legendFormat: '{{pod}} : ({{SrcK8S_Namespace}}) -> ({{DstK8S_Namespace}})'
+    - expr: |
+        label_replace(
+          label_replace(
+            topk(5,sum(rate(netobserv_namespace_flows_total[1m])) by (SrcK8S_Namespace, DstK8S_Namespace)),
+            "SrcK8S_Namespace", "(not namespaced)", "SrcK8S_Namespace", "()"
+          ),
+          "DstK8S_Namespace", "(not namespaced)", "DstK8S_Namespace", "()"
+        )
+      legendFormat: '{{SrcK8S_Namespace}} -> {{DstK8S_Namespace}}'
       type: graphPanel
       dashboard: netobserv
       title:
-        Top 5 flows rates per minute per Namespace
+        Top flow rates per source and destination namespaces (1-min rates)
