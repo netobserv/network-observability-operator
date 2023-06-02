@@ -29,9 +29,20 @@ encode:
 visualization:
   type: grafana
   grafana:
-    - expr: 'topk(5,netobserv_workload_egress_packets_total)'
-      legendFormat: '{{pod}} : (({{SrcK8S_Namespace}},{{SrcK8S_OwnerName}}) -> ({{DstK8S_Namespace}},{{DstK8S_OwnerName}})'
+    - expr: |
+        label_replace(
+          label_replace(
+            topk(5, sum(
+              rate(netobserv_workload_egress_packets_total{SrcK8S_OwnerType!~"|Node",DstK8S_OwnerType!~"|Node"}[1m])
+              or rate(netobserv_workload_egress_packets_total{SrcK8S_OwnerType=~"|Node",DstK8S_OwnerType!~"|Node"}[1m])
+              or rate(netobserv_workload_egress_packets_total{SrcK8S_OwnerType!~"|Node",DstK8S_OwnerType=~"|Node"}[1m])
+            ) by (SrcK8S_Namespace, SrcK8S_OwnerName, DstK8S_Namespace, DstK8S_OwnerName)),
+            "SrcK8S_Namespace", "non pods", "SrcK8S_Namespace", "()"
+          ),
+          "DstK8S_Namespace", "non pods", "DstK8S_Namespace", "()"
+        )
+      legendFormat: '{{SrcK8S_OwnerName}} ({{SrcK8S_Namespace}}) -> {{DstK8S_OwnerName}} ({{DstK8S_Namespace}})'
       type: graphPanel
       dashboard: netobserv
       title:
-        Top 5 Egress packets per source and destination namespaces and owners
+        Top packet rates emitted per source and destination workloads (1-min rates)
