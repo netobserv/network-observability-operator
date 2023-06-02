@@ -75,7 +75,8 @@ func probeChanged(old, new *corev1.Probe) bool {
 }
 
 func ServiceChanged(old, new *corev1.Service, report *ChangeReport) bool {
-	return report.Check("Service meta changed", !equality.Semantic.DeepDerivative(new.ObjectMeta, old.ObjectMeta)) ||
+	return report.Check("Service annotations changed", !equality.Semantic.DeepDerivative(new.Annotations, old.Annotations)) ||
+		report.Check("Service labels changed", !equality.Semantic.DeepDerivative(new.Labels, old.Labels)) ||
 		report.Check("Service spec changed", !equality.Semantic.DeepDerivative(new.Spec, old.Spec))
 }
 
