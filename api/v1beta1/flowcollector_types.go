@@ -228,6 +228,13 @@ type FlowCollectorEBPF struct {
 	//+kubebuilder:default:=false
 	//+optional
 	EnableTCPDrop *bool `json:"enableTCPDrop,omitempty"`
+
+	// enable DNS tracking feature, this feature requires mounting
+	// kernel debug filesystem hence the ebpf pod has to run as privileged
+	// if privileged isn't set an error will be reported.
+	//+kubebuilder:default:=false
+	//+optional
+	EnableDNSTracking *bool `json:"enableDNSTracking,omitempty"`
 }
 
 // `FlowCollectorKafka` defines the desired Kafka config of FlowCollector

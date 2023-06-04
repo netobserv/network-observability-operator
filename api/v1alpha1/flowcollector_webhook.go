@@ -67,6 +67,10 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 		*dst.Spec.Agent.EBPF.EnableTCPDrop = *restored.Spec.Agent.EBPF.EnableTCPDrop
 	}
 
+	if restored.Spec.Agent.EBPF.EnableDNSTracking != nil {
+		*dst.Spec.Agent.EBPF.EnableDNSTracking = *restored.Spec.Agent.EBPF.EnableDNSTracking
+	}
+
 	dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS
 	dst.Spec.Kafka.SASL = restored.Spec.Kafka.SASL
 

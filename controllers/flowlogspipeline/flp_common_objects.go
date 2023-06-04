@@ -388,6 +388,21 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 		}
 		outputFields = append(outputFields, outputTCPDropFields...)
 	}
+
+	if helper.IsDNSTrackingEnabled(b.desired) {
+		outDNSTrackingFields := []api.OutputField{
+			{
+				Name:      "DnsRequestTimeMs",
+				Operation: "min",
+			},
+			{
+				Name:      "DnsResponseTimeMs",
+				Operation: "max",
+			},
+		}
+		outputFields = append(outputFields, outDNSTrackingFields...)
+	}
+
 	// Connection tracking stage (only if LogTypes is not FLOWS)
 	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)

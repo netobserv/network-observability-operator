@@ -98,6 +98,7 @@ func flowCollectorIsoSpecs() {
 					Privileged:         false,
 					KafkaBatchSize:     0,
 					EnableTCPDrop:      pointer.Bool(false),
+					EnableDNSTracking:  pointer.Bool(false),
 				},
 			},
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{

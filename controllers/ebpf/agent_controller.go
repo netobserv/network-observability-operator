@@ -55,8 +55,8 @@ const (
 	dedupeJustMarkDefault         = "true"
 	envGoMemLimit                 = "GOMEMLIMIT"
 	envEnableTCPDrop              = "ENABLE_TCP_DROPS"
-
-	envListSeparator = ","
+	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
+	envListSeparator              = ","
 )
 
 const (
@@ -184,7 +184,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	volumeMounts := c.volumes.GetMounts()
 	volumes := c.volumes.GetVolumes()
 
-	if helper.IsTCPDropEnabled(&coll.Spec) {
+	if helper.IsTCPDropEnabled(&coll.Spec) || helper.IsDNSTrackingEnabled(&coll.Spec) {
 		if !coll.Spec.Agent.EBPF.Privileged {
 			return nil, fmt.Errorf("to use TCPDrop feature privileged mode need to be enabled")
 		}
@@ -297,9 +297,16 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 		}
 	}
 
-	if coll.Spec.Agent.EBPF.EnableTCPDrop != nil && *coll.Spec.Agent.EBPF.EnableTCPDrop {
+	if helper.IsTCPDropEnabled(&coll.Spec) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableTCPDrop,
+			Value: "true",
+		})
+	}
+
+	if helper.IsDNSTrackingEnabled(&coll.Spec) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableDNSTracking,
 			Value: "true",
 		})
 	}

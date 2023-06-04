@@ -109,6 +109,13 @@ func IsTCPDropEnabled(spec *flowslatest.FlowCollectorSpec) bool {
 	return false
 }
 
+func IsDNSTrackingEnabled(spec *flowslatest.FlowCollectorSpec) bool {
+	if spec.Agent.EBPF.EnableDNSTracking != nil && *spec.Agent.EBPF.EnableDNSTracking {
+		return true
+	}
+	return false
+}
+
 func PtrBool(b *bool) bool {
 	if b == nil {
 		return false
