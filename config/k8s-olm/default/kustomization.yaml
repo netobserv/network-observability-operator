@@ -13,11 +13,11 @@ namePrefix: netobserv-
 #  someName: someValue
 
 bases:
-- ../crd
-- ../rbac
-- ../manager
-- ../webhook
-- ../certmanager
+- ../../crd
+- ../../rbac
+- ../../manager
+- ../../webhook
+- ../../certmanager
 
 patchesStrategicMerge:
 - manager_webhook_patch.yaml

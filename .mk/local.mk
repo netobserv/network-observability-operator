@@ -58,8 +58,8 @@ deploy-kind: generate kustomize ## Deploy controller to the K8s cluster specifie
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:.+~console-plugin:main~' ./config/manager/manager.yaml
-	$(KUSTOMIZE) build config/kind | kubectl apply -f -
+	$(KUSTOMIZE) build config/k8s-olm/default | kubectl apply -f -
 
 .PHONY: undeploy-kind
 undeploy-kind: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/kind | kubectl --ignore-not-found=true delete -f - || true
+	$(KUSTOMIZE) build config/k8s-olm/default | kubectl --ignore-not-found=true delete -f - || true
