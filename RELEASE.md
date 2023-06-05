@@ -36,7 +36,7 @@ Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, 
 make update-bundle
 
 # Set desired operator version - CAREFUL, no leading "v" here
-version="1.0.3-rc0"
+version="1.0.3"
 vv=v$version
 test_branch=test-$vv
 
@@ -52,7 +52,7 @@ The release script should be triggered ([check github actions](https://github.co
 At this point, you can test the bundle / catalog on your cluster:
 
 ```bash
-BUNDLE_VERSION="$version" make catalog-deploy
+BUNDLE_VERSION="$version" USER=netobserv make catalog-deploy
 ```
 
 When everything is ok, push to main and delete the test branch
