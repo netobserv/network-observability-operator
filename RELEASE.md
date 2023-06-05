@@ -4,7 +4,7 @@
 
 All components deployed by this operator can be released separatly, at their own pace.
 
-Before releasing, it's a good opportunity to check for image upgrades: [go-toolset](https://catalog.redhat.com/software/containers/ubi9/go-toolset/61e5c00b4ec9945c18787690), [node.js](https://catalog.redhat.com/software/containers/ubi9/nodejs-16/61a60604c17162a20c1c6a2e) and [ubi9-minimal](https://catalog.redhat.com/software/containers/ubi9-minimal/61832888c0d15aff4912fe0d).
+Before releasing, it's a good opportunity to check for image upgrades: Go, [node.js](https://catalog.redhat.com/software/containers/ubi9/nodejs-16/61a60604c17162a20c1c6a2e) and [ubi9-minimal](https://catalog.redhat.com/software/containers/ubi9-minimal/61832888c0d15aff4912fe0d).
 
 To release them, a tag in the format "v0.1.2" or "v0.1.2-rc0" must be set on the desired clean HEAD state (generally, up-to-date `main` branch), then pushed. It applies to [the console plugin](https://github.com/netobserv/network-observability-console-plugin/), [flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline) and [netobserv-ebpf-agent](https://github.com/netobserv/netobserv-ebpf-agent).
 
@@ -33,10 +33,10 @@ Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, 
 
 ```bash
 
-make bundle
+make update-bundle
 
 # Set desired operator version - CAREFUL, no leading "v" here
-version="1.0.2"
+version="1.0.3-rc0"
 vv=v$version
 test_branch=test-$vv
 
