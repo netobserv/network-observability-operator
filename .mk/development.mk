@@ -128,7 +128,7 @@ undeploy-all: undeploy-infra undeploy-sample-cr undeploy-sample-workload
 .PHONY: deploy-prometheus
 deploy-prometheus: ## Deploy prometheus.
 	@echo -e "\n==> Deploy prometheus"
-	kubectl apply -f config/kubernetes/deployment-prometheus.yaml
+	kubectl apply -f config/kind/deployment-prometheus.yaml
 	kubectl rollout status "deploy/prometheus" --timeout=600s
 	-pkill --oldest --full "9090:9090"
 ifeq (true, $(PORT_FWD))
@@ -139,7 +139,7 @@ endif
 .PHONY: undeploy-prometheus
 undeploy-prometheus: ## Undeploy prometheus.
 	@echo -e "\n==> Undeploy prometheus"
-	kubectl --ignore-not-found=true delete -f config/kubernetes/deployment-prometheus.yaml || true
+	kubectl --ignore-not-found=true delete -f config/kind/deployment-prometheus.yaml || true
 	-pkill --oldest --full "9090:9090"
 
 .PHONY: get-related-images
