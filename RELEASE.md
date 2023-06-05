@@ -115,9 +115,9 @@ After having cloned or updated these repo, copy the bundle content:
 path_k8s="../community-operators"
 path_okd="../community-operators-prod"
 
-cd $path_k8s && git fetch upstream && git rebase upstream/main
+cd $path_k8s && git fetch upstream && git reset --hard upstream/main
 cd -
-cd $path_okd && git fetch upstream && git rebase upstream/main
+cd $path_okd && git fetch upstream && git reset --hard upstream/main
 cd -
 
 mkdir -p $path_k8s/operators/netobserv-operator/$version

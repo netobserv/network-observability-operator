@@ -120,7 +120,7 @@ bin/operator-sdk bundle validate $BUNDLE_IMAGE
 bin/operator-sdk bundle validate -b podman $BUNDLE_IMAGE
 ```
 
-> Note: the base64 logo can be generated with: `base64 -w 0 <image file>`, then manually pasted in the [CSV manifest file](./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml) under `spec.icon`.
+> Note: the base64 logo can be generated with: `base64 -w 0 <image file>`, then manually pasted in the [CSV manifest file](./config/csv/bases/netobserv-operator.clusterserviceversion.yaml) under `spec.icon`.
 
 ### Deploy as bundle from command line
 
