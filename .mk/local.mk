@@ -14,7 +14,7 @@ uninstall-cert-manager: ## Uninstall cert manager from the target kubernetes clu
 
 .PHONY: create-kind-cluster
 create-kind-cluster: $(KIND) ## Create kind cluster
-	-$(KIND) create cluster --config config/kubernetes/kind.config.yaml
+	-$(KIND) create cluster --config config/kind/kind.config.yaml
 	kubectl cluster-info --context kind-kind
 
 .PHONY: delete-kind-cluster
@@ -58,8 +58,8 @@ deploy-kind: generate kustomize ## Deploy controller to the K8s cluster specifie
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:.+~console-plugin:main~' ./config/manager/manager.yaml
-	$(KUSTOMIZE) build config/kubernetes | kubectl apply -f -
+	$(KUSTOMIZE) build config/kind | kubectl apply -f -
 
 .PHONY: undeploy-kind
 undeploy-kind: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/kubernetes | kubectl --ignore-not-found=true delete -f - || true
+	$(KUSTOMIZE) build config/kind | kubectl --ignore-not-found=true delete -f - || true
