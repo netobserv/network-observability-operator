@@ -107,9 +107,12 @@ SHELL = /usr/bin/env bash -o pipefail
 
 NAMESPACE ?= netobserv
 
-# Local paths from preparing upstream release
-OPERATORHUB_K8S="../community-operators"
-OPERATORHUB_OKD="../community-operators-prod"
+# Local paths from preparing upstream release to OperatorHub
+ifeq ($(BUNDLE_CONFIG), "config/openshift-olm")
+	OPERATORHUB_PATH ?= "../community-operators-prod"
+else
+	OPERATORHUB_PATH ?= "../community-operators"
+endif
 
 all: help
 
@@ -359,6 +362,8 @@ bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metada
 
 .PHONY: bundle
 bundle: bundle-prepare ## Generate final bundle files.
+	rm -r bundle/manifests
+	rm -r bundle/metadata
 	$(SED) -e 's/^/    /' config/descriptions/upstream.md > tmp-desc
 	$(KUSTOMIZE) build $(BUNDLE_CONFIG) \
 		| $(SED) -e 's~:container-image:~$(IMAGE)~' \
@@ -445,26 +450,28 @@ related-release-notes: ## Grab release notes for related components (to be inser
 	cat /tmp/related.md
 	echo -e "\nText has been copied to the clipboard.\n"
 
-.PHONY: prepare-upstream-releases
-prepare-upstream-releases: ## Prepare bundles for an upstream release on operatorhub
+.PHONY: prepare-operatorhub
+prepare-operatorhub: ## Copy bundle for an upstream release on OperatorHub
 	$(SED) -i '/scorecard/d' ./bundle.Dockerfile
 	$(SED) -i '/scorecard/d' ./bundle/metadata/annotations.yaml
 	$(SED) -i '/Annotations for testing/d' ./bundle/metadata/annotations.yaml
 	$(SED) -i -r 's~:created-at:~$(DATE)~' ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
-	@read -p "Going to hard-reset git's $(OPERATORHUB_K8S) and $(OPERATORHUB_OKD) - type y to proceed: " -n 1 -r; \
+	@read -p "Going to hard-reset git's $(OPERATORHUB_PATH) - type y to proceed: " -n 1 -r; \
 	if [[ $$REPLY =~ ^[^Yy] ]]; \
 	then \
 			exit 1; \
 	fi
-	# cd $(OPERATORHUB_K8S) && git fetch upstream && git reset --hard upstream/main
-	# cd $(OPERATORHUB_OKD) && git fetch upstream && git reset --hard upstream/main
-	mkdir -p $(OPERATORHUB_K8S)/operators/netobserv-operator/$(BUNDLE_VERSION)
-	cp -r "bundle/manifests" "$(OPERATORHUB_K8S)/operators/netobserv-operator/$(BUNDLE_VERSION)"
-	cp -r "bundle/metadata" "$(OPERATORHUB_K8S)/operators/netobserv-operator/$(BUNDLE_VERSION)"
-	mkdir -p $(OPERATORHUB_OKD)/operators/netobserv-operator/$(BUNDLE_VERSION)
-	cp -r "bundle/manifests" "$(OPERATORHUB_OKD)/operators/netobserv-operator/$(BUNDLE_VERSION)"
-	cp -r "bundle/metadata" "$(OPERATORHUB_OKD)/operators/netobserv-operator/$(BUNDLE_VERSION)"
-	echo "  com.redhat.openshift.versions: \"v4.10-v4.13\"" >> $(OPERATORHUB_OKD)/operators/netobserv-operator/1.0.3/metadata/annotations.yaml
+	cd $(OPERATORHUB_PATH) && git fetch upstream && git reset --hard upstream/main && cd -
+	mkdir -p "$(OPERATORHUB_PATH)/operators/netobserv-operator/$(BUNDLE_VERSION)"
+	cp -r bundle/manifests "$(OPERATORHUB_PATH)/operators/netobserv-operator/$(BUNDLE_VERSION)"
+	cp -r bundle/metadata "$(OPERATORHUB_PATH)/operators/netobserv-operator/$(BUNDLE_VERSION)"
+ifeq ($(BUNDLE_CONFIG), "config/openshift-olm")
+	echo "  com.redhat.openshift.versions: \"v4.10-v4.13\"" >> $(OPERATORHUB_PATH)/operators/netobserv-operator/$(BUNDLE_VERSION)/metadata/annotations.yaml
+endif
+	cd $(OPERATORHUB_PATH) && git add -A
+
+	@echo ""
+	@echo "Everything is ready to be pushed. Before that, you should compare the content of $(BUNDLE_VERSION) with $(PREVIOUS_VERSION) to make sure it looks correct."
 
 include .mk/sample.mk
 include .mk/development.mk
