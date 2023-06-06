@@ -37,7 +37,12 @@ const (
 // This is a workaround for the related issue:
 // https://github.com/kubernetes-sigs/controller-tools/issues/622
 
-// FlowCollectorSpec defines the desired state of FlowCollector
+// FlowCollectorSpec defines the desired state of FlowCollector.
+// <br><br>
+// *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature
+// is not officially supported by Red Hat. It may have been, for instance, contributed by the community
+// and accepted without a formal agreement for maintenance. The product maintainers may provide some support
+// for these features as a best effort only.
 type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
@@ -74,7 +79,7 @@ type FlowCollectorSpec struct {
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
-	// exporters defines additional optional exporters for custom consumption or storage. This is an experimental feature. Currently, only KAFKA exporter is available.
+	// exporters define additional optional exporters for custom consumption or storage.
 	// +optional
 	// +k8s:conversion-gen=false
 	Exporters []*FlowCollectorExporter `json:"exporters"`
@@ -85,7 +90,7 @@ type FlowCollectorSpec struct {
 // +union
 type FlowCollectorAgent struct {
 	// type selects the flows tracing agent. Possible values are "EBPF" (default) to use NetObserv eBPF agent,
-	// "IPFIX" to use the legacy IPFIX collector. "EBPF" is recommended in most cases as it offers better
+	// "IPFIX" - <i>deprecated (*)</i> - to use the legacy IPFIX collector. "EBPF" is recommended in most cases as it offers better
 	// performances and should work regardless of the CNI installed on the cluster.
 	// "IPFIX" works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX,
 	// but they would require manual configuration).
@@ -95,7 +100,7 @@ type FlowCollectorAgent struct {
 	// +kubebuilder:default:=EBPF
 	Type string `json:"type"`
 
-	// ipfix describes the settings related to the IPFIX-based flow reporter when the "agent.type"
+	// ipfix - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when the "agent.type"
 	// property is set to "IPFIX".
 	// +optional
 	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
@@ -708,19 +713,19 @@ const (
 	IpfixExporter ExporterType = "IPFIX"
 )
 
-// FlowCollectorExporter defines an additional exporter to send enriched flows to
+// FlowCollectorExporter defines an additional exporter to send enriched flows to.
 type FlowCollectorExporter struct {
-	// type selects the type of exporters. "KAFKA" and "IPFIX" are the available options at this moment.
+	// type selects the type of exporters. The available options are "KAFKA" and "IPFIX". "IPFIX" is <i>unsupported (*)</i>.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="KAFKA";"IPFIX"
 	// +kubebuilder:validation:Required
 	Type ExporterType `json:"type"`
 
-	// kafka configuration, such as address or topic, to send enriched flows to.
+	// kafka configuration, such as the address and topic, to send enriched flows to.
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
-	// ipfix configuration, such as ip address and port to send ipfix flows to.
+	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. <i>Unsupported (*)</i>.
 	// +optional
 	IPFIX FlowCollectorIPFIXReceiver `json:"ipfix,omitempty"`
 }
@@ -745,7 +750,7 @@ type FlowCollectorStatus struct {
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
 // +kubebuilder:storageversion
 
-// FlowCollector is the Schema for the flowcollectors API, which pilots and configures netflow collection.
+// FlowCollector is the schema for the network flows collection API, which pilots and configures the underlying deployments.
 type FlowCollector struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
