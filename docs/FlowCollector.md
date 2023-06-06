@@ -6032,7 +6032,7 @@ loki, the flow store, client settings.
         <td><b>authToken</b></td>
         <td>enum</td>
         <td>
-          AuthToken describe the way to get a token to authenticate to Loki. DISABLED will not send any token with the request. HOST will use the local pod service account to authenticate to Loki. FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode. When using the Loki Operator, set it to `HOST` or `FORWARD`.<br/>
+          AuthToken describe the way to get a token to authenticate to Loki. DISABLED will not send any token with the request. HOST - <i>deprecated (*)</i> - will use the local pod service account to authenticate to Loki. FORWARD will forward the user token for authorization. When using the Loki Operator, this should be set to `FORWARD`.<br/>
           <br/>
             <i>Enum</i>: DISABLED, HOST, FORWARD<br/>
             <i>Default</i>: DISABLED<br/>
