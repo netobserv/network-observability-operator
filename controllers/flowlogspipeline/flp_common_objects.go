@@ -536,7 +536,7 @@ func createIPFIXWriteStage(name string, spec *flowslatest.FlowCollectorIPFIXRece
 	return fromStage.WriteIpfix(name, api.WriteIpfix{
 		TargetHost:   spec.TargetHost,
 		TargetPort:   spec.TargetPort,
-		Transport:    spec.Transport,
+		Transport:    getIPFIXTransport(spec.Transport),
 		EnterpriseID: 2,
 	})
 }
@@ -552,6 +552,15 @@ func (b *builder) getKafkaTLS(tls *flowslatest.ClientTLS, volumeName string) *ap
 		}
 	}
 	return nil
+}
+
+func getIPFIXTransport(transport string) string {
+	switch transport {
+	case "UDP":
+		return "udp"
+	default:
+		return "tcp" //always fallback on tcp
+	}
 }
 
 // returns a configmap with a digest of its configuration contents, which will be used to
