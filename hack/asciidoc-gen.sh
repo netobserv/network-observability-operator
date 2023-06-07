@@ -31,3 +31,6 @@ sed -i -r '/^== Specification$/d ' $ADOC
 sed -i -r 's/^==/=/g' $ADOC
 sed -i -r '/^= API endpoints/Q' $ADOC
 sed -i -r 's/OpenShift/{product-title}/' $ADOC
+sed -i -r 's/<br>/ +\n/g' $ADOC
+sed -i -r 's/<i>/_/g' $ADOC
+sed -i -r 's/<\/i>/_/g' $ADOC

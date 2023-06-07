@@ -8,7 +8,7 @@
 Description::
 +
 --
-FlowCollector is the Schema for the flowcollectors API, which pilots and configures netflow collection.
+FlowCollector is the schema for the network flows collection API, which pilots and configures the underlying deployments.
 --
 
 Type::
@@ -35,7 +35,9 @@ Type::
 
 | `spec`
 | `object`
-| FlowCollectorSpec defines the desired state of FlowCollector
+| FlowCollectorSpec defines the desired state of FlowCollector.  +
+ +
+ *: the mention of _"unsupported"_, or _"deprecated"_ for a feature throughout this document means that this feature is not officially supported by Red Hat. It may have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers may provide some support for these features as a best effort only.
 
 |===
 == .metadata
@@ -55,7 +57,9 @@ Type::
 Description::
 +
 --
-FlowCollectorSpec defines the desired state of FlowCollector
+FlowCollectorSpec defines the desired state of FlowCollector.  +
+ +
+ *: the mention of _"unsupported"_, or _"deprecated"_ for a feature throughout this document means that this feature is not officially supported by Red Hat. It may have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers may provide some support for these features as a best effort only.
 --
 
 Type::
@@ -85,11 +89,11 @@ Required::
 
 | `exporters`
 | `array`
-| exporters defines additional optional exporters for custom consumption or storage. This is an experimental feature. Currently, only KAFKA exporter is available.
+| exporters define additional optional exporters for custom consumption or storage.
 
 | `exporters[]`
 | `object`
-| FlowCollectorExporter defines an additional exporter to send enriched flows to
+| FlowCollectorExporter defines an additional exporter to send enriched flows to.
 
 | `kafka`
 | `object`
@@ -133,11 +137,11 @@ Required::
 
 | `ipfix`
 | `object`
-| ipfix describes the settings related to the IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".
+| ipfix - _deprecated (*)_ - describes the settings related to the IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".
 
 | `type`
 | `string`
-| type selects the flows tracing agent. Possible values are "EBPF" (default) to use NetObserv eBPF agent, "IPFIX" to use the legacy IPFIX collector. "EBPF" is recommended in most cases as it offers better performances and should work regardless of the CNI installed on the cluster. "IPFIX" works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).
+| type selects the flows tracing agent. Possible values are "EBPF" (default) to use NetObserv eBPF agent, "IPFIX" - _deprecated (*)_ - to use the legacy IPFIX collector. "EBPF" is recommended in most cases as it offers better performances and should work regardless of the CNI installed on the cluster. "IPFIX" works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).
 
 |===
 == .spec.agent.ebpf
@@ -254,7 +258,7 @@ Type::
 Description::
 +
 --
-ipfix describes the settings related to the IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".
+ipfix - _deprecated (*)_ - describes the settings related to the IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".
 --
 
 Type::
@@ -354,8 +358,6 @@ consolePlugin defines the settings related to the {product-title} Console plugin
 Type::
   `object`
 
-Required::
-  - `register`
 
 
 
@@ -377,7 +379,7 @@ Required::
 
 | `port`
 | `integer`
-| port is the plugin service port
+| port is the plugin service port. Do not use 9002, which is reserved for metrics.
 
 | `portNaming`
 | `object`
@@ -519,7 +521,7 @@ Type::
 Description::
 +
 --
-exporters defines additional optional exporters for custom consumption or storage. This is an experimental feature. Currently, only KAFKA exporter is available.
+exporters define additional optional exporters for custom consumption or storage.
 --
 
 Type::
@@ -532,7 +534,7 @@ Type::
 Description::
 +
 --
-FlowCollectorExporter defines an additional exporter to send enriched flows to
+FlowCollectorExporter defines an additional exporter to send enriched flows to.
 --
 
 Type::
@@ -547,20 +549,57 @@ Required::
 |===
 | Property | Type | Description
 
+| `ipfix`
+| `object`
+| IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. _Unsupported (*)_.
+
 | `kafka`
 | `object`
-| kafka configuration, such as address or topic, to send enriched flows to.
+| kafka configuration, such as the address and topic, to send enriched flows to.
 
 | `type`
 | `string`
-| type selects the type of exporters. Only "KAFKA" is available at the moment.
+| type selects the type of exporters. The available options are "KAFKA" and "IPFIX". "IPFIX" is _unsupported (*)_.
+
+|===
+== .spec.exporters[].ipfix
+Description::
++
+--
+IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. _Unsupported (*)_.
+--
+
+Type::
+  `object`
+
+Required::
+  - `targetHost`
+  - `targetPort`
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `targetHost`
+| `string`
+| address of the ipfix external receiver
+
+| `targetPort`
+| `integer`
+| port for the ipfix external receiver
+
+| `transport`
+| `string`
+| Transport protocol (tcp/udp) to be used for the IPFIX connection, defaults to tcp
 
 |===
 == .spec.exporters[].kafka
 Description::
 +
 --
-kafka configuration, such as address or topic, to send enriched flows to.
+kafka configuration, such as the address and topic, to send enriched flows to.
 --
 
 Type::
@@ -652,6 +691,10 @@ Type::
 | `string`
 | name of the config map or secret containing certificates
 
+| `namespace`
+| `string`
+| namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+
 | `type`
 | `string`
 | type for the certificate reference: "configmap" or "secret"
@@ -685,6 +728,10 @@ Type::
 | `name`
 | `string`
 | name of the config map or secret containing certificates
+
+| `namespace`
+| `string`
+| namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
 
 | `type`
 | `string`
@@ -787,6 +834,10 @@ Type::
 | `string`
 | name of the config map or secret containing certificates
 
+| `namespace`
+| `string`
+| namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+
 | `type`
 | `string`
 | type for the certificate reference: "configmap" or "secret"
@@ -821,6 +872,10 @@ Type::
 | `string`
 | name of the config map or secret containing certificates
 
+| `namespace`
+| `string`
+| namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+
 | `type`
 | `string`
 | type for the certificate reference: "configmap" or "secret"
@@ -845,7 +900,7 @@ Type::
 
 | `authToken`
 | `string`
-| AuthToken describe the way to get a token to authenticate to Loki. DISABLED will not send any token with the request. HOST will use the local pod service account to authenticate to Loki. FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode. When using the Loki Operator, set it to `HOST` or `FORWARD`.
+| AuthToken describe the way to get a token to authenticate to Loki. DISABLED will not send any token with the request. HOST - _deprecated (*)_ - will use the local pod service account to authenticate to Loki. FORWARD will forward the user token for authorization. When using the Loki Operator, this should be set to `FORWARD`.
 
 | `batchSize`
 | `integer`
@@ -875,9 +930,13 @@ Type::
 | `object (string)`
 | staticLabels is a map of common labels to set on each flow.
 
+| `statusTls`
+| `object`
+| tls client configuration for loki status URL.
+
 | `statusUrl`
 | `string`
-| statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend. When using the Loki Operator, set it to the Loki HTTP query frontend service, for example https://loki-query-frontend-http.netobserv.svc:3100/.
+| statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend. When using the Loki Operator, set it to the Loki HTTP query frontend service, for example https://loki-query-frontend-http.netobserv.svc:3100/. statusTLS configuration will be used when statusUrl is set.
 
 | `tenantID`
 | `string`
@@ -889,18 +948,128 @@ Type::
 
 | `tls`
 | `object`
-| tls client configuration.
+| tls client configuration for loki URL.
 
 | `url`
 | `string`
 | url is the address of an existing Loki service to push the flows to. When using the Loki Operator, set it to the Loki gateway service with the `network` tenant set in path, for example https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.
 
 |===
+== .spec.loki.statusTls
+Description::
++
+--
+tls client configuration for loki status URL.
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `caCert`
+| `object`
+| caCert defines the reference of the certificate for the Certificate Authority
+
+| `enable`
+| `boolean`
+| enable TLS
+
+| `insecureSkipVerify`
+| `boolean`
+| insecureSkipVerify allows skipping client-side verification of the server certificate If set to true, CACert field will be ignored
+
+| `userCert`
+| `object`
+| userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)
+
+|===
+== .spec.loki.statusTls.caCert
+Description::
++
+--
+caCert defines the reference of the certificate for the Certificate Authority
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `certFile`
+| `string`
+| certFile defines the path to the certificate file name within the config map or secret
+
+| `certKey`
+| `string`
+| certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.
+
+| `name`
+| `string`
+| name of the config map or secret containing certificates
+
+| `namespace`
+| `string`
+| namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+
+| `type`
+| `string`
+| type for the certificate reference: "configmap" or "secret"
+
+|===
+== .spec.loki.statusTls.userCert
+Description::
++
+--
+userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `certFile`
+| `string`
+| certFile defines the path to the certificate file name within the config map or secret
+
+| `certKey`
+| `string`
+| certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.
+
+| `name`
+| `string`
+| name of the config map or secret containing certificates
+
+| `namespace`
+| `string`
+| namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+
+| `type`
+| `string`
+| type for the certificate reference: "configmap" or "secret"
+
+|===
 == .spec.loki.tls
 Description::
 +
 --
-tls client configuration.
+tls client configuration for loki URL.
 --
 
 Type::
@@ -959,6 +1128,10 @@ Type::
 | `string`
 | name of the config map or secret containing certificates
 
+| `namespace`
+| `string`
+| namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+
 | `type`
 | `string`
 | type for the certificate reference: "configmap" or "secret"
@@ -992,6 +1165,10 @@ Type::
 | `name`
 | `string`
 | name of the config map or secret containing certificates
+
+| `namespace`
+| `string`
+| namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
 
 | `type`
 | `string`
@@ -1229,6 +1406,10 @@ Type::
 | `name`
 | `string`
 | name of the config map or secret containing certificates
+
+| `namespace`
+| `string`
+| namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
 
 | `type`
 | `string`
