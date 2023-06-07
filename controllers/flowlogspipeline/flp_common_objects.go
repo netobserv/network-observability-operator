@@ -674,6 +674,7 @@ func (b *builder) clusterRoleBinding(ck ConfKind, mono bool) *rbacv1.ClusterRole
 }
 
 func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
+	serverName := fmt.Sprintf("%s.%s.svc", b.promServiceName(), b.info.Namespace)
 	flpServiceMonitorObject := monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.serviceMonitorName(),
@@ -698,6 +699,26 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 			},
 		},
 	}
+	if b.desired.Processor.Metrics.Server.TLS.Type == flowslatest.ServerTLSAuto {
+		flpServiceMonitorObject.Spec.Endpoints[0].Scheme = "https"
+		flpServiceMonitorObject.Spec.Endpoints[0].TLSConfig = &monitoringv1.TLSConfig{
+			SafeTLSConfig: monitoringv1.SafeTLSConfig{
+				ServerName: serverName,
+			},
+			CAFile: "/etc/prometheus/configmaps/serving-certs-ca-bundle/service-ca.crt",
+		}
+	}
+
+	if b.desired.Processor.Metrics.Server.TLS.Type == flowslatest.ServerTLSProvided {
+		flpServiceMonitorObject.Spec.Endpoints[0].Scheme = "https"
+		flpServiceMonitorObject.Spec.Endpoints[0].TLSConfig = &monitoringv1.TLSConfig{
+			SafeTLSConfig: monitoringv1.SafeTLSConfig{
+				ServerName:         serverName,
+				InsecureSkipVerify: true,
+			},
+		}
+	}
+
 	return &flpServiceMonitorObject
 }
 

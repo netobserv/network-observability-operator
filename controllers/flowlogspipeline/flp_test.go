@@ -482,6 +482,18 @@ func TestServiceChanged(t *testing.T) {
 	report = helper.NewChangeReport("")
 	assert.False(helper.ServiceChanged(second, third, &report))
 	assert.Contains(report.String(), "no change")
+
+	// Check annotations change
+	cfg.Processor.LogLevel = "error"
+	b = monoBuilder(ns, &cfg)
+	fourth := b.promService()
+	fourth.ObjectMeta.Annotations = map[string]string{
+		"name": "value",
+	}
+
+	report = helper.NewChangeReport("")
+	assert.True(helper.ServiceChanged(third, fourth, &report))
+	assert.Contains(report.String(), "Service annotations changed")
 }
 
 func TestServiceMonitorNoChange(t *testing.T) {
@@ -526,6 +538,15 @@ func TestServiceMonitorChanged(t *testing.T) {
 	report = helper.NewChangeReport("")
 	assert.True(helper.ServiceMonitorChanged(second, third, &report))
 	assert.Contains(report.String(), "ServiceMonitor labels changed")
+
+	// Check scheme changed
+	b = newMonolithBuilder(info.NewInstance(image2), &cfg)
+	fourth := b.generic.serviceMonitor()
+	fourth.Spec.Endpoints[0].Scheme = "https"
+
+	report = helper.NewChangeReport("")
+	assert.True(helper.ServiceMonitorChanged(third, fourth, &report))
+	assert.Contains(report.String(), "ServiceMonitor spec changed")
 }
 
 func TestPrometheusRuleNoChange(t *testing.T) {
