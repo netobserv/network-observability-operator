@@ -3856,7 +3856,7 @@ Resource Types:
 
 
 
-FlowCollector is the Schema for the flowcollectors API, which pilots and configures netflow collection.
+FlowCollector is the schema for the network flows collection API, which pilots and configures the underlying deployments.
 
 <table>
     <thead>
@@ -3888,7 +3888,7 @@ FlowCollector is the Schema for the flowcollectors API, which pilots and configu
         <td><b><a href="#flowcollectorspec-1">spec</a></b></td>
         <td>object</td>
         <td>
-          FlowCollectorSpec defines the desired state of FlowCollector<br/>
+          FlowCollectorSpec defines the desired state of FlowCollector. <br><br> *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature is not officially supported by Red Hat. It may have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers may provide some support for these features as a best effort only.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3907,7 +3907,7 @@ FlowCollector is the Schema for the flowcollectors API, which pilots and configu
 
 
 
-FlowCollectorSpec defines the desired state of FlowCollector
+FlowCollectorSpec defines the desired state of FlowCollector. <br><br> *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature is not officially supported by Red Hat. It may have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers may provide some support for these features as a best effort only.
 
 <table>
     <thead>
@@ -3948,7 +3948,7 @@ FlowCollectorSpec defines the desired state of FlowCollector
         <td><b><a href="#flowcollectorspecexportersindex-1">exporters</a></b></td>
         <td>[]object</td>
         <td>
-          exporters defines additional optional exporters for custom consumption or storage. This is an experimental feature. Currently, only KAFKA exporter is available.<br/>
+          exporters define additional optional exporters for custom consumption or storage.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4003,7 +4003,7 @@ agent for flows extraction.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type selects the flows tracing agent. Possible values are "EBPF" (default) to use NetObserv eBPF agent, "IPFIX" to use the legacy IPFIX collector. "EBPF" is recommended in most cases as it offers better performances and should work regardless of the CNI installed on the cluster. "IPFIX" works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
+          type selects the flows tracing agent. Possible values are "EBPF" (default) to use NetObserv eBPF agent, "IPFIX" - <i>deprecated (*)</i> - to use the legacy IPFIX collector. "EBPF" is recommended in most cases as it offers better performances and should work regardless of the CNI installed on the cluster. "IPFIX" works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
           <br/>
             <i>Enum</i>: EBPF, IPFIX<br/>
             <i>Default</i>: EBPF<br/>
@@ -4020,7 +4020,7 @@ agent for flows extraction.
         <td><b><a href="#flowcollectorspecagentipfix-1">ipfix</a></b></td>
         <td>object</td>
         <td>
-          ipfix describes the settings related to the IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".<br/>
+          ipfix - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4212,7 +4212,7 @@ resources are the compute resources required by this container. More info: https
 
 
 
-ipfix describes the settings related to the IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".
+ipfix - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".
 
 <table>
     <thead>
@@ -5499,7 +5499,7 @@ resources, in terms of compute resources, required by this container. More info:
 
 
 
-FlowCollectorExporter defines an additional exporter to send enriched flows to
+FlowCollectorExporter defines an additional exporter to send enriched flows to.
 
 <table>
     <thead>
@@ -5514,7 +5514,7 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type selects the type of exporters. "KAFKA" and "IPFIX" are the available options at this moment.<br/>
+          type selects the type of exporters. The available options are "KAFKA" and "IPFIX". "IPFIX" is <i>unsupported (*)</i>.<br/>
           <br/>
             <i>Enum</i>: KAFKA, IPFIX<br/>
         </td>
@@ -5523,14 +5523,14 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to
         <td><b><a href="#flowcollectorspecexportersindexipfix">ipfix</a></b></td>
         <td>object</td>
         <td>
-          ipfix configuration, such as ip address and port to send ipfix flows to.<br/>
+          IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. <i>Unsupported (*)</i>.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindexkafka-1">kafka</a></b></td>
         <td>object</td>
         <td>
-          kafka configuration, such as address or topic, to send enriched flows to.<br/>
+          kafka configuration, such as the address and topic, to send enriched flows to.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5542,7 +5542,7 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to
 
 
 
-ipfix configuration, such as ip address and port to send ipfix flows to.
+IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. <i>Unsupported (*)</i>.
 
 <table>
     <thead>
@@ -5587,7 +5587,7 @@ ipfix configuration, such as ip address and port to send ipfix flows to.
 
 
 
-kafka configuration, such as address or topic, to send enriched flows to.
+kafka configuration, such as the address and topic, to send enriched flows to.
 
 <table>
     <thead>
@@ -6032,7 +6032,7 @@ loki, the flow store, client settings.
         <td><b>authToken</b></td>
         <td>enum</td>
         <td>
-          AuthToken describe the way to get a token to authenticate to Loki. DISABLED will not send any token with the request. HOST will use the local pod service account to authenticate to Loki. FORWARD will forward user token, in this mode, pod that are not receiving user request like the processor will use the local pod service account. Similar to HOST mode. When using the Loki Operator, set it to `HOST` or `FORWARD`.<br/>
+          AuthToken describe the way to get a token to authenticate to Loki. DISABLED will not send any token with the request. HOST - <i>deprecated (*)</i> - will use the local pod service account to authenticate to Loki. FORWARD will forward the user token for authorization. When using the Loki Operator, this should be set to `FORWARD`.<br/>
           <br/>
             <i>Enum</i>: DISABLED, HOST, FORWARD<br/>
             <i>Default</i>: DISABLED<br/>
