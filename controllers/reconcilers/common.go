@@ -166,6 +166,7 @@ func (i *Instance) ReconcileService(ctx context.Context, old, new *corev1.Servic
 		// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
 		newSVC := old.DeepCopy()
 		newSVC.Spec.Ports = new.Spec.Ports
+		newSVC.ObjectMeta.Annotations = new.ObjectMeta.Annotations
 		if err := i.UpdateOwned(ctx, old, newSVC); err != nil {
 			return err
 		}
