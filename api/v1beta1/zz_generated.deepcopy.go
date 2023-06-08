@@ -313,6 +313,11 @@ func (in *FlowCollectorFLP) DeepCopyInto(out *FlowCollectorFLP) {
 		*out = new(v1.Duration)
 		**out = **in
 	}
+	if in.ConversationTerminatingTimeout != nil {
+		in, out := &in.ConversationTerminatingTimeout, &out.ConversationTerminatingTimeout
+		*out = new(v1.Duration)
+		**out = **in
+	}
 	in.Debug.DeepCopyInto(&out.Debug)
 }
 

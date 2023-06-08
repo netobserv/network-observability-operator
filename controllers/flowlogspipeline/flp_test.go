@@ -94,6 +94,9 @@ func getConfig() flowslatest.FlowCollectorSpec {
 			ConversationEndTimeout: &metav1.Duration{
 				Duration: conntrackEndTimeout,
 			},
+			ConversationTerminatingTimeout: &metav1.Duration{
+				Duration: conntrackTerminatingTimeout,
+			},
 		},
 		Loki: flowslatest.FlowCollectorLoki{
 			URL: "http://loki:3100/",

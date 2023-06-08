@@ -81,11 +81,14 @@ type ConnTrackOperationEnum struct {
 	Count string `yaml:"count" json:"count" doc:"count"`
 	Min   string `yaml:"min" json:"min" doc:"min"`
 	Max   string `yaml:"max" json:"max" doc:"max"`
+	First string `yaml:"first" json:"first" doc:"first"`
+	Last  string `yaml:"last" json:"last" doc:"last"`
 }
 
 type ConnTrackSchedulingGroup struct {
 	Selector             map[string]interface{} `yaml:"selector,omitempty" json:"selector,omitempty" doc:"key-value map to match against connection fields to apply this scheduling"`
 	EndConnectionTimeout Duration               `yaml:"endConnectionTimeout,omitempty" json:"endConnectionTimeout,omitempty" doc:"duration of time to wait from the last flow log to end a connection"`
+	TerminatingTimeout   Duration               `yaml:"terminatingTimeout,omitempty" json:"terminatingTimeout,omitempty" doc:"duration of time to wait from detected FIN flag to end a connection"`
 	HeartbeatInterval    Duration               `yaml:"heartbeatInterval,omitempty" json:"heartbeatInterval,omitempty" doc:"duration of time to wait between heartbeat reports of a connection"`
 }
 
@@ -95,7 +98,7 @@ func ConnTrackOperationName(operation string) string {
 
 type ConnTrackTCPFlags struct {
 	FieldName           string `yaml:"fieldName,omitempty" json:"fieldName,omitempty" doc:"name of the field containing TCP flags"`
-	DetectEndConnection bool   `yaml:"detectEndConnection,omitempty" json:"detectEndConnection,omitempty" doc:"detect end connections by FIN_ACK flag"`
+	DetectEndConnection bool   `yaml:"detectEndConnection,omitempty" json:"detectEndConnection,omitempty" doc:"detect end connections by FIN flag"`
 	SwapAB              bool   `yaml:"swapAB,omitempty" json:"swapAB,omitempty" doc:"swap source and destination when the first flowlog contains the SYN_ACK flag"`
 }
 
@@ -113,7 +116,7 @@ func (ct *ConnTrack) Validate() error {
 			return conntrackInvalidError{splitABWithNoBidi: true,
 				msg: fmt.Errorf("output field %q has splitAB=true although bidirection is not enabled (fieldGroupARef is empty)", of.Name)}
 		}
-		if !isOperationValid(of.Operation) {
+		if !isOperationValid(of.Operation, of.SplitAB) {
 			return conntrackInvalidError{unknownOperation: true,
 				msg: fmt.Errorf("unknown operation %q in output field %q", of.Operation, of.Name)}
 		}
@@ -250,13 +253,15 @@ func addToSet(set map[string]struct{}, item string) bool {
 	return true
 }
 
-func isOperationValid(value string) bool {
+func isOperationValid(value string, splitAB bool) bool {
 	valid := true
 	switch value {
 	case ConnTrackOperationName("Sum"):
 	case ConnTrackOperationName("Count"):
 	case ConnTrackOperationName("Min"):
 	case ConnTrackOperationName("Max"):
+	case ConnTrackOperationName("First"), ConnTrackOperationName("Last"):
+		valid = !splitAB
 	default:
 		valid = false
 	}

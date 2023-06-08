@@ -29,20 +29,21 @@ import (
 )
 
 const (
-	configVolume               = "config-volume"
-	configPath                 = "/etc/flowlogs-pipeline"
-	configFile                 = "config.json"
-	metricsConfigDir           = "metrics_definitions"
-	lokiToken                  = "loki-token"
-	healthServiceName          = "health"
-	prometheusServiceName      = "prometheus"
-	profilePortName            = "pprof"
-	healthTimeoutSeconds       = 5
-	livenessPeriodSeconds      = 10
-	startupFailureThreshold    = 5
-	startupPeriodSeconds       = 10
-	conntrackEndTimeout        = 10 * time.Second
-	conntrackHeartbeatInterval = 30 * time.Second
+	configVolume                = "config-volume"
+	configPath                  = "/etc/flowlogs-pipeline"
+	configFile                  = "config.json"
+	metricsConfigDir            = "metrics_definitions"
+	lokiToken                   = "loki-token"
+	healthServiceName           = "health"
+	prometheusServiceName       = "prometheus"
+	profilePortName             = "pprof"
+	healthTimeoutSeconds        = 5
+	livenessPeriodSeconds       = 10
+	startupFailureThreshold     = 5
+	startupPeriodSeconds        = 10
+	conntrackTerminatingTimeout = 5 * time.Second
+	conntrackEndTimeout         = 10 * time.Second
+	conntrackHeartbeatInterval  = 30 * time.Second
 )
 
 type ConfKind string
@@ -323,6 +324,11 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
 		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
 
+		terminatingTimeout := conntrackTerminatingTimeout
+		if b.desired.Processor.ConversationTerminatingTimeout != nil {
+			terminatingTimeout = b.desired.Processor.ConversationTerminatingTimeout.Duration
+		}
+
 		endTimeout := conntrackEndTimeout
 		if b.desired.Processor.ConversationEndTimeout != nil {
 			endTimeout = b.desired.Processor.ConversationEndTimeout.Duration
@@ -380,12 +386,25 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 					Name:      "TimeFlowEndMs",
 					Operation: "max",
 				},
+				{
+					Name:      "FlowDirection",
+					Operation: "first",
+				},
+				{
+					Name:      "IfDirection",
+					Operation: "first",
+				},
+				{
+					Name:      "AgentIP",
+					Operation: "first",
+				},
 			},
 			Scheduling: []api.ConnTrackSchedulingGroup{
 				{
 					Selector:             nil, // Default group. Match all flowlogs
 					HeartbeatInterval:    api.Duration{Duration: heartbeatInterval},
 					EndConnectionTimeout: api.Duration{Duration: endTimeout},
+					TerminatingTimeout:   api.Duration{Duration: terminatingTimeout},
 				},
 			},
 			TCPFlags: api.ConnTrackTCPFlags{

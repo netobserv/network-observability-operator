@@ -24,10 +24,11 @@ import (
 )
 
 const (
-	timeout                    = time.Second * 10
-	interval                   = 50 * time.Millisecond
-	conntrackEndTimeout        = 10 * time.Second
-	conntrackHeartbeatInterval = 30 * time.Second
+	timeout                     = time.Second * 10
+	interval                    = 50 * time.Millisecond
+	conntrackEndTimeout         = 10 * time.Second
+	conntrackTerminatingTimeout = 5 * time.Second
+	conntrackHeartbeatInterval  = 30 * time.Second
 )
 
 var outputRecordTypes = flowslatest.LogTypeAll
@@ -106,6 +107,9 @@ func flowCollectorControllerSpecs() {
 						},
 						ConversationEndTimeout: &metav1.Duration{
 							Duration: conntrackEndTimeout,
+						},
+						ConversationTerminatingTimeout: &metav1.Duration{
+							Duration: conntrackTerminatingTimeout,
 						},
 						Metrics: flowslatest.FLPMetrics{
 							IgnoreTags: []string{"flows"},
@@ -247,6 +251,9 @@ func flowCollectorControllerSpecs() {
 					},
 					ConversationEndTimeout: &metav1.Duration{
 						Duration: conntrackEndTimeout,
+					},
+					ConversationTerminatingTimeout: &metav1.Duration{
+						Duration: conntrackTerminatingTimeout,
 					},
 					Metrics: flowslatest.FLPMetrics{
 						IgnoreTags:    []string{"flows", "bytes", "packets"},
