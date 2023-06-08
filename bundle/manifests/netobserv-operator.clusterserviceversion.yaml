@@ -311,6 +311,7 @@ metadata:
             "processor": {
               "conversationEndTimeout": "10s",
               "conversationHeartbeatInterval": "30s",
+              "conversationTerminatingTimeout": "5s",
               "dropUnusedFields": true,
               "imagePullPolicy": "IfNotPresent",
               "kafkaConsumerAutoscaler": null,
