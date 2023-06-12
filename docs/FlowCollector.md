@@ -5514,9 +5514,9 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type selects the type of exporters. The available options are "KAFKA" and "IPFIX". "IPFIX" is <i>unsupported (*)</i>.<br/>
+          type selects the type of exporters. The available options are "KAFKA", "IPFIX" and "S3". "IPFIX" is <i>unsupported (*)</i>.<br/>
           <br/>
-            <i>Enum</i>: KAFKA, IPFIX<br/>
+            <i>Enum</i>: KAFKA, IPFIX, S3<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -5531,6 +5531,13 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to.
         <td>object</td>
         <td>
           kafka configuration, such as the address and topic, to send enriched flows to.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexs3">s3</a></b></td>
+        <td>object</td>
+        <td>
+          S3 configuration, such as the endpoint, credentials and bucket name<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5793,6 +5800,81 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
             <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].s3
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindex-1)</sup></sup>
+
+
+
+S3 configuration, such as the endpoint, credentials and bucket name
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>accessKeyId</b></td>
+        <td>string</td>
+        <td>
+          username to connect to server<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>batchSize</b></td>
+        <td>integer</td>
+        <td>
+          limit on how many flows will be buffered before being sent (default: 100)<br/>
+          <br/>
+            <i>Default</i>: 100<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>bucket</b></td>
+        <td>string</td>
+        <td>
+          bucket name into which to store objects<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>endpoint</b></td>
+        <td>string</td>
+        <td>
+          address of the s3 server<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>secretAccessKey</b></td>
+        <td>string</td>
+        <td>
+          password to connect to server<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>secure</b></td>
+        <td>boolean</td>
+        <td>
+          secure flag. Use true for https, false for http (default: true)<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 

@@ -512,7 +512,11 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 		dashboardConfigMap = b.makeMetricsDashboardConfigMap(dashboard)
 	}
 
-	b.addCustomExportStages(&enrichedStage)
+	err = b.addCustomExportStages(&enrichedStage)
+	if err != nil {
+		return nil, err
+	}
+
 	return dashboardConfigMap, nil
 }
 
@@ -532,15 +536,20 @@ func (b *builder) makeMetricsDashboardConfigMap(dashboard string) *corev1.Config
 	return &configMap
 }
 
-func (b *builder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage) {
+func (b *builder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage) error {
 	for i, exporter := range b.desired.Exporters {
-		if exporter.Type == flowslatest.KafkaExporter {
+		switch exporter.Type {
+		case flowslatest.KafkaExporter:
 			b.createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), &exporter.Kafka, enrichedStage)
-		}
-		if exporter.Type == flowslatest.IpfixExporter {
-			createIPFIXWriteStage(fmt.Sprintf("IPFIX-export-%d", i), &exporter.IPFIX, enrichedStage)
+		case flowslatest.IpfixExporter:
+			b.createIPFIXWriteStage(fmt.Sprintf("IPFIX-export-%d", i), &exporter.IPFIX, enrichedStage)
+		case flowslatest.S3Exporter:
+			b.createS3WriteStage(fmt.Sprintf("s3-export-%d", i), &exporter.S3, enrichedStage)
+		default:
+			return fmt.Errorf("unknown exporter type: %s", exporter.Type)
 		}
 	}
+	return nil
 }
 
 func (b *builder) createKafkaWriteStage(name string, spec *flowslatest.FlowCollectorKafka, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
@@ -551,12 +560,23 @@ func (b *builder) createKafkaWriteStage(name string, spec *flowslatest.FlowColle
 	})
 }
 
-func createIPFIXWriteStage(name string, spec *flowslatest.FlowCollectorIPFIXReceiver, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
+func (b *builder) createIPFIXWriteStage(name string, spec *flowslatest.FlowCollectorIPFIXReceiver, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
 	return fromStage.WriteIpfix(name, api.WriteIpfix{
 		TargetHost:   spec.TargetHost,
 		TargetPort:   spec.TargetPort,
 		Transport:    getIPFIXTransport(spec.Transport),
 		EnterpriseID: 2,
+	})
+}
+
+func (b *builder) createS3WriteStage(name string, spec *flowslatest.FlowCollectorS3, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
+	return fromStage.EncodeS3(name, api.EncodeS3{
+		Endpoint:        spec.Endpoint,
+		AccessKeyId:     spec.AccessKeyID,
+		SecretAccessKey: spec.SecretAccessKey,
+		Bucket:          spec.Bucket,
+		Secure:          spec.Secure,
+		BatchSize:       spec.BatchSize,
 	})
 }
 

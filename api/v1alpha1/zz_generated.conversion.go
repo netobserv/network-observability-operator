@@ -600,6 +600,7 @@ func autoConvert_v1beta1_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter
 		return err
 	}
 	// WARNING: in.IPFIX requires manual conversion: does not exist in peer-type
+	// WARNING: in.S3 requires manual conversion: does not exist in peer-type
 	return nil
 }
 

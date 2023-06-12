@@ -143,3 +143,12 @@ spec:
     #     targetHost: "ipfix-collector.ipfix.svc.cluster.local"
     #     targetPort: 4739
     #     transport: TCP or UDP (optional - defaults to TCP)
+    # or 
+    # - type: S3
+    #   s3:
+    #    endpoint: s3.us-east-1.amazonaws.com
+    #    accessKeyId: <ACCESS_KEY_ID>
+    #    secretAccessKey: <SECRET_ACCESS_KEY>
+    #    bucket: <BUCKET_NAME>
+    #    secure: true
+    #    batchSize: 100

@@ -3297,13 +3297,53 @@ spec:
                       - address
                       - topic
                       type: object
+                    s3:
+                      description: S3 configuration, such as the endpoint, credentials
+                        and bucket name
+                      properties:
+                        accessKeyId:
+                          default: ""
+                          description: username to connect to server
+                          type: string
+                        batchSize:
+                          default: 100
+                          description: 'limit on how many flows will be buffered before
+                            being sent (default: 100)'
+                          minimum: 1
+                          type: integer
+                        bucket:
+                          default: ""
+                          description: bucket name into which to store objects
+                          type: string
+                        endpoint:
+                          default: ""
+                          description: address of the s3 server
+                          type: string
+                        secretAccessKey:
+                          default: ""
+                          description: password to connect to server
+                          type: string
+                        secure:
+                          default: true
+                          description: 'secure flag. Use true for https, false for
+                            http (default: true)'
+                          type: boolean
+                      required:
+                      - accessKeyId
+                      - batchSize
+                      - bucket
+                      - endpoint
+                      - secretAccessKey
+                      - secure
+                      type: object
                     type:
                       description: type selects the type of exporters. The available
-                        options are "KAFKA" and "IPFIX". "IPFIX" is <i>unsupported
+                        options are "KAFKA", "IPFIX" and "S3". "IPFIX" is <i>unsupported
                         (*)</i>.
                       enum:
                       - KAFKA
                       - IPFIX
+                      - S3
                       type: string
                   required:
                   - type

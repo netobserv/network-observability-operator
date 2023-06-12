@@ -241,6 +241,8 @@ type FlowCollectorKafka struct {
 }
 
 type FlowCollectorIPFIXReceiver struct {
+	// Important: Run "make generate" to regenerate code after modifying this file
+
 	//+kubebuilder:default:=""
 	// address of the ipfix external receiver
 	TargetHost string `json:"targetHost"`
@@ -253,6 +255,35 @@ type FlowCollectorIPFIXReceiver struct {
 	// +kubebuilder:validation:Enum:="TCP";"UDP"
 	// +optional
 	Transport string `json:"transport,omitempty"`
+}
+
+type FlowCollectorS3 struct {
+	// Important: Run "make generate" to regenerate code after modifying this file
+
+	//+kubebuilder:default:=""
+	// address of the s3 server
+	Endpoint string `json:"endpoint"`
+
+	//+kubebuilder:default:=""
+	// username to connect to server
+	AccessKeyID string `json:"accessKeyId"`
+
+	//+kubebuilder:default:=""
+	// password to connect to server
+	SecretAccessKey string `json:"secretAccessKey"`
+
+	//+kubebuilder:default:=""
+	// bucket name into which to store objects
+	Bucket string `json:"bucket"`
+
+	//+kubebuilder:default:=true
+	// secure flag. Use true for https, false for http (default: true)
+	Secure bool `json:"secure"`
+
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:default:=100
+	// limit on how many flows will be buffered before being sent (default: 100)
+	BatchSize int `json:"batchSize"`
 }
 
 const (
@@ -716,13 +747,14 @@ type ExporterType string
 const (
 	KafkaExporter ExporterType = "KAFKA"
 	IpfixExporter ExporterType = "IPFIX"
+	S3Exporter    ExporterType = "S3"
 )
 
 // FlowCollectorExporter defines an additional exporter to send enriched flows to.
 type FlowCollectorExporter struct {
-	// type selects the type of exporters. The available options are "KAFKA" and "IPFIX". "IPFIX" is <i>unsupported (*)</i>.
+	// type selects the type of exporters. The available options are "KAFKA", "IPFIX" and "S3". "IPFIX" is <i>unsupported (*)</i>.
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="KAFKA";"IPFIX"
+	// +kubebuilder:validation:Enum:="KAFKA";"IPFIX";"S3"
 	// +kubebuilder:validation:Required
 	Type ExporterType `json:"type"`
 
@@ -733,6 +765,10 @@ type FlowCollectorExporter struct {
 	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. <i>Unsupported (*)</i>.
 	// +optional
 	IPFIX FlowCollectorIPFIXReceiver `json:"ipfix,omitempty"`
+
+	// S3 configuration, such as the endpoint, credentials and bucket name
+	// +optional
+	S3 FlowCollectorS3 `json:"s3,omitempty"`
 }
 
 // FlowCollectorStatus defines the observed state of FlowCollector
