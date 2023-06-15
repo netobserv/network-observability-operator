@@ -36,7 +36,7 @@ func (c *Client) CreateOwned(ctx context.Context, obj client.Object) error {
 		return err
 	}
 	kind := reflect.TypeOf(obj).String()
-	log.Info("Creating a new "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+	log.Info("CREATING a new "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 	err = c.Create(ctx, obj)
 	if err != nil {
 		log.Error(err, "Failed to create new "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
@@ -48,7 +48,6 @@ func (c *Client) CreateOwned(ctx context.Context, obj client.Object) error {
 // UpdateOwned is an helper function that updates an object, sets owner reference and writes info & errors logs
 func (c *Client) UpdateOwned(ctx context.Context, old, obj client.Object) error {
 	log := log.FromContext(ctx)
-	c.SetChanged(true)
 	if old != nil {
 		obj.SetResourceVersion(old.GetResourceVersion())
 	}
@@ -58,11 +57,21 @@ func (c *Client) UpdateOwned(ctx context.Context, old, obj client.Object) error 
 		return err
 	}
 	kind := reflect.TypeOf(obj).String()
-	log.Info("Updating "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+	log.Info("UPDATING "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 	err = c.Update(ctx, obj)
 	if err != nil {
 		log.Error(err, "Failed to update "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 		return err
+	}
+	err = c.Get(ctx, client.ObjectKeyFromObject(obj), obj)
+	if err != nil {
+		log.Error(err, "Failed to get updated resource "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+		return err
+	}
+	if obj.GetResourceVersion() != old.GetResourceVersion() {
+		c.SetChanged(true)
+	} else {
+		log.Info(kind+" not updated", "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 	}
 	return nil
 }

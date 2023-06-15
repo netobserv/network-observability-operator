@@ -68,7 +68,12 @@ func (m *NamespacedObjectManager) FetchAll(ctx context.Context) error {
 			// On success, placeholder is filled with resource. Caller should keep a pointer to it.
 		}
 	}
-	log.Info("Fetched: " + strings.Join(fetched, ",") + ". Not found: " + strings.Join(notFound, ","))
+	if len(fetched) > 0 {
+		log.Info("FETCHED: " + strings.Join(fetched, ","))
+	}
+	if len(notFound) > 0 {
+		log.Info("(Items not deployed: " + strings.Join(notFound, ",") + ")")
+	}
 	return nil
 }
 
@@ -83,7 +88,7 @@ func (m *NamespacedObjectManager) cleanup(ctx context.Context, namespace string)
 		ref := obj.placeholder.DeepCopyObject().(client.Object)
 		ref.SetName(obj.name)
 		ref.SetNamespace(namespace)
-		log.Info("Deleting old "+obj.kind, "Namespace", namespace, "Name", obj.name)
+		log.Info("DELETING "+obj.kind, "Namespace", namespace, "Name", obj.name)
 		err := m.client.Delete(ctx, ref)
 		if client.IgnoreNotFound(err) != nil {
 			log.Error(err, "Failed to delete old "+obj.kind, "Namespace", namespace, "Name", obj.name)
@@ -103,7 +108,7 @@ func (m *NamespacedObjectManager) TryDelete(ctx context.Context, obj client.Obje
 	if m.Exists(obj) {
 		log := log.FromContext(ctx)
 		kind := reflect.TypeOf(obj).String()
-		log.Info("Deleting old "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+		log.Info("DELETING "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 		err := m.client.Delete(ctx, obj)
 		if err != nil {
 			log.Error(err, "Failed to delete old "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())

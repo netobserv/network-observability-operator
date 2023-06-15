@@ -87,7 +87,7 @@ func NewAgentController(common *reconcilers.Common, config *operator.Config) *Ag
 
 func (c *AgentController) Reconcile(
 	ctx context.Context, target *flowslatest.FlowCollector) error {
-	rlog := log.FromContext(ctx).WithName("ebpf.AgentController")
+	rlog := log.FromContext(ctx).WithName("ebpf")
 	ctx = log.IntoContext(ctx, rlog)
 	current, err := c.current(ctx)
 	if err != nil {
