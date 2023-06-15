@@ -303,10 +303,8 @@ image-push: ## Push MULTIARCH_TARGETS images
 .PHONY: manifest-build
 manifest-build: ## Build MULTIARCH_TARGETS manifest
 	@echo 'building manifest $(IMAGE)'
-	DOCKER_BUILDKIT=1 $(OCI_BIN) rmi ${IMAGE}; \
-	DOCKER_BUILDKIT=1 $(OCI_BIN) manifest create ${IMAGE}
-	trap 'exit' INT; \
-	$(foreach target,$(MULTIARCH_TARGETS),$(call manifest_add_target,$(target)))
+	DOCKER_BUILDKIT=1 $(OCI_BIN) rmi ${IMAGE} -f
+	DOCKER_BUILDKIT=1 $(OCI_BIN) manifest create ${IMAGE} $(foreach target,$(MULTIARCH_TARGETS), --amend ${IMAGE}-$(target));
 
 .PHONY: manifest-push
 manifest-push: ## Push MULTIARCH_TARGETS manifest
