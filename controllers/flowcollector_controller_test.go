@@ -809,8 +809,8 @@ func GetCR(key types.NamespacedName) *flowslatest.FlowCollector {
 }
 
 func UpdateCR(key types.NamespacedName, updater func(*flowslatest.FlowCollector)) {
-	cr := GetCR(key)
 	Eventually(func() error {
+		cr := GetCR(key)
 		updater(cr)
 		return k8sClient.Update(ctx, cr)
 	}, timeout, interval).Should(Succeed())

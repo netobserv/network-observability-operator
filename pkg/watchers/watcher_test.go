@@ -189,8 +189,13 @@ func TestUpdateCertificate(t *testing.T) {
 	assert := assert.New(t)
 	clientMock := test.ClientMock{}
 	clientMock.MockConfigMap(&otherLokiCA)
+	// Copy cert changing content => should be updated
 	copied := otherLokiCA
 	copied.Namespace = baseNamespace
+	copied.Data = map[string]string{
+		"tls.crt": " -- MODIFIED LOKI OTHER CA --",
+	}
+
 	clientMock.MockConfigMap(&copied)
 	clientMock.MockCreateUpdate()
 
@@ -206,4 +211,31 @@ func TestUpdateCertificate(t *testing.T) {
 	clientMock.AssertCalled(t, "Get", mock.Anything, types.NamespacedName{Name: otherLokiCA.Name, Namespace: baseNamespace}, mock.Anything)
 	clientMock.AssertNotCalled(t, "Create")
 	clientMock.AssertCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestNoUpdateCertificate(t *testing.T) {
+	assert := assert.New(t)
+	clientMock := test.ClientMock{}
+	clientMock.MockConfigMap(&otherLokiCA)
+	// Copy cert keeping same content => should not be updated
+	copied := otherLokiCA
+	copied.Namespace = baseNamespace
+	copied.Data = map[string]string{
+		"tls.crt": otherLokiCA.Data["tls.crt"],
+	}
+	clientMock.MockConfigMap(&copied)
+	clientMock.MockCreateUpdate()
+
+	builder := builder.Builder{}
+	watcher := RegisterWatcher(&builder)
+	assert.NotNil(watcher)
+	watcher.Reset(baseNamespace)
+	cl := helper.UnmanagedClient(&clientMock)
+
+	_, _, err := watcher.ProcessMTLSCerts(context.Background(), cl, &otherLokiTLS, baseNamespace)
+	assert.NoError(err)
+	clientMock.AssertCalled(t, "Get", mock.Anything, types.NamespacedName{Name: otherLokiCA.Name, Namespace: otherLokiCA.Namespace}, mock.Anything)
+	clientMock.AssertCalled(t, "Get", mock.Anything, types.NamespacedName{Name: otherLokiCA.Name, Namespace: baseNamespace}, mock.Anything)
+	clientMock.AssertNotCalled(t, "Create")
+	clientMock.AssertNotCalled(t, "Update")
 }

@@ -103,6 +103,8 @@ func (w *Watcher) ProcessCACert(ctx context.Context, cl helper.Client, tls *flow
 
 func (w *Watcher) reconcile(ctx context.Context, cl helper.Client, ref objectRef, destNamespace string) (string, error) {
 	rlog := log.FromContext(ctx, "Name", ref.name, "Source namespace", ref.namespace, "Target namespace", destNamespace)
+	report := helper.NewChangeReport("Watcher for " + string(ref.kind) + " " + ref.name)
+	defer report.LogIfNeeded(ctx)
 
 	w.watch(ref.kind, ref.name, ref.namespace)
 	var watchable Watchable
@@ -141,11 +143,18 @@ func (w *Watcher) reconcile(ctx context.Context, cl helper.Client, ref objectRef
 				return "", err
 			}
 		} else {
-			// Update existing
-			rlog.Info(fmt.Sprintf("updating %s %s in namespace %s", ref.kind, ref.name, destNamespace))
-			watchable.PrepareForUpdate(obj, target)
-			if err := cl.UpdateOwned(ctx, target, target); err != nil {
+			// Check for update
+			targetDigest, err := watchable.GetDigest(target, ref.keys)
+			if err != nil {
 				return "", err
+			}
+			if report.Check("Digest changed", targetDigest != digest) {
+				// Update existing
+				rlog.Info(fmt.Sprintf("updating %s %s in namespace %s", ref.kind, ref.name, destNamespace))
+				watchable.PrepareForUpdate(obj, target)
+				if err := cl.UpdateOwned(ctx, target, target); err != nil {
+					return "", err
+				}
 			}
 		}
 	}
