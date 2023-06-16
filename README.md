@@ -181,7 +181,7 @@ NetObserv is meant to be used by cluster admins, or, when using the Loki Operato
 
 To make autorized queries to Loki using the Loki Operator, NetObserv must be configured as such:
 
-- set `spec.loki.authToken` to `FORWARD` in the `FlowCollector` resource. The console plugin will forward the logged-in Console user token to Loki.
+- set `spec.loki.authToken` to `FORWARD` in the `FlowCollector` resource. The console plugin will forward the logged-in [OCP Console](https://github.com/openshift/console) user token to Loki [Gateway API](https://github.com/observatorium/api).
 - install `ClusterRole` and `ClusterRoleBinding` for NetObserv: [role.yaml](https://github.com/netobserv/documents/blob/main/examples/loki-stack/role.yaml).
 - To get access to the flow logs, users must have a `ClusterRoleBinding` for the `netobserv-reader` role. E.g: [rolebinding-user-test.yaml](https://github.com/netobserv/documents/blob/main/examples/loki-stack/rolebinding-user-test.yaml).
 
@@ -193,12 +193,12 @@ oc adm policy add-cluster-role-to-user netobserv-reader test
 
 More information about multi-tenancy can be found on [this page](https://github.com/netobserv/documents/blob/main/loki_operator.md#netobserv-configuration).
 
-Note that multi-tenancy is not possible when not using the Loki Operator.
+Note that multi-tenancy is not possible without using the Loki Operator.
 
 #### Network Policy
 
 For a production deployment, it is also highly recommended to lock down the `netobserv` namespace (or wherever NetObserv is installed) using network policies.
-An example of such a network policy is [provided here](https://github.com/netobserv/documents/blob/main/examples/lockdown-netobserv.yaml).
+An example of network policy is [provided here](https://github.com/netobserv/documents/blob/main/examples/lockdown-netobserv.yaml).
 
 #### Communications
 
