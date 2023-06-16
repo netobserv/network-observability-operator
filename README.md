@@ -132,7 +132,7 @@ A couple of settings deserve special attention:
 
 - Kafka (`spec.deploymentModel: KAFKA` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability. It's also an option to consider when you have a bursty traffic. [This page](https://www.redhat.com/en/topics/integration/what-is-apache-kafka) provides some guidance on why to use Kafka. When configured to use Kafka, NetObserv operator assumes it is already deployed and a topic is created. For convenience, we provide a quick deployment using [Strimzi](https://strimzi.io/): run `make deploy-kafka` from the repository.
 
-- Exporters (`spec.exporters`, _experimental_) an optional list of exporters to which to send enriched flows. Currently only KAFKA is supported. This allows you to define any custom storage or processing that can read from Kafka. This feature is flagged as _experimental_ as it has not been thoroughly or stress tested yet, so use at your own risk.
+- Exporters (`spec.exporters`) an optional list of exporters to which to send enriched flows. Currently, KAFKA and IPFIX are available (only KAFKA being actively maintained). This allows you to define any custom storage or processing that can read from Kafka or from an IPFIX collector.
 
 ### Performance fine-tuning
 
@@ -175,32 +175,39 @@ More performance fine-tuning is possible when using Kafka, ie. with `spec.deploy
 
 ### Securing data and communications
 
-NetObserv is currently meant to be used by cluster / network admins. There is not yet multi-tenancy implemented, which means a user having access to the data will be able to see *all* the data. It is up to the cluster admins to restrict the access to the NetObserv and Loki namespaces and services according to their security policy.
+#### Authorizations
 
-By default, communications between internal components are not secured. It is possible to set up TLS for several communications:
+NetObserv is meant to be used by cluster admins, or, when using the Loki Operator (v5.7 or above), project admins (ie. users having admin permissions on some namespaces only). Multi-tenancy is based on namespaces permissions, with allowed users able to get flows limited to their namespaces. Flows across two namespaces will be visible to them as long as they have access to at least one of these namespaces.
 
-- Between processor (`flowlogs-pipeline`) and Loki, by setting `spec.loki.tls`.
+To make autorized queries to Loki using the Loki Operator, NetObserv must be configured as such:
+
+- set `spec.loki.authToken` to `FORWARD` in the `FlowCollector` resource. The console plugin will forward the logged-in [OCP Console](https://github.com/openshift/console) user token to Loki [Gateway API](https://github.com/observatorium/api).
+- install `ClusterRole` and `ClusterRoleBinding` for NetObserv: [role.yaml](https://github.com/netobserv/documents/blob/main/examples/loki-stack/role.yaml).
+- To get access to the flow logs, users must have a `ClusterRoleBinding` for the `netobserv-reader` role. E.g: [rolebinding-user-test.yaml](https://github.com/netobserv/documents/blob/main/examples/loki-stack/rolebinding-user-test.yaml).
+
+Or, using the CLI for user `test`:
+
+```bash
+oc adm policy add-cluster-role-to-user netobserv-reader test
+```
+
+More information about multi-tenancy can be found on [this page](https://github.com/netobserv/documents/blob/main/loki_operator.md#netobserv-configuration).
+
+Note that multi-tenancy is not possible without using the Loki Operator.
+
+#### Network Policy
+
+For a production deployment, it is also highly recommended to lock down the `netobserv` namespace (or wherever NetObserv is installed) using network policies.
+An example of network policy is [provided here](https://github.com/netobserv/documents/blob/main/examples/lockdown-netobserv.yaml).
+
+#### Communications
+
+By default, communications between internal components are not secured. Note that, when using the Loki Operator, securing communication with TLS is necessary. There are several places where TLS can be set up:
+
+- Connections to Loki (from the processor `flowlogs-pipeline` and from the Console plugin), by setting `spec.loki.tls`.
 - With Kafka (both on producer and consumer sides), by setting `spec.kafka.tls`. Mutual TLS is supported here.
 - The metrics server running in the processor (`flowlogs-pipeline`) can listen using TLS, via `spec.processor.metrics.server.tls`.
 - The Console plugin server always uses TLS.
-
-To make authenticated queries to Loki, when using the Loki Operator, there are two options:
-
-- per-user auth: set `spec.loki.authToken` to `FORWARD` in the `FlowCollector` resource. The console plugin will forward the logged-in Console user token to Loki. To get access to the flow logs, users must have the following permission:
-
-```yaml
-- apiGroups:
-  - 'loki.grafana.com'
-  resources:
-  - network
-  resourceNames:
-  - logs
-  verbs:
-  - 'get'
-```
-
-- per-app auth, ie. with NetObserv components having access to the logs using their own service account, regardless of the user permissions. For this mode, set `spec.loki.authToken` to `HOST` and setup `ClusterRole` for `flowlogs-pipeline` and `netobserv-plugin`, e.g: [role.yaml](https://github.com/netobserv/documents/blob/main/examples/loki-stack/role.yaml).
-
 
 ## Development & building from sources
 
