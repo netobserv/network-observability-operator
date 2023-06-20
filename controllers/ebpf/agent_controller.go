@@ -126,7 +126,7 @@ func (c *AgentController) Reconcile(
 		return err
 	}
 
-	switch c.requiredAction(current, desired) {
+	switch requiredAction(current, desired) {
 	case actionCreate:
 		rlog.Info("action: create agent")
 		return c.CreateOwned(ctx, desired)
@@ -331,11 +331,11 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 	return config, nil
 }
 
-func (c *AgentController) requiredAction(current, desired *v1.DaemonSet) reconcileAction {
+func requiredAction(current, desired *v1.DaemonSet) reconcileAction {
 	if desired == nil {
 		return actionNone
 	}
-	if current == nil && desired != nil {
+	if current == nil {
 		return actionCreate
 	}
 	cSpec, dSpec := current.Spec, desired.Spec
@@ -344,6 +344,13 @@ func (c *AgentController) requiredAction(current, desired *v1.DaemonSet) reconci
 		!eq(dSpec.Selector, cSpec.Selector) ||
 		!eq(dSpec.Template, cSpec.Template) {
 
+		return actionUpdate
+	}
+
+	// Env vars aren't covered by DeepDerivative when they are removed: deep-compare them
+	dConts := dSpec.Template.Spec.Containers
+	cConts := cSpec.Template.Spec.Containers
+	if len(dConts) > 0 && len(cConts) > 0 && !equality.Semantic.DeepEqual(dConts[0].Env, cConts[0].Env) {
 		return actionUpdate
 	}
 
