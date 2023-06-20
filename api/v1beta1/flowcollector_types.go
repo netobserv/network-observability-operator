@@ -294,6 +294,15 @@ type ServerTLS struct {
 	// TLS configuration when `type` is set to `PROVIDED`.
 	// +optional
 	Provided *CertificateReference `json:"provided"`
+
+	//+kubebuilder:default:=false
+	// insecureSkipVerify allows skipping client-side verification of the provided certificate
+	// If set to true, ProvidedCaFile field will be ignored
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+
+	// Reference to the CA file will be ignored
+	// +optional
+	ProvidedCaFile *FileReference `json:"providedCaFile,omitempty"`
 }
 
 // `MetricsServerConfig` define the metrics server endpoint configuration for Prometheus scraper
@@ -688,6 +697,24 @@ const (
 	RefTypeSecret    MountableType = "secret"
 	RefTypeConfigMap MountableType = "configmap"
 )
+
+type FileReference struct {
+	//+kubebuilder:validation:Enum=configmap;secret
+	// type for the file reference: "configmap" or "secret"
+	Type MountableType `json:"type,omitempty"`
+
+	// name of the config map or secret containing the file
+	Name string `json:"name,omitempty"`
+
+	// namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed.
+	// If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+	// +optional
+	//+kubebuilder:default:=""
+	Namespace string `json:"namespace,omitempty"`
+
+	// file defines the file name within the config map or secret
+	File string `json:"file,omitempty"`
+}
 
 type CertificateReference struct {
 	//+kubebuilder:validation:Enum=configmap;secret

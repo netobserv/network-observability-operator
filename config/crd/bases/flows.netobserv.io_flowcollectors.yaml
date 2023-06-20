@@ -4468,6 +4468,12 @@ spec:
                           tls:
                             description: TLS configuration.
                             properties:
+                              insecureSkipVerify:
+                                default: false
+                                description: insecureSkipVerify allows skipping client-side
+                                  verification of the provided certificate If set
+                                  to true, ProvidedCaFile field will be ignored
+                                type: boolean
                               provided:
                                 description: TLS configuration when `type` is set
                                   to `PROVIDED`.
@@ -4499,6 +4505,34 @@ spec:
                                   type:
                                     description: 'Type for the certificate reference:
                                       `configmap` or `secret`'
+                                    enum:
+                                    - configmap
+                                    - secret
+                                    type: string
+                                type: object
+                              providedCaFile:
+                                description: Reference to the CA file will be ignored
+                                properties:
+                                  file:
+                                    description: file defines the file name within
+                                      the config map or secret
+                                    type: string
+                                  name:
+                                    description: name of the config map or secret
+                                      containing the file
+                                    type: string
+                                  namespace:
+                                    default: ""
+                                    description: namespace of the config map or secret
+                                      containing the file. If omitted, assumes same
+                                      namespace as where NetObserv is deployed. If
+                                      the namespace is different, the config map or
+                                      the secret will be copied so that it can be
+                                      mounted as required.
+                                    type: string
+                                  type:
+                                    description: 'type for the file reference: "configmap"
+                                      or "secret"'
                                     enum:
                                     - configmap
                                     - secret

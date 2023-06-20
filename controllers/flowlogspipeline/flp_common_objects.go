@@ -807,8 +807,11 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 		flpServiceMonitorObject.Spec.Endpoints[0].TLSConfig = &monitoringv1.TLSConfig{
 			SafeTLSConfig: monitoringv1.SafeTLSConfig{
 				ServerName:         serverName,
-				InsecureSkipVerify: true,
+				InsecureSkipVerify: b.desired.Processor.Metrics.Server.TLS.InsecureSkipVerify,
 			},
+		}
+		if !b.desired.Processor.Metrics.Server.TLS.InsecureSkipVerify && b.desired.Processor.Metrics.Server.TLS.ProvidedCaFile.File != "" {
+			flpServiceMonitorObject.Spec.Endpoints[0].TLSConfig.SafeTLSConfig.CA = helper.GetSecretOrConfigMap(b.desired.Processor.Metrics.Server.TLS.ProvidedCaFile)
 		}
 	}
 

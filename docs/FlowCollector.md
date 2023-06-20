@@ -7972,10 +7972,26 @@ TLS configuration.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          insecureSkipVerify allows skipping client-side verification of the provided certificate If set to true, ProvidedCaFile field will be ignored<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessormetricsservertlsprovided-1">provided</a></b></td>
         <td>object</td>
         <td>
           TLS configuration when `type` is set to `PROVIDED`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessormetricsservertlsprovidedcafile">providedCaFile</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the CA file will be ignored<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8043,6 +8059,58 @@ TLS configuration when `type` is set to `PROVIDED`.
         <td>enum</td>
         <td>
           Type for the certificate reference: `configmap` or `secret`<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.metrics.server.tls.providedCaFile
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsservertls-1)</sup></sup>
+
+
+
+Reference to the CA file will be ignored
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          file defines the file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the config map or secret containing the file<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type for the file reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
