@@ -238,7 +238,7 @@ type FlowCollectorKafka struct {
 	// +optional
 	TLS ClientTLS `json:"tls"`
 
-	// SASL authentication configuration.
+	// SASL authentication configuration. <i>Unsupported (*)</i>
 	// +optional
 	// +k8s:conversion-gen=false
 	SASL SASLConfig `json:"sasl"`

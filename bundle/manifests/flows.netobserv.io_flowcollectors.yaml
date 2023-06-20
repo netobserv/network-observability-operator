@@ -3215,7 +3215,8 @@ spec:
                           description: address of the Kafka server
                           type: string
                         sasl:
-                          description: SASL authentication configuration.
+                          description: SASL authentication configuration. <i>Unsupported
+                            (*)</i>
                           properties:
                             clientIDKey:
                               description: key for client ID within the provided `reference`
@@ -3374,7 +3375,8 @@ spec:
                     description: address of the Kafka server
                     type: string
                   sasl:
-                    description: SASL authentication configuration.
+                    description: SASL authentication configuration. <i>Unsupported
+                      (*)</i>
                     properties:
                       clientIDKey:
                         description: key for client ID within the provided `reference`

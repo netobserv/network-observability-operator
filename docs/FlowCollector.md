@@ -5620,7 +5620,7 @@ kafka configuration, such as the address and topic, to send enriched flows to.
         <td><b><a href="#flowcollectorspecexportersindexkafkasasl">sasl</a></b></td>
         <td>object</td>
         <td>
-          SASL authentication configuration.<br/>
+          SASL authentication configuration. <i>Unsupported (*)</i><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5639,7 +5639,7 @@ kafka configuration, such as the address and topic, to send enriched flows to.
 
 
 
-SASL authentication configuration.
+SASL authentication configuration. <i>Unsupported (*)</i>
 
 <table>
     <thead>
@@ -5938,7 +5938,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b><a href="#flowcollectorspeckafkasasl">sasl</a></b></td>
         <td>object</td>
         <td>
-          SASL authentication configuration.<br/>
+          SASL authentication configuration. <i>Unsupported (*)</i><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5957,7 +5957,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
 
 
 
-SASL authentication configuration.
+SASL authentication configuration. <i>Unsupported (*)</i>
 
 <table>
     <thead>
