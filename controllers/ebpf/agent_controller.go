@@ -53,6 +53,7 @@ const (
 	dedupeDefault                 = "firstCome"
 	envDedupeJustMark             = "DEDUPER_JUST_MARK"
 	dedupeJustMarkDefault         = "true"
+	envGoMemLimit                 = "GOMEMLIMIT"
 
 	envListSeparator = ","
 )
@@ -245,6 +246,18 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			Value: strconv.Itoa(int(*sampling)),
 		})
 	}
+
+	// set GOMEMLIMIT which allows specifying a soft memory cap to force GC when resource limit is reached
+	// to prevent OOM
+	if coll.Spec.Agent.EBPF.Resources.Limits.Memory() != nil {
+		if memLimit, ok := coll.Spec.Agent.EBPF.Resources.Limits.Memory().AsInt64(); ok {
+			// we will set the GOMEMLIMIT to current memlimit - 10% as a headroom to account for
+			// memory sources the Go runtime is unaware of
+			memLimit -= int64(float64(memLimit) * 0.1)
+			config = append(config, corev1.EnvVar{Name: envGoMemLimit, Value: fmt.Sprint(memLimit)})
+		}
+	}
+
 	dedup := dedupeDefault
 	dedupJustMark := dedupeJustMarkDefault
 	// we need to sort env map to keep idempotency,
