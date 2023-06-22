@@ -3856,7 +3856,7 @@ Resource Types:
 
 
 
-FlowCollector is the schema for the network flows collection API, which pilots and configures the underlying deployments.
+`FlowCollector` is the schema for the network flows collection API, which pilots and configures the underlying deployments.
 
 <table>
     <thead>
@@ -3888,14 +3888,14 @@ FlowCollector is the schema for the network flows collection API, which pilots a
         <td><b><a href="#flowcollectorspec-1">spec</a></b></td>
         <td>object</td>
         <td>
-          FlowCollectorSpec defines the desired state of FlowCollector. <br><br> *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature is not officially supported by Red Hat. It may have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers may provide some support for these features as a best effort only.<br/>
+          Defines the desired state of the FlowCollector resource. <br><br> *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorstatus-1">status</a></b></td>
         <td>object</td>
         <td>
-          FlowCollectorStatus defines the observed state of FlowCollector<br/>
+          `FlowCollectorStatus` defines the observed state of FlowCollector<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3907,7 +3907,7 @@ FlowCollector is the schema for the network flows collection API, which pilots a
 
 
 
-FlowCollectorSpec defines the desired state of FlowCollector. <br><br> *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature is not officially supported by Red Hat. It may have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers may provide some support for these features as a best effort only.
+Defines the desired state of the FlowCollector resource. <br><br> *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.
 
 <table>
     <thead>
@@ -3922,7 +3922,7 @@ FlowCollectorSpec defines the desired state of FlowCollector. <br><br> *: the me
         <td><b><a href="#flowcollectorspecagent-1">agent</a></b></td>
         <td>object</td>
         <td>
-          agent for flows extraction.<br/>
+          Agent configuration for flows extraction.<br/>
           <br/>
             <i>Default</i>: map[type:EBPF]<br/>
         </td>
@@ -3931,7 +3931,7 @@ FlowCollectorSpec defines the desired state of FlowCollector. <br><br> *: the me
         <td><b>deploymentModel</b></td>
         <td>enum</td>
         <td>
-          deploymentModel defines the desired type of deployment for flow processing. Possible values are "DIRECT" (default) to make the flow processor listening directly from the agents, or "KAFKA" to make flows sent to a Kafka pipeline before consumption by the processor. Kafka can provide better scalability, resiliency and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
+          `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br> - `DIRECT` (default) to make the flow processor listening directly from the agents.<br> - `KAFKA` to make flows sent to a Kafka pipeline before consumption by the processor.<br> Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
           <br/>
             <i>Enum</i>: DIRECT, KAFKA<br/>
             <i>Default</i>: DIRECT<br/>
@@ -3941,42 +3941,42 @@ FlowCollectorSpec defines the desired state of FlowCollector. <br><br> *: the me
         <td><b><a href="#flowcollectorspecconsoleplugin-1">consolePlugin</a></b></td>
         <td>object</td>
         <td>
-          consolePlugin defines the settings related to the OpenShift Console plugin, when available.<br/>
+          `consolePlugin` defines the settings related to the OpenShift Console plugin, when available.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindex-1">exporters</a></b></td>
         <td>[]object</td>
         <td>
-          exporters define additional optional exporters for custom consumption or storage.<br/>
+          `exporters` define additional optional exporters for custom consumption or storage.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspeckafka-1">kafka</a></b></td>
         <td>object</td>
         <td>
-          kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the "spec.deploymentModel" is "KAFKA".<br/>
+          Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `KAFKA`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecloki-1">loki</a></b></td>
         <td>object</td>
         <td>
-          loki, the flow store, client settings.<br/>
+          Loki, the flow store, client settings.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace where NetObserv pods are deployed. If empty, the namespace of the operator is going to be used.<br/>
+          Namespace where NetObserv pods are deployed. If empty, the namespace of the operator is going to be used.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessor-1">processor</a></b></td>
         <td>object</td>
         <td>
-          processor defines the settings of the component that receives the flows from the agent, enriches them, and forwards them to the Loki persistence layer.<br/>
+          `processor` defines the settings of the component that receives the flows from the agent, enriches them, generates metrics, and forwards them to the Loki persistence layer and/or any available exporter.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3988,7 +3988,7 @@ FlowCollectorSpec defines the desired state of FlowCollector. <br><br> *: the me
 
 
 
-agent for flows extraction.
+Agent configuration for flows extraction.
 
 <table>
     <thead>
@@ -4003,7 +4003,7 @@ agent for flows extraction.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type selects the flows tracing agent. Possible values are "EBPF" (default) to use NetObserv eBPF agent, "IPFIX" - <i>deprecated (*)</i> - to use the legacy IPFIX collector. "EBPF" is recommended in most cases as it offers better performances and should work regardless of the CNI installed on the cluster. "IPFIX" works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
+          `type` selects the flows tracing agent. Possible values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` - <i>deprecated (*)</i> - to use the legacy IPFIX collector.<br> `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
           <br/>
             <i>Enum</i>: EBPF, IPFIX<br/>
             <i>Default</i>: EBPF<br/>
@@ -4013,14 +4013,14 @@ agent for flows extraction.
         <td><b><a href="#flowcollectorspecagentebpf-1">ebpf</a></b></td>
         <td>object</td>
         <td>
-          ebpf describes the settings related to the eBPF-based flow reporter when the "agent.type" property is set to "EBPF".<br/>
+          `ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `EBPF`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentipfix-1">ipfix</a></b></td>
         <td>object</td>
         <td>
-          ipfix - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".<br/>
+          `ipfix` - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4032,7 +4032,7 @@ agent for flows extraction.
 
 
 
-ebpf describes the settings related to the eBPF-based flow reporter when the "agent.type" property is set to "EBPF".
+`ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `EBPF`.
 
 <table>
     <thead>
@@ -4047,7 +4047,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>cacheActiveTimeout</b></td>
         <td>string</td>
         <td>
-          cacheActiveTimeout is the max period during which the reporter will aggregate flows before sending. Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load, however you can expect higher memory consumption and an increased latency in the flow collection.<br/>
+          `cacheActiveTimeout` is the max period during which the reporter will aggregate flows before sending. Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load, however you can expect higher memory consumption and an increased latency in the flow collection.<br/>
           <br/>
             <i>Default</i>: 5s<br/>
         </td>
@@ -4056,7 +4056,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>cacheMaxFlows</b></td>
         <td>integer</td>
         <td>
-          cacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows. Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load, however you can expect higher memory consumption and an increased latency in the flow collection.<br/>
+          `cacheMaxFlows` is the max number of flows in an aggregate; when reached, the reporter sends the flows. Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load, however you can expect higher memory consumption and an increased latency in the flow collection.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 100000<br/>
@@ -4067,14 +4067,14 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b><a href="#flowcollectorspecagentebpfdebug-1">debug</a></b></td>
         <td>object</td>
         <td>
-          Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.<br/>
+          `debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>excludeInterfaces</b></td>
         <td>[]string</td>
         <td>
-          excludeInterfaces contains the interface names that will be excluded from flow tracing. If an entry is enclosed by slashes (such as `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
+          `excludeInterfaces` contains the interface names that will be excluded from flow tracing. An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.<br/>
           <br/>
             <i>Default</i>: [lo]<br/>
         </td>
@@ -4083,7 +4083,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
-          imagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
+          `imagePullPolicy` is the Kubernetes pull policy for the image defined above<br/>
           <br/>
             <i>Enum</i>: IfNotPresent, Always, Never<br/>
             <i>Default</i>: IfNotPresent<br/>
@@ -4093,14 +4093,14 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>interfaces</b></td>
         <td>[]string</td>
         <td>
-          interfaces contains the interface names from where flows will be collected. If empty, the agent will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. If an entry is enclosed by slashes (such as `/br-/`), it will match as regular expression, otherwise it will be matched as a case-sensitive string.<br/>
+          `interfaces` contains the interface names from where flows will be collected. If empty, the agent will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>kafkaBatchSize</b></td>
         <td>integer</td>
         <td>
-          kafkaBatchSize limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 10MB.<br/>
+          `kafkaBatchSize` limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 10MB.<br/>
           <br/>
             <i>Default</i>: 10485760<br/>
         </td>
@@ -4109,7 +4109,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>logLevel</b></td>
         <td>enum</td>
         <td>
-          logLevel defines the log level for the NetObserv eBPF Agent<br/>
+          `logLevel` defines the log level for the NetObserv eBPF Agent<br/>
           <br/>
             <i>Enum</i>: trace, debug, info, warn, error, fatal, panic<br/>
             <i>Default</i>: info<br/>
@@ -4119,14 +4119,14 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>privileged</b></td>
         <td>boolean</td>
         <td>
-          privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false: in that case, the operator will set granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container, to enable its correct operation. If for some reason these capabilities cannot be set (for example old kernel version not knowing CAP_BPF) then you can turn on this mode for more global privileges.<br/>
+          Privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false: in that case, the operator will set granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container, to enable its correct operation. If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF is in use, then you can turn on this mode for more global privileges.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfresources-1">resources</a></b></td>
         <td>object</td>
         <td>
-          resources are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          `resources` are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:50Mi]]<br/>
         </td>
@@ -4135,7 +4135,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          sampling rate of the flow reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.<br/>
+          Sampling rate of the flow reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 50<br/>
@@ -4151,7 +4151,7 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
 
 
 
-Debug allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
+`debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.
 
 <table>
     <thead>
@@ -4166,7 +4166,7 @@ Debug allows setting some aspects of the internal configuration of the eBPF agen
         <td><b>env</b></td>
         <td>map[string]string</td>
         <td>
-          env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (such as GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug and support scenarios.<br/>
+          `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as GOGC and GOMAXPROCS, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4178,7 +4178,7 @@ Debug allows setting some aspects of the internal configuration of the eBPF agen
 
 
 
-resources are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+`resources` are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 <table>
     <thead>
@@ -4212,7 +4212,7 @@ resources are the compute resources required by this container. More info: https
 
 
 
-ipfix - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when the "agent.type" property is set to "IPFIX".
+`ipfix` - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.
 
 <table>
     <thead>
@@ -4227,7 +4227,7 @@ ipfix - <i>deprecated (*)</i> - describes the settings related to the IPFIX-base
         <td><b>cacheActiveTimeout</b></td>
         <td>string</td>
         <td>
-          cacheActiveTimeout is the max period during which the reporter will aggregate flows before sending<br/>
+          `cacheActiveTimeout` is the max period during which the reporter will aggregate flows before sending<br/>
           <br/>
             <i>Default</i>: 20s<br/>
         </td>
@@ -4236,7 +4236,7 @@ ipfix - <i>deprecated (*)</i> - describes the settings related to the IPFIX-base
         <td><b>cacheMaxFlows</b></td>
         <td>integer</td>
         <td>
-          cacheMaxFlows is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
+          `cacheMaxFlows` is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 400<br/>
@@ -4247,14 +4247,14 @@ ipfix - <i>deprecated (*)</i> - describes the settings related to the IPFIX-base
         <td><b><a href="#flowcollectorspecagentipfixclusternetworkoperator-1">clusterNetworkOperator</a></b></td>
         <td>object</td>
         <td>
-          clusterNetworkOperator defines the settings related to the OpenShift Cluster Network Operator, when available.<br/>
+          `clusterNetworkOperator` defines the settings related to the OpenShift Cluster Network Operator, when available.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>forceSampleAll</b></td>
         <td>boolean</td>
         <td>
-          forceSampleAll allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it might generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risk. When it is set to true, the value of "sampling" is ignored.<br/>
+          `forceSampleAll` allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it might generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risk. When it is set to true, the value of `sampling` is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -4263,14 +4263,14 @@ ipfix - <i>deprecated (*)</i> - describes the settings related to the IPFIX-base
         <td><b><a href="#flowcollectorspecagentipfixovnkubernetes-1">ovnKubernetes</a></b></td>
         <td>object</td>
         <td>
-          ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.<br/>
+          `ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          sampling is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which might impact the cluster stability, refer to "forceSampleAll". Alternatively, you can use the eBPF Agent instead of IPFIX.<br/>
+          `sampling` is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which might impact the cluster stability, refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of IPFIX.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 400<br/>
@@ -4286,7 +4286,7 @@ ipfix - <i>deprecated (*)</i> - describes the settings related to the IPFIX-base
 
 
 
-clusterNetworkOperator defines the settings related to the OpenShift Cluster Network Operator, when available.
+`clusterNetworkOperator` defines the settings related to the OpenShift Cluster Network Operator, when available.
 
 <table>
     <thead>
@@ -4301,7 +4301,7 @@ clusterNetworkOperator defines the settings related to the OpenShift Cluster Net
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace  where the config map is going to be deployed.<br/>
+          Namespace  where the config map is going to be deployed.<br/>
           <br/>
             <i>Default</i>: openshift-network-operator<br/>
         </td>
@@ -4315,7 +4315,7 @@ clusterNetworkOperator defines the settings related to the OpenShift Cluster Net
 
 
 
-ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
+`ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
 
 <table>
     <thead>
@@ -4330,7 +4330,7 @@ ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. Th
         <td><b>containerName</b></td>
         <td>string</td>
         <td>
-          containerName defines the name of the container to configure for IPFIX.<br/>
+          `containerName` defines the name of the container to configure for IPFIX.<br/>
           <br/>
             <i>Default</i>: ovnkube-node<br/>
         </td>
@@ -4339,7 +4339,7 @@ ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. Th
         <td><b>daemonSetName</b></td>
         <td>string</td>
         <td>
-          daemonSetName defines the name of the DaemonSet controlling the OVN-Kubernetes pods.<br/>
+          `daemonSetName` defines the name of the DaemonSet controlling the OVN-Kubernetes pods.<br/>
           <br/>
             <i>Default</i>: ovnkube-node<br/>
         </td>
@@ -4348,7 +4348,7 @@ ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. Th
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace where OVN-Kubernetes pods are deployed.<br/>
+          Namespace where OVN-Kubernetes pods are deployed.<br/>
           <br/>
             <i>Default</i>: ovn-kubernetes<br/>
         </td>
@@ -4362,7 +4362,7 @@ ovnKubernetes defines the settings of the OVN-Kubernetes CNI, when available. Th
 
 
 
-consolePlugin defines the settings related to the OpenShift Console plugin, when available.
+`consolePlugin` defines the settings related to the OpenShift Console plugin, when available.
 
 <table>
     <thead>
@@ -4377,14 +4377,14 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td><b><a href="#flowcollectorspecconsolepluginautoscaler-1">autoscaler</a></b></td>
         <td>object</td>
         <td>
-          autoscaler spec of a horizontal pod autoscaler to set up for the plugin Deployment.<br/>
+          `autoscaler` spec of a horizontal pod autoscaler to set up for the plugin Deployment.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
-          imagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
+          `imagePullPolicy` is the Kubernetes pull policy for the image defined above<br/>
           <br/>
             <i>Enum</i>: IfNotPresent, Always, Never<br/>
             <i>Default</i>: IfNotPresent<br/>
@@ -4394,7 +4394,7 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td><b>logLevel</b></td>
         <td>enum</td>
         <td>
-          logLevel for the console plugin backend<br/>
+          `logLevel` for the console plugin backend<br/>
           <br/>
             <i>Enum</i>: trace, debug, info, warn, error, fatal, panic<br/>
             <i>Default</i>: info<br/>
@@ -4404,7 +4404,7 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          port is the plugin service port. Do not use 9002, which is reserved for metrics.<br/>
+          `port` is the plugin service port. Do not use 9002, which is reserved for metrics.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 9001<br/>
@@ -4416,7 +4416,7 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td><b><a href="#flowcollectorspecconsolepluginportnaming-1">portNaming</a></b></td>
         <td>object</td>
         <td>
-          portNaming defines the configuration of the port-to-service name translation<br/>
+          `portNaming` defines the configuration of the port-to-service name translation<br/>
           <br/>
             <i>Default</i>: map[enable:true]<br/>
         </td>
@@ -4425,7 +4425,7 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td><b><a href="#flowcollectorspecconsolepluginquickfiltersindex-1">quickFilters</a></b></td>
         <td>[]object</td>
         <td>
-          quickFilters configures quick filter presets for the Console plugin<br/>
+          `quickFilters` configures quick filter presets for the Console plugin<br/>
           <br/>
             <i>Default</i>: [map[default:true filter:map[dst_namespace!:openshift-,netobserv src_namespace!:openshift-,netobserv] name:Applications] map[filter:map[dst_namespace:openshift-,netobserv src_namespace:openshift-,netobserv] name:Infrastructure] map[default:true filter:map[dst_kind:Pod src_kind:Pod] name:Pods network] map[filter:map[dst_kind:Service] name:Services network]]<br/>
         </td>
@@ -4434,7 +4434,7 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td><b>register</b></td>
         <td>boolean</td>
         <td>
-          register allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator. When set to false, you can still register it manually by editing console.operator.openshift.io/cluster. E.g: oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'<br/>
+          `register` allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator. When set to false, you can still register it manually by editing console.operator.openshift.io/cluster with the following command: `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -4443,7 +4443,7 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td><b>replicas</b></td>
         <td>integer</td>
         <td>
-          replicas defines the number of replicas (pods) to start.<br/>
+          `replicas` defines the number of replicas (pods) to start.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 1<br/>
@@ -4454,7 +4454,7 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
         <td><b><a href="#flowcollectorspecconsolepluginresources-1">resources</a></b></td>
         <td>object</td>
         <td>
-          resources, in terms of compute resources, required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          `resources`, in terms of compute resources, required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:100Mi] requests:map[cpu:100m memory:50Mi]]<br/>
         </td>
@@ -4468,7 +4468,7 @@ consolePlugin defines the settings related to the OpenShift Console plugin, when
 
 
 
-autoscaler spec of a horizontal pod autoscaler to set up for the plugin Deployment.
+`autoscaler` spec of a horizontal pod autoscaler to set up for the plugin Deployment.
 
 <table>
     <thead>
@@ -4483,7 +4483,7 @@ autoscaler spec of a horizontal pod autoscaler to set up for the plugin Deployme
         <td><b>maxReplicas</b></td>
         <td>integer</td>
         <td>
-          maxReplicas is the upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
+          `maxReplicas` is the upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 3<br/>
@@ -4493,14 +4493,14 @@ autoscaler spec of a horizontal pod autoscaler to set up for the plugin Deployme
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindex-1">metrics</a></b></td>
         <td>[]object</td>
         <td>
-          metrics used by the pod autoscaler<br/>
+          Metrics used by the pod autoscaler<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>minReplicas</b></td>
         <td>integer</td>
         <td>
-          minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.<br/>
+          `minReplicas` is the lower limit for the number of replicas to which the autoscaler can scale down. It defaults to 1 pod. minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured. Scaling is active as long as at least one metric value is available.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -4509,7 +4509,7 @@ autoscaler spec of a horizontal pod autoscaler to set up for the plugin Deployme
         <td><b>status</b></td>
         <td>enum</td>
         <td>
-          Status describe the desired status regarding deploying an horizontal pod autoscaler DISABLED will not deploy an horizontal pod autoscaler ENABLED will deploy an horizontal pod autoscaler<br/>
+          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `DISABLED` will not deploy an horizontal pod autoscaler.<br> - `ENABLED` will deploy an horizontal pod autoscaler.<br><br/>
           <br/>
             <i>Enum</i>: DISABLED, ENABLED<br/>
             <i>Default</i>: DISABLED<br/>
@@ -5388,7 +5388,7 @@ target specifies the target value for the given metric
 
 
 
-portNaming defines the configuration of the port-to-service name translation
+`portNaming` defines the configuration of the port-to-service name translation
 
 <table>
     <thead>
@@ -5403,7 +5403,7 @@ portNaming defines the configuration of the port-to-service name translation
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          enable the console plugin port-to-service name translation<br/>
+          Enable the console plugin port-to-service name translation<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -5412,7 +5412,7 @@ portNaming defines the configuration of the port-to-service name translation
         <td><b>portNames</b></td>
         <td>map[string]string</td>
         <td>
-          portNames defines additional port names to use in the console. Example: portNames: {"3100": "loki"}<br/>
+          `portNames` defines additional port names to use in the console, for example, `portNames: {"3100": "loki"}`.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5424,7 +5424,7 @@ portNaming defines the configuration of the port-to-service name translation
 
 
 
-QuickFilter defines preset configuration for Console's quick filters
+`QuickFilter` defines preset configuration for Console's quick filters
 
 <table>
     <thead>
@@ -5439,21 +5439,21 @@ QuickFilter defines preset configuration for Console's quick filters
         <td><b>filter</b></td>
         <td>map[string]string</td>
         <td>
-          filter is a set of keys and values to be set when this filter is selected. Each key can relate to a list of values using a coma-separated string. Example: filter: {"src_namespace": "namespace1,namespace2"}<br/>
+          `filter` is a set of keys and values to be set when this filter is selected. Each key can relate to a list of values using a coma-separated string, for example, `filter: {"src_namespace": "namespace1,namespace2"}`.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the filter, that will be displayed in Console<br/>
+          Name of the filter, that will be displayed in Console<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>default</b></td>
         <td>boolean</td>
         <td>
-          default defines whether this filter should be active by default or not<br/>
+          `default` defines whether this filter should be active by default or not<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5465,7 +5465,7 @@ QuickFilter defines preset configuration for Console's quick filters
 
 
 
-resources, in terms of compute resources, required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+`resources`, in terms of compute resources, required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 <table>
     <thead>
@@ -5499,7 +5499,7 @@ resources, in terms of compute resources, required by this container. More info:
 
 
 
-FlowCollectorExporter defines an additional exporter to send enriched flows to.
+`FlowCollectorExporter` defines an additional exporter to send enriched flows to.
 
 <table>
     <thead>
@@ -5514,7 +5514,7 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type selects the type of exporters. The available options are "KAFKA" and "IPFIX". "IPFIX" is <i>unsupported (*)</i>.<br/>
+          `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is <i>unsupported (*)</i>.<br/>
           <br/>
             <i>Enum</i>: KAFKA, IPFIX<br/>
         </td>
@@ -5530,7 +5530,7 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to.
         <td><b><a href="#flowcollectorspecexportersindexkafka-1">kafka</a></b></td>
         <td>object</td>
         <td>
-          kafka configuration, such as the address and topic, to send enriched flows to.<br/>
+          Kafka configuration, such as the address and topic, to send enriched flows to.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5557,7 +5557,7 @@ IPFIX configuration, such as the IP address and port to send enriched IPFIX flow
         <td><b>targetHost</b></td>
         <td>string</td>
         <td>
-          address of the ipfix external receiver<br/>
+          Address of the IPFIX external receiver<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -5566,14 +5566,14 @@ IPFIX configuration, such as the IP address and port to send enriched IPFIX flow
         <td><b>targetPort</b></td>
         <td>integer</td>
         <td>
-          port for the ipfix external receiver<br/>
+          Port for the IPFIX external receiver<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>transport</b></td>
         <td>enum</td>
         <td>
-          Transport protocol (tcp/udp) to be used for the IPFIX connection, defaults to tcp<br/>
+          Transport protocol (`TCP` or `UDP`) to be used for the IPFIX connection, defaults to `TCP`.<br/>
           <br/>
             <i>Enum</i>: TCP, UDP<br/>
         </td>
@@ -5587,7 +5587,7 @@ IPFIX configuration, such as the IP address and port to send enriched IPFIX flow
 
 
 
-kafka configuration, such as the address and topic, to send enriched flows to.
+Kafka configuration, such as the address and topic, to send enriched flows to.
 
 <table>
     <thead>
@@ -5602,7 +5602,7 @@ kafka configuration, such as the address and topic, to send enriched flows to.
         <td><b>address</b></td>
         <td>string</td>
         <td>
-          address of the Kafka server<br/>
+          Address of the Kafka server<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -5611,7 +5611,7 @@ kafka configuration, such as the address and topic, to send enriched flows to.
         <td><b>topic</b></td>
         <td>string</td>
         <td>
-          kafka topic to use. It must exist, NetObserv will not create it.<br/>
+          Kafka topic to use. It must exist, NetObserv will not create it.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -5654,28 +5654,28 @@ SASL authentication configuration. <i>Unsupported (*)</i>
         <td><b>clientIDKey</b></td>
         <td>string</td>
         <td>
-          key for client ID within the provided `reference`<br/>
+          Key for client ID within the provided `reference`<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>clientSecretKey</b></td>
         <td>string</td>
         <td>
-          key for client secret within the provided `reference`<br/>
+          Key for client secret within the provided `reference`<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindexkafkasaslreference">reference</a></b></td>
         <td>object</td>
         <td>
-          reference to the secret or config map containing the client ID and secret<br/>
+          Reference to the secret or config map containing the client ID and secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type is the type of SASL authentication to use, or `DISABLED` if SASL is not used<br/>
+          Type of SASL authentication to use, or `DISABLED` if SASL is not used<br/>
           <br/>
             <i>Enum</i>: DISABLED, PLAIN, SCRAM-SHA512<br/>
             <i>Default</i>: DISABLED<br/>
@@ -5690,7 +5690,7 @@ SASL authentication configuration. <i>Unsupported (*)</i>
 
 
 
-reference to the secret or config map containing the client ID and secret
+Reference to the secret or config map containing the client ID and secret
 
 <table>
     <thead>
@@ -5705,14 +5705,14 @@ reference to the secret or config map containing the client ID and secret
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the config map or secret to reference<br/>
+          Name of the config map or secret to reference<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -5721,7 +5721,7 @@ reference to the secret or config map containing the client ID and secret
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the reference: "configmap" or "secret"<br/>
+          Type for the reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -5750,14 +5750,14 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b><a href="#flowcollectorspecexportersindexkafkatlscacert-1">caCert</a></b></td>
         <td>object</td>
         <td>
-          caCert defines the reference of the certificate for the Certificate Authority<br/>
+          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          enable TLS<br/>
+          Enable TLS<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -5766,7 +5766,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          insecureSkipVerify allows skipping client-side verification of the server certificate If set to true, CACert field will be ignored<br/>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to true, the `caCert` field is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -5775,7 +5775,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b><a href="#flowcollectorspecexportersindexkafkatlsusercert-1">userCert</a></b></td>
         <td>object</td>
         <td>
-          userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)<br/>
+          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5787,7 +5787,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
 
 
 
-caCert defines the reference of the certificate for the Certificate Authority
+`caCert` defines the reference of the certificate for the Certificate Authority
 
 <table>
     <thead>
@@ -5802,28 +5802,28 @@ caCert defines the reference of the certificate for the Certificate Authority
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the config map or secret<br/>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the config map or secret containing certificates<br/>
+          Name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -5832,7 +5832,7 @@ caCert defines the reference of the certificate for the Certificate Authority
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: "configmap" or "secret"<br/>
+          Type for the certificate reference: `configmap` or `secret`<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -5846,7 +5846,7 @@ caCert defines the reference of the certificate for the Certificate Authority
 
 
 
-userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)
+`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
 
 <table>
     <thead>
@@ -5861,28 +5861,28 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the config map or secret<br/>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the config map or secret containing certificates<br/>
+          Name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -5891,7 +5891,7 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: "configmap" or "secret"<br/>
+          Type for the certificate reference: `configmap` or `secret`<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -5905,7 +5905,7 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
 
 
 
-kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the "spec.deploymentModel" is "KAFKA".
+Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `KAFKA`.
 
 <table>
     <thead>
@@ -5920,7 +5920,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b>address</b></td>
         <td>string</td>
         <td>
-          address of the Kafka server<br/>
+          Address of the Kafka server<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -5929,7 +5929,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b>topic</b></td>
         <td>string</td>
         <td>
-          kafka topic to use. It must exist, NetObserv will not create it.<br/>
+          Kafka topic to use. It must exist, NetObserv will not create it.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -5972,28 +5972,28 @@ SASL authentication configuration. <i>Unsupported (*)</i>
         <td><b>clientIDKey</b></td>
         <td>string</td>
         <td>
-          key for client ID within the provided `reference`<br/>
+          Key for client ID within the provided `reference`<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>clientSecretKey</b></td>
         <td>string</td>
         <td>
-          key for client secret within the provided `reference`<br/>
+          Key for client secret within the provided `reference`<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspeckafkasaslreference">reference</a></b></td>
         <td>object</td>
         <td>
-          reference to the secret or config map containing the client ID and secret<br/>
+          Reference to the secret or config map containing the client ID and secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type is the type of SASL authentication to use, or `DISABLED` if SASL is not used<br/>
+          Type of SASL authentication to use, or `DISABLED` if SASL is not used<br/>
           <br/>
             <i>Enum</i>: DISABLED, PLAIN, SCRAM-SHA512<br/>
             <i>Default</i>: DISABLED<br/>
@@ -6008,7 +6008,7 @@ SASL authentication configuration. <i>Unsupported (*)</i>
 
 
 
-reference to the secret or config map containing the client ID and secret
+Reference to the secret or config map containing the client ID and secret
 
 <table>
     <thead>
@@ -6023,14 +6023,14 @@ reference to the secret or config map containing the client ID and secret
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the config map or secret to reference<br/>
+          Name of the config map or secret to reference<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -6039,7 +6039,7 @@ reference to the secret or config map containing the client ID and secret
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the reference: "configmap" or "secret"<br/>
+          Type for the reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -6068,14 +6068,14 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b><a href="#flowcollectorspeckafkatlscacert-1">caCert</a></b></td>
         <td>object</td>
         <td>
-          caCert defines the reference of the certificate for the Certificate Authority<br/>
+          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          enable TLS<br/>
+          Enable TLS<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -6084,7 +6084,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          insecureSkipVerify allows skipping client-side verification of the server certificate If set to true, CACert field will be ignored<br/>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to true, the `caCert` field is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -6093,7 +6093,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b><a href="#flowcollectorspeckafkatlsusercert-1">userCert</a></b></td>
         <td>object</td>
         <td>
-          userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)<br/>
+          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6105,7 +6105,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
 
 
 
-caCert defines the reference of the certificate for the Certificate Authority
+`caCert` defines the reference of the certificate for the Certificate Authority
 
 <table>
     <thead>
@@ -6120,28 +6120,28 @@ caCert defines the reference of the certificate for the Certificate Authority
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the config map or secret<br/>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the config map or secret containing certificates<br/>
+          Name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -6150,7 +6150,7 @@ caCert defines the reference of the certificate for the Certificate Authority
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: "configmap" or "secret"<br/>
+          Type for the certificate reference: `configmap` or `secret`<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -6164,7 +6164,7 @@ caCert defines the reference of the certificate for the Certificate Authority
 
 
 
-userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)
+`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
 
 <table>
     <thead>
@@ -6179,28 +6179,28 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the config map or secret<br/>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the config map or secret containing certificates<br/>
+          Name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -6209,7 +6209,7 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: "configmap" or "secret"<br/>
+          Type for the certificate reference: `configmap` or `secret`<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -6223,7 +6223,7 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
 
 
 
-loki, the flow store, client settings.
+Loki, the flow store, client settings.
 
 <table>
     <thead>
@@ -6238,7 +6238,7 @@ loki, the flow store, client settings.
         <td><b>authToken</b></td>
         <td>enum</td>
         <td>
-          AuthToken describe the way to get a token to authenticate to Loki. DISABLED will not send any token with the request. HOST - <i>deprecated (*)</i> - will use the local pod service account to authenticate to Loki. FORWARD will forward the user token for authorization. When using the Loki Operator, this should be set to `FORWARD`.<br/>
+          `authToken` describes the way to get a token to authenticate to Loki.<br> - `DISABLED` will not send any token with the request.<br> - `FORWARD` will forward the user token for authorization.<br> - `HOST` - <i>deprecated (*)</i> - will use the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `FORWARD`.<br/>
           <br/>
             <i>Enum</i>: DISABLED, HOST, FORWARD<br/>
             <i>Default</i>: DISABLED<br/>
@@ -6248,7 +6248,7 @@ loki, the flow store, client settings.
         <td><b>batchSize</b></td>
         <td>integer</td>
         <td>
-          batchSize is max batch size (in bytes) of logs to accumulate before sending.<br/>
+          `batchSize` is the maximum batch size (in bytes) of logs to accumulate before sending.<br/>
           <br/>
             <i>Format</i>: int64<br/>
             <i>Default</i>: 102400<br/>
@@ -6259,7 +6259,7 @@ loki, the flow store, client settings.
         <td><b>batchWait</b></td>
         <td>string</td>
         <td>
-          batchWait is max time to wait before sending a batch.<br/>
+          `batchWait` is the maximum time to wait before sending a batch.<br/>
           <br/>
             <i>Default</i>: 1s<br/>
         </td>
@@ -6268,7 +6268,7 @@ loki, the flow store, client settings.
         <td><b>maxBackoff</b></td>
         <td>string</td>
         <td>
-          maxBackoff is the maximum backoff time for client connection between retries.<br/>
+          `maxBackoff` is the maximum backoff time for client connection between retries.<br/>
           <br/>
             <i>Default</i>: 5s<br/>
         </td>
@@ -6277,7 +6277,7 @@ loki, the flow store, client settings.
         <td><b>maxRetries</b></td>
         <td>integer</td>
         <td>
-          maxRetries is the maximum number of retries for client connections.<br/>
+          `maxRetries` is the maximum number of retries for client connections.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 2<br/>
@@ -6288,7 +6288,7 @@ loki, the flow store, client settings.
         <td><b>minBackoff</b></td>
         <td>string</td>
         <td>
-          minBackoff is the initial backoff time for client connection between retries.<br/>
+          `minBackoff` is the initial backoff time for client connection between retries.<br/>
           <br/>
             <i>Default</i>: 1s<br/>
         </td>
@@ -6297,14 +6297,14 @@ loki, the flow store, client settings.
         <td><b>querierUrl</b></td>
         <td>string</td>
         <td>
-          querierURL specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server). When using the Loki Operator, do not set it, since ingestion and queries use the Loki gateway.<br/>
+          `querierURL` specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server). When using the Loki Operator, do not set it, since ingestion and queries use the Loki gateway.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>staticLabels</b></td>
         <td>map[string]string</td>
         <td>
-          staticLabels is a map of common labels to set on each flow.<br/>
+          `staticLabels` is a map of common labels to set on each flow.<br/>
           <br/>
             <i>Default</i>: map[app:netobserv-flowcollector]<br/>
         </td>
@@ -6313,21 +6313,21 @@ loki, the flow store, client settings.
         <td><b><a href="#flowcollectorspeclokistatustls">statusTls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration for loki status URL.<br/>
+          TLS client configuration for Loki status URL.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>statusUrl</b></td>
         <td>string</td>
         <td>
-          statusURL specifies the address of the Loki /ready /metrics /config endpoints, in case it is different from the Loki querier URL. If empty, the QuerierURL value will be used. This is useful to show error messages and some context in the frontend. When using the Loki Operator, set it to the Loki HTTP query frontend service, for example https://loki-query-frontend-http.netobserv.svc:3100/. statusTLS configuration will be used when statusUrl is set.<br/>
+          `statusURL` specifies the address of the Loki `/ready`, `/metrics` and `/config` endpoints, in case it is different from the Loki querier URL. If empty, the `querierURL` value will be used. This is useful to show error messages and some context in the frontend. When using the Loki Operator, set it to the Loki HTTP query frontend service, for example https://loki-query-frontend-http.netobserv.svc:3100/. `statusTLS` configuration will be used when `statusUrl` is set.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>tenantID</b></td>
         <td>string</td>
         <td>
-          tenantID is the Loki X-Scope-OrgID that identifies the tenant for each request. When using the Loki Operator, set it to `network`, which corresponds to a special tenant mode.<br/>
+          `tenantID` is the Loki `X-Scope-OrgID` that identifies the tenant for each request. When using the Loki Operator, set it to `network`, which corresponds to a special tenant mode.<br/>
           <br/>
             <i>Default</i>: netobserv<br/>
         </td>
@@ -6336,7 +6336,7 @@ loki, the flow store, client settings.
         <td><b>timeout</b></td>
         <td>string</td>
         <td>
-          timeout is the maximum time connection / request limit. A Timeout of zero means no timeout.<br/>
+          `timeout` is the maximum time connection / request limit. A timeout of zero means no timeout.<br/>
           <br/>
             <i>Default</i>: 10s<br/>
         </td>
@@ -6345,14 +6345,14 @@ loki, the flow store, client settings.
         <td><b><a href="#flowcollectorspeclokitls-1">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration for loki URL.<br/>
+          TLS client configuration for Loki URL.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>url</b></td>
         <td>string</td>
         <td>
-          url is the address of an existing Loki service to push the flows to. When using the Loki Operator, set it to the Loki gateway service with the `network` tenant set in path, for example https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.<br/>
+          `url` is the address of an existing Loki service to push the flows to. When using the Loki Operator, set it to the Loki gateway service with the `network` tenant set in path, for example https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.<br/>
           <br/>
             <i>Default</i>: http://loki:3100/<br/>
         </td>
@@ -6366,7 +6366,7 @@ loki, the flow store, client settings.
 
 
 
-tls client configuration for loki status URL.
+TLS client configuration for Loki status URL.
 
 <table>
     <thead>
@@ -6381,14 +6381,14 @@ tls client configuration for loki status URL.
         <td><b><a href="#flowcollectorspeclokistatustlscacert">caCert</a></b></td>
         <td>object</td>
         <td>
-          caCert defines the reference of the certificate for the Certificate Authority<br/>
+          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          enable TLS<br/>
+          Enable TLS<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -6397,7 +6397,7 @@ tls client configuration for loki status URL.
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          insecureSkipVerify allows skipping client-side verification of the server certificate If set to true, CACert field will be ignored<br/>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to true, the `caCert` field is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -6406,7 +6406,7 @@ tls client configuration for loki status URL.
         <td><b><a href="#flowcollectorspeclokistatustlsusercert">userCert</a></b></td>
         <td>object</td>
         <td>
-          userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)<br/>
+          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6418,7 +6418,7 @@ tls client configuration for loki status URL.
 
 
 
-caCert defines the reference of the certificate for the Certificate Authority
+`caCert` defines the reference of the certificate for the Certificate Authority
 
 <table>
     <thead>
@@ -6433,28 +6433,28 @@ caCert defines the reference of the certificate for the Certificate Authority
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the config map or secret<br/>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the config map or secret containing certificates<br/>
+          Name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -6463,7 +6463,7 @@ caCert defines the reference of the certificate for the Certificate Authority
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: "configmap" or "secret"<br/>
+          Type for the certificate reference: `configmap` or `secret`<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -6477,7 +6477,7 @@ caCert defines the reference of the certificate for the Certificate Authority
 
 
 
-userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)
+`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
 
 <table>
     <thead>
@@ -6492,28 +6492,28 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the config map or secret<br/>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the config map or secret containing certificates<br/>
+          Name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -6522,7 +6522,7 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: "configmap" or "secret"<br/>
+          Type for the certificate reference: `configmap` or `secret`<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -6536,7 +6536,7 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
 
 
 
-tls client configuration for loki URL.
+TLS client configuration for Loki URL.
 
 <table>
     <thead>
@@ -6551,14 +6551,14 @@ tls client configuration for loki URL.
         <td><b><a href="#flowcollectorspeclokitlscacert-1">caCert</a></b></td>
         <td>object</td>
         <td>
-          caCert defines the reference of the certificate for the Certificate Authority<br/>
+          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          enable TLS<br/>
+          Enable TLS<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -6567,7 +6567,7 @@ tls client configuration for loki URL.
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          insecureSkipVerify allows skipping client-side verification of the server certificate If set to true, CACert field will be ignored<br/>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to true, the `caCert` field is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -6576,7 +6576,7 @@ tls client configuration for loki URL.
         <td><b><a href="#flowcollectorspeclokitlsusercert-1">userCert</a></b></td>
         <td>object</td>
         <td>
-          userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)<br/>
+          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6588,7 +6588,7 @@ tls client configuration for loki URL.
 
 
 
-caCert defines the reference of the certificate for the Certificate Authority
+`caCert` defines the reference of the certificate for the Certificate Authority
 
 <table>
     <thead>
@@ -6603,28 +6603,28 @@ caCert defines the reference of the certificate for the Certificate Authority
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the config map or secret<br/>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the config map or secret containing certificates<br/>
+          Name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -6633,7 +6633,7 @@ caCert defines the reference of the certificate for the Certificate Authority
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: "configmap" or "secret"<br/>
+          Type for the certificate reference: `configmap` or `secret`<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -6647,7 +6647,7 @@ caCert defines the reference of the certificate for the Certificate Authority
 
 
 
-userCert defines the user certificate reference, used for mTLS (you can ignore it when using regular, one-way TLS)
+`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
 
 <table>
     <thead>
@@ -6662,28 +6662,28 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the config map or secret<br/>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the config map or secret containing certificates<br/>
+          Name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -6692,7 +6692,7 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: "configmap" or "secret"<br/>
+          Type for the certificate reference: `configmap` or `secret`<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -6706,7 +6706,7 @@ userCert defines the user certificate reference, used for mTLS (you can ignore i
 
 
 
-processor defines the settings of the component that receives the flows from the agent, enriches them, and forwards them to the Loki persistence layer.
+`processor` defines the settings of the component that receives the flows from the agent, enriches them, generates metrics, and forwards them to the Loki persistence layer and/or any available exporter.
 
 <table>
     <thead>
@@ -6721,7 +6721,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b>conversationEndTimeout</b></td>
         <td>string</td>
         <td>
-          conversation end timeout is the duration of time to wait from the last flow log to end a conversation<br/>
+          `conversationEndTimeout` is the time to wait after a network flow is received, to consider the conversation ended. This delay is ignored when a FIN packet is collected for TCP flows (see `conversationTerminatingTimeout` instead).<br/>
           <br/>
             <i>Default</i>: 10s<br/>
         </td>
@@ -6730,7 +6730,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b>conversationHeartbeatInterval</b></td>
         <td>string</td>
         <td>
-          conversation heartbeat interval is the duration of time to wait between heartbeat reports of a conversation<br/>
+          `conversationHeartbeatInterval` is the time to wait between "tick" events of a conversation<br/>
           <br/>
             <i>Default</i>: 30s<br/>
         </td>
@@ -6739,7 +6739,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b>conversationTerminatingTimeout</b></td>
         <td>string</td>
         <td>
-          conversation terminating timeout is the duration of time to wait from detected FIN flag to end a connection<br/>
+          `conversationTerminatingTimeout` is the time to wait from detected FIN flag to end a conversation. Only relevant for TCP flows.<br/>
           <br/>
             <i>Default</i>: 5s<br/>
         </td>
@@ -6748,14 +6748,14 @@ processor defines the settings of the component that receives the flows from the
         <td><b><a href="#flowcollectorspecprocessordebug-1">debug</a></b></td>
         <td>object</td>
         <td>
-          Debug allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.<br/>
+          `debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>dropUnusedFields</b></td>
         <td>boolean</td>
         <td>
-          dropUnusedFields allows, when set to true, to drop fields that are known to be unused by OVS, in order to save storage space.<br/>
+          `dropUnusedFields` allows, when set to true, to drop fields that are known to be unused by OVS, to save storage space.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -6764,7 +6764,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b>enableKubeProbes</b></td>
         <td>boolean</td>
         <td>
-          enableKubeProbes is a flag to enable or disable Kubernetes liveness and readiness probes<br/>
+          `enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -6773,7 +6773,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b>healthPort</b></td>
         <td>integer</td>
         <td>
-          healthPort is a collector HTTP port in the Pod that exposes the health check API<br/>
+          `healthPort` is a collector HTTP port in the Pod that exposes the health check API<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 8080<br/>
@@ -6785,7 +6785,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
-          imagePullPolicy is the Kubernetes pull policy for the image defined above<br/>
+          `imagePullPolicy` is the Kubernetes pull policy for the image defined above<br/>
           <br/>
             <i>Enum</i>: IfNotPresent, Always, Never<br/>
             <i>Default</i>: IfNotPresent<br/>
@@ -6795,14 +6795,14 @@ processor defines the settings of the component that receives the flows from the
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscaler-1">kafkaConsumerAutoscaler</a></b></td>
         <td>object</td>
         <td>
-          kafkaConsumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlogs-pipeline-transformer, which consumes Kafka messages. This setting is ignored when Kafka is disabled.<br/>
+          `kafkaConsumerAutoscaler` is the spec of a horizontal pod autoscaler to set up for `flowlogs-pipeline-transformer`, which consumes Kafka messages. This setting is ignored when Kafka is disabled.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>kafkaConsumerBatchSize</b></td>
         <td>integer</td>
         <td>
-          kafkaConsumerBatchSize indicates to the broker the maximum batch size, in bytes, that the consumer will accept. Ignored when not using Kafka. Default: 10MB.<br/>
+          `kafkaConsumerBatchSize` indicates to the broker the maximum batch size, in bytes, that the consumer will accept. Ignored when not using Kafka. Default: 10MB.<br/>
           <br/>
             <i>Default</i>: 10485760<br/>
         </td>
@@ -6811,7 +6811,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b>kafkaConsumerQueueCapacity</b></td>
         <td>integer</td>
         <td>
-          kafkaConsumerQueueCapacity defines the capacity of the internal message queue used in the Kafka consumer client. Ignored when not using Kafka.<br/>
+          `kafkaConsumerQueueCapacity` defines the capacity of the internal message queue used in the Kafka consumer client. Ignored when not using Kafka.<br/>
           <br/>
             <i>Default</i>: 1000<br/>
         </td>
@@ -6820,7 +6820,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b>kafkaConsumerReplicas</b></td>
         <td>integer</td>
         <td>
-          kafkaConsumerReplicas defines the number of replicas (pods) to start for flowlogs-pipeline-transformer, which consumes Kafka messages. This setting is ignored when Kafka is disabled.<br/>
+          `kafkaConsumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline-transformer`, which consumes Kafka messages. This setting is ignored when Kafka is disabled.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 3<br/>
@@ -6831,7 +6831,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b>logLevel</b></td>
         <td>enum</td>
         <td>
-          logLevel of the collector runtime<br/>
+          `logLevel` of the processor runtime<br/>
           <br/>
             <i>Enum</i>: trace, debug, info, warn, error, fatal, panic<br/>
             <i>Default</i>: info<br/>
@@ -6841,7 +6841,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b>logTypes</b></td>
         <td>enum</td>
         <td>
-          logTypes defines the desired record types to generate. Possible values are "FLOWS" (default) to export flowLogs, "CONVERSATIONS" to generate newConnection, heartbeat, endConnection events, "ENDED_CONVERSATIONS" to generate only endConnection events or "ALL" to generate both flow logs and conversations events<br/>
+          `logTypes` defines the desired record types to generate. Possible values are:<br> - `FLOWS` (default) to export regular network flows<br> - `CONVERSATIONS` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br> - `ENDED_CONVERSATIONS` to generate only ended conversations events<br> - `ALL` to generate both network flows and all conversations events<br><br/>
           <br/>
             <i>Enum</i>: FLOWS, CONVERSATIONS, ENDED_CONVERSATIONS, ALL<br/>
             <i>Default</i>: FLOWS<br/>
@@ -6851,14 +6851,14 @@ processor defines the settings of the component that receives the flows from the
         <td><b><a href="#flowcollectorspecprocessormetrics-1">metrics</a></b></td>
         <td>object</td>
         <td>
-          Metrics define the processor configuration regarding metrics<br/>
+          `Metrics` define the processor configuration regarding metrics<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          port of the flow collector (host port) By conventions, some value are not authorized port must not be below 1024 and must not equal this values: 4789,6081,500, and 4500<br/>
+          Port of the flow collector (host port). By convention, some values are forbidden. It must be greater than 1024 and different from 4500, 4789 and 6081.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 2055<br/>
@@ -6870,7 +6870,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b>profilePort</b></td>
         <td>integer</td>
         <td>
-          profilePort allows setting up a Go pprof profiler listening to this port<br/>
+          `profilePort` allows setting up a Go pprof profiler listening to this port<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Minimum</i>: 0<br/>
@@ -6881,7 +6881,7 @@ processor defines the settings of the component that receives the flows from the
         <td><b><a href="#flowcollectorspecprocessorresources-1">resources</a></b></td>
         <td>object</td>
         <td>
-          resources are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          `resources` are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:100Mi]]<br/>
         </td>
@@ -6895,7 +6895,7 @@ processor defines the settings of the component that receives the flows from the
 
 
 
-Debug allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
+`debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.
 
 <table>
     <thead>
@@ -6910,7 +6910,7 @@ Debug allows setting some aspects of the internal configuration of the flow proc
         <td><b>env</b></td>
         <td>map[string]string</td>
         <td>
-          env allows passing custom environment variables to the NetObserv Agent. Useful for passing some very concrete performance-tuning options (such as GOGC, GOMAXPROCS) that shouldn't be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug and support scenarios.<br/>
+          `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as GOGC and GOMAXPROCS, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6922,7 +6922,7 @@ Debug allows setting some aspects of the internal configuration of the flow proc
 
 
 
-kafkaConsumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlogs-pipeline-transformer, which consumes Kafka messages. This setting is ignored when Kafka is disabled.
+`kafkaConsumerAutoscaler` is the spec of a horizontal pod autoscaler to set up for `flowlogs-pipeline-transformer`, which consumes Kafka messages. This setting is ignored when Kafka is disabled.
 
 <table>
     <thead>
@@ -6937,7 +6937,7 @@ kafkaConsumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlo
         <td><b>maxReplicas</b></td>
         <td>integer</td>
         <td>
-          maxReplicas is the upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
+          `maxReplicas` is the upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 3<br/>
@@ -6947,14 +6947,14 @@ kafkaConsumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlo
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindex-1">metrics</a></b></td>
         <td>[]object</td>
         <td>
-          metrics used by the pod autoscaler<br/>
+          Metrics used by the pod autoscaler<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>minReplicas</b></td>
         <td>integer</td>
         <td>
-          minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.<br/>
+          `minReplicas` is the lower limit for the number of replicas to which the autoscaler can scale down. It defaults to 1 pod. minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured. Scaling is active as long as at least one metric value is available.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -6963,7 +6963,7 @@ kafkaConsumerAutoscaler spec of a horizontal pod autoscaler to set up for flowlo
         <td><b>status</b></td>
         <td>enum</td>
         <td>
-          Status describe the desired status regarding deploying an horizontal pod autoscaler DISABLED will not deploy an horizontal pod autoscaler ENABLED will deploy an horizontal pod autoscaler<br/>
+          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `DISABLED` will not deploy an horizontal pod autoscaler.<br> - `ENABLED` will deploy an horizontal pod autoscaler.<br><br/>
           <br/>
             <i>Enum</i>: DISABLED, ENABLED<br/>
             <i>Default</i>: DISABLED<br/>
@@ -7842,7 +7842,7 @@ target specifies the target value for the given metric
 
 
 
-Metrics define the processor configuration regarding metrics
+`Metrics` define the processor configuration regarding metrics
 
 <table>
     <thead>
@@ -7857,14 +7857,14 @@ Metrics define the processor configuration regarding metrics
         <td><b>disableAlerts</b></td>
         <td>[]enum</td>
         <td>
-          disableAlerts is a list of alerts that should be disabled. Possible values are: `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period. `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br/>
+          `disableAlerts` is a list of alerts that should be disabled. Possible values are:<br> `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br> `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>ignoreTags</b></td>
         <td>[]string</td>
         <td>
-          ignoreTags is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions . Available tags are: egress, ingress, flows, bytes, packets, namespaces, nodes, workloads<br/>
+          `ignoreTags` is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions . Available tags are: `egress`, `ingress`, `flows`, `bytes`, `packets`, `namespaces`, `nodes`, `workloads`.<br/>
           <br/>
             <i>Default</i>: [egress packets]<br/>
         </td>
@@ -7873,7 +7873,7 @@ Metrics define the processor configuration regarding metrics
         <td><b><a href="#flowcollectorspecprocessormetricsserver-1">server</a></b></td>
         <td>object</td>
         <td>
-          metricsServer endpoint configuration for Prometheus scraper<br/>
+          Metrics server endpoint configuration for Prometheus scraper<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7885,7 +7885,7 @@ Metrics define the processor configuration regarding metrics
 
 
 
-metricsServer endpoint configuration for Prometheus scraper
+Metrics server endpoint configuration for Prometheus scraper
 
 <table>
     <thead>
@@ -7900,7 +7900,7 @@ metricsServer endpoint configuration for Prometheus scraper
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          the prometheus HTTP port<br/>
+          The prometheus HTTP port<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 9102<br/>
@@ -7939,14 +7939,14 @@ TLS configuration.
         <td><b><a href="#flowcollectorspecprocessormetricsservertlsprovided-1">provided</a></b></td>
         <td>object</td>
         <td>
-          TLS configuration.<br/>
+          TLS configuration when `type` is set to `PROVIDED`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Select the type of TLS configuration "DISABLED" (default) to not configure TLS for the endpoint, "PROVIDED" to manually provide cert file and a key file, and "AUTO" to use OpenShift auto generated certificate using annotations<br/>
+          Select the type of TLS configuration:<br> - `DISABLED` (default) to not configure TLS for the endpoint. - `PROVIDED` to manually provide cert file and a key file. - `AUTO` to use OpenShift auto generated certificate using annotations.<br/>
           <br/>
             <i>Enum</i>: DISABLED, PROVIDED, AUTO<br/>
             <i>Default</i>: DISABLED<br/>
@@ -7961,7 +7961,7 @@ TLS configuration.
 
 
 
-TLS configuration.
+TLS configuration when `type` is set to `PROVIDED`.
 
 <table>
     <thead>
@@ -7976,28 +7976,28 @@ TLS configuration.
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          certFile defines the path to the certificate file name within the config map or secret<br/>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>certKey</b></td>
         <td>string</td>
         <td>
-          certKey defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the config map or secret containing certificates<br/>
+          Name of the config map or secret containing certificates<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace of the config map or secret containing certificates. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -8006,7 +8006,7 @@ TLS configuration.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the certificate reference: "configmap" or "secret"<br/>
+          Type for the certificate reference: `configmap` or `secret`<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -8020,7 +8020,7 @@ TLS configuration.
 
 
 
-resources are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+`resources` are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 <table>
     <thead>
@@ -8054,7 +8054,7 @@ resources are the compute resources required by this container. More info: https
 
 
 
-FlowCollectorStatus defines the observed state of FlowCollector
+`FlowCollectorStatus` defines the observed state of FlowCollector
 
 <table>
     <thead>
@@ -8069,14 +8069,14 @@ FlowCollectorStatus defines the observed state of FlowCollector
         <td><b><a href="#flowcollectorstatusconditionsindex-1">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          conditions represent the latest available observations of an object's state<br/>
+          `conditions` represent the latest available observations of an object's state<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace where console plugin and flowlogs-pipeline have been deployed.<br/>
+          Namespace where console plugin and flowlogs-pipeline have been deployed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

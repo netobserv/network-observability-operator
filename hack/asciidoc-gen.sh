@@ -11,8 +11,8 @@ jq '.definitions |= ({"io.netobserv.flows.v1beta1.FlowCollector"})
   | .definitions."io.netobserv.flows.v1beta1.FlowCollector".properties.metadata += {type:"object"}
   | del(.definitions."io.netobserv.flows.v1beta1.FlowCollector".properties.spec.properties.consolePlugin.properties.autoscaler.properties)
   | del(.definitions."io.netobserv.flows.v1beta1.FlowCollector".properties.spec.properties.processor.properties.kafkaConsumerAutoscaler.properties)
-  | .definitions."io.netobserv.flows.v1beta1.FlowCollector".properties.spec.properties.consolePlugin.properties.autoscaler.description |= . + " Please refer to HorizontalPodAutoscaler documentation (autoscaling/v2)."
-  | .definitions."io.netobserv.flows.v1beta1.FlowCollector".properties.spec.properties.processor.properties.kafkaConsumerAutoscaler.description |= . + " Please refer to HorizontalPodAutoscaler documentation (autoscaling/v2)."' \
+  | .definitions."io.netobserv.flows.v1beta1.FlowCollector".properties.spec.properties.consolePlugin.properties.autoscaler.description |= . + " Refer to HorizontalPodAutoscaler documentation (autoscaling/v2)."
+  | .definitions."io.netobserv.flows.v1beta1.FlowCollector".properties.spec.properties.processor.properties.kafkaConsumerAutoscaler.description |= . + " Refer to HorizontalPodAutoscaler documentation (autoscaling/v2)."' \
   _tmp/openapi.json > _tmp/openapi-amended.json
 
 openshift-apidocs-gen build -c hack/asciidoc-gen-config.yaml _tmp/openapi-amended.json
@@ -30,7 +30,9 @@ sed -i -r '/^toc::\[\]$/d ' $ADOC
 sed -i -r '/^== Specification$/d ' $ADOC
 sed -i -r 's/^==/=/g' $ADOC
 sed -i -r '/^= API endpoints/Q' $ADOC
-sed -i -r 's/OpenShift/{product-title}/' $ADOC
+sed -i -r 's/OpenShift/{product-title}/g' $ADOC
 sed -i -r 's/<br>/ +\n/g' $ADOC
 sed -i -r 's/<i>/_/g' $ADOC
 sed -i -r 's/<\/i>/_/g' $ADOC
+# Our asciidoc gen doesn't handle arrays very well, producing duplicate fields... so remove one of them
+sed -i -r '/^\| `.+\[\]`$/,+3d' $ADOC
