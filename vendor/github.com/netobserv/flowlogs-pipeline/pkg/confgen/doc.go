@@ -24,7 +24,6 @@ import (
 	"strings"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
-	"github.com/netobserv/flowlogs-pipeline/pkg/pipeline/extract/aggregate"
 )
 
 func (cg *ConfGen) generateVisualizeText(vgs []VisualizationGrafana) string {
@@ -49,7 +48,7 @@ func (cg *ConfGen) generatePromEncodeText(metrics api.PromMetricsItems) string {
 	return section
 }
 
-func (cg *ConfGen) generateOperationText(definitions aggregate.Definitions) string {
+func (cg *ConfGen) generateOperationText(definitions api.AggregateDefinitions) string {
 	section := ""
 	for _, definition := range definitions {
 		by := strings.Join(definition.GroupByKeys[:], ", ")
@@ -72,7 +71,7 @@ func (cg *ConfGen) generateDoc(fileName string) error {
 
 		labels := strings.Join(metric.Tags[:], ", ")
 		// TODO: add support for multiple operations
-		operation := cg.generateOperationText(*metric.AggregateDefinitions)
+		operation := cg.generateOperationText(metric.Aggregates.Rules)
 		expose := cg.generatePromEncodeText(metric.PromEncode.Metrics)
 		visualize := cg.generateVisualizeText(metric.Visualization.Grafana)
 		doc += fmt.Sprintf(

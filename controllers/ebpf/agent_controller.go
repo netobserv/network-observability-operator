@@ -3,6 +3,7 @@ package ebpf
 import (
 	"context"
 	"fmt"
+	"path"
 	"strconv"
 	"strings"
 
@@ -43,6 +44,10 @@ const (
 	envKafkaTLSCACertPath         = "KAFKA_TLS_CA_CERT_PATH"
 	envKafkaTLSUserCertPath       = "KAFKA_TLS_USER_CERT_PATH"
 	envKafkaTLSUserKeyPath        = "KAFKA_TLS_USER_KEY_PATH"
+	envKafkaEnableSASL            = "KAFKA_ENABLE_SASL"
+	envKafkaSASLType              = "KAFKA_SASL_TYPE"
+	envKafkaSASLIDPath            = "KAFKA_SASL_CLIENT_ID_PATH"
+	envKafkaSASLSecretPath        = "KAFKA_SASL_CLIENT_SECRET_PATH"
 	envLogLevel                   = "LOG_LEVEL"
 	envDedupe                     = "DEDUPER"
 	dedupeDefault                 = "firstCome"
@@ -121,7 +126,7 @@ func (c *AgentController) Reconcile(
 		return err
 	}
 
-	switch c.requiredAction(current, desired) {
+	switch requiredAction(current, desired) {
 	case actionCreate:
 		rlog.Info("action: create agent")
 		return c.CreateOwned(ctx, desired)
@@ -285,6 +290,27 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 				corev1.EnvVar{Name: envKafkaTLSUserKeyPath, Value: userKeyPath},
 			)
 		}
+		if helper.UseSASL(&coll.Spec.Kafka.SASL) {
+			sasl := &coll.Spec.Kafka.SASL
+			// Annotate pod with secret reference so that it is reloaded if modified
+			digest, err := c.Watcher.ProcessSASL(ctx, c.Client, sasl, c.PrivilegedNamespace())
+			if err != nil {
+				return nil, err
+			}
+			annots[watchers.Annotation("kafka-sd")] = digest
+
+			t := "plain"
+			if coll.Spec.Kafka.SASL.Type == flowslatest.SASLScramSHA512 {
+				t = "scramSHA512"
+			}
+			basePath := c.volumes.AddVolume(&sasl.Reference, "kafka-sasl")
+			config = append(config,
+				corev1.EnvVar{Name: envKafkaEnableSASL, Value: "true"},
+				corev1.EnvVar{Name: envKafkaSASLType, Value: t},
+				corev1.EnvVar{Name: envKafkaSASLIDPath, Value: path.Join(basePath, sasl.ClientIDKey)},
+				corev1.EnvVar{Name: envKafkaSASLSecretPath, Value: path.Join(basePath, sasl.ClientSecretKey)},
+			)
+		}
 	} else {
 		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
 		// When flowlogs-pipeline is deployed as a daemonset, each agent must send
@@ -305,11 +331,11 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 	return config, nil
 }
 
-func (c *AgentController) requiredAction(current, desired *v1.DaemonSet) reconcileAction {
+func requiredAction(current, desired *v1.DaemonSet) reconcileAction {
 	if desired == nil {
 		return actionNone
 	}
-	if current == nil && desired != nil {
+	if current == nil {
 		return actionCreate
 	}
 	cSpec, dSpec := current.Spec, desired.Spec
@@ -318,6 +344,13 @@ func (c *AgentController) requiredAction(current, desired *v1.DaemonSet) reconci
 		!eq(dSpec.Selector, cSpec.Selector) ||
 		!eq(dSpec.Template, cSpec.Template) {
 
+		return actionUpdate
+	}
+
+	// Env vars aren't covered by DeepDerivative when they are removed: deep-compare them
+	dConts := dSpec.Template.Spec.Containers
+	cConts := cSpec.Template.Spec.Containers
+	if len(dConts) > 0 && len(cConts) > 0 && !equality.Semantic.DeepEqual(dConts[0].Env, cConts[0].Env) {
 		return actionUpdate
 	}
 

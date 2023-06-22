@@ -101,6 +101,10 @@ func (w *Watcher) ProcessCACert(ctx context.Context, cl helper.Client, tls *flow
 	return caDigest, nil
 }
 
+func (w *Watcher) ProcessSASL(ctx context.Context, cl helper.Client, sasl *flowslatest.SASLConfig, targetNamespace string) (string, error) {
+	return w.reconcile(ctx, cl, w.refFromConfigOrSecret(&sasl.Reference, []string{sasl.ClientIDKey, sasl.ClientSecretKey}), targetNamespace)
+}
+
 func (w *Watcher) reconcile(ctx context.Context, cl helper.Client, ref objectRef, destNamespace string) (string, error) {
 	rlog := log.FromContext(ctx, "Name", ref.name, "Source namespace", ref.namespace, "Target namespace", destNamespace)
 	report := helper.NewChangeReport("Watcher for " + string(ref.kind) + " " + ref.name)

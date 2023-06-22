@@ -5617,10 +5617,113 @@ kafka configuration, such as the address and topic, to send enriched flows to.
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkasasl">sasl</a></b></td>
+        <td>object</td>
+        <td>
+          SASL authentication configuration. <i>Unsupported (*)</i><br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindexkafkatls-1">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
+          TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.sasl
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafka-1)</sup></sup>
+
+
+
+SASL authentication configuration. <i>Unsupported (*)</i>
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>clientIDKey</b></td>
+        <td>string</td>
+        <td>
+          key for client ID within the provided `reference`<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>clientSecretKey</b></td>
+        <td>string</td>
+        <td>
+          key for client secret within the provided `reference`<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkasaslreference">reference</a></b></td>
+        <td>object</td>
+        <td>
+          reference to the secret or config map containing the client ID and secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type is the type of SASL authentication to use, or `DISABLED` if SASL is not used<br/>
+          <br/>
+            <i>Enum</i>: DISABLED, PLAIN, SCRAM-SHA512<br/>
+            <i>Default</i>: DISABLED<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.sasl.reference
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkasasl)</sup></sup>
+
+
+
+reference to the secret or config map containing the client ID and secret
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the config map or secret to reference<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type for the reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5632,7 +5735,7 @@ kafka configuration, such as the address and topic, to send enriched flows to.
 
 
 
-tls client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
+TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
 
 <table>
     <thead>
@@ -5832,10 +5935,113 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkasasl">sasl</a></b></td>
+        <td>object</td>
+        <td>
+          SASL authentication configuration. <i>Unsupported (*)</i><br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspeckafkatls-1">tls</a></b></td>
         <td>object</td>
         <td>
-          tls client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
+          TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.sasl
+<sup><sup>[↩ Parent](#flowcollectorspeckafka-1)</sup></sup>
+
+
+
+SASL authentication configuration. <i>Unsupported (*)</i>
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>clientIDKey</b></td>
+        <td>string</td>
+        <td>
+          key for client ID within the provided `reference`<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>clientSecretKey</b></td>
+        <td>string</td>
+        <td>
+          key for client secret within the provided `reference`<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkasaslreference">reference</a></b></td>
+        <td>object</td>
+        <td>
+          reference to the secret or config map containing the client ID and secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type is the type of SASL authentication to use, or `DISABLED` if SASL is not used<br/>
+          <br/>
+            <i>Enum</i>: DISABLED, PLAIN, SCRAM-SHA512<br/>
+            <i>Default</i>: DISABLED<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.sasl.reference
+<sup><sup>[↩ Parent](#flowcollectorspeckafkasasl)</sup></sup>
+
+
+
+reference to the secret or config map containing the client ID and secret
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          name of the config map or secret to reference<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          type for the reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5847,7 +6053,7 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
 
 
 
-tls client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
+TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
 
 <table>
     <thead>

@@ -91,7 +91,7 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 # Image building tool (docker / podman) - docker is preferred in CI
-OCI_BIN_PATH := $(shell which docker || which podman)
+OCI_BIN_PATH := $(shell which docker 2>/dev/null || which podman)
 OCI_BIN ?= $(shell basename ${OCI_BIN_PATH})
 
 DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")

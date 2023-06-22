@@ -96,7 +96,7 @@ func (b *PipelineBuilderStage) next(name string, param StageParam) PipelineBuild
 }
 
 // Aggregate chains the current stage with an aggregate stage and returns that new stage
-func (b *PipelineBuilderStage) Aggregate(name string, aggs []api.AggregateDefinition) PipelineBuilderStage {
+func (b *PipelineBuilderStage) Aggregate(name string, aggs api.Aggregates) PipelineBuilderStage {
 	return b.next(name, NewAggregateParams(name, aggs))
 }
 

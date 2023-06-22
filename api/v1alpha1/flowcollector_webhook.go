@@ -63,6 +63,7 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS
+	dst.Spec.Kafka.SASL = restored.Spec.Kafka.SASL
 
 	if restored.Spec.Exporters != nil {
 		for _, restoredExp := range restored.Spec.Exporters {

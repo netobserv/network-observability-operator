@@ -62,5 +62,5 @@ func (c *ClientTLS) Build() (*tls.Config, error) {
 		}
 		return tlsConfig, nil
 	}
-	return nil, nil
+	return tlsConfig, nil
 }

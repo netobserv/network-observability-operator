@@ -33,8 +33,8 @@ func NewKafkaParams(name string, ingest api.IngestKafka) StageParam {
 	return StageParam{Name: name, Ingest: &Ingest{Type: api.KafkaType, Kafka: &ingest}}
 }
 
-func NewAggregateParams(name string, aggs []api.AggregateDefinition) StageParam {
-	return StageParam{Name: name, Extract: &Extract{Type: api.AggregateType, Aggregates: aggs}}
+func NewAggregateParams(name string, aggs api.Aggregates) StageParam {
+	return StageParam{Name: name, Extract: &Extract{Type: api.AggregateType, Aggregates: &aggs}}
 }
 
 func NewTransformGenericParams(name string, gen api.TransformGeneric) StageParam {
