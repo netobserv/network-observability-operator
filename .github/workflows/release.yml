@@ -8,7 +8,7 @@ env:
   WF_REGISTRY: quay.io/netobserv
   WF_IMAGE: network-observability-operator
   WF_ORG: netobserv
-  WF_MULTIARCH_TARGETS: amd64 arm64 ppc64le
+  WF_MULTIARCH_TARGETS: amd64 arm64 ppc64le s390x
 
 jobs:
   push-image:

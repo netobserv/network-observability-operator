@@ -28,7 +28,7 @@ run_step() {
     | sed -r "s~\\$\{\{ env\.WF_VERSION \}\}~$version~g" \
     | sed -r "s~\\$\{\{ env\.WF_REGISTRY \}\}~quay.io/netobserv~g" \
     | sed -r "s~\\$\{\{ env\.WF_IMAGE \}\}~network-observability-operator~g" \
-    | sed -r "s~\\$\{\{ env\.WF_MULTIARCH_TARGETS \}\}~amd64 arm64 ppc64le~g" \
+    | sed -r "s~\\$\{\{ env\.WF_MULTIARCH_TARGETS \}\}~amd64 arm64 ppc64le s390x~g" \
     | sed -r "s~\\$\{\{ env\.short_sha \}\}~$short_sha~g" \
     | sed -r "s~\\$\{\{ env\.tag \}\}~$fake_tag~g" \
   )
@@ -100,9 +100,11 @@ run_step "push_image.yml" "push-image" "build images"
 expect_image_tagged "quay.io/netobserv/network-observability-operator:main-amd64"
 expect_image_tagged "quay.io/netobserv/network-observability-operator:main-arm64"
 expect_image_tagged "quay.io/netobserv/network-observability-operator:main-ppc64le"
+expect_image_tagged "quay.io/netobserv/network-observability-operator:main-s390x"
 expect_image_tagged "quay.io/netobserv/network-observability-operator:$short_sha-amd64"
 expect_image_tagged "quay.io/netobserv/network-observability-operator:$short_sha-arm64"
 expect_image_tagged "quay.io/netobserv/network-observability-operator:$short_sha-ppc64le"
+expect_image_tagged "quay.io/netobserv/network-observability-operator:$short_sha-s390x"
 
 run_step "push_image.yml" "push-image" "build bundle"
 expect_image_tagged "quay.io/netobserv/network-observability-operator-bundle:v0.0.0-main"
