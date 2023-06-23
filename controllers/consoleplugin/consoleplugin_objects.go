@@ -348,12 +348,24 @@ func (b *builder) metricsService() *corev1.Service {
 func (b *builder) configMap() (*corev1.ConfigMap, string) {
 	outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
 
+	var features []string
+	if b.desired.Agent.Type == flowslatest.AgentEBPF {
+		if helper.IsTCPDropEnabled(b.desired) {
+			features = append(features, "tcpDrop")
+		}
+
+		if helper.IsDNSTrackingEnabled(b.desired) {
+			features = append(features, "dnsTracking")
+		}
+	}
+
 	config := map[string]interface{}{
 		"recordTypes":     outputRecordTypes,
 		"portNaming":      b.desired.ConsolePlugin.PortNaming,
 		"quickFilters":    b.desired.ConsolePlugin.QuickFilters,
 		"alertNamespaces": []string{b.namespace},
 		"sampling":        helper.GetSampling(b.desired),
+		"features":        features,
 	}
 
 	configStr := "{}"

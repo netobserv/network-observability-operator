@@ -103,14 +103,14 @@ func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
 }
 
 func IsTCPDropEnabled(spec *flowslatest.FlowCollectorSpec) bool {
-	if spec.Agent.EBPF.EnableTCPDrop != nil && *spec.Agent.EBPF.EnableTCPDrop {
+	if spec.Agent.EBPF.Privileged && spec.Agent.EBPF.EnableTCPDrop != nil && *spec.Agent.EBPF.EnableTCPDrop {
 		return true
 	}
 	return false
 }
 
 func IsDNSTrackingEnabled(spec *flowslatest.FlowCollectorSpec) bool {
-	if spec.Agent.EBPF.EnableDNSTracking != nil && *spec.Agent.EBPF.EnableDNSTracking {
+	if spec.Agent.EBPF.Privileged && spec.Agent.EBPF.EnableDNSTracking != nil && *spec.Agent.EBPF.EnableDNSTracking {
 		return true
 	}
 	return false
