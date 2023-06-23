@@ -4074,7 +4074,7 @@ Agent configuration for flows extraction.
         <td><b>enableDNSTracking</b></td>
         <td>boolean</td>
         <td>
-          enable DNS tracking feature, this feature requires mounting kernel debug filesystem hence the ebpf pod has to run as privileged if privileged isn't set an error will be reported.<br/>
+          Enable the DNS tracking feature. This feature requires mounting the kernel debug filesystem hence the eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged parameter is not set, an error is reported.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -4083,7 +4083,7 @@ Agent configuration for flows extraction.
         <td><b>enableTCPDrop</b></td>
         <td>boolean</td>
         <td>
-          enable TCP drop flows logging feature, this feature requires mounting kernel debug filesystem hence the ebpf pod has to run as privileged if privileged isn't set an error will be reported.<br/>
+          Enable the TCP drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged parameter is not set, an error is reported.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>

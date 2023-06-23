@@ -7,8 +7,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-logr/logr"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -23,7 +25,6 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
-	"k8s.io/apimachinery/pkg/api/equality"
 )
 
 const (
@@ -125,7 +126,7 @@ func (c *AgentController) Reconcile(
 	if err := c.permissions.Reconcile(ctx, &target.Spec.Agent.EBPF); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
-	desired, err := c.desired(ctx, target)
+	desired, err := c.desired(ctx, target, rlog)
 	if err != nil {
 		return err
 	}
@@ -171,7 +172,7 @@ func newMountPropagationMode(m corev1.MountPropagationMode) *corev1.MountPropaga
 	return mode
 }
 
-func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector) (*v1.DaemonSet, error) {
+func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector, rlog logr.Logger) (*v1.DaemonSet, error) {
 	if coll == nil || !helper.UseEBPF(&coll.Spec) {
 		return nil, nil
 	}
@@ -186,24 +187,26 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 
 	if helper.IsTCPDropEnabled(&coll.Spec) || helper.IsDNSTrackingEnabled(&coll.Spec) {
 		if !coll.Spec.Agent.EBPF.Privileged {
-			return nil, fmt.Errorf("to use TCPDrop feature privileged mode need to be enabled")
-		}
-		volume := corev1.Volume{
-			Name: bpfTraceMountName,
-			VolumeSource: corev1.VolumeSource{
-				HostPath: &corev1.HostPathVolumeSource{
-					Type: newHostPathType(corev1.HostPathDirectory),
-					Path: bpfTraceMountPath,
+			rlog.Error(fmt.Errorf("invalid configuration"),
+				"To use TCPDrop and/or DNSTracking feature(s) privileged mode needs to be enabled", nil)
+		} else {
+			volume := corev1.Volume{
+				Name: bpfTraceMountName,
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Type: newHostPathType(corev1.HostPathDirectory),
+						Path: bpfTraceMountPath,
+					},
 				},
-			},
+			}
+			volumes = append(volumes, volume)
+			volumeMount := corev1.VolumeMount{
+				Name:             bpfTraceMountName,
+				MountPath:        bpfTraceMountPath,
+				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+			}
+			volumeMounts = append(volumeMounts, volumeMount)
 		}
-		volumes = append(volumes, volume)
-		volumeMount := corev1.VolumeMount{
-			Name:             bpfTraceMountName,
-			MountPath:        bpfTraceMountPath,
-			MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
-		}
-		volumeMounts = append(volumeMounts, volumeMount)
 	}
 
 	return &v1.DaemonSet{

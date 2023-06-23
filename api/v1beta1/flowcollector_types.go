@@ -222,16 +222,16 @@ type FlowCollectorEBPF struct {
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
 
-	// enable TCP drop flows logging feature, this feature requires mounting
-	// kernel debug filesystem hence the ebpf pod has to run as privileged
-	// if privileged isn't set an error will be reported.
+	// Enable the TCP drop flows logging feature. This feature requires mounting
+	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
+	// If the spec.agent.eBPF.privileged parameter is not set, an error is reported.
 	//+kubebuilder:default:=false
 	//+optional
 	EnableTCPDrop *bool `json:"enableTCPDrop,omitempty"`
 
-	// enable DNS tracking feature, this feature requires mounting
-	// kernel debug filesystem hence the ebpf pod has to run as privileged
-	// if privileged isn't set an error will be reported.
+	// Enable the DNS tracking feature. This feature requires mounting
+	// the kernel debug filesystem hence the eBPF pod has to run as privileged.
+	// If the spec.agent.eBPF.privileged parameter is not set, an error is reported.
 	//+kubebuilder:default:=false
 	//+optional
 	EnableDNSTracking *bool `json:"enableDNSTracking,omitempty"`
