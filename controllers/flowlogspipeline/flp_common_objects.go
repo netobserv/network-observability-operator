@@ -368,22 +368,30 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 	if helper.IsTCPDropEnabled(b.desired) {
 		outputTCPDropFields := []api.OutputField{
 			{
-				Name:      "TCPDropBytes",
+				Name:      "TcpDropBytes",
 				Operation: "sum",
 			},
 			{
-				Name:      "TCPDropBytes",
+				Name:      "TcpDropBytes",
 				Operation: "sum",
 				SplitAB:   true,
 			},
 			{
-				Name:      "TCPDropPackets",
+				Name:      "TcpDropPackets",
 				Operation: "sum",
 			},
 			{
-				Name:      "TCPDropPackets",
+				Name:      "TcpDropPackets",
 				Operation: "sum",
 				SplitAB:   true,
+			},
+			{
+				Name:      "TcpDropLatestState",
+				Operation: "last",
+			},
+			{
+				Name:      "TcpDropLatestDropCause",
+				Operation: "last",
 			},
 		}
 		outputFields = append(outputFields, outputTCPDropFields...)
