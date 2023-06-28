@@ -120,7 +120,7 @@ bin/operator-sdk bundle validate $BUNDLE_IMAGE
 bin/operator-sdk bundle validate -b podman $BUNDLE_IMAGE
 ```
 
-> Note: the base64 logo can be generated with: `base64 -w 0 <image file>`, then manually pasted in the [CSV manifest file](./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml) under `spec.icon`.
+> Note: the base64 logo can be generated with: `base64 -w 0 <image file>`, then manually pasted in the [CSV manifest file](./config/csv/bases/netobserv-operator.clusterserviceversion.yaml) under `spec.icon`.
 
 ### Deploy as bundle from command line
 
@@ -191,6 +191,90 @@ E.g:
 ```bash
 CSV=network-observability-operator.v1.2.0 USER=myself VERSION=test make set-agent-image set-flp-image set-plugin-image
 ```
+
+## Understanding the config / kustomize structure
+
+The [config](./config/) directory contains assets required for creating the Operator bundle (which comes in two flavours: for OpenShift and for "vanilla" Kubernetes), as well as other assets used in `make` scripts that are helpful to set up development environments.
+
+Let's see the `kustomize` dependency tree for OpenShift bundle, which entry point is `config/openshift-olm`:
+
+```
+openshift-olm
+|
+|===> ../csv
+|     |
+|     |===> ../samples
+|     |     |
+|     |     |===> FlowCollector samples
+|     |
+|     |===> CSV base file
+|
+|===> ./default
+      |
+      |===> Various patches and ServiceMonitor
+      |
+      |===> ../../crd
+      |     |
+      |     |===> CRD base file
+      |     |
+      |     |===> Various patches and configuration
+      |
+      |===> ../../rbac
+      |     |
+      |     |===> All RBAC-related resources
+      |
+      |===> ../../manager
+      |     |
+      |     |===> Operator deployment and various patches
+      |
+      |===> ../../webhook
+            |
+            |===> Webhook service and configuration
+       
+```
+
+For "vanilla" Kubernetes, the dependency tree is very similar, but includes CertManager and doesn't include the ServiceMonitor. Its entry point is `config/k8s-olm`:
+
+```
+k8s-olm
+|
+|===> ../csv
+|     |
+|     |===> ../samples
+|     |     |
+|     |     |===> FlowCollector samples
+|     |
+|     |===> CSV base file
+|
+|===> ./default
+      |
+      |===> Various patches
+      |
+      |===> ../../crd
+      |     |
+      |     |===> CRD base file
+      |     |
+      |     |===> Various patches and configuration
+      |
+      |===> ../../rbac
+      |     |
+      |     |===> All RBAC-related resources
+      |
+      |===> ../../manager
+      |     |
+      |     |===> Operator deployment and various patches
+      |
+      |===> ../../webhook
+      |     |
+      |     |===> Webhook service and configuration
+      |
+      |===> ../../certmanager
+            |
+            |===> Configuration for CertManager
+       
+```
+
+On top of that, there is also `config/openshift` which is used in developers environment to generate all the operator related assets without going through the bundle generation (e.g. there is no CSV), in order to be deployed directly on a running cluster. This is used in the `make deploy` script. Its content is very similar to `config/olm-openshift` apart from a few tweaks.
 
 ## View flowlogs-pipeline metrics in console
 

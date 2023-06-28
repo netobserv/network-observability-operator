@@ -100,57 +100,40 @@ bin/operator-sdk cleanup netobserv-operator
 
 ### Publishing on OperatorHub
 
-First, do some manual cleanup. Ideally these steps should be included in the `make bundle` process (TODO).
-- In [bundle.Dockerfile](./bundle.Dockerfile), remove the two "Labels for testing" and the `scorecard` reference.
-- In [bundled annotations.yaml](./bundle/metadata/annotations.yaml), remove the two annotations for testing.
-
 There's a cross-publication on two repos:
 - For non-OpenShift: https://github.com/k8s-operatorhub/community-operators
 - For OpenShift / community operators: https://github.com/redhat-openshift-ecosystem/community-operators-prod
 
-After having cloned or updated these repo, copy the bundle content:
+The bundle built in the steps above is set up for OpenShift, so we'll start with that one.
+
+Run:
 
 ```bash
-# Here, set correct paths and new version
-path_k8s="../community-operators"
-path_okd="../community-operators-prod"
-
-cd $path_k8s && git fetch upstream && git rebase upstream/main
-cd -
-cd $path_okd && git fetch upstream && git rebase upstream/main
-cd -
-
-mkdir -p $path_k8s/operators/netobserv-operator/$version
-mkdir -p $path_okd/operators/netobserv-operator/$version
-cp -r "bundle/manifests" "$path_k8s/operators/netobserv-operator/$version"
-cp -r "bundle/manifests" "$path_okd/operators/netobserv-operator/$version"
-cp -r "bundle/metadata" "$path_k8s/operators/netobserv-operator/$version"
-cp -r "bundle/metadata" "$path_okd/operators/netobserv-operator/$version"
+# OPERATORHUB_PATH defaults to "../community-operators-prod"
+OPERATORHUB_PATH=/path/to/operatorhub-for-okd make prepare-operatorhub
 ```
 
 You should double check eveything is correct by comparing the produced files with their equivalent in the previous release,
 making sure there's nothing unexpected.
 
-On OKD repo, edit the annotations.yaml to include the supported OpenShift versions:
-
-```yaml
-  # OpenShift annotations.
-  com.redhat.openshift.versions: "v4.10-v4.12"
-```
+If necessary, update the "com.redhat.openshift.versions" annotation for compatible OpenShift versions.
 
 Then commit and push (commits must be signed):
 
 ```bash
-cd $path_k8s
-git add -A
-git commit -s -m "operators netobserv-operator ($version)"
-git push origin HEAD:bump-$version
-
-cd $path_okd
 git add -A
 git commit -s -m "operators netobserv-operator ($version)"
 git push origin HEAD:bump-$version
 ```
+
+For non-OpenShift, we need first to generate a non-OpenShift compliant bundle:
+
+```bash
+# When BUNDLE_CONFIG is "config/k8s-olm", OPERATORHUB_PATH defaults then to "../community-operators"
+OPERATORHUB_PATH=/path/to/operatorhub-for-k8s BUNDLE_CONFIG=config/k8s-olm make update-bundle prepare-operatorhub
+```
+
+Then check, commit push push as above.
 
 Open PRs in GitHub. A bunch of tests will be triggered, if passed the merge should be automatic.
 

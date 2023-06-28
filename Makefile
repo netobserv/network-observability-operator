@@ -74,6 +74,9 @@ IMAGE_TAG_BASE ?= $(REPO)/network-observability-operator
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMAGE=<some-registry>/<project-name-bundle>:<tag>)
 BUNDLE_IMAGE ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
 
+# BUNDLE_CONFIG is the config sources to use for OLM bundle - "config/openshift-olm" for OpenShift, or "config/k8s-olm" for upstream Kubernetes.
+BUNDLE_CONFIG ?= config/openshift-olm
+
 # Image URL to use all building/pushing image targets
 IMAGE ?= $(IMAGE_TAG_BASE):$(VERSION)
 OCI_BUILD_OPTS ?=
@@ -103,6 +106,13 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 NAMESPACE ?= netobserv
+
+# Local paths from preparing upstream release to OperatorHub
+ifeq ($(BUNDLE_CONFIG), "config/openshift-olm")
+	OPERATORHUB_PATH ?= "../community-operators-prod"
+else
+	OPERATORHUB_PATH ?= "../community-operators"
+endif
 
 all: help
 
@@ -340,20 +350,22 @@ run: fmt lint ## Run a controller from your host.
 
 .PHONY: bundle-prepare
 bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
-	$(OPSDK) generate kustomize manifests -q
+# $(OPSDK) generate kustomize manifests -q --input-dir $(BUNDLE_CONFIG) --output-dir $(BUNDLE_CONFIG)
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:$(FLP_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:.+~console-plugin:$(PLG_VERSION)~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
-	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/manifests/bases/description-upstream.md
-	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/manifests/bases/description-ocp.md
-	$(SED) -i -r 's~replaces: netobserv-operator\.v.*~replaces: netobserv-operator\.$(PREVIOUS_VERSION)~' ./config/manifests/bases/netobserv-operator.clusterserviceversion.yaml
+	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
+	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/descriptions/upstream.md
+	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/descriptions/ocp.md
+	$(SED) -i -r 's~replaces: netobserv-operator\.v.*~replaces: netobserv-operator\.$(PREVIOUS_VERSION)~' ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
 
 .PHONY: bundle
 bundle: bundle-prepare ## Generate final bundle files.
-	$(SED) -e 's/^/    /' config/manifests/bases/description-upstream.md > tmp-desc
-	$(KUSTOMIZE) build config/manifests \
+	rm -r bundle/manifests
+	rm -r bundle/metadata
+	$(SED) -e 's/^/    /' config/descriptions/upstream.md > tmp-desc
+	$(KUSTOMIZE) build $(BUNDLE_CONFIG) \
 		| $(SED) -e 's~:container-image:~$(IMAGE)~' \
 		| $(SED) -e "/':full-description:'/r tmp-desc" \
 		| $(SED) -e "s/':full-description:'/|\-/" \
@@ -437,6 +449,29 @@ related-release-notes: ## Grab release notes for related components (to be inser
 	wl-copy < /tmp/related.md
 	cat /tmp/related.md
 	echo -e "\nText has been copied to the clipboard.\n"
+
+.PHONY: prepare-operatorhub
+prepare-operatorhub: ## Copy bundle for an upstream release on OperatorHub
+	$(SED) -i '/scorecard/d' ./bundle.Dockerfile
+	$(SED) -i '/scorecard/d' ./bundle/metadata/annotations.yaml
+	$(SED) -i '/Annotations for testing/d' ./bundle/metadata/annotations.yaml
+	$(SED) -i -r 's~:created-at:~$(DATE)~' ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
+	@read -p "Going to hard-reset git's $(OPERATORHUB_PATH) - type y to proceed: " -n 1 -r; \
+	if [[ $$REPLY =~ ^[^Yy] ]]; \
+	then \
+			exit 1; \
+	fi
+	cd $(OPERATORHUB_PATH) && git fetch upstream && git reset --hard upstream/main && cd -
+	mkdir -p "$(OPERATORHUB_PATH)/operators/netobserv-operator/$(BUNDLE_VERSION)"
+	cp -r bundle/manifests "$(OPERATORHUB_PATH)/operators/netobserv-operator/$(BUNDLE_VERSION)"
+	cp -r bundle/metadata "$(OPERATORHUB_PATH)/operators/netobserv-operator/$(BUNDLE_VERSION)"
+ifeq ($(BUNDLE_CONFIG), "config/openshift-olm")
+	echo "  com.redhat.openshift.versions: \"v4.10-v4.13\"" >> $(OPERATORHUB_PATH)/operators/netobserv-operator/$(BUNDLE_VERSION)/metadata/annotations.yaml
+endif
+	cd $(OPERATORHUB_PATH) && git add -A
+
+	@echo ""
+	@echo "Everything is ready to be pushed. Before that, you should compare the content of $(BUNDLE_VERSION) with $(PREVIOUS_VERSION) to make sure it looks correct."
 
 include .mk/sample.mk
 include .mk/development.mk
