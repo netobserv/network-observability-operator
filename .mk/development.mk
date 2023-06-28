@@ -1,8 +1,5 @@
 ##@ Development helpers
 
-# use default cluster storage class
-DEFAULT_SC := $(shell kubectl get storageclass -o=jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
-
 ifeq ("", "$(CSV)")
 OPERATOR_NS ?= $(NAMESPACE)
 else
@@ -54,6 +51,7 @@ undeploy-loki: ## Undeploy loki.
 	-pkill --oldest --full "3100:3100"
 
 .PHONY: deploy-kafka
+deploy-kafka: DEFAULT_SC=$(shell kubectl get storageclass -o=jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
 deploy-kafka:
 	@echo -e "\n==> Deploy default Kafka. Get more help on https://github.com/netobserv/documents/blob/main/kafka.md"
 	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
@@ -65,6 +63,7 @@ deploy-kafka:
 	kubectl wait --timeout=180s --for=condition=ready kafkatopic network-flows -n $(NAMESPACE)
 
 .PHONY: deploy-kafka-tls
+deploy-kafka-tls: DEFAULT_SC=$(shell kubectl get storageclass -o=jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
 deploy-kafka-tls:
 	@echo -e "\n==> Deploy Kafka with mTLS. Get more help on https://github.com/netobserv/documents/blob/main/kafka.md"
 	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
