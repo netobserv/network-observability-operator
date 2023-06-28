@@ -568,7 +568,7 @@ type FlowCollectorConsolePlugin struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	// enable the console plugin deployment.
-	// spec.Loki.enable must be true
+	// spec.Loki.enable must also be true
 	Enable *bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:=true

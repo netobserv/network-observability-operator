@@ -4384,7 +4384,7 @@ Agent configuration for flows extraction.
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          enable the console plugin deployment. spec.Loki.enable must be true<br/>
+          enable the console plugin deployment. spec.Loki.enable must also be true<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>

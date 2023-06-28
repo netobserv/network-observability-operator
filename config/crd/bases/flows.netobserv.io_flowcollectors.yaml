@@ -3013,7 +3013,7 @@ spec:
                   enable:
                     default: true
                     description: enable the console plugin deployment. spec.Loki.enable
-                      must be true
+                      must also be true
                     type: boolean
                   imagePullPolicy:
                     default: IfNotPresent
