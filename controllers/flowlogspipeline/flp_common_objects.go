@@ -439,7 +439,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 	})
 
 	// loki stage (write) configuration
-	if *b.desired.Loki.Enable {
+	if helper.UseLoki(b.desired) {
 		lokiWrite := api.WriteLoki{
 			Labels:         indexFields,
 			BatchSize:      int(b.desired.Loki.BatchSize),
