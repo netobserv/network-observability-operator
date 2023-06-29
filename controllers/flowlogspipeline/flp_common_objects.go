@@ -439,57 +439,59 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 	})
 
 	// loki stage (write) configuration
-	lokiWrite := api.WriteLoki{
-		Labels:         indexFields,
-		BatchSize:      int(b.desired.Loki.BatchSize),
-		BatchWait:      b.desired.Loki.BatchWait.ToUnstructured().(string),
-		MaxBackoff:     b.desired.Loki.MaxBackoff.ToUnstructured().(string),
-		MaxRetries:     int(helper.PtrInt32(b.desired.Loki.MaxRetries)),
-		MinBackoff:     b.desired.Loki.MinBackoff.ToUnstructured().(string),
-		StaticLabels:   model.LabelSet{},
-		Timeout:        b.desired.Loki.Timeout.ToUnstructured().(string),
-		URL:            b.desired.Loki.URL,
-		TimestampLabel: "TimeFlowEndMs",
-		TimestampScale: "1ms",
-		TenantID:       b.desired.Loki.TenantID,
-	}
-
-	for k, v := range b.desired.Loki.StaticLabels {
-		lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
-	}
-
-	var authorization *promConfig.Authorization
-	if helper.LokiUseHostToken(&b.desired.Loki) || helper.LokiForwardUserToken(&b.desired.Loki) {
-		b.volumes.AddToken(constants.FLPName)
-		authorization = &promConfig.Authorization{
-			Type:            "Bearer",
-			CredentialsFile: constants.TokensPath + constants.FLPName,
+	if *b.desired.Loki.Enable {
+		lokiWrite := api.WriteLoki{
+			Labels:         indexFields,
+			BatchSize:      int(b.desired.Loki.BatchSize),
+			BatchWait:      b.desired.Loki.BatchWait.ToUnstructured().(string),
+			MaxBackoff:     b.desired.Loki.MaxBackoff.ToUnstructured().(string),
+			MaxRetries:     int(helper.PtrInt32(b.desired.Loki.MaxRetries)),
+			MinBackoff:     b.desired.Loki.MinBackoff.ToUnstructured().(string),
+			StaticLabels:   model.LabelSet{},
+			Timeout:        b.desired.Loki.Timeout.ToUnstructured().(string),
+			URL:            b.desired.Loki.URL,
+			TimestampLabel: "TimeFlowEndMs",
+			TimestampScale: "1ms",
+			TenantID:       b.desired.Loki.TenantID,
 		}
-	}
 
-	if b.desired.Loki.TLS.Enable {
-		if b.desired.Loki.TLS.InsecureSkipVerify {
-			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-				Authorization: authorization,
-				TLSConfig: promConfig.TLSConfig{
-					InsecureSkipVerify: true,
-				},
+		for k, v := range b.desired.Loki.StaticLabels {
+			lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
+		}
+
+		var authorization *promConfig.Authorization
+		if helper.LokiUseHostToken(&b.desired.Loki) || helper.LokiForwardUserToken(&b.desired.Loki) {
+			b.volumes.AddToken(constants.FLPName)
+			authorization = &promConfig.Authorization{
+				Type:            "Bearer",
+				CredentialsFile: constants.TokensPath + constants.FLPName,
+			}
+		}
+
+		if b.desired.Loki.TLS.Enable {
+			if b.desired.Loki.TLS.InsecureSkipVerify {
+				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+					Authorization: authorization,
+					TLSConfig: promConfig.TLSConfig{
+						InsecureSkipVerify: true,
+					},
+				}
+			} else {
+				caPath := b.volumes.AddCACertificate(&b.desired.Loki.TLS, "loki-certs")
+				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+					Authorization: authorization,
+					TLSConfig: promConfig.TLSConfig{
+						CAFile: caPath,
+					},
+				}
 			}
 		} else {
-			caPath := b.volumes.AddCACertificate(&b.desired.Loki.TLS, "loki-certs")
 			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
 				Authorization: authorization,
-				TLSConfig: promConfig.TLSConfig{
-					CAFile: caPath,
-				},
 			}
 		}
-	} else {
-		lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-			Authorization: authorization,
-		}
+		enrichedStage.WriteLoki("loki", lokiWrite)
 	}
-	enrichedStage.WriteLoki("loki", lokiWrite)
 
 	// write on Stdout if logging trace enabled
 	if b.desired.Processor.LogLevel == "trace" {

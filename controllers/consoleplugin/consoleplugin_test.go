@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -29,6 +30,7 @@ var testResources = corev1.ResourceRequirements{
 
 func getPluginConfig() flowslatest.FlowCollectorConsolePlugin {
 	return flowslatest.FlowCollectorConsolePlugin{
+		Enable:          pointer.Bool(true),
 		Port:            9001,
 		ImagePullPolicy: string(testPullPolicy),
 		Resources:       testResources,

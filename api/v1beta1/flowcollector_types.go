@@ -482,6 +482,10 @@ const (
 
 // `FlowCollectorLoki` defines the desired state for FlowCollector's Loki client.
 type FlowCollectorLoki struct {
+	//+kubebuilder:default:=true
+	// enable storing flows to Loki. It is required for the OpenShift Console plugin installation.
+	Enable *bool `json:"enable,omitempty"`
+
 	//+kubebuilder:default:="http://loki:3100/"
 	// `url` is the address of an existing Loki service to push the flows to. When using the Loki Operator,
 	// set it to the Loki gateway service with the `network` tenant set in path, for example
@@ -562,6 +566,11 @@ type FlowCollectorLoki struct {
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector
 type FlowCollectorConsolePlugin struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
+
+	//+kubebuilder:default:=true
+	// enable the console plugin deployment.
+	// spec.Loki.enable must also be true
+	Enable *bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:=true
 	// `register` allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator.
