@@ -91,8 +91,15 @@ func UseSASL(cfg *flowslatest.SASLConfig) bool {
 	return cfg.Type == flowslatest.SASLPlain || cfg.Type == flowslatest.SASLScramSHA512
 }
 
+func UseLoki(spec *flowslatest.FlowCollectorSpec) bool {
+	// nil should fallback to default value, which is "true"
+	return spec.Loki.Enable == nil || *spec.Loki.Enable
+}
+
 func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
-	return PtrBool(spec.Loki.Enable) && PtrBool(spec.ConsolePlugin.Enable)
+	return UseLoki(spec) &&
+		// nil should fallback to default value, which is "true"
+		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
 }
 
 func PtrBool(b *bool) bool {
