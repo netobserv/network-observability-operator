@@ -16,9 +16,11 @@ encode:
       - name: workload_egress_bytes_total
         type: counter
         valuekey: Bytes
-        filter:
-          key: FlowDirection
+        filters:
+        - key: FlowDirection
           value: "1"
+        - key: Duplicate
+          value: "false"
         labels:
           - SrcK8S_Namespace
           - DstK8S_Namespace
