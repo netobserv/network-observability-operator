@@ -310,12 +310,12 @@ func (r *FlowCollectorReconciler) reconcileOperator(ctx context.Context, cmn *re
 		}
 	}
 
-	desiredFlowDashboardCM := buildFlowMetricsDashboard()
-	if err := cmn.ReconcileConfigMap(ctx, desiredFlowDashboardCM); err != nil {
-		return err
-	}
-
 	if r.availableAPIs.HasSvcMonitor() {
+		desiredFlowDashboardCM := buildFlowMetricsDashboard()
+		if err := cmn.ReconcileConfigMap(ctx, desiredFlowDashboardCM); err != nil {
+			return err
+		}
+
 		desiredHealthDashboardCM := buildHealthDashboard()
 		if err := cmn.ReconcileConfigMap(ctx, desiredHealthDashboardCM); err != nil {
 			return err
