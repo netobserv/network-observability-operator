@@ -1,0 +1,511 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "hideControls": false,
+  "id": null,
+  "links": [],
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "prometheus",
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 20,
+            "w": 25,
+            "x": 0,
+            "y": 0
+          },
+          "id": 3,
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "sideWidth": null,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": null,
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 1,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "label_replace(\n  label_replace(\n    topk(5,sum(rate(netobserv_node_ingress_bytes_total[1m])) by (SrcK8S_HostName, DstK8S_HostName)),\n    \"SrcK8S_HostName\", \"(external)\", \"SrcK8S_HostName\", \"()\"\n  ),\n  \"DstK8S_HostName\", \"(external)\", \"DstK8S_HostName\", \"()\"\n)\n",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "{{SrcK8S_HostName}} -> {{DstK8S_HostName}}",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "showTitle": true,
+      "title": "Top byte rates received per source and destination nodes (1-min rates)"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "prometheus",
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 20,
+            "w": 25,
+            "x": 0,
+            "y": 0
+          },
+          "id": 2,
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "sideWidth": null,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": null,
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "label_replace(\n  label_replace(\n    topk(5,sum(rate(netobserv_namespace_flows_total{SrcK8S_Namespace!~\"|openshift.*\"}[1m]) or rate(netobserv_namespace_flows_total{SrcK8S_Namespace=~\"openshift.*\",DstK8S_Namespace!~\"|openshift.*\"}[1m])) by (SrcK8S_Namespace, DstK8S_Namespace)),\n    \"SrcK8S_Namespace\", \"(not namespaced)\", \"SrcK8S_Namespace\", \"()\"\n  ),\n  \"DstK8S_Namespace\", \"(not namespaced)\", \"DstK8S_Namespace\", \"()\"\n)\n",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "{{SrcK8S_Namespace}} -> {{DstK8S_Namespace}}",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Applications",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "prometheus",
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 20,
+            "w": 25,
+            "x": 0,
+            "y": 0
+          },
+          "id": 2,
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "sideWidth": null,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": null,
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "label_replace(\n  label_replace(\n    topk(5,sum(rate(netobserv_namespace_flows_total{SrcK8S_Namespace=~\"openshift.*\"}[1m]) or rate(netobserv_namespace_flows_total{SrcK8S_Namespace!~\"openshift.*\",DstK8S_Namespace=~\"openshift.*\"}[1m])) by (SrcK8S_Namespace, DstK8S_Namespace)),\n    \"SrcK8S_Namespace\", \"(not namespaced)\", \"SrcK8S_Namespace\", \"()\"\n  ),\n  \"DstK8S_Namespace\", \"(not namespaced)\", \"DstK8S_Namespace\", \"()\"\n)\n",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "{{SrcK8S_Namespace}} -> {{DstK8S_Namespace}}",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Infrastructure",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "showTitle": true,
+      "title": "Top flow rates per source and destination namespaces (1-min rates)"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "prometheus",
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 20,
+            "w": 25,
+            "x": 0,
+            "y": 0
+          },
+          "id": 4,
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "sideWidth": null,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": null,
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "label_replace(\n  label_replace(\n    topk(5, sum(\n      rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace!~\"|openshift.*\",SrcK8S_OwnerType!~\"|Node\",DstK8S_OwnerType!~\"|Node\"}[1m])\n      or rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace!~\"|openshift.*\",SrcK8S_OwnerType=~\"|Node\",DstK8S_OwnerType!~\"|Node\"}[1m])\n      or rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace!~\"|openshift.*\",SrcK8S_OwnerType!~\"|Node\",DstK8S_OwnerType=~\"|Node\"}[1m])\n    or rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace=~\"openshift.*\",DstK8S_Namespace!~\"|openshift.*\",SrcK8S_OwnerType!~\"|Node\",DstK8S_OwnerType!~\"|Node\"}[1m])\n      or rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace=~\"openshift.*\",DstK8S_Namespace!~\"|openshift.*\",SrcK8S_OwnerType=~\"|Node\",DstK8S_OwnerType!~\"|Node\"}[1m])\n      or rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace=~\"openshift.*\",DstK8S_Namespace!~\"|openshift.*\",SrcK8S_OwnerType!~\"|Node\",DstK8S_OwnerType=~\"|Node\"}[1m])\n    ) by (SrcK8S_Namespace, SrcK8S_OwnerName, DstK8S_Namespace, DstK8S_OwnerName)),\n    \"SrcK8S_Namespace\", \"non pods\", \"SrcK8S_Namespace\", \"()\"\n  ),\n  \"DstK8S_Namespace\", \"non pods\", \"DstK8S_Namespace\", \"()\"\n)\n",
+              "intervalFactor": 2,
+              "legendFormat": "{{SrcK8S_OwnerName}} ({{SrcK8S_Namespace}}) -> {{DstK8S_OwnerName}} ({{DstK8S_Namespace}})",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Applications",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "prometheus",
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 20,
+            "w": 25,
+            "x": 0,
+            "y": 0
+          },
+          "id": 4,
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "sideWidth": null,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "repeat": null,
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "label_replace(\n  label_replace(\n    topk(5, sum(\n      rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace=~\"openshift.*\",SrcK8S_OwnerType!~\"|Node\",DstK8S_OwnerType!~\"|Node\"}[1m])\n      or rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace=~\"openshift.*\",SrcK8S_OwnerType=~\"|Node\",DstK8S_OwnerType!~\"|Node\"}[1m])\n      or rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace=~\"openshift.*\",SrcK8S_OwnerType!~\"|Node\",DstK8S_OwnerType=~\"|Node\"}[1m])\n      or rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace!~\"openshift.*\",DstK8S_Namespace=~\"openshift.*\",SrcK8S_OwnerType!~\"|Node\",DstK8S_OwnerType!~\"|Node\"}[1m])\n      or rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace!~\"openshift.*\",DstK8S_Namespace=~\"openshift.*\",SrcK8S_OwnerType=~\"|Node\",DstK8S_OwnerType!~\"|Node\"}[1m])\n      or rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace!~\"openshift.*\",DstK8S_Namespace=~\"openshift.*\",SrcK8S_OwnerType!~\"|Node\",DstK8S_OwnerType=~\"|Node\"}[1m])\n    ) by (SrcK8S_Namespace, SrcK8S_OwnerName, DstK8S_Namespace, DstK8S_OwnerName)),\n    \"SrcK8S_Namespace\", \"non pods\", \"SrcK8S_Namespace\", \"()\"\n  ),\n  \"DstK8S_Namespace\", \"non pods\", \"DstK8S_Namespace\", \"()\"\n)\n",
+              "intervalFactor": 2,
+              "legendFormat": "{{SrcK8S_OwnerName}} ({{SrcK8S_Namespace}}) -> {{DstK8S_OwnerName}} ({{DstK8S_Namespace}})",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Infrastructure",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "showTitle": true,
+      "title": "Top byte rates received per source and destination workloads (1-min rates)"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 16,
+  "style": "dark",
+  "tags": [
+    "netobserv-mixin"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "NetObserv",
+  "version": 0
+}

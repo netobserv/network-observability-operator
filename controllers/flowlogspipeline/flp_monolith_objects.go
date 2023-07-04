@@ -41,16 +41,16 @@ func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.Daemo
 	}
 }
 
-func (b *monolithBuilder) configMap() (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
-	stages, params, dashboardConfigMap, err := b.buildPipelineConfig()
+func (b *monolithBuilder) configMap() (*corev1.ConfigMap, string, error) {
+	stages, params, err := b.buildPipelineConfig()
 	if err != nil {
-		return nil, "", nil, err
+		return nil, "", err
 	}
 	pipelineConfigMap, digest, err := b.generic.configMap(stages, params)
-	return pipelineConfigMap, digest, dashboardConfigMap, err
+	return pipelineConfigMap, digest, err
 }
 
-func (b *monolithBuilder) buildPipelineConfig() ([]config.Stage, []config.StageParam, *corev1.ConfigMap, error) {
+func (b *monolithBuilder) buildPipelineConfig() ([]config.Stage, []config.StageParam, error) {
 	var pipeline config.PipelineBuilderStage
 	if helper.UseIPFIX(b.generic.desired) {
 		// IPFIX collector
@@ -65,11 +65,11 @@ func (b *monolithBuilder) buildPipelineConfig() ([]config.Stage, []config.StageP
 		})
 	}
 
-	dashboardConfigMap, err := b.generic.addTransformStages(&pipeline)
+	err := b.generic.addTransformStages(&pipeline)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
-	return pipeline.GetStages(), pipeline.GetStageParams(), dashboardConfigMap, nil
+	return pipeline.GetStages(), pipeline.GetStageParams(), nil
 }
 
 func (b *monolithBuilder) promService() *corev1.Service {

@@ -9,12 +9,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+//go:embed flow_metrics_dashboard.json
+var flowMetricsDashboardEmbed string
+
+//go:embed infra_health_dashboard.json
+var healthDashboardEmbed string
+
 const (
 	downstreamLabelKey       = "openshift.io/cluster-monitoring"
 	downstreamLabelValue     = "true"
 	roleSuffix               = "-metrics-reader"
 	monitoringServiceAccount = "prometheus-k8s"
 	monitoringNamespace      = "openshift-monitoring"
+	dashboardCMNamespace     = "openshift-config-managed"
+	dashboardCMAnnotation    = "console.openshift.io/dashboard"
+
+	flowDashboardCMName = "grafana-dashboard-netobserv-flow-metrics"
+	flowDashboardCMFile = "netobserv-flow-metrics.json"
+
+	healthDashboardCMName = "grafana-dashboard-netobserv-health"
+	healthDashboardCMFile = "netobserv-health-metrics.json"
 )
 
 func buildNamespace(ns string, isDownstream bool) *corev1.Namespace {
@@ -68,23 +82,29 @@ func buildRoleBindingMonitoringReader(ns string) *rbacv1.ClusterRoleBinding {
 	}
 }
 
-//go:embed infra_health_dashboard.json
-var healthDashboardEmbed string
-
-const (
-	healthDashboardCMName       = "grafana-dashboard-netobserv-health"
-	healthDashboardCMNamespace  = "openshift-config-managed"
-	healthDashboardCMAnnotation = "console.openshift.io/dashboard"
-	healthDashboardCMFile       = "netobserv-health-metrics.json"
-)
+func buildFlowMetricsDashboard() *corev1.ConfigMap {
+	configMap := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      flowDashboardCMName,
+			Namespace: dashboardCMNamespace,
+			Labels: map[string]string{
+				dashboardCMAnnotation: "true",
+			},
+		},
+		Data: map[string]string{
+			flowDashboardCMFile: flowMetricsDashboardEmbed,
+		},
+	}
+	return &configMap
+}
 
 func buildHealthDashboard() *corev1.ConfigMap {
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      healthDashboardCMName,
-			Namespace: healthDashboardCMNamespace,
+			Namespace: dashboardCMNamespace,
 			Labels: map[string]string{
-				healthDashboardCMAnnotation: "true",
+				dashboardCMAnnotation: "true",
 			},
 		},
 		Data: map[string]string{

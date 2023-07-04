@@ -213,15 +213,12 @@ func flowCollectorControllerSpecs() {
 
 			By("Expecting the monitoring dashboards configmap to be created")
 			Eventually(func() interface{} {
-				ofc := v1.ConfigMap{}
-				if err := k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "grafana-dashboard-netobserv",
+				cm := v1.ConfigMap{}
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "grafana-dashboard-netobserv-flow-metrics",
 					Namespace: "openshift-config-managed",
-				}, &ofc); err != nil {
-					return err
-				}
-				return ofc.Data["netobserv-metrics.json"]
-			}, timeout, interval).Should(ContainSubstring(`"panels": [`))
+				}, &cm)
+			}, timeout, interval).Should(Succeed())
 
 			By("Expecting the infra health dashboards configmap to be created")
 			Eventually(func() interface{} {
@@ -327,14 +324,6 @@ func flowCollectorControllerSpecs() {
 				Expect(ds.Spec.Template.Spec.Tolerations).
 					To(ContainElement(v1.Toleration{Operator: v1.TolerationOpExists}))
 			})
-
-			By("Expecting the monitoring dashboards configmap to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "grafana-dashboard-netobserv",
-					Namespace: "openshift-config-managed",
-				}, &v1.ConfigMap{})
-			}, timeout, interval).Should(MatchError(`configmaps "grafana-dashboard-netobserv" not found`))
 		})
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {

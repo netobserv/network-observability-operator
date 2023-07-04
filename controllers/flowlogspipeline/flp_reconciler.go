@@ -4,12 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -67,37 +61,6 @@ func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowslatest.Flow
 		if err := sr.reconcile(sr.context(ctx), desired); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func reconcileDashboardConfig(ctx context.Context, cl *helper.Client, dbConfigMap *corev1.ConfigMap) error {
-	if dbConfigMap == nil {
-		// Dashboard config not desired => delete if exists
-		if err := cl.Delete(ctx, &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      dashboardCMName,
-				Namespace: dashboardCMNamespace,
-			},
-		}); err != nil {
-			if !errors.IsNotFound(err) {
-				return fmt.Errorf("deleting %s ConfigMap: %w", dashboardCMName, err)
-			}
-		}
-		return nil
-	}
-	curr := &corev1.ConfigMap{}
-	if err := cl.Get(ctx, types.NamespacedName{
-		Name:      dashboardCMName,
-		Namespace: dashboardCMNamespace,
-	}, curr); err != nil {
-		if errors.IsNotFound(err) {
-			return cl.CreateOwned(ctx, dbConfigMap)
-		}
-		return err
-	}
-	if !equality.Semantic.DeepDerivative(dbConfigMap.Data, curr.Data) {
-		return cl.UpdateOwned(ctx, curr, dbConfigMap)
 	}
 	return nil
 }

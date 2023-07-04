@@ -178,14 +178,14 @@ func TestDaemonSetNoChange(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := monoBuilder(ns, &cfg)
-	_, digest, _, err := b.configMap()
+	_, digest, err := b.configMap()
 	assert.NoError(err)
 	first := b.daemonSet(annotate(digest))
 
 	// Check no change
 	cfg = getConfig()
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	second := b.daemonSet(annotate(digest))
 
@@ -201,14 +201,14 @@ func TestDaemonSetChanged(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := monoBuilder(ns, &cfg)
-	_, digest, _, err := b.configMap()
+	_, digest, err := b.configMap()
 	assert.NoError(err)
 	first := b.daemonSet(annotate(digest))
 
 	// Check probes enabled change
 	cfg.Processor.EnableKubeProbes = pointer.Bool(true)
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	second := b.daemonSet(annotate(digest))
 
@@ -239,7 +239,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	third := b.daemonSet(annotate(digest))
 
@@ -253,7 +253,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	fourth := b.daemonSet(annotate(digest))
 
@@ -267,7 +267,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	fifth := b.daemonSet(annotate(digest))
 
@@ -288,7 +288,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		},
 	}
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	sixth := b.daemonSet(annotate(digest))
 
@@ -306,7 +306,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		},
 	}
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	seventh := b.daemonSet(annotate(digest))
 
@@ -322,14 +322,14 @@ func TestDeploymentNoChange(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := transfBuilder(ns, &cfg)
-	_, digest, _, err := b.configMap()
+	_, digest, err := b.configMap()
 	assert.NoError(err)
 	first := b.deployment(annotate(digest))
 
 	// Check no change
 	cfg = getConfig()
 	b = transfBuilder(ns, &cfg)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	second := b.deployment(annotate(digest))
 
@@ -345,14 +345,14 @@ func TestDeploymentChanged(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := transfBuilder(ns, &cfg)
-	_, digest, _, err := b.configMap()
+	_, digest, err := b.configMap()
 	assert.NoError(err)
 	first := b.deployment(annotate(digest))
 
 	// Check probes enabled change
 	cfg.Processor.EnableKubeProbes = pointer.Bool(true)
 	b = transfBuilder(ns, &cfg)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	second := b.deployment(annotate(digest))
 
@@ -367,7 +367,7 @@ func TestDeploymentChanged(t *testing.T) {
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
 	b = transfBuilder(ns, &cfg)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	third := b.deployment(annotate(digest))
 
@@ -381,7 +381,7 @@ func TestDeploymentChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
 	b = transfBuilder(ns, &cfg)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	fourth := b.deployment(annotate(digest))
 
@@ -395,7 +395,7 @@ func TestDeploymentChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
 	b = transfBuilder(ns, &cfg)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	fifth := b.deployment(annotate(digest))
 
@@ -410,7 +410,7 @@ func TestDeploymentChanged(t *testing.T) {
 	cfg2 := cfg
 	cfg2.Processor.KafkaConsumerReplicas = pointer.Int32(5)
 	b = transfBuilder(ns, &cfg2)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	sixth := b.deployment(annotate(digest))
 
@@ -426,7 +426,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfigNoHPA()
 	b := transfBuilder(ns, &cfg)
-	_, digest, _, err := b.configMap()
+	_, digest, err := b.configMap()
 	assert.NoError(err)
 	first := b.deployment(annotate(digest))
 
@@ -434,7 +434,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	cfg2 := cfg
 	cfg2.Processor.KafkaConsumerReplicas = pointer.Int32(5)
 	b = transfBuilder(ns, &cfg2)
-	_, digest, _, err = b.configMap()
+	_, digest, err = b.configMap()
 	assert.NoError(err)
 	second := b.deployment(annotate(digest))
 
@@ -604,7 +604,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	cfg := getConfig()
 	loki := cfg.Loki
 	b := monoBuilder(ns, &cfg)
-	cm, digest, _, err := b.configMap()
+	cm, digest, err := b.configMap()
 	assert.NoError(err)
 	assert.NotEmpty(t, digest)
 
@@ -744,7 +744,7 @@ func TestPipelineConfig(t *testing.T) {
 	cfg := getConfig()
 	cfg.Processor.LogLevel = "info"
 	b := monoBuilder(ns, &cfg)
-	stages, parameters, _, err := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
@@ -762,7 +762,7 @@ func TestPipelineConfig(t *testing.T) {
 
 	// Kafka Transformer
 	bt := transfBuilder(ns, &cfg)
-	stages, parameters, _, err = bt.buildPipelineConfig()
+	stages, parameters, err = bt.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ = json.Marshal(stages)
@@ -778,7 +778,7 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 	cfg.Processor.LogLevel = "info"
 	cfg.Processor.DropUnusedFields = pointer.Bool(true)
 	b := monoBuilder(ns, &cfg)
-	stages, parameters, _, err := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
@@ -796,7 +796,7 @@ func TestPipelineTraceStage(t *testing.T) {
 	cfg := getConfig()
 
 	b := monoBuilder("namespace", &cfg)
-	stages, parameters, _, err := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
@@ -809,9 +809,8 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	cfg := getConfig()
 
 	b := monoBuilder("namespace", &cfg)
-	stages, parameters, cm, err := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
-	assert.NotNil(cm)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
@@ -824,11 +823,6 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	assert.Equal("workload_ingress_bytes_total", parameters[5].Encode.Prom.Metrics[5].Name)
 	assert.Equal("workload_ingress_packets_total", parameters[5].Encode.Prom.Metrics[6].Name)
 	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
-
-	var grafanaDashboard map[string]interface{}
-	err = json.Unmarshal([]byte(cm.Data[dashboardCMFile]), &grafanaDashboard)
-	assert.NoError(err)
-	assert.Len(grafanaDashboard["panels"], 7)
 }
 
 func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
@@ -838,20 +832,14 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	cfg.Processor.Metrics.IgnoreTags = []string{"nodes"}
 
 	b := monoBuilder("namespace", &cfg)
-	stages, parameters, cm, err := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
-	assert.NotNil(cm)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 	assert.Len(parameters[5].Encode.Prom.Metrics, 5)
 	assert.Equal("namespace_flows_total", parameters[5].Encode.Prom.Metrics[0].Name)
 	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
-
-	var grafanaDashboard map[string]interface{}
-	err = json.Unmarshal([]byte(cm.Data[dashboardCMFile]), &grafanaDashboard)
-	assert.NoError(err)
-	assert.Len(grafanaDashboard["panels"], 5)
 }
 
 func TestMergeMetricsConfigurationIgnoreAll(t *testing.T) {
@@ -861,9 +849,8 @@ func TestMergeMetricsConfigurationIgnoreAll(t *testing.T) {
 	cfg.Processor.Metrics.IgnoreTags = []string{"nodes", "namespaces", "workloads"}
 
 	b := monoBuilder("namespace", &cfg)
-	stages, parameters, cm, err := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
-	assert.Nil(cm)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"}]`, string(jsonStages))
@@ -889,7 +876,7 @@ func TestPipelineWithExporter(t *testing.T) {
 	})
 
 	b := monoBuilder("namespace", &cfg)
-	stages, parameters, _, err := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
