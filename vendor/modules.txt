@@ -140,7 +140,7 @@ github.com/munnerz/goautoneg
 # github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 ## explicit
 github.com/mwitkow/go-conntrack
-# github.com/netobserv/flowlogs-pipeline v0.1.9 => ../flowlogs-pipeline
+# github.com/netobserv/flowlogs-pipeline v0.1.10-0.20230705074433-8d40b3290d93
 ## explicit; go 1.18
 github.com/netobserv/flowlogs-pipeline/pkg/api
 github.com/netobserv/flowlogs-pipeline/pkg/confgen
@@ -691,4 +691,3 @@ sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.3.0
 ## explicit; go 1.12
 sigs.k8s.io/yaml
-# github.com/netobserv/flowlogs-pipeline => ../flowlogs-pipeline
