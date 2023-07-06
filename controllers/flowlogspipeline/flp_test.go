@@ -897,7 +897,7 @@ func TestPipelineWithoutLoki(t *testing.T) {
 	cfg.Loki.Enable = pointer.Bool(false)
 
 	b := monoBuilder("namespace", &cfg)
-	stages, parameters, _, err := b.buildPipelineConfig()
+	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
