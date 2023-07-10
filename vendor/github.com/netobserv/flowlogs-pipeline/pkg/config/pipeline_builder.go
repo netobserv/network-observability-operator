@@ -135,6 +135,11 @@ func (b *PipelineBuilderStage) EncodeKafka(name string, kafka api.EncodeKafka) P
 	return b.next(name, NewEncodeKafkaParams(name, kafka))
 }
 
+// EncodeS3 chains the current stage with an EncodeS3 stage (writing to s3 bucket) and returns that new stage
+func (b *PipelineBuilderStage) EncodeS3(name string, s3 api.EncodeS3) PipelineBuilderStage {
+	return b.next(name, NewEncodeS3Params(name, s3))
+}
+
 // WriteStdout chains the current stage with a WriteStdout stage and returns that new stage
 func (b *PipelineBuilderStage) WriteStdout(name string, stdout api.WriteStdout) PipelineBuilderStage {
 	return b.next(name, NewWriteStdoutParams(name, stdout))

@@ -65,6 +65,10 @@ func NewEncodeKafkaParams(name string, kafka api.EncodeKafka) StageParam {
 	return StageParam{Name: name, Encode: &Encode{Type: api.KafkaType, Kafka: &kafka}}
 }
 
+func NewEncodeS3Params(name string, s3 api.EncodeS3) StageParam {
+	return StageParam{Name: name, Encode: &Encode{Type: api.S3Type, S3: &s3}}
+}
+
 func NewWriteStdoutParams(name string, stdout api.WriteStdout) StageParam {
 	return StageParam{Name: name, Write: &Write{Type: api.StdoutType, Stdout: &stdout}}
 }
