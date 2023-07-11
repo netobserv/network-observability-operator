@@ -64,8 +64,17 @@ jobs:
             * ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-${{ env.short_sha }}
 
             They will expire after two weeks.
-            
-            Catalog source:
+
+            To deploy this build:
+            \`\`\`bash
+            # Direct deployment, from operator repo
+            IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make deploy
+
+            # Or using operator-sdk
+            operator-sdk run bundle ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-${{ env.short_sha }}
+            \`\`\`
+
+            Or as a Catalog Source:
             \`\`\`yaml
             apiVersion: operators.coreos.com/v1alpha1
             kind: CatalogSource
