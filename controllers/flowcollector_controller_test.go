@@ -324,6 +324,28 @@ func flowCollectorControllerSpecs() {
 				Expect(ds.Spec.Template.Spec.Tolerations).
 					To(ContainElement(v1.Toleration{Operator: v1.TolerationOpExists}))
 			})
+
+			By("Expecting the flow dashboards configmap to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "grafana-dashboard-netobserv",
+					Namespace: "openshift-config-managed",
+				}, &v1.ConfigMap{})
+			}, timeout, interval).Should(MatchError(`configmaps "grafana-dashboard-netobserv" not found`))
+
+			By("Expecting the health dashboards rows to be filtered")
+			Eventually(func() interface{} {
+				cm := v1.ConfigMap{}
+				if err := k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "grafana-dashboard-netobserv-health",
+					Namespace: "openshift-config-managed",
+				}, &cm); err != nil {
+					return err
+				}
+				return cm.Data["netobserv-health-metrics.json"]
+			}, timeout, interval).Should(Satisfy(func(json string) bool {
+				return !strings.Contains(json, "flows") && strings.Contains(json, "Agents") && strings.Contains(json, "Processor") && strings.Contains(json, "Operator")
+			}))
 		})
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {

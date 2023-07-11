@@ -4,6 +4,7 @@ import (
 	_ "embed"
 
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -82,7 +83,12 @@ func buildRoleBindingMonitoringReader(ns string) *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func buildFlowMetricsDashboard() *corev1.ConfigMap {
+func buildFlowMetricsDashboard(ignoreFlags []string) (*corev1.ConfigMap, bool, error) {
+	dashboard, err := helper.FilterDashboardRows(flowMetricsDashboardEmbed, ignoreFlags)
+	if err != nil {
+		return nil, false, err
+	}
+
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      flowDashboardCMName,
@@ -92,13 +98,18 @@ func buildFlowMetricsDashboard() *corev1.ConfigMap {
 			},
 		},
 		Data: map[string]string{
-			flowDashboardCMFile: flowMetricsDashboardEmbed,
+			flowDashboardCMFile: dashboard,
 		},
 	}
-	return &configMap
+	return &configMap, len(dashboard) == 0, nil
 }
 
-func buildHealthDashboard() *corev1.ConfigMap {
+func buildHealthDashboard(ignoreFlags []string) (*corev1.ConfigMap, bool, error) {
+	dashboard, err := helper.FilterDashboardRows(healthDashboardEmbed, ignoreFlags)
+	if err != nil {
+		return nil, false, err
+	}
+
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      healthDashboardCMName,
@@ -108,8 +119,8 @@ func buildHealthDashboard() *corev1.ConfigMap {
 			},
 		},
 		Data: map[string]string{
-			healthDashboardCMFile: healthDashboardEmbed,
+			healthDashboardCMFile: dashboard,
 		},
 	}
-	return &configMap
+	return &configMap, len(dashboard) == 0, nil
 }

@@ -139,13 +139,20 @@ func (c *Common) ReconcileRole(ctx context.Context, desired *rbacv1.Role) error 
 	return c.UpdateOwned(ctx, &actual, desired)
 }
 
-func (c *Common) ReconcileConfigMap(ctx context.Context, desired *corev1.ConfigMap) error {
+func (c *Common) ReconcileConfigMap(ctx context.Context, desired *corev1.ConfigMap, delete bool) error {
 	actual := corev1.ConfigMap{}
 	if err := c.Get(ctx, types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, &actual); err != nil {
 		if errors.IsNotFound(err) {
+			if delete {
+				return nil
+			}
 			return c.CreateOwned(ctx, desired)
 		}
 		return fmt.Errorf("can't reconcile Configmap %s: %w", desired.Name, err)
+	}
+
+	if delete {
+		return c.Delete(ctx, desired)
 	}
 
 	if helper.IsSubSet(actual.Labels, desired.Labels) &&

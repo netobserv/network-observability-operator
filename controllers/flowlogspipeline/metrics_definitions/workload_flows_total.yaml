@@ -1,0 +1,24 @@
+#flp_confgen
+description:
+  This metric counts flows per workloads
+details:
+  Counting flows per source and destination workloads
+usage:
+  Evaluate number of flows per source and destination workloads
+tags:
+  - flows
+  - workloads
+  - health
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: workload_flows_total
+        type: counter
+        labels:
+          - SrcK8S_Namespace
+          - DstK8S_Namespace
+          - SrcK8S_OwnerName
+          - DstK8S_OwnerName
+          - SrcK8S_OwnerType
+          - DstK8S_OwnerType

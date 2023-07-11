@@ -8,6 +8,7 @@ usage:
 tags:
   - flows
   - namespaces
+  - health
 encode:
   type: prom
   prom:
