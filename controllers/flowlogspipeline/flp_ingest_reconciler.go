@@ -18,7 +18,6 @@ import (
 
 // flpIngesterReconciler reconciles the current flowlogs-pipeline-ingester state with the desired configuration
 type flpIngesterReconciler struct {
-	singleReconciler
 	*reconcilers.Instance
 	owned ingestOwnedObjects
 }
@@ -168,8 +167,5 @@ func (r *flpIngesterReconciler) reconcilePermissions(ctx context.Context, builde
 	}
 
 	desired := builder.clusterRoleBinding()
-	if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
-		return err
-	}
-	return nil
+	return r.ReconcileClusterRoleBinding(ctx, desired)
 }

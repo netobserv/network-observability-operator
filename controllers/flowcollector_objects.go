@@ -30,7 +30,7 @@ func buildNamespace(ns string, isDownstream bool) *corev1.Namespace {
 	}
 }
 
-func buildRoleMonitoringReader(ns string) *rbacv1.ClusterRole {
+func buildRoleMonitoringReader() *rbacv1.ClusterRole {
 	cr := rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: constants.OperatorName + roleSuffix,

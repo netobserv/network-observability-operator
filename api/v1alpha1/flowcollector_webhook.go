@@ -100,10 +100,7 @@ func (r *FlowCollector) ConvertFrom(srcRaw conversion.Hub) error {
 	copy(r.Status.Conditions, src.Status.Conditions)
 
 	// Preserve Hub data on down-conversion except for metadata
-	if err := utilconversion.MarshalData(src, r); err != nil {
-		return err
-	}
-	return nil
+	return utilconversion.MarshalData(src, r)
 }
 
 func (r *FlowCollectorList) ConvertTo(dstRaw conversion.Hub) error {

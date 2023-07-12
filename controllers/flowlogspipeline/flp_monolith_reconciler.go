@@ -18,7 +18,6 @@ import (
 
 // flpMonolithReconciler reconciles the current flowlogs-pipeline monolith state with the desired configuration
 type flpMonolithReconciler struct {
-	singleReconciler
 	*reconcilers.Instance
 	owned monolithOwnedObjects
 }

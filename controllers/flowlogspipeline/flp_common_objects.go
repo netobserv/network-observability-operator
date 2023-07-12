@@ -131,7 +131,7 @@ func (b *builder) portProtocol() corev1.Protocol {
 	return corev1.ProtocolUDP
 }
 
-func (b *builder) podTemplate(hasHostPort, hasLokiInterface, hostNetwork bool, annotations map[string]string) corev1.PodTemplateSpec {
+func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[string]string) corev1.PodTemplateSpec {
 	var ports []corev1.ContainerPort
 	var tolerations []corev1.Toleration
 	if hasHostPort {

@@ -19,7 +19,6 @@ import (
 
 // flpTransformerReconciler reconciles the current flowlogs-pipeline-transformer state with the desired configuration
 type flpTransformerReconciler struct {
-	singleReconciler
 	*reconcilers.Instance
 	owned transfoOwnedObjects
 }
@@ -142,14 +141,14 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 	report := helper.NewChangeReport("FLP Deployment")
 	defer report.LogIfNeeded(ctx)
 
-	new := builder.deployment(annotations)
+	newDep := builder.deployment(annotations)
 
 	if !r.Managed.Exists(r.owned.deployment) {
-		if err := r.CreateOwned(ctx, new); err != nil {
+		if err := r.CreateOwned(ctx, newDep); err != nil {
 			return err
 		}
-	} else if helper.DeploymentChanged(r.owned.deployment, new, constants.FLPName, helper.HPADisabled(&desiredFLP.KafkaConsumerAutoscaler), helper.PtrInt32(desiredFLP.KafkaConsumerReplicas), &report) {
-		if err := r.UpdateOwned(ctx, r.owned.deployment, new); err != nil {
+	} else if helper.DeploymentChanged(r.owned.deployment, newDep, constants.FLPName, helper.HPADisabled(&desiredFLP.KafkaConsumerAutoscaler), helper.PtrInt32(desiredFLP.KafkaConsumerReplicas), &report) {
+		if err := r.UpdateOwned(ctx, r.owned.deployment, newDep); err != nil {
 			return err
 		}
 	} else {
@@ -208,8 +207,5 @@ func (r *flpTransformerReconciler) reconcilePermissions(ctx context.Context, bui
 	}
 
 	desired := builder.clusterRoleBinding()
-	if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
-		return err
-	}
-	return nil
+	return r.ReconcileClusterRoleBinding(ctx, desired)
 }
