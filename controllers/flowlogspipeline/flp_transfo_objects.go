@@ -26,7 +26,7 @@ func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowColl
 }
 
 func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deployment {
-	pod := b.generic.podTemplate(false /*no listen*/, true /*loki itf*/, false /*no host network*/, annotations)
+	pod := b.generic.podTemplate(false /*no listen*/, false /*no host network*/, annotations)
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.generic.name(),

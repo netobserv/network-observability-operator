@@ -86,7 +86,7 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme, co
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
-func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	desired, err := r.getFlowCollector(ctx)
 	if err != nil {
@@ -300,7 +300,7 @@ func (r *FlowCollectorReconciler) reconcileOperator(ctx context.Context, cmn *re
 		}
 	}
 	if r.config.DownstreamDeployment {
-		desiredRole := buildRoleMonitoringReader(cmn.Namespace)
+		desiredRole := buildRoleMonitoringReader()
 		if err := cmn.ReconcileClusterRole(ctx, desiredRole); err != nil {
 			return err
 		}

@@ -141,9 +141,9 @@ func TestGenDigests(t *testing.T) {
 	assert.Equal("8aAMRw==", dig1)
 
 	// Update object, verify the digest has changed
-	copy := lokiCA
-	copy.Data["tls.crt"] = " -- LOKI CA MODIFIED --"
-	clientMock.UpdateObject(&copy)
+	caCopy := lokiCA
+	caCopy.Data["tls.crt"] = " -- LOKI CA MODIFIED --"
+	clientMock.UpdateObject(&caCopy)
 
 	digUpdated, err := watcher.ProcessCACert(context.Background(), cl, &lokiTLS, baseNamespace)
 	assert.NoError(err)
@@ -151,8 +151,8 @@ func TestGenDigests(t *testing.T) {
 	assert.Equal("Hb65OQ==", digUpdated)
 
 	// Update another key in object, verify the digest hasn't changed
-	copy.Data["other"] = " -- OTHER --"
-	clientMock.UpdateObject(&copy)
+	caCopy.Data["other"] = " -- OTHER --"
+	clientMock.UpdateObject(&caCopy)
 
 	digUpdated2, err := watcher.ProcessCACert(context.Background(), cl, &lokiTLS, baseNamespace)
 	assert.NoError(err)

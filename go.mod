@@ -1,6 +1,6 @@
 module github.com/netobserv/network-observability-operator
 
-go 1.18
+go 1.19
 
 require (
 	github.com/mitchellh/mapstructure v1.4.3

@@ -25,7 +25,7 @@ func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCol
 }
 
 func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.DaemonSet {
-	pod := b.generic.podTemplate(true /*listens*/, true /*loki itf*/, !b.generic.info.UseOpenShiftSCC, annotations)
+	pod := b.generic.podTemplate(true /*listens*/, !b.generic.info.UseOpenShiftSCC, annotations)
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.generic.name(),

@@ -93,7 +93,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 			return err
 		}
 
-		cmDigest, err := r.reconcileConfigMap(ctx, &builder, &desired.Spec)
+		cmDigest, err := r.reconcileConfigMap(ctx, &builder)
 		if err != nil {
 			return err
 		}
@@ -102,7 +102,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 			return err
 		}
 
-		if err = r.reconcileServices(ctx, &builder, &desired.Spec); err != nil {
+		if err = r.reconcileServices(ctx, &builder); err != nil {
 			return err
 		}
 
@@ -158,10 +158,7 @@ func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builde
 	}
 
 	desired := builder.clusterRoleBinding()
-	if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
-		return err
-	}
-	return nil
+	return r.ReconcileClusterRoleBinding(ctx, desired)
 }
 
 func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec) error {
@@ -191,7 +188,7 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, de
 	return nil
 }
 
-func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec) (string, error) {
+func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder *builder) (string, error) {
 	newCM, configDigest := builder.configMap()
 	if !r.Managed.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
@@ -224,7 +221,7 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder *builder
 	return nil
 }
 
-func (r *CPReconciler) reconcileServices(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec) error {
+func (r *CPReconciler) reconcileServices(ctx context.Context, builder *builder) error {
 	report := helper.NewChangeReport("Console services")
 	defer report.LogIfNeeded(ctx)
 

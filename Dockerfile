@@ -2,7 +2,7 @@
 ARG TARGETPLATFORM=linux/amd64
 ARG BUILDPLATFORM=linux/amd64
 # Build the manager binary
-FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.19 as builder
+FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.20 as builder
 ARG BUILD_VERSION="unknown"
 
 ARG TARGETPLATFORM
