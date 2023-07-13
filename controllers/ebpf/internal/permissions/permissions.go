@@ -152,12 +152,16 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 	}
 	if desired.Privileged {
 		scc.AllowPrivilegedContainer = true
-		if (desired.EnableTCPDrop != nil && *desired.EnableTCPDrop) ||
-			(desired.EnableDNSTracking != nil && *desired.EnableDNSTracking) {
-			scc.AllowHostDirVolumePlugin = true
-		}
 	} else {
 		scc.AllowedCapabilities = AllowedCapabilities
+	}
+	if (desired.EnableTCPDrop != nil && *desired.EnableTCPDrop) ||
+		(desired.EnableDNSTracking != nil && *desired.EnableDNSTracking) {
+		scc.AllowHostDirVolumePlugin = true
+	}
+	if (desired.EnableTCPDrop != nil && !*desired.EnableTCPDrop) &&
+		(desired.EnableDNSTracking != nil && !*desired.EnableDNSTracking) {
+		scc.AllowHostDirVolumePlugin = false
 	}
 	actual := &osv1.SecurityContextConstraints{}
 	if err := c.Get(ctx, client.ObjectKeyFromObject(scc), actual); err != nil {
@@ -176,6 +180,7 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 		!equality.Semantic.DeepDerivative(&scc.SELinuxContext, &actual.SELinuxContext) ||
 		!equality.Semantic.DeepDerivative(&scc.Users, &actual.Users) ||
 		scc.AllowPrivilegedContainer != actual.AllowPrivilegedContainer ||
+		scc.AllowHostDirVolumePlugin != actual.AllowHostDirVolumePlugin ||
 		!equality.Semantic.DeepDerivative(&scc.AllowedCapabilities, &actual.AllowedCapabilities) {
 
 		rlog.Info("updating SecurityContextConstraints")
