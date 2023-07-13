@@ -8,7 +8,7 @@ usage:
 tags:
   - flows
   - nodes
-  - health
+  - nodes-flows
 encode:
   type: prom
   prom:

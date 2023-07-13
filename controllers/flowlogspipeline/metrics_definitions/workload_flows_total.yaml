@@ -8,7 +8,7 @@ usage:
 tags:
   - flows
   - workloads
-  - health
+  - workloads-flows
 encode:
   type: prom
   prom:

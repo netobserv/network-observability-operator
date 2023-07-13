@@ -36,7 +36,9 @@ spec:
       ignoreTags:
         - egress
         - packets
-        - health
+        - nodes-flows
+        - namespaces-flows
+        - workloads-flows
       disableAlerts: []
     dropUnusedFields: true
     resources:

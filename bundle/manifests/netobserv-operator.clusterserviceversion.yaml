@@ -329,7 +329,8 @@ metadata:
                 "disableAlerts": [],
                 "ignoreTags": [
                   "egress",
-                  "packets"
+                  "packets",
+                  "namespaces-flows"
                 ],
                 "server": {
                   "port": 9102
