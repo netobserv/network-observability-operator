@@ -400,11 +400,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 	if helper.IsDNSTrackingEnabled(b.desired) {
 		outDNSTrackingFields := []api.OutputField{
 			{
-				Name:      "DnsRequestTimeMs",
-				Operation: "min",
-			},
-			{
-				Name:      "DnsResponseTimeMs",
+				Name:      "DnsLatencyMs",
 				Operation: "max",
 			},
 		}

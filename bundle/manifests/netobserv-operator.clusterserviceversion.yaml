@@ -175,6 +175,8 @@ metadata:
               "ebpf": {
                 "cacheActiveTimeout": "5s",
                 "cacheMaxFlows": 100000,
+                "enableDNSTracking": false,
+                "enableTCPDrop": false,
                 "excludeInterfaces": [
                   "lo"
                 ],
@@ -182,6 +184,7 @@ metadata:
                 "interfaces": [],
                 "kafkaBatchSize": 10485760,
                 "logLevel": "info",
+                "privileged": false,
                 "resources": {
                   "limits": {
                     "memory": "800Mi"
