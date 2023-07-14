@@ -7,6 +7,15 @@ import (
 	"strconv"
 	"strings"
 
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
+	"github.com/netobserv/network-observability-operator/controllers/operator"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/volumes"
+	"github.com/netobserv/network-observability-operator/pkg/watchers"
+
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -16,15 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
-	"github.com/netobserv/network-observability-operator/controllers/operator"
-	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/netobserv/network-observability-operator/pkg/volumes"
-	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
 const (
@@ -250,86 +250,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 }
 
 func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowCollector, annots map[string]string) ([]corev1.EnvVar, error) {
-	var config []corev1.EnvVar
-	if coll.Spec.Agent.EBPF.CacheActiveTimeout != "" {
-		config = append(config, corev1.EnvVar{
-			Name:  envCacheActiveTimeout,
-			Value: coll.Spec.Agent.EBPF.CacheActiveTimeout,
-		})
-	}
-	if coll.Spec.Agent.EBPF.CacheMaxFlows != 0 {
-		config = append(config, corev1.EnvVar{
-			Name:  envCacheMaxFlows,
-			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.CacheMaxFlows)),
-		})
-	}
-	if coll.Spec.Agent.EBPF.LogLevel != "" {
-		config = append(config, corev1.EnvVar{
-			Name:  envLogLevel,
-			Value: coll.Spec.Agent.EBPF.LogLevel,
-		})
-	}
-	if len(coll.Spec.Agent.EBPF.Interfaces) > 0 {
-		config = append(config, corev1.EnvVar{
-			Name:  envInterfaces,
-			Value: strings.Join(coll.Spec.Agent.EBPF.Interfaces, envListSeparator),
-		})
-	}
-	if len(coll.Spec.Agent.EBPF.ExcludeInterfaces) > 0 {
-		config = append(config, corev1.EnvVar{
-			Name:  envExcludeInterfaces,
-			Value: strings.Join(coll.Spec.Agent.EBPF.ExcludeInterfaces, envListSeparator),
-		})
-	}
-	sampling := coll.Spec.Agent.EBPF.Sampling
-	if sampling != nil && *sampling > 1 {
-		config = append(config, corev1.EnvVar{
-			Name:  envSampling,
-			Value: strconv.Itoa(int(*sampling)),
-		})
-	}
-
-	// set GOMEMLIMIT which allows specifying a soft memory cap to force GC when resource limit is reached
-	// to prevent OOM
-	if coll.Spec.Agent.EBPF.Resources.Limits.Memory() != nil {
-		if memLimit, ok := coll.Spec.Agent.EBPF.Resources.Limits.Memory().AsInt64(); ok {
-			// we will set the GOMEMLIMIT to current memlimit - 10% as a headroom to account for
-			// memory sources the Go runtime is unaware of
-			memLimit -= int64(float64(memLimit) * 0.1)
-			config = append(config, corev1.EnvVar{Name: envGoMemLimit, Value: fmt.Sprint(memLimit)})
-		}
-	}
-
-	if helper.IsTCPDropEnabled(&coll.Spec) {
-		config = append(config, corev1.EnvVar{
-			Name:  envEnableTCPDrop,
-			Value: "true",
-		})
-	}
-
-	if helper.IsDNSTrackingEnabled(&coll.Spec) {
-		config = append(config, corev1.EnvVar{
-			Name:  envEnableDNSTracking,
-			Value: "true",
-		})
-	}
-
-	dedup := dedupeDefault
-	dedupJustMark := dedupeJustMarkDefault
-	// we need to sort env map to keep idempotency,
-	// as equal maps could be iterated in different order
-	for _, pair := range helper.KeySorted(coll.Spec.Agent.EBPF.Debug.Env) {
-		k, v := pair[0], pair[1]
-		if k == envDedupe {
-			dedup = v
-		} else if k == envDedupeJustMark {
-			dedupJustMark = v
-		} else {
-			config = append(config, corev1.EnvVar{Name: k, Value: v})
-		}
-	}
-	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
-	config = append(config, corev1.EnvVar{Name: envDedupeJustMark, Value: dedupJustMark})
+	config := c.setEnvConfig(coll)
 
 	if helper.UseKafka(&coll.Spec) {
 		config = append(config,
@@ -438,4 +359,95 @@ func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *core
 	}
 
 	return &sc
+}
+
+func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1.EnvVar {
+	var config []corev1.EnvVar
+
+	if coll.Spec.Agent.EBPF.CacheActiveTimeout != "" {
+		config = append(config, corev1.EnvVar{
+			Name:  envCacheActiveTimeout,
+			Value: coll.Spec.Agent.EBPF.CacheActiveTimeout,
+		})
+	}
+
+	if coll.Spec.Agent.EBPF.CacheMaxFlows != 0 {
+		config = append(config, corev1.EnvVar{
+			Name:  envCacheMaxFlows,
+			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.CacheMaxFlows)),
+		})
+	}
+
+	if coll.Spec.Agent.EBPF.LogLevel != "" {
+		config = append(config, corev1.EnvVar{
+			Name:  envLogLevel,
+			Value: coll.Spec.Agent.EBPF.LogLevel,
+		})
+	}
+
+	if len(coll.Spec.Agent.EBPF.Interfaces) > 0 {
+		config = append(config, corev1.EnvVar{
+			Name:  envInterfaces,
+			Value: strings.Join(coll.Spec.Agent.EBPF.Interfaces, envListSeparator),
+		})
+	}
+
+	if len(coll.Spec.Agent.EBPF.ExcludeInterfaces) > 0 {
+		config = append(config, corev1.EnvVar{
+			Name:  envExcludeInterfaces,
+			Value: strings.Join(coll.Spec.Agent.EBPF.ExcludeInterfaces, envListSeparator),
+		})
+	}
+
+	sampling := coll.Spec.Agent.EBPF.Sampling
+	if sampling != nil && *sampling > 1 {
+		config = append(config, corev1.EnvVar{
+			Name:  envSampling,
+			Value: strconv.Itoa(int(*sampling)),
+		})
+	}
+
+	// set GOMEMLIMIT which allows specifying a soft memory cap to force GC when resource limit is reached
+	// to prevent OOM
+	if coll.Spec.Agent.EBPF.Resources.Limits.Memory() != nil {
+		if memLimit, ok := coll.Spec.Agent.EBPF.Resources.Limits.Memory().AsInt64(); ok {
+			// we will set the GOMEMLIMIT to current memlimit - 10% as a headroom to account for
+			// memory sources the Go runtime is unaware of
+			memLimit -= int64(float64(memLimit) * 0.1)
+			config = append(config, corev1.EnvVar{Name: envGoMemLimit, Value: fmt.Sprint(memLimit)})
+		}
+	}
+
+	if helper.IsTCPDropEnabled(&coll.Spec) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableTCPDrop,
+			Value: "true",
+		})
+	}
+
+	if helper.IsDNSTrackingEnabled(&coll.Spec) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableDNSTracking,
+			Value: "true",
+		})
+	}
+
+	dedup := dedupeDefault
+	dedupJustMark := dedupeJustMarkDefault
+	// we need to sort env map to keep idempotency,
+	// as equal maps could be iterated in different order
+	for _, pair := range helper.KeySorted(coll.Spec.Agent.EBPF.Debug.Env) {
+		k, v := pair[0], pair[1]
+		if k == envDedupe {
+			dedup = v
+		} else if k == envDedupeJustMark {
+			dedupJustMark = v
+		} else {
+			config = append(config, corev1.EnvVar{Name: k, Value: v})
+		}
+	}
+	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
+	config = append(config, corev1.EnvVar{Name: envDedupeJustMark, Value: dedupJustMark})
+
+	return config
 }
