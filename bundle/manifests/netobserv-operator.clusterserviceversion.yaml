@@ -330,7 +330,9 @@ metadata:
                 "ignoreTags": [
                   "egress",
                   "packets",
-                  "namespaces-flows"
+                  "nodes-flows",
+                  "namespaces-flows",
+                  "workloads-flows"
                 ],
                 "server": {
                   "port": 9102
