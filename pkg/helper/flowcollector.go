@@ -102,8 +102,8 @@ func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
 		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
 }
 
-func IsTCPDropEnabled(spec *flowslatest.FlowCollectorSpec) bool {
-	if spec.Agent.EBPF.Privileged && spec.Agent.EBPF.EnableTCPDrop != nil && *spec.Agent.EBPF.EnableTCPDrop {
+func IsPktDropEnabled(spec *flowslatest.FlowCollectorSpec) bool {
+	if spec.Agent.EBPF.Privileged && spec.Agent.EBPF.EnablePktDrop != nil && *spec.Agent.EBPF.EnablePktDrop {
 		return true
 	}
 	return false

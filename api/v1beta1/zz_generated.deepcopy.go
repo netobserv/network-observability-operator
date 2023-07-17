@@ -268,8 +268,8 @@ func (in *FlowCollectorEBPF) DeepCopyInto(out *FlowCollectorEBPF) {
 		copy(*out, *in)
 	}
 	in.Debug.DeepCopyInto(&out.Debug)
-	if in.EnableTCPDrop != nil {
-		in, out := &in.EnableTCPDrop, &out.EnableTCPDrop
+	if in.EnablePktDrop != nil {
+		in, out := &in.EnablePktDrop, &out.EnablePktDrop
 		*out = new(bool)
 		**out = **in
 	}

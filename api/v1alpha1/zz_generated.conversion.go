@@ -569,7 +569,7 @@ func autoConvert_v1beta1_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1b
 	if err := Convert_v1beta1_DebugConfig_To_v1alpha1_DebugConfig(&in.Debug, &out.Debug, s); err != nil {
 		return err
 	}
-	// WARNING: in.EnableTCPDrop requires manual conversion: does not exist in peer-type
+	// WARNING: in.EnablePktDrop requires manual conversion: does not exist in peer-type
 	// WARNING: in.EnableDNSTracking requires manual conversion: does not exist in peer-type
 	return nil
 }

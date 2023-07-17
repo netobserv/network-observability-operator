@@ -365,36 +365,36 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 		},
 	}
 
-	if helper.IsTCPDropEnabled(b.desired) {
-		outputTCPDropFields := []api.OutputField{
+	if helper.IsPktDropEnabled(b.desired) {
+		outputPktDropFields := []api.OutputField{
 			{
-				Name:      "TcpDropBytes",
+				Name:      "PktDropBytes",
 				Operation: "sum",
 			},
 			{
-				Name:      "TcpDropBytes",
-				Operation: "sum",
-				SplitAB:   true,
-			},
-			{
-				Name:      "TcpDropPackets",
-				Operation: "sum",
-			},
-			{
-				Name:      "TcpDropPackets",
+				Name:      "PktDropBytes",
 				Operation: "sum",
 				SplitAB:   true,
 			},
 			{
-				Name:      "TcpDropLatestState",
+				Name:      "PktDropPackets",
+				Operation: "sum",
+			},
+			{
+				Name:      "PktDropPackets",
+				Operation: "sum",
+				SplitAB:   true,
+			},
+			{
+				Name:      "PktDropLatestState",
 				Operation: "last",
 			},
 			{
-				Name:      "TcpDropLatestDropCause",
+				Name:      "PktDropLatestDropCause",
 				Operation: "last",
 			},
 		}
-		outputFields = append(outputFields, outputTCPDropFields...)
+		outputFields = append(outputFields, outputPktDropFields...)
 	}
 
 	if helper.IsDNSTrackingEnabled(b.desired) {

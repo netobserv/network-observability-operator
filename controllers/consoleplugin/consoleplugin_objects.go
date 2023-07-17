@@ -350,8 +350,8 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 
 	var features []string
 	if b.desired.Agent.Type == flowslatest.AgentEBPF {
-		if helper.IsTCPDropEnabled(b.desired) {
-			features = append(features, "tcpDrop")
+		if helper.IsPktDropEnabled(b.desired) {
+			features = append(features, "pktDrop")
 		}
 
 		if helper.IsDNSTrackingEnabled(b.desired) {
