@@ -2289,6 +2289,20 @@ spec:
                               they are only useful in edge debug or support scenarios.'
                             type: object
                         type: object
+                      enableDNSTracking:
+                        default: false
+                        description: Enable the DNS tracking feature. This feature
+                          requires mounting the kernel debug filesystem hence the
+                          eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged
+                          parameter is not set, an error is reported.
+                        type: boolean
+                      enableTCPDrop:
+                        default: false
+                        description: Enable the TCP drop flows logging feature. This
+                          feature requires mounting the kernel debug filesystem, so
+                          the eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged
+                          parameter is not set, an error is reported.
+                        type: boolean
                       excludeInterfaces:
                         default:
                         - lo

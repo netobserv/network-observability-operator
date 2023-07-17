@@ -7,14 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	v1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
@@ -23,7 +15,16 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
+
+	"github.com/go-logr/logr"
+	v1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -54,16 +55,19 @@ const (
 	envDedupeJustMark             = "DEDUPER_JUST_MARK"
 	dedupeJustMarkDefault         = "true"
 	envGoMemLimit                 = "GOMEMLIMIT"
-
-	envListSeparator = ","
+	envEnableTCPDrop              = "ENABLE_TCP_DROPS"
+	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
+	envListSeparator              = ","
 )
 
 const (
-	exportKafka = "kafka"
-	exportGRPC  = "grpc"
+	exportKafka        = "kafka"
+	exportGRPC         = "grpc"
+	kafkaCerts         = "kafka-certs"
+	averageMessageSize = 100
+	bpfTraceMountName  = "bpf-kernel-debug"
+	bpfTraceMountPath  = "/sys/kernel/debug"
 )
-
-const averageMessageSize = 100
 
 type reconcileAction int
 
@@ -122,7 +126,7 @@ func (c *AgentController) Reconcile(
 	if err := c.permissions.Reconcile(ctx, &target.Spec.Agent.EBPF); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
-	desired, err := c.desired(ctx, target)
+	desired, err := c.desired(ctx, target, rlog)
 	if err != nil {
 		return err
 	}
@@ -156,7 +160,19 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 	return &agentDS, nil
 }
 
-func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector) (*v1.DaemonSet, error) {
+func newHostPathType(pathType corev1.HostPathType) *corev1.HostPathType {
+	hostPathType := new(corev1.HostPathType)
+	*hostPathType = corev1.HostPathType(pathType)
+	return hostPathType
+}
+
+func newMountPropagationMode(m corev1.MountPropagationMode) *corev1.MountPropagationMode {
+	mode := new(corev1.MountPropagationMode)
+	*mode = corev1.MountPropagationMode(m)
+	return mode
+}
+
+func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector, rlog logr.Logger) (*v1.DaemonSet, error) {
 	if coll == nil || !helper.UseEBPF(&coll.Spec) {
 		return nil, nil
 	}
@@ -165,6 +181,32 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	env, err := c.envConfig(ctx, coll, annotations)
 	if err != nil {
 		return nil, err
+	}
+	volumeMounts := c.volumes.GetMounts()
+	volumes := c.volumes.GetVolumes()
+
+	if helper.IsTCPDropEnabled(&coll.Spec) || helper.IsDNSTrackingEnabled(&coll.Spec) {
+		if !coll.Spec.Agent.EBPF.Privileged {
+			rlog.Error(fmt.Errorf("invalid configuration"),
+				"To use TCPDrop and/or DNSTracking feature(s) privileged mode needs to be enabled", nil)
+		} else {
+			volume := corev1.Volume{
+				Name: bpfTraceMountName,
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Type: newHostPathType(corev1.HostPathDirectory),
+						Path: bpfTraceMountPath,
+					},
+				},
+			}
+			volumes = append(volumes, volume)
+			volumeMount := corev1.VolumeMount{
+				Name:             bpfTraceMountName,
+				MountPath:        bpfTraceMountPath,
+				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+			}
+			volumeMounts = append(volumeMounts, volumeMount)
+		}
 	}
 
 	return &v1.DaemonSet{
@@ -191,7 +233,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 					ServiceAccountName: constants.EBPFServiceAccount,
 					HostNetwork:        true,
 					DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
-					Volumes:            c.volumes.GetVolumes(),
+					Volumes:            volumes,
 					Containers: []corev1.Container{{
 						Name:            constants.EBPFAgentName,
 						Image:           c.config.EBPFAgentImage,
@@ -199,7 +241,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 						Resources:       coll.Spec.Agent.EBPF.Resources,
 						SecurityContext: c.securityContext(coll),
 						Env:             env,
-						VolumeMounts:    c.volumes.GetMounts(),
+						VolumeMounts:    volumeMounts,
 					}},
 				},
 			},
@@ -208,72 +250,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 }
 
 func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowCollector, annots map[string]string) ([]corev1.EnvVar, error) {
-	var config []corev1.EnvVar
-	if coll.Spec.Agent.EBPF.CacheActiveTimeout != "" {
-		config = append(config, corev1.EnvVar{
-			Name:  envCacheActiveTimeout,
-			Value: coll.Spec.Agent.EBPF.CacheActiveTimeout,
-		})
-	}
-	if coll.Spec.Agent.EBPF.CacheMaxFlows != 0 {
-		config = append(config, corev1.EnvVar{
-			Name:  envCacheMaxFlows,
-			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.CacheMaxFlows)),
-		})
-	}
-	if coll.Spec.Agent.EBPF.LogLevel != "" {
-		config = append(config, corev1.EnvVar{
-			Name:  envLogLevel,
-			Value: coll.Spec.Agent.EBPF.LogLevel,
-		})
-	}
-	if len(coll.Spec.Agent.EBPF.Interfaces) > 0 {
-		config = append(config, corev1.EnvVar{
-			Name:  envInterfaces,
-			Value: strings.Join(coll.Spec.Agent.EBPF.Interfaces, envListSeparator),
-		})
-	}
-	if len(coll.Spec.Agent.EBPF.ExcludeInterfaces) > 0 {
-		config = append(config, corev1.EnvVar{
-			Name:  envExcludeInterfaces,
-			Value: strings.Join(coll.Spec.Agent.EBPF.ExcludeInterfaces, envListSeparator),
-		})
-	}
-	sampling := coll.Spec.Agent.EBPF.Sampling
-	if sampling != nil && *sampling > 1 {
-		config = append(config, corev1.EnvVar{
-			Name:  envSampling,
-			Value: strconv.Itoa(int(*sampling)),
-		})
-	}
-
-	// set GOMEMLIMIT which allows specifying a soft memory cap to force GC when resource limit is reached
-	// to prevent OOM
-	if coll.Spec.Agent.EBPF.Resources.Limits.Memory() != nil {
-		if memLimit, ok := coll.Spec.Agent.EBPF.Resources.Limits.Memory().AsInt64(); ok {
-			// we will set the GOMEMLIMIT to current memlimit - 10% as a headroom to account for
-			// memory sources the Go runtime is unaware of
-			memLimit -= int64(float64(memLimit) * 0.1)
-			config = append(config, corev1.EnvVar{Name: envGoMemLimit, Value: fmt.Sprint(memLimit)})
-		}
-	}
-
-	dedup := dedupeDefault
-	dedupJustMark := dedupeJustMarkDefault
-	// we need to sort env map to keep idempotency,
-	// as equal maps could be iterated in different order
-	for _, pair := range helper.KeySorted(coll.Spec.Agent.EBPF.Debug.Env) {
-		k, v := pair[0], pair[1]
-		if k == envDedupe {
-			dedup = v
-		} else if k == envDedupeJustMark {
-			dedupJustMark = v
-		} else {
-			config = append(config, corev1.EnvVar{Name: k, Value: v})
-		}
-	}
-	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
-	config = append(config, corev1.EnvVar{Name: envDedupeJustMark, Value: dedupJustMark})
+	config := c.setEnvConfig(coll)
 
 	if helper.UseKafka(&coll.Spec) {
 		config = append(config,
@@ -382,4 +359,95 @@ func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *core
 	}
 
 	return &sc
+}
+
+func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1.EnvVar {
+	var config []corev1.EnvVar
+
+	if coll.Spec.Agent.EBPF.CacheActiveTimeout != "" {
+		config = append(config, corev1.EnvVar{
+			Name:  envCacheActiveTimeout,
+			Value: coll.Spec.Agent.EBPF.CacheActiveTimeout,
+		})
+	}
+
+	if coll.Spec.Agent.EBPF.CacheMaxFlows != 0 {
+		config = append(config, corev1.EnvVar{
+			Name:  envCacheMaxFlows,
+			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.CacheMaxFlows)),
+		})
+	}
+
+	if coll.Spec.Agent.EBPF.LogLevel != "" {
+		config = append(config, corev1.EnvVar{
+			Name:  envLogLevel,
+			Value: coll.Spec.Agent.EBPF.LogLevel,
+		})
+	}
+
+	if len(coll.Spec.Agent.EBPF.Interfaces) > 0 {
+		config = append(config, corev1.EnvVar{
+			Name:  envInterfaces,
+			Value: strings.Join(coll.Spec.Agent.EBPF.Interfaces, envListSeparator),
+		})
+	}
+
+	if len(coll.Spec.Agent.EBPF.ExcludeInterfaces) > 0 {
+		config = append(config, corev1.EnvVar{
+			Name:  envExcludeInterfaces,
+			Value: strings.Join(coll.Spec.Agent.EBPF.ExcludeInterfaces, envListSeparator),
+		})
+	}
+
+	sampling := coll.Spec.Agent.EBPF.Sampling
+	if sampling != nil && *sampling > 1 {
+		config = append(config, corev1.EnvVar{
+			Name:  envSampling,
+			Value: strconv.Itoa(int(*sampling)),
+		})
+	}
+
+	// set GOMEMLIMIT which allows specifying a soft memory cap to force GC when resource limit is reached
+	// to prevent OOM
+	if coll.Spec.Agent.EBPF.Resources.Limits.Memory() != nil {
+		if memLimit, ok := coll.Spec.Agent.EBPF.Resources.Limits.Memory().AsInt64(); ok {
+			// we will set the GOMEMLIMIT to current memlimit - 10% as a headroom to account for
+			// memory sources the Go runtime is unaware of
+			memLimit -= int64(float64(memLimit) * 0.1)
+			config = append(config, corev1.EnvVar{Name: envGoMemLimit, Value: fmt.Sprint(memLimit)})
+		}
+	}
+
+	if helper.IsTCPDropEnabled(&coll.Spec) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableTCPDrop,
+			Value: "true",
+		})
+	}
+
+	if helper.IsDNSTrackingEnabled(&coll.Spec) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableDNSTracking,
+			Value: "true",
+		})
+	}
+
+	dedup := dedupeDefault
+	dedupJustMark := dedupeJustMarkDefault
+	// we need to sort env map to keep idempotency,
+	// as equal maps could be iterated in different order
+	for _, pair := range helper.KeySorted(coll.Spec.Agent.EBPF.Debug.Env) {
+		k, v := pair[0], pair[1]
+		if k == envDedupe {
+			dedup = v
+		} else if k == envDedupeJustMark {
+			dedupJustMark = v
+		} else {
+			config = append(config, corev1.EnvVar{Name: k, Value: v})
+		}
+	}
+	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
+	config = append(config, corev1.EnvVar{Name: envDedupeJustMark, Value: dedupJustMark})
+
+	return config
 }

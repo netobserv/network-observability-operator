@@ -102,6 +102,20 @@ func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
 		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
 }
 
+func IsTCPDropEnabled(spec *flowslatest.FlowCollectorSpec) bool {
+	if spec.Agent.EBPF.Privileged && spec.Agent.EBPF.EnableTCPDrop != nil && *spec.Agent.EBPF.EnableTCPDrop {
+		return true
+	}
+	return false
+}
+
+func IsDNSTrackingEnabled(spec *flowslatest.FlowCollectorSpec) bool {
+	if spec.Agent.EBPF.Privileged && spec.Agent.EBPF.EnableDNSTracking != nil && *spec.Agent.EBPF.EnableDNSTracking {
+		return true
+	}
+	return false
+}
+
 func PtrBool(b *bool) bool {
 	if b == nil {
 		return false

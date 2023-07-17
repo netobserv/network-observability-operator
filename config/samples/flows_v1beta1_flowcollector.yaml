@@ -12,6 +12,9 @@ spec:
       sampling: 50
       cacheActiveTimeout: 5s
       cacheMaxFlows: 100000
+      privileged: false
+      enableTCPDrop: false
+      enableDNSTracking: false
       interfaces: [ ]
       excludeInterfaces: [ "lo" ]
       logLevel: info

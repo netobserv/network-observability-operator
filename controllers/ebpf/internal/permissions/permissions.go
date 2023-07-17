@@ -9,6 +9,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+
 	osv1 "github.com/openshift/api/security/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -154,6 +155,14 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 	} else {
 		scc.AllowedCapabilities = AllowedCapabilities
 	}
+	if (desired.EnableTCPDrop != nil && *desired.EnableTCPDrop) ||
+		(desired.EnableDNSTracking != nil && *desired.EnableDNSTracking) {
+		scc.AllowHostDirVolumePlugin = true
+	}
+	if (desired.EnableTCPDrop != nil && !*desired.EnableTCPDrop) &&
+		(desired.EnableDNSTracking != nil && !*desired.EnableDNSTracking) {
+		scc.AllowHostDirVolumePlugin = false
+	}
 	actual := &osv1.SecurityContextConstraints{}
 	if err := c.Get(ctx, client.ObjectKeyFromObject(scc), actual); err != nil {
 		if errors.IsNotFound(err) {
@@ -171,6 +180,7 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 		!equality.Semantic.DeepDerivative(&scc.SELinuxContext, &actual.SELinuxContext) ||
 		!equality.Semantic.DeepDerivative(&scc.Users, &actual.Users) ||
 		scc.AllowPrivilegedContainer != actual.AllowPrivilegedContainer ||
+		scc.AllowHostDirVolumePlugin != actual.AllowHostDirVolumePlugin ||
 		!equality.Semantic.DeepDerivative(&scc.AllowedCapabilities, &actual.AllowedCapabilities) {
 
 		rlog.Info("updating SecurityContextConstraints")
