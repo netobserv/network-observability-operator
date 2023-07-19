@@ -13,7 +13,7 @@ spec:
       cacheActiveTimeout: 5s
       cacheMaxFlows: 100000
       privileged: false
-      enableTCPDrop: false
+      enablePktDrop: false
       enableDNSTracking: false
       interfaces: [ ]
       excludeInterfaces: [ "lo" ]

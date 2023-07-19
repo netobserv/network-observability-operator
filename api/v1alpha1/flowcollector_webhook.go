@@ -63,8 +63,8 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
-	if restored.Spec.Agent.EBPF.EnableTCPDrop != nil {
-		*dst.Spec.Agent.EBPF.EnableTCPDrop = *restored.Spec.Agent.EBPF.EnableTCPDrop
+	if restored.Spec.Agent.EBPF.EnablePktDrop != nil {
+		*dst.Spec.Agent.EBPF.EnablePktDrop = *restored.Spec.Agent.EBPF.EnablePktDrop
 	}
 
 	if restored.Spec.Agent.EBPF.EnableDNSTracking != nil {

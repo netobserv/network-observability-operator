@@ -97,7 +97,7 @@ func flowCollectorIsoSpecs() {
 					ExcludeInterfaces:  []string{},
 					Privileged:         false,
 					KafkaBatchSize:     0,
-					EnableTCPDrop:      pointer.Bool(false),
+					EnablePktDrop:      pointer.Bool(false),
 					EnableDNSTracking:  pointer.Bool(false),
 				},
 			},

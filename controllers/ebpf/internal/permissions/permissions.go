@@ -155,11 +155,11 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 	} else {
 		scc.AllowedCapabilities = AllowedCapabilities
 	}
-	if (desired.EnableTCPDrop != nil && *desired.EnableTCPDrop) ||
+	if (desired.EnablePktDrop != nil && *desired.EnablePktDrop) ||
 		(desired.EnableDNSTracking != nil && *desired.EnableDNSTracking) {
 		scc.AllowHostDirVolumePlugin = true
 	}
-	if (desired.EnableTCPDrop != nil && !*desired.EnableTCPDrop) &&
+	if (desired.EnablePktDrop != nil && !*desired.EnablePktDrop) &&
 		(desired.EnableDNSTracking != nil && !*desired.EnableDNSTracking) {
 		scc.AllowHostDirVolumePlugin = false
 	}

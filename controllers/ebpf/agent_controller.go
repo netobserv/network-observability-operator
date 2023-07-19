@@ -55,7 +55,7 @@ const (
 	envDedupeJustMark             = "DEDUPER_JUST_MARK"
 	dedupeJustMarkDefault         = "true"
 	envGoMemLimit                 = "GOMEMLIMIT"
-	envEnableTCPDrop              = "ENABLE_TCP_DROPS"
+	envEnablePktDrop              = "ENABLE_PKT_DROPS"
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
 	envListSeparator              = ","
 )
@@ -185,10 +185,10 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	volumeMounts := c.volumes.GetMounts()
 	volumes := c.volumes.GetVolumes()
 
-	if helper.IsTCPDropEnabled(&coll.Spec) || helper.IsDNSTrackingEnabled(&coll.Spec) {
+	if helper.IsPktDropEnabled(&coll.Spec) || helper.IsDNSTrackingEnabled(&coll.Spec) {
 		if !coll.Spec.Agent.EBPF.Privileged {
 			rlog.Error(fmt.Errorf("invalid configuration"),
-				"To use TCPDrop and/or DNSTracking feature(s) privileged mode needs to be enabled", nil)
+				"To use PktDrop and/or DNSTracking feature(s) privileged mode needs to be enabled", nil)
 		} else {
 			volume := corev1.Volume{
 				Name: bpfTraceMountName,
@@ -418,9 +418,9 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		}
 	}
 
-	if helper.IsTCPDropEnabled(&coll.Spec) {
+	if helper.IsPktDropEnabled(&coll.Spec) {
 		config = append(config, corev1.EnvVar{
-			Name:  envEnableTCPDrop,
+			Name:  envEnablePktDrop,
 			Value: "true",
 		})
 	}

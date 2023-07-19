@@ -176,7 +176,7 @@ metadata:
                 "cacheActiveTimeout": "5s",
                 "cacheMaxFlows": 100000,
                 "enableDNSTracking": false,
-                "enableTCPDrop": false,
+                "enablePktDrop": false,
                 "excludeInterfaces": [
                   "lo"
                 ],
