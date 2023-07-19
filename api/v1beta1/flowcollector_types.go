@@ -48,12 +48,11 @@ type FlowCollectorSpec struct {
 
 	// Namespace where NetObserv pods are deployed.
 	// If empty, the namespace of the operator is going to be used.
-	// +optional
+	// +kubebuilder:default:=netobserv
 	Namespace string `json:"namespace,omitempty"`
 
 	// Agent configuration for flows extraction.
-	// +kubebuilder:default:={type:"EBPF"}
-	Agent FlowCollectorAgent `json:"agent"`
+	Agent FlowCollectorAgent `json:"agent,omitempty"`
 
 	// `processor` defines the settings of the component that receives the flows from the agent,
 	// enriches them, generates metrics, and forwards them to the Loki persistence layer and/or any available exporter.
@@ -71,9 +70,8 @@ type FlowCollectorSpec struct {
 	// Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="DIRECT";"KAFKA"
-	// +kubebuilder:validation:Required
 	// +kubebuilder:default:=DIRECT
-	DeploymentModel string `json:"deploymentModel"`
+	DeploymentModel string `json:"deploymentModel,omitempty"`
 
 	// Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `KAFKA`.
 	// +optional
@@ -97,9 +95,8 @@ type FlowCollectorAgent struct {
 	// but they would require manual configuration).
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="EBPF";"IPFIX"
-	// +kubebuilder:validation:Required
 	// +kubebuilder:default:=EBPF
-	Type string `json:"type"`
+	Type string `json:"type,omitempty"`
 
 	// `ipfix` - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type`
 	// is set to `IPFIX`.
@@ -538,7 +535,7 @@ type FlowCollectorLoki struct {
 
 	//+kubebuilder:default:="1s"
 	// `batchWait` is the maximum time to wait before sending a batch.
-	BatchWait metav1.Duration `json:"batchWait,omitempty"`
+	BatchWait *metav1.Duration `json:"batchWait,omitempty"` // Warning: keep as pointer, else default is ignored
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=102400
@@ -548,15 +545,15 @@ type FlowCollectorLoki struct {
 	//+kubebuilder:default:="10s"
 	// `timeout` is the maximum time connection / request limit.
 	// A timeout of zero means no timeout.
-	Timeout metav1.Duration `json:"timeout,omitempty"`
+	Timeout *metav1.Duration `json:"timeout,omitempty"` // Warning: keep as pointer, else default is ignored
 
-	//+kubebuilder:default:="1s"
+	//+kubebuilder:default="1s"
 	// `minBackoff` is the initial backoff time for client connection between retries.
-	MinBackoff metav1.Duration `json:"minBackoff,omitempty"`
+	MinBackoff *metav1.Duration `json:"minBackoff,omitempty"` // Warning: keep as pointer, else default is ignored
 
-	//+kubebuilder:default:="5s"
+	//+kubebuilder:default="5s"
 	// `maxBackoff` is the maximum backoff time for client connection between retries.
-	MaxBackoff metav1.Duration `json:"maxBackoff,omitempty"`
+	MaxBackoff *metav1.Duration `json:"maxBackoff,omitempty"` // Warning: keep as pointer, else default is ignored
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=2

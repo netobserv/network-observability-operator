@@ -5,6 +5,8 @@ package helper
 import (
 	"sort"
 	"strings"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // maximum length of a metadata label in Kubernetes
@@ -67,4 +69,11 @@ func MaxLabelLength(in string) string {
 		return in
 	}
 	return in[:maxLabelLength]
+}
+
+func UnstructuredDuration(in *metav1.Duration) string {
+	if in == nil {
+		return ""
+	}
+	return in.ToUnstructured().(string)
 }
