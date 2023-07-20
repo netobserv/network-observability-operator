@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/netobserv/network-observability-operator/controllers/globals"
-	configv1 "github.com/openshift/api/config/v1"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -32,8 +30,8 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/operator"
 	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/pkg/conditions"
-	"github.com/netobserv/network-observability-operator/pkg/discover"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
@@ -46,12 +44,11 @@ const (
 // FlowCollectorReconciler reconciles a FlowCollector object
 type FlowCollectorReconciler struct {
 	client.Client
-	permissions   discover.Permissions
-	availableAPIs *discover.AvailableAPIs
-	Scheme        *runtime.Scheme
-	config        *operator.Config
-	watcher       *watchers.Watcher
-	lookupIP      func(string) ([]net.IP, error)
+	clusterInfo *cluster.Info
+	Scheme      *runtime.Scheme
+	config      *operator.Config
+	watcher     *watchers.Watcher
+	lookupIP    func(string) ([]net.IP, error)
 }
 
 func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme, config *operator.Config) *FlowCollectorReconciler {
@@ -100,21 +97,12 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 
 	ns := getNamespaceName(desired)
 	r.watcher.Reset(ns)
+	if err := r.clusterInfo.CheckClusterInfo(ctx, r.Client); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	var didChange, isInProgress bool
 	previousNamespace := desired.Status.Namespace
-
-	// obtain default cluster ID - api is specific to openshift
-	if r.permissions.Vendor(ctx) == discover.VendorOpenShift && globals.DefaultClusterID == "" {
-		cversion := &configv1.ClusterVersion{}
-		key := client.ObjectKey{Name: "version"}
-		if err := r.Client.Get(ctx, key, cversion); err != nil {
-			log.Error(err, "unable to obtain cluster ID")
-		} else {
-			globals.DefaultClusterID = cversion.Spec.ClusterID
-		}
-	}
-
 	reconcilersInfo := r.newCommonInfo(ctx, desired, ns, previousNamespace, func(b bool) { didChange = b }, func(b bool) { isInProgress = b })
 
 	err = r.reconcileOperator(ctx, &reconcilersInfo, desired)
@@ -125,7 +113,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 	// Create reconcilers
 	flpReconciler := flowlogspipeline.NewReconciler(&reconcilersInfo, r.config.FlowlogsPipelineImage)
 	var cpReconciler consoleplugin.CPReconciler
-	if r.availableAPIs.HasConsolePlugin() {
+	if r.clusterInfo.HasConsolePlugin() {
 		cpReconciler = consoleplugin.NewReconciler(&reconcilersInfo, r.config.ConsolePluginImage)
 	}
 
@@ -142,7 +130,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 	}
 
 	// OVS config map for CNO
-	if r.availableAPIs.HasCNO() {
+	if r.clusterInfo.HasCNO() {
 		ovsConfigController := ovs.NewFlowsConfigCNOController(&reconcilersInfo, desired.Spec.Agent.IPFIX.ClusterNetworkOperator.Namespace, ovsFlowsConfigMapName)
 		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
 			return ctrl.Result{}, r.failure(ctx, conditions.ReconcileCNOFailed(err), desired)
@@ -161,7 +149,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 	}
 
 	// Console plugin
-	if r.availableAPIs.HasConsolePlugin() {
+	if r.clusterInfo.HasConsolePlugin() {
 		err := cpReconciler.Reconcile(ctx, desired)
 		if err != nil {
 			return ctrl.Result{}, r.failure(ctx, conditions.ReconcileConsolePluginFailed(err), desired)
@@ -214,7 +202,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 		// Namespace updated, clean up previous namespace
 		log.Info("FlowCollector namespace change detected: cleaning up previous namespace", "old namespace", oldNS, "new namepace", newNS)
 		flpReconciler.CleanupNamespace(ctx)
-		if r.availableAPIs.HasConsolePlugin() {
+		if r.clusterInfo.HasConsolePlugin() {
 			cpReconciler.CleanupNamespace(ctx)
 		}
 	}
@@ -253,24 +241,21 @@ func (r *FlowCollectorReconciler) setupDiscovery(ctx context.Context, mgr ctrl.M
 	if err != nil {
 		return fmt.Errorf("can't instantiate discovery client: %w", err)
 	}
-	r.permissions = discover.Permissions{
-		Client: dc,
+	info, err := cluster.NewInfo(dc)
+	if err != nil {
+		return fmt.Errorf("can't collect cluster info: %w", err)
 	}
-	if r.permissions.Vendor(ctx) == discover.VendorOpenShift {
+	if info.HasOCPSecurity() {
 		builder.Owns(&securityv1.SecurityContextConstraints{})
 	}
-	apis, err := discover.NewAvailableAPIs(dc)
-	if err != nil {
-		return fmt.Errorf("can't discover available APIs: %w", err)
-	}
-	r.availableAPIs = apis
-	if apis.HasConsolePlugin() {
+	r.clusterInfo = &info
+	if info.HasConsolePlugin() {
 		builder.Owns(&osv1alpha1.ConsolePlugin{})
 	} else {
 		log.Info("Console not detected: the console plugin is not available")
 	}
-	if !apis.HasCNO() {
-		log.Info("CNO not detected: using ovnKubernetes config and reconciler")
+	if !info.HasCNO() {
+		log.Info("CNO not detected: if using IPFIX agent, will use ovnKubernetes config and reconciler")
 	}
 	return nil
 }
@@ -324,7 +309,7 @@ func (r *FlowCollectorReconciler) reconcileOperator(ctx context.Context, cmn *re
 		}
 	}
 
-	if r.availableAPIs.HasSvcMonitor() {
+	if r.clusterInfo.HasSvcMonitor() {
 		desiredFlowDashboardCM, del, err := buildFlowMetricsDashboard(cmn.Namespace, desired.Spec.Processor.Metrics.IgnoreTags)
 		if err != nil {
 			return err
@@ -370,7 +355,7 @@ func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *f
 }
 
 func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowslatest.FlowCollector) error {
-	if !r.availableAPIs.HasCNO() {
+	if !r.clusterInfo.HasCNO() {
 		ns := getNamespaceName(desired)
 		info := r.newCommonInfo(ctx, desired, ns, ns, func(b bool) {}, func(b bool) {})
 		ovsConfigController := ovs.NewFlowsConfigOVNKController(&info, desired.Spec.Agent.IPFIX.OVNKubernetes)
@@ -393,8 +378,7 @@ func (r *FlowCollectorReconciler) newCommonInfo(ctx context.Context, desired *fl
 		},
 		Namespace:         ns,
 		PreviousNamespace: prevNs,
-		UseOpenShiftSCC:   r.permissions.Vendor(ctx) == discover.VendorOpenShift,
-		AvailableAPIs:     r.availableAPIs,
+		ClusterInfo:       r.clusterInfo,
 		Watcher:           r.watcher,
 	}
 }

@@ -1,7 +1,9 @@
 package consoleplugin
 
 import (
+	"context"
 	"encoding/json"
+	"sort"
 	"testing"
 
 	promConfig "github.com/prometheus/common/config"
@@ -14,6 +16,8 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -103,6 +107,10 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 	return autoScaler, getPluginConfig()
 }
 
+func nbuilder(spec *flowslatest.FlowCollectorSpec) builder {
+	return newBuilder(testNamespace, testImage, spec, []string{})
+}
+
 func TestContainerUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 
@@ -110,7 +118,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	plugin := getPluginConfig()
 	loki := flowslatest.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder := newBuilder(testNamespace, testImage, &spec)
+	builder := nbuilder(&spec)
 	old := builder.deployment("digest")
 	nEw := builder.deployment("digest")
 	report := helper.NewChangeReport("")
@@ -162,7 +170,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 		},
 	}}
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = nbuilder(&spec)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -172,7 +180,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	//new loki cert name
 	loki.TLS.CACert.Name = "cm-name-2"
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = nbuilder(&spec)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -182,7 +190,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	//test again no change
 	loki.TLS.CACert.Name = "cm-name-2"
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = nbuilder(&spec)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.False(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -194,7 +202,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	loki.StatusTLS.Enable = true
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = nbuilder(&spec)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -209,7 +217,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	}
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = nbuilder(&spec)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -225,7 +233,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	}
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = nbuilder(&spec)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -264,7 +272,7 @@ func TestBuiltService(t *testing.T) {
 	plugin := getPluginConfig()
 	loki := flowslatest.FlowCollectorLoki{URL: "http://foo:1234"}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder := newBuilder(testNamespace, testImage, &spec)
+	builder := nbuilder(&spec)
 	old := builder.mainService()
 	nEw := builder.mainService()
 	report := helper.NewChangeReport("")
@@ -278,7 +286,7 @@ func TestLabels(t *testing.T) {
 	plugin := getPluginConfig()
 	loki := flowslatest.FlowCollectorLoki{URL: "http://foo:1234"}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder := newBuilder(testNamespace, testImage, &spec)
+	builder := nbuilder(&spec)
 
 	// Deployment
 	depl := builder.deployment("digest")
@@ -350,4 +358,49 @@ func TestHTTPClientConfig(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, config2.TLSConfig.InsecureSkipVerify, true)
 	assert.Nil(t, config2.ProxyURL.URL, nil)
+}
+
+func TestDashboardsPerOCPVersion(t *testing.T) {
+	r := CPReconciler{
+		Instance: &reconcilers.Instance{
+			Common: &reconcilers.Common{
+				ClusterInfo: &cluster.Info{},
+			},
+		},
+	}
+	// Check previous versions
+	r.ClusterInfo.SetOpenShiftVersion("4.12.5")
+	dashboards := r.getAvailableDashboards(context.Background())
+	sort.Strings(dashboards)
+	assert.Equal(t, []string{
+		constants.KubernetesNetworkDashboard,
+		constants.FlowDashboardCMName,
+		constants.HealthDashboardCMName,
+	}, dashboards)
+
+	// 4.14 introduces new dashboards; check exact version
+	r.ClusterInfo.SetOpenShiftVersion("4.14.0")
+	dashboards = r.getAvailableDashboards(context.Background())
+	sort.Strings(dashboards)
+	assert.Equal(t, []string{
+		constants.KubernetesNetworkDashboard,
+		constants.IngressDashboardCMName,
+		constants.FlowDashboardCMName,
+		constants.HealthDashboardCMName,
+		constants.NetStatsDashboardCMName,
+		constants.OVNDashboardCMName,
+	}, dashboards)
+
+	// Check future versions
+	r.ClusterInfo.SetOpenShiftVersion("4.14.5")
+	dashboards = r.getAvailableDashboards(context.Background())
+	sort.Strings(dashboards)
+	assert.Equal(t, []string{
+		constants.KubernetesNetworkDashboard,
+		constants.IngressDashboardCMName,
+		constants.FlowDashboardCMName,
+		constants.HealthDashboardCMName,
+		constants.NetStatsDashboardCMName,
+		constants.OVNDashboardCMName,
+	}, dashboards)
 }

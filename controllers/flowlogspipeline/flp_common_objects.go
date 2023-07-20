@@ -23,7 +23,6 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/globals"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -546,7 +545,7 @@ func (b *builder) addTransformFilter(lastStage config.PipelineBuilderStage) conf
 		clusterName = b.desired.Processor.ClusterName
 	} else {
 		//take clustername from openshift
-		clusterName = string(globals.DefaultClusterID)
+		clusterName = b.info.ClusterInfo.ID
 	}
 	if clusterName != "" {
 		transformFilterRules = []api.TransformFilterRule{

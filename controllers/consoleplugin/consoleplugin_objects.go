@@ -36,15 +36,16 @@ const metricsPort = 9002
 const metricsPortName = "metrics"
 
 type builder struct {
-	namespace string
-	labels    map[string]string
-	selector  map[string]string
-	desired   *flowslatest.FlowCollectorSpec
-	imageName string
-	volumes   volumes.Builder
+	namespace           string
+	labels              map[string]string
+	selector            map[string]string
+	desired             *flowslatest.FlowCollectorSpec
+	imageName           string
+	volumes             volumes.Builder
+	availableDashboards []string
 }
 
-func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec) builder {
+func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec, dashboards []string) builder {
 	version := helper.ExtractVersion(imageName)
 	return builder{
 		namespace: ns,
@@ -55,8 +56,9 @@ func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec) bu
 		selector: map[string]string{
 			"app": constants.PluginName,
 		},
-		desired:   desired,
-		imageName: imageName,
+		desired:             desired,
+		imageName:           imageName,
+		availableDashboards: dashboards,
 	}
 }
 
@@ -353,19 +355,19 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		if helper.IsPktDropEnabled(b.desired) {
 			features = append(features, "pktDrop")
 		}
-
 		if helper.IsDNSTrackingEnabled(b.desired) {
 			features = append(features, "dnsTracking")
 		}
 	}
 
 	config := map[string]interface{}{
-		"recordTypes":     outputRecordTypes,
-		"portNaming":      b.desired.ConsolePlugin.PortNaming,
-		"quickFilters":    b.desired.ConsolePlugin.QuickFilters,
-		"alertNamespaces": []string{b.namespace},
-		"sampling":        helper.GetSampling(b.desired),
-		"features":        features,
+		"recordTypes":         outputRecordTypes,
+		"portNaming":          b.desired.ConsolePlugin.PortNaming,
+		"quickFilters":        b.desired.ConsolePlugin.QuickFilters,
+		"alertNamespaces":     []string{b.namespace},
+		"sampling":            helper.GetSampling(b.desired),
+		"features":            features,
+		"availableDashboards": b.availableDashboards,
 	}
 
 	configStr := "{}"

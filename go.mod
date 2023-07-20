@@ -3,6 +3,7 @@ module github.com/netobserv/network-observability-operator
 go 1.19
 
 require (
+	github.com/coreos/go-semver v0.3.0
 	github.com/go-logr/logr v1.2.3
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/netobserv/flowlogs-pipeline v0.1.10-rc1

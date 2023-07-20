@@ -51,10 +51,10 @@ func newMonolithReconciler(cmn *reconcilers.Instance) *flpMonolithReconciler {
 	cmn.Managed.AddManagedObject(RoleBindingMonoName(ConfKafkaIngester), owned.roleBindingIn)
 	cmn.Managed.AddManagedObject(RoleBindingMonoName(ConfKafkaTransformer), owned.roleBindingTr)
 	cmn.Managed.AddManagedObject(configMapName(ConfMonolith), owned.configMap)
-	if cmn.AvailableAPIs.HasSvcMonitor() {
+	if cmn.ClusterInfo.HasSvcMonitor() {
 		cmn.Managed.AddManagedObject(serviceMonitorName(ConfMonolith), owned.serviceMonitor)
 	}
-	if cmn.AvailableAPIs.HasPromRule() {
+	if cmn.ClusterInfo.HasPromRule() {
 		cmn.Managed.AddManagedObject(prometheusRuleName(ConfMonolith), owned.prometheusRule)
 	}
 
@@ -135,13 +135,13 @@ func (r *flpMonolithReconciler) reconcilePrometheusService(ctx context.Context, 
 	if err := r.ReconcileService(ctx, r.owned.promService, builder.promService(), &report); err != nil {
 		return err
 	}
-	if r.AvailableAPIs.HasSvcMonitor() {
+	if r.ClusterInfo.HasSvcMonitor() {
 		serviceMonitor := builder.generic.serviceMonitor()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}
-	if r.AvailableAPIs.HasPromRule() {
+	if r.ClusterInfo.HasPromRule() {
 		promRules := builder.generic.prometheusRule()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
@@ -170,7 +170,7 @@ func (r *flpMonolithReconciler) reconcilePermissions(ctx context.Context, builde
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 
-	cr := buildClusterRoleIngester(r.UseOpenShiftSCC)
+	cr := buildClusterRoleIngester(r.ClusterInfo.HasOCPSecurity())
 	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
 		return err
 	}
