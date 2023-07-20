@@ -806,11 +806,19 @@ func autoConvert_v1alpha1_FlowCollectorLoki_To_v1beta1_FlowCollectorLoki(in *Flo
 	out.StatusURL = in.StatusURL
 	out.TenantID = in.TenantID
 	out.AuthToken = in.AuthToken
-	out.BatchWait = in.BatchWait
+	if err := v1.Convert_v1_Duration_To_Pointer_v1_Duration(&in.BatchWait, &out.BatchWait, s); err != nil {
+		return err
+	}
 	out.BatchSize = in.BatchSize
-	out.Timeout = in.Timeout
-	out.MinBackoff = in.MinBackoff
-	out.MaxBackoff = in.MaxBackoff
+	if err := v1.Convert_v1_Duration_To_Pointer_v1_Duration(&in.Timeout, &out.Timeout, s); err != nil {
+		return err
+	}
+	if err := v1.Convert_v1_Duration_To_Pointer_v1_Duration(&in.MinBackoff, &out.MinBackoff, s); err != nil {
+		return err
+	}
+	if err := v1.Convert_v1_Duration_To_Pointer_v1_Duration(&in.MaxBackoff, &out.MaxBackoff, s); err != nil {
+		return err
+	}
 	if err := v1.Convert_int32_To_Pointer_int32(&in.MaxRetries, &out.MaxRetries, s); err != nil {
 		return err
 	}
@@ -833,11 +841,19 @@ func autoConvert_v1beta1_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1b
 	out.StatusURL = in.StatusURL
 	out.TenantID = in.TenantID
 	out.AuthToken = in.AuthToken
-	out.BatchWait = in.BatchWait
+	if err := v1.Convert_Pointer_v1_Duration_To_v1_Duration(&in.BatchWait, &out.BatchWait, s); err != nil {
+		return err
+	}
 	out.BatchSize = in.BatchSize
-	out.Timeout = in.Timeout
-	out.MinBackoff = in.MinBackoff
-	out.MaxBackoff = in.MaxBackoff
+	if err := v1.Convert_Pointer_v1_Duration_To_v1_Duration(&in.Timeout, &out.Timeout, s); err != nil {
+		return err
+	}
+	if err := v1.Convert_Pointer_v1_Duration_To_v1_Duration(&in.MinBackoff, &out.MinBackoff, s); err != nil {
+		return err
+	}
+	if err := v1.Convert_Pointer_v1_Duration_To_v1_Duration(&in.MaxBackoff, &out.MaxBackoff, s); err != nil {
+		return err
+	}
 	if err := v1.Convert_Pointer_int32_To_int32(&in.MaxRetries, &out.MaxRetries, s); err != nil {
 		return err
 	}

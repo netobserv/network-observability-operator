@@ -349,7 +349,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 	outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
 
 	var features []string
-	if b.desired.Agent.Type == flowslatest.AgentEBPF {
+	if helper.UseEBPF(b.desired) {
 		if helper.IsPktDropEnabled(b.desired) {
 			features = append(features, "pktDrop")
 		}

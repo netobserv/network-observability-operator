@@ -3923,10 +3923,15 @@ Defines the desired state of the FlowCollector resource. <br><br> *: the mention
         <td>object</td>
         <td>
           Agent configuration for flows extraction.<br/>
-          <br/>
-            <i>Default</i>: map[type:EBPF]<br/>
         </td>
-        <td>true</td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsoleplugin-1">consolePlugin</a></b></td>
+        <td>object</td>
+        <td>
+          `consolePlugin` defines the settings related to the OpenShift Console plugin, when available.<br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b>deploymentModel</b></td>
         <td>enum</td>
@@ -3935,13 +3940,6 @@ Defines the desired state of the FlowCollector resource. <br><br> *: the mention
           <br/>
             <i>Enum</i>: DIRECT, KAFKA<br/>
             <i>Default</i>: DIRECT<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecconsoleplugin-1">consolePlugin</a></b></td>
-        <td>object</td>
-        <td>
-          `consolePlugin` defines the settings related to the OpenShift Console plugin, when available.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3970,6 +3968,8 @@ Defines the desired state of the FlowCollector resource. <br><br> *: the mention
         <td>string</td>
         <td>
           Namespace where NetObserv pods are deployed. If empty, the namespace of the operator is going to be used.<br/>
+          <br/>
+            <i>Default</i>: netobserv<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4000,16 +4000,6 @@ Agent configuration for flows extraction.
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          `type` selects the flows tracing agent. Possible values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` - <i>deprecated (*)</i> - to use the legacy IPFIX collector.<br> `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
-          <br/>
-            <i>Enum</i>: EBPF, IPFIX<br/>
-            <i>Default</i>: EBPF<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpf-1">ebpf</a></b></td>
         <td>object</td>
         <td>
@@ -4021,6 +4011,16 @@ Agent configuration for flows extraction.
         <td>object</td>
         <td>
           `ipfix` - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          `type` selects the flows tracing agent. Possible values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` - <i>deprecated (*)</i> - to use the legacy IPFIX collector.<br> `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
+          <br/>
+            <i>Enum</i>: EBPF, IPFIX<br/>
+            <i>Default</i>: EBPF<br/>
         </td>
         <td>false</td>
       </tr></tbody>

@@ -2255,8 +2255,6 @@ spec:
               as a best effort only.'
             properties:
               agent:
-                default:
-                  type: EBPF
                 description: Agent configuration for flows extraction.
                 properties:
                   ebpf:
@@ -2502,8 +2500,6 @@ spec:
                     - EBPF
                     - IPFIX
                     type: string
-                required:
-                - type
                 type: object
               consolePlugin:
                 description: '`consolePlugin` defines the settings related to the
@@ -3787,6 +3783,7 @@ spec:
                     type: string
                 type: object
               namespace:
+                default: netobserv
                 description: Namespace where NetObserv pods are deployed. If empty,
                   the namespace of the operator is going to be used.
                 type: string
@@ -4585,9 +4582,6 @@ spec:
                         type: object
                     type: object
                 type: object
-            required:
-            - agent
-            - deploymentModel
             type: object
           status:
             description: '`FlowCollectorStatus` defines the observed state of FlowCollector'

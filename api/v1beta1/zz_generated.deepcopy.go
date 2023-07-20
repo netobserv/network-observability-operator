@@ -477,10 +477,26 @@ func (in *FlowCollectorLoki) DeepCopyInto(out *FlowCollectorLoki) {
 		*out = new(bool)
 		**out = **in
 	}
-	out.BatchWait = in.BatchWait
-	out.Timeout = in.Timeout
-	out.MinBackoff = in.MinBackoff
-	out.MaxBackoff = in.MaxBackoff
+	if in.BatchWait != nil {
+		in, out := &in.BatchWait, &out.BatchWait
+		*out = new(v1.Duration)
+		**out = **in
+	}
+	if in.Timeout != nil {
+		in, out := &in.Timeout, &out.Timeout
+		*out = new(v1.Duration)
+		**out = **in
+	}
+	if in.MinBackoff != nil {
+		in, out := &in.MinBackoff, &out.MinBackoff
+		*out = new(v1.Duration)
+		**out = **in
+	}
+	if in.MaxBackoff != nil {
+		in, out := &in.MaxBackoff, &out.MaxBackoff
+		*out = new(v1.Duration)
+		**out = **in
+	}
 	if in.MaxRetries != nil {
 		in, out := &in.MaxRetries, &out.MaxRetries
 		*out = new(int32)

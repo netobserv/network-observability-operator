@@ -101,14 +101,14 @@ func getConfig() flowslatest.FlowCollectorSpec {
 		Loki: flowslatest.FlowCollectorLoki{
 			Enable: pointer.Bool(true),
 			URL:    "http://loki:3100/",
-			BatchWait: metav1.Duration{
+			BatchWait: &metav1.Duration{
 				Duration: 1,
 			},
 			BatchSize: 102400,
-			MinBackoff: metav1.Duration{
+			MinBackoff: &metav1.Duration{
 				Duration: 1,
 			},
-			MaxBackoff: metav1.Duration{
+			MaxBackoff: &metav1.Duration{
 				Duration: 300,
 			},
 			MaxRetries:   pointer.Int32(10),

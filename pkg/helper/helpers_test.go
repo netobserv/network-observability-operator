@@ -2,8 +2,10 @@ package helper
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestExtractVersion(t *testing.T) {
@@ -69,4 +71,27 @@ func TestMaxLabelLengt_NoCut(t *testing.T) {
 	assert.Equal(t, "0123456789", MaxLabelLength("0123456789"))
 	assert.Equal(t, "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde",
 		MaxLabelLength("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde"))
+}
+
+func TestUnstructuredDuration(t *testing.T) {
+
+	t.Run("nil input", func(t *testing.T) {
+		var d *metav1.Duration
+		got := UnstructuredDuration(d)
+		want := ""
+
+		if got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
+
+	t.Run("valid input", func(t *testing.T) {
+		d := &metav1.Duration{Duration: time.Minute}
+		want := "1m0s"
+		got := UnstructuredDuration(d)
+
+		if got != want {
+			t.Errorf("got %q, want %q", got, want)
+		}
+	})
 }
