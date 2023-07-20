@@ -8,13 +8,9 @@ The operator provides dashboards, metrics, and keeps flows accessible in a query
 
 [Loki](https://grafana.com/oss/loki/), from GrafanaLabs, is the backend that is used to store all collected flows. The NetObserv Operator does not install Loki directly, however we provide some guidance to help you there.
 
-For normal usage, we recommend two options:
+- For a production or production-like environment usage, refer to [the operator documentation](https://docs.openshift.com/container-platform/latest/networking/network_observability/installing-operators.html).
 
-- Installing the [Loki Operator](https://docs.openshift.com/container-platform/4.11//logging/cluster-logging-loki.html). We have written [a guide](https://github.com/netobserv/documents/blob/main/loki_operator.md) to help you through those steps. Please note that it requires configuring an object storage. Note also that the Loki Operator can also be used for [OpenShift cluster logging](https://docs.openshift.com/container-platform/4.11/logging/cluster-logging.html). If you do so, you should not share the same `LokiStack` for Logging and NetObserv.
-
-- Installing using [Grafana's official documentation](https://grafana.com/docs/loki/latest/). Here also we wrote a ["distributed Loki" step by step guide](https://github.com/netobserv/documents/blob/main/loki_distributed.md).
-
-For a quick try that is not suitable for production and not scalable (it deploys a single pod, configures a 1GB storage PVC, with 24 hours of retention), you can simply run the following commands:
+- For a quick try that is not suitable for production and not scalable (it deploys a single pod, configures a 1GB storage PVC, with 24 hours of retention), you can simply run the following commands:
 
 ```
 oc create namespace netobserv
@@ -52,7 +48,7 @@ A couple of settings deserve special attention:
 
 - Kafka (`spec.deploymentModel: KAFKA` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created.
 
-- Exporters (`spec.exporters`, _experimental_) an optional list of exporters to which to send enriched flows. Currently only KAFKA is supported. This allows you to define any custom storage or processing that can read from Kafka. This feature is flagged as _experimental_ as it has not been thoroughly or stress tested yet, so use at your own risk.
+- Exporters (`spec.exporters`) an optional list of exporters to which to send enriched flows. KAFKA and IPFIX exporters are supported. This allows you to define any custom storage or processing that can read from Kafka or use the IPFIX standard.
 
 ## Further reading
 
