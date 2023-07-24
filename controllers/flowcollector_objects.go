@@ -10,9 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//go:embed flow_metrics_dashboard.json
-var flowMetricsDashboardEmbed string
-
 //go:embed infra_health_dashboard.json
 var healthDashboardEmbed string
 
@@ -83,8 +80,8 @@ func buildRoleBindingMonitoringReader(ns string) *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func buildFlowMetricsDashboard(ignoreFlags []string) (*corev1.ConfigMap, bool, error) {
-	dashboard, err := helper.FilterDashboardRows(flowMetricsDashboardEmbed, ignoreFlags)
+func buildFlowMetricsDashboard(namespace string, ignoreFlags []string) (*corev1.ConfigMap, bool, error) {
+	dashboard, err := helper.CreateFlowMetricsDashboard(namespace, ignoreFlags)
 	if err != nil {
 		return nil, false, err
 	}
