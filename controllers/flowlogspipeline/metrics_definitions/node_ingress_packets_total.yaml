@@ -16,9 +16,11 @@ encode:
       - name: node_ingress_packets_total
         type: counter
         valuekey: Packets
-        filter:
-          key: FlowDirection
+        filters:
+        - key: FlowDirection
           value: "0"
+        - key: Duplicate
+          value: "false"
         labels:
           - SrcK8S_HostName
           - DstK8S_HostName
