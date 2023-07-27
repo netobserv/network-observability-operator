@@ -379,7 +379,7 @@ func TestDashboardsPerOCPVersion(t *testing.T) {
 	}, dashboards)
 
 	// 4.14 introduces new dashboards; check exact version
-	r.ClusterInfo.SetOpenShiftVersion("4.14.0")
+	r.ClusterInfo.SetOpenShiftVersion("4.15.0")
 	dashboards = r.getAvailableDashboards(context.Background())
 	sort.Strings(dashboards)
 	assert.Equal(t, []string{
@@ -392,7 +392,7 @@ func TestDashboardsPerOCPVersion(t *testing.T) {
 	}, dashboards)
 
 	// Check future versions
-	r.ClusterInfo.SetOpenShiftVersion("4.14.5")
+	r.ClusterInfo.SetOpenShiftVersion("4.15.5")
 	dashboards = r.getAvailableDashboards(context.Background())
 	sort.Strings(dashboards)
 	assert.Equal(t, []string{

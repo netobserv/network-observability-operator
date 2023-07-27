@@ -103,7 +103,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 
 	var didChange, isInProgress bool
 	previousNamespace := desired.Status.Namespace
-	reconcilersInfo := r.newCommonInfo(ctx, desired, ns, previousNamespace, func(b bool) { didChange = b }, func(b bool) { isInProgress = b })
+	reconcilersInfo := r.newCommonInfo(desired, ns, previousNamespace, func(b bool) { didChange = b }, func(b bool) { isInProgress = b })
 
 	err = r.reconcileOperator(ctx, &reconcilersInfo, desired)
 	if err != nil {
@@ -357,7 +357,7 @@ func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *f
 func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	if !r.clusterInfo.HasCNO() {
 		ns := getNamespaceName(desired)
-		info := r.newCommonInfo(ctx, desired, ns, ns, func(b bool) {}, func(b bool) {})
+		info := r.newCommonInfo(desired, ns, ns, func(b bool) {}, func(b bool) {})
 		ovsConfigController := ovs.NewFlowsConfigOVNKController(&info, desired.Spec.Agent.IPFIX.OVNKubernetes)
 		if err := ovsConfigController.Finalize(ctx, desired); err != nil {
 			return fmt.Errorf("failed to finalize ovn-kubernetes reconciler: %w", err)
@@ -366,7 +366,7 @@ func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsla
 	return nil
 }
 
-func (r *FlowCollectorReconciler) newCommonInfo(ctx context.Context, desired *flowslatest.FlowCollector, ns, prevNs string, changeHook, inProgressHook func(bool)) reconcilers.Common {
+func (r *FlowCollectorReconciler) newCommonInfo(desired *flowslatest.FlowCollector, ns, prevNs string, changeHook, inProgressHook func(bool)) reconcilers.Common {
 	return reconcilers.Common{
 		Client: helper.Client{
 			Client: r.Client,
