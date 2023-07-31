@@ -1,10 +1,10 @@
 ## Description
 
-<!-- Please fill-in description here -->
+<!-- Fill-in description here -->
 
 ## Dependencies
 
-<!-- Please list here any related PRs with links, that need to be pulled also for testing -->
+<!-- List here any related PRs with links, that need to be pulled also for testing -->
 n/a
 
 ## Checklist
