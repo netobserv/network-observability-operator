@@ -55,16 +55,6 @@ const (
 	ConfKafkaTransformer ConfKind = "kafkaTransformer"
 )
 
-const (
-	dashboardName         = "netobserv"
-	dashboardTitle        = "NetObserv"
-	dashboardTags         = "['netobserv-mixin']"
-	dashboardCMNamespace  = "openshift-config-managed"
-	dashboardCMAnnotation = "console.openshift.io/dashboard"
-	dashboardCMName       = "grafana-dashboard-netobserv"
-	dashboardCMFile       = "netobserv-metrics.json"
-)
-
 var FlpConfSuffix = map[ConfKind]string{
 	ConfMonolith:         "",
 	ConfKafkaIngester:    "-ingester",
@@ -246,34 +236,17 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 var metricsConfigEmbed embed.FS
 
 // obtainMetricsConfiguration returns the configuration info for the prometheus stage needed to
-// supply the metrics and also the dashboards for those metrics
-func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, string, error) {
+// supply the metrics for those metrics
+func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, error) {
 	entries, err := metricsConfigEmbed.ReadDir(metricsConfigDir)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to access metrics_definitions directory: %w", err)
+		return nil, fmt.Errorf("failed to access metrics_definitions directory: %w", err)
 	}
 
 	cg := confgen.NewConfGen(&confgen.Options{
 		GenerateStages: []string{"encode_prom"},
 		SkipWithTags:   b.desired.Processor.Metrics.IgnoreTags,
 	})
-
-	config := confgen.Config{
-		Visualization: confgen.ConfigVisualization{
-			Grafana: confgen.ConfigVisualizationGrafana{
-				Dashboards: []confgen.ConfigVisualizationGrafanaDashboard{
-					{
-						Name:          dashboardName,
-						Title:         dashboardTitle,
-						TimeFrom:      "now",
-						Tags:          dashboardTags,
-						SchemaVersion: "16",
-					},
-				},
-			},
-		},
-	}
-	cg.SetConfig(&config)
 
 	for _, entry := range entries {
 		fileName := entry.Name()
@@ -284,29 +257,25 @@ func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, string, er
 
 		input, err := metricsConfigEmbed.ReadFile(srcPath)
 		if err != nil {
-			return nil, "", fmt.Errorf("error reading metrics file %s; %w", srcPath, err)
+			return nil, fmt.Errorf("error reading metrics file %s; %w", srcPath, err)
 		}
 		err = cg.ParseDefinition(fileName, input)
 		if err != nil {
-			return nil, "", fmt.Errorf("error parsing metrics file %s; %w", srcPath, err)
+			return nil, fmt.Errorf("error parsing metrics file %s; %w", srcPath, err)
 		}
 	}
 
 	stages := cg.GenerateTruncatedConfig()
 	if len(stages) != 1 {
-		return nil, "", fmt.Errorf("error generating truncated config, 1 stage expected in %v", stages)
+		return nil, fmt.Errorf("error generating truncated config, 1 stage expected in %v", stages)
 	}
 	if stages[0].Encode == nil || stages[0].Encode.Prom == nil {
-		return nil, "", fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
+		return nil, fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
 	}
-	jsonStr, err := cg.GenerateGrafanaJson()
-	if err != nil {
-		return nil, "", fmt.Errorf("error generating grafana dashboard: %w", err)
-	}
-	return stages[0].Encode.Prom.Metrics, jsonStr, nil
+	return stages[0].Encode.Prom.Metrics, nil
 }
 
-func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev1.ConfigMap, error) {
+func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	lastStage := *stage
 	indexFields := constants.LokiIndexFields
 
@@ -544,12 +513,11 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 	}
 
 	// obtain encode_prometheus stage from metrics_definitions
-	promMetrics, dashboard, err := b.obtainMetricsConfiguration()
+	promMetrics, err := b.obtainMetricsConfiguration()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var dashboardConfigMap *corev1.ConfigMap
 	if len(promMetrics) > 0 {
 		// prometheus stage (encode) configuration
 		promEncode := api.PromEncode{
@@ -557,27 +525,10 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) (*corev
 			Metrics: promMetrics,
 		}
 		enrichedStage.EncodePrometheus("prometheus", promEncode)
-		dashboardConfigMap = b.makeMetricsDashboardConfigMap(dashboard)
 	}
 
 	b.addCustomExportStages(&enrichedStage)
-	return dashboardConfigMap, nil
-}
-
-func (b *builder) makeMetricsDashboardConfigMap(dashboard string) *corev1.ConfigMap {
-	configMap := corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      dashboardCMName,
-			Namespace: dashboardCMNamespace,
-			Labels: map[string]string{
-				dashboardCMAnnotation: "true",
-			},
-		},
-		Data: map[string]string{
-			dashboardCMFile: dashboard,
-		},
-	}
-	return &configMap
+	return nil
 }
 
 func (b *builder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage) {

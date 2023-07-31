@@ -88,7 +88,7 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslat
 	}
 
 	builder := newMonolithBuilder(r.Instance, &desired.Spec)
-	newCM, configDigest, dbConfigMap, err := builder.configMap()
+	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err
 	}
@@ -101,11 +101,6 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslat
 		}
 	} else if !equality.Semantic.DeepDerivative(newCM.Data, r.owned.configMap.Data) {
 		if err := r.UpdateOwned(ctx, r.owned.configMap, newCM); err != nil {
-			return err
-		}
-	}
-	if r.AvailableAPIs.HasConsoleConfig() {
-		if err := reconcileDashboardConfig(ctx, &r.Client, dbConfigMap); err != nil {
 			return err
 		}
 	}

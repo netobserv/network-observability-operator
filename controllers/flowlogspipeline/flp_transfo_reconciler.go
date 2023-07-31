@@ -89,7 +89,7 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 	}
 
 	builder := newTransfoBuilder(r.Instance, &desired.Spec)
-	newCM, configDigest, dbConfigMap, err := builder.configMap()
+	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err
 	}
@@ -102,11 +102,6 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 		}
 	} else if !equality.Semantic.DeepDerivative(newCM.Data, r.owned.configMap.Data) {
 		if err := r.UpdateOwned(ctx, r.owned.configMap, newCM); err != nil {
-			return err
-		}
-	}
-	if r.AvailableAPIs.HasConsoleConfig() {
-		if err := reconcileDashboardConfig(ctx, &r.Client, dbConfigMap); err != nil {
 			return err
 		}
 	}

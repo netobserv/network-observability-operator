@@ -2,20 +2,20 @@
 description:
   This metric observes the nodes incoming traffic
 details:
-  Sum bytes for incoming traffic per source and destination nodes
+  Sum packets for incoming traffic per source and destination nodes
 usage:
   Evaluate network incoming usage breakdown per source and destination nodes
 tags:
   - ingress
-  - bytes
+  - packets
   - nodes
 encode:
   type: prom
   prom:
     metrics:
-      - name: node_ingress_bytes_total
+      - name: node_ingress_packets_total
         type: counter
-        valuekey: Bytes
+        valuekey: Packets
         filters:
         - key: FlowDirection
           value: "0"

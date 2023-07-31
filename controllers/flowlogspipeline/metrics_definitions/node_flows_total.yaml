@@ -1,0 +1,20 @@
+#flp_confgen
+description:
+  This metric counts flows per nodes
+details:
+  Counting flows per source and destination nodes
+usage:
+  Evaluate number of flows per source and destination nodes
+tags:
+  - flows
+  - nodes
+  - nodes-flows
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: node_flows_total
+        type: counter
+        labels:
+          - SrcK8S_HostName
+          - DstK8S_HostName

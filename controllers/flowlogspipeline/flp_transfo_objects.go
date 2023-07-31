@@ -43,16 +43,16 @@ func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deplo
 	}
 }
 
-func (b *transfoBuilder) configMap() (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
-	stages, params, dashboardConfigMap, err := b.buildPipelineConfig()
+func (b *transfoBuilder) configMap() (*corev1.ConfigMap, string, error) {
+	stages, params, err := b.buildPipelineConfig()
 	if err != nil {
-		return nil, "", nil, err
+		return nil, "", err
 	}
 	configMap, digest, err := b.generic.configMap(stages, params)
-	return configMap, digest, dashboardConfigMap, err
+	return configMap, digest, err
 }
 
-func (b *transfoBuilder) buildPipelineConfig() ([]config.Stage, []config.StageParam, *corev1.ConfigMap, error) {
+func (b *transfoBuilder) buildPipelineConfig() ([]config.Stage, []config.StageParam, error) {
 	// TODO in a later optimization patch: set ingester <-> transformer communication also via protobuf
 	// For now, we leave this communication via JSON and just setup protobuf ingestion when
 	// the transformer is communicating directly via eBPF agent
@@ -71,11 +71,11 @@ func (b *transfoBuilder) buildPipelineConfig() ([]config.Stage, []config.StagePa
 		PullMaxBytes:      b.generic.desired.Processor.KafkaConsumerBatchSize,
 	})
 
-	dashboardConfigMap, err := b.generic.addTransformStages(&pipeline)
+	err := b.generic.addTransformStages(&pipeline)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
-	return pipeline.GetStages(), pipeline.GetStageParams(), dashboardConfigMap, nil
+	return pipeline.GetStages(), pipeline.GetStageParams(), nil
 }
 
 func (b *transfoBuilder) promService() *corev1.Service {

@@ -21,6 +21,17 @@ func ContainsString(slice []string, s string) bool {
 	return false
 }
 
+func Intersect(first, second []string) bool {
+	for _, i := range first {
+		for _, j := range second {
+			if i == j {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func RemoveAllStrings(slice []string, search string) []string {
 	for i, v := range slice {
 		if v == search {

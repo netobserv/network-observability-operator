@@ -4,10 +4,14 @@ import (
 	_ "embed"
 
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+//go:embed infra_health_dashboard.json
+var healthDashboardEmbed string
 
 const (
 	downstreamLabelKey       = "openshift.io/cluster-monitoring"
@@ -15,6 +19,14 @@ const (
 	roleSuffix               = "-metrics-reader"
 	monitoringServiceAccount = "prometheus-k8s"
 	monitoringNamespace      = "openshift-monitoring"
+	dashboardCMNamespace     = "openshift-config-managed"
+	dashboardCMAnnotation    = "console.openshift.io/dashboard"
+
+	flowDashboardCMName = "grafana-dashboard-netobserv-flow-metrics"
+	flowDashboardCMFile = "netobserv-flow-metrics.json"
+
+	healthDashboardCMName = "grafana-dashboard-netobserv-health"
+	healthDashboardCMFile = "netobserv-health-metrics.json"
 )
 
 func buildNamespace(ns string, isDownstream bool) *corev1.Namespace {
@@ -68,28 +80,44 @@ func buildRoleBindingMonitoringReader(ns string) *rbacv1.ClusterRoleBinding {
 	}
 }
 
-//go:embed infra_health_dashboard.json
-var healthDashboardEmbed string
+func buildFlowMetricsDashboard(namespace string, ignoreFlags []string) (*corev1.ConfigMap, bool, error) {
+	dashboard, err := helper.CreateFlowMetricsDashboard(namespace, ignoreFlags)
+	if err != nil {
+		return nil, false, err
+	}
 
-const (
-	healthDashboardCMName       = "grafana-dashboard-netobserv-health"
-	healthDashboardCMNamespace  = "openshift-config-managed"
-	healthDashboardCMAnnotation = "console.openshift.io/dashboard"
-	healthDashboardCMFile       = "netobserv-health-metrics.json"
-)
-
-func buildHealthDashboard() *corev1.ConfigMap {
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      healthDashboardCMName,
-			Namespace: healthDashboardCMNamespace,
+			Name:      flowDashboardCMName,
+			Namespace: dashboardCMNamespace,
 			Labels: map[string]string{
-				healthDashboardCMAnnotation: "true",
+				dashboardCMAnnotation: "true",
 			},
 		},
 		Data: map[string]string{
-			healthDashboardCMFile: healthDashboardEmbed,
+			flowDashboardCMFile: dashboard,
 		},
 	}
-	return &configMap
+	return &configMap, len(dashboard) == 0, nil
+}
+
+func buildHealthDashboard(ignoreFlags []string) (*corev1.ConfigMap, bool, error) {
+	dashboard, err := helper.FilterDashboardRows(healthDashboardEmbed, ignoreFlags)
+	if err != nil {
+		return nil, false, err
+	}
+
+	configMap := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      healthDashboardCMName,
+			Namespace: dashboardCMNamespace,
+			Labels: map[string]string{
+				dashboardCMAnnotation: "true",
+			},
+		},
+		Data: map[string]string{
+			healthDashboardCMFile: dashboard,
+		},
+	}
+	return &configMap, len(dashboard) == 0, nil
 }

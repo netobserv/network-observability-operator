@@ -2,20 +2,20 @@
 description:
   This metric observes the nodes outgoing traffic
 details:
-  Sum bytes for outgoing traffic per source and destination nodes
+  Sum packets for outgoing traffic per source and destination nodes
 usage:
   Evaluate network outgoing usage breakdown per source and destination nodes
 tags:
   - egress
-  - bytes
+  - packets
   - nodes
 encode:
   type: prom
   prom:
     metrics:
-      - name: node_egress_bytes_total
+      - name: node_egress_packets_total
         type: counter
-        valuekey: Bytes
+        valuekey: Packets
         filters:
         - key: FlowDirection
           value: "1"
