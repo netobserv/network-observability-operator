@@ -17,7 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
@@ -175,7 +175,7 @@ func (b *builder) buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 		"-key", "/var/serving-cert/tls.key",
 		"-loki", querierURL,
 		"-loki-labels", strings.Join(indexFields, ","),
-		"-loki-tenant-id", desired.Loki.TenantID,
+		"-loki-tenant-id", desired.Loki.Manual.TenantID,
 		"-loglevel", desired.ConsolePlugin.LogLevel,
 		"-frontend-config", filepath.Join(configPath, configFile),
 	}
@@ -188,11 +188,11 @@ func (b *builder) buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 		args = append(args, "-loki-status", statusURL)
 	}
 
-	if desired.Loki.TLS.Enable {
-		if desired.Loki.TLS.InsecureSkipVerify {
+	if desired.Loki.Manual.TLS.Enable {
+		if desired.Loki.Manual.TLS.InsecureSkipVerify {
 			args = append(args, "-loki-skip-tls")
 		} else {
-			caPath := b.volumes.AddCACertificate(&desired.Loki.TLS, "loki-certs")
+			caPath := b.volumes.AddCACertificate(&desired.Loki.Manual.TLS, "loki-certs")
 			if caPath != "" {
 				args = append(args, "-loki-ca-path", caPath)
 			}

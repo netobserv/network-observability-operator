@@ -12,5 +12,5 @@ limitations under the License.
 */
 
 // Package v1aplha1 contains the v1alpha1 API implementation.
-// +k8s:conversion-gen=github.com/netobserv/network-observability-operator/api/v1beta1
+// +k8s:conversion-gen=github.com/netobserv/network-observability-operator/api/v1beta2
 package v1alpha1

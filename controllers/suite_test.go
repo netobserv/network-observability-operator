@@ -44,6 +44,7 @@ import (
 
 	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/operator"
 	//+kubebuilder:scaffold:imports
 )
@@ -106,6 +107,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	err = flowsv1beta1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = flowsv1beta2.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = corev1.AddToScheme(scheme.Scheme)

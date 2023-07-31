@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	rec "sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )

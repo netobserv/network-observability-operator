@@ -11,6 +11,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1beta1 contains the v1beta1 API implementation.
-// +k8s:conversion-gen=github.com/netobserv/network-observability-operator/api/v1beta2
-package v1beta1
+// Package v1beta2 contains the v1beta2 API implementation.
+package v1beta2

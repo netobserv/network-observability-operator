@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -109,13 +109,12 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 		if err = r.reconcileHPA(ctx, &builder, &desired.Spec); err != nil {
 			return err
 		}
-
 		// Watch for Loki certificates if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
 		// because certificate is always reloaded from file
-		if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &desired.Spec.Loki.TLS, r.Namespace); err != nil {
+		if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &desired.Spec.Loki.Manual.TLS, r.Namespace); err != nil {
 			return err
 		}
-		if _, _, err = r.Watcher.ProcessMTLSCerts(ctx, r.Client, &desired.Spec.Loki.StatusTLS, r.Namespace); err != nil {
+		if _, _, err = r.Watcher.ProcessMTLSCerts(ctx, r.Client, &desired.Spec.Loki.Manual.StatusTLS, r.Namespace); err != nil {
 			return err
 		}
 	} else {
@@ -267,15 +266,15 @@ func pluginNeedsUpdate(plg *osv1alpha1.ConsolePlugin, desired *pluginSpec) bool 
 }
 
 func querierURL(loki *flowslatest.FlowCollectorLoki) string {
-	if loki.QuerierURL != "" {
-		return loki.QuerierURL
+	if loki.Manual.QuerierURL != "" {
+		return loki.Manual.QuerierURL
 	}
-	return loki.URL
+	return loki.Manual.IngesterURL
 }
 
 func statusURL(loki *flowslatest.FlowCollectorLoki) string {
-	if loki.StatusURL != "" {
-		return loki.StatusURL
+	if loki.Manual.StatusURL != "" {
+		return loki.Manual.StatusURL
 	}
 	return querierURL(loki)
 }

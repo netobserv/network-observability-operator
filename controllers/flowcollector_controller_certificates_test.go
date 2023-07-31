@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
@@ -144,18 +144,19 @@ func flowCollectorCertificatesSpecs() {
 				Type: "EBPF",
 			},
 			Loki: flowslatest.FlowCollectorLoki{
-				Enable:    pointer.Bool(true),
-				AuthToken: flowslatest.LokiAuthForwardUserToken,
-				TLS: flowslatest.ClientTLS{
-					Enable: true,
-					CACert: flowslatest.CertificateReference{
-						Type:      flowslatest.RefTypeConfigMap,
-						Name:      lokiCert.Name,
-						Namespace: lokiCert.Namespace,
-						CertFile:  "cert.crt",
+				Enable: pointer.Bool(true),
+				Manual: flowslatest.LokiManualParams{
+					AuthToken: flowslatest.LokiAuthForwardUserToken,
+					TLS: flowslatest.ClientTLS{
+						Enable: true,
+						CACert: flowslatest.CertificateReference{
+							Type:      flowslatest.RefTypeConfigMap,
+							Name:      lokiCert.Name,
+							Namespace: lokiCert.Namespace,
+							CertFile:  "cert.crt",
+						},
 					},
-				},
-			},
+				}},
 			Kafka: flowslatest.FlowCollectorKafka{
 				TLS: flowslatest.ClientTLS{
 					Enable: true,

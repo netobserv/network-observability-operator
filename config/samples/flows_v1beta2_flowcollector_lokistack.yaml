@@ -1,0 +1,168 @@
+apiVersion: flows.netobserv.io/v1beta2
+kind: FlowCollector
+metadata:
+  name: cluster
+spec:
+  namespace: netobserv
+  deploymentModel: DIRECT
+  agent:
+    type: EBPF
+    ebpf:
+      imagePullPolicy: IfNotPresent
+      sampling: 50
+      cacheActiveTimeout: 5s
+      cacheMaxFlows: 100000
+      interfaces: [ ]
+      excludeInterfaces: [ "lo" ]
+      logLevel: info
+      resources:
+        requests:
+          memory: 50Mi
+          cpu: 100m
+        limits:
+          memory: 800Mi
+      kafkaBatchSize: 10485760
+  processor:
+    port: 2055
+    imagePullPolicy: IfNotPresent
+    logLevel: info
+    profilePort: 6060
+    metrics:
+      server:
+        port: 9102
+      ignoreTags:
+        - egress
+        - packets
+      disableAlerts: []
+    dropUnusedFields: true
+    resources:
+      requests:
+        memory: 100Mi
+        cpu: 100m
+      limits:
+        memory: 800Mi
+    kafkaConsumerReplicas: 3
+    kafkaConsumerAutoscaler: null
+    kafkaConsumerQueueCapacity: 1000
+    kafkaConsumerBatchSize: 10485760
+    logTypes: FLOWS
+    conversationTerminatingTimeout: 5s
+    conversationHeartbeatInterval: 30s
+    conversationEndTimeout: 10s
+  kafka:
+    address: "kafka-cluster-kafka-bootstrap.netobserv"
+    topic: network-flows
+    tls:
+      enable: false
+      caCert:
+        type: secret
+        name: kafka-cluster-cluster-ca-cert
+        certFile: ca.crt
+      userCert:
+        type: secret
+        name: flp-kafka
+        certFile: user.crt
+        certKey: user.key
+  loki:
+    mode: LOKISTACK
+    lokiStack:
+      name: loki
+      namespace: netobserv
+    batchWait: 1s
+    batchSize: 10485760
+    minBackoff: 1s
+    maxBackoff: 5s
+    maxRetries: 2
+  consolePlugin:
+    register: true
+    imagePullPolicy: IfNotPresent
+    port: 9001
+    logLevel: info
+    autoscaler:
+      status: DISABLED
+      minReplicas: 1
+      maxReplicas: 3
+      metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 50
+    portNaming:
+      enable: true
+      portNames:
+        "3100": loki
+    quickFilters:
+    - name: Applications
+      filter:
+        src_namespace!: 'openshift-,netobserv'
+        dst_namespace!: 'openshift-,netobserv'
+      default: true
+    - name: Infrastructure
+      filter:
+        src_namespace: 'openshift-,netobserv'
+        dst_namespace: 'openshift-,netobserv'
+    - name: Pods network
+      filter:
+        src_kind: 'Pod'
+        dst_kind: 'Pod'
+      default: true
+    - name: Services network
+      filter:
+        dst_kind: 'Service'
+  exporters: []
+    # - type: KAFKA
+    #   kafka:
+    #     address: "kafka-cluster-kafka-bootstrap.netobserv"
+    #     topic: netobserv-flows-export
+    # or
+    # - type: IPFIX
+    #   ipfix:
+    #     targetHost: "ipfix-collector.ipfix.svc.cluster.local"
+    #     targetPort: 4739
+    #     transport: TCP or UDP (optional - defaults to TCP)
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: netobserv-reader    
+rules:
+- apiGroups:
+  - 'loki.grafana.com'
+  resources:
+  - network
+  resourceNames:
+  - logs
+  verbs:
+  - 'get'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: netobserv-writer
+rules:
+- apiGroups:
+  - 'loki.grafana.com'
+  resources:
+  - network
+  resourceNames:
+  - logs
+  verbs:
+  - 'create'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: netobserv-writer-flp
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: netobserv-writer
+subjects:
+- kind: ServiceAccount
+  name: flowlogs-pipeline    
+  namespace: netobserv
+- kind: ServiceAccount
+  name: flowlogs-pipeline-transformer
+  namespace: netobserv

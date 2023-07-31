@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -116,7 +116,7 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslat
 
 	// Watch for Loki certificate if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
 	// because certificate is always reloaded from file
-	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &desired.Spec.Loki.TLS, r.Namespace); err != nil {
+	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &desired.Spec.Loki.Manual.TLS, r.Namespace); err != nil {
 		return err
 	}
 

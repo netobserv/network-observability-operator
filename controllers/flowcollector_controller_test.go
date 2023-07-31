@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
@@ -643,7 +643,7 @@ func flowCollectorControllerSpecs() {
 				},
 			})).Should(Succeed())
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.TLS = flowslatest.ClientTLS{
+				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
 					Enable: true,
 					CACert: flowslatest.CertificateReference{
 						Type:     flowslatest.RefTypeConfigMap,
@@ -668,7 +668,7 @@ func flowCollectorControllerSpecs() {
 
 		It("Should restore no TLS config", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.TLS = flowslatest.ClientTLS{
+				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
 					Enable: false,
 				}
 			})

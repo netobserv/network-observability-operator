@@ -386,6 +386,9 @@ spec:
       kind: FlowCollector
       name: flowcollectors.flows.netobserv.io
       version: v1beta1
+    - kind: FlowCollector
+      name: flowcollectors.flows.netobserv.io
+      version: v1beta2
   description: |-
     NetObserv Operator is an OpenShift / Kubernetes operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by the NetObserv eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
 

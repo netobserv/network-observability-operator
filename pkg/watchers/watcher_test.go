@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 	"github.com/stretchr/testify/assert"

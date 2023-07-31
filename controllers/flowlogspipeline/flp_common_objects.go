@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/globals"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
@@ -316,10 +316,10 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 			MinBackoff:     helper.UnstructuredDuration(b.desired.Loki.MinBackoff),
 			StaticLabels:   model.LabelSet{},
 			Timeout:        helper.UnstructuredDuration(b.desired.Loki.Timeout),
-			URL:            b.desired.Loki.URL,
+			URL:            helper.LokiIngesterURL(&b.desired.Loki),
 			TimestampLabel: "TimeFlowEndMs",
 			TimestampScale: "1ms",
-			TenantID:       b.desired.Loki.TenantID,
+			TenantID:       helper.LokiTenantID(&b.desired.Loki),
 		}
 
 		for k, v := range b.desired.Loki.StaticLabels {
@@ -327,7 +327,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		}
 
 		var authorization *promConfig.Authorization
-		if helper.LokiUseHostToken(&b.desired.Loki) || helper.LokiForwardUserToken(&b.desired.Loki) {
+		if helper.LokiUseHostToken(&b.desired.Loki) || helper.LokiForwardUserToken(&b.desired.Loki) || helper.LokiModeLokiStack(&b.desired.Loki) {
 			b.volumes.AddToken(constants.FLPName)
 			authorization = &promConfig.Authorization{
 				Type:            "Bearer",
@@ -335,28 +335,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 			}
 		}
 
-		if b.desired.Loki.TLS.Enable {
-			if b.desired.Loki.TLS.InsecureSkipVerify {
-				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-					Authorization: authorization,
-					TLSConfig: promConfig.TLSConfig{
-						InsecureSkipVerify: true,
-					},
-				}
-			} else {
-				caPath := b.volumes.AddCACertificate(&b.desired.Loki.TLS, "loki-certs")
-				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-					Authorization: authorization,
-					TLSConfig: promConfig.TLSConfig{
-						CAFile: caPath,
-					},
-				}
-			}
-		} else {
-			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-				Authorization: authorization,
-			}
-		}
+		lokiWrite.ClientConfig = helper.LokiTLSClient(&b.desired.Loki, authorization, &b.volumes)
 		enrichedStage.WriteLoki("loki", lokiWrite)
 	}
 

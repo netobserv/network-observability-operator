@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -98,9 +98,8 @@ func getConfig() flowslatest.FlowCollectorSpec {
 				Duration: conntrackTerminatingTimeout,
 			},
 		},
-		Loki: flowslatest.FlowCollectorLoki{
-			Enable: pointer.Bool(true),
-			URL:    "http://loki:3100/",
+		Loki: flowslatest.FlowCollectorLoki{Manual: flowslatest.LokiManualParams{
+			IngesterURL: "http://loki:3100/"},
 			BatchWait: &metav1.Duration{
 				Duration: 1,
 			},
@@ -111,6 +110,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 			MaxBackoff: &metav1.Duration{
 				Duration: 300,
 			},
+			Enable:       pointer.Bool(true),
 			MaxRetries:   pointer.Int32(10),
 			StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
 		},
@@ -279,7 +279,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.Contains(report.String(), "no change")
 
 	// Check Loki config change
-	cfg.Loki.TLS = flowslatest.ClientTLS{
+	cfg.Loki.Manual.TLS = flowslatest.ClientTLS{
 		Enable: true,
 		CACert: flowslatest.CertificateReference{
 			Type:     "configmap",
@@ -297,7 +297,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.Contains(report.String(), "config-digest")
 
 	// Check volumes change
-	cfg.Loki.TLS = flowslatest.ClientTLS{
+	cfg.Loki.Manual.TLS = flowslatest.ClientTLS{
 		Enable: true,
 		CACert: flowslatest.CertificateReference{
 			Type:     "configmap",
@@ -624,7 +624,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.Equal(cfg.Processor.Port, int32(params[0].Ingest.Collector.Port))
 
 	lokiCfg := params[3].Write.Loki
-	assert.Equal(loki.URL, lokiCfg.URL)
+	assert.Equal(loki.Manual.IngesterURL, lokiCfg.URL)
 	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg.BatchWait)
 	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg.MinBackoff)
 	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
