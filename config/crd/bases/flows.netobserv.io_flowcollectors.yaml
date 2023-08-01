@@ -3780,6 +3780,12 @@ spec:
                   and forwards them to the Loki persistence layer and/or any available
                   exporter.'
                 properties:
+                  clusterName:
+                    default: ""
+                    description: '`clusterName` is the name of the cluster to appear
+                      in the flows data. This is useful in a multi-cluster context.
+                      When using OpenShift, leave empty to make it automatically determined.'
+                    type: string
                   conversationEndTimeout:
                     default: 10s
                     description: '`conversationEndTimeout` is the time to wait after

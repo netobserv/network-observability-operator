@@ -58,6 +58,8 @@ spec:
     conversationTerminatingTimeout: 5s
     conversationHeartbeatInterval: 30s
     conversationEndTimeout: 10s
+    # Append a unique cluster name to each record
+    # clusterName: <CLUSTER NAME>
   kafka:
     address: "kafka-cluster-kafka-bootstrap.netobserv"
     topic: network-flows

@@ -58,6 +58,14 @@ rules:
   - update
   - watch
 - apiGroups:
+  - config.openshift.io
+  resources:
+  - clusterversions
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - console.openshift.io
   resources:
   - consoleplugins
@@ -155,24 +163,15 @@ rules:
   - rbac.authorization.k8s.io
   resources:
   - clusterrolebindings
-  - rolebindings
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
   - clusterroles
+  - rolebindings
   - roles
   verbs:
   - create
   - delete
   - get
   - list
+  - update
   - watch
 - apiGroups:
   - security.openshift.io

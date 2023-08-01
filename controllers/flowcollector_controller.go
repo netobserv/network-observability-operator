@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/netobserv/network-observability-operator/controllers/globals"
+	configv1 "github.com/openshift/api/config/v1"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -64,8 +66,7 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme, co
 //+kubebuilder:rbac:groups=apps,resources=deployments;daemonsets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=namespaces;services;serviceaccounts;configmaps;secrets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=endpoints,verbs=get;list;watch
-//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;roles,verbs=get;create;delete;watch;list
-//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings;rolebindings,verbs=get;list;create;delete;update;watch
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings;clusterroles;rolebindings;roles,verbs=get;list;create;delete;update;watch
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;delete;update;patch;list;watch
 //+kubebuilder:rbac:groups=operator.openshift.io,resources=consoles,verbs=get;update;list;update;watch
 //+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors,verbs=get;list;watch;create;update;patch;delete
@@ -75,6 +76,7 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme, co
 //+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=list;create;update;watch
 //+kubebuilder:rbac:groups=apiregistration.k8s.io,resources=apiservices,verbs=list;get;watch
 //+kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors;prometheusrules,verbs=get;create;delete;update;patch;list;watch
+//+kubebuilder:rbac:groups=config.openshift.io,resources=clusterversions,verbs=get;list;watch
 //+kubebuilder:rbac:urls="/metrics",verbs=get
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -101,6 +103,18 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 
 	var didChange, isInProgress bool
 	previousNamespace := desired.Status.Namespace
+
+	// obtain default cluster ID - api is specific to openshift
+	if r.permissions.Vendor(ctx) == discover.VendorOpenShift && globals.DefaultClusterID == "" {
+		cversion := &configv1.ClusterVersion{}
+		key := client.ObjectKey{Name: "version"}
+		if err := r.Client.Get(ctx, key, cversion); err != nil {
+			log.Error(err, "unable to obtain cluster ID")
+		} else {
+			globals.DefaultClusterID = cversion.Spec.ClusterID
+		}
+	}
+
 	reconcilersInfo := r.newCommonInfo(ctx, desired, ns, previousNamespace, func(b bool) { didChange = b }, func(b bool) { isInProgress = b })
 
 	err = r.reconcileOperator(ctx, &reconcilersInfo, desired)

@@ -53,6 +53,7 @@ func flowCollectorIsoSpecs() {
 				ConversationHeartbeatInterval:  &metav1.Duration{Duration: time.Second},
 				ConversationEndTimeout:         &metav1.Duration{Duration: time.Second},
 				ConversationTerminatingTimeout: &metav1.Duration{Duration: time.Second},
+				ClusterName:                    "testCluster",
 				Debug:                          flowslatest.DebugConfig{},
 				LogTypes:                       &outputRecordTypes,
 				Metrics: flowslatest.FLPMetrics{
