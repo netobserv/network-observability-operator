@@ -19,12 +19,18 @@ type rowInfo struct {
 const (
 	layerApps           = "Applications"
 	layerInfra          = "Infrastructure"
+	layerPods           = "Pods"
+	layerServices       = "Services"
 	appsFilters1        = `SrcK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
 	appsFilters2        = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
 	infraFilters1       = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
 	infraFilters2       = `SrcK8S_Namespace!~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
+	K8SField            = "$K8S_"
+	podsFilter          = K8SField + `Type="Pod"`
+	servicesFilter      = K8SField + `Type="Service"`
 	metricTagNamespaces = "namespaces"
 	metricTagNodes      = "nodes"
+	metricTagPods       = "pods"
 	metricTagWorkloads  = "workloads"
 	metricTagIngress    = "ingress"
 	metricTagEgress     = "egress"
@@ -62,11 +68,18 @@ var (
 			),
 			"DstK8S_Namespace", "non pods", "DstK8S_Namespace", "()"
 		)`,
+		metricTagPods: `label_replace(
+			topk(10,sum(
+				rate($NAME{$K8S_TYPE_FILTER}[1m])
+			) by ($K8S_Name, $K8S_Namespace, $K8S_Type, $K8S_HostName)),
+			"$K8S_HostName", "(external)", "$K8S_HostName", "()"
+		)`,
 	}
 	mapLegends = map[string]string{
 		metricTagNodes:      "{{SrcK8S_HostName}} -> {{DstK8S_HostName}}",
 		metricTagNamespaces: "{{SrcK8S_Namespace}} -> {{DstK8S_Namespace}}",
 		metricTagWorkloads:  "{{SrcK8S_OwnerName}} ({{SrcK8S_Namespace}}) -> {{DstK8S_OwnerName}} ({{DstK8S_Namespace}})",
+		metricTagPods:       "{{$K8S_Name}} ({{$K8S_Namespace}})",
 	}
 	formatCleaner = strings.NewReplacer(
 		"\"", "\\\"",
@@ -81,15 +94,27 @@ var (
 		"$FILTERS1", infraFilters1,
 		"$FILTERS2", infraFilters2,
 	)
+	podsFilterReplacer = strings.NewReplacer(
+		"$K8S_TYPE_FILTER", podsFilter,
+	)
+	servicesFilterReplacer = strings.NewReplacer(
+		"$K8S_TYPE_FILTER", servicesFilter,
+	)
 )
 
 func init() {
-	for _, group := range []string{metricTagNodes, metricTagNamespaces, metricTagWorkloads} {
-		groupTrimmed := strings.TrimSuffix(group, "s")
-		for _, vt := range []string{metricTagBytes, metricTagPackets} {
+	for _, group := range []string{metricTagNodes, metricTagNamespaces, metricTagWorkloads, metricTagPods} {
+		metricTag := strings.TrimSuffix(group, "s")
+		valueTypes := []string{metricTagBytes, metricTagPackets}
+		if group == metricTagPods {
+			// pods / services graphs are only available on top bytes
+			metricTag = "top_pods"
+			valueTypes = []string{metricTagBytes}
+		}
+		for _, vt := range valueTypes {
 			for _, dir := range []string{metricTagEgress, metricTagIngress} {
 				rowsInfo = append(rowsInfo, rowInfo{
-					metric:    fmt.Sprintf("netobserv_%s_%s_%s_total", groupTrimmed, dir, vt),
+					metric:    fmt.Sprintf("netobserv_%s_%s_%s_total", metricTag, dir, vt),
 					group:     group,
 					dir:       dir,
 					valueType: vt,
@@ -99,22 +124,49 @@ func init() {
 	}
 }
 
-func buildQuery(netobsNs string, rowInfo rowInfo, isApp bool) string {
+func srcDstReplacer(str string, matcher string, isSrc bool) string {
+	outputField := strings.ReplaceAll(matcher, "$", "")
+	if isSrc {
+		outputField = "Src" + outputField
+	} else {
+		outputField = "Dst" + outputField
+	}
+	return strings.ReplaceAll(str, matcher, outputField)
+}
+
+func buildQuery(netobsNs string, rowInfo rowInfo, layer string) string {
 	strTemplate := mapStrTemplates[rowInfo.group]
 	q := strings.ReplaceAll(strTemplate, "$NAME", rowInfo.metric)
-	if isApp {
+	switch layer {
+	case layerPods:
+		q = podsFilterReplacer.Replace(q)
+	case layerServices:
+		q = servicesFilterReplacer.Replace(q)
+	case layerApps:
 		q = appFilterReplacer.Replace(q)
-	} else {
+	default:
 		q = infraFilterReplacer.Replace(q)
 	}
 	q = strings.ReplaceAll(q, "$NETOBSERV_NS", netobsNs)
+	if layer == layerPods || layer == layerServices {
+		q = srcDstReplacer(q, K8SField, rowInfo.dir == metricTagEgress)
+	}
 	// Return formatted / one line
 	return formatCleaner.Replace(q)
 }
 
+func buildLegend(rowInfo rowInfo, layer string) string {
+	switch layer {
+	case layerPods, layerServices:
+		return srcDstReplacer(mapLegends[rowInfo.group], K8SField, rowInfo.dir == metricTagEgress)
+	default:
+		return mapLegends[rowInfo.group]
+	}
+}
+
 func flowMetricsPanel(netobsNs string, rowInfo rowInfo, layer string) string {
-	q := buildQuery(netobsNs, rowInfo, layer == layerApps)
-	legend := mapLegends[rowInfo.group]
+	q := buildQuery(netobsNs, rowInfo, layer)
+	legend := buildLegend(rowInfo, layer)
 	return fmt.Sprintf(`
 	{
 		"aliasColors": {},
@@ -207,11 +259,18 @@ func flowMetricsPanel(netobsNs string, rowInfo rowInfo, layer string) string {
 
 func flowMetricsRow(netobsNs string, rowInfo rowInfo) string {
 	var verb, vt string
+	grouping := "source and destination"
 	switch rowInfo.dir {
 	case metricTagEgress:
 		verb = "sent"
+		if rowInfo.group == metricTagPods {
+			grouping = "source"
+		}
 	case metricTagIngress:
 		verb = "received"
+		if rowInfo.group == metricTagPods {
+			grouping = "destination"
+		}
 	}
 	switch rowInfo.valueType {
 	case metricTagBytes:
@@ -219,10 +278,12 @@ func flowMetricsRow(netobsNs string, rowInfo rowInfo) string {
 	case metricTagPackets:
 		vt = "packet"
 	}
-	title := fmt.Sprintf("Top %s rates %s per source and destination %s", vt, verb, rowInfo.group)
+	title := fmt.Sprintf("Top %s rates %s per %s %s", vt, verb, grouping, rowInfo.group)
 	var panels string
 	if rowInfo.group == metricTagNodes {
 		panels = fmt.Sprintf("[%s]", flowMetricsPanel(netobsNs, rowInfo, ""))
+	} else if rowInfo.group == metricTagPods {
+		panels = fmt.Sprintf("[%s, %s]", flowMetricsPanel(netobsNs, rowInfo, layerPods), flowMetricsPanel(netobsNs, rowInfo, layerServices))
 	} else {
 		panels = fmt.Sprintf("[%s, %s]", flowMetricsPanel(netobsNs, rowInfo, layerApps), flowMetricsPanel(netobsNs, rowInfo, layerInfra))
 	}
