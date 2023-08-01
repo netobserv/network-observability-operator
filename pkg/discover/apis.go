@@ -50,10 +50,6 @@ func NewAvailableAPIs(client *discovery.DiscoveryClient) (*AvailableAPIs, error)
 	return &AvailableAPIs{apisMap: apiMap}, nil
 }
 
-func NewAvailableAPIsMock(apiMap map[string]bool) *AvailableAPIs {
-	return &AvailableAPIs{apisMap: apiMap}
-}
-
 // HasConsolePlugin returns true if "consoleplugins.console.openshift.io" API was found
 func (c *AvailableAPIs) HasConsolePlugin() bool {
 	return c.apisMap[consolePlugin]

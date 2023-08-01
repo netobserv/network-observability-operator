@@ -519,7 +519,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		enrichedStage.EncodePrometheus("prometheus", promEncode)
 	}
 
-	if len(topPromMetrics) > 0 && b.info != nil && b.info.AvailableAPIs != nil && b.info.AvailableAPIs.HasSvcMonitor() {
+	if len(topPromMetrics) > 0 {
 		topBytesStage := enrichedStage.ExtractTimebased("top_bytes", api.ExtractTimebased{
 			Rules: []api.TimebasedFilterRule{
 				{

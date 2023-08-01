@@ -34,7 +34,6 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/discover"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -65,6 +64,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 			Resources:       resources,
 			HealthPort:      8080,
 			Metrics: flowslatest.FLPMetrics{
+				IgnoreTags: []string{"pods"},
 				Server: flowslatest.MetricsServerConfig{
 					Port: 9090,
 					TLS: flowslatest.ServerTLS{
@@ -158,11 +158,6 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 
 func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
 	info := reconcilers.Common{Namespace: ns}
-	return newMonolithBuilder(info.NewInstance(image), cfg)
-}
-
-func monoBuilderMonitoring(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
-	info := reconcilers.Common{Namespace: ns, AvailableAPIs: discover.NewAvailableAPIsMock(map[string]bool{"servicemonitors.monitoring.coreos.com": true})}
 	return newMonolithBuilder(info.NewInstance(image), cfg)
 }
 
@@ -843,7 +838,7 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Processor.Metrics.IgnoreTags = []string{"nodes"}
+	cfg.Processor.Metrics.IgnoreTags = []string{"nodes", "pods"}
 
 	b := monoBuilder("namespace", &cfg)
 	stages, parameters, err := b.buildPipelineConfig()
@@ -860,7 +855,7 @@ func TestMergeMetricsConfigurationIgnoreAll(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Processor.Metrics.IgnoreTags = []string{"nodes", "namespaces", "workloads"}
+	cfg.Processor.Metrics.IgnoreTags = []string{"nodes", "namespaces", "workloads", "pods"}
 
 	b := monoBuilder("namespace", &cfg)
 	stages, parameters, err := b.buildPipelineConfig()
@@ -925,7 +920,8 @@ func TestPipelineConfigWithMonitoring(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	cfg.Processor.LogLevel = "info"
-	b := monoBuilderMonitoring(ns, &cfg)
+	cfg.Processor.Metrics.IgnoreTags = []string{}
+	b := monoBuilder(ns, &cfg)
 	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
