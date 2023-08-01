@@ -34,6 +34,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/discover"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -157,6 +158,11 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 
 func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
 	info := reconcilers.Common{Namespace: ns}
+	return newMonolithBuilder(info.NewInstance(image), cfg)
+}
+
+func monoBuilderMonitoring(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
+	info := reconcilers.Common{Namespace: ns, AvailableAPIs: discover.NewAvailableAPIsMock(map[string]bool{"servicemonitors.monitoring.coreos.com": true})}
 	return newMonolithBuilder(info.NewInstance(image), cfg)
 }
 
@@ -910,4 +916,42 @@ func TestPipelineWithoutLoki(t *testing.T) {
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+}
+
+func TestPipelineConfigWithMonitoring(t *testing.T) {
+	assert := assert.New(t)
+
+	// Single config
+	ns := "namespace"
+	cfg := getConfig()
+	cfg.Processor.LogLevel = "info"
+	b := monoBuilderMonitoring(ns, &cfg)
+	stages, parameters, err := b.buildPipelineConfig()
+	assert.NoError(err)
+	assert.True(validatePipelineConfig(stages, parameters))
+	jsonStages, _ := json.Marshal(stages)
+	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"top_bytes","follows":"enrich"},{"name":"top_prometheus","follows":"top_bytes"}]`, string(jsonStages))
+
+	assert.Len(parameters[4].Encode.Prom.Metrics, 15)
+	assert.Equal("namespace_egress_bytes_total", parameters[4].Encode.Prom.Metrics[0].Name)
+	assert.Equal("namespace_egress_packets_total", parameters[4].Encode.Prom.Metrics[1].Name)
+	assert.Equal("namespace_flows_total", parameters[4].Encode.Prom.Metrics[2].Name)
+	assert.Equal("namespace_ingress_bytes_total", parameters[4].Encode.Prom.Metrics[3].Name)
+	assert.Equal("namespace_ingress_packets_total", parameters[4].Encode.Prom.Metrics[4].Name)
+	assert.Equal("node_egress_bytes_total", parameters[4].Encode.Prom.Metrics[5].Name)
+	assert.Equal("node_egress_packets_total", parameters[4].Encode.Prom.Metrics[6].Name)
+	assert.Equal("node_flows_total", parameters[4].Encode.Prom.Metrics[7].Name)
+	assert.Equal("node_ingress_bytes_total", parameters[4].Encode.Prom.Metrics[8].Name)
+	assert.Equal("node_ingress_packets_total", parameters[4].Encode.Prom.Metrics[9].Name)
+	assert.Equal("workload_egress_bytes_total", parameters[4].Encode.Prom.Metrics[10].Name)
+	assert.Equal("workload_egress_packets_total", parameters[4].Encode.Prom.Metrics[11].Name)
+	assert.Equal("workload_flows_total", parameters[4].Encode.Prom.Metrics[12].Name)
+	assert.Equal("workload_ingress_bytes_total", parameters[4].Encode.Prom.Metrics[13].Name)
+	assert.Equal("workload_ingress_packets_total", parameters[4].Encode.Prom.Metrics[14].Name)
+	assert.Equal("netobserv_", parameters[4].Encode.Prom.Prefix)
+
+	assert.Len(parameters[6].Encode.Prom.Metrics, 2)
+	assert.Equal("top_pods_egress_bytes_total", parameters[6].Encode.Prom.Metrics[0].Name)
+	assert.Equal("top_pods_ingress_bytes_total", parameters[6].Encode.Prom.Metrics[1].Name)
+	assert.Equal("netobserv_", parameters[6].Encode.Prom.Prefix)
 }

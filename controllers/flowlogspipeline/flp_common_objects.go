@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
@@ -101,13 +102,129 @@ func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 	}
 }
 
-func name(ck ConfKind) string                 { return constants.FLPName + FlpConfSuffix[ck] }
-func RoleBindingName(ck ConfKind) string      { return name(ck) + "-role" }
-func RoleBindingMonoName(ck ConfKind) string  { return name(ck) + "-role-mono" }
-func promServiceName(ck ConfKind) string      { return name(ck) + "-prom" }
-func configMapName(ck ConfKind) string        { return name(ck) + "-config" }
-func serviceMonitorName(ck ConfKind) string   { return name(ck) + "-monitor" }
-func prometheusRuleName(ck ConfKind) string   { return name(ck) + "-alert" }
+func name(ck ConfKind) string                { return constants.FLPName + FlpConfSuffix[ck] }
+func RoleBindingName(ck ConfKind) string     { return name(ck) + "-role" }
+func RoleBindingMonoName(ck ConfKind) string { return name(ck) + "-role-mono" }
+func promServiceName(ck ConfKind) string     { return name(ck) + "-prom" }
+func configMapName(ck ConfKind) string       { return name(ck) + "-config" }
+func serviceMonitorName(ck ConfKind) string  { return name(ck) + "-monitor" }
+func prometheusRuleName(ck ConfKind) string  { return name(ck) + "-alert" }
+func connectionTrackingPktDropFields() []api.OutputField {
+	return []api.OutputField{
+		{
+			Name:      "PktDropBytes",
+			Operation: "sum",
+		},
+		{
+			Name:      "PktDropBytes",
+			Operation: "sum",
+			SplitAB:   true,
+		},
+		{
+			Name:      "PktDropPackets",
+			Operation: "sum",
+		},
+		{
+			Name:      "PktDropPackets",
+			Operation: "sum",
+			SplitAB:   true,
+		},
+		{
+			Name:      "PktDropLatestState",
+			Operation: "last",
+		},
+		{
+			Name:      "PktDropLatestDropCause",
+			Operation: "last",
+		},
+	}
+}
+func connectionTrackingDNSFields() []api.OutputField {
+	return []api.OutputField{
+		{
+			Name:      "DnsLatencyMs",
+			Operation: "max",
+		},
+	}
+}
+func (b *builder) connectionTrackingOutputFields() []api.OutputField {
+	outputFields := []api.OutputField{
+		{
+			Name:      "Bytes",
+			Operation: "sum",
+		},
+		{
+			Name:      "Bytes",
+			Operation: "sum",
+			SplitAB:   true,
+		},
+		{
+			Name:      "Packets",
+			Operation: "sum",
+		},
+		{
+			Name:      "Packets",
+			Operation: "sum",
+			SplitAB:   true,
+		},
+		{
+			Name:      "numFlowLogs",
+			Operation: "count",
+		},
+		{
+			Name:      "TimeFlowStartMs",
+			Operation: "min",
+		},
+		{
+			Name:      "TimeFlowEndMs",
+			Operation: "max",
+		},
+		{
+			Name:      "FlowDirection",
+			Operation: "first",
+		},
+		{
+			Name:      "IfDirection",
+			Operation: "first",
+		},
+		{
+			Name:      "AgentIP",
+			Operation: "first",
+		},
+	}
+	if helper.IsPktDropEnabled(b.desired) {
+		outputFields = append(outputFields, connectionTrackingPktDropFields()...)
+	}
+	if helper.IsDNSTrackingEnabled(b.desired) {
+		outputFields = append(outputFields, connectionTrackingDNSFields()...)
+	}
+	return outputFields
+}
+func (b *builder) connectionTrackingScheduling() []api.ConnTrackSchedulingGroup {
+	terminatingTimeout := conntrackTerminatingTimeout
+	if b.desired.Processor.ConversationTerminatingTimeout != nil {
+		terminatingTimeout = b.desired.Processor.ConversationTerminatingTimeout.Duration
+	}
+
+	endTimeout := conntrackEndTimeout
+	if b.desired.Processor.ConversationEndTimeout != nil {
+		endTimeout = b.desired.Processor.ConversationEndTimeout.Duration
+	}
+
+	heartbeatInterval := conntrackHeartbeatInterval
+	if b.desired.Processor.ConversationHeartbeatInterval != nil {
+		heartbeatInterval = b.desired.Processor.ConversationHeartbeatInterval.Duration
+	}
+
+	return []api.ConnTrackSchedulingGroup{
+		{
+			Selector:             nil, // Default group. Match all flowlogs
+			HeartbeatInterval:    api.Duration{Duration: heartbeatInterval},
+			EndConnectionTimeout: api.Duration{Duration: endTimeout},
+			TerminatingTimeout:   api.Duration{Duration: terminatingTimeout},
+		},
+	}
+}
 func (b *builder) name() string               { return name(b.confKind) }
 func (b *builder) promServiceName() string    { return promServiceName(b.confKind) }
 func (b *builder) configMapName() string      { return configMapName(b.confKind) }
@@ -235,18 +352,23 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 //go:embed metrics_definitions
 var metricsConfigEmbed embed.FS
 
-// obtainMetricsConfiguration returns the configuration info for the prometheus stage needed to
-// supply the metrics for those metrics
-func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, error) {
+// obtainMetricsConfiguration returns the configuration info for the prometheus stages
+func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, api.PromMetricsItems, error) {
 	entries, err := metricsConfigEmbed.ReadDir(metricsConfigDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to access metrics_definitions directory: %w", err)
+		return nil, nil, fmt.Errorf("failed to access metrics_definitions directory: %w", err)
 	}
 
-	cg := confgen.NewConfGen(&confgen.Options{
+	// separate metrics and top metrics
+	promConfGen := confgen.NewConfGen(&confgen.Options{
 		GenerateStages: []string{"encode_prom"},
 		SkipWithTags:   b.desired.Processor.Metrics.IgnoreTags,
 	})
+	topPromConfGen := confgen.NewConfGen(&confgen.Options{
+		GenerateStages: []string{"encode_prom"},
+		SkipWithTags:   b.desired.Processor.Metrics.IgnoreTags,
+	})
+	promConfGens := []*confgen.ConfGen{promConfGen, topPromConfGen}
 
 	for _, entry := range entries {
 		fileName := entry.Name()
@@ -257,22 +379,32 @@ func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, error) {
 
 		input, err := metricsConfigEmbed.ReadFile(srcPath)
 		if err != nil {
-			return nil, fmt.Errorf("error reading metrics file %s; %w", srcPath, err)
+			return nil, nil, fmt.Errorf("error reading metrics file %s; %w", srcPath, err)
 		}
-		err = cg.ParseDefinition(fileName, input)
+
+		var confGeng = promConfGen
+		if strings.HasPrefix(fileName, "top_") {
+			confGeng = topPromConfGen
+		}
+		err = confGeng.ParseDefinition(fileName, input)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing metrics file %s; %w", srcPath, err)
+			return nil, nil, fmt.Errorf("error parsing metrics file %s; %w", srcPath, err)
 		}
 	}
 
-	stages := cg.GenerateTruncatedConfig()
-	if len(stages) != 1 {
-		return nil, fmt.Errorf("error generating truncated config, 1 stage expected in %v", stages)
+	var metrics = make([]api.PromMetricsItems, len(promConfGens))
+	for i, confGen := range promConfGens {
+		stages := confGen.GenerateTruncatedConfig()
+		if len(stages) != 1 {
+			return nil, nil, fmt.Errorf("error generating truncated config, 1 stage expected in %v", stages)
+		}
+		if stages[0].Encode == nil || stages[0].Encode.Prom == nil {
+			return nil, nil, fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
+		}
+		metrics[i] = stages[0].Encode.Prom.Metrics
 	}
-	if stages[0].Encode == nil || stages[0].Encode.Prom == nil {
-		return nil, fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
-	}
-	return stages[0].Encode.Prom.Metrics, nil
+
+	return metrics[0], metrics[1], nil
 }
 
 func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
@@ -289,112 +421,10 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		// Else: nothing for eBPF at the moment
 	}
 
-	outputFields := []api.OutputField{
-		{
-			Name:      "Bytes",
-			Operation: "sum",
-		},
-		{
-			Name:      "Bytes",
-			Operation: "sum",
-			SplitAB:   true,
-		},
-		{
-			Name:      "Packets",
-			Operation: "sum",
-		},
-		{
-			Name:      "Packets",
-			Operation: "sum",
-			SplitAB:   true,
-		},
-		{
-			Name:      "numFlowLogs",
-			Operation: "count",
-		},
-		{
-			Name:      "TimeFlowStartMs",
-			Operation: "min",
-		},
-		{
-			Name:      "TimeFlowEndMs",
-			Operation: "max",
-		},
-		{
-			Name:      "FlowDirection",
-			Operation: "first",
-		},
-		{
-			Name:      "IfDirection",
-			Operation: "first",
-		},
-		{
-			Name:      "AgentIP",
-			Operation: "first",
-		},
-	}
-
-	if helper.IsPktDropEnabled(b.desired) {
-		outputPktDropFields := []api.OutputField{
-			{
-				Name:      "PktDropBytes",
-				Operation: "sum",
-			},
-			{
-				Name:      "PktDropBytes",
-				Operation: "sum",
-				SplitAB:   true,
-			},
-			{
-				Name:      "PktDropPackets",
-				Operation: "sum",
-			},
-			{
-				Name:      "PktDropPackets",
-				Operation: "sum",
-				SplitAB:   true,
-			},
-			{
-				Name:      "PktDropLatestState",
-				Operation: "last",
-			},
-			{
-				Name:      "PktDropLatestDropCause",
-				Operation: "last",
-			},
-		}
-		outputFields = append(outputFields, outputPktDropFields...)
-	}
-
-	if helper.IsDNSTrackingEnabled(b.desired) {
-		outDNSTrackingFields := []api.OutputField{
-			{
-				Name:      "DnsLatencyMs",
-				Operation: "max",
-			},
-		}
-		outputFields = append(outputFields, outDNSTrackingFields...)
-	}
-
 	// Connection tracking stage (only if LogTypes is not FLOWS)
 	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
 		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
-
-		terminatingTimeout := conntrackTerminatingTimeout
-		if b.desired.Processor.ConversationTerminatingTimeout != nil {
-			terminatingTimeout = b.desired.Processor.ConversationTerminatingTimeout.Duration
-		}
-
-		endTimeout := conntrackEndTimeout
-		if b.desired.Processor.ConversationEndTimeout != nil {
-			endTimeout = b.desired.Processor.ConversationEndTimeout.Duration
-		}
-
-		heartbeatInterval := conntrackHeartbeatInterval
-		if b.desired.Processor.ConversationHeartbeatInterval != nil {
-			heartbeatInterval = b.desired.Processor.ConversationHeartbeatInterval.Duration
-		}
 
 		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{
 			KeyDefinition: api.KeyDefinition{
@@ -412,15 +442,8 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 				},
 			},
 			OutputRecordTypes: outputRecordTypes,
-			OutputFields:      outputFields,
-			Scheduling: []api.ConnTrackSchedulingGroup{
-				{
-					Selector:             nil, // Default group. Match all flowlogs
-					HeartbeatInterval:    api.Duration{Duration: heartbeatInterval},
-					EndConnectionTimeout: api.Duration{Duration: endTimeout},
-					TerminatingTimeout:   api.Duration{Duration: terminatingTimeout},
-				},
-			},
+			OutputFields:      b.connectionTrackingOutputFields(),
+			Scheduling:        b.connectionTrackingScheduling(),
 			TCPFlags: api.ConnTrackTCPFlags{
 				FieldName:           "Flags",
 				DetectEndConnection: true,
@@ -513,7 +536,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	}
 
 	// obtain encode_prometheus stage from metrics_definitions
-	promMetrics, err := b.obtainMetricsConfiguration()
+	promMetrics, topPromMetrics, err := b.obtainMetricsConfiguration()
 	if err != nil {
 		return err
 	}
@@ -525,6 +548,42 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 			Metrics: promMetrics,
 		}
 		enrichedStage.EncodePrometheus("prometheus", promEncode)
+	}
+
+	if len(topPromMetrics) > 0 && b.info != nil && b.info.AvailableAPIs != nil && b.info.AvailableAPIs.HasSvcMonitor() {
+		topBytesStage := enrichedStage.ExtractTimebased("top_bytes", api.ExtractTimebased{
+			Rules: []api.TimebasedFilterRule{
+				{
+					Name:          "top_src_bytes",
+					IndexKeys:     []string{"SrcK8S_Name", "SrcK8S_Namespace", "SrcK8S_Type", "SrcK8S_HostName", "FlowDirection", "Duplicate"},
+					OperationType: "avg",
+					OperationKey:  "Bytes",
+					TopK:          10,
+					Reversed:      false,
+					TimeInterval: api.Duration{
+						Duration: 60 * time.Second,
+					},
+				},
+				{
+					Name:          "top_dst_bytes",
+					IndexKeys:     []string{"DstK8S_Name", "DstK8S_Namespace", "DstK8S_Type", "DstK8S_HostName", "FlowDirection", "Duplicate"},
+					OperationType: "avg",
+					OperationKey:  "Bytes",
+					TopK:          10,
+					Reversed:      false,
+					TimeInterval: api.Duration{
+						Duration: 60 * time.Second,
+					},
+				},
+			},
+		})
+
+		// prometheus stage (encode) configuration for top metrics
+		topPromEncode := api.PromEncode{
+			Prefix:  "netobserv_",
+			Metrics: topPromMetrics,
+		}
+		topBytesStage.EncodePrometheus("top_prometheus", topPromEncode)
 	}
 
 	b.addCustomExportStages(&enrichedStage)

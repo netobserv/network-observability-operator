@@ -1,0 +1,29 @@
+#flp_confgen
+description:
+  This metric observes the incoming traffic
+details:
+  Sum bytes for incoming traffic per destination pod / service
+usage:
+  Evaluate network incoming usage breakdown per pod / service
+tags:
+  - ingress
+  - bytes
+  - pods
+  - services
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: top_pods_ingress_bytes_total
+        type: counter
+        valuekey: Bytes
+        filters:
+        - key: FlowDirection
+          value: "0"
+        - key: Duplicate
+          value: "false"
+        labels:
+          - DstK8S_Name
+          - DstK8S_Namespace
+          - DstK8S_Type
+          - DstK8S_HostName
