@@ -42,6 +42,7 @@ spec:
         # Ignoring eihter "namespaces" or "workloads", as namespaces metrics are included in workload metrics
         # This helps reduce total cardinality
         - namespaces
+        - pods
       disableAlerts: []
     dropUnusedFields: true
     resources:

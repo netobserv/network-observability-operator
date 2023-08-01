@@ -333,7 +333,8 @@ metadata:
                   "nodes-flows",
                   "namespaces-flows",
                   "workloads-flows",
-                  "namespaces"
+                  "namespaces",
+                  "pods"
                 ],
                 "server": {
                   "port": 9102
