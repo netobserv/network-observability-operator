@@ -73,6 +73,7 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 
 	dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS
 	dst.Spec.Kafka.SASL = restored.Spec.Kafka.SASL
+	dst.Spec.Agent.EBPF.EnableFlowRTT = restored.Spec.Agent.EBPF.EnableFlowRTT
 
 	dst.Spec.ConsolePlugin.Enable = restored.Spec.ConsolePlugin.Enable
 

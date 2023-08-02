@@ -482,6 +482,14 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 		outputFields = append(outputFields, outDNSTrackingFields...)
 	}
 
+	if b.desired.Agent.EBPF.EnableFlowRTT {
+		outputFields = append(outputFields, api.OutputField{
+			Name:      "MaxTimeFlowRttNs",
+			Operation: "max",
+			Input:     "TimeFlowRttNs",
+		})
+	}
+
 	// Connection tracking stage (only if LogTypes is not FLOWS)
 	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)

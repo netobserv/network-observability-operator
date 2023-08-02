@@ -357,6 +357,10 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		if helper.IsDNSTrackingEnabled(b.desired) {
 			features = append(features, "dnsTracking")
 		}
+
+		if b.desired.Agent.EBPF.EnableFlowRTT {
+			features = append(features, "flowRTT")
+		}
 	}
 
 	config := map[string]interface{}{

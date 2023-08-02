@@ -57,6 +57,7 @@ const (
 	envGoMemLimit                 = "GOMEMLIMIT"
 	envEnablePktDrop              = "ENABLE_PKT_DROPS"
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
+	envEnableFlowRTT              = "ENABLE_RTT"
 	envListSeparator              = ","
 )
 
@@ -404,6 +405,13 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		config = append(config, corev1.EnvVar{
 			Name:  envSampling,
 			Value: strconv.Itoa(int(*sampling)),
+		})
+	}
+
+	if coll.Spec.Agent.EBPF.EnableFlowRTT {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableFlowRTT,
+			Value: "true",
 		})
 	}
 

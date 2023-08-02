@@ -214,6 +214,14 @@ type FlowCollectorEBPF struct {
 	// (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
+
+	// `enableFlowRtt` allows enabling FlowRTT calculations in the ebpf agent.
+	// Currently only TCP handshake based RTT is calculated per flow.
+	// This feature is optionally enabled and is disabled by default.
+	// This feature needs both INGRESS and EGRESS direction flow capture and will be disabled if both are not enabled.
+	//+kubebuilder:default:=false
+	//+optional
+	EnableFlowRTT bool `json:"enableFlowRtt,omitempty"`
 }
 
 // FlowCollectorKafka defines the desired Kafka config of FlowCollector

@@ -237,6 +237,15 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>enableFlowRtt</b></td>
+        <td>boolean</td>
+        <td>
+          `enableFlowRtt` allows enabling FlowRTT calculations in the ebpf agent. Currently only TCP handshake based RTT is calculated per flow. This feature is optionally enabled and is disabled by default. This feature needs both INGRESS and EGRESS direction flow capture and will be disabled if both are not enabled.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>excludeInterfaces</b></td>
         <td>[]string</td>
         <td>
@@ -4075,6 +4084,15 @@ Agent configuration for flows extraction.
         <td>boolean</td>
         <td>
           Enable the DNS tracking feature. This feature requires mounting the kernel debug filesystem hence the eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged parameter is not set, an error is reported.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enableFlowRtt</b></td>
+        <td>boolean</td>
+        <td>
+          `enableFlowRtt` allows enabling FlowRTT calculations in the ebpf agent. Currently only TCP handshake based RTT is calculated per flow. This feature is optionally enabled and is disabled by default. This feature needs both INGRESS and EGRESS direction flow capture and will be disabled if both are not enabled.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
