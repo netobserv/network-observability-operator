@@ -109,12 +109,15 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 		if err = r.reconcileHPA(ctx, &builder, &desired.Spec); err != nil {
 			return err
 		}
+
 		// Watch for Loki certificates if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
 		// because certificate is always reloaded from file
-		if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &desired.Spec.Loki.Manual.TLS, r.Namespace); err != nil {
+		clientTLS := helper.LokiTLS(&desired.Spec.Loki)
+		if _, err = r.Watcher.ProcessCACert(ctx, r.Client, clientTLS, r.Namespace); err != nil {
 			return err
 		}
-		if _, _, err = r.Watcher.ProcessMTLSCerts(ctx, r.Client, &desired.Spec.Loki.Manual.StatusTLS, r.Namespace); err != nil {
+		statusTLS := helper.LokiStatusTLS(&desired.Spec.Loki)
+		if _, _, err = r.Watcher.ProcessMTLSCerts(ctx, r.Client, statusTLS, r.Namespace); err != nil {
 			return err
 		}
 	} else {
@@ -263,18 +266,4 @@ func (r *CPReconciler) reconcileHPA(ctx context.Context, builder *builder, desir
 
 func pluginNeedsUpdate(plg *osv1alpha1.ConsolePlugin, desired *pluginSpec) bool {
 	return plg.Spec.Service.Port != desired.Port
-}
-
-func querierURL(loki *flowslatest.FlowCollectorLoki) string {
-	if loki.Manual.QuerierURL != "" {
-		return loki.Manual.QuerierURL
-	}
-	return loki.Manual.IngesterURL
-}
-
-func statusURL(loki *flowslatest.FlowCollectorLoki) string {
-	if loki.Manual.StatusURL != "" {
-		return loki.Manual.StatusURL
-	}
-	return querierURL(loki)
 }

@@ -123,6 +123,31 @@ spec:
     #     targetPort: 4739
     #     transport: TCP or UDP (optional - defaults to TCP)
 ---
+apiVersion: loki.grafana.com/v1
+kind: LokiStack
+metadata:
+  name: loki
+  namespace: netobserv
+spec:
+  tenants:
+    mode: openshift-network
+  managementState: Managed
+  limits:
+    global:
+      queries:
+        queryTimeout: 3m
+  storage:
+    schemas:
+      - effectiveDate: '2020-10-11'
+        version: v11
+    secret:
+      name: loki-secret
+      type: s3
+  hashRing:
+    type: memberlist
+  size: 1x.extra-small
+  storageClassName: gp3-csi
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:

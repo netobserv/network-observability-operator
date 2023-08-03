@@ -545,15 +545,25 @@ type LokiStack struct {
 	Namespace string `json:"namespace"`
 }
 
+const (
+	LokiModeManual    = "MANUAL"
+	LokiModeLokiStack = "LOKISTACK"
+)
+
 // FlowCollectorLoki defines the desired state for FlowCollector's Loki client.
 type FlowCollectorLoki struct {
-
 	//+kubebuilder:validation:Enum=MANUAL;LOKISTACK
 	//+kubebuilder:default:="LOKISTACK"
 	Mode string `json:"mode,omitempty"`
 
+	// Loki configuration for MANUAL mode. This is the more flexible configuration.
+	// It will be ignored for other mods
+	// +optional
 	Manual LokiManualParams `json:"manual,omitempty"`
 
+	// Loki configuration for LOKISTACK mode. This is usefull for an easy loki-operator config.
+	// It will be ignored for other mods
+	// +optional
 	LokiStack LokiStack `json:"lokiStack,omitempty"`
 
 	//+kubebuilder:default:=true

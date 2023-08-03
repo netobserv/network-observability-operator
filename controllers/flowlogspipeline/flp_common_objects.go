@@ -327,7 +327,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		}
 
 		var authorization *promConfig.Authorization
-		if helper.LokiUseHostToken(&b.desired.Loki) || helper.LokiForwardUserToken(&b.desired.Loki) || helper.LokiModeLokiStack(&b.desired.Loki) {
+		if helper.LokiUseHostToken(&b.desired.Loki) || helper.LokiForwardUserToken(&b.desired.Loki) {
 			b.volumes.AddToken(constants.FLPName)
 			authorization = &promConfig.Authorization{
 				Type:            "Bearer",
@@ -335,7 +335,29 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 			}
 		}
 
-		lokiWrite.ClientConfig = helper.LokiTLSClient(&b.desired.Loki, authorization, &b.volumes)
+		clientTLS := helper.LokiTLS(&b.desired.Loki)
+		if clientTLS.Enable {
+			if clientTLS.InsecureSkipVerify {
+				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+					Authorization: authorization,
+					TLSConfig: promConfig.TLSConfig{
+						InsecureSkipVerify: true,
+					},
+				}
+			} else {
+				caPath := b.volumes.AddCACertificate(clientTLS, "loki-certs")
+				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+					Authorization: authorization,
+					TLSConfig: promConfig.TLSConfig{
+						CAFile: caPath,
+					},
+				}
+			}
+		} else {
+			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+				Authorization: authorization,
+			}
+		}
 		enrichedStage.WriteLoki("loki", lokiWrite)
 	}
 

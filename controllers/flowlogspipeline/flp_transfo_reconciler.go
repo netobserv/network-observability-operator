@@ -116,7 +116,8 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 
 	// Watch for Loki certificate if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
 	// because certificate is always reloaded from file
-	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &desired.Spec.Loki.Manual.TLS, r.Namespace); err != nil {
+	clientTLS := helper.LokiTLS(&desired.Spec.Loki)
+	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, clientTLS, r.Namespace); err != nil {
 		return err
 	}
 
