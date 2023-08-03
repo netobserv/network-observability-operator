@@ -110,8 +110,21 @@ func LokiForwardUserToken(spec *flowslatest.FlowCollectorLoki) bool {
 	}
 }
 
+func getLokiStackNameAndNamespace(spec *flowslatest.LokiStack) (string, string) {
+	if spec != nil {
+		return spec.Name, spec.Namespace
+	}
+	return "loki", "netobserv"
+}
+
 func lokiStackGatewayURL(spec *flowslatest.FlowCollectorLoki) string {
-	return "https://" + spec.LokiStack.Name + "-gateway-http." + spec.LokiStack.Namespace + ".svc:8080/api/logs/v1/network/"
+	name, namespace := getLokiStackNameAndNamespace(spec.LokiStack)
+	return "https://" + name + "-gateway-http." + namespace + ".svc:8080/api/logs/v1/network/"
+}
+
+func lokiStackStatusURL(spec *flowslatest.FlowCollectorLoki) string {
+	name, namespace := getLokiStackNameAndNamespace(spec.LokiStack)
+	return "https://" + name + "-query-frontend-http." + namespace + ".svc:3100/"
 }
 
 func LokiIngesterURL(spec *flowslatest.FlowCollectorLoki) string {
@@ -138,7 +151,7 @@ func LokiQuerierURL(spec *flowslatest.FlowCollectorLoki) string {
 func LokiStatusURL(spec *flowslatest.FlowCollectorLoki) string {
 	switch spec.Mode {
 	case flowslatest.LokiModeLokiStack:
-		return "https://" + spec.LokiStack.Name + "-query-frontend-http." + spec.LokiStack.Namespace + ".svc:3100/"
+		return lokiStackStatusURL(spec)
 	default:
 		if spec.Manual.StatusURL != "" {
 			return spec.Manual.StatusURL
@@ -159,11 +172,12 @@ func LokiTenantID(spec *flowslatest.FlowCollectorLoki) string {
 func LokiTLS(spec *flowslatest.FlowCollectorLoki) *flowslatest.ClientTLS {
 	switch spec.Mode {
 	case flowslatest.LokiModeLokiStack:
+		name, _ := getLokiStackNameAndNamespace(spec.LokiStack)
 		clientTLS := &flowslatest.ClientTLS{
 			Enable: true,
 			CACert: flowslatest.CertificateReference{
 				Type:     flowslatest.RefTypeConfigMap,
-				Name:     spec.LokiStack.Name + "-gateway-ca-bundle",
+				Name:     name + "-gateway-ca-bundle",
 				CertFile: "service-ca.crt",
 			},
 			InsecureSkipVerify: false,
@@ -177,17 +191,18 @@ func LokiTLS(spec *flowslatest.FlowCollectorLoki) *flowslatest.ClientTLS {
 func LokiStatusTLS(spec *flowslatest.FlowCollectorLoki) *flowslatest.ClientTLS {
 	switch spec.Mode {
 	case flowslatest.LokiModeLokiStack:
+		name, _ := getLokiStackNameAndNamespace(spec.LokiStack)
 		clientTLS := &flowslatest.ClientTLS{
 			Enable: true,
 			CACert: flowslatest.CertificateReference{
 				Type:     flowslatest.RefTypeConfigMap,
-				Name:     spec.LokiStack.Name + "-ca-bundle",
+				Name:     name + "-ca-bundle",
 				CertFile: "service-ca.crt",
 			},
 			InsecureSkipVerify: false,
 			UserCert: flowslatest.CertificateReference{
 				Type:     flowslatest.RefTypeSecret,
-				Name:     spec.LokiStack.Name + "-query-frontend-http",
+				Name:     name + "-query-frontend-http",
 				CertFile: "tls.crt",
 				CertKey:  "tls.key",
 			},

@@ -156,6 +156,7 @@ func flowCollectorIsoSpecs() {
 				},
 			},
 				Enable:       pointer.Bool(true),
+				Mode:         flowslatest.LokiModeManual,
 				BatchWait:    &metav1.Duration{Duration: time.Second},
 				BatchSize:    100,
 				Timeout:      &metav1.Duration{Duration: time.Second},

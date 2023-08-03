@@ -492,6 +492,7 @@ const (
 	LokiAuthForwardUserToken = "FORWARD"
 )
 
+// LokiManualParams defines the parameters to connect loki
 type LokiManualParams struct {
 	//+kubebuilder:default:="http://loki:3100/"
 	// `ingesterUrl` is the address of an existing Loki service to push the flows to. When using the Loki Operator,
@@ -538,11 +539,12 @@ type LokiManualParams struct {
 	StatusTLS ClientTLS `json:"statusTls"`
 }
 
+// LokiStack defines the name and namespace of the loki-operator instance
 type LokiStack struct {
 	//+kubebuilder:default:="loki"
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 	//+kubebuilder:default:="netobserv"
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 const (
@@ -553,7 +555,7 @@ const (
 // FlowCollectorLoki defines the desired state for FlowCollector's Loki client.
 type FlowCollectorLoki struct {
 	//+kubebuilder:validation:Enum=MANUAL;LOKISTACK
-	//+kubebuilder:default:="LOKISTACK"
+	//+kubebuilder:default:="MANUAL"
 	Mode string `json:"mode,omitempty"`
 
 	// Loki configuration for MANUAL mode. This is the more flexible configuration.
@@ -564,7 +566,7 @@ type FlowCollectorLoki struct {
 	// Loki configuration for LOKISTACK mode. This is usefull for an easy loki-operator config.
 	// It will be ignored for other mods
 	// +optional
-	LokiStack LokiStack `json:"lokiStack,omitempty"`
+	LokiStack *LokiStack `json:"lokiStack,omitempty"`
 
 	//+kubebuilder:default:=true
 	// enable storing flows to Loki. It is required for the OpenShift Console plugin installation.

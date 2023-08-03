@@ -11032,14 +11032,14 @@ loki, the flow store, client settings.
         <td><b><a href="#flowcollectorspeclokilokistack">lokiStack</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Loki configuration for LOKISTACK mode. This is usefull for an easy loki-operator config. It will be ignored for other mods<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspeclokimanual">manual</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Loki configuration for MANUAL mode. This is the more flexible configuration. It will be ignored for other mods<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11078,7 +11078,7 @@ loki, the flow store, client settings.
           <br/>
           <br/>
             <i>Enum</i>: MANUAL, LOKISTACK<br/>
-            <i>Default</i>: LOKISTACK<br/>
+            <i>Default</i>: MANUAL<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11108,7 +11108,7 @@ loki, the flow store, client settings.
 
 
 
-
+Loki configuration for LOKISTACK mode. This is usefull for an easy loki-operator config. It will be ignored for other mods
 
 <table>
     <thead>
@@ -11127,7 +11127,7 @@ loki, the flow store, client settings.
           <br/>
             <i>Default</i>: loki<br/>
         </td>
-        <td>true</td>
+        <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
@@ -11136,7 +11136,7 @@ loki, the flow store, client settings.
           <br/>
             <i>Default</i>: netobserv<br/>
         </td>
-        <td>true</td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -11146,7 +11146,7 @@ loki, the flow store, client settings.
 
 
 
-
+Loki configuration for MANUAL mode. This is the more flexible configuration. It will be ignored for other mods
 
 <table>
     <thead>

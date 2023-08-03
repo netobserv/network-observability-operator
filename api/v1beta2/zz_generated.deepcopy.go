@@ -473,7 +473,11 @@ func (in *FlowCollectorList) DeepCopyObject() runtime.Object {
 func (in *FlowCollectorLoki) DeepCopyInto(out *FlowCollectorLoki) {
 	*out = *in
 	out.Manual = in.Manual
-	out.LokiStack = in.LokiStack
+	if in.LokiStack != nil {
+		in, out := &in.LokiStack, &out.LokiStack
+		*out = new(LokiStack)
+		**out = **in
+	}
 	if in.Enable != nil {
 		in, out := &in.Enable, &out.Enable
 		*out = new(bool)

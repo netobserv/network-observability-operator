@@ -6240,6 +6240,9 @@ spec:
                       the OpenShift Console plugin installation.
                     type: boolean
                   lokiStack:
+                    description: Loki configuration for LOKISTACK mode. This is usefull
+                      for an easy loki-operator config. It will be ignored for other
+                      mods
                     properties:
                       name:
                         default: loki
@@ -6247,11 +6250,10 @@ spec:
                       namespace:
                         default: netobserv
                         type: string
-                    required:
-                    - name
-                    - namespace
                     type: object
                   manual:
+                    description: Loki configuration for MANUAL mode. This is the more
+                      flexible configuration. It will be ignored for other mods
                     properties:
                       authToken:
                         default: DISABLED
@@ -6484,7 +6486,7 @@ spec:
                       connection between retries.'
                     type: string
                   mode:
-                    default: LOKISTACK
+                    default: MANUAL
                     enum:
                     - MANUAL
                     - LOKISTACK
