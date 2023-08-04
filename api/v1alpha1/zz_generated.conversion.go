@@ -659,6 +659,7 @@ func autoConvert_v1beta1_FlowCollectorFLP_To_v1alpha1_FlowCollectorFLP(in *v1bet
 	// WARNING: in.ConversationHeartbeatInterval requires manual conversion: does not exist in peer-type
 	// WARNING: in.ConversationEndTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.ConversationTerminatingTimeout requires manual conversion: does not exist in peer-type
+	// WARNING: in.ClusterName requires manual conversion: does not exist in peer-type
 	if err := Convert_v1beta1_DebugConfig_To_v1alpha1_DebugConfig(&in.Debug, &out.Debug, s); err != nil {
 		return err
 	}

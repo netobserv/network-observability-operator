@@ -448,6 +448,11 @@ type FlowCollectorFLP struct {
 	// `conversationTerminatingTimeout` is the time to wait from detected FIN flag to end a conversation. Only relevant for TCP flows.
 	ConversationTerminatingTimeout *metav1.Duration `json:"conversationTerminatingTimeout,omitempty"`
 
+	//+kubebuilder:default:=""
+	// +optional
+	// `clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.
+	ClusterName string `json:"clusterName,omitempty"`
+
 	// `debug` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
 	// such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.

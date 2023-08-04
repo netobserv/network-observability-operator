@@ -23,6 +23,7 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/globals"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -279,16 +280,112 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	lastStage := *stage
 	indexFields := constants.LokiIndexFields
 
-	// Filter-out unused fields?
-	if helper.PtrBool(b.desired.Processor.DropUnusedFields) {
-		if helper.UseIPFIX(b.desired) {
-			lastStage = lastStage.TransformFilter("filter", api.TransformFilter{
-				Rules: filters.GetOVSGoflowUnusedRules(),
-			})
+	lastStage = b.addTransformFilter(lastStage)
+
+	indexFields, lastStage = b.addConnectionTracking(indexFields, lastStage)
+
+	// enrich stage (transform) configuration
+	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
+		Rules: api.NetworkTransformRules{{
+			Input:  "SrcAddr",
+			Output: "SrcK8S",
+			Type:   api.AddKubernetesRuleType,
+		}, {
+			Input:  "DstAddr",
+			Output: "DstK8S",
+			Type:   api.AddKubernetesRuleType,
+		}, {
+			Type: api.ReinterpretDirectionRuleType,
+		}},
+		DirectionInfo: api.NetworkTransformDirectionInfo{
+			ReporterIPField:    "AgentIP",
+			SrcHostField:       "SrcK8S_HostIP",
+			DstHostField:       "DstK8S_HostIP",
+			FlowDirectionField: "FlowDirection",
+			IfDirectionField:   "IfDirection",
+		},
+	})
+
+	// loki stage (write) configuration
+	if helper.UseLoki(b.desired) {
+		lokiWrite := api.WriteLoki{
+			Labels:         indexFields,
+			BatchSize:      int(b.desired.Loki.BatchSize),
+			BatchWait:      helper.UnstructuredDuration(b.desired.Loki.BatchWait),
+			MaxBackoff:     helper.UnstructuredDuration(b.desired.Loki.MaxBackoff),
+			MaxRetries:     int(helper.PtrInt32(b.desired.Loki.MaxRetries)),
+			MinBackoff:     helper.UnstructuredDuration(b.desired.Loki.MinBackoff),
+			StaticLabels:   model.LabelSet{},
+			Timeout:        helper.UnstructuredDuration(b.desired.Loki.Timeout),
+			URL:            b.desired.Loki.URL,
+			TimestampLabel: "TimeFlowEndMs",
+			TimestampScale: "1ms",
+			TenantID:       b.desired.Loki.TenantID,
 		}
-		// Else: nothing for eBPF at the moment
+
+		for k, v := range b.desired.Loki.StaticLabels {
+			lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
+		}
+
+		var authorization *promConfig.Authorization
+		if helper.LokiUseHostToken(&b.desired.Loki) || helper.LokiForwardUserToken(&b.desired.Loki) {
+			b.volumes.AddToken(constants.FLPName)
+			authorization = &promConfig.Authorization{
+				Type:            "Bearer",
+				CredentialsFile: constants.TokensPath + constants.FLPName,
+			}
+		}
+
+		if b.desired.Loki.TLS.Enable {
+			if b.desired.Loki.TLS.InsecureSkipVerify {
+				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+					Authorization: authorization,
+					TLSConfig: promConfig.TLSConfig{
+						InsecureSkipVerify: true,
+					},
+				}
+			} else {
+				caPath := b.volumes.AddCACertificate(&b.desired.Loki.TLS, "loki-certs")
+				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+					Authorization: authorization,
+					TLSConfig: promConfig.TLSConfig{
+						CAFile: caPath,
+					},
+				}
+			}
+		} else {
+			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+				Authorization: authorization,
+			}
+		}
+		enrichedStage.WriteLoki("loki", lokiWrite)
 	}
 
+	// write on Stdout if logging trace enabled
+	if b.desired.Processor.LogLevel == "trace" {
+		enrichedStage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
+	}
+
+	// obtain encode_prometheus stage from metrics_definitions
+	promMetrics, err := b.obtainMetricsConfiguration()
+	if err != nil {
+		return err
+	}
+
+	if len(promMetrics) > 0 {
+		// prometheus stage (encode) configuration
+		promEncode := api.PromEncode{
+			Prefix:  "netobserv_",
+			Metrics: promMetrics,
+		}
+		enrichedStage.EncodePrometheus("prometheus", promEncode)
+	}
+
+	b.addCustomExportStages(&enrichedStage)
+	return nil
+}
+
+func (b *builder) addConnectionTracking(indexFields []string, lastStage config.PipelineBuilderStage) ([]string, config.PipelineBuilderStage) {
 	outputFields := []api.OutputField{
 		{
 			Name:      "Bytes",
@@ -429,106 +526,43 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		})
 
 	}
+	return indexFields, lastStage
+}
 
-	// enrich stage (transform) configuration
-	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
-		Rules: api.NetworkTransformRules{{
-			Input:  "SrcAddr",
-			Output: "SrcK8S",
-			Type:   api.AddKubernetesRuleType,
-		}, {
-			Input:  "DstAddr",
-			Output: "DstK8S",
-			Type:   api.AddKubernetesRuleType,
-		}, {
-			Type: api.ReinterpretDirectionRuleType,
-		}},
-		DirectionInfo: api.NetworkTransformDirectionInfo{
-			ReporterIPField:    "AgentIP",
-			SrcHostField:       "SrcK8S_HostIP",
-			DstHostField:       "DstK8S_HostIP",
-			FlowDirectionField: "FlowDirection",
-			IfDirectionField:   "IfDirection",
-		},
-	})
+func (b *builder) addTransformFilter(lastStage config.PipelineBuilderStage) config.PipelineBuilderStage {
+	var clusterName string
+	transformFilterRules := []api.TransformFilterRule{}
 
-	// loki stage (write) configuration
-	if helper.UseLoki(b.desired) {
-		lokiWrite := api.WriteLoki{
-			Labels:         indexFields,
-			BatchSize:      int(b.desired.Loki.BatchSize),
-			BatchWait:      helper.UnstructuredDuration(b.desired.Loki.BatchWait),
-			MaxBackoff:     helper.UnstructuredDuration(b.desired.Loki.MaxBackoff),
-			MaxRetries:     int(helper.PtrInt32(b.desired.Loki.MaxRetries)),
-			MinBackoff:     helper.UnstructuredDuration(b.desired.Loki.MinBackoff),
-			StaticLabels:   model.LabelSet{},
-			Timeout:        helper.UnstructuredDuration(b.desired.Loki.Timeout),
-			URL:            b.desired.Loki.URL,
-			TimestampLabel: "TimeFlowEndMs",
-			TimestampScale: "1ms",
-			TenantID:       b.desired.Loki.TenantID,
+	if b.desired.Processor.ClusterName != "" {
+		clusterName = b.desired.Processor.ClusterName
+	} else {
+		//take clustername from openshift
+		clusterName = string(globals.DefaultClusterID)
+	}
+	if clusterName != "" {
+		transformFilterRules = []api.TransformFilterRule{
+			{
+				Input: "K8S_ClusterName",
+				Type:  "add_field_if_doesnt_exist",
+				Value: clusterName,
+			},
 		}
-
-		for k, v := range b.desired.Loki.StaticLabels {
-			lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
-		}
-
-		var authorization *promConfig.Authorization
-		if helper.LokiUseHostToken(&b.desired.Loki) || helper.LokiForwardUserToken(&b.desired.Loki) {
-			b.volumes.AddToken(constants.FLPName)
-			authorization = &promConfig.Authorization{
-				Type:            "Bearer",
-				CredentialsFile: constants.TokensPath + constants.FLPName,
-			}
-		}
-
-		if b.desired.Loki.TLS.Enable {
-			if b.desired.Loki.TLS.InsecureSkipVerify {
-				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-					Authorization: authorization,
-					TLSConfig: promConfig.TLSConfig{
-						InsecureSkipVerify: true,
-					},
-				}
-			} else {
-				caPath := b.volumes.AddCACertificate(&b.desired.Loki.TLS, "loki-certs")
-				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-					Authorization: authorization,
-					TLSConfig: promConfig.TLSConfig{
-						CAFile: caPath,
-					},
-				}
-			}
-		} else {
-			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-				Authorization: authorization,
-			}
-		}
-		enrichedStage.WriteLoki("loki", lokiWrite)
 	}
 
-	// write on Stdout if logging trace enabled
-	if b.desired.Processor.LogLevel == "trace" {
-		enrichedStage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
-	}
-
-	// obtain encode_prometheus stage from metrics_definitions
-	promMetrics, err := b.obtainMetricsConfiguration()
-	if err != nil {
-		return err
-	}
-
-	if len(promMetrics) > 0 {
-		// prometheus stage (encode) configuration
-		promEncode := api.PromEncode{
-			Prefix:  "netobserv_",
-			Metrics: promMetrics,
+	// Filter-out unused fields?
+	if helper.PtrBool(b.desired.Processor.DropUnusedFields) {
+		if helper.UseIPFIX(b.desired) {
+			rules := filters.GetOVSGoflowUnusedRules()
+			transformFilterRules = append(transformFilterRules, rules...)
 		}
-		enrichedStage.EncodePrometheus("prometheus", promEncode)
+		// Else: nothing for eBPF at the moment
 	}
-
-	b.addCustomExportStages(&enrichedStage)
-	return nil
+	if len(transformFilterRules) > 0 {
+		lastStage = lastStage.TransformFilter("filter", api.TransformFilter{
+			Rules: transformFilterRules,
+		})
+	}
+	return lastStage
 }
 
 func (b *builder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage) {

@@ -6754,6 +6754,15 @@ TLS client configuration for Loki URL.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>clusterName</b></td>
+        <td>string</td>
+        <td>
+          `clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>conversationEndTimeout</b></td>
         <td>string</td>
         <td>
