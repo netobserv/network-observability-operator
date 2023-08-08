@@ -410,24 +410,29 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 			Operation: "count",
 		},
 		{
-			Name:      "TimeFlowStartMs",
-			Operation: "min",
+			Name:          "TimeFlowStartMs",
+			Operation:     "min",
+			ReportMissing: true,
 		},
 		{
-			Name:      "TimeFlowEndMs",
-			Operation: "max",
+			Name:          "TimeFlowEndMs",
+			Operation:     "max",
+			ReportMissing: true,
 		},
 		{
-			Name:      "FlowDirection",
-			Operation: "first",
+			Name:          "FlowDirection",
+			Operation:     "first",
+			ReportMissing: true,
 		},
 		{
-			Name:      "IfDirection",
-			Operation: "first",
+			Name:          "IfDirection",
+			Operation:     "first",
+			ReportMissing: true,
 		},
 		{
-			Name:      "AgentIP",
-			Operation: "first",
+			Name:          "AgentIP",
+			Operation:     "first",
+			ReportMissing: true,
 		},
 	}
 
@@ -465,6 +470,10 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 
 	if helper.IsDNSTrackingEnabled(b.desired) {
 		outDNSTrackingFields := []api.OutputField{
+			{
+				Name:      "DnsFlagsResponseCode",
+				Operation: "last",
+			},
 			{
 				Name:      "DnsLatencyMs",
 				Operation: "max",

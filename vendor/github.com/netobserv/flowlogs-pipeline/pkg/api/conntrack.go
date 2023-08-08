@@ -70,10 +70,11 @@ type ConnTrackHash struct {
 }
 
 type OutputField struct {
-	Name      string `yaml:"name,omitempty" json:"name,omitempty" doc:"output field name"`
-	Operation string `yaml:"operation,omitempty" json:"operation,omitempty" enum:"ConnTrackOperationEnum" doc:"aggregate operation on the field value"`
-	SplitAB   bool   `yaml:"splitAB,omitempty" json:"splitAB,omitempty" doc:"When true, 2 output fields will be created. One for A->B and one for B->A flows."`
-	Input     string `yaml:"input,omitempty" json:"input,omitempty" doc:"The input field to base the operation on. When omitted, 'name' is used"`
+	Name          string `yaml:"name,omitempty" json:"name,omitempty" doc:"output field name"`
+	Operation     string `yaml:"operation,omitempty" json:"operation,omitempty" enum:"ConnTrackOperationEnum" doc:"aggregate operation on the field value"`
+	SplitAB       bool   `yaml:"splitAB,omitempty" json:"splitAB,omitempty" doc:"When true, 2 output fields will be created. One for A->B and one for B->A flows."`
+	Input         string `yaml:"input,omitempty" json:"input,omitempty" doc:"The input field to base the operation on. When omitted, 'name' is used"`
+	ReportMissing bool   `yaml:"reportMissing,omitempty" json:"reportMissing,omitempty" doc:"When true, missing input will produce MissingFieldError metric and error logs"`
 }
 
 type ConnTrackOperationEnum struct {
