@@ -294,16 +294,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 			Input:  "DstAddr",
 			Output: "DstK8S",
 			Type:   api.AddKubernetesRuleType,
-		}, {
-			Type: api.ReinterpretDirectionRuleType,
 		}},
-		DirectionInfo: api.NetworkTransformDirectionInfo{
-			ReporterIPField:    "AgentIP",
-			SrcHostField:       "SrcK8S_HostIP",
-			DstHostField:       "DstK8S_HostIP",
-			FlowDirectionField: "FlowDirection",
-			IfDirectionField:   "IfDirection",
-		},
 	})
 
 	// loki stage (write) configuration
