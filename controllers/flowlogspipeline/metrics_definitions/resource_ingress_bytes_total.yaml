@@ -1,6 +1,6 @@
 #flp_confgen
 description:
-  This metric observes the incoming traffic
+  This metric observes the pod / service incoming traffic
 details:
   Sum bytes for incoming traffic per destination pod / service
 usage:
@@ -8,13 +8,12 @@ usage:
 tags:
   - ingress
   - bytes
-  - pods
-  - services
+  - resources
 encode:
   type: prom
   prom:
     metrics:
-      - name: top_pods_ingress_bytes_total
+      - name: resource_ingress_bytes_total
         type: counter
         valuekey: Bytes
         filters:

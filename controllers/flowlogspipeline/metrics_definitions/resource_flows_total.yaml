@@ -1,0 +1,22 @@
+#flp_confgen
+description:
+  This metric counts flows per pod / service
+details:
+  Counting flows per source pod / service
+usage:
+  Evaluate number of flows per source pod / service
+tags:
+  - flows
+  - resources
+  - resources-flows
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: resource_flows_total
+        type: counter
+        labels:
+          - SrcK8S_Name
+          - SrcK8S_Namespace
+          - SrcK8S_Type
+          - SrcK8S_HostName

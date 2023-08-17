@@ -1,22 +1,21 @@
 #flp_confgen
 description:
-  This metric observes the outgoing traffic
+  This metric observes the pod / service outgoing traffic
 details:
-  Sum bytes for outgoing traffic per source pod / service
+  Sum packets for outgoing traffic per source pod / service
 usage:
   Evaluate network outgoing usage breakdown per pod / service
 tags:
   - egress
-  - bytes
-  - pods
-  - services
+  - packets
+  - resources
 encode:
   type: prom
   prom:
     metrics:
-      - name: top_pods_egress_bytes_total
+      - name: resource_egress_packets_total
         type: counter
-        valuekey: Bytes
+        valuekey: Packets
         filters:
         - key: FlowDirection
           value: "1"

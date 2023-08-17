@@ -8,7 +8,6 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
@@ -363,22 +362,17 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 var metricsConfigEmbed embed.FS
 
 // obtainMetricsConfiguration returns the configuration info for the prometheus stages
-func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, api.PromMetricsItems, error) {
+func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, error) {
 	entries, err := metricsConfigEmbed.ReadDir(metricsConfigDir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to access metrics_definitions directory: %w", err)
+		return nil, fmt.Errorf("failed to access metrics_definitions directory: %w", err)
 	}
 
 	// separate metrics and top metrics
-	promConfGen := confgen.NewConfGen(&confgen.Options{
+	cg := confgen.NewConfGen(&confgen.Options{
 		GenerateStages: []string{"encode_prom"},
 		SkipWithTags:   b.desired.Processor.Metrics.IgnoreTags,
 	})
-	topPromConfGen := confgen.NewConfGen(&confgen.Options{
-		GenerateStages: []string{"encode_prom"},
-		SkipWithTags:   b.desired.Processor.Metrics.IgnoreTags,
-	})
-	promConfGens := []*confgen.ConfGen{promConfGen, topPromConfGen}
 
 	for _, entry := range entries {
 		fileName := entry.Name()
@@ -389,32 +383,24 @@ func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, api.PromMe
 
 		input, err := metricsConfigEmbed.ReadFile(srcPath)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error reading metrics file %s; %w", srcPath, err)
+			return nil, fmt.Errorf("error reading metrics file %s; %w", srcPath, err)
 		}
 
-		var confGeng = promConfGen
-		if strings.HasPrefix(fileName, "top_") {
-			confGeng = topPromConfGen
-		}
-		err = confGeng.ParseDefinition(fileName, input)
+		err = cg.ParseDefinition(fileName, input)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error parsing metrics file %s; %w", srcPath, err)
+			return nil, fmt.Errorf("error parsing metrics file %s; %w", srcPath, err)
 		}
 	}
 
-	var metrics = make([]api.PromMetricsItems, len(promConfGens))
-	for i, confGen := range promConfGens {
-		stages := confGen.GenerateTruncatedConfig()
-		if len(stages) != 1 {
-			return nil, nil, fmt.Errorf("error generating truncated config, 1 stage expected in %v", stages)
-		}
-		if stages[0].Encode == nil || stages[0].Encode.Prom == nil {
-			return nil, nil, fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
-		}
-		metrics[i] = stages[0].Encode.Prom.Metrics
+	stages := cg.GenerateTruncatedConfig()
+	if len(stages) != 1 {
+		return nil, fmt.Errorf("error generating truncated config, 1 stage expected in %v", stages)
+	}
+	if stages[0].Encode == nil || stages[0].Encode.Prom == nil {
+		return nil, fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
 	}
 
-	return metrics[0], metrics[1], nil
+	return stages[0].Encode.Prom.Metrics, nil
 }
 
 func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
@@ -505,7 +491,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	}
 
 	// obtain encode_prometheus stage from metrics_definitions
-	promMetrics, topPromMetrics, err := b.obtainMetricsConfiguration()
+	promMetrics, err := b.obtainMetricsConfiguration()
 	if err != nil {
 		return err
 	}
@@ -517,42 +503,6 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 			Metrics: promMetrics,
 		}
 		enrichedStage.EncodePrometheus("prometheus", promEncode)
-	}
-
-	if len(topPromMetrics) > 0 {
-		topBytesStage := enrichedStage.ExtractTimebased("top_bytes", api.ExtractTimebased{
-			Rules: []api.TimebasedFilterRule{
-				{
-					Name:          "top_src_bytes",
-					IndexKeys:     []string{"SrcK8S_Name", "SrcK8S_Namespace", "SrcK8S_Type", "SrcK8S_HostName", "FlowDirection", "Duplicate"},
-					OperationType: "avg",
-					OperationKey:  "Bytes",
-					TopK:          10,
-					Reversed:      false,
-					TimeInterval: api.Duration{
-						Duration: 60 * time.Second,
-					},
-				},
-				{
-					Name:          "top_dst_bytes",
-					IndexKeys:     []string{"DstK8S_Name", "DstK8S_Namespace", "DstK8S_Type", "DstK8S_HostName", "FlowDirection", "Duplicate"},
-					OperationType: "avg",
-					OperationKey:  "Bytes",
-					TopK:          10,
-					Reversed:      false,
-					TimeInterval: api.Duration{
-						Duration: 60 * time.Second,
-					},
-				},
-			},
-		})
-
-		// prometheus stage (encode) configuration for top metrics
-		topPromEncode := api.PromEncode{
-			Prefix:  "netobserv_",
-			Metrics: topPromMetrics,
-		}
-		topBytesStage.EncodePrometheus("top_prometheus", topPromEncode)
 	}
 
 	b.addCustomExportStages(&enrichedStage)

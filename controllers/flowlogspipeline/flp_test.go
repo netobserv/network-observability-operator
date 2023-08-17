@@ -64,7 +64,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 			Resources:       resources,
 			HealthPort:      8080,
 			Metrics: flowslatest.FLPMetrics{
-				IgnoreTags: []string{"pods"},
+				IgnoreTags: []string{"resources"},
 				Server: flowslatest.MetricsServerConfig{
 					Port: 9090,
 					TLS: flowslatest.ServerTLS{
@@ -838,7 +838,7 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Processor.Metrics.IgnoreTags = []string{"nodes", "pods"}
+	cfg.Processor.Metrics.IgnoreTags = []string{"nodes", "resources"}
 
 	b := monoBuilder("namespace", &cfg)
 	stages, parameters, err := b.buildPipelineConfig()
@@ -855,7 +855,7 @@ func TestMergeMetricsConfigurationIgnoreAll(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Processor.Metrics.IgnoreTags = []string{"nodes", "namespaces", "workloads", "pods"}
+	cfg.Processor.Metrics.IgnoreTags = []string{"nodes", "namespaces", "workloads", "resources"}
 
 	b := monoBuilder("namespace", &cfg)
 	stages, parameters, err := b.buildPipelineConfig()
@@ -926,9 +926,9 @@ func TestPipelineConfigWithMonitoring(t *testing.T) {
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"top_bytes","follows":"enrich"},{"name":"top_prometheus","follows":"top_bytes"}]`, string(jsonStages))
+	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 
-	assert.Len(parameters[4].Encode.Prom.Metrics, 15)
+	assert.Len(parameters[4].Encode.Prom.Metrics, 20)
 	assert.Equal("namespace_egress_bytes_total", parameters[4].Encode.Prom.Metrics[0].Name)
 	assert.Equal("namespace_egress_packets_total", parameters[4].Encode.Prom.Metrics[1].Name)
 	assert.Equal("namespace_flows_total", parameters[4].Encode.Prom.Metrics[2].Name)
@@ -939,15 +939,15 @@ func TestPipelineConfigWithMonitoring(t *testing.T) {
 	assert.Equal("node_flows_total", parameters[4].Encode.Prom.Metrics[7].Name)
 	assert.Equal("node_ingress_bytes_total", parameters[4].Encode.Prom.Metrics[8].Name)
 	assert.Equal("node_ingress_packets_total", parameters[4].Encode.Prom.Metrics[9].Name)
-	assert.Equal("workload_egress_bytes_total", parameters[4].Encode.Prom.Metrics[10].Name)
-	assert.Equal("workload_egress_packets_total", parameters[4].Encode.Prom.Metrics[11].Name)
-	assert.Equal("workload_flows_total", parameters[4].Encode.Prom.Metrics[12].Name)
-	assert.Equal("workload_ingress_bytes_total", parameters[4].Encode.Prom.Metrics[13].Name)
-	assert.Equal("workload_ingress_packets_total", parameters[4].Encode.Prom.Metrics[14].Name)
+	assert.Equal("resource_egress_bytes_total", parameters[4].Encode.Prom.Metrics[10].Name)
+	assert.Equal("resource_egress_packets_total", parameters[4].Encode.Prom.Metrics[11].Name)
+	assert.Equal("resource_flows_total", parameters[4].Encode.Prom.Metrics[12].Name)
+	assert.Equal("resource_ingress_bytes_total", parameters[4].Encode.Prom.Metrics[13].Name)
+	assert.Equal("resource_ingress_packets_total", parameters[4].Encode.Prom.Metrics[14].Name)
+	assert.Equal("workload_egress_bytes_total", parameters[4].Encode.Prom.Metrics[15].Name)
+	assert.Equal("workload_egress_packets_total", parameters[4].Encode.Prom.Metrics[16].Name)
+	assert.Equal("workload_flows_total", parameters[4].Encode.Prom.Metrics[17].Name)
+	assert.Equal("workload_ingress_bytes_total", parameters[4].Encode.Prom.Metrics[18].Name)
+	assert.Equal("workload_ingress_packets_total", parameters[4].Encode.Prom.Metrics[19].Name)
 	assert.Equal("netobserv_", parameters[4].Encode.Prom.Prefix)
-
-	assert.Len(parameters[6].Encode.Prom.Metrics, 2)
-	assert.Equal("top_pods_egress_bytes_total", parameters[6].Encode.Prom.Metrics[0].Name)
-	assert.Equal("top_pods_ingress_bytes_total", parameters[6].Encode.Prom.Metrics[1].Name)
-	assert.Equal("netobserv_", parameters[6].Encode.Prom.Prefix)
 }
