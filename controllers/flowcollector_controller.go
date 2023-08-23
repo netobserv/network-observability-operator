@@ -332,7 +332,7 @@ func (r *FlowCollectorReconciler) reconcileOperator(ctx context.Context, cmn *re
 			return err
 		}
 
-		desiredHealthDashboardCM, del, err := buildHealthDashboard(desired.Spec.Processor.Metrics.IgnoreTags)
+		desiredHealthDashboardCM, del, err := buildHealthDashboard(cmn.Namespace, desired.Spec.Processor.Metrics.IgnoreTags)
 		if err != nil {
 			return err
 		} else if err = cmn.ReconcileConfigMap(ctx, desiredHealthDashboardCM, del); err != nil {

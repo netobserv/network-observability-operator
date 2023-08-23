@@ -101,8 +101,8 @@ func buildFlowMetricsDashboard(namespace string, ignoreFlags []string) (*corev1.
 	return &configMap, len(dashboard) == 0, nil
 }
 
-func buildHealthDashboard(ignoreFlags []string) (*corev1.ConfigMap, bool, error) {
-	dashboard, err := helper.FilterDashboardRows(healthDashboardEmbed, ignoreFlags)
+func buildHealthDashboard(namespace string, ignoreFlags []string) (*corev1.ConfigMap, bool, error) {
+	dashboard, err := helper.FilterDashboardRows(healthDashboardEmbed, namespace, ignoreFlags)
 	if err != nil {
 		return nil, false, err
 	}
