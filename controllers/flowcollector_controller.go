@@ -13,7 +13,6 @@ import (
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -177,8 +176,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 	} else {
 		status = conditions.Ready()
 	}
-	r.updateCondition(ctx, status, desired)
-	return ctrl.Result{}, nil
+	return ctrl.Result{}, r.updateCondition(ctx, status, desired)
 }
 
 func (r *FlowCollectorReconciler) getFlowCollector(ctx context.Context) (*flowslatest.FlowCollector, error) {
@@ -222,8 +220,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	// Update namespace in status
 	log.Info("Updating status with new namespace " + newNS)
 	desired.Status.Namespace = newNS
-	r.updateCondition(ctx, conditions.Updating(), desired)
-	return nil
+	return r.updateCondition(ctx, conditions.Updating(), desired)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -402,18 +399,22 @@ func (r *FlowCollectorReconciler) newCommonInfo(ctx context.Context, desired *fl
 func (r *FlowCollectorReconciler) failure(ctx context.Context, errcond *conditions.ErrorCondition, fc *flowslatest.FlowCollector) error {
 	log := log.FromContext(ctx)
 	log.Error(errcond.Error, errcond.Message)
-	meta.SetStatusCondition(&fc.Status.Conditions, errcond.Condition)
+	conditions.AddUniqueCondition(&errcond.Condition, fc)
 	if errUpdate := r.Status().Update(ctx, fc); errUpdate != nil {
 		log.Error(errUpdate, "Set conditions failed")
 	}
 	return errcond.Error
 }
 
-func (r *FlowCollectorReconciler) updateCondition(ctx context.Context, cond *metav1.Condition, fc *flowslatest.FlowCollector) {
-	meta.SetStatusCondition(&fc.Status.Conditions, *cond)
+func (r *FlowCollectorReconciler) updateCondition(ctx context.Context, cond *metav1.Condition, fc *flowslatest.FlowCollector) error {
+	conditions.AddUniqueCondition(cond, fc)
 	if err := r.Status().Update(ctx, fc); err != nil {
 		log.FromContext(ctx).Error(err, "Set conditions failed")
-		// Do not propagate this update failure: if update failed it's generally because it was modified concurrently:
+		// Do not propagate this update failure if it was modified concurrently:
 		// in that case, it will anyway trigger new reconcile loops so the conditions will be updated soon.
+		if !errors.IsConflict(err) {
+			return err
+		}
 	}
+	return nil
 }
