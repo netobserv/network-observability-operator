@@ -25,7 +25,6 @@ import (
 
 const (
 	timeout                     = time.Second * 10
-	checkStatusTimeout          = time.Second * 30
 	interval                    = 50 * time.Millisecond
 	conntrackEndTimeout         = 10 * time.Second
 	conntrackTerminatingTimeout = 5 * time.Second
@@ -73,6 +72,7 @@ func flowCollectorControllerSpecs() {
 	rbKeyTransform := types.NamespacedName{Name: flowlogspipeline.RoleBindingName(flowlogspipeline.ConfKafkaTransformer)}
 	rbKeyIngestMono := types.NamespacedName{Name: flowlogspipeline.RoleBindingMonoName(flowlogspipeline.ConfKafkaIngester)}
 	rbKeyTransformMono := types.NamespacedName{Name: flowlogspipeline.RoleBindingMonoName(flowlogspipeline.ConfKafkaTransformer)}
+	rbKeyPlugin := types.NamespacedName{Name: constants.PluginName}
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
@@ -146,7 +146,7 @@ func flowCollectorControllerSpecs() {
 					return err
 				}
 				return conditionMatch(updatedCr.Status.Conditions, "Pending", "Updating")
-			}, checkStatusTimeout, interval).Should(Succeed())
+			}, timeout, interval).Should(Succeed())
 
 			By("Expecting to create the flowlogs-pipeline DaemonSet")
 			Eventually(func() error {
@@ -187,6 +187,15 @@ func flowCollectorControllerSpecs() {
 			Expect(rb2.Subjects).Should(HaveLen(1))
 			Expect(rb2.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
 			Expect(rb2.RoleRef.Name).Should(Equal("flowlogs-pipeline-transformer"))
+
+			By("Expecting to create console plugin role binding")
+			rb3 := rbacv1.ClusterRoleBinding{}
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyPlugin, &rb3)
+			}, timeout, interval).Should(Succeed())
+			Expect(rb3.Subjects).Should(HaveLen(1))
+			Expect(rb3.Subjects[0].Name).Should(Equal("netobserv-plugin"))
+			Expect(rb3.RoleRef.Name).Should(Equal("netobserv-plugin"))
 
 			By("Not expecting transformer role binding")
 			Eventually(func() interface{} {
@@ -238,15 +247,6 @@ func flowCollectorControllerSpecs() {
 					Namespace: "openshift-config-managed",
 				}, &cm)
 			}, timeout, interval).Should(Succeed())
-
-			By("Expecting status to be ready")
-			Eventually(func() error {
-				updatedCr := flowslatest.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &updatedCr); err != nil {
-					return err
-				}
-				return conditionMatch(updatedCr.Status.Conditions, "Ready", "Ready")
-			}, checkStatusTimeout, interval).Should(Succeed())
 		})
 
 		It("Should update successfully", func() {
@@ -548,15 +548,6 @@ func flowCollectorControllerSpecs() {
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, flpKey1, &appsv1.DaemonSet{})
 			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline" not found`))
-
-			By("Expecting status to be ready")
-			Eventually(func() error {
-				updatedCr := flowslatest.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &updatedCr); err != nil {
-					return err
-				}
-				return conditionMatch(updatedCr.Status.Conditions, "Ready", "Ready")
-			}, checkStatusTimeout, interval).Should(Succeed())
 		})
 	})
 
@@ -768,6 +759,21 @@ func flowCollectorControllerSpecs() {
 		It("Should get CR", func() {
 			Eventually(func() error {
 				return k8sClient.Get(ctx, crKey, &flowCR)
+			}, timeout, interval).Should(Succeed())
+		})
+
+		It("Should condition be ready", func() {
+			// Do a dummy change that will trigger reconcile
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.ConsolePlugin.LogLevel = "debug"
+			})
+			By("Expecting status to be ready")
+			Eventually(func() error {
+				updatedCr := flowslatest.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &updatedCr); err != nil {
+					return err
+				}
+				return conditionMatch(updatedCr.Status.Conditions, "Ready", "Ready")
 			}, timeout, interval).Should(Succeed())
 		})
 
