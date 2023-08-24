@@ -397,6 +397,7 @@ func (r *FlowCollectorReconciler) newCommonInfo(ctx context.Context, desired *fl
 }
 
 func (r *FlowCollectorReconciler) failure(ctx context.Context, errcond *conditions.ErrorCondition, fc *flowslatest.FlowCollector) error {
+	log.FromContext(ctx).Info("Updating failure status to " + errcond.Reason)
 	log := log.FromContext(ctx)
 	log.Error(errcond.Error, errcond.Message)
 	conditions.AddUniqueCondition(&errcond.Condition, fc)
@@ -407,6 +408,7 @@ func (r *FlowCollectorReconciler) failure(ctx context.Context, errcond *conditio
 }
 
 func (r *FlowCollectorReconciler) updateCondition(ctx context.Context, cond *metav1.Condition, fc *flowslatest.FlowCollector) error {
+	log.FromContext(ctx).Info("Updating status to " + cond.Reason)
 	conditions.AddUniqueCondition(cond, fc)
 	if err := r.Status().Update(ctx, fc); err != nil {
 		log.FromContext(ctx).Error(err, "Set conditions failed")

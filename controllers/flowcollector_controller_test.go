@@ -25,6 +25,7 @@ import (
 
 const (
 	timeout                     = time.Second * 10
+	checkStatusTimeout          = time.Second * 30
 	interval                    = 50 * time.Millisecond
 	conntrackEndTimeout         = 10 * time.Second
 	conntrackTerminatingTimeout = 5 * time.Second
@@ -138,6 +139,15 @@ func flowCollectorControllerSpecs() {
 			// Create
 			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
 
+			By("Expecting status to be updating")
+			Eventually(func() error {
+				updatedCr := flowslatest.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &updatedCr); err != nil {
+					return err
+				}
+				return conditionMatch(updatedCr.Status.Conditions, "Pending", "Updating")
+			}, checkStatusTimeout, interval).Should(Succeed())
+
 			By("Expecting to create the flowlogs-pipeline DaemonSet")
 			Eventually(func() error {
 				if err := k8sClient.Get(ctx, flpKey1, &ds); err != nil {
@@ -228,6 +238,15 @@ func flowCollectorControllerSpecs() {
 					Namespace: "openshift-config-managed",
 				}, &cm)
 			}, timeout, interval).Should(Succeed())
+
+			By("Expecting status to be ready")
+			Eventually(func() error {
+				updatedCr := flowslatest.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &updatedCr); err != nil {
+					return err
+				}
+				return conditionMatch(updatedCr.Status.Conditions, "Ready", "Ready")
+			}, checkStatusTimeout, interval).Should(Succeed())
 		})
 
 		It("Should update successfully", func() {
@@ -529,6 +548,15 @@ func flowCollectorControllerSpecs() {
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, flpKey1, &appsv1.DaemonSet{})
 			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline" not found`))
+
+			By("Expecting status to be ready")
+			Eventually(func() error {
+				updatedCr := flowslatest.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &updatedCr); err != nil {
+					return err
+				}
+				return conditionMatch(updatedCr.Status.Conditions, "Ready", "Ready")
+			}, checkStatusTimeout, interval).Should(Succeed())
 		})
 	})
 
@@ -836,5 +864,22 @@ func checkDigestUpdate(oldDigest *string, annots map[string]string) error {
 		return fmt.Errorf("expect digest to change, but is still %s", *oldDigest)
 	}
 	*oldDigest = newDigest
+	return nil
+}
+
+func conditionMatch(conditions []metav1.Condition, conditionType string, conditionReason string) error {
+	if len(conditions) < 1 {
+		return fmt.Errorf("Invalid status condition length %d\nconditions: %v", len(conditions), conditions)
+	}
+	// check only first condition since AddUniqueCondition function sort them
+	if conditions[0].Type != conditionType {
+		return fmt.Errorf("Invalid condition type %s != %s\nconditions: %v", conditions[0].Type, conditionType, conditions)
+	}
+	if conditions[0].Reason != conditionReason {
+		return fmt.Errorf("Invalid condition reason %s != %s\nconditions: %v", conditions[0].Reason, conditionReason, conditions)
+	}
+	if conditions[0].Status != metav1.ConditionTrue {
+		return fmt.Errorf("Invalid condition status %s != %s\nconditions: %v", conditions[0].Status, metav1.ConditionTrue, conditions)
+	}
 	return nil
 }
