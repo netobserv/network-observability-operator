@@ -436,7 +436,7 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 		},
 	}
 
-	if helper.IsPktDropEnabled(b.desired) {
+	if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
 		outputPktDropFields := []api.OutputField{
 			{
 				Name:      "PktDropBytes",
@@ -468,7 +468,7 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 		outputFields = append(outputFields, outputPktDropFields...)
 	}
 
-	if helper.IsDNSTrackingEnabled(b.desired) {
+	if helper.IsDNSTrackingEnabled(&b.desired.Agent.EBPF) {
 		outDNSTrackingFields := []api.OutputField{
 			{
 				Name:      "DnsFlagsResponseCode",
@@ -482,7 +482,7 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 		outputFields = append(outputFields, outDNSTrackingFields...)
 	}
 
-	if helper.IsDNSTrackingEnabled(b.desired) {
+	if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
 		outputFields = append(outputFields, api.OutputField{
 			Name:      "MaxTimeFlowRttNs",
 			Operation: "max",

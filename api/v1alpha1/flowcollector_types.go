@@ -143,13 +143,6 @@ type FlowCollectorIPFIX struct {
 	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty" mapstructure:"-"`
 }
 
-type FeatureConfigType string
-
-const (
-	ConfigEnabled  FeatureConfigType = "ENABLED"
-	ConfigDisabled FeatureConfigType = "DISABLED"
-)
-
 // FlowCollectorEBPF defines a FlowCollector that uses eBPF to collect the flows information
 type FlowCollectorEBPF struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
@@ -221,14 +214,6 @@ type FlowCollectorEBPF struct {
 	// (for example GOGC, GOMAXPROCS env vars). Users setting its values do it at their own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
-
-	// `enableFlowRtt` allows enabling FlowRTT calculations in the ebpf agent. Set this to ENABLED or DISABLED.
-	// Currently only TCP handshake based RTT is calculated per flow.
-	// This feature is optionally enabled and is disabled by default.
-	// This feature needs both INGRESS and EGRESS direction flow capture and will be disabled if both are not enabled.
-	//+kubebuilder:default:=DISABLED
-	//+optional
-	FlowRTT FeatureConfigType `json:"enableFlowRtt,omitempty"`
 }
 
 // FlowCollectorKafka defines the desired Kafka config of FlowCollector
