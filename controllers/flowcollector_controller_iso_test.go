@@ -98,7 +98,7 @@ func flowCollectorIsoSpecs() {
 					ExcludeInterfaces:  []string{},
 					Privileged:         false,
 					KafkaBatchSize:     0,
-					Features:           []flowslatest.AgentFeature{},
+					Features:           nil,
 				},
 			},
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
