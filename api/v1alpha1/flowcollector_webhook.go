@@ -64,12 +64,12 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 
 	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
 
-	dst.Spec.Agent.EBPF.PktDrop = restored.Spec.Agent.EBPF.PktDrop
-	dst.Spec.Agent.EBPF.DNSTracking = restored.Spec.Agent.EBPF.DNSTracking
+	if restored.Spec.Agent.EBPF.Features != nil {
+		dst.Spec.Agent.EBPF.Features = restored.Spec.Agent.EBPF.Features
+	}
 
 	dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS
 	dst.Spec.Kafka.SASL = restored.Spec.Kafka.SASL
-	dst.Spec.Agent.EBPF.FlowRTT = restored.Spec.Agent.EBPF.FlowRTT
 
 	dst.Spec.ConsolePlugin.Enable = restored.Spec.ConsolePlugin.Enable
 

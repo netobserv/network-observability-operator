@@ -237,15 +237,6 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>enableFlowRtt</b></td>
-        <td>string</td>
-        <td>
-          `enableFlowRtt` allows enabling FlowRTT calculations in the ebpf agent. Set this to ENABLED or DISABLED. Currently only TCP handshake based RTT is calculated per flow. This feature is optionally enabled and is disabled by default. This feature needs both INGRESS and EGRESS direction flow capture and will be disabled if both are not enabled.<br/>
-          <br/>
-            <i>Default</i>: DISABLED<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>excludeInterfaces</b></td>
         <td>[]string</td>
         <td>
@@ -4080,39 +4071,19 @@ Agent configuration for flows extraction.
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>enableDNSTracking</b></td>
-        <td>string</td>
-        <td>
-          Enable the DNS tracking feature. This feature requires mounting the kernel debug filesystem hence the eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged parameter is not set, an error is reported.<br/>
-          <br/>
-            <i>Default</i>: DISABLED<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>enableFlowRtt</b></td>
-        <td>string</td>
-        <td>
-          `enableFlowRtt` allows enabling FlowRTT calculations in the ebpf agent. Currently only TCP handshake based RTT is calculated per flow. This feature is optionally enabled and is disabled by default. This feature needs both INGRESS and EGRESS direction flow capture and will be disabled if both are not enabled.<br/>
-          <br/>
-            <i>Default</i>: DISABLED<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>enablePktDrop</b></td>
-        <td>string</td>
-        <td>
-          Enable the Packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged parameter is not set, an error is reported.<br/>
-          <br/>
-            <i>Default</i>: DISABLED<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>excludeInterfaces</b></td>
         <td>[]string</td>
         <td>
           `excludeInterfaces` contains the interface names that will be excluded from flow tracing. An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.<br/>
           <br/>
             <i>Default</i>: [lo]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>features</b></td>
+        <td>[]enum</td>
+        <td>
+          List of additional features to enable. They are all disabled by default. Enabling additional features may have performance impacts. Possible values are:<br> - `PKT_DROP`: enable the packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br> - `DNS_TRACKING`: enable the DNS tracking feature. This feature requires mounting the kernel debug filesystem hence the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br> - `FLOW_RTT` <i>Unsupported (*)</i>: allows enabling flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature needs both INGRESS and EGRESS direction flow capture and will be disabled if they are not both enabled.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>

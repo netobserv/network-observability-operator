@@ -186,10 +186,9 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	volumeMounts := c.volumes.GetMounts()
 	volumes := c.volumes.GetVolumes()
 
-	if helper.IsPktDropEnabled(&coll.Spec) || helper.IsDNSTrackingEnabled(&coll.Spec) {
+	if helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PktDrop) || helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.DNSTracking) {
 		if !coll.Spec.Agent.EBPF.Privileged {
-			rlog.Error(fmt.Errorf("invalid configuration"),
-				"To use PktDrop and/or DNSTracking feature(s) privileged mode needs to be enabled", nil)
+			rlog.Error(fmt.Errorf("invalid configuration"), "To use PktDrop and/or DNSTracking feature(s) privileged mode needs to be enabled")
 		} else {
 			volume := corev1.Volume{
 				Name: bpfTraceMountName,
@@ -408,7 +407,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		})
 	}
 
-	if helper.IsFlowRTTEnabled(&coll.Spec) {
+	if helper.IsFlowRTTEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableFlowRTT,
 			Value: "true",
@@ -426,14 +425,14 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		}
 	}
 
-	if helper.IsPktDropEnabled(&coll.Spec) {
+	if helper.IsPktDropEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnablePktDrop,
 			Value: "true",
 		})
 	}
 
-	if helper.IsDNSTrackingEnabled(&coll.Spec) {
+	if helper.IsDNSTrackingEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableDNSTracking,
 			Value: "true",

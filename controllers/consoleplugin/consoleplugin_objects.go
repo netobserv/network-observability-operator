@@ -350,15 +350,15 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 
 	var features []string
 	if helper.UseEBPF(b.desired) {
-		if helper.IsPktDropEnabled(b.desired) {
+		if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
 			features = append(features, "pktDrop")
 		}
 
-		if helper.IsDNSTrackingEnabled(b.desired) {
+		if helper.IsDNSTrackingEnabled(&b.desired.Agent.EBPF) {
 			features = append(features, "dnsTracking")
 		}
 
-		if helper.IsFlowRTTEnabled(b.desired) {
+		if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
 			features = append(features, "flowRTT")
 		}
 	}
