@@ -146,6 +146,13 @@ type FlowCollectorIPFIX struct {
 	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty" mapstructure:"-"`
 }
 
+type FeatureConfigType string
+
+const (
+	ConfigEnabled  FeatureConfigType = "ENABLED"
+	ConfigDisabled FeatureConfigType = "DISABLED"
+)
+
 // `FlowCollectorEBPF` defines a FlowCollector that uses eBPF to collect the flows information
 type FlowCollectorEBPF struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
@@ -222,23 +229,24 @@ type FlowCollectorEBPF struct {
 	// Enable the Packets drop flows logging feature. This feature requires mounting
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
 	// If the spec.agent.eBPF.privileged parameter is not set, an error is reported.
-	//+kubebuilder:default:=false
+	//+kubebuilder:default:=DISABLED
 	//+optional
-	EnablePktDrop *bool `json:"enablePktDrop,omitempty"`
+	PktDrop FeatureConfigType `json:"enablePktDrop,omitempty"`
 
 	// Enable the DNS tracking feature. This feature requires mounting
 	// the kernel debug filesystem hence the eBPF pod has to run as privileged.
 	// If the spec.agent.eBPF.privileged parameter is not set, an error is reported.
-	//+kubebuilder:default:=false
+	//+kubebuilder:default:=DISABLED
 	//+optional
-	EnableDNSTracking *bool `json:"enableDNSTracking,omitempty"`
+	DNSTracking FeatureConfigType `json:"enableDNSTracking,omitempty"`
+
 	// `enableFlowRtt` allows enabling FlowRTT calculations in the ebpf agent.
 	// Currently only TCP handshake based RTT is calculated per flow.
 	// This feature is optionally enabled and is disabled by default.
 	// This feature needs both INGRESS and EGRESS direction flow capture and will be disabled if both are not enabled.
-	//+kubebuilder:default:=false
+	//+kubebuilder:default:=DISABLED
 	//+optional
-	EnableFlowRTT bool `json:"enableFlowRtt,omitempty"`
+	FlowRTT FeatureConfigType `json:"enableFlowRtt,omitempty"`
 }
 
 // `FlowCollectorKafka` defines the desired Kafka config of FlowCollector

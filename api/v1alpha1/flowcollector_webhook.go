@@ -63,17 +63,13 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
-	if restored.Spec.Agent.EBPF.EnablePktDrop != nil {
-		*dst.Spec.Agent.EBPF.EnablePktDrop = *restored.Spec.Agent.EBPF.EnablePktDrop
-	}
 
-	if restored.Spec.Agent.EBPF.EnableDNSTracking != nil {
-		*dst.Spec.Agent.EBPF.EnableDNSTracking = *restored.Spec.Agent.EBPF.EnableDNSTracking
-	}
+	dst.Spec.Agent.EBPF.PktDrop = restored.Spec.Agent.EBPF.PktDrop
+	dst.Spec.Agent.EBPF.DNSTracking = restored.Spec.Agent.EBPF.DNSTracking
 
 	dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS
 	dst.Spec.Kafka.SASL = restored.Spec.Kafka.SASL
-	dst.Spec.Agent.EBPF.EnableFlowRTT = restored.Spec.Agent.EBPF.EnableFlowRTT
+	dst.Spec.Agent.EBPF.FlowRTT = restored.Spec.Agent.EBPF.FlowRTT
 
 	dst.Spec.ConsolePlugin.Enable = restored.Spec.ConsolePlugin.Enable
 

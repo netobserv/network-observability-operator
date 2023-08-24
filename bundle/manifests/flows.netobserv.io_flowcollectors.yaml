@@ -112,14 +112,14 @@ spec:
                             type: object
                         type: object
                       enableFlowRtt:
-                        default: false
+                        default: DISABLED
                         description: '`enableFlowRtt` allows enabling FlowRTT calculations
-                          in the ebpf agent. Currently only TCP handshake based RTT
-                          is calculated per flow. This feature is optionally enabled
-                          and is disabled by default. This feature needs both INGRESS
-                          and EGRESS direction flow capture and will be disabled if
-                          both are not enabled.'
-                        type: boolean
+                          in the ebpf agent. Set this to ENABLED or DISABLED. Currently
+                          only TCP handshake based RTT is calculated per flow. This
+                          feature is optionally enabled and is disabled by default.
+                          This feature needs both INGRESS and EGRESS direction flow
+                          capture and will be disabled if both are not enabled.'
+                        type: string
                       excludeInterfaces:
                         default:
                         - lo
@@ -2310,28 +2310,28 @@ spec:
                             type: object
                         type: object
                       enableDNSTracking:
-                        default: false
+                        default: DISABLED
                         description: Enable the DNS tracking feature. This feature
                           requires mounting the kernel debug filesystem hence the
                           eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged
                           parameter is not set, an error is reported.
-                        type: boolean
+                        type: string
                       enableFlowRtt:
-                        default: false
+                        default: DISABLED
                         description: '`enableFlowRtt` allows enabling FlowRTT calculations
                           in the ebpf agent. Currently only TCP handshake based RTT
                           is calculated per flow. This feature is optionally enabled
                           and is disabled by default. This feature needs both INGRESS
                           and EGRESS direction flow capture and will be disabled if
                           both are not enabled.'
-                        type: boolean
+                        type: string
                       enablePktDrop:
-                        default: false
+                        default: DISABLED
                         description: Enable the Packets drop flows logging feature.
                           This feature requires mounting the kernel debug filesystem,
                           so the eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged
                           parameter is not set, an error is reported.
-                        type: boolean
+                        type: string
                       excludeInterfaces:
                         default:
                         - lo

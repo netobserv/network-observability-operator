@@ -98,9 +98,9 @@ func flowCollectorIsoSpecs() {
 					ExcludeInterfaces:  []string{},
 					Privileged:         false,
 					KafkaBatchSize:     0,
-					EnablePktDrop:      pointer.Bool(false),
-					EnableDNSTracking:  pointer.Bool(false),
-					EnableFlowRTT:      false,
+					PktDrop:            "DISABLED",
+					DNSTracking:        "disabled",
+					FlowRTT:            "dISABLED",
 				},
 			},
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{

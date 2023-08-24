@@ -1,6 +1,8 @@
 package helper
 
 import (
+	"strings"
+
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
@@ -102,18 +104,30 @@ func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
 		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
 }
 
+func IsFeatureEnabled(config flowslatest.FeatureConfigType) bool {
+	return (strings.ToUpper(string(config)) == string(flowslatest.ConfigEnabled))
+}
+
+func IsPrivileged(spec *flowslatest.FlowCollectorSpec) bool {
+	return spec.Agent.EBPF.Privileged
+}
+
 func IsPktDropEnabled(spec *flowslatest.FlowCollectorSpec) bool {
-	if spec.Agent.EBPF.Privileged && spec.Agent.EBPF.EnablePktDrop != nil && *spec.Agent.EBPF.EnablePktDrop {
+	if IsPrivileged(spec) && IsFeatureEnabled(spec.Agent.EBPF.PktDrop) {
 		return true
 	}
 	return false
 }
 
 func IsDNSTrackingEnabled(spec *flowslatest.FlowCollectorSpec) bool {
-	if spec.Agent.EBPF.Privileged && spec.Agent.EBPF.EnableDNSTracking != nil && *spec.Agent.EBPF.EnableDNSTracking {
+	if IsPrivileged(spec) && IsFeatureEnabled(spec.Agent.EBPF.DNSTracking) {
 		return true
 	}
 	return false
+}
+
+func IsFlowRTTEnabled(spec *flowslatest.FlowCollectorSpec) bool {
+	return IsFeatureEnabled(spec.Agent.EBPF.FlowRTT)
 }
 
 func PtrBool(b *bool) bool {

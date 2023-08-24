@@ -358,7 +358,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 			features = append(features, "dnsTracking")
 		}
 
-		if b.desired.Agent.EBPF.EnableFlowRTT {
+		if helper.IsFlowRTTEnabled(b.desired) {
 			features = append(features, "flowRTT")
 		}
 	}

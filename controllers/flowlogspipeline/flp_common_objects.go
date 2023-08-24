@@ -482,7 +482,7 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 		outputFields = append(outputFields, outDNSTrackingFields...)
 	}
 
-	if b.desired.Agent.EBPF.EnableFlowRTT {
+	if helper.IsDNSTrackingEnabled(b.desired) {
 		outputFields = append(outputFields, api.OutputField{
 			Name:      "MaxTimeFlowRttNs",
 			Operation: "max",

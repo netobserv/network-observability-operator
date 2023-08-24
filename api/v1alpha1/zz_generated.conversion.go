@@ -547,7 +547,7 @@ func autoConvert_v1alpha1_FlowCollectorEBPF_To_v1beta1_FlowCollectorEBPF(in *Flo
 	if err := Convert_v1alpha1_DebugConfig_To_v1beta1_DebugConfig(&in.Debug, &out.Debug, s); err != nil {
 		return err
 	}
-	out.EnableFlowRTT = in.EnableFlowRTT
+	out.FlowRTT = v1beta1.FeatureConfigType(in.FlowRTT)
 	return nil
 }
 
@@ -570,9 +570,9 @@ func autoConvert_v1beta1_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1b
 	if err := Convert_v1beta1_DebugConfig_To_v1alpha1_DebugConfig(&in.Debug, &out.Debug, s); err != nil {
 		return err
 	}
-	// WARNING: in.EnablePktDrop requires manual conversion: does not exist in peer-type
-	// WARNING: in.EnableDNSTracking requires manual conversion: does not exist in peer-type
-	out.EnableFlowRTT = in.EnableFlowRTT
+	// WARNING: in.PktDrop requires manual conversion: does not exist in peer-type
+	// WARNING: in.DNSTracking requires manual conversion: does not exist in peer-type
+	out.FlowRTT = FeatureConfigType(in.FlowRTT)
 	return nil
 }
 

@@ -408,7 +408,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		})
 	}
 
-	if coll.Spec.Agent.EBPF.EnableFlowRTT {
+	if helper.IsFlowRTTEnabled(&coll.Spec) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableFlowRTT,
 			Value: "true",
