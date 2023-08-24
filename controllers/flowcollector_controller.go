@@ -316,12 +316,18 @@ func (r *FlowCollectorReconciler) reconcileOperator(ctx context.Context, cmn *re
 		} else if err = cmn.ReconcileConfigMap(ctx, desiredFlowDashboardCM, del); err != nil {
 			return err
 		}
+		if !del {
+			r.clusterInfo.Dashboards.SetAvailable(constants.FlowDashboardCMName)
+		}
 
 		desiredHealthDashboardCM, del, err := buildHealthDashboard(desired.Spec.Processor.Metrics.IgnoreTags)
 		if err != nil {
 			return err
 		} else if err = cmn.ReconcileConfigMap(ctx, desiredHealthDashboardCM, del); err != nil {
 			return err
+		}
+		if !del {
+			r.clusterInfo.Dashboards.SetAvailable(constants.HealthDashboardCMName)
 		}
 	}
 	return nil

@@ -1,9 +1,7 @@
 package consoleplugin
 
 import (
-	"context"
 	"encoding/json"
-	"sort"
 	"testing"
 
 	promConfig "github.com/prometheus/common/config"
@@ -16,8 +14,6 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -358,49 +354,4 @@ func TestHTTPClientConfig(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, config2.TLSConfig.InsecureSkipVerify, true)
 	assert.Nil(t, config2.ProxyURL.URL, nil)
-}
-
-func TestDashboardsPerOCPVersion(t *testing.T) {
-	r := CPReconciler{
-		Instance: &reconcilers.Instance{
-			Common: &reconcilers.Common{
-				ClusterInfo: &cluster.Info{},
-			},
-		},
-	}
-	// Check previous versions
-	r.ClusterInfo.SetOpenShiftVersion("4.12.5")
-	dashboards := r.getAvailableDashboards(context.Background())
-	sort.Strings(dashboards)
-	assert.Equal(t, []string{
-		constants.KubernetesNetworkDashboard,
-		constants.FlowDashboardCMName,
-		constants.HealthDashboardCMName,
-	}, dashboards)
-
-	// 4.14 introduces new dashboards; check exact version
-	r.ClusterInfo.SetOpenShiftVersion("4.15.0")
-	dashboards = r.getAvailableDashboards(context.Background())
-	sort.Strings(dashboards)
-	assert.Equal(t, []string{
-		constants.KubernetesNetworkDashboard,
-		constants.IngressDashboardCMName,
-		constants.FlowDashboardCMName,
-		constants.HealthDashboardCMName,
-		constants.NetStatsDashboardCMName,
-		constants.OVNDashboardCMName,
-	}, dashboards)
-
-	// Check future versions
-	r.ClusterInfo.SetOpenShiftVersion("4.15.5")
-	dashboards = r.getAvailableDashboards(context.Background())
-	sort.Strings(dashboards)
-	assert.Equal(t, []string{
-		constants.KubernetesNetworkDashboard,
-		constants.IngressDashboardCMName,
-		constants.FlowDashboardCMName,
-		constants.HealthDashboardCMName,
-		constants.NetStatsDashboardCMName,
-		constants.OVNDashboardCMName,
-	}, dashboards)
 }

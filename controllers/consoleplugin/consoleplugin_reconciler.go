@@ -82,7 +82,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 	}
 
 	if helper.UseConsolePlugin(&desired.Spec) {
-		dashboards := r.getAvailableDashboards(ctx)
+		dashboards := r.ClusterInfo.Dashboards.GetList()
 
 		// Create object builder
 		builder := newBuilder(ns, r.Instance.Image, &desired.Spec, dashboards)
@@ -280,24 +280,4 @@ func statusURL(loki *flowslatest.FlowCollectorLoki) string {
 		return loki.StatusURL
 	}
 	return querierURL(loki)
-}
-
-func (r *CPReconciler) getAvailableDashboards(ctx context.Context) []string {
-	d := []string{
-		constants.KubernetesNetworkDashboard,
-		// TODO: should be conditional; wait for https://github.com/netobserv/network-observability-operator/pull/388 to be merged
-		constants.FlowDashboardCMName,
-		constants.HealthDashboardCMName,
-	}
-	if ok, err := r.ClusterInfo.OpenShiftVersionIsAtLeast("4.15.0"); err != nil {
-		// Log error but do not fail: it's likely a bug in code, if the openshift version cannot be found
-		log.FromContext(ctx).Error(err, "Could not get available dashboards for this cluster version. Is it OpenShift?")
-	} else if ok {
-		d = append(d,
-			constants.IngressDashboardCMName,
-			constants.NetStatsDashboardCMName,
-			constants.OVNDashboardCMName,
-		)
-	}
-	return d
 }

@@ -21,6 +21,7 @@ type Info struct {
 	openShiftVersion      *semver.Version
 	apisMap               map[string]bool
 	fetchedClusterVersion bool
+	Dashboards            Dashboards
 }
 
 var (
@@ -33,7 +34,9 @@ var (
 )
 
 func NewInfo(dcl *discovery.DiscoveryClient) (Info, error) {
-	info := Info{}
+	info := Info{
+		Dashboards: NewDashboards(),
+	}
 	if err := info.fetchAvailableAPIs(dcl); err != nil {
 		return info, err
 	}
@@ -43,7 +46,10 @@ func NewInfo(dcl *discovery.DiscoveryClient) (Info, error) {
 func (c *Info) CheckClusterInfo(ctx context.Context, cl client.Client) error {
 	if c.HasOCPSecurity() && !c.fetchedClusterVersion {
 		// Assumes having openshift security <=> being on openshift
-		return c.fetchOpenShiftClusterVersion(ctx, cl)
+		if err := c.fetchOpenShiftClusterVersion(ctx, cl); err != nil {
+			return err
+		}
+		c.Dashboards.CheckClusterDashboards(ctx, c)
 	}
 	return nil
 }
