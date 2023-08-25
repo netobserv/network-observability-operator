@@ -39,10 +39,11 @@ spec:
         - nodes-flows
         - namespaces-flows
         - workloads-flows
-        # Ignoring eihter "namespaces" or "workloads", as namespaces metrics are included in workload metrics
+        - resources-flows
+        # Ignoring eihter "namespaces", "workloads" or "resources", as namespaces metrics are included in workload and resources metrics
         # This helps reduce total cardinality
         - namespaces
-        - pods
+        - resources
       disableAlerts: []
     dropUnusedFields: true
     resources:
