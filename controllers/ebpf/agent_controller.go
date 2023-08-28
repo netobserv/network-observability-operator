@@ -68,6 +68,8 @@ const (
 	averageMessageSize = 100
 	bpfTraceMountName  = "bpf-kernel-debug"
 	bpfTraceMountPath  = "/sys/kernel/debug"
+	bpfNetNSMountName  = "var-run-netns"
+	bpfNetNSMountPath  = "/var/run/netns"
 )
 
 type reconcileAction int
@@ -185,6 +187,25 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	}
 	volumeMounts := c.volumes.GetMounts()
 	volumes := c.volumes.GetVolumes()
+
+	if helper.IsPrivileged(&coll.Spec.Agent.EBPF) {
+		volume := corev1.Volume{
+			Name: bpfNetNSMountName,
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
+					Type: newHostPathType(corev1.HostPathDirectory),
+					Path: bpfNetNSMountPath,
+				},
+			},
+		}
+		volumes = append(volumes, volume)
+		volumeMount := corev1.VolumeMount{
+			Name:             bpfNetNSMountName,
+			MountPath:        bpfNetNSMountPath,
+			MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+		}
+		volumeMounts = append(volumeMounts, volumeMount)
+	}
 
 	if helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketsDrop) || helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.DNSTracking) {
 		if !coll.Spec.Agent.EBPF.Privileged {

@@ -152,11 +152,9 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 	}
 	if desired.Privileged {
 		scc.AllowPrivilegedContainer = true
+		scc.AllowHostDirVolumePlugin = true
 	} else {
 		scc.AllowedCapabilities = AllowedCapabilities
-	}
-	if helper.IsPktDropEnabled(desired) || helper.IsDNSTrackingEnabled(desired) {
-		scc.AllowHostDirVolumePlugin = true
 	}
 	actual := &osv1.SecurityContextConstraints{}
 	if err := c.Get(ctx, client.ObjectKeyFromObject(scc), actual); err != nil {
