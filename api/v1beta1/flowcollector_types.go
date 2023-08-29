@@ -149,7 +149,7 @@ type FlowCollectorIPFIX struct {
 // Agent feature, can be one of:<br>
 // - `PKT_DROP`, to track packet drops.<br>
 // - `DNS_TRACKING`, to track specific information on DNS traffic.<br>
-// - `FLOW_RTT`, to track L4 latency. <i>Unsupported (*)</i><br>
+// - `FLOW_RTT`, to track L4 TCP latency. <i>Unsupported (*)</i><br>
 // +kubebuilder:validation:Enum:="PKT_DROP";"DNS_TRACKING";"FLOW_RTT"
 type AgentFeature string
 
