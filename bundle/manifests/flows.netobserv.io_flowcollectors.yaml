@@ -2322,8 +2322,9 @@ spec:
                           the kernel debug filesystem hence the eBPF pod has to run
                           as privileged. If the `spec.agent.eBPF.privileged` parameter
                           is not set, an error is reported.<br> - `FlowRTT` [unsupported
-                          (*)]: allows enabling flow latency (RTT) calculations in
-                          the eBPF agent during TCP handshakes.<br>'
+                          (*)]: enable flow latency (RTT) calculations in the eBPF
+                          agent during TCP handshakes. This feature better works with
+                          `sampling` set to 1.<br>'
                         items:
                           description: Agent feature, can be one of:<br> - `PacketsDrop`,
                             to track packet drops.<br> - `DNSTacking`, to track specific
