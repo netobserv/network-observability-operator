@@ -2234,12 +2234,12 @@ spec:
             type: object
           spec:
             description: 'Defines the desired state of the FlowCollector resource.
-              <br><br> *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i>
-              for a feature throughout this document means that this feature is not
-              officially supported by Red Hat. It might have been, for instance, contributed
-              by the community and accepted without a formal agreement for maintenance.
-              The product maintainers might provide some support for these features
-              as a best effort only.'
+              <br><br> *: the mention of "unsupported", or "deprecated" for a feature
+              throughout this document means that this feature is not officially supported
+              by Red Hat. It might have been, for instance, contributed by the community
+              and accepted without a formal agreement for maintenance. The product
+              maintainers might provide some support for these features as a best
+              effort only.'
             properties:
               agent:
                 description: Agent configuration for flows extraction.
@@ -2402,8 +2402,8 @@ spec:
                         type: integer
                     type: object
                   ipfix:
-                    description: '`ipfix` - <i>deprecated (*)</i> - describes the
-                      settings related to the IPFIX-based flow reporter when `spec.agent.type`
+                    description: '`ipfix` [deprecated (*)] - describes the settings
+                      related to the IPFIX-based flow reporter when `spec.agent.type`
                       is set to `IPFIX`.'
                     properties:
                       cacheActiveTimeout:
@@ -2477,12 +2477,11 @@ spec:
                     default: EBPF
                     description: '`type` selects the flows tracing agent. Possible
                       values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br>
-                      - `IPFIX` - <i>deprecated (*)</i> - to use the legacy IPFIX
-                      collector.<br> `EBPF` is recommended as it offers better performances
-                      and should work regardless of the CNI installed on the cluster.
-                      `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work
-                      if they support exporting IPFIX, but they would require manual
-                      configuration).'
+                      - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br>
+                      `EBPF` is recommended as it offers better performances and should
+                      work regardless of the CNI installed on the cluster. `IPFIX`
+                      works with OVN-Kubernetes CNI (other CNIs could work if they
+                      support exporting IPFIX, but they would require manual configuration).'
                     enum:
                     - EBPF
                     - IPFIX
@@ -3189,7 +3188,7 @@ spec:
                   properties:
                     ipfix:
                       description: IPFIX configuration, such as the IP address and
-                        port to send enriched IPFIX flows to. <i>Unsupported (*)</i>.
+                        port to send enriched IPFIX flows to. [Unsupported (*)].
                       properties:
                         targetHost:
                           default: ""
@@ -3218,8 +3217,8 @@ spec:
                           description: Address of the Kafka server
                           type: string
                         sasl:
-                          description: SASL authentication configuration. <i>Unsupported
-                            (*)</i>
+                          description: SASL authentication configuration. [Unsupported
+                            (*)].
                           properties:
                             clientIDKey:
                               description: Key for client ID within the provided `reference`
@@ -3360,8 +3359,7 @@ spec:
                       type: object
                     type:
                       description: '`type` selects the type of exporters. The available
-                        options are `KAFKA` and `IPFIX`. `IPFIX` is <i>unsupported
-                        (*)</i>.'
+                        options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).'
                       enum:
                       - KAFKA
                       - IPFIX
@@ -3380,8 +3378,7 @@ spec:
                     description: Address of the Kafka server
                     type: string
                   sasl:
-                    description: SASL authentication configuration. <i>Unsupported
-                      (*)</i>
+                    description: SASL authentication configuration. [Unsupported (*)].
                     properties:
                       clientIDKey:
                         description: Key for client ID within the provided `reference`
@@ -3521,9 +3518,9 @@ spec:
                     description: '`authToken` describes the way to get a token to
                       authenticate to Loki.<br> - `DISABLED` will not send any token
                       with the request.<br> - `FORWARD` will forward the user token
-                      for authorization.<br> - `HOST` - <i>deprecated (*)</i> - will
-                      use the local pod service account to authenticate to Loki.<br>
-                      When using the Loki Operator, this must be set to `FORWARD`.'
+                      for authorization.<br> - `HOST` [deprecated (*)] - will use
+                      the local pod service account to authenticate to Loki.<br> When
+                      using the Loki Operator, this must be set to `FORWARD`.'
                     enum:
                     - DISABLED
                     - HOST

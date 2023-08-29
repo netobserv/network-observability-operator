@@ -3888,7 +3888,7 @@ Resource Types:
         <td><b><a href="#flowcollectorspec-1">spec</a></b></td>
         <td>object</td>
         <td>
-          Defines the desired state of the FlowCollector resource. <br><br> *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.<br/>
+          Defines the desired state of the FlowCollector resource. <br><br> *: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3907,7 +3907,7 @@ Resource Types:
 
 
 
-Defines the desired state of the FlowCollector resource. <br><br> *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.
+Defines the desired state of the FlowCollector resource. <br><br> *: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.
 
 <table>
     <thead>
@@ -4010,14 +4010,14 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentipfix-1">ipfix</a></b></td>
         <td>object</td>
         <td>
-          `ipfix` - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.<br/>
+          `ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the flows tracing agent. Possible values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` - <i>deprecated (*)</i> - to use the legacy IPFIX collector.<br> `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
+          `type` selects the flows tracing agent. Possible values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br> `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
           <br/>
             <i>Enum</i>: EBPF, IPFIX<br/>
             <i>Default</i>: EBPF<br/>
@@ -4230,7 +4230,7 @@ Agent configuration for flows extraction.
 
 
 
-`ipfix` - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.
+`ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.
 
 <table>
     <thead>
@@ -5541,7 +5541,7 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is <i>unsupported (*)</i>.<br/>
+          `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).<br/>
           <br/>
             <i>Enum</i>: KAFKA, IPFIX<br/>
         </td>
@@ -5550,7 +5550,7 @@ target specifies the target value for the given metric
         <td><b><a href="#flowcollectorspecexportersindexipfix">ipfix</a></b></td>
         <td>object</td>
         <td>
-          IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. <i>Unsupported (*)</i>.<br/>
+          IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5569,7 +5569,7 @@ target specifies the target value for the given metric
 
 
 
-IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. <i>Unsupported (*)</i>.
+IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].
 
 <table>
     <thead>
@@ -5647,7 +5647,7 @@ Kafka configuration, such as the address and topic, to send enriched flows to.
         <td><b><a href="#flowcollectorspecexportersindexkafkasasl">sasl</a></b></td>
         <td>object</td>
         <td>
-          SASL authentication configuration. <i>Unsupported (*)</i><br/>
+          SASL authentication configuration. [Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5666,7 +5666,7 @@ Kafka configuration, such as the address and topic, to send enriched flows to.
 
 
 
-SASL authentication configuration. <i>Unsupported (*)</i>
+SASL authentication configuration. [Unsupported (*)].
 
 <table>
     <thead>
@@ -5965,7 +5965,7 @@ Kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b><a href="#flowcollectorspeckafkasasl">sasl</a></b></td>
         <td>object</td>
         <td>
-          SASL authentication configuration. <i>Unsupported (*)</i><br/>
+          SASL authentication configuration. [Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5984,7 +5984,7 @@ Kafka configuration, allowing to use Kafka as a broker as part of the flow colle
 
 
 
-SASL authentication configuration. <i>Unsupported (*)</i>
+SASL authentication configuration. [Unsupported (*)].
 
 <table>
     <thead>
@@ -6265,7 +6265,7 @@ Loki, the flow store, client settings.
         <td><b>authToken</b></td>
         <td>enum</td>
         <td>
-          `authToken` describes the way to get a token to authenticate to Loki.<br> - `DISABLED` will not send any token with the request.<br> - `FORWARD` will forward the user token for authorization.<br> - `HOST` - <i>deprecated (*)</i> - will use the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `FORWARD`.<br/>
+          `authToken` describes the way to get a token to authenticate to Loki.<br> - `DISABLED` will not send any token with the request.<br> - `FORWARD` will forward the user token for authorization.<br> - `HOST` [deprecated (*)] - will use the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `FORWARD`.<br/>
           <br/>
             <i>Enum</i>: DISABLED, HOST, FORWARD<br/>
             <i>Default</i>: DISABLED<br/>
