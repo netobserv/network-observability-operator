@@ -325,7 +325,7 @@ func CreateFlowMetricsDashboard(netobsNs string, ignoreFlags []string) (string, 
 	`, rowsStr), nil
 }
 
-func FilterDashboardRows(dashboard string, ignoreFlags []string) (string, error) {
+func FilterDashboardRows(dashboard string, netobsNs string, ignoreFlags []string) (string, error) {
 	var result map[string]any
 	err := json.Unmarshal([]byte(dashboard), &result)
 	if err != nil {
@@ -366,5 +366,5 @@ func FilterDashboardRows(dashboard string, ignoreFlags []string) (string, error)
 
 	result["rows"] = filteredRows
 	bytes, err := json.Marshal(result)
-	return string(bytes), err
+	return strings.ReplaceAll(string(bytes), "$NETOBSERV_NS", netobsNs), err
 }
