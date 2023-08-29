@@ -147,16 +147,16 @@ type FlowCollectorIPFIX struct {
 }
 
 // Agent feature, can be one of:<br>
-// - `PKT_DROP`, to track packet drops.<br>
-// - `DNS_TRACKING`, to track specific information on DNS traffic.<br>
-// - `FLOW_RTT`, to track TCP latency. [Unsupported (*)].<br>
-// +kubebuilder:validation:Enum:="PKT_DROP";"DNS_TRACKING";"FLOW_RTT"
+// - `PacketsDrop`, to track packet drops.<br>
+// - `DNSTacking`, to track specific information on DNS traffic.<br>
+// - `FlowRTT`, to track TCP latency. [Unsupported (*)].<br>
+// +kubebuilder:validation:Enum:="PacketsDrop";"DNSTacking";"FlowRTT"
 type AgentFeature string
 
 const (
-	PktDrop     AgentFeature = "PKT_DROP"
-	DNSTracking AgentFeature = "DNS_TRACKING"
-	FlowRTT     AgentFeature = "FLOW_RTT"
+	PacketsDrop AgentFeature = "PacketsDrop"
+	DNSTracking AgentFeature = "DNSTacking"
+	FlowRTT     AgentFeature = "FlowRTT"
 )
 
 // `FlowCollectorEBPF` defines a FlowCollector that uses eBPF to collect the flows information
@@ -233,13 +233,13 @@ type FlowCollectorEBPF struct {
 	Debug DebugConfig `json:"debug,omitempty"`
 
 	// List of additional features to enable. They are all disabled by default. Enabling additional features may have performance impacts. Possible values are:<br>
-	// - `PKT_DROP`: enable the packets drop flows logging feature. This feature requires mounting
+	// - `PacketsDrop`: enable the packets drop flows logging feature. This feature requires mounting
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
 	// If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br>
-	// - `DNS_TRACKING`: enable the DNS tracking feature. This feature requires mounting
+	// - `DNSTacking`: enable the DNS tracking feature. This feature requires mounting
 	// the kernel debug filesystem hence the eBPF pod has to run as privileged.
 	// If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br>
-	// - `FLOW_RTT` [unsupported (*)]: allows enabling flow latency (RTT) calculations in the eBPF agent during TCP handshakes.<br>
+	// - `FlowRTT` [unsupported (*)]: allows enabling flow latency (RTT) calculations in the eBPF agent during TCP handshakes.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 }

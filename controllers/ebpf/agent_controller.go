@@ -186,9 +186,9 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	volumeMounts := c.volumes.GetMounts()
 	volumes := c.volumes.GetVolumes()
 
-	if helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PktDrop) || helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.DNSTracking) {
+	if helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketsDrop) || helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.DNSTracking) {
 		if !coll.Spec.Agent.EBPF.Privileged {
-			rlog.Error(fmt.Errorf("invalid configuration"), "To use PktDrop and/or DNSTracking feature(s) privileged mode needs to be enabled")
+			rlog.Error(fmt.Errorf("invalid configuration"), "To use PacketsDrop and/or DNSTracking feature(s) privileged mode needs to be enabled")
 		} else {
 			volume := corev1.Volume{
 				Name: bpfTraceMountName,
