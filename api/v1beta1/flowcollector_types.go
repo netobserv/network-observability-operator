@@ -149,7 +149,7 @@ type FlowCollectorIPFIX struct {
 // Agent feature, can be one of:<br>
 // - `PKT_DROP`, to track packet drops.<br>
 // - `DNS_TRACKING`, to track specific information on DNS traffic.<br>
-// - `FLOW_RTT`, to track L4 TCP latency. <i>Unsupported (*)</i><br>
+// - `FLOW_RTT`, to track TCP latency. [Unsupported (*)].<br>
 // +kubebuilder:validation:Enum:="PKT_DROP";"DNS_TRACKING";"FLOW_RTT"
 type AgentFeature string
 
@@ -239,8 +239,7 @@ type FlowCollectorEBPF struct {
 	// - `DNS_TRACKING`: enable the DNS tracking feature. This feature requires mounting
 	// the kernel debug filesystem hence the eBPF pod has to run as privileged.
 	// If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br>
-	// - `FLOW_RTT` <i>Unsupported (*)</i>: allows enabling flow latency (RTT) calculations in the eBPF agent during TCP handshakes.
-	// This feature needs both INGRESS and EGRESS direction flow capture and will be disabled if they are not both enabled.<br>
+	// - `FLOW_RTT` [unsupported (*)]: allows enabling flow latency (RTT) calculations in the eBPF agent during TCP handshakes.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 }
