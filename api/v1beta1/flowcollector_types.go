@@ -39,7 +39,7 @@ const (
 
 // Defines the desired state of the FlowCollector resource.
 // <br><br>
-// *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature
+// *: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature
 // is not officially supported by Red Hat. It might have been, for instance, contributed by the community
 // and accepted without a formal agreement for maintenance. The product maintainers might provide some support
 // for these features as a best effort only.
@@ -89,7 +89,7 @@ type FlowCollectorSpec struct {
 type FlowCollectorAgent struct {
 	// `type` selects the flows tracing agent. Possible values are:<br>
 	// - `EBPF` (default) to use NetObserv eBPF agent.<br>
-	// - `IPFIX` - <i>deprecated (*)</i> - to use the legacy IPFIX collector.<br>
+	// - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br>
 	// `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster.
 	// `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX,
 	// but they would require manual configuration).
@@ -98,7 +98,7 @@ type FlowCollectorAgent struct {
 	// +kubebuilder:default:=EBPF
 	Type string `json:"type,omitempty"`
 
-	// `ipfix` - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type`
+	// `ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type`
 	// is set to `IPFIX`.
 	// +optional
 	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
@@ -250,7 +250,7 @@ type FlowCollectorKafka struct {
 	// +optional
 	TLS ClientTLS `json:"tls"`
 
-	// SASL authentication configuration. <i>Unsupported (*)</i>
+	// SASL authentication configuration. [Unsupported (*)].
 	// +optional
 	// +k8s:conversion-gen=false
 	SASL SASLConfig `json:"sasl"`
@@ -535,7 +535,7 @@ type FlowCollectorLoki struct {
 	// `authToken` describes the way to get a token to authenticate to Loki.<br>
 	// - `DISABLED` will not send any token with the request.<br>
 	// - `FORWARD` will forward the user token for authorization.<br>
-	// - `HOST` - <i>deprecated (*)</i> - will use the local pod service account to authenticate to Loki.<br>
+	// - `HOST` [deprecated (*)] - will use the local pod service account to authenticate to Loki.<br>
 	// When using the Loki Operator, this must be set to `FORWARD`.
 	AuthToken string `json:"authToken,omitempty"`
 
@@ -797,7 +797,7 @@ const (
 
 // `FlowCollectorExporter` defines an additional exporter to send enriched flows to.
 type FlowCollectorExporter struct {
-	// `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is <i>unsupported (*)</i>.
+	// `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="KAFKA";"IPFIX"
 	// +kubebuilder:validation:Required
@@ -807,7 +807,7 @@ type FlowCollectorExporter struct {
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
-	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. <i>Unsupported (*)</i>.
+	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].
 	// +optional
 	IPFIX FlowCollectorIPFIXReceiver `json:"ipfix,omitempty"`
 }
