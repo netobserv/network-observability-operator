@@ -28,10 +28,12 @@ func NewDashboards() Dashboards {
 	}
 }
 
+// CheckClusterDashboards sets the available dashboards based on OpenShift version.
+// This function shouldn't be called in non-OpenShift context.
 func (d *Dashboards) CheckClusterDashboards(ctx context.Context, clusterInfo *Info) {
 	if ok, err := clusterInfo.OpenShiftVersionIsAtLeast("4.15.0"); err != nil {
 		// Log error but do not fail: it's likely a bug in code, if the openshift version cannot be found
-		log.FromContext(ctx).Error(err, "Could not get available dashboards for this cluster version. Is it OpenShift?")
+		log.FromContext(ctx).Error(err, "Could not get available dashboards for this cluster version.")
 	} else if ok {
 		d.SetAvailable(constants.IngressDashboardCMName)
 		d.SetAvailable(constants.NetStatsDashboardCMName)

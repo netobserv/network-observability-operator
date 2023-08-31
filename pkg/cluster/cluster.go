@@ -44,8 +44,7 @@ func NewInfo(dcl *discovery.DiscoveryClient) (Info, error) {
 }
 
 func (c *Info) CheckClusterInfo(ctx context.Context, cl client.Client) error {
-	if c.HasOCPSecurity() && !c.fetchedClusterVersion {
-		// Assumes having openshift security <=> being on openshift
+	if c.IsOpenShift() && !c.fetchedClusterVersion {
 		if err := c.fetchOpenShiftClusterVersion(ctx, cl); err != nil {
 			return err
 		}
@@ -112,6 +111,11 @@ func (c *Info) OpenShiftVersionIsAtLeast(v string) (bool, error) {
 	}
 	version := semver.New(v)
 	return !c.openShiftVersion.LessThan(*version), nil
+}
+
+// IsOpenShift assumes having openshift SCC API <=> being on openshift
+func (c *Info) IsOpenShift() bool {
+	return c.HasOCPSecurity()
 }
 
 // HasOCPSecurity returns true if "securitycontextconstraints.security.openshift.io" API was found
