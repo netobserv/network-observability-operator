@@ -72,6 +72,7 @@ func flowCollectorControllerSpecs() {
 	rbKeyTransform := types.NamespacedName{Name: flowlogspipeline.RoleBindingName(flowlogspipeline.ConfKafkaTransformer)}
 	rbKeyIngestMono := types.NamespacedName{Name: flowlogspipeline.RoleBindingMonoName(flowlogspipeline.ConfKafkaIngester)}
 	rbKeyTransformMono := types.NamespacedName{Name: flowlogspipeline.RoleBindingMonoName(flowlogspipeline.ConfKafkaTransformer)}
+	rbKeyPlugin := types.NamespacedName{Name: constants.PluginName}
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
@@ -138,6 +139,15 @@ func flowCollectorControllerSpecs() {
 			// Create
 			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
 
+			By("Expecting status to be updating")
+			Eventually(func() error {
+				updatedCr := flowslatest.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &updatedCr); err != nil {
+					return err
+				}
+				return conditionMatch(updatedCr.Status.Conditions, "Pending", "Updating")
+			}, timeout, interval).Should(Succeed())
+
 			By("Expecting to create the flowlogs-pipeline DaemonSet")
 			Eventually(func() error {
 				if err := k8sClient.Get(ctx, flpKey1, &ds); err != nil {
@@ -177,6 +187,15 @@ func flowCollectorControllerSpecs() {
 			Expect(rb2.Subjects).Should(HaveLen(1))
 			Expect(rb2.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
 			Expect(rb2.RoleRef.Name).Should(Equal("flowlogs-pipeline-transformer"))
+
+			By("Expecting to create console plugin role binding")
+			rb3 := rbacv1.ClusterRoleBinding{}
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyPlugin, &rb3)
+			}, timeout, interval).Should(Succeed())
+			Expect(rb3.Subjects).Should(HaveLen(1))
+			Expect(rb3.Subjects[0].Name).Should(Equal("netobserv-plugin"))
+			Expect(rb3.RoleRef.Name).Should(Equal("netobserv-plugin"))
 
 			By("Not expecting transformer role binding")
 			Eventually(func() interface{} {
@@ -743,6 +762,21 @@ func flowCollectorControllerSpecs() {
 			}, timeout, interval).Should(Succeed())
 		})
 
+		It("Should condition be ready", func() {
+			// Do a dummy change that will trigger reconcile
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.ConsolePlugin.LogLevel = "debug"
+			})
+			By("Expecting status to be ready")
+			Eventually(func() error {
+				updatedCr := flowslatest.FlowCollector{}
+				if err := k8sClient.Get(ctx, crKey, &updatedCr); err != nil {
+					return err
+				}
+				return conditionMatch(updatedCr.Status.Conditions, "Ready", "Ready")
+			}, timeout, interval).Should(Succeed())
+		})
+
 		It("Should delete CR", func() {
 			Eventually(func() error {
 				return k8sClient.Delete(ctx, &flowCR)
@@ -836,5 +870,22 @@ func checkDigestUpdate(oldDigest *string, annots map[string]string) error {
 		return fmt.Errorf("expect digest to change, but is still %s", *oldDigest)
 	}
 	*oldDigest = newDigest
+	return nil
+}
+
+func conditionMatch(conditions []metav1.Condition, conditionType string, conditionReason string) error {
+	if len(conditions) < 1 {
+		return fmt.Errorf("Invalid status condition length %d\nconditions: %v", len(conditions), conditions)
+	}
+	// check only first condition since AddUniqueCondition function sort them
+	if conditions[0].Type != conditionType {
+		return fmt.Errorf("Invalid condition type %s != %s\nconditions: %v", conditions[0].Type, conditionType, conditions)
+	}
+	if conditions[0].Reason != conditionReason {
+		return fmt.Errorf("Invalid condition reason %s != %s\nconditions: %v", conditions[0].Reason, conditionReason, conditions)
+	}
+	if conditions[0].Status != metav1.ConditionTrue {
+		return fmt.Errorf("Invalid condition status %s != %s\nconditions: %v", conditions[0].Status, metav1.ConditionTrue, conditions)
+	}
 	return nil
 }
