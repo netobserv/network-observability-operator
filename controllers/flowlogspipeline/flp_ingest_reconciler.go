@@ -48,10 +48,10 @@ func newIngesterReconciler(cmn *reconcilers.Instance) *flpIngesterReconciler {
 	cmn.Managed.AddManagedObject(promServiceName(ConfKafkaIngester), owned.promService)
 	cmn.Managed.AddManagedObject(RoleBindingName(ConfKafkaIngester), owned.roleBinding)
 	cmn.Managed.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
-	if cmn.AvailableAPIs.HasSvcMonitor() {
+	if cmn.ClusterInfo.HasSvcMonitor() {
 		cmn.Managed.AddManagedObject(serviceMonitorName(ConfKafkaIngester), owned.serviceMonitor)
 	}
-	if cmn.AvailableAPIs.HasPromRule() {
+	if cmn.ClusterInfo.HasPromRule() {
 		cmn.Managed.AddManagedObject(prometheusRuleName(ConfKafkaIngester), owned.prometheusRule)
 	}
 
@@ -126,13 +126,13 @@ func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, 
 	if err := r.ReconcileService(ctx, r.owned.promService, builder.promService(), &report); err != nil {
 		return err
 	}
-	if r.AvailableAPIs.HasSvcMonitor() {
+	if r.ClusterInfo.HasSvcMonitor() {
 		serviceMonitor := builder.generic.serviceMonitor()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}
-	if r.AvailableAPIs.HasPromRule() {
+	if r.ClusterInfo.HasPromRule() {
 		promRules := builder.generic.prometheusRule()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
@@ -161,7 +161,7 @@ func (r *flpIngesterReconciler) reconcilePermissions(ctx context.Context, builde
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 
-	cr := buildClusterRoleIngester(r.UseOpenShiftSCC)
+	cr := buildClusterRoleIngester(r.ClusterInfo.HasOCPSecurity())
 	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
 		return err
 	}

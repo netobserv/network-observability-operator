@@ -103,6 +103,10 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 	return autoScaler, getPluginConfig()
 }
 
+func nbuilder(spec *flowslatest.FlowCollectorSpec) builder {
+	return newBuilder(testNamespace, testImage, spec, []string{})
+}
+
 func TestContainerUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 
@@ -110,7 +114,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	plugin := getPluginConfig()
 	loki := flowslatest.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder := newBuilder(testNamespace, testImage, &spec)
+	builder := nbuilder(&spec)
 	old := builder.deployment("digest")
 	nEw := builder.deployment("digest")
 	report := helper.NewChangeReport("")
@@ -162,7 +166,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 		},
 	}}
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = nbuilder(&spec)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -172,7 +176,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	//new loki cert name
 	loki.TLS.CACert.Name = "cm-name-2"
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = nbuilder(&spec)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -182,7 +186,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	//test again no change
 	loki.TLS.CACert.Name = "cm-name-2"
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = nbuilder(&spec)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.False(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -194,7 +198,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	loki.StatusTLS.Enable = true
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = nbuilder(&spec)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -209,7 +213,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	}
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = nbuilder(&spec)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -225,7 +229,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	}
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = nbuilder(&spec)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -264,7 +268,7 @@ func TestBuiltService(t *testing.T) {
 	plugin := getPluginConfig()
 	loki := flowslatest.FlowCollectorLoki{URL: "http://foo:1234"}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder := newBuilder(testNamespace, testImage, &spec)
+	builder := nbuilder(&spec)
 	old := builder.mainService()
 	nEw := builder.mainService()
 	report := helper.NewChangeReport("")
@@ -278,7 +282,7 @@ func TestLabels(t *testing.T) {
 	plugin := getPluginConfig()
 	loki := flowslatest.FlowCollectorLoki{URL: "http://foo:1234"}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder := newBuilder(testNamespace, testImage, &spec)
+	builder := nbuilder(&spec)
 
 	// Deployment
 	depl := builder.deployment("digest")

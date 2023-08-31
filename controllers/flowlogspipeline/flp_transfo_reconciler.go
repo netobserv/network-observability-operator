@@ -52,10 +52,10 @@ func newTransformerReconciler(cmn *reconcilers.Instance) *flpTransformerReconcil
 	cmn.Managed.AddManagedObject(promServiceName(ConfKafkaTransformer), owned.promService)
 	cmn.Managed.AddManagedObject(RoleBindingName(ConfKafkaTransformer), owned.roleBinding)
 	cmn.Managed.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
-	if cmn.AvailableAPIs.HasSvcMonitor() {
+	if cmn.ClusterInfo.HasSvcMonitor() {
 		cmn.Managed.AddManagedObject(serviceMonitorName(ConfKafkaTransformer), owned.serviceMonitor)
 	}
-	if cmn.AvailableAPIs.HasPromRule() {
+	if cmn.ClusterInfo.HasPromRule() {
 		cmn.Managed.AddManagedObject(prometheusRuleName(ConfKafkaTransformer), owned.prometheusRule)
 	}
 
@@ -176,13 +176,13 @@ func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Contex
 	if err := r.ReconcileService(ctx, r.owned.promService, builder.promService(), &report); err != nil {
 		return err
 	}
-	if r.AvailableAPIs.HasSvcMonitor() {
+	if r.ClusterInfo.HasSvcMonitor() {
 		serviceMonitor := builder.generic.serviceMonitor()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}
-	if r.AvailableAPIs.HasPromRule() {
+	if r.ClusterInfo.HasPromRule() {
 		promRules := builder.generic.prometheusRule()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err

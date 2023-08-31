@@ -32,6 +32,14 @@ const (
 	NewConnectionType = "newConnection"
 	HeartbeatType     = "heartbeat"
 	EndConnectionType = "endConnection"
+
+	// Dashboards
+	FlowDashboardCMName        = "grafana-dashboard-netobserv-flow-metrics"
+	HealthDashboardCMName      = "grafana-dashboard-netobserv-health"
+	IngressDashboardCMName     = "grafana-dashboard-ingress"
+	NetStatsDashboardCMName    = "grafana-dashboard-network-stats"
+	OVNDashboardCMName         = "grafana-dashboard-ovn-health"
+	KubernetesNetworkDashboard = "grafana-dashboard-cluster-total"
 )
 
 var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}

@@ -144,6 +144,13 @@ func flowCollectorConsolePluginSpecs() {
 				}
 				return ofc.Data["config.yaml"]
 			}, timeout, interval).Should(ContainSubstring("portNaming:\n  enable: true\n  portNames:\n    \"3100\": loki\nquickFilters:\n- name: Applications"))
+			Eventually(func() interface{} {
+				ofc := v1.ConfigMap{}
+				if err := k8sClient.Get(ctx, configKey, &ofc); err != nil {
+					return err
+				}
+				return ofc.Data["config.yaml"]
+			}, timeout, interval).Should(ContainSubstring("- grafana-dashboard-netobserv-flow-metrics\n- grafana-dashboard-netobserv-health"))
 		})
 
 		It("Should update successfully", func() {

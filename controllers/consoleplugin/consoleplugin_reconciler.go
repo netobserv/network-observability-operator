@@ -56,7 +56,7 @@ func NewReconciler(common *reconcilers.Common, imageName string) CPReconciler {
 	cmnInstance.Managed.AddManagedObject(constants.PluginName, owned.hpa)
 	cmnInstance.Managed.AddManagedObject(constants.PluginName, owned.serviceAccount)
 	cmnInstance.Managed.AddManagedObject(configMapName, owned.configMap)
-	if common.AvailableAPIs.HasSvcMonitor() {
+	if common.ClusterInfo.HasSvcMonitor() {
 		cmnInstance.Managed.AddManagedObject(constants.PluginName, owned.serviceMonitor)
 	}
 
@@ -82,8 +82,10 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 	}
 
 	if helper.UseConsolePlugin(&desired.Spec) {
+		dashboards := r.ClusterInfo.Dashboards.GetList()
+
 		// Create object builder
-		builder := newBuilder(ns, r.Instance.Image, &desired.Spec)
+		builder := newBuilder(ns, r.Instance.Image, &desired.Spec, dashboards)
 
 		if err := r.reconcilePermissions(ctx, &builder); err != nil {
 			return err
@@ -231,7 +233,7 @@ func (r *CPReconciler) reconcileServices(ctx context.Context, builder *builder) 
 	if err := r.ReconcileService(ctx, r.owned.metricsService, builder.metricsService(), &report); err != nil {
 		return err
 	}
-	if r.AvailableAPIs.HasSvcMonitor() {
+	if r.ClusterInfo.HasSvcMonitor() {
 		serviceMonitor := builder.serviceMonitor()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err

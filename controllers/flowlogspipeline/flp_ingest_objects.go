@@ -25,7 +25,7 @@ func newIngestBuilder(info *reconcilers.Instance, desired *flowslatest.FlowColle
 }
 
 func (b *ingestBuilder) daemonSet(annotations map[string]string) *appsv1.DaemonSet {
-	pod := b.generic.podTemplate(true /*listens*/, !b.generic.info.UseOpenShiftSCC, annotations)
+	pod := b.generic.podTemplate(true /*listens*/, !b.generic.info.ClusterInfo.HasOCPSecurity(), annotations)
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.generic.name(),

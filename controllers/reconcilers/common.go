@@ -6,7 +6,7 @@ import (
 	"reflect"
 
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/pkg/discover"
+	"github.com/netobserv/network-observability-operator/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 	corev1 "k8s.io/api/core/v1"
@@ -22,8 +22,7 @@ type Common struct {
 	Watcher           *watchers.Watcher
 	Namespace         string
 	PreviousNamespace string
-	UseOpenShiftSCC   bool
-	AvailableAPIs     *discover.AvailableAPIs
+	ClusterInfo       *cluster.Info
 }
 
 func (c *Common) PrivilegedNamespace() string {
