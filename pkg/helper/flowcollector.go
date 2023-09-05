@@ -102,18 +102,35 @@ func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
 		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
 }
 
-func IsPktDropEnabled(spec *flowslatest.FlowCollectorSpec) bool {
-	if spec.Agent.EBPF.Privileged && spec.Agent.EBPF.EnablePktDrop != nil && *spec.Agent.EBPF.EnablePktDrop {
+func IsFeatureEnabled(spec *flowslatest.FlowCollectorEBPF, feature flowslatest.AgentFeature) bool {
+	for _, f := range spec.Features {
+		if f == feature {
+			return true
+		}
+	}
+	return false
+}
+
+func IsPrivileged(spec *flowslatest.FlowCollectorEBPF) bool {
+	return spec.Privileged
+}
+
+func IsPktDropEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+	if IsPrivileged(spec) && IsFeatureEnabled(spec, flowslatest.PacketsDrop) {
 		return true
 	}
 	return false
 }
 
-func IsDNSTrackingEnabled(spec *flowslatest.FlowCollectorSpec) bool {
-	if spec.Agent.EBPF.Privileged && spec.Agent.EBPF.EnableDNSTracking != nil && *spec.Agent.EBPF.EnableDNSTracking {
+func IsDNSTrackingEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+	if IsPrivileged(spec) && IsFeatureEnabled(spec, flowslatest.DNSTracking) {
 		return true
 	}
 	return false
+}
+
+func IsFlowRTTEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+	return IsFeatureEnabled(spec, flowslatest.FlowRTT)
 }
 
 func PtrBool(b *bool) bool {

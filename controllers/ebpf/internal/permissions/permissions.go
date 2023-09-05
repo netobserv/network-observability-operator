@@ -155,13 +155,8 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 	} else {
 		scc.AllowedCapabilities = AllowedCapabilities
 	}
-	if (desired.EnablePktDrop != nil && *desired.EnablePktDrop) ||
-		(desired.EnableDNSTracking != nil && *desired.EnableDNSTracking) {
+	if helper.IsPktDropEnabled(desired) || helper.IsDNSTrackingEnabled(desired) {
 		scc.AllowHostDirVolumePlugin = true
-	}
-	if (desired.EnablePktDrop != nil && !*desired.EnablePktDrop) &&
-		(desired.EnableDNSTracking != nil && !*desired.EnableDNSTracking) {
-		scc.AllowHostDirVolumePlugin = false
 	}
 	actual := &osv1.SecurityContextConstraints{}
 	if err := c.Get(ctx, client.ObjectKeyFromObject(scc), actual); err != nil {

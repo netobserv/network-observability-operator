@@ -268,15 +268,10 @@ func (in *FlowCollectorEBPF) DeepCopyInto(out *FlowCollectorEBPF) {
 		copy(*out, *in)
 	}
 	in.Debug.DeepCopyInto(&out.Debug)
-	if in.EnablePktDrop != nil {
-		in, out := &in.EnablePktDrop, &out.EnablePktDrop
-		*out = new(bool)
-		**out = **in
-	}
-	if in.EnableDNSTracking != nil {
-		in, out := &in.EnableDNSTracking, &out.EnableDNSTracking
-		*out = new(bool)
-		**out = **in
+	if in.Features != nil {
+		in, out := &in.Features, &out.Features
+		*out = make([]AgentFeature, len(*in))
+		copy(*out, *in)
 	}
 }
 

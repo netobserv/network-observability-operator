@@ -63,12 +63,10 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
-	if restored.Spec.Agent.EBPF.EnablePktDrop != nil {
-		*dst.Spec.Agent.EBPF.EnablePktDrop = *restored.Spec.Agent.EBPF.EnablePktDrop
-	}
 
-	if restored.Spec.Agent.EBPF.EnableDNSTracking != nil {
-		*dst.Spec.Agent.EBPF.EnableDNSTracking = *restored.Spec.Agent.EBPF.EnableDNSTracking
+	if restored.Spec.Agent.EBPF.Features != nil {
+		dst.Spec.Agent.EBPF.Features = make([]v1beta1.AgentFeature, len(restored.Spec.Agent.EBPF.Features))
+		copy(dst.Spec.Agent.EBPF.Features, restored.Spec.Agent.EBPF.Features)
 	}
 
 	dst.Spec.Loki.StatusTLS = restored.Spec.Loki.StatusTLS

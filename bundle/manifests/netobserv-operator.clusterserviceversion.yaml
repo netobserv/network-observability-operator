@@ -175,8 +175,6 @@ metadata:
               "ebpf": {
                 "cacheActiveTimeout": "5s",
                 "cacheMaxFlows": 100000,
-                "enableDNSTracking": false,
-                "enablePktDrop": false,
                 "excludeInterfaces": [
                   "lo"
                 ],

@@ -13,8 +13,10 @@ spec:
       cacheActiveTimeout: 5s
       cacheMaxFlows: 100000
       privileged: false
-      enablePktDrop: false
-      enableDNSTracking: false
+      # features: 
+      # - "PacketsDrop"
+      # - "DNSTacking"
+      # - "FlowRTT"
       interfaces: [ ]
       excludeInterfaces: [ "lo" ]
       logLevel: info
