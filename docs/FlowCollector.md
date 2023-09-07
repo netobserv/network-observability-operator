@@ -8626,7 +8626,7 @@ Resource Types:
         <td><b><a href="#flowcollectorspec-1">spec</a></b></td>
         <td>object</td>
         <td>
-          Defines the desired state of the FlowCollector resource. <br><br> *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.<br/>
+          Defines the desired state of the FlowCollector resource. <br><br> *: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8645,7 +8645,7 @@ Resource Types:
 
 
 
-Defines the desired state of the FlowCollector resource. <br><br> *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.
+Defines the desired state of the FlowCollector resource. <br><br> *: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.
 
 <table>
     <thead>
@@ -8748,14 +8748,14 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentipfix-1">ipfix</a></b></td>
         <td>object</td>
         <td>
-          `ipfix` - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.<br/>
+          `ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the flows tracing agent. Possible values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` - <i>deprecated (*)</i> - to use the legacy IPFIX collector.<br> `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
+          `type` selects the flows tracing agent. Possible values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br> `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
           <br/>
             <i>Enum</i>: EBPF, IPFIX<br/>
             <i>Default</i>: EBPF<br/>
@@ -8809,30 +8809,19 @@ Agent configuration for flows extraction.
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>enableDNSTracking</b></td>
-        <td>boolean</td>
-        <td>
-          Enable the DNS tracking feature. This feature requires mounting the kernel debug filesystem hence the eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged parameter is not set, an error is reported.<br/>
-          <br/>
-            <i>Default</i>: false<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>enablePktDrop</b></td>
-        <td>boolean</td>
-        <td>
-          Enable the Packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged parameter is not set, an error is reported.<br/>
-          <br/>
-            <i>Default</i>: false<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>excludeInterfaces</b></td>
         <td>[]string</td>
         <td>
           `excludeInterfaces` contains the interface names that will be excluded from flow tracing. An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.<br/>
           <br/>
             <i>Default</i>: [lo]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>features</b></td>
+        <td>[]enum</td>
+        <td>
+          List of additional features to enable. They are all disabled by default. Enabling additional features may have performance impacts. Possible values are:<br> - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br> - `DNSTracking`: enable the DNS tracking feature. This feature requires mounting the kernel debug filesystem hence the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br> - `FlowRTT` [unsupported (*)]: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8968,7 +8957,7 @@ Agent configuration for flows extraction.
 
 
 
-`ipfix` - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.
+`ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.
 
 <table>
     <thead>
@@ -10279,7 +10268,7 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is <i>unsupported (*)</i>.<br/>
+          `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).<br/>
           <br/>
             <i>Enum</i>: KAFKA, IPFIX<br/>
         </td>
@@ -10288,7 +10277,7 @@ target specifies the target value for the given metric
         <td><b><a href="#flowcollectorspecexportersindexipfix-1">ipfix</a></b></td>
         <td>object</td>
         <td>
-          IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. <i>Unsupported (*)</i>.<br/>
+          IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10307,7 +10296,7 @@ target specifies the target value for the given metric
 
 
 
-IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. <i>Unsupported (*)</i>.
+IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].
 
 <table>
     <thead>
@@ -10385,7 +10374,7 @@ Kafka configuration, such as the address and topic, to send enriched flows to.
         <td><b><a href="#flowcollectorspecexportersindexkafkasasl-1">sasl</a></b></td>
         <td>object</td>
         <td>
-          SASL authentication configuration. <i>Unsupported (*)</i><br/>
+          SASL authentication configuration. [Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10404,7 +10393,7 @@ Kafka configuration, such as the address and topic, to send enriched flows to.
 
 
 
-SASL authentication configuration. <i>Unsupported (*)</i>
+SASL authentication configuration. [Unsupported (*)].
 
 <table>
     <thead>
@@ -10416,24 +10405,17 @@ SASL authentication configuration. <i>Unsupported (*)</i>
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>clientIDKey</b></td>
-        <td>string</td>
-        <td>
-          Key for client ID within the provided `reference`<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>clientSecretKey</b></td>
-        <td>string</td>
-        <td>
-          Key for client secret within the provided `reference`<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecexportersindexkafkasaslreference-1">reference</a></b></td>
+        <td><b><a href="#flowcollectorspecexportersindexkafkasaslclientidreference-1">clientIDReference</a></b></td>
         <td>object</td>
         <td>
-          Reference to the secret or config map containing the client ID and secret<br/>
+          Reference to the secret or config map containing the client ID<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkasaslclientsecretreference-1">clientSecretReference</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the secret or config map containing the client secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10450,12 +10432,12 @@ SASL authentication configuration. <i>Unsupported (*)</i>
 </table>
 
 
-### FlowCollector.spec.exporters[index].kafka.sasl.reference
+### FlowCollector.spec.exporters[index].kafka.sasl.clientIDReference
 <sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkasasl-1)</sup></sup>
 
 
 
-Reference to the secret or config map containing the client ID and secret
+Reference to the secret or config map containing the client ID
 
 <table>
     <thead>
@@ -10467,17 +10449,24 @@ Reference to the secret or config map containing the client ID and secret
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the config map or secret to reference<br/>
+          Name of the config map or secret containing the file<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -10486,7 +10475,59 @@ Reference to the secret or config map containing the client ID and secret
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the reference: "configmap" or "secret"<br/>
+          Type for the file reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.sasl.clientSecretReference
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkasasl-1)</sup></sup>
+
+
+
+Reference to the secret or config map containing the client secret
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing the file<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the file reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -10703,7 +10744,7 @@ Kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b><a href="#flowcollectorspeckafkasasl-1">sasl</a></b></td>
         <td>object</td>
         <td>
-          SASL authentication configuration. <i>Unsupported (*)</i><br/>
+          SASL authentication configuration. [Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10722,7 +10763,7 @@ Kafka configuration, allowing to use Kafka as a broker as part of the flow colle
 
 
 
-SASL authentication configuration. <i>Unsupported (*)</i>
+SASL authentication configuration. [Unsupported (*)].
 
 <table>
     <thead>
@@ -10734,24 +10775,17 @@ SASL authentication configuration. <i>Unsupported (*)</i>
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>clientIDKey</b></td>
-        <td>string</td>
-        <td>
-          Key for client ID within the provided `reference`<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>clientSecretKey</b></td>
-        <td>string</td>
-        <td>
-          Key for client secret within the provided `reference`<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspeckafkasaslreference-1">reference</a></b></td>
+        <td><b><a href="#flowcollectorspeckafkasaslclientidreference-1">clientIDReference</a></b></td>
         <td>object</td>
         <td>
-          Reference to the secret or config map containing the client ID and secret<br/>
+          Reference to the secret or config map containing the client ID<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkasaslclientsecretreference-1">clientSecretReference</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the secret or config map containing the client secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10768,12 +10802,12 @@ SASL authentication configuration. <i>Unsupported (*)</i>
 </table>
 
 
-### FlowCollector.spec.kafka.sasl.reference
+### FlowCollector.spec.kafka.sasl.clientIDReference
 <sup><sup>[↩ Parent](#flowcollectorspeckafkasasl-1)</sup></sup>
 
 
 
-Reference to the secret or config map containing the client ID and secret
+Reference to the secret or config map containing the client ID
 
 <table>
     <thead>
@@ -10785,17 +10819,24 @@ Reference to the secret or config map containing the client ID and secret
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the config map or secret to reference<br/>
+          Name of the config map or secret containing the file<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -10804,7 +10845,59 @@ Reference to the secret or config map containing the client ID and secret
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the reference: "configmap" or "secret"<br/>
+          Type for the file reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.sasl.clientSecretReference
+<sup><sup>[↩ Parent](#flowcollectorspeckafkasasl-1)</sup></sup>
+
+
+
+Reference to the secret or config map containing the client secret
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing the file<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the file reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -11161,7 +11254,7 @@ Loki configuration for MANUAL mode. This is the more flexible configuration. It 
         <td><b>authToken</b></td>
         <td>enum</td>
         <td>
-          `authToken` describes the way to get a token to authenticate to Loki.<br> - `DISABLED` will not send any token with the request.<br> - `FORWARD` will forward the user token for authorization.<br> - `HOST` - <i>deprecated (*)</i> - will use the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `FORWARD`.<br/>
+          `authToken` describes the way to get a token to authenticate to Loki.<br> - `DISABLED` will not send any token with the request.<br> - `FORWARD` will forward the user token for authorization.<br> - `HOST` [deprecated (*)] - will use the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `FORWARD`.<br/>
           <br/>
             <i>Enum</i>: DISABLED, HOST, FORWARD<br/>
             <i>Default</i>: DISABLED<br/>
@@ -11574,6 +11667,15 @@ TLS client configuration for Loki URL.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>clusterName</b></td>
+        <td>string</td>
+        <td>
+          `clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>conversationEndTimeout</b></td>
         <td>string</td>
         <td>
@@ -12720,9 +12822,9 @@ target specifies the target value for the given metric
         <td><b>ignoreTags</b></td>
         <td>[]string</td>
         <td>
-          `ignoreTags` is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions . Available tags are: `egress`, `ingress`, `flows`, `bytes`, `packets`, `namespaces`, `nodes`, `workloads`.<br/>
+          `ignoreTags` is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions . Available tags are: `egress`, `ingress`, `flows`, `bytes`, `packets`, `namespaces`, `nodes`, `workloads`, `nodes-flows`, `namespaces-flows`, `workloads-flows`. Namespace-based metrics are covered by both `workloads` and `namespaces` tags, hence it is recommended to always ignore one of them (`workloads` offering a finer granularity).<br/>
           <br/>
-            <i>Default</i>: [egress packets]<br/>
+            <i>Default</i>: [egress packets nodes-flows namespaces-flows workloads-flows namespaces]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12792,10 +12894,26 @@ TLS configuration.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          insecureSkipVerify allows skipping client-side verification of the provided certificate If set to true, ProvidedCaFile field will be ignored<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessormetricsservertlsprovided-1">provided</a></b></td>
         <td>object</td>
         <td>
           TLS configuration when `type` is set to `PROVIDED`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessormetricsservertlsprovidedcafile-1">providedCaFile</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the CA file will be ignored<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12863,6 +12981,58 @@ TLS configuration when `type` is set to `PROVIDED`.
         <td>enum</td>
         <td>
           Type for the certificate reference: `configmap` or `secret`<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.metrics.server.tls.providedCaFile
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsservertls-1)</sup></sup>
+
+
+
+Reference to the CA file will be ignored
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing the file<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the file reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>

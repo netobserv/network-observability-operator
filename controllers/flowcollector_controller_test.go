@@ -632,7 +632,7 @@ func flowCollectorControllerSpecs() {
 		})
 	})
 
-	Context("Using certificates", func() {
+	Context("Using certificates with loki manual mode", func() {
 		flpDS := appsv1.DaemonSet{}
 		It("Should update Loki to use TLS", func() {
 			// Create CM certificate
@@ -668,6 +668,55 @@ func flowCollectorControllerSpecs() {
 
 		It("Should restore no TLS config", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
+					Enable: false,
+				}
+			})
+			Eventually(func() interface{} {
+				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
+					return err
+				}
+				return flpDS.Spec.Template.Spec.Volumes
+			}, timeout, interval).Should(HaveLen(1))
+			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+		})
+	})
+
+	Context("Using Certificates With Loki in LokiStack Mode", func() {
+		flpDS := appsv1.DaemonSet{}
+		It("Should update Loki config successfully", func() {
+			// Create CM certificate
+			Expect(k8sClient.Create(ctx, &v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "lokistack-gateway-ca-bundle",
+					Namespace: operatorNamespace,
+				},
+				Data: map[string]string{"service-ca.crt": "certificate data"},
+			})).Should(Succeed())
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Loki.Mode = "LOKISTACK"
+				fc.Spec.Loki.LokiStack = &flowslatest.LokiStack{
+					Name:      "lokistack",
+					Namespace: operatorNamespace,
+				}
+			})
+		})
+		It("Should have certificate mounted", func() {
+			By("Expecting certificate mounted")
+			Eventually(func() interface{} {
+				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
+					return err
+				}
+				return flpDS.Spec.Template.Spec.Volumes
+			}, timeout, interval).Should(HaveLen(3))
+			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("flowlogs-pipeline"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[2].Name).To(Equal("loki-certs-ca"))
+		})
+
+		It("Should restore no TLS config in manual mode", func() {
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Loki.Mode = "MANUAL"
 				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
 					Enable: false,
 				}

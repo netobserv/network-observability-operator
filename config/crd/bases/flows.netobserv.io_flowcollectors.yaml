@@ -4940,12 +4940,12 @@ spec:
             type: object
           spec:
             description: 'Defines the desired state of the FlowCollector resource.
-              <br><br> *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i>
-              for a feature throughout this document means that this feature is not
-              officially supported by Red Hat. It might have been, for instance, contributed
-              by the community and accepted without a formal agreement for maintenance.
-              The product maintainers might provide some support for these features
-              as a best effort only.'
+              <br><br> *: the mention of "unsupported", or "deprecated" for a feature
+              throughout this document means that this feature is not officially supported
+              by Red Hat. It might have been, for instance, contributed by the community
+              and accepted without a formal agreement for maintenance. The product
+              maintainers might provide some support for these features as a best
+              effort only.'
             properties:
               agent:
                 description: Agent configuration for flows extraction.
@@ -4993,20 +4993,6 @@ spec:
                               they are only useful in edge debug or support scenarios.'
                             type: object
                         type: object
-                      enableDNSTracking:
-                        default: false
-                        description: Enable the DNS tracking feature. This feature
-                          requires mounting the kernel debug filesystem hence the
-                          eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged
-                          parameter is not set, an error is reported.
-                        type: boolean
-                      enablePktDrop:
-                        default: false
-                        description: Enable the Packets drop flows logging feature.
-                          This feature requires mounting the kernel debug filesystem,
-                          so the eBPF pod has to run as privileged. If the spec.agent.eBPF.privileged
-                          parameter is not set, an error is reported.
-                        type: boolean
                       excludeInterfaces:
                         default:
                         - lo
@@ -5015,6 +5001,32 @@ spec:
                           by slashes, such as `/br-/`, is matched as a regular expression.
                           Otherwise it is matched as a case-sensitive string.'
                         items:
+                          type: string
+                        type: array
+                      features:
+                        description: 'List of additional features to enable. They
+                          are all disabled by default. Enabling additional features
+                          may have performance impacts. Possible values are:<br> -
+                          `PacketDrop`: enable the packets drop flows logging feature.
+                          This feature requires mounting the kernel debug filesystem,
+                          so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged`
+                          parameter is not set, an error is reported.<br> - `DNSTracking`:
+                          enable the DNS tracking feature. This feature requires mounting
+                          the kernel debug filesystem hence the eBPF pod has to run
+                          as privileged. If the `spec.agent.eBPF.privileged` parameter
+                          is not set, an error is reported.<br> - `FlowRTT` [unsupported
+                          (*)]: enable flow latency (RTT) calculations in the eBPF
+                          agent during TCP handshakes. This feature better works with
+                          `sampling` set to 1.<br>'
+                        items:
+                          description: Agent feature, can be one of:<br> - `PacketDrop`,
+                            to track packet drops.<br> - `DNSTracking`, to track specific
+                            information on DNS traffic.<br> - `FlowRTT`, to track
+                            TCP latency. [Unsupported (*)].<br>
+                          enum:
+                          - PacketDrop
+                          - DNSTracking
+                          - FlowRTT
                           type: string
                         type: array
                       imagePullPolicy:
@@ -5108,8 +5120,8 @@ spec:
                         type: integer
                     type: object
                   ipfix:
-                    description: '`ipfix` - <i>deprecated (*)</i> - describes the
-                      settings related to the IPFIX-based flow reporter when `spec.agent.type`
+                    description: '`ipfix` [deprecated (*)] - describes the settings
+                      related to the IPFIX-based flow reporter when `spec.agent.type`
                       is set to `IPFIX`.'
                     properties:
                       cacheActiveTimeout:
@@ -5183,12 +5195,11 @@ spec:
                     default: EBPF
                     description: '`type` selects the flows tracing agent. Possible
                       values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br>
-                      - `IPFIX` - <i>deprecated (*)</i> - to use the legacy IPFIX
-                      collector.<br> `EBPF` is recommended as it offers better performances
-                      and should work regardless of the CNI installed on the cluster.
-                      `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work
-                      if they support exporting IPFIX, but they would require manual
-                      configuration).'
+                      - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br>
+                      `EBPF` is recommended as it offers better performances and should
+                      work regardless of the CNI installed on the cluster. `IPFIX`
+                      works with OVN-Kubernetes CNI (other CNIs could work if they
+                      support exporting IPFIX, but they would require manual configuration).'
                     enum:
                     - EBPF
                     - IPFIX
@@ -5895,7 +5906,7 @@ spec:
                   properties:
                     ipfix:
                       description: IPFIX configuration, such as the IP address and
-                        port to send enriched IPFIX flows to. <i>Unsupported (*)</i>.
+                        port to send enriched IPFIX flows to. [Unsupported (*)].
                       properties:
                         targetHost:
                           default: ""
@@ -5924,34 +5935,61 @@ spec:
                           description: Address of the Kafka server
                           type: string
                         sasl:
-                          description: SASL authentication configuration. <i>Unsupported
-                            (*)</i>
+                          description: SASL authentication configuration. [Unsupported
+                            (*)].
                           properties:
-                            clientIDKey:
-                              description: Key for client ID within the provided `reference`
-                              type: string
-                            clientSecretKey:
-                              description: Key for client secret within the provided
-                                `reference`
-                              type: string
-                            reference:
+                            clientIDReference:
                               description: Reference to the secret or config map containing
-                                the client ID and secret
+                                the client ID
                               properties:
+                                file:
+                                  description: File name within the config map or
+                                    secret
+                                  type: string
                                 name:
-                                  description: Name of the config map or secret to
-                                    reference
+                                  description: Name of the config map or secret containing
+                                    the file
                                   type: string
                                 namespace:
                                   default: ""
-                                  description: Namespace of the config map or secret.
-                                    If omitted, assumes same namespace as where NetObserv
-                                    is deployed. If the namespace is different, the
-                                    config map or the secret will be copied so that
-                                    it can be mounted as required.
+                                  description: Namespace of the config map or secret
+                                    containing the file. If omitted, assumes same
+                                    namespace as where NetObserv is deployed. If the
+                                    namespace is different, the config map or the
+                                    secret will be copied so that it can be mounted
+                                    as required.
                                   type: string
                                 type:
-                                  description: 'Type for the reference: "configmap"
+                                  description: 'Type for the file reference: "configmap"
+                                    or "secret"'
+                                  enum:
+                                  - configmap
+                                  - secret
+                                  type: string
+                              type: object
+                            clientSecretReference:
+                              description: Reference to the secret or config map containing
+                                the client secret
+                              properties:
+                                file:
+                                  description: File name within the config map or
+                                    secret
+                                  type: string
+                                name:
+                                  description: Name of the config map or secret containing
+                                    the file
+                                  type: string
+                                namespace:
+                                  default: ""
+                                  description: Namespace of the config map or secret
+                                    containing the file. If omitted, assumes same
+                                    namespace as where NetObserv is deployed. If the
+                                    namespace is different, the config map or the
+                                    secret will be copied so that it can be mounted
+                                    as required.
+                                  type: string
+                                type:
+                                  description: 'Type for the file reference: "configmap"
                                     or "secret"'
                                   enum:
                                   - configmap
@@ -6066,8 +6104,7 @@ spec:
                       type: object
                     type:
                       description: '`type` selects the type of exporters. The available
-                        options are `KAFKA` and `IPFIX`. `IPFIX` is <i>unsupported
-                        (*)</i>.'
+                        options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).'
                       enum:
                       - KAFKA
                       - IPFIX
@@ -6086,32 +6123,57 @@ spec:
                     description: Address of the Kafka server
                     type: string
                   sasl:
-                    description: SASL authentication configuration. <i>Unsupported
-                      (*)</i>
+                    description: SASL authentication configuration. [Unsupported (*)].
                     properties:
-                      clientIDKey:
-                        description: Key for client ID within the provided `reference`
-                        type: string
-                      clientSecretKey:
-                        description: Key for client secret within the provided `reference`
-                        type: string
-                      reference:
+                      clientIDReference:
                         description: Reference to the secret or config map containing
-                          the client ID and secret
+                          the client ID
                         properties:
+                          file:
+                            description: File name within the config map or secret
+                            type: string
                           name:
-                            description: Name of the config map or secret to reference
+                            description: Name of the config map or secret containing
+                              the file
                             type: string
                           namespace:
                             default: ""
-                            description: Namespace of the config map or secret. If
-                              omitted, assumes same namespace as where NetObserv is
-                              deployed. If the namespace is different, the config
-                              map or the secret will be copied so that it can be mounted
-                              as required.
+                            description: Namespace of the config map or secret containing
+                              the file. If omitted, assumes same namespace as where
+                              NetObserv is deployed. If the namespace is different,
+                              the config map or the secret will be copied so that
+                              it can be mounted as required.
                             type: string
                           type:
-                            description: 'Type for the reference: "configmap" or "secret"'
+                            description: 'Type for the file reference: "configmap"
+                              or "secret"'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      clientSecretReference:
+                        description: Reference to the secret or config map containing
+                          the client secret
+                        properties:
+                          file:
+                            description: File name within the config map or secret
+                            type: string
+                          name:
+                            description: Name of the config map or secret containing
+                              the file
+                            type: string
+                          namespace:
+                            default: ""
+                            description: Namespace of the config map or secret containing
+                              the file. If omitted, assumes same namespace as where
+                              NetObserv is deployed. If the namespace is different,
+                              the config map or the secret will be copied so that
+                              it can be mounted as required.
+                            type: string
+                          type:
+                            description: 'Type for the file reference: "configmap"
+                              or "secret"'
                             enum:
                             - configmap
                             - secret
@@ -6260,8 +6322,8 @@ spec:
                         description: '`authToken` describes the way to get a token
                           to authenticate to Loki.<br> - `DISABLED` will not send
                           any token with the request.<br> - `FORWARD` will forward
-                          the user token for authorization.<br> - `HOST` - <i>deprecated
-                          (*)</i> - will use the local pod service account to authenticate
+                          the user token for authorization.<br> - `HOST` [deprecated
+                          (*)] - will use the local pod service account to authenticate
                           to Loki.<br> When using the Loki Operator, this must be
                           set to `FORWARD`.'
                         enum:
@@ -6516,6 +6578,12 @@ spec:
                   and forwards them to the Loki persistence layer and/or any available
                   exporter.'
                 properties:
+                  clusterName:
+                    default: ""
+                    description: '`clusterName` is the name of the cluster to appear
+                      in the flows data. This is useful in a multi-cluster context.
+                      When using OpenShift, leave empty to make it automatically determined.'
+                    type: string
                   conversationEndTimeout:
                     default: 10s
                     description: '`conversationEndTimeout` is the time to wait after
@@ -7182,11 +7250,19 @@ spec:
                         default:
                         - egress
                         - packets
+                        - nodes-flows
+                        - namespaces-flows
+                        - workloads-flows
+                        - namespaces
                         description: '`ignoreTags` is a list of tags to specify which
                           metrics to ignore. Each metric is associated with a list
                           of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions
                           . Available tags are: `egress`, `ingress`, `flows`, `bytes`,
-                          `packets`, `namespaces`, `nodes`, `workloads`.'
+                          `packets`, `namespaces`, `nodes`, `workloads`, `nodes-flows`,
+                          `namespaces-flows`, `workloads-flows`. Namespace-based metrics
+                          are covered by both `workloads` and `namespaces` tags, hence
+                          it is recommended to always ignore one of them (`workloads`
+                          offering a finer granularity).'
                         items:
                           type: string
                         type: array
@@ -7204,6 +7280,12 @@ spec:
                           tls:
                             description: TLS configuration.
                             properties:
+                              insecureSkipVerify:
+                                default: false
+                                description: insecureSkipVerify allows skipping client-side
+                                  verification of the provided certificate If set
+                                  to true, ProvidedCaFile field will be ignored
+                                type: boolean
                               provided:
                                 description: TLS configuration when `type` is set
                                   to `PROVIDED`.
@@ -7235,6 +7317,34 @@ spec:
                                   type:
                                     description: 'Type for the certificate reference:
                                       `configmap` or `secret`'
+                                    enum:
+                                    - configmap
+                                    - secret
+                                    type: string
+                                type: object
+                              providedCaFile:
+                                description: Reference to the CA file will be ignored
+                                properties:
+                                  file:
+                                    description: File name within the config map or
+                                      secret
+                                    type: string
+                                  name:
+                                    description: Name of the config map or secret
+                                      containing the file
+                                    type: string
+                                  namespace:
+                                    default: ""
+                                    description: Namespace of the config map or secret
+                                      containing the file. If omitted, assumes same
+                                      namespace as where NetObserv is deployed. If
+                                      the namespace is different, the config map or
+                                      the secret will be copied so that it can be
+                                      mounted as required.
+                                    type: string
+                                  type:
+                                    description: 'Type for the file reference: "configmap"
+                                      or "secret"'
                                     enum:
                                     - configmap
                                     - secret

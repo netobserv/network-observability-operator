@@ -65,7 +65,7 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
 
 	if restored.Spec.Agent.EBPF.Features != nil {
-		dst.Spec.Agent.EBPF.Features = make([]v1beta1.AgentFeature, len(restored.Spec.Agent.EBPF.Features))
+		dst.Spec.Agent.EBPF.Features = make([]v1beta2.AgentFeature, len(restored.Spec.Agent.EBPF.Features))
 		copy(dst.Spec.Agent.EBPF.Features, restored.Spec.Agent.EBPF.Features)
 	}
 
@@ -170,8 +170,8 @@ func Convert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1beta2
 }
 
 // // This function need to be manually created because conversion-gen not able to create it intentionally because
-// // we have new defined fields in v1beta1 not in v1alpha1
+// // we have new defined fields in v1beta2 not in v1alpha1
 // // nolint:golint,stylecheck,revive
-func Convert_v1beta1_ServerTLS_To_v1alpha1_ServerTLS(in *v1beta1.ServerTLS, out *ServerTLS, s apiconversion.Scope) error {
-	return autoConvert_v1beta1_ServerTLS_To_v1alpha1_ServerTLS(in, out, s)
+func Convert_v1beta2_ServerTLS_To_v1alpha1_ServerTLS(in *v1beta2.ServerTLS, out *ServerTLS, s apiconversion.Scope) error {
+	return autoConvert_v1beta2_ServerTLS_To_v1alpha1_ServerTLS(in, out, s)
 }

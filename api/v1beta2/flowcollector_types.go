@@ -39,7 +39,7 @@ const (
 
 // Defines the desired state of the FlowCollector resource.
 // <br><br>
-// *: the mention of <i>"unsupported"</i>, or <i>"deprecated"</i> for a feature throughout this document means that this feature
+// *: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature
 // is not officially supported by Red Hat. It might have been, for instance, contributed by the community
 // and accepted without a formal agreement for maintenance. The product maintainers might provide some support
 // for these features as a best effort only.
@@ -90,7 +90,7 @@ type FlowCollectorSpec struct {
 type FlowCollectorAgent struct {
 	// `type` selects the flows tracing agent. Possible values are:<br>
 	// - `EBPF` (default) to use NetObserv eBPF agent.<br>
-	// - `IPFIX` - <i>deprecated (*)</i> - to use the legacy IPFIX collector.<br>
+	// - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br>
 	// `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster.
 	// `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX,
 	// but they would require manual configuration).
@@ -99,7 +99,7 @@ type FlowCollectorAgent struct {
 	// +kubebuilder:default:=EBPF
 	Type string `json:"type,omitempty"`
 
-	// `ipfix` - <i>deprecated (*)</i> - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type`
+	// `ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type`
 	// is set to `IPFIX`.
 	// +optional
 	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
@@ -146,6 +146,19 @@ type FlowCollectorIPFIX struct {
 	// `ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
 	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty" mapstructure:"-"`
 }
+
+// Agent feature, can be one of:<br>
+// - `PacketDrop`, to track packet drops.<br>
+// - `DNSTracking`, to track specific information on DNS traffic.<br>
+// - `FlowRTT`, to track TCP latency. [Unsupported (*)].<br>
+// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT"
+type AgentFeature string
+
+const (
+	PacketDrop  AgentFeature = "PacketDrop"
+	DNSTracking AgentFeature = "DNSTracking"
+	FlowRTT     AgentFeature = "FlowRTT"
+)
 
 // `FlowCollectorEBPF` defines a FlowCollector that uses eBPF to collect the flows information
 type FlowCollectorEBPF struct {
@@ -220,19 +233,16 @@ type FlowCollectorEBPF struct {
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
 
-	// Enable the Packets drop flows logging feature. This feature requires mounting
+	// List of additional features to enable. They are all disabled by default. Enabling additional features may have performance impacts. Possible values are:<br>
+	// - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
-	// If the spec.agent.eBPF.privileged parameter is not set, an error is reported.
-	//+kubebuilder:default:=false
-	//+optional
-	EnablePktDrop *bool `json:"enablePktDrop,omitempty"`
-
-	// Enable the DNS tracking feature. This feature requires mounting
+	// If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br>
+	// - `DNSTracking`: enable the DNS tracking feature. This feature requires mounting
 	// the kernel debug filesystem hence the eBPF pod has to run as privileged.
-	// If the spec.agent.eBPF.privileged parameter is not set, an error is reported.
-	//+kubebuilder:default:=false
-	//+optional
-	EnableDNSTracking *bool `json:"enableDNSTracking,omitempty"`
+	// If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br>
+	// - `FlowRTT` [unsupported (*)]: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br>
+	// +optional
+	Features []AgentFeature `json:"features,omitempty"`
 }
 
 // `FlowCollectorKafka` defines the desired Kafka config of FlowCollector
@@ -251,7 +261,7 @@ type FlowCollectorKafka struct {
 	// +optional
 	TLS ClientTLS `json:"tls"`
 
-	// SASL authentication configuration. <i>Unsupported (*)</i>
+	// SASL authentication configuration. [Unsupported (*)].
 	// +optional
 	// +k8s:conversion-gen=false
 	SASL SASLConfig `json:"sasl"`
@@ -295,6 +305,15 @@ type ServerTLS struct {
 	// TLS configuration when `type` is set to `PROVIDED`.
 	// +optional
 	Provided *CertificateReference `json:"provided"`
+
+	//+kubebuilder:default:=false
+	// insecureSkipVerify allows skipping client-side verification of the provided certificate
+	// If set to true, ProvidedCaFile field will be ignored
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+
+	// Reference to the CA file will be ignored
+	// +optional
+	ProvidedCaFile *FileReference `json:"providedCaFile,omitempty"`
 }
 
 // `MetricsServerConfig` define the metrics server endpoint configuration for Prometheus scraper
@@ -330,8 +349,9 @@ type FLPMetrics struct {
 	Server MetricsServerConfig `json:"server,omitempty"`
 
 	// `ignoreTags` is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions .
-	// Available tags are: `egress`, `ingress`, `flows`, `bytes`, `packets`, `namespaces`, `nodes`, `workloads`.
-	//+kubebuilder:default:={"egress","packets"}
+	// Available tags are: `egress`, `ingress`, `flows`, `bytes`, `packets`, `namespaces`, `nodes`, `workloads`, `nodes-flows`, `namespaces-flows`, `workloads-flows`.
+	// Namespace-based metrics are covered by both `workloads` and `namespaces` tags, hence it is recommended to always ignore one of them (`workloads` offering a finer granularity).
+	//+kubebuilder:default:={"egress","packets","nodes-flows","namespaces-flows","workloads-flows","namespaces"}
 	// +optional
 	IgnoreTags []string `json:"ignoreTags"`
 
@@ -448,6 +468,11 @@ type FlowCollectorFLP struct {
 	// `conversationTerminatingTimeout` is the time to wait from detected FIN flag to end a conversation. Only relevant for TCP flows.
 	ConversationTerminatingTimeout *metav1.Duration `json:"conversationTerminatingTimeout,omitempty"`
 
+	//+kubebuilder:default:=""
+	// +optional
+	// `clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.
+	ClusterName string `json:"clusterName,omitempty"`
+
 	// `debug` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
 	// such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.
@@ -526,7 +551,7 @@ type LokiManualParams struct {
 	// `authToken` describes the way to get a token to authenticate to Loki.<br>
 	// - `DISABLED` will not send any token with the request.<br>
 	// - `FORWARD` will forward the user token for authorization.<br>
-	// - `HOST` - <i>deprecated (*)</i> - will use the local pod service account to authenticate to Loki.<br>
+	// - `HOST` [deprecated (*)] - will use the local pod service account to authenticate to Loki.<br>
 	// When using the Loki Operator, this must be set to `FORWARD`.
 	AuthToken string `json:"authToken,omitempty"`
 
@@ -720,6 +745,24 @@ const (
 	RefTypeConfigMap MountableType = "configmap"
 )
 
+type FileReference struct {
+	//+kubebuilder:validation:Enum=configmap;secret
+	// Type for the file reference: "configmap" or "secret"
+	Type MountableType `json:"type,omitempty"`
+
+	// Name of the config map or secret containing the file
+	Name string `json:"name,omitempty"`
+
+	// Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed.
+	// If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+	// +optional
+	//+kubebuilder:default:=""
+	Namespace string `json:"namespace,omitempty"`
+
+	// File name within the config map or secret
+	File string `json:"file,omitempty"`
+}
+
 type CertificateReference struct {
 	//+kubebuilder:validation:Enum=configmap;secret
 	// Type for the certificate reference: `configmap` or `secret`
@@ -776,29 +819,11 @@ type SASLConfig struct {
 	// Type of SASL authentication to use, or `DISABLED` if SASL is not used
 	Type SASLType `json:"type,omitempty"`
 
-	// Reference to the secret or config map containing the client ID and secret
-	Reference ConfigOrSecret `json:"reference,omitempty"`
+	// Reference to the secret or config map containing the client ID
+	ClientIDReference FileReference `json:"clientIDReference,omitempty"`
 
-	// Key for client ID within the provided `reference`
-	ClientIDKey string `json:"clientIDKey,omitempty"`
-
-	// Key for client secret within the provided `reference`
-	ClientSecretKey string `json:"clientSecretKey,omitempty"`
-}
-
-type ConfigOrSecret struct {
-	//+kubebuilder:validation:Enum=configmap;secret
-	// Type for the reference: "configmap" or "secret"
-	Type MountableType `json:"type,omitempty"`
-
-	// Name of the config map or secret to reference
-	Name string `json:"name,omitempty"`
-
-	// Namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed.
-	// If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
-	// +optional
-	//+kubebuilder:default:=""
-	Namespace string `json:"namespace,omitempty"`
+	// Reference to the secret or config map containing the client secret
+	ClientSecretReference FileReference `json:"clientSecretReference,omitempty"`
 }
 
 // `DebugConfig` allows tweaking some aspects of the internal configuration of the agent and FLP.
@@ -822,7 +847,7 @@ const (
 
 // `FlowCollectorExporter` defines an additional exporter to send enriched flows to.
 type FlowCollectorExporter struct {
-	// `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is <i>unsupported (*)</i>.
+	// `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="KAFKA";"IPFIX"
 	// +kubebuilder:validation:Required
@@ -832,7 +857,7 @@ type FlowCollectorExporter struct {
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
-	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. <i>Unsupported (*)</i>.
+	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].
 	// +optional
 	IPFIX FlowCollectorIPFIXReceiver `json:"ipfix,omitempty"`
 }
@@ -856,6 +881,7 @@ type FlowCollectorStatus struct {
 // +kubebuilder:printcolumn:name="Deployment Model",type="string",JSONPath=`.spec.deploymentModel`
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
 // +kubebuilder:storageversion
+
 // `FlowCollector` is the schema for the network flows collection API, which pilots and configures the underlying deployments.
 type FlowCollector struct {
 	metav1.TypeMeta   `json:",inline"`
