@@ -630,7 +630,17 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
 	assert.EqualValues(*loki.MaxRetries, lokiCfg.MaxRetries)
 	assert.EqualValues(loki.BatchSize, lokiCfg.BatchSize)
-	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection", "_RecordType"}, lokiCfg.Labels)
+	assert.EqualValues([]string{
+		"SrcK8S_Namespace",
+		"SrcK8S_OwnerName",
+		"SrcK8S_Type",
+		"DstK8S_Namespace",
+		"DstK8S_OwnerName",
+		"DstK8S_Type",
+		"FlowDirection",
+		"Duplicate",
+		"_RecordType",
+	}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
 	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))

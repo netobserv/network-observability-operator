@@ -34,6 +34,6 @@ const (
 	EndConnectionType = "endConnection"
 )
 
-var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection", "Duplicate"}
+var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type", "FlowDirection", "Duplicate"}
 var LokiConnectionIndexFields = []string{"_RecordType"}
 var FlowCollectorName = types.NamespacedName{Name: "cluster"}
