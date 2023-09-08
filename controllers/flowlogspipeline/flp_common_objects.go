@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
-	"path"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -632,11 +631,12 @@ func (b *builder) getKafkaSASL(sasl *flowslatest.SASLConfig, volumePrefix string
 	if sasl.Type == flowslatest.SASLScramSHA512 {
 		t = "scramSHA512"
 	}
-	basePath := b.volumes.AddVolume(&sasl.Reference, volumePrefix+"-sasl")
+	idPath := b.volumes.AddVolume(&sasl.ClientIDReference, volumePrefix+"-sasl-id")
+	secretPath := b.volumes.AddVolume(&sasl.ClientSecretReference, volumePrefix+"-sasl-secret")
 	return &api.SASLConfig{
 		Type:             t,
-		ClientIDPath:     path.Join(basePath, sasl.ClientIDKey),
-		ClientSecretPath: path.Join(basePath, sasl.ClientSecretKey),
+		ClientIDPath:     idPath,
+		ClientSecretPath: secretPath,
 	}
 }
 

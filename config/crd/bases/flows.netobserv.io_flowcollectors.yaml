@@ -3232,31 +3232,58 @@ spec:
                           description: SASL authentication configuration. [Unsupported
                             (*)].
                           properties:
-                            clientIDKey:
-                              description: Key for client ID within the provided `reference`
-                              type: string
-                            clientSecretKey:
-                              description: Key for client secret within the provided
-                                `reference`
-                              type: string
-                            reference:
+                            clientIDReference:
                               description: Reference to the secret or config map containing
-                                the client ID and secret
+                                the client ID
                               properties:
+                                file:
+                                  description: File name within the config map or
+                                    secret
+                                  type: string
                                 name:
-                                  description: Name of the config map or secret to
-                                    reference
+                                  description: Name of the config map or secret containing
+                                    the file
                                   type: string
                                 namespace:
                                   default: ""
-                                  description: Namespace of the config map or secret.
-                                    If omitted, assumes same namespace as where NetObserv
-                                    is deployed. If the namespace is different, the
-                                    config map or the secret will be copied so that
-                                    it can be mounted as required.
+                                  description: Namespace of the config map or secret
+                                    containing the file. If omitted, assumes same
+                                    namespace as where NetObserv is deployed. If the
+                                    namespace is different, the config map or the
+                                    secret will be copied so that it can be mounted
+                                    as required.
                                   type: string
                                 type:
-                                  description: 'Type for the reference: "configmap"
+                                  description: 'Type for the file reference: "configmap"
+                                    or "secret"'
+                                  enum:
+                                  - configmap
+                                  - secret
+                                  type: string
+                              type: object
+                            clientSecretReference:
+                              description: Reference to the secret or config map containing
+                                the client secret
+                              properties:
+                                file:
+                                  description: File name within the config map or
+                                    secret
+                                  type: string
+                                name:
+                                  description: Name of the config map or secret containing
+                                    the file
+                                  type: string
+                                namespace:
+                                  default: ""
+                                  description: Namespace of the config map or secret
+                                    containing the file. If omitted, assumes same
+                                    namespace as where NetObserv is deployed. If the
+                                    namespace is different, the config map or the
+                                    secret will be copied so that it can be mounted
+                                    as required.
+                                  type: string
+                                type:
+                                  description: 'Type for the file reference: "configmap"
                                     or "secret"'
                                   enum:
                                   - configmap
@@ -3392,29 +3419,55 @@ spec:
                   sasl:
                     description: SASL authentication configuration. [Unsupported (*)].
                     properties:
-                      clientIDKey:
-                        description: Key for client ID within the provided `reference`
-                        type: string
-                      clientSecretKey:
-                        description: Key for client secret within the provided `reference`
-                        type: string
-                      reference:
+                      clientIDReference:
                         description: Reference to the secret or config map containing
-                          the client ID and secret
+                          the client ID
                         properties:
+                          file:
+                            description: File name within the config map or secret
+                            type: string
                           name:
-                            description: Name of the config map or secret to reference
+                            description: Name of the config map or secret containing
+                              the file
                             type: string
                           namespace:
                             default: ""
-                            description: Namespace of the config map or secret. If
-                              omitted, assumes same namespace as where NetObserv is
-                              deployed. If the namespace is different, the config
-                              map or the secret will be copied so that it can be mounted
-                              as required.
+                            description: Namespace of the config map or secret containing
+                              the file. If omitted, assumes same namespace as where
+                              NetObserv is deployed. If the namespace is different,
+                              the config map or the secret will be copied so that
+                              it can be mounted as required.
                             type: string
                           type:
-                            description: 'Type for the reference: "configmap" or "secret"'
+                            description: 'Type for the file reference: "configmap"
+                              or "secret"'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      clientSecretReference:
+                        description: Reference to the secret or config map containing
+                          the client secret
+                        properties:
+                          file:
+                            description: File name within the config map or secret
+                            type: string
+                          name:
+                            description: Name of the config map or secret containing
+                              the file
+                            type: string
+                          namespace:
+                            default: ""
+                            description: Namespace of the config map or secret containing
+                              the file. If omitted, assumes same namespace as where
+                              NetObserv is deployed. If the namespace is different,
+                              the config map or the secret will be copied so that
+                              it can be mounted as required.
+                            type: string
+                          type:
+                            description: 'Type for the file reference: "configmap"
+                              or "secret"'
                             enum:
                             - configmap
                             - secret
@@ -4537,16 +4590,16 @@ spec:
                                 description: Reference to the CA file will be ignored
                                 properties:
                                   file:
-                                    description: file defines the file name within
-                                      the config map or secret
+                                    description: File name within the config map or
+                                      secret
                                     type: string
                                   name:
-                                    description: name of the config map or secret
+                                    description: Name of the config map or secret
                                       containing the file
                                     type: string
                                   namespace:
                                     default: ""
-                                    description: namespace of the config map or secret
+                                    description: Namespace of the config map or secret
                                       containing the file. If omitted, assumes same
                                       namespace as where NetObserv is deployed. If
                                       the namespace is different, the config map or
@@ -4554,7 +4607,7 @@ spec:
                                       mounted as required.
                                     type: string
                                   type:
-                                    description: 'type for the file reference: "configmap"
+                                    description: 'Type for the file reference: "configmap"
                                       or "secret"'
                                     enum:
                                     - configmap

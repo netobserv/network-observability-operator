@@ -88,12 +88,15 @@ func annotateKafkaCerts(ctx context.Context, info *reconcilers.Common, spec *flo
 		annotations[watchers.Annotation(prefix+"-user")] = userDigest
 	}
 	if helper.UseSASL(&spec.SASL) {
-		saslDigest, err := info.Watcher.ProcessSASL(ctx, info.Client, &spec.SASL, info.Namespace)
+		saslDigest1, saslDigest2, err := info.Watcher.ProcessSASL(ctx, info.Client, &spec.SASL, info.Namespace)
 		if err != nil {
 			return err
 		}
-		if saslDigest != "" {
-			annotations[watchers.Annotation(prefix+"-sd")] = saslDigest
+		if saslDigest1 != "" {
+			annotations[watchers.Annotation(prefix+"-sd1")] = saslDigest1
+		}
+		if saslDigest2 != "" {
+			annotations[watchers.Annotation(prefix+"-sd2")] = saslDigest2
 		}
 	}
 	return nil

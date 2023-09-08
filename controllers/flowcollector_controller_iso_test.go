@@ -184,13 +184,18 @@ func flowCollectorIsoSpecs() {
 				},
 				SASL: flowslatest.SASLConfig{
 					Type: "DISABLED",
-					Reference: flowslatest.ConfigOrSecret{
+					ClientIDReference: flowslatest.FileReference{
 						Type:      "configmap",
 						Name:      "",
 						Namespace: "",
+						File:      "",
 					},
-					ClientIDKey:     "",
-					ClientSecretKey: "",
+					ClientSecretReference: flowslatest.FileReference{
+						Type:      "configmap",
+						Name:      "",
+						Namespace: "",
+						File:      "",
+					},
 				},
 			},
 			Exporters: []*flowslatest.FlowCollectorExporter{},

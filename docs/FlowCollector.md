@@ -5667,24 +5667,17 @@ SASL authentication configuration. [Unsupported (*)].
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>clientIDKey</b></td>
-        <td>string</td>
-        <td>
-          Key for client ID within the provided `reference`<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>clientSecretKey</b></td>
-        <td>string</td>
-        <td>
-          Key for client secret within the provided `reference`<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecexportersindexkafkasaslreference">reference</a></b></td>
+        <td><b><a href="#flowcollectorspecexportersindexkafkasaslclientidreference">clientIDReference</a></b></td>
         <td>object</td>
         <td>
-          Reference to the secret or config map containing the client ID and secret<br/>
+          Reference to the secret or config map containing the client ID<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkasaslclientsecretreference">clientSecretReference</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the secret or config map containing the client secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5701,12 +5694,12 @@ SASL authentication configuration. [Unsupported (*)].
 </table>
 
 
-### FlowCollector.spec.exporters[index].kafka.sasl.reference
+### FlowCollector.spec.exporters[index].kafka.sasl.clientIDReference
 <sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkasasl)</sup></sup>
 
 
 
-Reference to the secret or config map containing the client ID and secret
+Reference to the secret or config map containing the client ID
 
 <table>
     <thead>
@@ -5718,17 +5711,24 @@ Reference to the secret or config map containing the client ID and secret
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the config map or secret to reference<br/>
+          Name of the config map or secret containing the file<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -5737,7 +5737,59 @@ Reference to the secret or config map containing the client ID and secret
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the reference: "configmap" or "secret"<br/>
+          Type for the file reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.sasl.clientSecretReference
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkasasl)</sup></sup>
+
+
+
+Reference to the secret or config map containing the client secret
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing the file<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the file reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -5985,24 +6037,17 @@ SASL authentication configuration. [Unsupported (*)].
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>clientIDKey</b></td>
-        <td>string</td>
-        <td>
-          Key for client ID within the provided `reference`<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>clientSecretKey</b></td>
-        <td>string</td>
-        <td>
-          Key for client secret within the provided `reference`<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspeckafkasaslreference">reference</a></b></td>
+        <td><b><a href="#flowcollectorspeckafkasaslclientidreference">clientIDReference</a></b></td>
         <td>object</td>
         <td>
-          Reference to the secret or config map containing the client ID and secret<br/>
+          Reference to the secret or config map containing the client ID<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkasaslclientsecretreference">clientSecretReference</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the secret or config map containing the client secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6019,12 +6064,12 @@ SASL authentication configuration. [Unsupported (*)].
 </table>
 
 
-### FlowCollector.spec.kafka.sasl.reference
+### FlowCollector.spec.kafka.sasl.clientIDReference
 <sup><sup>[↩ Parent](#flowcollectorspeckafkasasl)</sup></sup>
 
 
 
-Reference to the secret or config map containing the client ID and secret
+Reference to the secret or config map containing the client ID
 
 <table>
     <thead>
@@ -6036,17 +6081,24 @@ Reference to the secret or config map containing the client ID and secret
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the config map or secret to reference<br/>
+          Name of the config map or secret containing the file<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -6055,7 +6107,59 @@ Reference to the secret or config map containing the client ID and secret
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the reference: "configmap" or "secret"<br/>
+          Type for the file reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.sasl.clientSecretReference
+<sup><sup>[↩ Parent](#flowcollectorspeckafkasasl)</sup></sup>
+
+
+
+Reference to the secret or config map containing the client secret
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing the file<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the file reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -8085,21 +8189,21 @@ Reference to the CA file will be ignored
         <td><b>file</b></td>
         <td>string</td>
         <td>
-          file defines the file name within the config map or secret<br/>
+          File name within the config map or secret<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name of the config map or secret containing the file<br/>
+          Name of the config map or secret containing the file<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -8108,7 +8212,7 @@ Reference to the CA file will be ignored
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type for the file reference: "configmap" or "secret"<br/>
+          Type for the file reference: "configmap" or "secret"<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
