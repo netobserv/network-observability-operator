@@ -11,16 +11,16 @@ type objectRef struct {
 	keys      []string
 }
 
-func (w *Watcher) refFromConfigOrSecret(cos *flowslatest.ConfigOrSecret, keys []string) objectRef {
-	ns := cos.Namespace
+func (w *Watcher) refFromFile(fr *flowslatest.FileReference) objectRef {
+	ns := fr.Namespace
 	if ns == "" {
 		ns = w.defaultNamespace
 	}
 	return objectRef{
-		kind:      cos.Type,
-		name:      cos.Name,
+		kind:      fr.Type,
+		name:      fr.Name,
 		namespace: ns,
-		keys:      keys,
+		keys:      []string{fr.File},
 	}
 }
 

@@ -93,7 +93,8 @@ func flowCollectorCertificatesSpecs() {
 			"password": []byte("azerty"),
 		},
 	}
-	expectedKafkaSaslHash, _ := sw.GetDigest(&kafka2Sasl, []string{"username", "password"})
+	expectedKafkaSaslHash1, _ := sw.GetDigest(&kafka2Sasl, []string{"username"})
+	expectedKafkaSaslHash2, _ := sw.GetDigest(&kafka2Sasl, []string{"password"})
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
@@ -115,10 +116,10 @@ func flowCollectorCertificatesSpecs() {
 			cmEmpty, _ := cmw.GetDigest(&v1.ConfigMap{}, []string{"any"})
 			sEmpty, _ := sw.GetDigest(&v1.Secret{}, []string{"any"})
 			allKeys := map[string]interface{}{}
-			for _, hash := range []string{"", cmEmpty, sEmpty, expectedLokiHash, expectedKafkaHash, expectedKafka2Hash, expectedKafkaUserHash, expectedKafkaSaslHash} {
+			for _, hash := range []string{"", cmEmpty, sEmpty, expectedLokiHash, expectedKafkaHash, expectedKafka2Hash, expectedKafkaUserHash, expectedKafkaSaslHash1, expectedKafkaSaslHash2} {
 				allKeys[hash] = nil
 			}
-			Expect(allKeys).To(HaveLen(8))
+			Expect(allKeys).To(HaveLen(9))
 		})
 	})
 
@@ -187,12 +188,16 @@ func flowCollectorCertificatesSpecs() {
 					},
 					SASL: flowslatest.SASLConfig{
 						Type: "PLAIN",
-						Reference: flowslatest.ConfigOrSecret{
+						ClientIDReference: flowslatest.FileReference{
 							Type: flowslatest.RefTypeSecret,
 							Name: kafka2Sasl.Name,
+							File: "username",
 						},
-						ClientIDKey:     "username",
-						ClientSecretKey: "password",
+						ClientSecretReference: flowslatest.FileReference{
+							Type: flowslatest.RefTypeSecret,
+							Name: kafka2Sasl.Name,
+							File: "password",
+						},
 					},
 				},
 			}},
@@ -281,19 +286,21 @@ func flowCollectorCertificatesSpecs() {
 					return err
 				}
 				return flp.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(7))
-			Expect(flp.Spec.Template.Annotations).To(HaveLen(7))
+			}, timeout, interval).Should(HaveLen(8))
+			Expect(flp.Spec.Template.Annotations).To(HaveLen(8))
 			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-ca"]).To(Equal(expectedKafkaHash))
 			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-user"]).To(Equal(expectedKafkaUserHash))
 			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-export-0-ca"]).To(Equal(expectedKafka2Hash))
-			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-export-0-sd"]).To(Equal(expectedKafkaSaslHash))
+			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-export-0-sd1"]).To(Equal(expectedKafkaSaslHash1))
+			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-export-0-sd2"]).To(Equal(expectedKafkaSaslHash2))
 			Expect(flp.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
 			Expect(flp.Spec.Template.Spec.Volumes[1].Name).To(Equal("kafka-cert-ca"))
 			Expect(flp.Spec.Template.Spec.Volumes[2].Name).To(Equal("kafka-cert-user"))
 			Expect(flp.Spec.Template.Spec.Volumes[3].Name).To(Equal("flowlogs-pipeline")) // token
 			Expect(flp.Spec.Template.Spec.Volumes[4].Name).To(Equal("loki-certs-ca"))
 			Expect(flp.Spec.Template.Spec.Volumes[5].Name).To(Equal("kafka-export-0-ca"))
-			Expect(flp.Spec.Template.Spec.Volumes[6].Name).To(Equal("kafka-export-0-sasl"))
+			Expect(flp.Spec.Template.Spec.Volumes[6].Name).To(Equal("kafka-export-0-sasl-id"))
+			Expect(flp.Spec.Template.Spec.Volumes[7].Name).To(Equal("kafka-export-0-sasl-secret"))
 			lastFLPAnnots = flp.Spec.Template.Annotations
 		})
 	})

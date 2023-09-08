@@ -3,7 +3,6 @@ package ebpf
 import (
 	"context"
 	"fmt"
-	"path"
 	"strconv"
 	"strings"
 
@@ -304,22 +303,24 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 		if helper.UseSASL(&coll.Spec.Kafka.SASL) {
 			sasl := &coll.Spec.Kafka.SASL
 			// Annotate pod with secret reference so that it is reloaded if modified
-			digest, err := c.Watcher.ProcessSASL(ctx, c.Client, sasl, c.PrivilegedNamespace())
+			d1, d2, err := c.Watcher.ProcessSASL(ctx, c.Client, sasl, c.PrivilegedNamespace())
 			if err != nil {
 				return nil, err
 			}
-			annots[watchers.Annotation("kafka-sd")] = digest
+			annots[watchers.Annotation("kafka-sd1")] = d1
+			annots[watchers.Annotation("kafka-sd2")] = d2
 
 			t := "plain"
 			if coll.Spec.Kafka.SASL.Type == flowslatest.SASLScramSHA512 {
 				t = "scramSHA512"
 			}
-			basePath := c.volumes.AddVolume(&sasl.Reference, "kafka-sasl")
+			idPath := c.volumes.AddVolume(&sasl.ClientIDReference, "kafka-sasl-id")
+			secretPath := c.volumes.AddVolume(&sasl.ClientSecretReference, "kafka-sasl-secret")
 			config = append(config,
 				corev1.EnvVar{Name: envKafkaEnableSASL, Value: "true"},
 				corev1.EnvVar{Name: envKafkaSASLType, Value: t},
-				corev1.EnvVar{Name: envKafkaSASLIDPath, Value: path.Join(basePath, sasl.ClientIDKey)},
-				corev1.EnvVar{Name: envKafkaSASLSecretPath, Value: path.Join(basePath, sasl.ClientSecretKey)},
+				corev1.EnvVar{Name: envKafkaSASLIDPath, Value: idPath},
+				corev1.EnvVar{Name: envKafkaSASLSecretPath, Value: secretPath},
 			)
 		}
 	} else {

@@ -716,19 +716,19 @@ const (
 
 type FileReference struct {
 	//+kubebuilder:validation:Enum=configmap;secret
-	// type for the file reference: "configmap" or "secret"
+	// Type for the file reference: "configmap" or "secret"
 	Type MountableType `json:"type,omitempty"`
 
-	// name of the config map or secret containing the file
+	// Name of the config map or secret containing the file
 	Name string `json:"name,omitempty"`
 
-	// namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed.
+	// Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed.
 	// If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
 	// +optional
 	//+kubebuilder:default:=""
 	Namespace string `json:"namespace,omitempty"`
 
-	// file defines the file name within the config map or secret
+	// File name within the config map or secret
 	File string `json:"file,omitempty"`
 }
 
@@ -788,29 +788,11 @@ type SASLConfig struct {
 	// Type of SASL authentication to use, or `DISABLED` if SASL is not used
 	Type SASLType `json:"type,omitempty"`
 
-	// Reference to the secret or config map containing the client ID and secret
-	Reference ConfigOrSecret `json:"reference,omitempty"`
+	// Reference to the secret or config map containing the client ID
+	ClientIDReference FileReference `json:"clientIDReference,omitempty"`
 
-	// Key for client ID within the provided `reference`
-	ClientIDKey string `json:"clientIDKey,omitempty"`
-
-	// Key for client secret within the provided `reference`
-	ClientSecretKey string `json:"clientSecretKey,omitempty"`
-}
-
-type ConfigOrSecret struct {
-	//+kubebuilder:validation:Enum=configmap;secret
-	// Type for the reference: "configmap" or "secret"
-	Type MountableType `json:"type,omitempty"`
-
-	// Name of the config map or secret to reference
-	Name string `json:"name,omitempty"`
-
-	// Namespace of the config map or secret. If omitted, assumes same namespace as where NetObserv is deployed.
-	// If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
-	// +optional
-	//+kubebuilder:default:=""
-	Namespace string `json:"namespace,omitempty"`
+	// Reference to the secret or config map containing the client secret
+	ClientSecretReference FileReference `json:"clientSecretReference,omitempty"`
 }
 
 // `DebugConfig` allows tweaking some aspects of the internal configuration of the agent and FLP.

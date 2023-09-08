@@ -2,6 +2,7 @@ package volumes
 
 import (
 	"fmt"
+	"path"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -45,10 +46,10 @@ func (b *Builder) AddCertificate(ref *flowslatest.CertificateReference, volumeNa
 	return
 }
 
-func (b *Builder) AddVolume(config *flowslatest.ConfigOrSecret, volumeName string) string {
+func (b *Builder) AddVolume(config *flowslatest.FileReference, volumeName string) string {
 	vol, vm := buildVolumeAndMount(config.Type, config.Name, volumeName)
 	b.info = append(b.info, VolumeInfo{Volume: vol, Mount: vm})
-	return "/var/" + volumeName
+	return path.Join("var", volumeName, config.File)
 }
 
 // AddToken will add a volume + volume mount for a service account token if defined

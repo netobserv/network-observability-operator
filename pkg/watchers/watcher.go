@@ -101,8 +101,16 @@ func (w *Watcher) ProcessCACert(ctx context.Context, cl helper.Client, tls *flow
 	return caDigest, nil
 }
 
-func (w *Watcher) ProcessSASL(ctx context.Context, cl helper.Client, sasl *flowslatest.SASLConfig, targetNamespace string) (string, error) {
-	return w.reconcile(ctx, cl, w.refFromConfigOrSecret(&sasl.Reference, []string{sasl.ClientIDKey, sasl.ClientSecretKey}), targetNamespace)
+func (w *Watcher) ProcessSASL(ctx context.Context, cl helper.Client, sasl *flowslatest.SASLConfig, targetNamespace string) (idDigest string, secretDigest string, err error) {
+	idDigest, err = w.reconcile(ctx, cl, w.refFromFile(&sasl.ClientIDReference), targetNamespace)
+	if err != nil {
+		return "", "", err
+	}
+	secretDigest, err = w.reconcile(ctx, cl, w.refFromFile(&sasl.ClientSecretReference), targetNamespace)
+	if err != nil {
+		return "", "", err
+	}
+	return idDigest, secretDigest, nil
 }
 
 func (w *Watcher) reconcile(ctx context.Context, cl helper.Client, ref objectRef, destNamespace string) (string, error) {
