@@ -169,7 +169,6 @@ func Convert_v1beta1_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1beta1
 // // This function need to be manually created because conversion-gen not able to create it intentionally because
 // // we have new defined fields in v1beta1 not in v1alpha1
 // // nolint:golint,stylecheck,revive
-// func Convert_v1beta1_CertificateReference_To_v1alpha1_CertificateReference(in *v1beta1.CertificateReference, out *CertificateReference, s apiconversion.Scope) error {
 func Convert_v1beta1_ServerTLS_To_v1alpha1_ServerTLS(in *v1beta1.ServerTLS, out *ServerTLS, s apiconversion.Scope) error {
 	return autoConvert_v1beta1_ServerTLS_To_v1alpha1_ServerTLS(in, out, s)
 }
