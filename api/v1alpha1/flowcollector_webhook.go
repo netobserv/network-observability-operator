@@ -74,6 +74,9 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 
 	dst.Spec.ConsolePlugin.Enable = restored.Spec.ConsolePlugin.Enable
 
+	dst.Spec.Processor.Metrics.Server.TLS.InsecureSkipVerify = restored.Spec.Processor.Metrics.Server.TLS.InsecureSkipVerify
+	dst.Spec.Processor.Metrics.Server.TLS.ProvidedCaFile = restored.Spec.Processor.Metrics.Server.TLS.ProvidedCaFile
+
 	if restored.Spec.Exporters != nil {
 		for _, restoredExp := range restored.Spec.Exporters {
 			if !isExporterIn(restoredExp, dst.Spec.Exporters) {
@@ -159,4 +162,11 @@ func Convert_v1beta1_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(in 
 // nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1beta1.FlowCollectorEBPF, out *FlowCollectorEBPF, s apiconversion.Scope) error {
 	return autoConvert_v1beta1_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in, out, s)
+}
+
+// // This function need to be manually created because conversion-gen not able to create it intentionally because
+// // we have new defined fields in v1beta1 not in v1alpha1
+// // nolint:golint,stylecheck,revive
+func Convert_v1beta1_ServerTLS_To_v1alpha1_ServerTLS(in *v1beta1.ServerTLS, out *ServerTLS, s apiconversion.Scope) error {
+	return autoConvert_v1beta1_ServerTLS_To_v1alpha1_ServerTLS(in, out, s)
 }
