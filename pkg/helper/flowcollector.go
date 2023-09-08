@@ -116,7 +116,7 @@ func IsPrivileged(spec *flowslatest.FlowCollectorEBPF) bool {
 }
 
 func IsPktDropEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	if IsPrivileged(spec) && IsFeatureEnabled(spec, flowslatest.PacketsDrop) {
+	if IsPrivileged(spec) && IsFeatureEnabled(spec, flowslatest.PacketDrop) {
 		return true
 	}
 	return false

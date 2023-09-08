@@ -14,8 +14,8 @@ spec:
       cacheMaxFlows: 100000
       privileged: false
       # features: 
-      # - "PacketsDrop"
-      # - "DNSTacking"
+      # - "PacketDrop"
+      # - "DNSTracking"
       # - "FlowRTT"
       interfaces: [ ]
       excludeInterfaces: [ "lo" ]
