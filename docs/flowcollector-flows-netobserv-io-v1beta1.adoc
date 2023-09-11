@@ -35,9 +35,9 @@ Type::
 
 | `spec`
 | `object`
-| `FlowCollectorSpec` defines the desired state of the FlowCollector resource.  +
+| Defines the desired state of the FlowCollector resource.  +
  +
- *: the mention of _"unsupported"_, or _"deprecated"_ for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.
+ *: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.
 
 |===
 == .metadata
@@ -57,17 +57,14 @@ Type::
 Description::
 +
 --
-`FlowCollectorSpec` defines the desired state of the FlowCollector resource.  +
+Defines the desired state of the FlowCollector resource.  +
  +
- *: the mention of _"unsupported"_, or _"deprecated"_ for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.
+ *: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature is not officially supported by Red Hat. It might have been, for instance, contributed by the community and accepted without a formal agreement for maintenance. The product maintainers might provide some support for these features as a best effort only.
 --
 
 Type::
   `object`
 
-Required::
-  - `agent`
-  - `deploymentModel`
 
 
 
@@ -121,8 +118,6 @@ Agent configuration for flows extraction.
 Type::
   `object`
 
-Required::
-  - `type`
 
 
 
@@ -136,13 +131,13 @@ Required::
 
 | `ipfix`
 | `object`
-| `ipfix` - _deprecated (*)_ - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.
+| `ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.
 
 | `type`
 | `string`
 | `type` selects the flows tracing agent. Possible values are: +
  - `EBPF` (default) to use NetObserv eBPF agent. +
- - `IPFIX` - _deprecated (*)_ - to use the legacy IPFIX collector. +
+ - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector. +
  `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).
 
 |===
@@ -178,6 +173,14 @@ Type::
 | `excludeInterfaces`
 | `array (string)`
 | `excludeInterfaces` contains the interface names that will be excluded from flow tracing. An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.
+
+| `features`
+| `array (string)`
+| List of additional features to enable. They are all disabled by default. Enabling additional features may have performance impacts. Possible values are: +
+ - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported. +
+ - `DNSTracking`: enable the DNS tracking feature. This feature requires mounting the kernel debug filesystem hence the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported. +
+ - `FlowRTT` [unsupported (*)]: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1. +
+
 
 | `imagePullPolicy`
 | `string`
@@ -260,7 +263,7 @@ Type::
 Description::
 +
 --
-`ipfix` - _deprecated (*)_ - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.
+`ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.
 --
 
 Type::
@@ -370,6 +373,10 @@ Type::
 | `autoscaler`
 | `object`
 | `autoscaler` spec of a horizontal pod autoscaler to set up for the plugin Deployment. Refer to HorizontalPodAutoscaler documentation (autoscaling/v2).
+
+| `enable`
+| `boolean`
+| enable the console plugin deployment. spec.Loki.enable must also be true
 
 | `imagePullPolicy`
 | `string`
@@ -549,7 +556,7 @@ Required::
 
 | `ipfix`
 | `object`
-| IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. _Unsupported (*)_.
+| IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].
 
 | `kafka`
 | `object`
@@ -557,14 +564,14 @@ Required::
 
 | `type`
 | `string`
-| `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is _unsupported (*)_.
+| `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).
 
 |===
 == .spec.exporters[].ipfix
 Description::
 +
 --
-IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. _Unsupported (*)_.
+IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].
 --
 
 Type::
@@ -617,20 +624,122 @@ Required::
 | `string`
 | Address of the Kafka server
 
+| `sasl`
+| `object`
+| SASL authentication configuration. [Unsupported (*)].
+
 | `tls`
 | `object`
-| TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, the Kafka certificate needs to be copied in the agent namespace (by default it is `netobserv-privileged`).
+| TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
 
 | `topic`
 | `string`
 | Kafka topic to use. It must exist, NetObserv will not create it.
 
 |===
+== .spec.exporters[].kafka.sasl
+Description::
++
+--
+SASL authentication configuration. [Unsupported (*)].
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `clientIDReference`
+| `object`
+| Reference to the secret or config map containing the client ID
+
+| `clientSecretReference`
+| `object`
+| Reference to the secret or config map containing the client secret
+
+| `type`
+| `string`
+| Type of SASL authentication to use, or `DISABLED` if SASL is not used
+
+|===
+== .spec.exporters[].kafka.sasl.clientIDReference
+Description::
++
+--
+Reference to the secret or config map containing the client ID
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `file`
+| `string`
+| File name within the config map or secret
+
+| `name`
+| `string`
+| Name of the config map or secret containing the file
+
+| `namespace`
+| `string`
+| Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+
+| `type`
+| `string`
+| Type for the file reference: "configmap" or "secret"
+
+|===
+== .spec.exporters[].kafka.sasl.clientSecretReference
+Description::
++
+--
+Reference to the secret or config map containing the client secret
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `file`
+| `string`
+| File name within the config map or secret
+
+| `name`
+| `string`
+| Name of the config map or secret containing the file
+
+| `namespace`
+| `string`
+| Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+
+| `type`
+| `string`
+| Type for the file reference: "configmap" or "secret"
+
+|===
 == .spec.exporters[].kafka.tls
 Description::
 +
 --
-TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, the Kafka certificate needs to be copied in the agent namespace (by default it is `netobserv-privileged`).
+TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
 --
 
 Type::
@@ -760,20 +869,122 @@ Required::
 | `string`
 | Address of the Kafka server
 
+| `sasl`
+| `object`
+| SASL authentication configuration. [Unsupported (*)].
+
 | `tls`
 | `object`
-| TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, the Kafka certificate needs to be copied in the agent namespace (by default it is `netobserv-privileged`).
+| TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
 
 | `topic`
 | `string`
 | Kafka topic to use. It must exist, NetObserv will not create it.
 
 |===
+== .spec.kafka.sasl
+Description::
++
+--
+SASL authentication configuration. [Unsupported (*)].
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `clientIDReference`
+| `object`
+| Reference to the secret or config map containing the client ID
+
+| `clientSecretReference`
+| `object`
+| Reference to the secret or config map containing the client secret
+
+| `type`
+| `string`
+| Type of SASL authentication to use, or `DISABLED` if SASL is not used
+
+|===
+== .spec.kafka.sasl.clientIDReference
+Description::
++
+--
+Reference to the secret or config map containing the client ID
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `file`
+| `string`
+| File name within the config map or secret
+
+| `name`
+| `string`
+| Name of the config map or secret containing the file
+
+| `namespace`
+| `string`
+| Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+
+| `type`
+| `string`
+| Type for the file reference: "configmap" or "secret"
+
+|===
+== .spec.kafka.sasl.clientSecretReference
+Description::
++
+--
+Reference to the secret or config map containing the client secret
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `file`
+| `string`
+| File name within the config map or secret
+
+| `name`
+| `string`
+| Name of the config map or secret containing the file
+
+| `namespace`
+| `string`
+| Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+
+| `type`
+| `string`
+| Type for the file reference: "configmap" or "secret"
+
+|===
 == .spec.kafka.tls
 Description::
 +
 --
-TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, the Kafka certificate needs to be copied in the agent namespace (by default it is `netobserv-privileged`).
+TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
 --
 
 Type::
@@ -901,7 +1112,7 @@ Type::
 | `authToken` describes the way to get a token to authenticate to Loki. +
  - `DISABLED` will not send any token with the request. +
  - `FORWARD` will forward the user token for authorization. +
- - `HOST` - _deprecated (*)_ - will use the local pod service account to authenticate to Loki. +
+ - `HOST` [deprecated (*)] - will use the local pod service account to authenticate to Loki. +
  When using the Loki Operator, this must be set to `FORWARD`.
 
 | `batchSize`
@@ -911,6 +1122,10 @@ Type::
 | `batchWait`
 | `string`
 | `batchWait` is the maximum time to wait before sending a batch.
+
+| `enable`
+| `boolean`
+| enable storing flows to Loki. It is required for the {product-title} Console plugin installation.
 
 | `maxBackoff`
 | `string`
@@ -1194,6 +1409,10 @@ Type::
 |===
 | Property | Type | Description
 
+| `clusterName`
+| `string`
+| `clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using {product-title}, leave empty to make it automatically determined.
+
 | `conversationEndTimeout`
 | `string`
 | `conversationEndTimeout` is the time to wait after a network flow is received, to consider the conversation ended. This delay is ignored when a FIN packet is collected for TCP flows (see `conversationTerminatingTimeout` instead).
@@ -1333,7 +1552,7 @@ Type::
 
 | `ignoreTags`
 | `array (string)`
-| `ignoreTags` is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions . Available tags are: `egress`, `ingress`, `flows`, `bytes`, `packets`, `namespaces`, `nodes`, `workloads`.
+| `ignoreTags` is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions . Available tags are: `egress`, `ingress`, `flows`, `bytes`, `packets`, `namespaces`, `nodes`, `workloads`, `nodes-flows`, `namespaces-flows`, `workloads-flows`. Namespace-based metrics are covered by both `workloads` and `namespaces` tags, hence it is recommended to always ignore one of them (`workloads` offering a finer granularity).
 
 | `server`
 | `object`
@@ -1383,9 +1602,17 @@ Type::
 |===
 | Property | Type | Description
 
+| `insecureSkipVerify`
+| `boolean`
+| insecureSkipVerify allows skipping client-side verification of the provided certificate If set to true, ProvidedCaFile field will be ignored
+
 | `provided`
 | `object`
 | TLS configuration when `type` is set to `PROVIDED`.
+
+| `providedCaFile`
+| `object`
+| Reference to the CA file will be ignored
 
 | `type`
 | `string`
@@ -1429,6 +1656,40 @@ Type::
 | `type`
 | `string`
 | Type for the certificate reference: `configmap` or `secret`
+
+|===
+== .spec.processor.metrics.server.tls.providedCaFile
+Description::
++
+--
+Reference to the CA file will be ignored
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `file`
+| `string`
+| File name within the config map or secret
+
+| `name`
+| `string`
+| Name of the config map or secret containing the file
+
+| `namespace`
+| `string`
+| Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+
+| `type`
+| `string`
+| Type for the file reference: "configmap" or "secret"
 
 |===
 == .spec.processor.resources
