@@ -1,0 +1,28 @@
+#flp_confgen
+description:
+  This metric observes the nodes outgoing traffic
+details:
+  Sum RTT for outgoing traffic per source and destination nodes
+usage:
+  Evaluate network outgoing TCP hanshakes Round Trip Time per source and destination nodes
+tags:
+  - egress
+  - rtt
+  - nodes
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: node_egress_rtt_total
+        type: histogram
+        valuekey: TimeFlowRttNs
+        filters:
+        - key: FlowDirection
+          value: "1"
+        - key: Duplicate
+          value: "false"
+        - key: TimeFlowRttNs
+          value: "!nil"
+        labels:
+          - SrcK8S_HostName
+          - DstK8S_HostName

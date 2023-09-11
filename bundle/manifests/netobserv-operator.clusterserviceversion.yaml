@@ -328,6 +328,7 @@ metadata:
                 "ignoreTags": [
                   "egress",
                   "packets",
+                  "rtt",
                   "nodes-flows",
                   "namespaces-flows",
                   "workloads-flows",

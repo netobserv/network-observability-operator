@@ -814,22 +814,33 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
-	assert.Len(parameters[5].Encode.Prom.Metrics, 15)
-	assert.Equal("namespace_egress_bytes_total", parameters[5].Encode.Prom.Metrics[0].Name)
-	assert.Equal("namespace_egress_packets_total", parameters[5].Encode.Prom.Metrics[1].Name)
-	assert.Equal("namespace_flows_total", parameters[5].Encode.Prom.Metrics[2].Name)
-	assert.Equal("namespace_ingress_bytes_total", parameters[5].Encode.Prom.Metrics[3].Name)
-	assert.Equal("namespace_ingress_packets_total", parameters[5].Encode.Prom.Metrics[4].Name)
-	assert.Equal("node_egress_bytes_total", parameters[5].Encode.Prom.Metrics[5].Name)
-	assert.Equal("node_egress_packets_total", parameters[5].Encode.Prom.Metrics[6].Name)
-	assert.Equal("node_flows_total", parameters[5].Encode.Prom.Metrics[7].Name)
-	assert.Equal("node_ingress_bytes_total", parameters[5].Encode.Prom.Metrics[8].Name)
-	assert.Equal("node_ingress_packets_total", parameters[5].Encode.Prom.Metrics[9].Name)
-	assert.Equal("workload_egress_bytes_total", parameters[5].Encode.Prom.Metrics[10].Name)
-	assert.Equal("workload_egress_packets_total", parameters[5].Encode.Prom.Metrics[11].Name)
-	assert.Equal("workload_flows_total", parameters[5].Encode.Prom.Metrics[12].Name)
-	assert.Equal("workload_ingress_bytes_total", parameters[5].Encode.Prom.Metrics[13].Name)
-	assert.Equal("workload_ingress_packets_total", parameters[5].Encode.Prom.Metrics[14].Name)
+	assert.Len(parameters[5].Encode.Prom.Metrics, 21)
+	definitions := []string{
+		"namespace_egress_bytes_total",
+		"namespace_egress_packets_total",
+		"namespace_egress_rtt_total",
+		"namespace_flows_total",
+		"namespace_ingress_bytes_total",
+		"namespace_ingress_packets_total",
+		"namespace_ingress_rtt_total",
+		"node_egress_bytes_total",
+		"node_egress_packets_total",
+		"node_egress_rtt_total",
+		"node_flows_total",
+		"node_ingress_bytes_total",
+		"node_ingress_packets_total",
+		"node_ingress_rtt_total",
+		"workload_egress_bytes_total",
+		"workload_egress_packets_total",
+		"workload_egress_rtt_total",
+		"workload_flows_total",
+		"workload_ingress_bytes_total",
+		"workload_ingress_packets_total",
+		"workload_ingress_rtt_total",
+	}
+	for i, def := range definitions {
+		assert.Equal(def, parameters[5].Encode.Prom.Metrics[i].Name)
+	}
 	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
 }
 
@@ -845,7 +856,7 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
-	assert.Len(parameters[5].Encode.Prom.Metrics, 10)
+	assert.Len(parameters[5].Encode.Prom.Metrics, 14)
 	assert.Equal("namespace_egress_bytes_total", parameters[5].Encode.Prom.Metrics[0].Name)
 	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
 }

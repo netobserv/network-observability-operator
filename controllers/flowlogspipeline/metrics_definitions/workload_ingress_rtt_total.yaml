@@ -1,0 +1,32 @@
+#flp_confgen
+description:
+  This metric observes the incoming traffic
+details:
+  Sum RTT for incoming traffic per source and destination namespaces and owners
+usage:
+  Evaluate network incoming TCP hanshakes Round Trip Time per source and destination namespaces and owners
+tags:
+  - ingress
+  - rtt
+  - workloads
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: workload_ingress_rtt_total
+        type: histogram
+        valuekey: TimeFlowRttNs
+        filters:
+        - key: FlowDirection
+          value: "0"
+        - key: Duplicate
+          value: "false"
+        - key: TimeFlowRttNs
+          value: "!nil"
+        labels:
+          - SrcK8S_Namespace
+          - DstK8S_Namespace
+          - SrcK8S_OwnerName
+          - DstK8S_OwnerName
+          - SrcK8S_OwnerType
+          - DstK8S_OwnerType

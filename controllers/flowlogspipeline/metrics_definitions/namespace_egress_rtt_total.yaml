@@ -1,0 +1,28 @@
+#flp_confgen
+description:
+  This metric observes the namespaces outgoing traffic
+details:
+  Sum RTT for outgoing traffic per source and destination namespaces
+usage:
+  Evaluate network outgoing TCP hanshakes Round Trip Time per source and destination namespaces
+tags:
+  - egress
+  - rtt
+  - namespaces
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: namespace_egress_rtt_total
+        type: histogram
+        valuekey: TimeFlowRttNs
+        filters:
+        - key: FlowDirection
+          value: "1"
+        - key: Duplicate
+          value: "false"
+        - key: TimeFlowRttNs
+          value: "!nil"
+        labels:
+          - SrcK8S_Namespace
+          - DstK8S_Namespace
