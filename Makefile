@@ -24,13 +24,13 @@ REPO ?= quay.io/$(IMAGE_ORG)
 
 # Component versions to use in bundle / release (do not use $VERSION for that)
 PREVIOUS_VERSION ?= v1.0.3
-BUNDLE_VERSION ?= 1.0.4-rc0
+BUNDLE_VERSION ?= 1.0.4
 # console plugin
-export PLG_VERSION ?= v0.1.11-rc0
+export PLG_VERSION ?= v0.1.11
 # flowlogs-pipeline
-export FLP_VERSION ?= v0.1.10-rc2
+export FLP_VERSION ?= v0.1.10
 # eBPF agent
-export BPF_VERSION ?= v0.3.2-rc0
+export BPF_VERSION ?= v0.3.2
 
 # Allows building bundles in Mac replacing BSD 'sed' command by GNU-compatible 'gsed'
 ifeq (,$(shell which gsed 2>/dev/null))
