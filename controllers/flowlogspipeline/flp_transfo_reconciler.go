@@ -128,6 +128,10 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 	if err = annotateKafkaExporterCerts(ctx, r.Common, desired.Spec.Exporters, annotations); err != nil {
 		return err
 	}
+	// Watch for monitoring caCert
+	if err = reconcileMonitoringCerts(ctx, r.Common, &desired.Spec.Processor.Metrics.Server.TLS, r.Namespace); err != nil {
+		return err
+	}
 
 	return r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, annotations)
 }

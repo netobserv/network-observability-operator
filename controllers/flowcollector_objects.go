@@ -14,13 +14,11 @@ import (
 var healthDashboardEmbed string
 
 const (
-	downstreamLabelKey       = "openshift.io/cluster-monitoring"
-	downstreamLabelValue     = "true"
-	roleSuffix               = "-metrics-reader"
-	monitoringServiceAccount = "prometheus-k8s"
-	monitoringNamespace      = "openshift-monitoring"
-	dashboardCMNamespace     = "openshift-config-managed"
-	dashboardCMAnnotation    = "console.openshift.io/dashboard"
+	downstreamLabelKey    = "openshift.io/cluster-monitoring"
+	downstreamLabelValue  = "true"
+	roleSuffix            = "-metrics-reader"
+	dashboardCMNamespace  = "openshift-config-managed"
+	dashboardCMAnnotation = "console.openshift.io/dashboard"
 
 	flowDashboardCMName = "grafana-dashboard-netobserv-flow-metrics"
 	flowDashboardCMFile = "netobserv-flow-metrics.json"
@@ -74,8 +72,8 @@ func buildRoleBindingMonitoringReader(ns string) *rbacv1.ClusterRoleBinding {
 		},
 		Subjects: []rbacv1.Subject{{
 			Kind:      "ServiceAccount",
-			Name:      monitoringServiceAccount,
-			Namespace: monitoringNamespace,
+			Name:      constants.MonitoringServiceAccount,
+			Namespace: constants.MonitoringNamespace,
 		}},
 	}
 }
