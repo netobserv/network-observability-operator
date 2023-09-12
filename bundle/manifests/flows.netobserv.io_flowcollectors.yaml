@@ -3845,8 +3845,7 @@ spec:
                 type: object
               namespace:
                 default: netobserv
-                description: Namespace where NetObserv pods are deployed. If empty,
-                  the namespace of the operator is going to be used.
+                description: Namespace where NetObserv pods are deployed.
                 type: string
               processor:
                 description: '`processor` defines the settings of the component that

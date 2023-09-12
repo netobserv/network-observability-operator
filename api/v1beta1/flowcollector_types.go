@@ -47,7 +47,6 @@ type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	// Namespace where NetObserv pods are deployed.
-	// If empty, the namespace of the operator is going to be used.
 	// +kubebuilder:default:=netobserv
 	Namespace string `json:"namespace,omitempty"`
 

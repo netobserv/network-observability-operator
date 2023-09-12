@@ -3967,7 +3967,7 @@ Defines the desired state of the FlowCollector resource. <br><br> *: the mention
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where NetObserv pods are deployed. If empty, the namespace of the operator is going to be used.<br/>
+          Namespace where NetObserv pods are deployed.<br/>
           <br/>
             <i>Default</i>: netobserv<br/>
         </td>
