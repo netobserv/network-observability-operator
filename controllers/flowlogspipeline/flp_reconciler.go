@@ -101,3 +101,20 @@ func annotateKafkaCerts(ctx context.Context, info *reconcilers.Common, spec *flo
 	}
 	return nil
 }
+
+func reconcileMonitoringCerts(ctx context.Context, info *reconcilers.Common, tlsConfig *flowslatest.ServerTLS, ns string) error {
+	if tlsConfig.Type == flowslatest.ServerTLSProvided && tlsConfig.Provided != nil {
+		_, err := info.Watcher.ProcessCertRef(ctx, info.Client, tlsConfig.Provided, ns)
+		if err != nil {
+			return err
+		}
+	}
+	if !tlsConfig.InsecureSkipVerify && tlsConfig.ProvidedCaFile != nil && tlsConfig.ProvidedCaFile.File != "" {
+		_, err := info.Watcher.ProcessFileReference(ctx, info.Client, *tlsConfig.ProvidedCaFile, ns)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
