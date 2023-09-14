@@ -130,7 +130,7 @@ Kind of the destination matched Kubernetes object, such as Pod name, Service nam
 
 SrcPort::
 
-• *SrcPort*: `number`
+• `Optional` *SrcPort*: `number`
 
 Source port
 
@@ -138,7 +138,7 @@ Source port
 
 DstPort::
 
-• *DstPort*: `number`
+• `Optional` *DstPort*: `number`
 
 Destination port
 
@@ -208,11 +208,27 @@ Network interface
 
 '''
 
+IfDirection::
+
+• `Optional` *IfDirection*: xref:../enums/InterfaceDirection.adoc[`InterfaceDirection`]
+
+Flow direction from the network interface observation point
+
+'''
+
+Flags::
+
+• `Optional` *Flags*: `number`
+
+TCP flags
+
+'''
+
 Packets::
 
-• *Packets*: `number`
+• `Optional` *Packets*: `number`
 
-Number of packets in this flow
+Number of packets
 
 '''
 
@@ -234,9 +250,9 @@ In conversation tracking, B to A packets counter per conversation
 
 Bytes::
 
-• *Bytes*: `number`
+• `Optional` *Bytes*: `number`
 
-Number of bytes in this flow
+Number of bytes
 
 '''
 
@@ -253,6 +269,126 @@ Bytes_BA::
 • `Optional` *Bytes_BA*: `number`
 
 In conversation tracking, B to A bytes counter per conversation
+
+'''
+
+IcmpType::
+
+• `Optional` *IcmpType*: `number`
+
+ICMP type
+
+'''
+
+IcmpCode::
+
+• `Optional` *IcmpCode*: `number`
+
+ICMP code
+
+'''
+
+PktDropLatestState::
+
+• `Optional` *PktDropLatestState*: `string`
+
+Pkt TCP state for drops
+
+'''
+
+PktDropLatestDropCause::
+
+• `Optional` *PktDropLatestDropCause*: `string`
+
+Pkt cause for drops
+
+'''
+
+PktDropLatestFlags::
+
+• `Optional` *PktDropLatestFlags*: `number`
+
+Pkt TCP flags for drops
+
+'''
+
+PktDropPackets::
+
+• `Optional` *PktDropPackets*: `number`
+
+Number of packets dropped by the kernel
+
+'''
+
+PktDropPackets_AB::
+
+• `Optional` *PktDropPackets_AB*: `number`
+
+In conversation tracking, A to B packets dropped counter per conversation
+
+'''
+
+PktDropPackets_BA::
+
+• `Optional` *PktDropPackets_BA*: `number`
+
+In conversation tracking, B to A packets dropped counter per conversation
+
+'''
+
+PktDropBytes::
+
+• `Optional` *PktDropBytes*: `number`
+
+Number of bytes dropped by the kernel
+
+'''
+
+PktDropBytes_AB::
+
+• `Optional` *PktDropBytes_AB*: `number`
+
+In conversation tracking, A to B bytes dropped counter per conversation
+
+'''
+
+PktDropBytes_BA::
+
+• `Optional` *PktDropBytes_BA*: `number`
+
+In conversation tracking, B to A bytes dropped counter per conversation
+
+'''
+
+DnsId::
+
+• `Optional` *DnsId*: `number`
+
+DNS record id
+
+'''
+
+DnsFlags::
+
+• `Optional` *DnsFlags*: `number`
+
+DNS flags for DNS record
+
+'''
+
+DnsFlagsResponseCode::
+
+• `Optional` *DnsFlagsResponseCode*: `string`
+
+Parsed DNS header RCODEs name
+
+'''
+
+DnsLatencyMs::
+
+• `Optional` *DnsLatencyMs*: `number`
+
+Calculated time between response and request, in milliseconds
 
 '''
 
@@ -277,6 +413,14 @@ TimeReceived::
 • *TimeReceived*: `number`
 
 Timestamp when this flow was received and processed by the flow collector, in seconds
+
+'''
+
+TimeFlowRttNs::
+
+• `Optional` *TimeFlowRttNs*: `number`
+
+Flow Round Trip Time (RTT) in nanoseconds
 
 '''
 
@@ -310,7 +454,7 @@ Ingress::
 
 • *Ingress* = `"0"`
 
-Incoming traffic, from node observation point
+Incoming traffic, from the node observation point
 
 '''
 
@@ -318,4 +462,12 @@ Egress::
 
 • *Egress* = `"1"`
 
-Outgoing traffic, from node observation point
+Outgoing traffic, from the node observation point
+
+'''
+
+Inner::
+
+• *Inner* = `"2"`
+
+Inner traffic, with the same source and destination node
