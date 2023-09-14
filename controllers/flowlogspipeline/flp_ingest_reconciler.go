@@ -116,6 +116,11 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowslat
 		return err
 	}
 
+	// Watch for monitoring caCert
+	if err = reconcileMonitoringCerts(ctx, r.Common, &desired.Spec.Processor.Metrics.Server.TLS, r.Namespace); err != nil {
+		return err
+	}
+
 	return r.reconcileDaemonSet(ctx, builder.daemonSet(annotations))
 }
 
