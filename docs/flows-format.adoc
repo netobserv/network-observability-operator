@@ -210,7 +210,7 @@ Network interface
 
 IfDirection::
 
-• `Optional` *IfDirection*: xref:../enums/InterfaceDirection.adoc[`InterfaceDirection`]
+• `Optional` *IfDirection*: `InterfaceDirection` (see the following section, Enumeration: InterfaceDirection)
 
 Flow direction from the network interface observation point
 
@@ -471,3 +471,21 @@ Inner::
 • *Inner* = `"2"`
 
 Inner traffic, with the same source and destination node
+
+
+== Enumeration: InterfaceDirection
+
+
+Ingress::
+
+• *Ingress* = `"0"`
+
+Incoming traffic, from the network interface observation point
+
+'''
+
+Egress::
+
+• *Egress* = `"1"`
+
+Outgoing traffic, from the network interface observation point

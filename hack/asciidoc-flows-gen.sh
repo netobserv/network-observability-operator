@@ -20,11 +20,18 @@ echo -e "\n" >> $ADOC
 kramdoc -o - <(curl -fsSL ${MD_SOURCE}/interfaces/Fields.md) \
   | sed -r 's/^= /== /' \
   | sed -r 's/Interface: //' \
-  | sed -r '/Properties/d' >> $ADOC
+  | sed -r '/Properties/d' \
+  | sed -r 's~xref:.*InterfaceDirection\.adoc\[`InterfaceDirection`\]~`InterfaceDirection` (see the following section, Enumeration: InterfaceDirection)~' >> $ADOC
 
 # FlowDirection enum
 echo -e "\n" >> $ADOC
 kramdoc -o - <(curl -fsSL ${MD_SOURCE}/enums/FlowDirection.md) \
+  | sed -r 's/^= /== /' \
+  | sed -r '/Enumeration Members/d' >> $ADOC
+
+# InterfaceDirection enum
+echo -e "\n" >> $ADOC
+kramdoc -o - <(curl -fsSL ${MD_SOURCE}/enums/InterfaceDirection.md) \
   | sed -r 's/^= /== /' \
   | sed -r '/Enumeration Members/d' >> $ADOC
 
