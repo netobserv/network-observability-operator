@@ -175,6 +175,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	for _, pair := range helper.KeySorted(b.desired.Processor.Debug.Env) {
 		envs = append(envs, corev1.EnvVar{Name: pair[0], Value: pair[1]})
 	}
+	envs = append(envs, constants.EnvNoHTTP2)
 
 	container := corev1.Container{
 		Name:            constants.FLPName,
@@ -831,6 +832,7 @@ func shouldAddAlert(name flowslatest.FLPAlert, disabledList []flowslatest.FLPAle
 
 func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 	rules := []monitoringv1.Rule{}
+	d := monitoringv1.Duration("10m")
 
 	// Not receiving flows
 	if shouldAddAlert(flowslatest.AlertNoFlows, b.desired.Processor.Metrics.DisableAlerts) {
@@ -841,7 +843,7 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 				"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
 			},
 			Expr: intstr.FromString("sum(rate(netobserv_ingest_flows_processed[1m])) == 0"),
-			For:  "10m",
+			For:  &d,
 			Labels: map[string]string{
 				"severity": "warning",
 				"app":      "netobserv",
@@ -858,7 +860,7 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 				"summary":     "NetObserv flowlogs-pipeline is dropping flows because of loki errors",
 			},
 			Expr: intstr.FromString("sum(rate(netobserv_loki_dropped_entries_total[1m])) > 0"),
-			For:  "10m",
+			For:  &d,
 			Labels: map[string]string{
 				"severity": "warning",
 				"app":      "netobserv",

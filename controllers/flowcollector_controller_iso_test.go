@@ -9,7 +9,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 )
@@ -67,8 +67,8 @@ func flowCollectorIsoSpecs() {
 					IgnoreTags:    []string{},
 					DisableAlerts: []flowslatest.FLPAlert{},
 				},
-				EnableKubeProbes: pointer.Bool(false),
-				DropUnusedFields: pointer.Bool(false),
+				EnableKubeProbes: ptr.To(false),
+				DropUnusedFields: ptr.To(false),
 			},
 			Agent: flowslatest.FlowCollectorAgent{
 				Type: "EBPF",
@@ -102,8 +102,8 @@ func flowCollectorIsoSpecs() {
 				},
 			},
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
-				Enable:          pointer.Bool(true),
-				Register:        pointer.Bool(false),
+				Enable:          ptr.To(true),
+				Register:        ptr.To(false),
 				Replicas:        &zero,
 				Port:            12345,
 				ImagePullPolicy: "Always",
@@ -111,13 +111,13 @@ func flowCollectorIsoSpecs() {
 				LogLevel:        "trace",
 				Autoscaler:      flowslatest.FlowCollectorHPA{Status: "DISABLED", MinReplicas: &zero, MaxReplicas: zero, Metrics: []ascv2.MetricSpec{}},
 				PortNaming: flowslatest.ConsolePluginPortConfig{
-					Enable:    pointer.Bool(false),
+					Enable:    ptr.To(false),
 					PortNames: map[string]string{},
 				},
 				QuickFilters: []flowslatest.QuickFilter{},
 			},
 			Loki: flowslatest.FlowCollectorLoki{
-				Enable:       pointer.Bool(true),
+				Enable:       ptr.To(true),
 				URL:          "http://loki",
 				QuerierURL:   "",
 				StatusURL:    "",
