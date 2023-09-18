@@ -22,8 +22,8 @@ func key(obj client.Object) string {
 	return obj.GetObjectKind().GroupVersionKind().Kind + "/" + obj.GetNamespace() + "/" + obj.GetName()
 }
 
-func (o *ClientMock) Get(ctx context.Context, nsname types.NamespacedName, obj client.Object) error {
-	args := o.Called(ctx, nsname, obj)
+func (o *ClientMock) Get(ctx context.Context, nsname types.NamespacedName, obj client.Object, opts ...client.GetOption) error {
+	args := o.Called(ctx, nsname, obj, opts)
 	return args.Error(0)
 }
 
@@ -52,7 +52,7 @@ func (o *ClientMock) MockSecret(obj *v1.Secret) {
 		o.objs = map[string]client.Object{}
 	}
 	o.objs[key(obj)] = obj
-	o.On("Get", mock.Anything, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, mock.Anything).Run(func(args mock.Arguments) {
+	o.On("Get", mock.Anything, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		arg := args.Get(2).(*v1.Secret)
 		arg.SetName(obj.GetName())
 		arg.SetNamespace(obj.GetNamespace())
@@ -65,7 +65,7 @@ func (o *ClientMock) MockConfigMap(obj *v1.ConfigMap) {
 		o.objs = map[string]client.Object{}
 	}
 	o.objs[key(obj)] = obj
-	o.On("Get", mock.Anything, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, mock.Anything).Run(func(args mock.Arguments) {
+	o.On("Get", mock.Anything, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		arg := args.Get(2).(*v1.ConfigMap)
 		arg.SetName(obj.GetName())
 		arg.SetNamespace(obj.GetNamespace())
@@ -78,7 +78,7 @@ func (o *ClientMock) UpdateObject(obj client.Object) {
 }
 
 func (o *ClientMock) MockNonExisting(nsn types.NamespacedName) {
-	o.On("Get", mock.Anything, nsn, mock.Anything).Return(kerr.NewNotFound(schema.GroupResource{}, ""))
+	o.On("Get", mock.Anything, nsn, mock.Anything, mock.Anything).Return(kerr.NewNotFound(schema.GroupResource{}, ""))
 }
 
 func (o *ClientMock) MockCreateUpdate() {
