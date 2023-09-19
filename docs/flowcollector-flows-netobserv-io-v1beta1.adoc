@@ -250,12 +250,6 @@ Type::
 |===
 | Property | Type | Description
 
-| `claims`
-| `array`
-| Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
- This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
- This field is immutable. It can only be set for containers.
-
 | `limits`
 | `integer-or-string`
 | Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -263,45 +257,6 @@ Type::
 | `requests`
 | `integer-or-string`
 | Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-
-|===
-== .spec.agent.ebpf.resources.claims
-Description::
-+
---
-Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
- This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
- This field is immutable. It can only be set for containers.
---
-
-Type::
-  `array`
-
-
-
-
-== .spec.agent.ebpf.resources.claims[]
-Description::
-+
---
-ResourceClaim references one entry in PodSpec.ResourceClaims.
---
-
-Type::
-  `object`
-
-Required::
-  - `name`
-
-
-
-[cols="1,1,1",options="header"]
-|===
-| Property | Type | Description
-
-| `name`
-| `string`
-| Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.
 
 |===
 == .spec.agent.ipfix
@@ -558,12 +513,6 @@ Type::
 |===
 | Property | Type | Description
 
-| `claims`
-| `array`
-| Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
- This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
- This field is immutable. It can only be set for containers.
-
 | `limits`
 | `integer-or-string`
 | Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -571,45 +520,6 @@ Type::
 | `requests`
 | `integer-or-string`
 | Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-
-|===
-== .spec.consolePlugin.resources.claims
-Description::
-+
---
-Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
- This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
- This field is immutable. It can only be set for containers.
---
-
-Type::
-  `array`
-
-
-
-
-== .spec.consolePlugin.resources.claims[]
-Description::
-+
---
-ResourceClaim references one entry in PodSpec.ResourceClaims.
---
-
-Type::
-  `object`
-
-Required::
-  - `name`
-
-
-
-[cols="1,1,1",options="header"]
-|===
-| Property | Type | Description
-
-| `name`
-| `string`
-| Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.
 
 |===
 == .spec.exporters
@@ -1799,12 +1709,6 @@ Type::
 |===
 | Property | Type | Description
 
-| `claims`
-| `array`
-| Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
- This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
- This field is immutable. It can only be set for containers.
-
 | `limits`
 | `integer-or-string`
 | Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -1812,45 +1716,6 @@ Type::
 | `requests`
 | `integer-or-string`
 | Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-
-|===
-== .spec.processor.resources.claims
-Description::
-+
---
-Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. 
- This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. 
- This field is immutable. It can only be set for containers.
---
-
-Type::
-  `array`
-
-
-
-
-== .spec.processor.resources.claims[]
-Description::
-+
---
-ResourceClaim references one entry in PodSpec.ResourceClaims.
---
-
-Type::
-  `object`
-
-Required::
-  - `name`
-
-
-
-[cols="1,1,1",options="header"]
-|===
-| Property | Type | Description
-
-| `name`
-| `string`
-| Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.
 
 |===
 
