@@ -815,7 +815,7 @@ const (
 
 // `FlowCollectorExporter` defines an additional exporter to send enriched flows to.
 type FlowCollectorExporter struct {
-	// `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).
+	// `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="KAFKA";"IPFIX"
 	// +kubebuilder:validation:Required
@@ -825,7 +825,7 @@ type FlowCollectorExporter struct {
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
-	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].
+	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
 	// +optional
 	IPFIX FlowCollectorIPFIXReceiver `json:"ipfix,omitempty"`
 }

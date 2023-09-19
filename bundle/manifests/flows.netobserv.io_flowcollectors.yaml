@@ -3330,7 +3330,7 @@ spec:
                   properties:
                     ipfix:
                       description: IPFIX configuration, such as the IP address and
-                        port to send enriched IPFIX flows to. [Unsupported (*)].
+                        port to send enriched IPFIX flows to.
                       properties:
                         targetHost:
                           default: ""
@@ -3528,7 +3528,7 @@ spec:
                       type: object
                     type:
                       description: '`type` selects the type of exporters. The available
-                        options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).'
+                        options are `KAFKA` and `IPFIX`.'
                       enum:
                       - KAFKA
                       - IPFIX
