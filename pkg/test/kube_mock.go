@@ -22,6 +22,10 @@ func key(obj client.Object) string {
 	return obj.GetObjectKind().GroupVersionKind().Kind + "/" + obj.GetNamespace() + "/" + obj.GetName()
 }
 
+func (o *ClientMock) Len() int {
+	return len(o.objs)
+}
+
 func (o *ClientMock) Get(ctx context.Context, nsname types.NamespacedName, obj client.Object, opts ...client.GetOption) error {
 	args := o.Called(ctx, nsname, obj, opts)
 	return args.Error(0)
@@ -47,6 +51,16 @@ func (o *ClientMock) Update(ctx context.Context, obj client.Object, opts ...clie
 	return args.Error(0)
 }
 
+func (o *ClientMock) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
+	k := key(obj)
+	if _, exists := o.objs[k]; !exists {
+		return errors.New("doesn't exist")
+	}
+	delete(o.objs, k)
+	args := o.Called(ctx, obj, opts)
+	return args.Error(0)
+}
+
 func (o *ClientMock) MockSecret(obj *v1.Secret) {
 	if o.objs == nil {
 		o.objs = map[string]client.Object{}
@@ -58,6 +72,7 @@ func (o *ClientMock) MockSecret(obj *v1.Secret) {
 		arg.SetNamespace(obj.GetNamespace())
 		arg.Data = obj.Data
 	}).Return(nil)
+	o.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 }
 
 func (o *ClientMock) MockConfigMap(obj *v1.ConfigMap) {
@@ -71,6 +86,7 @@ func (o *ClientMock) MockConfigMap(obj *v1.ConfigMap) {
 		arg.SetNamespace(obj.GetNamespace())
 		arg.Data = obj.Data
 	}).Return(nil)
+	o.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 }
 
 func (o *ClientMock) UpdateObject(obj client.Object) {

@@ -31,6 +31,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/operator"
 	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/cleanup"
 	"github.com/netobserv/network-observability-operator/pkg/conditions"
 	"github.com/netobserv/network-observability-operator/pkg/discover"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -98,6 +99,9 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 	}
 
 	ns := getNamespaceName(desired)
+	if err := cleanup.CleanPastReferences(ctx, r.Client, ns); err != nil {
+		return ctrl.Result{}, err
+	}
 	r.watcher.Reset(ns)
 
 	var didChange, isInProgress bool
