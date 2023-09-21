@@ -3,6 +3,7 @@ package cleanup
 import (
 	"context"
 
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -11,10 +12,11 @@ import (
 
 var (
 	// Add to this list any object that we used to generate in past versions, and stopped doing so.
-	// For instance, any object that was renamed between two releases of the operator and that could therefore
-	// remain on the cluster after an upgrade.
+	// For instance, with any object that was renamed between two releases of the operator:
+	// The old version with a different name could therefor remain on the cluster after an upgrade.
 	cleanupList = []cleanupItem{
 		{
+			// Old name of NetObserv grafana dashboard / configmap (noo 1.3)
 			ref:         client.ObjectKey{Name: "grafana-dashboard-netobserv", Namespace: "openshift-config-managed"},
 			placeholder: &corev1.ConfigMap{},
 		},
@@ -45,12 +47,20 @@ func CleanPastReferences(ctx context.Context, cl client.Client, defaultNamespace
 			}
 			return err
 		}
-		log.
-			WithValues("name", item.ref.Name).
-			WithValues("namespace", item.ref.Namespace).
-			Info("Deleting old object")
-		if err := cl.Delete(ctx, item.placeholder); err != nil {
-			return err
+		// Make sure we own that object
+		if helper.IsOwned(item.placeholder) {
+			log.
+				WithValues("name", item.ref.Name).
+				WithValues("namespace", item.ref.Namespace).
+				Info("Deleting old object")
+			if err := cl.Delete(ctx, item.placeholder); err != nil {
+				return err
+			}
+		} else {
+			log.
+				WithValues("name", item.ref.Name).
+				WithValues("namespace", item.ref.Namespace).
+				Info("An object was found, but we don't own it - skip deletion")
 		}
 	}
 	didRun = true
