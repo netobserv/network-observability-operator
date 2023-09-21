@@ -232,6 +232,42 @@ func TestContainerUpdateCheck(t *testing.T) {
 	assert.Contains(report.String(), "Volumes changed")
 }
 
+func TestContainerUpdateWithLokistackMode(t *testing.T) {
+	assert := assert.New(t)
+
+	//equals specs
+	plugin := getPluginConfig()
+	loki := flowslatest.FlowCollectorLoki{Mode: "LOKISTACK", LokiStack: &flowslatest.LokiStack{Name: "lokistack", Namespace: "ls-namespace"}}
+	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder := newBuilder(testNamespace, testImage, &spec)
+	old := builder.deployment("digest")
+	nEw := builder.deployment("digest")
+	report := helper.NewChangeReport("")
+	assert.False(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "no change")
+
+	//update lokistack name
+	loki.LokiStack.Name = "lokistack-updated"
+
+	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder = newBuilder(testNamespace, testImage, &spec)
+	nEw = builder.deployment("digest")
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Volumes changed")
+	old = nEw
+
+	//update lokistack namespace
+	loki.LokiStack.Namespace = "ls-namespace-updated"
+
+	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder = newBuilder(testNamespace, testImage, &spec)
+	nEw = builder.deployment("digest")
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Container changed")
+}
+
 func TestServiceUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 	old := getServiceSpecs()

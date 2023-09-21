@@ -228,11 +228,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*v1beta2.ServerTLS)(nil), (*ServerTLS)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_ServerTLS_To_v1alpha1_ServerTLS(a.(*v1beta2.ServerTLS), b.(*ServerTLS), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddConversionFunc((*FlowCollectorLoki)(nil), (*v1beta2.FlowCollectorLoki)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(a.(*FlowCollectorLoki), b.(*v1beta2.FlowCollectorLoki), scope)
 	}); err != nil {
@@ -265,6 +260,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddConversionFunc((*v1beta2.FlowCollectorLoki)(nil), (*FlowCollectorLoki)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(a.(*v1beta2.FlowCollectorLoki), b.(*FlowCollectorLoki), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*v1beta2.ServerTLS)(nil), (*ServerTLS)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_ServerTLS_To_v1alpha1_ServerTLS(a.(*v1beta2.ServerTLS), b.(*ServerTLS), scope)
 	}); err != nil {
 		return err
 	}
