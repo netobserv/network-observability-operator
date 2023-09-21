@@ -8,7 +8,6 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -190,9 +189,9 @@ func TestNoCopy(t *testing.T) {
 
 	_, _, err := watcher.ProcessMTLSCerts(context.Background(), cl, &lokiTLS, baseNamespace)
 	assert.NoError(err)
-	clientMock.AssertCalled(t, "Get", mock.Anything, types.NamespacedName{Name: lokiCA.Name, Namespace: lokiCA.Namespace}, mock.Anything, mock.Anything)
-	clientMock.AssertNotCalled(t, "Create")
-	clientMock.AssertNotCalled(t, "Update")
+	clientMock.AssertGetCalledWith(t, types.NamespacedName{Name: lokiCA.Name, Namespace: lokiCA.Namespace})
+	clientMock.AssertCreateNotCalled(t)
+	clientMock.AssertUpdateNotCalled(t)
 }
 
 func TestCopyCertificate(t *testing.T) {
@@ -209,10 +208,10 @@ func TestCopyCertificate(t *testing.T) {
 
 	_, _, err := watcher.ProcessMTLSCerts(context.Background(), cl, &otherLokiTLS, baseNamespace)
 	assert.NoError(err)
-	clientMock.AssertCalled(t, "Get", mock.Anything, types.NamespacedName{Name: otherLokiCA.Name, Namespace: otherLokiCA.Namespace}, mock.Anything, mock.Anything)
-	clientMock.AssertCalled(t, "Get", mock.Anything, types.NamespacedName{Name: otherLokiCA.Name, Namespace: baseNamespace}, mock.Anything, mock.Anything)
-	clientMock.AssertCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything)
-	clientMock.AssertNotCalled(t, "Update")
+	clientMock.AssertGetCalledWith(t, types.NamespacedName{Name: otherLokiCA.Name, Namespace: otherLokiCA.Namespace})
+	clientMock.AssertGetCalledWith(t, types.NamespacedName{Name: otherLokiCA.Name, Namespace: baseNamespace})
+	clientMock.AssertCreateCalled(t)
+	clientMock.AssertUpdateNotCalled(t)
 }
 
 func TestUpdateCertificate(t *testing.T) {
@@ -236,10 +235,10 @@ func TestUpdateCertificate(t *testing.T) {
 
 	_, _, err := watcher.ProcessMTLSCerts(context.Background(), cl, &otherLokiTLS, baseNamespace)
 	assert.NoError(err)
-	clientMock.AssertCalled(t, "Get", mock.Anything, types.NamespacedName{Name: otherLokiCA.Name, Namespace: otherLokiCA.Namespace}, mock.Anything, mock.Anything)
-	clientMock.AssertCalled(t, "Get", mock.Anything, types.NamespacedName{Name: otherLokiCA.Name, Namespace: baseNamespace}, mock.Anything, mock.Anything)
-	clientMock.AssertNotCalled(t, "Create")
-	clientMock.AssertCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything)
+	clientMock.AssertGetCalledWith(t, types.NamespacedName{Name: otherLokiCA.Name, Namespace: otherLokiCA.Namespace})
+	clientMock.AssertGetCalledWith(t, types.NamespacedName{Name: otherLokiCA.Name, Namespace: baseNamespace})
+	clientMock.AssertCreateNotCalled(t)
+	clientMock.AssertUpdateCalled(t)
 }
 
 func TestNoUpdateCertificate(t *testing.T) {
@@ -262,8 +261,8 @@ func TestNoUpdateCertificate(t *testing.T) {
 
 	_, _, err := watcher.ProcessMTLSCerts(context.Background(), cl, &otherLokiTLS, baseNamespace)
 	assert.NoError(err)
-	clientMock.AssertCalled(t, "Get", mock.Anything, types.NamespacedName{Name: otherLokiCA.Name, Namespace: otherLokiCA.Namespace}, mock.Anything, mock.Anything)
-	clientMock.AssertCalled(t, "Get", mock.Anything, types.NamespacedName{Name: otherLokiCA.Name, Namespace: baseNamespace}, mock.Anything, mock.Anything)
-	clientMock.AssertNotCalled(t, "Create")
-	clientMock.AssertNotCalled(t, "Update")
+	clientMock.AssertGetCalledWith(t, types.NamespacedName{Name: otherLokiCA.Name, Namespace: otherLokiCA.Namespace})
+	clientMock.AssertGetCalledWith(t, types.NamespacedName{Name: otherLokiCA.Name, Namespace: baseNamespace})
+	clientMock.AssertCreateNotCalled(t)
+	clientMock.AssertUpdateNotCalled(t)
 }
