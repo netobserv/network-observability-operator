@@ -8705,7 +8705,7 @@ Defines the desired state of the FlowCollector resource. <br><br> *: the mention
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where NetObserv pods are deployed. If empty, the namespace of the operator is going to be used.<br/>
+          Namespace where NetObserv pods are deployed.<br/>
           <br/>
             <i>Default</i>: netobserv<br/>
         </td>
@@ -8785,7 +8785,7 @@ Agent configuration for flows extraction.
         <td><b>cacheActiveTimeout</b></td>
         <td>string</td>
         <td>
-          `cacheActiveTimeout` is the max period during which the reporter will aggregate flows before sending. Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load, however you can expect higher memory consumption and an increased latency in the flow collection.<br/>
+          `cacheActiveTimeout` is the max period during which the reporter aggregates flows before sending. Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load, however you can expect higher memory consumption and an increased latency in the flow collection.<br/>
           <br/>
             <i>Default</i>: 5s<br/>
         </td>
@@ -8812,7 +8812,7 @@ Agent configuration for flows extraction.
         <td><b>excludeInterfaces</b></td>
         <td>[]string</td>
         <td>
-          `excludeInterfaces` contains the interface names that will be excluded from flow tracing. An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.<br/>
+          `excludeInterfaces` contains the interface names that are excluded from flow tracing. An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.<br/>
           <br/>
             <i>Default</i>: [lo]<br/>
         </td>
@@ -8838,7 +8838,7 @@ Agent configuration for flows extraction.
         <td><b>interfaces</b></td>
         <td>[]string</td>
         <td>
-          `interfaces` contains the interface names from where flows will be collected. If empty, the agent will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.<br/>
+          `interfaces` contains the interface names from where flows are collected. If empty, the agent fetches all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8864,7 +8864,7 @@ Agent configuration for flows extraction.
         <td><b>privileged</b></td>
         <td>boolean</td>
         <td>
-          Privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false: in that case, the operator will set granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container, to enable its correct operation. If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF is in use, then you can turn on this mode for more global privileges.<br/>
+          Privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false: in that case, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container, to enable its correct operation. If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF is in use, then you can turn on this mode for more global privileges.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9008,7 +9008,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>cacheActiveTimeout</b></td>
         <td>string</td>
         <td>
-          `cacheActiveTimeout` is the max period during which the reporter will aggregate flows before sending<br/>
+          `cacheActiveTimeout` is the max period during which the reporter aggregates flows before sending.<br/>
           <br/>
             <i>Default</i>: 20s<br/>
         </td>
@@ -9017,7 +9017,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>cacheMaxFlows</b></td>
         <td>integer</td>
         <td>
-          `cacheMaxFlows` is the max number of flows in an aggregate; when reached, the reporter sends the flows<br/>
+          `cacheMaxFlows` is the max number of flows in an aggregate; when reached, the reporter sends the flows.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 400<br/>
@@ -9299,7 +9299,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>status</b></td>
         <td>enum</td>
         <td>
-          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `DISABLED` will not deploy an horizontal pod autoscaler.<br> - `ENABLED` will deploy an horizontal pod autoscaler.<br><br/>
+          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `DISABLED` does not deploy an horizontal pod autoscaler.<br> - `ENABLED` deploys an horizontal pod autoscaler.<br><br/>
           <br/>
             <i>Enum</i>: DISABLED, ENABLED<br/>
             <i>Default</i>: DISABLED<br/>
@@ -10236,7 +10236,7 @@ target specifies the target value for the given metric
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the filter, that will be displayed in Console<br/>
+          Name of the filter, that is displayed in the Console<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -10437,7 +10437,7 @@ Kafka configuration, such as the address and topic, to send enriched flows to.
         <td><b>topic</b></td>
         <td>string</td>
         <td>
-          Kafka topic to use. It must exist, NetObserv will not create it.<br/>
+          Kafka topic to use. It must exist, NetObserv does not create it.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -10538,7 +10538,7 @@ Reference to the secret or config map containing the client ID
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -10590,7 +10590,7 @@ Reference to the secret or config map containing the client secret
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -10701,7 +10701,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -10760,7 +10760,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -10807,7 +10807,7 @@ Kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b>topic</b></td>
         <td>string</td>
         <td>
-          Kafka topic to use. It must exist, NetObserv will not create it.<br/>
+          Kafka topic to use. It must exist, NetObserv does not create it.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -10908,7 +10908,7 @@ Reference to the secret or config map containing the client ID
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -10960,7 +10960,7 @@ Reference to the secret or config map containing the client secret
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -11071,7 +11071,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -11130,7 +11130,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -11326,7 +11326,7 @@ Loki configuration for MANUAL mode. This is the more flexible configuration. It 
         <td><b>authToken</b></td>
         <td>enum</td>
         <td>
-          `authToken` describes the way to get a token to authenticate to Loki.<br> - `DISABLED` will not send any token with the request.<br> - `FORWARD` will forward the user token for authorization.<br> - `HOST` [deprecated (*)] - will use the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `FORWARD`.<br/>
+          `authToken` describes the way to get a token to authenticate to Loki.<br> - `DISABLED` does not send any token with the request.<br> - `FORWARD` forwards the user token for authorization.<br> - `HOST` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `FORWARD`.<br/>
           <br/>
             <i>Enum</i>: DISABLED, HOST, FORWARD<br/>
             <i>Default</i>: DISABLED<br/>
@@ -11345,7 +11345,7 @@ Loki configuration for MANUAL mode. This is the more flexible configuration. It 
         <td><b>querierUrl</b></td>
         <td>string</td>
         <td>
-          `querierURL` specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester and querier are in the same server). When using the Loki Operator, do not set it, since ingestion and queries use the Loki gateway.<br/>
+          `querierURL` specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value is used (assuming that the Loki ingester and querier are in the same server). When using the Loki Operator, do not set it, since ingestion and queries use the Loki gateway.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11359,7 +11359,7 @@ Loki configuration for MANUAL mode. This is the more flexible configuration. It 
         <td><b>statusUrl</b></td>
         <td>string</td>
         <td>
-          `statusURL` specifies the address of the Loki `/ready`, `/metrics` and `/config` endpoints, in case it is different from the Loki querier URL. If empty, the `querierURL` value will be used. This is useful to show error messages and some context in the frontend. When using the Loki Operator, set it to the Loki HTTP query frontend service, for example https://loki-query-frontend-http.netobserv.svc:3100/. `statusTLS` configuration will be used when `statusUrl` is set.<br/>
+          `statusURL` specifies the address of the Loki `/ready`, `/metrics` and `/config` endpoints, in case it is different from the Loki querier URL. If empty, the `querierURL` value is used. This is useful to show error messages and some context in the frontend. When using the Loki Operator, set it to the Loki HTTP query frontend service, for example https://loki-query-frontend-http.netobserv.svc:3100/. `statusTLS` configuration is used when `statusUrl` is set.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11475,7 +11475,7 @@ TLS client configuration for Loki status URL.
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -11534,7 +11534,7 @@ TLS client configuration for Loki status URL.
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -11645,7 +11645,7 @@ TLS client configuration for Loki URL.
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -11704,7 +11704,7 @@ TLS client configuration for Loki URL.
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -11832,7 +11832,7 @@ TLS client configuration for Loki URL.
         <td><b>kafkaConsumerBatchSize</b></td>
         <td>integer</td>
         <td>
-          `kafkaConsumerBatchSize` indicates to the broker the maximum batch size, in bytes, that the consumer will accept. Ignored when not using Kafka. Default: 10MB.<br/>
+          `kafkaConsumerBatchSize` indicates to the broker the maximum batch size, in bytes, that the consumer accepts. Ignored when not using Kafka. Default: 10MB.<br/>
           <br/>
             <i>Default</i>: 10485760<br/>
         </td>
@@ -11993,7 +11993,7 @@ TLS client configuration for Loki URL.
         <td><b>status</b></td>
         <td>enum</td>
         <td>
-          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `DISABLED` will not deploy an horizontal pod autoscaler.<br> - `ENABLED` will deploy an horizontal pod autoscaler.<br><br/>
+          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `DISABLED` does not deploy an horizontal pod autoscaler.<br> - `ENABLED` deploys an horizontal pod autoscaler.<br><br/>
           <br/>
             <i>Enum</i>: DISABLED, ENABLED<br/>
             <i>Default</i>: DISABLED<br/>
@@ -12969,7 +12969,7 @@ TLS configuration.
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          insecureSkipVerify allows skipping client-side verification of the provided certificate If set to true, ProvidedCaFile field will be ignored<br/>
+          insecureSkipVerify allows skipping client-side verification of the provided certificate. If set to true, the `providedCaFile` field is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -12985,7 +12985,7 @@ TLS configuration.
         <td><b><a href="#flowcollectorspecprocessormetricsservertlsprovidedcafile-1">providedCaFile</a></b></td>
         <td>object</td>
         <td>
-          Reference to the CA file will be ignored<br/>
+          Reference to the CA file when `type` is set to `PROVIDED`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -13043,7 +13043,7 @@ TLS configuration when `type` is set to `PROVIDED`.
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -13066,7 +13066,7 @@ TLS configuration when `type` is set to `PROVIDED`.
 
 
 
-Reference to the CA file will be ignored
+Reference to the CA file when `type` is set to `PROVIDED`.
 
 <table>
     <thead>
@@ -13095,7 +13095,7 @@ Reference to the CA file will be ignored
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.<br/>
+          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>

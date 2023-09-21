@@ -47,7 +47,6 @@ type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	// Namespace where NetObserv pods are deployed.
-	// If empty, the namespace of the operator is going to be used.
 	// +kubebuilder:default:=netobserv
 	Namespace string `json:"namespace,omitempty"`
 
@@ -117,12 +116,12 @@ type FlowCollectorIPFIX struct {
 
 	//+kubebuilder:validation:Pattern:=^\d+(ns|ms|s|m)?$
 	//+kubebuilder:default:="20s"
-	// `cacheActiveTimeout` is the max period during which the reporter will aggregate flows before sending
+	// `cacheActiveTimeout` is the max period during which the reporter aggregates flows before sending.
 	CacheActiveTimeout string `json:"cacheActiveTimeout,omitempty" mapstructure:"cacheActiveTimeout,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=400
-	// `cacheMaxFlows` is the max number of flows in an aggregate; when reached, the reporter sends the flows
+	// `cacheMaxFlows` is the max number of flows in an aggregate; when reached, the reporter sends the flows.
 	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty" mapstructure:"cacheMaxFlows,omitempty"`
 
 	//+kubebuilder:validation:Minimum=2
@@ -181,7 +180,7 @@ type FlowCollectorEBPF struct {
 	//+optional
 	Sampling *int32 `json:"sampling,omitempty"`
 
-	// `cacheActiveTimeout` is the max period during which the reporter will aggregate flows before sending.
+	// `cacheActiveTimeout` is the max period during which the reporter aggregates flows before sending.
 	// Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load,
 	// however you can expect higher memory consumption and an increased latency in the flow collection.
 	//+kubebuilder:validation:Pattern:=^\d+(ns|ms|s|m)?$
@@ -195,14 +194,14 @@ type FlowCollectorEBPF struct {
 	//+kubebuilder:default:=100000
 	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty"`
 
-	// `interfaces` contains the interface names from where flows will be collected. If empty, the agent
-	// will fetch all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
+	// `interfaces` contains the interface names from where flows are collected. If empty, the agent
+	// fetches all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
 	// An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 	// Otherwise it is matched as a case-sensitive string.
 	//+optional
 	Interfaces []string `json:"interfaces"`
 
-	// `excludeInterfaces` contains the interface names that will be excluded from flow tracing.
+	// `excludeInterfaces` contains the interface names that are excluded from flow tracing.
 	// An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 	// Otherwise it is matched as a case-sensitive string.
 	//+kubebuilder:default=lo;
@@ -215,7 +214,7 @@ type FlowCollectorEBPF struct {
 	LogLevel string `json:"logLevel,omitempty"`
 
 	// Privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false:
-	// in that case, the operator will set granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE)
+	// in that case, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE)
 	// to the container, to enable its correct operation.
 	// If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF
 	// is in use, then you can turn on this mode for more global privileges.
@@ -254,7 +253,7 @@ type FlowCollectorKafka struct {
 	Address string `json:"address"`
 
 	//+kubebuilder:default:=""
-	// Kafka topic to use. It must exist, NetObserv will not create it.
+	// Kafka topic to use. It must exist, NetObserv does not create it.
 	Topic string `json:"topic"`
 
 	// TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
@@ -307,11 +306,11 @@ type ServerTLS struct {
 	Provided *CertificateReference `json:"provided"`
 
 	//+kubebuilder:default:=false
-	// insecureSkipVerify allows skipping client-side verification of the provided certificate
-	// If set to true, ProvidedCaFile field will be ignored
+	// insecureSkipVerify allows skipping client-side verification of the provided certificate.
+	// If set to true, the `providedCaFile` field is ignored.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
-	// Reference to the CA file will be ignored
+	// Reference to the CA file when `type` is set to `PROVIDED`.
 	// +optional
 	ProvidedCaFile *FileReference `json:"providedCaFile,omitempty"`
 }
@@ -439,7 +438,7 @@ type FlowCollectorFLP struct {
 
 	//+kubebuilder:default:=10485760
 	// +optional
-	// `kafkaConsumerBatchSize` indicates to the broker the maximum batch size, in bytes, that the consumer will accept. Ignored when not using Kafka. Default: 10MB.
+	// `kafkaConsumerBatchSize` indicates to the broker the maximum batch size, in bytes, that the consumer accepts. Ignored when not using Kafka. Default: 10MB.
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
 
 	// `logTypes` defines the desired record types to generate. Possible values are:<br>
@@ -489,8 +488,8 @@ type FlowCollectorHPA struct {
 	// +kubebuilder:validation:Enum:=DISABLED;ENABLED
 	// +kubebuilder:default:=DISABLED
 	// `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br>
-	// - `DISABLED` will not deploy an horizontal pod autoscaler.<br>
-	// - `ENABLED` will deploy an horizontal pod autoscaler.<br>
+	// - `DISABLED` does not deploy an horizontal pod autoscaler.<br>
+	// - `ENABLED` deploys an horizontal pod autoscaler.<br>
 	Status string `json:"status,omitempty"`
 
 	// `minReplicas` is the lower limit for the number of replicas to which the autoscaler
@@ -527,18 +526,18 @@ type LokiManualParams struct {
 
 	//+kubebuilder:validation:optional
 	// `querierURL` specifies the address of the Loki querier service, in case it is different from the
-	// Loki ingester URL. If empty, the URL value will be used (assuming that the Loki ingester
+	// Loki ingester URL. If empty, the URL value is used (assuming that the Loki ingester
 	// and querier are in the same server). When using the Loki Operator, do not set it, since
 	// ingestion and queries use the Loki gateway.
 	QuerierURL string `json:"querierUrl,omitempty"`
 
 	//+kubebuilder:validation:optional
 	// `statusURL` specifies the address of the Loki `/ready`, `/metrics` and `/config` endpoints, in case it is different from the
-	// Loki querier URL. If empty, the `querierURL` value will be used.
+	// Loki querier URL. If empty, the `querierURL` value is used.
 	// This is useful to show error messages and some context in the frontend.
 	// When using the Loki Operator, set it to the Loki HTTP query frontend service, for example
 	// https://loki-query-frontend-http.netobserv.svc:3100/.
-	// `statusTLS` configuration will be used when `statusUrl` is set.
+	// `statusTLS` configuration is used when `statusUrl` is set.
 	StatusURL string `json:"statusUrl,omitempty"`
 
 	//+kubebuilder:default:="netobserv"
@@ -549,9 +548,9 @@ type LokiManualParams struct {
 	// +kubebuilder:validation:Enum:="DISABLED";"HOST";"FORWARD"
 	//+kubebuilder:default:="DISABLED"
 	// `authToken` describes the way to get a token to authenticate to Loki.<br>
-	// - `DISABLED` will not send any token with the request.<br>
-	// - `FORWARD` will forward the user token for authorization.<br>
-	// - `HOST` [deprecated (*)] - will use the local pod service account to authenticate to Loki.<br>
+	// - `DISABLED` does not send any token with the request.<br>
+	// - `FORWARD` forwards the user token for authorization.<br>
+	// - `HOST` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br>
 	// When using the Loki Operator, this must be set to `FORWARD`.
 	AuthToken string `json:"authToken,omitempty"`
 
@@ -700,7 +699,7 @@ type ConsolePluginPortConfig struct {
 
 // `QuickFilter` defines preset configuration for Console's quick filters
 type QuickFilter struct {
-	// Name of the filter, that will be displayed in Console
+	// Name of the filter, that is displayed in the Console
 	// +kubebuilder:MinLength:=1
 	Name string `json:"name"`
 	// `filter` is a set of keys and values to be set when this filter is selected. Each key can relate to a list of values using a coma-separated string,
@@ -753,8 +752,8 @@ type FileReference struct {
 	// Name of the config map or secret containing the file
 	Name string `json:"name,omitempty"`
 
-	// Namespace of the config map or secret containing the file. If omitted, assumes same namespace as where NetObserv is deployed.
-	// If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+	// Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+	// If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
 	// +optional
 	//+kubebuilder:default:=""
 	Namespace string `json:"namespace,omitempty"`
@@ -771,8 +770,8 @@ type CertificateReference struct {
 	// Name of the config map or secret containing certificates
 	Name string `json:"name,omitempty"`
 
-	// Namespace of the config map or secret containing certificates. If omitted, assumes the same namespace as where NetObserv is deployed.
-	// If the namespace is different, the config map or the secret will be copied so that it can be mounted as required.
+	// Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+	// If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
 	// +optional
 	//+kubebuilder:default:=""
 	Namespace string `json:"namespace,omitempty"`
