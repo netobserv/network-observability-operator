@@ -106,10 +106,10 @@ bundle for local testing, you should execute the following commands:
 
 ```bash
 export USER=<container-registry-username>
-export IMAGE=quay.io/$USER/network-observability-operator:v0.0.1
-export BUNDLE_IMAGE=quay.io/$USER/network-observability-operator-bundle:v0.0.1
-make image-build image-push
-make bundle-push
+export IMAGE=quay.io/$USER/network-observability-operator:test
+export BUNDLE_IMAGE=quay.io/$USER/network-observability-operator-bundle:v0.0.0-test
+make images
+make bundle bundle-build bundle-push
 ```
 
 Optionally, you might validate the bundle:
@@ -134,6 +134,26 @@ To cleanup:
 
 ```bash
 bin/operator-sdk cleanup netobserv-operator
+```
+
+#### Testing an upgrade
+
+First, deploy the previous version, e.g:
+
+```bash
+bin/operator-sdk  run bundle quay.io/netobserv/network-observability-operator-bundle:v1.0.3 --timeout 5m
+```
+
+Then, build your new bundle, e.g:
+
+```bash
+VERSION=test BUNDLE_VERSION=0.0.0-test make images bundle bundle-build bundle-push
+```
+
+Finally, run the upgrade:
+
+```bash
+bin/operator-sdk run bundle-upgrade quay.io/$USER/network-observability-operator-bundle:v0.0.0-test --timeout 5m
 ```
 
 ### Deploy as bundle from the Console's OperatorHub page
