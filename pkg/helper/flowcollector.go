@@ -1,8 +1,11 @@
 package helper
 
 import (
+	"strings"
+
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func GetSampling(spec *flowslatest.FlowCollectorSpec) int {
@@ -145,4 +148,9 @@ func PtrInt32(i *int32) int32 {
 		return 0
 	}
 	return *i
+}
+
+func IsOwned(obj client.Object) bool {
+	refs := obj.GetOwnerReferences()
+	return len(refs) > 0 && strings.HasPrefix(refs[0].APIVersion, flowslatest.GroupVersion.Group)
 }

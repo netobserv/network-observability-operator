@@ -3,7 +3,6 @@ package permissions
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -210,7 +209,7 @@ func (c *Reconciler) cleanupPreviousNamespace(ctx context.Context) error {
 		return fmt.Errorf("can't retrieve previous namespace: %w", err)
 	}
 	// Make sure we own that namespace
-	if len(previous.OwnerReferences) > 0 && strings.HasPrefix(previous.OwnerReferences[0].APIVersion, flowslatest.GroupVersion.Group) {
+	if helper.IsOwned(previous) {
 		rlog.Info("Owning previous privileged namespace: deleting it")
 		if err := c.Delete(ctx, previous); err != nil {
 			if errors.IsNotFound(err) {
