@@ -21,6 +21,7 @@ import (
 
 	"github.com/netobserv/network-observability-operator/api/v1beta2"
 	utilconversion "github.com/netobserv/network-observability-operator/pkg/conversion"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -57,7 +58,26 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
 	}
 
-	dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
+	// restore loki configuration from metadata
+	if len(dst.Spec.Loki.Mode) > 0 {
+		dst.Spec.Loki.Mode = restored.Spec.Loki.Mode
+		dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
+		dst.Spec.Loki.LokiStack = restored.Spec.Loki.LokiStack
+	} else {
+		// fallback on previous Manual mode
+		dst.Spec.Loki.Mode = v1beta2.LokiModeManual
+		dst.Spec.Loki.Manual.IngesterURL = r.Spec.Loki.URL
+		dst.Spec.Loki.Manual.QuerierURL = r.Spec.Loki.QuerierURL
+		dst.Spec.Loki.Manual.StatusURL = r.Spec.Loki.StatusURL
+		dst.Spec.Loki.Manual.TenantID = r.Spec.Loki.TenantID
+		dst.Spec.Loki.Manual.AuthToken = r.Spec.Loki.AuthToken
+		if err := Convert_v1beta1_ClientTLS_To_v1beta2_ClientTLS(&r.Spec.Loki.TLS, &dst.Spec.Loki.Manual.TLS, nil); err != nil {
+			return fmt.Errorf("copying v1beta1.Loki.TLS into v1beta2.Loki.Manual.TLS: %w", err)
+		}
+		if err := Convert_v1beta1_ClientTLS_To_v1beta2_ClientTLS(&r.Spec.Loki.StatusTLS, &dst.Spec.Loki.Manual.StatusTLS, nil); err != nil {
+			return fmt.Errorf("copying v1beta1.Loki.StatusTLS into v1beta2.Loki.Manual.StatusTLS: %w", err)
+		}
+	}
 
 	return nil
 }
@@ -71,6 +91,23 @@ func (r *FlowCollector) ConvertFrom(srcRaw conversion.Hub) error {
 	}
 	r.Status.Conditions = make([]v1.Condition, len(src.Status.Conditions))
 	copy(r.Status.Conditions, src.Status.Conditions)
+
+	r.Spec.Loki.URL = helper.LokiIngesterURL(&src.Spec.Loki)
+	r.Spec.Loki.QuerierURL = helper.LokiQuerierURL(&src.Spec.Loki)
+	r.Spec.Loki.StatusURL = helper.LokiStatusURL(&src.Spec.Loki)
+	r.Spec.Loki.TenantID = helper.LokiTenantID(&src.Spec.Loki)
+	switch src.Spec.Loki.Mode {
+	case v1beta2.LokiModeManual:
+		r.Spec.Loki.AuthToken = src.Spec.Loki.Manual.AuthToken
+	case v1beta2.LokiModeLokiStack:
+		r.Spec.Loki.AuthToken = v1beta2.LokiAuthForwardUserToken
+	}
+	if err := Convert_v1beta2_ClientTLS_To_v1beta1_ClientTLS(helper.LokiTLS(&src.Spec.Loki), &r.Spec.Loki.TLS, nil); err != nil {
+		return fmt.Errorf("copying v1beta2.LokiTLS into v1beta1.LokiTLS: %w", err)
+	}
+	if err := Convert_v1beta2_ClientTLS_To_v1beta1_ClientTLS(helper.LokiStatusTLS(&src.Spec.Loki), &r.Spec.Loki.StatusTLS, nil); err != nil {
+		return fmt.Errorf("copying v1beta2.LokiStatusTLS into v1beta1.LokiStatusTLS: %w", err)
+	}
 
 	// Preserve Hub data on down-conversion except for metadata
 	return utilconversion.MarshalData(src, r)
