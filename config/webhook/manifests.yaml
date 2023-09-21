@@ -12,14 +12,14 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-netobserv-io-v1beta1-flowcollector
+      path: /validate-netobserv-io-v1beta2-flowcollector
   failurePolicy: Fail
   name: flowcollectorconversionwebhook.netobserv.io
   rules:
   - apiGroups:
     - netobserv.io
     apiVersions:
-    - v1beta1
+    - v1beta2
     operations:
     - CREATE
     - UPDATE

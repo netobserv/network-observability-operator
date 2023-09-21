@@ -17,6 +17,7 @@ spec:
       conversionReviewVersions:
       - v1alpha1
       - v1beta1
+      - v1beta2
   group: flows.netobserv.io
   names:
     kind: FlowCollector
