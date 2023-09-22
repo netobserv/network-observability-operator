@@ -195,13 +195,13 @@ type FlowCollectorEBPF struct {
 
 	// `interfaces` contains the interface names from where flows are collected. If empty, the agent
 	// fetches all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
-	// An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression.
+	// An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 	// Otherwise it is matched as a case-sensitive string.
 	//+optional
 	Interfaces []string `json:"interfaces"`
 
 	// `excludeInterfaces` contains the interface names that are excluded from flow tracing.
-	// An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression.
+	// An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 	// Otherwise it is matched as a case-sensitive string.
 	//+kubebuilder:default=lo;
 	//+optional
@@ -227,11 +227,11 @@ type FlowCollectorEBPF struct {
 
 	// `debug` allows setting some aspects of the internal configuration of the eBPF agent.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
-	// such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.
+	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
 
-	// List of additional features to enable. They are all disabled by default. Enabling additional features may have performance impacts. Possible values are:<br>
+	// List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
 	// - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
 	// If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br>
@@ -252,7 +252,7 @@ type FlowCollectorKafka struct {
 	Address string `json:"address"`
 
 	//+kubebuilder:default:=""
-	// Kafka topic to use. It must exist, NetObserv does not create it.
+	// Kafka topic to use. It must exist. NetObserv does not create it.
 	Topic string `json:"topic"`
 
 	// TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
@@ -305,7 +305,7 @@ type ServerTLS struct {
 	Provided *CertificateReference `json:"provided"`
 
 	//+kubebuilder:default:=false
-	// insecureSkipVerify allows skipping client-side verification of the provided certificate.
+	// `insecureSkipVerify` allows skipping client-side verification of the provided certificate.
 	// If set to true, the `providedCaFile` field is ignored.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
@@ -473,7 +473,7 @@ type FlowCollectorFLP struct {
 
 	// `debug` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
-	// such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.
+	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
 }
@@ -603,8 +603,8 @@ type FlowCollectorConsolePlugin struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=true
-	// enable the console plugin deployment.
-	// spec.Loki.enable must also be true
+	// Enables the console plugin deployment.
+	// `spec.Loki.enable` must also be true
 	Enable *bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:=true
@@ -798,7 +798,7 @@ type SASLConfig struct {
 // They are aimed exclusively for debugging. Users setting these values do it at their own risk.
 type DebugConfig struct {
 	// `env` allows passing custom environment variables to underlying components. Useful for passing
-	// some very concrete performance-tuning options, such as GOGC and GOMAXPROCS, that should not be
+	// some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be
 	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
 	// in edge debug or support scenarios.
 	//+optional
