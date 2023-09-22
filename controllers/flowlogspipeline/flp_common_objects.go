@@ -489,6 +489,20 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 		})
 	}
 
+	if helper.IsTCPRetransEnabled(&b.desired.Agent.EBPF) {
+		outputFields = append(outputFields, []api.OutputField{
+			{
+				Name:      "TcpRetrans",
+				Operation: "sum",
+			},
+			{
+				Name:      "TcpRetrans",
+				Operation: "sum",
+				SplitAB:   true,
+			},
+		}...)
+	}
+
 	// Connection tracking stage (only if LogTypes is not FLOWS)
 	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)

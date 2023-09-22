@@ -17,6 +17,7 @@ spec:
       # - "PacketDrop"
       # - "DNSTracking"
       # - "FlowRTT"
+      # - "TCPRetrans"
       interfaces: [ ]
       excludeInterfaces: [ "lo" ]
       logLevel: info

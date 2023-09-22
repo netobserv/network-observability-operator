@@ -357,7 +357,9 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 		if helper.IsDNSTrackingEnabled(&b.desired.Agent.EBPF) {
 			features = append(features, "dnsTracking")
 		}
-
+		if helper.IsTCPRetransEnabled(&b.desired.Agent.EBPF) {
+			features = append(features, "tcpRetrans")
+		}
 		if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
 			features = append(features, "flowRTT")
 		}

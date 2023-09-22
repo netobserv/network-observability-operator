@@ -136,6 +136,13 @@ func IsFlowRTTEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 	return IsFeatureEnabled(spec, flowslatest.FlowRTT)
 }
 
+func IsTCPRetransEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+	if IsPrivileged(spec) && IsFeatureEnabled(spec, flowslatest.TCPRetrans) {
+		return true
+	}
+	return false
+}
+
 func PtrBool(b *bool) bool {
 	if b == nil {
 		return false

@@ -58,6 +58,7 @@ const (
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
 	envEnableFlowRTT              = "ENABLE_RTT"
 	envListSeparator              = ","
+	envEnableTCPRetrans           = "ENABLE_TCP_RETRANS"
 )
 
 const (
@@ -206,7 +207,9 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
 
-	if helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketDrop) || helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.DNSTracking) {
+	if helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketDrop) ||
+		helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.DNSTracking) ||
+		helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.TCPRetrans) {
 		if !coll.Spec.Agent.EBPF.Privileged {
 			rlog.Error(fmt.Errorf("invalid configuration"), "To use PacketsDrop and/or DNSTracking feature(s) privileged mode needs to be enabled")
 		} else {
@@ -457,6 +460,13 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	if helper.IsDNSTrackingEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableDNSTracking,
+			Value: "true",
+		})
+	}
+
+	if helper.IsTCPRetransEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableTCPRetrans,
 			Value: "true",
 		})
 	}
