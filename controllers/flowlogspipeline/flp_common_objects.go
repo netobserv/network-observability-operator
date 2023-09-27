@@ -540,7 +540,6 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 				SwapAB:              true,
 			},
 		})
-
 	}
 	return indexFields, lastStage
 }
