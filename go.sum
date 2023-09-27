@@ -477,8 +477,8 @@ github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRW
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f h1:KUppIJq7/+SVif2QVs3tOP0zanoHgBEVAwHxUSIzRqU=
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f/go.mod h1:ZdcZmHo+o7JKHSa8/e818NopupXU1YMK5fe1lsApnBw=
-github.com/netobserv/flowlogs-pipeline v0.1.10-rc1 h1:97J8LYTKvbXPBnjufH4AoQ2aSipEnLDXI1XxLbWFRq0=
-github.com/netobserv/flowlogs-pipeline v0.1.10-rc1/go.mod h1:ydmRhTeipXhtUWz2EOCGPIHIkYr8tyrfo7PavpKq/FI=
+github.com/netobserv/flowlogs-pipeline v0.1.10 h1:y4RQbreYlMClG6s7/rberI70gELwWexJneOE12AaBs0=
+github.com/netobserv/flowlogs-pipeline v0.1.10/go.mod h1:Ez/fKBEMJc8uHSHN1u4hu6p1Y9Crdq2741FgvQcH7Hs=
 github.com/netobserv/loki-client-go v0.0.0-20220927092034-f37122a54500 h1:RmnoJe/ci5q+QdM7upFdxiU+D8F3L3qTd5wXCwwHefw=
 github.com/netobserv/prometheus-common v0.44.0-netobserv h1:1DEcYfG8UQcDRjHax+MBJGpwbnsQNB+fiiMh54mW4yU=
 github.com/netobserv/prometheus-common v0.44.0-netobserv/go.mod h1:ofAIvZbQ1e/nugmZGz4/qCb9Ap1VoSTIO7x0VV9VvuY=

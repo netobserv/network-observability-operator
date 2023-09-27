@@ -17,11 +17,18 @@
 
 package config
 
-import "github.com/netobserv/flowlogs-pipeline/pkg/utils"
+import (
+	"syscall"
+
+	"github.com/netobserv/flowlogs-pipeline/pkg/utils"
+)
 
 type GenericMap map[string]interface{}
 
-const duplicateFieldName = "Duplicate"
+const (
+	duplicateFieldName = "Duplicate"
+	protoFieldName     = "Proto"
+)
 
 // Copy will create a flat copy of GenericMap
 func (m GenericMap) Copy() GenericMap {
@@ -38,6 +45,24 @@ func (m GenericMap) IsDuplicate() bool {
 	if duplicate, hasKey := m[duplicateFieldName]; hasKey {
 		if isDuplicate, err := utils.ConvertToBool(duplicate); err == nil {
 			return isDuplicate
+		}
+	}
+	return false
+}
+
+func (m GenericMap) IsValidProtocol() bool {
+	if _, ok := m[protoFieldName]; ok {
+		return true
+	}
+	return false
+}
+
+func (m GenericMap) IsTransportProtocol() bool {
+	if v, ok := m[protoFieldName]; ok {
+		if proto, err := utils.ConvertToFloat64(v); err == nil {
+			if proto == float64(syscall.IPPROTO_TCP) || proto == float64(syscall.IPPROTO_UDP) || proto == float64(syscall.IPPROTO_SCTP) {
+				return true
+			}
 		}
 	}
 	return false

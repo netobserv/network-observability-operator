@@ -39,8 +39,6 @@ func (tn *TransformNetwork) GetServiceFiles() (string, string) {
 }
 
 const (
-	OpAddRegexIf           = "add_regex_if"
-	OpAddIf                = "add_if"
 	OpAddSubnet            = "add_subnet"
 	OpAddLocation          = "add_location"
 	OpAddService           = "add_service"
@@ -50,13 +48,11 @@ const (
 )
 
 type TransformNetworkOperationEnum struct {
-	AddRegExIf           string `yaml:"add_regex_if" json:"add_regex_if" doc:"add output field if input field satisfies regex pattern from parameters field"`
-	AddIf                string `yaml:"add_if" json:"add_if" doc:"add output field if input field satisfies criteria from parameters field"`
 	AddSubnet            string `yaml:"add_subnet" json:"add_subnet" doc:"add output subnet field from input field and prefix length from parameters field"`
 	AddLocation          string `yaml:"add_location" json:"add_location" doc:"add output location fields from input"`
 	AddService           string `yaml:"add_service" json:"add_service" doc:"add output network service field from input port and parameters protocol field"`
 	AddKubernetes        string `yaml:"add_kubernetes" json:"add_kubernetes" doc:"add output kubernetes fields from input"`
-	ReinterpretDirection string `yaml:"reinterpret_direction" json:"reinterpret_direction" doc:"reinterpret flow direction at a higher level than the interface"`
+	ReinterpretDirection string `yaml:"reinterpret_direction" json:"reinterpret_direction" doc:"reinterpret flow direction at the node level (instead of net interface), to ease the deduplication process"`
 	AddIPCategory        string `yaml:"add_ip_category" json:"add_ip_category" doc:"categorize IPs based on known subnets configuration"`
 }
 
