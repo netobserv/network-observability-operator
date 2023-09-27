@@ -11,7 +11,7 @@ require (
 	github.com/openshift/api v0.0.0-20220112145620-704957ce4980
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.48.0
 	github.com/prometheus/common v0.44.0
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.25.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.28.2
