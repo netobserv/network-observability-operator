@@ -5711,7 +5711,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).<br/>
+          `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`.<br/>
           <br/>
             <i>Enum</i>: KAFKA, IPFIX<br/>
         </td>
@@ -5720,7 +5720,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b><a href="#flowcollectorspecexportersindexipfix">ipfix</a></b></td>
         <td>object</td>
         <td>
-          IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].<br/>
+          IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5739,7 +5739,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].
+IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
 
 <table>
     <thead>

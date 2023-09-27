@@ -256,7 +256,7 @@ Type::
 
 | `requests`
 | `integer-or-string`
-| Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+| Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 |===
 == .spec.agent.ipfix
@@ -519,7 +519,7 @@ Type::
 
 | `requests`
 | `integer-or-string`
-| Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+| Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 |===
 == .spec.exporters
@@ -556,7 +556,7 @@ Required::
 
 | `ipfix`
 | `object`
-| IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].
+| IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
 
 | `kafka`
 | `object`
@@ -564,14 +564,14 @@ Required::
 
 | `type`
 | `string`
-| `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).
+| `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`.
 
 |===
 == .spec.exporters[].ipfix
 Description::
 +
 --
-IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].
+IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
 --
 
 Type::
@@ -1715,7 +1715,7 @@ Type::
 
 | `requests`
 | `integer-or-string`
-| Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+| Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 |===
 
