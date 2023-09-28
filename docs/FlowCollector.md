@@ -4178,14 +4178,14 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentebpfdebug-1">debug</a></b></td>
         <td>object</td>
         <td>
-          `debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.<br/>
+          `debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>excludeInterfaces</b></td>
         <td>[]string</td>
         <td>
-          `excludeInterfaces` contains the interface names that are excluded from flow tracing. An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.<br/>
+          `excludeInterfaces` contains the interface names that are excluded from flow tracing. An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.<br/>
           <br/>
             <i>Default</i>: [lo]<br/>
         </td>
@@ -4194,7 +4194,7 @@ Agent configuration for flows extraction.
         <td><b>features</b></td>
         <td>[]enum</td>
         <td>
-          List of additional features to enable. They are all disabled by default. Enabling additional features may have performance impacts. Possible values are:<br> - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br> - `DNSTracking`: enable the DNS tracking feature. This feature requires mounting the kernel debug filesystem hence the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br> - `FlowRTT` [unsupported (*)]: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br><br/>
+          List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br> - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br> - `DNSTracking`: enable the DNS tracking feature. This feature requires mounting the kernel debug filesystem hence the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br> - `FlowRTT` [unsupported (*)]: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4211,7 +4211,7 @@ Agent configuration for flows extraction.
         <td><b>interfaces</b></td>
         <td>[]string</td>
         <td>
-          `interfaces` contains the interface names from where flows are collected. If empty, the agent fetches all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.<br/>
+          `interfaces` contains the interface names from where flows are collected. If empty, the agent fetches all the interfaces in the system, excepting the ones listed in ExcludeInterfaces. An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression. Otherwise it is matched as a case-sensitive string.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4237,7 +4237,7 @@ Agent configuration for flows extraction.
         <td><b>privileged</b></td>
         <td>boolean</td>
         <td>
-          Privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false: in that case, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container, to enable its correct operation. If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF is in use, then you can turn on this mode for more global privileges.<br/>
+          Privileged mode for the eBPF Agent container. In general this setting can be ignored or set to `false`: in that case, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container, to enable its correct operation. If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF is in use, then you can turn on this mode for more global privileges.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4269,7 +4269,7 @@ Agent configuration for flows extraction.
 
 
 
-`debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.
+`debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
 
 <table>
     <thead>
@@ -4284,7 +4284,7 @@ Agent configuration for flows extraction.
         <td><b>env</b></td>
         <td>map[string]string</td>
         <td>
-          `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as GOGC and GOMAXPROCS, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
+          `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4408,7 +4408,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>forceSampleAll</b></td>
         <td>boolean</td>
         <td>
-          `forceSampleAll` allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it might generate cluster instability. If you REALLY want to do that, set this flag to true. Use at your own risk. When it is set to true, the value of `sampling` is ignored.<br/>
+          `forceSampleAll` allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it might generate cluster instability. If you REALLY want to do that, set this flag to `true`. Use at your own risk. When it is set to `true`, the value of `sampling` is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -4538,7 +4538,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          enable the console plugin deployment. spec.Loki.enable must also be true<br/>
+          Enables the console plugin deployment. `spec.Loki.enable` must also be `true`<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -4597,7 +4597,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>register</b></td>
         <td>boolean</td>
         <td>
-          `register` allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator. When set to false, you can still register it manually by editing console.operator.openshift.io/cluster with the following command: `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`<br/>
+          `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator. When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command: `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -5810,7 +5810,7 @@ Kafka configuration, such as the address and topic, to send enriched flows to.
         <td><b>topic</b></td>
         <td>string</td>
         <td>
-          Kafka topic to use. It must exist, NetObserv does not create it.<br/>
+          Kafka topic to use. It must exist. NetObserv does not create it.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -6017,7 +6017,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to true, the `caCert` field is ignored.<br/>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to `true`, the `caCert` field is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -6180,7 +6180,7 @@ Kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b>topic</b></td>
         <td>string</td>
         <td>
-          Kafka topic to use. It must exist, NetObserv does not create it.<br/>
+          Kafka topic to use. It must exist. NetObserv does not create it.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -6387,7 +6387,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to true, the `caCert` field is ignored.<br/>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to `true`, the `caCert` field is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -6571,7 +6571,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          enable storing flows to Loki. It is required for the OpenShift Console plugin installation.<br/>
+          Set `enable` to `true` to store flows in Loki. It is required for the OpenShift Console plugin installation.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -6709,7 +6709,7 @@ TLS client configuration for Loki status URL.
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to true, the `caCert` field is ignored.<br/>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to `true`, the `caCert` field is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -6879,7 +6879,7 @@ TLS client configuration for Loki URL.
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to true, the `caCert` field is ignored.<br/>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to `true`, the `caCert` field is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -7069,14 +7069,14 @@ TLS client configuration for Loki URL.
         <td><b><a href="#flowcollectorspecprocessordebug-1">debug</a></b></td>
         <td>object</td>
         <td>
-          `debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.<br/>
+          `debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>dropUnusedFields</b></td>
         <td>boolean</td>
         <td>
-          `dropUnusedFields` allows, when set to true, to drop fields that are known to be unused by OVS, to save storage space.<br/>
+          `dropUnusedFields` allows, when set to `true`, to drop fields that are known to be unused by OVS, to save storage space.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -7216,7 +7216,7 @@ TLS client configuration for Loki URL.
 
 
 
-`debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.
+`debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
 
 <table>
     <thead>
@@ -7231,7 +7231,7 @@ TLS client configuration for Loki URL.
         <td><b>env</b></td>
         <td>map[string]string</td>
         <td>
-          `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as GOGC and GOMAXPROCS, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
+          `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8260,7 +8260,7 @@ TLS configuration.
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
-          insecureSkipVerify allows skipping client-side verification of the provided certificate. If set to true, the `providedCaFile` field is ignored.<br/>
+          `insecureSkipVerify` allows skipping client-side verification of the provided certificate. If set to `true`, the `providedCaFile` field is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>

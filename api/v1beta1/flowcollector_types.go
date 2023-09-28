@@ -134,8 +134,8 @@ type FlowCollectorIPFIX struct {
 	//+kubebuilder:default:=false
 	// `forceSampleAll` allows disabling sampling in the IPFIX-based flow reporter.
 	// It is not recommended to sample all the traffic with IPFIX, as it might generate cluster instability.
-	// If you REALLY want to do that, set this flag to true. Use at your own risk.
-	// When it is set to true, the value of `sampling` is ignored.
+	// If you REALLY want to do that, set this flag to `true`. Use at your own risk.
+	// When it is set to `true`, the value of `sampling` is ignored.
 	ForceSampleAll bool `json:"forceSampleAll,omitempty" mapstructure:"-"`
 
 	// `clusterNetworkOperator` defines the settings related to the OpenShift Cluster Network Operator, when available.
@@ -212,7 +212,7 @@ type FlowCollectorEBPF struct {
 	// `logLevel` defines the log level for the NetObserv eBPF Agent
 	LogLevel string `json:"logLevel,omitempty"`
 
-	// Privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false:
+	// Privileged mode for the eBPF Agent container. In general this setting can be ignored or set to `false`:
 	// in that case, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE)
 	// to the container, to enable its correct operation.
 	// If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF
@@ -306,7 +306,7 @@ type ServerTLS struct {
 
 	//+kubebuilder:default:=false
 	// `insecureSkipVerify` allows skipping client-side verification of the provided certificate.
-	// If set to true, the `providedCaFile` field is ignored.
+	// If set to `true`, the `providedCaFile` field is ignored.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
 	// Reference to the CA file when `type` is set to `PROVIDED`.
@@ -416,7 +416,7 @@ type FlowCollectorFLP struct {
 	EnableKubeProbes *bool `json:"enableKubeProbes,omitempty"`
 
 	//+kubebuilder:default:=true
-	// `dropUnusedFields` allows, when set to true, to drop fields that are known to be unused by OVS, to save storage space.
+	// `dropUnusedFields` allows, when set to `true`, to drop fields that are known to be unused by OVS, to save storage space.
 	DropUnusedFields *bool `json:"dropUnusedFields,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
@@ -518,7 +518,7 @@ const (
 // `FlowCollectorLoki` defines the desired state for FlowCollector's Loki client.
 type FlowCollectorLoki struct {
 	//+kubebuilder:default:=true
-	// enable storing flows to Loki. It is required for the OpenShift Console plugin installation.
+	// Set `enable` to `true` to store flows in Loki. It is required for the OpenShift Console plugin installation.
 	Enable *bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:="http://loki:3100/"
@@ -604,12 +604,12 @@ type FlowCollectorConsolePlugin struct {
 
 	//+kubebuilder:default:=true
 	// Enables the console plugin deployment.
-	// `spec.Loki.enable` must also be true
+	// `spec.Loki.enable` must also be `true`
 	Enable *bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:=true
-	// `register` allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator.
-	// When set to false, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
+	// `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator.
+	// When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
 	// `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`
 	Register *bool `json:"register,omitempty"`
 
@@ -761,7 +761,7 @@ type ClientTLS struct {
 
 	//+kubebuilder:default:=false
 	// `insecureSkipVerify` allows skipping client-side verification of the server certificate.
-	// If set to true, the `caCert` field is ignored.
+	// If set to `true`, the `caCert` field is ignored.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
 	// `caCert` defines the reference of the certificate for the Certificate Authority
