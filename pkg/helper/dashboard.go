@@ -17,19 +17,21 @@ type rowInfo struct {
 
 // Queries
 const (
-	layerApps           = "Applications"
-	layerInfra          = "Infrastructure"
-	appsFilters1        = `SrcK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
-	appsFilters2        = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
-	infraFilters1       = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
-	infraFilters2       = `SrcK8S_Namespace!~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
-	metricTagNamespaces = "namespaces"
-	metricTagNodes      = "nodes"
-	metricTagWorkloads  = "workloads"
-	metricTagIngress    = "ingress"
-	metricTagEgress     = "egress"
-	metricTagBytes      = "bytes"
-	metricTagPackets    = "packets"
+	layerApps                = "Applications"
+	layerInfra               = "Infrastructure"
+	appsFilters1             = `SrcK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
+	appsFilters2             = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
+	infraFilters1            = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
+	infraFilters2            = `SrcK8S_Namespace!~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
+	metricTagNamespaces      = "namespaces"
+	metricTagNodes           = "nodes"
+	metricTagWorkloads       = "workloads"
+	metricTagIngress         = "ingress"
+	metricTagEgress          = "egress"
+	metricTagBytes           = "bytes"
+	metricTagPackets         = "packets"
+	metricTagPktsDropBytes   = "drop_bytes"
+	metricTagPktsDropPackets = "drop_packets"
 )
 
 var (
@@ -95,6 +97,13 @@ func init() {
 					valueType: vt,
 				})
 			}
+		}
+		for _, vt := range []string{metricTagPktsDropBytes, metricTagPktsDropPackets} {
+			rowsInfo = append(rowsInfo, rowInfo{
+				metric:    fmt.Sprintf("netobserv_%s_%s_total", groupTrimmed, vt),
+				group:     group,
+				valueType: vt,
+			})
 		}
 	}
 }
@@ -218,6 +227,10 @@ func flowMetricsRow(netobsNs string, rowInfo rowInfo) string {
 		vt = "byte"
 	case metricTagPackets:
 		vt = "packet"
+	case metricTagPktsDropBytes:
+		vt = "drop bytes"
+	case metricTagPktsDropPackets:
+		vt = "drop packets"
 	}
 	title := fmt.Sprintf("Top %s rates %s per source and destination %s", vt, verb, rowInfo.group)
 	var panels string

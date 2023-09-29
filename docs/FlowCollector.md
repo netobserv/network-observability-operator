@@ -8183,9 +8183,9 @@ target specifies the target value for the given metric
         <td><b>ignoreTags</b></td>
         <td>[]string</td>
         <td>
-          `ignoreTags` is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions . Available tags are: `egress`, `ingress`, `flows`, `bytes`, `packets`, `namespaces`, `nodes`, `workloads`, `nodes-flows`, `namespaces-flows`, `workloads-flows`. Namespace-based metrics are covered by both `workloads` and `namespaces` tags, hence it is recommended to always ignore one of them (`workloads` offering a finer granularity).<br/>
+          `ignoreTags` is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions . Available tags are: `egress`, `ingress`, `flows`, `bytes`, `packets`, `namespaces`, `nodes`, `workloads`, `nodes-flows`, `namespaces-flows`, `workloads-flows`, `drop-bytes`, `drop-packets`. Namespace-based metrics are covered by both `workloads` and `namespaces` tags, hence it is recommended to always ignore one of them (`workloads` offering a finer granularity).<br/>
           <br/>
-            <i>Default</i>: [egress packets nodes-flows namespaces-flows workloads-flows namespaces]<br/>
+            <i>Default</i>: [egress packets nodes-flows namespaces-flows workloads-flows namespaces drop-bytes drop-packets]<br/>
         </td>
         <td>false</td>
       </tr><tr>

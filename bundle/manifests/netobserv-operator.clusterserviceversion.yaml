@@ -331,7 +331,9 @@ metadata:
                   "nodes-flows",
                   "namespaces-flows",
                   "workloads-flows",
-                  "namespaces"
+                  "namespaces",
+                  "drop-bytes",
+                  "drop-packets"
                 ],
                 "server": {
                   "port": 9102

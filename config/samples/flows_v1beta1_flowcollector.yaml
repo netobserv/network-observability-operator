@@ -44,6 +44,8 @@ spec:
         # Ignoring eihter "namespaces" or "workloads", as namespaces metrics are included in workload metrics
         # This helps reduce total cardinality
         - namespaces
+        - drop-bytes
+        - drop-packets
       disableAlerts: []
     dropUnusedFields: true
     resources:

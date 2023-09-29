@@ -32,8 +32,7 @@ func TestCreateFlowMetricsDashboard_All(t *testing.T) {
 	assert.NoError(err)
 
 	assert.Equal("NetObserv", d.Title)
-	assert.Len(d.Rows, 12)
-
+	assert.Len(d.Rows, 18)
 	// First row
 	row := 0
 	assert.Equal("Top byte rates sent per source and destination nodes", d.Rows[row].Title)
@@ -42,8 +41,8 @@ func TestCreateFlowMetricsDashboard_All(t *testing.T) {
 	assert.Len(d.Rows[row].Panels[0].Targets, 1)
 	assert.Contains(d.Rows[row].Panels[0].Targets[0].Expr, "label_replace(label_replace(topk(10,sum(rate(netobserv_node_egress_bytes_total[1m])) by (SrcK8S_HostName, DstK8S_HostName))")
 
-	// 6th row
-	row = 5
+	// 8th row
+	row = 7
 	assert.Equal("Top byte rates received per source and destination namespaces", d.Rows[row].Title)
 	assert.Len(d.Rows[row].Panels, 2)
 	assert.Equal("Applications", d.Rows[row].Panels[0].Title)
@@ -56,8 +55,8 @@ func TestCreateFlowMetricsDashboard_All(t *testing.T) {
 		`label_replace(label_replace(topk(10,sum(rate(netobserv_namespace_ingress_bytes_total{SrcK8S_Namespace=~"netobserv|openshift.*"}[1m]) or rate(netobserv_namespace_ingress_bytes_total{SrcK8S_Namespace!~"netobserv|openshift.*",DstK8S_Namespace=~"netobserv|openshift.*"}[1m])) by (SrcK8S_Namespace, DstK8S_Namespace))`,
 	)
 
-	// 12th row
-	row = 11
+	// 16th row
+	row = 15
 	assert.Equal("Top packet rates received per source and destination workloads", d.Rows[row].Title)
 	assert.Len(d.Rows[row].Panels, 2)
 	assert.Equal("Applications", d.Rows[row].Panels[0].Title)
@@ -74,7 +73,13 @@ func TestCreateFlowMetricsDashboard_All(t *testing.T) {
 func TestCreateFlowMetricsDashboard_OnlyNodeIngressBytes(t *testing.T) {
 	assert := assert.New(t)
 
-	js, err := CreateFlowMetricsDashboard("netobserv", []string{metricTagNamespaces, metricTagWorkloads, metricTagEgress, metricTagPackets})
+	js, err := CreateFlowMetricsDashboard("netobserv", []string{
+		metricTagNamespaces,
+		metricTagWorkloads,
+		metricTagEgress,
+		metricTagPackets,
+		metricTagPktsDropBytes,
+		metricTagPktsDropPackets})
 	assert.NoError(err)
 
 	var d dashboard
@@ -102,6 +107,8 @@ func TestCreateFlowMetricsDashboard_RemoveByMetricName(t *testing.T) {
 		"netobserv_node_egress_packets_total",
 		"netobserv_node_ingress_packets_total",
 		"netobserv_node_egress_bytes_total",
+		metricTagPktsDropBytes,
+		metricTagPktsDropPackets,
 	})
 	assert.NoError(err)
 
@@ -124,7 +131,7 @@ func TestCreateFlowMetricsDashboard_RemoveByMetricName(t *testing.T) {
 func TestCreateFlowMetricsDashboard_DefaultIgnoreTags(t *testing.T) {
 	assert := assert.New(t)
 
-	js, err := CreateFlowMetricsDashboard("netobserv", []string{"egress", "packets", "namespaces"})
+	js, err := CreateFlowMetricsDashboard("netobserv", []string{"egress", "packets", "namespaces", metricTagPktsDropBytes, metricTagPktsDropPackets})
 	assert.NoError(err)
 
 	var d dashboard

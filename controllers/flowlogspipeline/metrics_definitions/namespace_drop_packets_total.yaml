@@ -1,0 +1,25 @@
+#flp_confgen
+description:
+  This metric observes drop packets
+details:
+  Sum Packets for dropped traffic
+usage:
+  Evaluate packets drop breakdown per source and destination namespaces
+tags:
+  - drop-packets
+  - namespaces
+encode:
+  type: prom
+  prom:
+    metrics:
+      - name: namespace_drop_packets_total
+        type: counter
+        valuekey: PktDropPackets
+        filters:
+        - key: Duplicate
+          value: "false"
+        - key: PktDropPackets
+          value: "!nil"
+        labels:
+          - SrcK8S_Namespace
+          - DstK8S_Namespace
