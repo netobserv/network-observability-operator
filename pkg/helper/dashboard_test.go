@@ -78,8 +78,8 @@ func TestCreateFlowMetricsDashboard_OnlyNodeIngressBytes(t *testing.T) {
 		metricTagWorkloads,
 		metricTagEgress,
 		metricTagPackets,
-		metricTagPktsDropBytes,
-		metricTagPktsDropPackets})
+		metricTagDropBytes,
+		metricTagDropPackets})
 	assert.NoError(err)
 
 	var d dashboard
@@ -107,8 +107,8 @@ func TestCreateFlowMetricsDashboard_RemoveByMetricName(t *testing.T) {
 		"netobserv_node_egress_packets_total",
 		"netobserv_node_ingress_packets_total",
 		"netobserv_node_egress_bytes_total",
-		metricTagPktsDropBytes,
-		metricTagPktsDropPackets,
+		metricTagDropBytes,
+		metricTagDropPackets,
 	})
 	assert.NoError(err)
 
@@ -131,7 +131,7 @@ func TestCreateFlowMetricsDashboard_RemoveByMetricName(t *testing.T) {
 func TestCreateFlowMetricsDashboard_DefaultIgnoreTags(t *testing.T) {
 	assert := assert.New(t)
 
-	js, err := CreateFlowMetricsDashboard("netobserv", []string{"egress", "packets", "namespaces", metricTagPktsDropBytes, metricTagPktsDropPackets})
+	js, err := CreateFlowMetricsDashboard("netobserv", []string{"egress", "packets", "namespaces", metricTagDropBytes, metricTagDropPackets})
 	assert.NoError(err)
 
 	var d dashboard

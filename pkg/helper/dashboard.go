@@ -17,21 +17,21 @@ type rowInfo struct {
 
 // Queries
 const (
-	layerApps                = "Applications"
-	layerInfra               = "Infrastructure"
-	appsFilters1             = `SrcK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
-	appsFilters2             = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
-	infraFilters1            = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
-	infraFilters2            = `SrcK8S_Namespace!~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
-	metricTagNamespaces      = "namespaces"
-	metricTagNodes           = "nodes"
-	metricTagWorkloads       = "workloads"
-	metricTagIngress         = "ingress"
-	metricTagEgress          = "egress"
-	metricTagBytes           = "bytes"
-	metricTagPackets         = "packets"
-	metricTagPktsDropBytes   = "drop_bytes"
-	metricTagPktsDropPackets = "drop_packets"
+	layerApps            = "Applications"
+	layerInfra           = "Infrastructure"
+	appsFilters1         = `SrcK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
+	appsFilters2         = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
+	infraFilters1        = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
+	infraFilters2        = `SrcK8S_Namespace!~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
+	metricTagNamespaces  = "namespaces"
+	metricTagNodes       = "nodes"
+	metricTagWorkloads   = "workloads"
+	metricTagIngress     = "ingress"
+	metricTagEgress      = "egress"
+	metricTagBytes       = "bytes"
+	metricTagPackets     = "packets"
+	metricTagDropBytes   = "drop_bytes"
+	metricTagDropPackets = "drop_packets"
 )
 
 var (
@@ -98,7 +98,7 @@ func init() {
 				})
 			}
 		}
-		for _, vt := range []string{metricTagPktsDropBytes, metricTagPktsDropPackets} {
+		for _, vt := range []string{metricTagDropBytes, metricTagDropPackets} {
 			rowsInfo = append(rowsInfo, rowInfo{
 				metric:    fmt.Sprintf("netobserv_%s_%s_total", groupTrimmed, vt),
 				group:     group,
@@ -227,9 +227,9 @@ func flowMetricsRow(netobsNs string, rowInfo rowInfo) string {
 		vt = "byte"
 	case metricTagPackets:
 		vt = "packet"
-	case metricTagPktsDropBytes:
+	case metricTagDropBytes:
 		vt = "drop bytes"
-	case metricTagPktsDropPackets:
+	case metricTagDropPackets:
 		vt = "drop packets"
 	}
 	title := fmt.Sprintf("Top %s rates %s per source and destination %s", vt, verb, rowInfo.group)
