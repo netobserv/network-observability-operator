@@ -4609,6 +4609,114 @@ spec:
                     description: '`Metrics` define the processor configuration regarding
                       metrics'
                     properties:
+                      definitions:
+                        default:
+                        - filters:
+                            Duplicate: "false"
+                            FlowDirection: "0"
+                          labels:
+                          - SrcK8S_HostName
+                          - DstK8S_HostName
+                          name: node_ingress_bytes_total
+                          type: Counter
+                          valueField: Bytes
+                        - filters:
+                            Duplicate: "false"
+                            FlowDirection: "0"
+                          labels:
+                          - SrcK8S_Namespace
+                          - DstK8S_Namespace
+                          - SrcK8S_OwnerName
+                          - DstK8S_OwnerName
+                          - SrcK8S_OwnerType
+                          - DstK8S_OwnerType
+                          name: workload_ingress_bytes_total
+                          type: Counter
+                          valueField: Bytes
+                        description: '`definitions` is the list of metrics to be generated
+                          from flows and exposed to Prometheus. The provided API allows
+                          you to customize these metrics according to your needs.<br>
+                          When adding new metrics or modifying existing labels, you
+                          must carefully monitor the memory usage of Prometheus workloads
+                          as this could potentially have a high impact. Cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric<br>
+                          To check the cardinality of all NetObserv metrics, run as
+                          `promql`: `count({__name__=~"netobserv.*"}) by (__name__)`.
+                          A few metrics are provided by default:<br> - `netobserv_node_ingress_bytes_total`:
+                          incoming traffic per source and destination nodes, in bytes.<br>
+                          - `netobserv_workload_ingress_bytes_total`: incoming traffic
+                          per source and destination workloads, in bytes.<br>'
+                        items:
+                          description: '`MetricDefinition` provides the API to configure
+                            metrics generation.'
+                          properties:
+                            buckets:
+                              description: A list of buckets to use when `type` is
+                                "Histogram". The list must be parseable as floats.
+                                Prometheus default buckets will be used if unset.
+                              items:
+                                type: string
+                              type: array
+                            filters:
+                              description: '`filters` is a list of fields and values
+                                used to restrict which flows are taken into account.
+                                Oftentimes, these filters must be used to eliminate
+                                duplicates: `Duplicate:"false"` and `FlowDirection:
+                                "0"`. Refer to the documentation for the list of available
+                                fields: https://docs.openshift.com/container-platform/latest/networking/network_observability/json-flows-format-reference.html.'
+                              items:
+                                properties:
+                                  field:
+                                    description: Name of the field to filter on
+                                    type: string
+                                  value:
+                                    description: Value to filter on
+                                    type: string
+                                required:
+                                - field
+                                - value
+                                type: object
+                              type: array
+                            labels:
+                              description: '`labels` is a list of fields that should
+                                be used as Prometheus labels, also known as dimensions.
+                                From choosing labels results the level of granularity
+                                of this metric, as well as the available aggregations
+                                at query time. It must be done carefully as it impacts
+                                the metric cardinality (cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric).
+                                In general, avoid setting very high cardinality labels
+                                such as IP or MAC addresses. "SrcK8S_OwnerName" or
+                                "DstK8S_OwnerName" should be preferred over "SrcK8S_Name"
+                                or "DstK8S_Name" as much as possible. Refer to the
+                                documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/networking/network_observability/json-flows-format-reference.html.'
+                              items:
+                                type: string
+                              type: array
+                            name:
+                              description: Name of the metric in Prometheus. It will
+                                be automatically prefixed with "netobserv_".
+                              type: string
+                            type:
+                              description: 'Metric type: "Counter" or "Histogram".
+                                Use "Counter" for any value that increases over time
+                                and on which you can compute a rate, such as Bytes
+                                or Packets. Use "Histogram" for any value that must
+                                be sampled independently, such as latencies.'
+                              enum:
+                              - Counter
+                              - Histogram
+                              type: string
+                            valueField:
+                              description: '`valueField` is the flow field that must
+                                be used as a value for this metric. This field must
+                                hold numeric values. Leave empty to count flows rather
+                                than a specific value per flow. Refer to the documentation
+                                for the list of available fields: https://docs.openshift.com/container-platform/latest/networking/network_observability/json-flows-format-reference.html.'
+                              type: string
+                          required:
+                          - name
+                          - type
+                          type: object
+                        type: array
                       disableAlerts:
                         description: '`disableAlerts` is a list of alerts that should
                           be disabled. Possible values are:<br> `NetObservNoFlows`,
@@ -4634,15 +4742,18 @@ spec:
                         - namespaces-flows
                         - workloads-flows
                         - namespaces
-                        description: '`ignoreTags` is a list of tags to specify which
-                          metrics to ignore. Each metric is associated with a list
-                          of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions
+                        description: '`ignoreTags` [deprecated (*)] is a list of tags
+                          to specify which metrics to ignore. Each metric is associated
+                          with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions
                           . Available tags are: `egress`, `ingress`, `flows`, `bytes`,
                           `packets`, `namespaces`, `nodes`, `workloads`, `nodes-flows`,
                           `namespaces-flows`, `workloads-flows`. Namespace-based metrics
                           are covered by both `workloads` and `namespaces` tags, hence
                           it is recommended to always ignore one of them (`workloads`
-                          offering a finer granularity).'
+                          offering a finer granularity).<br> Deprecation notice: use
+                          `definitions` instead. It provides a comprehensive API to
+                          customize the metrics generation instead of using hard-coded
+                          metrics.'
                         items:
                           type: string
                         type: array

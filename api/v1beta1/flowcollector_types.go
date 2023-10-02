@@ -346,9 +346,10 @@ type FLPMetrics struct {
 	// +optional
 	Server MetricsServerConfig `json:"server,omitempty"`
 
-	// `ignoreTags` is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions .
+	// `ignoreTags` [deprecated (*)] is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions .
 	// Available tags are: `egress`, `ingress`, `flows`, `bytes`, `packets`, `namespaces`, `nodes`, `workloads`, `nodes-flows`, `namespaces-flows`, `workloads-flows`.
-	// Namespace-based metrics are covered by both `workloads` and `namespaces` tags, hence it is recommended to always ignore one of them (`workloads` offering a finer granularity).
+	// Namespace-based metrics are covered by both `workloads` and `namespaces` tags, hence it is recommended to always ignore one of them (`workloads` offering a finer granularity).<br>
+	// Deprecation notice: use `definitions` instead. It provides a comprehensive API to customize the metrics generation instead of using hard-coded metrics.
 	//+kubebuilder:default:={"egress","packets","nodes-flows","namespaces-flows","workloads-flows","namespaces"}
 	// +optional
 	IgnoreTags []string `json:"ignoreTags"`
@@ -359,6 +360,18 @@ type FLPMetrics struct {
 	// `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br>
 	// +optional
 	DisableAlerts []FLPAlert `json:"disableAlerts"`
+
+	// `definitions` is the list of metrics to be generated from flows and exposed to Prometheus.
+	// The provided API allows you to customize these metrics according to your needs.<br>
+	// When adding new metrics or modifying existing labels, you must carefully monitor the memory
+	// usage of Prometheus workloads as this could potentially have a high impact. Cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric<br>
+	// To check the cardinality of all NetObserv metrics, run as `promql`: `count({__name__=~"netobserv.*"}) by (__name__)`.
+	// A few metrics are provided by default:<br>
+	// - `netobserv_node_ingress_bytes_total`: incoming traffic per source and destination nodes, in bytes.<br>
+	// - `netobserv_workload_ingress_bytes_total`: incoming traffic per source and destination workloads, in bytes.<br>
+	//+kubebuilder:default:={{name:"node_ingress_bytes_total",type:"Counter",valueField:"Bytes",filters:{Duplicate:"false",FlowDirection: "0"},labels:{"SrcK8S_HostName","DstK8S_HostName"}},{name:"workload_ingress_bytes_total",type:"Counter",valueField:"Bytes",filters:{Duplicate:"false",FlowDirection: "0"},labels:{"SrcK8S_Namespace","DstK8S_Namespace","SrcK8S_OwnerName","DstK8S_OwnerName","SrcK8S_OwnerType","DstK8S_OwnerType"}}}
+	// +optional
+	Definitions []MetricDefinition `json:"definitions"`
 }
 
 const (
@@ -828,6 +841,61 @@ type FlowCollectorExporter struct {
 	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
 	// +optional
 	IPFIX FlowCollectorIPFIXReceiver `json:"ipfix,omitempty"`
+}
+
+type MetricType string
+
+const (
+	CounterMetric   MetricType = "Counter"
+	HistogramMetric MetricType = "Histogram"
+	// Note: we don't expose gauge on purpose to avoid configuration mistake related to gauge limitation.
+	// 99% of times, "counter" or "histogram" should be the ones to use.
+)
+
+// `MetricDefinition` provides the API to configure metrics generation.
+type MetricDefinition struct {
+	// Name of the metric in Prometheus. It will be automatically prefixed with "netobserv_".
+	Name string `json:"name"`
+
+	// Metric type: "Counter" or "Histogram".
+	// Use "Counter" for any value that increases over time and on which you can compute a rate, such as Bytes or Packets.
+	// Use "Histogram" for any value that must be sampled independently, such as latencies.
+	// +kubebuilder:validation:Enum:="Counter";"Histogram"
+	Type MetricType `json:"type"`
+
+	// `valueField` is the flow field that must be used as a value for this metric. This field must hold numeric values.
+	// Leave empty to count flows rather than a specific value per flow.
+	// Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/networking/network_observability/json-flows-format-reference.html.
+	// +optional
+	ValueField string `json:"valueField"`
+
+	// `filters` is a list of fields and values used to restrict which flows are taken into account. Oftentimes, these filters must
+	// be used to eliminate duplicates: `Duplicate:"false"` and `FlowDirection: "0"`.
+	// Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/networking/network_observability/json-flows-format-reference.html.
+	// +optional
+	Filters []MetricFilter `json:"filters"`
+
+	// `labels` is a list of fields that should be used as Prometheus labels, also known as dimensions.
+	// From choosing labels results the level of granularity of this metric, as well as the available aggregations at query time.
+	// It must be done carefully as it impacts the metric cardinality (cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric).
+	// In general, avoid setting very high cardinality labels such as IP or MAC addresses.
+	// "SrcK8S_OwnerName" or "DstK8S_OwnerName" should be preferred over "SrcK8S_Name" or "DstK8S_Name" as much as possible.
+	// Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/networking/network_observability/json-flows-format-reference.html.
+	// +optional
+	Labels []string `json:"labels"`
+
+	// A list of buckets to use when `type` is "Histogram". The list must be parseable as floats. Prometheus default buckets will be used if unset.
+	// +optional
+	Buckets []string `json:"buckets,omitempty"`
+}
+
+type MetricFilter struct {
+	// Name of the field to filter on
+	// +required
+	Field string `json:"field"`
+
+	// Value to filter on
+	Value string `json:"value"`
 }
 
 // `FlowCollectorStatus` defines the observed state of FlowCollector

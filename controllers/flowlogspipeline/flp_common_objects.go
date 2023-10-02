@@ -272,6 +272,15 @@ func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, error) {
 	if stages[0].Encode == nil || stages[0].Encode.Prom == nil {
 		return nil, fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
 	}
+
+	for _, metric := range b.desired.Processor.Metrics.Definitions {
+		m, err := helper.MetricsDefinitionToFLP(metric)
+		if err != nil {
+			return nil, fmt.Errorf("error reading metrics definitions '%s': %w", metric.Name, err)
+		}
+		stages[0].Encode.Prom.Metrics = append(stages[0].Encode.Prom.Metrics, *m)
+	}
+
 	return stages[0].Encode.Prom.Metrics, nil
 }
 
