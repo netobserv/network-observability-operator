@@ -41,43 +41,7 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	// Manually restore data.
 	restored := &v1beta2.FlowCollector{}
 	if ok, err := utilconversion.UnmarshalData(r, restored); err != nil || !ok {
-		return err
-	}
-
-	dst.Spec.Processor.LogTypes = restored.Spec.Processor.LogTypes
-
-	if restored.Spec.Processor.ConversationHeartbeatInterval != nil {
-		dst.Spec.Processor.ConversationHeartbeatInterval = restored.Spec.Processor.ConversationHeartbeatInterval
-	}
-
-	if restored.Spec.Processor.ConversationEndTimeout != nil {
-		dst.Spec.Processor.ConversationEndTimeout = restored.Spec.Processor.ConversationEndTimeout
-	}
-
-	if restored.Spec.Processor.ConversationTerminatingTimeout != nil {
-		dst.Spec.Processor.ConversationTerminatingTimeout = restored.Spec.Processor.ConversationTerminatingTimeout
-	}
-
-	if restored.Spec.Processor.Metrics.DisableAlerts != nil {
-		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
-	}
-
-	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
-
-	if restored.Spec.Agent.EBPF.Features != nil {
-		dst.Spec.Agent.EBPF.Features = make([]v1beta2.AgentFeature, len(restored.Spec.Agent.EBPF.Features))
-		copy(dst.Spec.Agent.EBPF.Features, restored.Spec.Agent.EBPF.Features)
-	}
-
-	dst.Spec.Kafka.SASL = restored.Spec.Kafka.SASL
-
-	// restore loki configuration from metadata
-	if len(dst.Spec.Loki.Mode) > 0 {
-		dst.Spec.Loki.Mode = restored.Spec.Loki.Mode
-		dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
-		dst.Spec.Loki.LokiStack = restored.Spec.Loki.LokiStack
-	} else {
-		// fallback on previous Manual mode
+		// fallback on current loki config as Manual mode if metadata are not available
 		dst.Spec.Loki.Mode = v1beta2.LokiModeManual
 		dst.Spec.Loki.Manual.IngesterURL = r.Spec.Loki.URL
 		dst.Spec.Loki.Manual.QuerierURL = r.Spec.Loki.QuerierURL
@@ -87,10 +51,44 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 		if err := Convert_v1alpha1_ClientTLS_To_v1beta2_ClientTLS(&r.Spec.Loki.TLS, &dst.Spec.Loki.Manual.TLS, nil); err != nil {
 			return fmt.Errorf("copying v1alplha1.Loki.TLS into v1beta2.Loki.Manual.TLS: %w", err)
 		}
+		return err
+	}
+
+	// Agent
+	if restored.Spec.Agent.EBPF.Features != nil {
+		dst.Spec.Agent.EBPF.Features = make([]v1beta2.AgentFeature, len(restored.Spec.Agent.EBPF.Features))
+		copy(dst.Spec.Agent.EBPF.Features, restored.Spec.Agent.EBPF.Features)
+	}
+
+	// Processor
+	dst.Spec.Processor.LogTypes = restored.Spec.Processor.LogTypes
+	if restored.Spec.Processor.ConversationHeartbeatInterval != nil {
+		dst.Spec.Processor.ConversationHeartbeatInterval = restored.Spec.Processor.ConversationHeartbeatInterval
+	}
+	if restored.Spec.Processor.ConversationEndTimeout != nil {
+		dst.Spec.Processor.ConversationEndTimeout = restored.Spec.Processor.ConversationEndTimeout
+	}
+	if restored.Spec.Processor.ConversationTerminatingTimeout != nil {
+		dst.Spec.Processor.ConversationTerminatingTimeout = restored.Spec.Processor.ConversationTerminatingTimeout
+	}
+	if restored.Spec.Processor.Metrics.DisableAlerts != nil {
+		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
 	}
 	dst.Spec.Processor.Metrics.Server.TLS.InsecureSkipVerify = restored.Spec.Processor.Metrics.Server.TLS.InsecureSkipVerify
 	dst.Spec.Processor.Metrics.Server.TLS.ProvidedCaFile = restored.Spec.Processor.Metrics.Server.TLS.ProvidedCaFile
 
+	// Kafka
+	dst.Spec.Kafka.SASL = restored.Spec.Kafka.SASL
+
+	// Loki
+	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
+	dst.Spec.Loki.Mode = restored.Spec.Loki.Mode
+	dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
+	if restored.Spec.Loki.LokiStack != nil {
+		dst.Spec.Loki.LokiStack = restored.Spec.Loki.LokiStack
+	}
+
+	// Exporters
 	if restored.Spec.Exporters != nil {
 		for _, restoredExp := range restored.Spec.Exporters {
 			if !isExporterIn(restoredExp, dst.Spec.Exporters) {

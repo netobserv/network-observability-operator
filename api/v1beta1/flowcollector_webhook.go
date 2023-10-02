@@ -41,30 +41,7 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	// Manually restore data.
 	restored := &v1beta2.FlowCollector{}
 	if ok, err := utilconversion.UnmarshalData(r, restored); err != nil || !ok {
-		return err
-	}
-
-	dst.Spec.Processor.LogTypes = restored.Spec.Processor.LogTypes
-
-	if restored.Spec.Processor.ConversationHeartbeatInterval != nil {
-		dst.Spec.Processor.ConversationHeartbeatInterval = restored.Spec.Processor.ConversationHeartbeatInterval
-	}
-
-	if restored.Spec.Processor.ConversationEndTimeout != nil {
-		dst.Spec.Processor.ConversationEndTimeout = restored.Spec.Processor.ConversationEndTimeout
-	}
-
-	if restored.Spec.Processor.Metrics.DisableAlerts != nil {
-		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
-	}
-
-	// restore loki configuration from metadata
-	if len(dst.Spec.Loki.Mode) > 0 {
-		dst.Spec.Loki.Mode = restored.Spec.Loki.Mode
-		dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
-		dst.Spec.Loki.LokiStack = restored.Spec.Loki.LokiStack
-	} else {
-		// fallback on previous Manual mode
+		// fallback on current loki config as Manual mode if metadata are not available
 		dst.Spec.Loki.Mode = v1beta2.LokiModeManual
 		dst.Spec.Loki.Manual.IngesterURL = r.Spec.Loki.URL
 		dst.Spec.Loki.Manual.QuerierURL = r.Spec.Loki.QuerierURL
@@ -77,6 +54,26 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 		if err := Convert_v1beta1_ClientTLS_To_v1beta2_ClientTLS(&r.Spec.Loki.StatusTLS, &dst.Spec.Loki.Manual.StatusTLS, nil); err != nil {
 			return fmt.Errorf("copying v1beta1.Loki.StatusTLS into v1beta2.Loki.Manual.StatusTLS: %w", err)
 		}
+		return err
+	}
+
+	// Processor
+	dst.Spec.Processor.LogTypes = restored.Spec.Processor.LogTypes
+	if restored.Spec.Processor.ConversationHeartbeatInterval != nil {
+		dst.Spec.Processor.ConversationHeartbeatInterval = restored.Spec.Processor.ConversationHeartbeatInterval
+	}
+	if restored.Spec.Processor.ConversationEndTimeout != nil {
+		dst.Spec.Processor.ConversationEndTimeout = restored.Spec.Processor.ConversationEndTimeout
+	}
+	if restored.Spec.Processor.Metrics.DisableAlerts != nil {
+		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
+	}
+
+	// Loki
+	dst.Spec.Loki.Mode = restored.Spec.Loki.Mode
+	dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
+	if restored.Spec.Loki.LokiStack != nil {
+		dst.Spec.Loki.LokiStack = restored.Spec.Loki.LokiStack
 	}
 
 	return nil
