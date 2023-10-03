@@ -58,7 +58,6 @@ type FlowCollectorSpec struct {
 	Processor FlowCollectorFLP `json:"processor,omitempty"`
 
 	// loki, the flow store, client settings.
-	// +k8s:conversion-gen=false
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
 
 	// `consolePlugin` defines the settings related to the OpenShift Console plugin, when available.
@@ -849,7 +848,7 @@ type FlowCollectorStatus struct {
 // +kubebuilder:printcolumn:name="Sampling (EBPF)",type="string",JSONPath=`.spec.agent.ebpf.sampling`
 // +kubebuilder:printcolumn:name="Deployment Model",type="string",JSONPath=`.spec.deploymentModel`
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
-
+// +kubebuilder:storageversion
 // `FlowCollector` is the schema for the network flows collection API, which pilots and configures the underlying deployments.
 type FlowCollector struct {
 	metav1.TypeMeta   `json:",inline"`

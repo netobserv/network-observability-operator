@@ -55,7 +55,6 @@ type FlowCollectorSpec struct {
 	Processor FlowCollectorFLP `json:"processor,omitempty"`
 
 	// loki, the flow store, client settings.
-	// +k8s:conversion-gen=false
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
 
 	// consolePlugin defines the settings related to the OpenShift Console plugin, when available.

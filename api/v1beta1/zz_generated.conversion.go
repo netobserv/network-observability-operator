@@ -927,7 +927,9 @@ func autoConvert_v1beta1_FlowCollectorSpec_To_v1beta2_FlowCollectorSpec(in *Flow
 	if err := Convert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(&in.Processor, &out.Processor, s); err != nil {
 		return err
 	}
-	// INFO: in.Loki opted out of conversion generation
+	if err := Convert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(&in.Loki, &out.Loki, s); err != nil {
+		return err
+	}
 	if err := Convert_v1beta1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(&in.ConsolePlugin, &out.ConsolePlugin, s); err != nil {
 		return err
 	}
@@ -952,7 +954,9 @@ func autoConvert_v1beta2_FlowCollectorSpec_To_v1beta1_FlowCollectorSpec(in *v1be
 	if err := Convert_v1beta2_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(&in.Processor, &out.Processor, s); err != nil {
 		return err
 	}
-	// INFO: in.Loki opted out of conversion generation
+	if err := Convert_v1beta2_FlowCollectorLoki_To_v1beta1_FlowCollectorLoki(&in.Loki, &out.Loki, s); err != nil {
+		return err
+	}
 	if err := Convert_v1beta2_FlowCollectorConsolePlugin_To_v1beta1_FlowCollectorConsolePlugin(&in.ConsolePlugin, &out.ConsolePlugin, s); err != nil {
 		return err
 	}
