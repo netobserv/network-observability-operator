@@ -214,7 +214,7 @@ CSV=network-observability-operator.v1.2.0 USER=myself VERSION=test make set-agen
 
 You can also do this by editing the CSV via the console by changing the image defined under `RELATED_IMAGE_EBPF_AGENT`, `RELATED_IMAGE_FLOWLOGS_PIPELINE`, and/or `RELATED_IMAGE_CONSOLE_PLUGIN`. If you are using this method, ensure that you are in the `openshift-netobserv-operator` namespace before updating the image value. If you are in a different namespace, then it reverts it back.
 
-![Alt text](image.png)
+![Alt text](./docs/assets/console-csv.png)
 
 ## Understanding the config / kustomize structure
 
