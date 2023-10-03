@@ -1,4 +1,4 @@
-package helper
+package metrics
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 )
 
-func MetricsDefinitionToFLP(fromCRD flowslatest.MetricDefinition) (*api.PromMetricsItem, error) {
+func ToFLP(fromCRD *flowslatest.MetricDefinition) (*api.PromMetricsItem, error) {
 	m := &api.PromMetricsItem{
 		Name:     fromCRD.Name,
 		Type:     strings.ToLower(string(fromCRD.Type)),
@@ -17,15 +17,15 @@ func MetricsDefinitionToFLP(fromCRD flowslatest.MetricDefinition) (*api.PromMetr
 		Labels:   fromCRD.Labels,
 		ValueKey: fromCRD.ValueField,
 	}
-	for k, v := range fromCRD.Filters {
-		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: k, Value: v})
+	for _, f := range fromCRD.Filters {
+		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: f.Field, Value: f.Value})
 	}
 	for _, b := range fromCRD.Buckets {
-		if f, err := strconv.ParseFloat(b, 64); err != nil {
+		f, err := strconv.ParseFloat(b, 64)
+		if err != nil {
 			return nil, fmt.Errorf("could not parse metric buckets as floats: '%s'; error was: %w", b, err)
-		} else {
-			m.Buckets = append(m.Buckets, f)
 		}
+		m.Buckets = append(m.Buckets, f)
 	}
 	return m, nil
 }

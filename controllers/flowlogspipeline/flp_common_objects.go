@@ -1,16 +1,13 @@
 package flowlogspipeline
 
 import (
-	"embed"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
-	"path/filepath"
 	"strconv"
 	"time"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
-	"github.com/netobserv/flowlogs-pipeline/pkg/confgen"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	promConfig "github.com/prometheus/common/config"
@@ -26,6 +23,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
 
@@ -33,7 +31,6 @@ const (
 	configVolume                = "config-volume"
 	configPath                  = "/etc/flowlogs-pipeline"
 	configFile                  = "config.json"
-	metricsConfigDir            = "metrics_definitions"
 	lokiToken                   = "loki-token"
 	healthServiceName           = "health"
 	prometheusServiceName       = "prometheus"
@@ -232,56 +229,22 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	}
 }
 
-//go:embed metrics_definitions
-var metricsConfigEmbed embed.FS
-
 // obtainMetricsConfiguration returns the configuration info for the prometheus stage needed to
 // supply the metrics for those metrics
-func (b *builder) obtainMetricsConfiguration() (api.PromMetricsItems, error) {
-	entries, err := metricsConfigEmbed.ReadDir(metricsConfigDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to access metrics_definitions directory: %w", err)
-	}
+func (b *builder) getMetricsDefinitions() ([]api.PromMetricsItem, error) {
+	definitions := metrics.GetEnabledMetrics(b.desired.Processor.Metrics.IgnoreTags)
+	definitions = append(definitions, b.desired.Processor.Metrics.Definitions...)
 
-	cg := confgen.NewConfGen(&confgen.Options{
-		GenerateStages: []string{"encode_prom"},
-		SkipWithTags:   b.desired.Processor.Metrics.IgnoreTags,
-	})
-
-	for _, entry := range entries {
-		fileName := entry.Name()
-		if fileName == "config.yaml" {
-			continue
-		}
-		srcPath := filepath.Join(metricsConfigDir, fileName)
-
-		input, err := metricsConfigEmbed.ReadFile(srcPath)
+	items := []api.PromMetricsItem{}
+	for i := range definitions {
+		m, err := metrics.ToFLP(&definitions[i])
 		if err != nil {
-			return nil, fmt.Errorf("error reading metrics file %s; %w", srcPath, err)
+			return nil, fmt.Errorf("error reading metrics definitions '%s': %w", definitions[i].Name, err)
 		}
-		err = cg.ParseDefinition(fileName, input)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing metrics file %s; %w", srcPath, err)
-		}
+		items = append(items, *m)
 	}
 
-	stages := cg.GenerateTruncatedConfig()
-	if len(stages) != 1 {
-		return nil, fmt.Errorf("error generating truncated config, 1 stage expected in %v", stages)
-	}
-	if stages[0].Encode == nil || stages[0].Encode.Prom == nil {
-		return nil, fmt.Errorf("error generating truncated config, Encode expected in %v", stages)
-	}
-
-	for _, metric := range b.desired.Processor.Metrics.Definitions {
-		m, err := helper.MetricsDefinitionToFLP(metric)
-		if err != nil {
-			return nil, fmt.Errorf("error reading metrics definitions '%s': %w", metric.Name, err)
-		}
-		stages[0].Encode.Prom.Metrics = append(stages[0].Encode.Prom.Metrics, *m)
-	}
-
-	return stages[0].Encode.Prom.Metrics, nil
+	return items, nil
 }
 
 func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
@@ -375,7 +338,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	}
 
 	// obtain encode_prometheus stage from metrics_definitions
-	promMetrics, err := b.obtainMetricsConfiguration()
+	promMetrics, err := b.getMetricsDefinitions()
 	if err != nil {
 		return err
 	}

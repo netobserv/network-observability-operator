@@ -19,8 +19,10 @@ package flowlogspipeline
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"testing"
 
+	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -813,6 +815,15 @@ func TestPipelineTraceStage(t *testing.T) {
 	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 }
 
+func getSortedMetricsNames(m []api.PromMetricsItem) []string {
+	ret := []string{}
+	for i := range m {
+		ret = append(ret, m[i].Name)
+	}
+	sort.Strings(ret)
+	return ret
+}
+
 func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	assert := assert.New(t)
 
@@ -824,22 +835,23 @@ func TestMergeMetricsConfigurationNoIgnore(t *testing.T) {
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
-	assert.Len(parameters[5].Encode.Prom.Metrics, 15)
-	assert.Equal("namespace_egress_bytes_total", parameters[5].Encode.Prom.Metrics[0].Name)
-	assert.Equal("namespace_egress_packets_total", parameters[5].Encode.Prom.Metrics[1].Name)
-	assert.Equal("namespace_flows_total", parameters[5].Encode.Prom.Metrics[2].Name)
-	assert.Equal("namespace_ingress_bytes_total", parameters[5].Encode.Prom.Metrics[3].Name)
-	assert.Equal("namespace_ingress_packets_total", parameters[5].Encode.Prom.Metrics[4].Name)
-	assert.Equal("node_egress_bytes_total", parameters[5].Encode.Prom.Metrics[5].Name)
-	assert.Equal("node_egress_packets_total", parameters[5].Encode.Prom.Metrics[6].Name)
-	assert.Equal("node_flows_total", parameters[5].Encode.Prom.Metrics[7].Name)
-	assert.Equal("node_ingress_bytes_total", parameters[5].Encode.Prom.Metrics[8].Name)
-	assert.Equal("node_ingress_packets_total", parameters[5].Encode.Prom.Metrics[9].Name)
-	assert.Equal("workload_egress_bytes_total", parameters[5].Encode.Prom.Metrics[10].Name)
-	assert.Equal("workload_egress_packets_total", parameters[5].Encode.Prom.Metrics[11].Name)
-	assert.Equal("workload_flows_total", parameters[5].Encode.Prom.Metrics[12].Name)
-	assert.Equal("workload_ingress_bytes_total", parameters[5].Encode.Prom.Metrics[13].Name)
-	assert.Equal("workload_ingress_packets_total", parameters[5].Encode.Prom.Metrics[14].Name)
+	names := getSortedMetricsNames(parameters[5].Encode.Prom.Metrics)
+	assert.Len(names, 15)
+	assert.Equal("namespace_egress_bytes_total", names[0])
+	assert.Equal("namespace_egress_packets_total", names[1])
+	assert.Equal("namespace_flows_total", names[2])
+	assert.Equal("namespace_ingress_bytes_total", names[3])
+	assert.Equal("namespace_ingress_packets_total", names[4])
+	assert.Equal("node_egress_bytes_total", names[5])
+	assert.Equal("node_egress_packets_total", names[6])
+	assert.Equal("node_flows_total", names[7])
+	assert.Equal("node_ingress_bytes_total", names[8])
+	assert.Equal("node_ingress_packets_total", names[9])
+	assert.Equal("workload_egress_bytes_total", names[10])
+	assert.Equal("workload_egress_packets_total", names[11])
+	assert.Equal("workload_flows_total", names[12])
+	assert.Equal("workload_ingress_bytes_total", names[13])
+	assert.Equal("workload_ingress_packets_total", names[14])
 	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
 }
 
@@ -855,8 +867,9 @@ func TestMergeMetricsConfigurationWithIgnore(t *testing.T) {
 	assert.True(validatePipelineConfig(stages, parameters))
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
-	assert.Len(parameters[5].Encode.Prom.Metrics, 10)
-	assert.Equal("namespace_egress_bytes_total", parameters[5].Encode.Prom.Metrics[0].Name)
+	names := getSortedMetricsNames(parameters[5].Encode.Prom.Metrics)
+	assert.Len(names, 10)
+	assert.Equal("namespace_egress_bytes_total", names[0])
 	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
 }
 
