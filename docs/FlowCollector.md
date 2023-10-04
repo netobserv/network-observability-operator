@@ -23,7 +23,8 @@ Resource Types:
 
 
 
-FlowCollector is the Schema for the flowcollectors API, which pilots and configures netflow collection.
+FlowCollector is the Schema for the flowcollectors API, which pilots and configures netflow collection. 
+ Deprecated: This type will be removed in one of the next releases.
 
 <table>
     <thead>

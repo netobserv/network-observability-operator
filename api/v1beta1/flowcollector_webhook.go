@@ -22,6 +22,7 @@ import (
 	"github.com/netobserv/network-observability-operator/api/v1beta2"
 	utilconversion "github.com/netobserv/network-observability-operator/pkg/conversion"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -41,19 +42,6 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	// Manually restore data.
 	restored := &v1beta2.FlowCollector{}
 	if ok, err := utilconversion.UnmarshalData(r, restored); err != nil || !ok {
-		// fallback on current loki config as Manual mode if metadata are not available
-		dst.Spec.Loki.Mode = v1beta2.LokiModeManual
-		dst.Spec.Loki.Manual.IngesterURL = r.Spec.Loki.URL
-		dst.Spec.Loki.Manual.QuerierURL = r.Spec.Loki.QuerierURL
-		dst.Spec.Loki.Manual.StatusURL = r.Spec.Loki.StatusURL
-		dst.Spec.Loki.Manual.TenantID = r.Spec.Loki.TenantID
-		dst.Spec.Loki.Manual.AuthToken = r.Spec.Loki.AuthToken
-		if err := Convert_v1beta1_ClientTLS_To_v1beta2_ClientTLS(&r.Spec.Loki.TLS, &dst.Spec.Loki.Manual.TLS, nil); err != nil {
-			return fmt.Errorf("copying v1beta1.Loki.TLS into v1beta2.Loki.Manual.TLS: %w", err)
-		}
-		if err := Convert_v1beta1_ClientTLS_To_v1beta2_ClientTLS(&r.Spec.Loki.StatusTLS, &dst.Spec.Loki.Manual.StatusTLS, nil); err != nil {
-			return fmt.Errorf("copying v1beta1.Loki.StatusTLS into v1beta2.Loki.Manual.StatusTLS: %w", err)
-		}
 		return err
 	}
 
@@ -105,7 +93,6 @@ func (r *FlowCollector) ConvertFrom(srcRaw conversion.Hub) error {
 	if err := Convert_v1beta2_ClientTLS_To_v1beta1_ClientTLS(helper.LokiStatusTLS(&src.Spec.Loki), &r.Spec.Loki.StatusTLS, nil); err != nil {
 		return fmt.Errorf("copying v1beta2.LokiStatusTLS into v1beta1.LokiStatusTLS: %w", err)
 	}
-
 	// Preserve Hub data on down-conversion except for metadata
 	return utilconversion.MarshalData(src, r)
 }

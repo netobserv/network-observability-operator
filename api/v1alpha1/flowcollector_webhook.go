@@ -41,16 +41,6 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	// Manually restore data.
 	restored := &v1beta2.FlowCollector{}
 	if ok, err := utilconversion.UnmarshalData(r, restored); err != nil || !ok {
-		// fallback on current loki config as Manual mode if metadata are not available
-		dst.Spec.Loki.Mode = v1beta2.LokiModeManual
-		dst.Spec.Loki.Manual.IngesterURL = r.Spec.Loki.URL
-		dst.Spec.Loki.Manual.QuerierURL = r.Spec.Loki.QuerierURL
-		dst.Spec.Loki.Manual.StatusURL = r.Spec.Loki.StatusURL
-		dst.Spec.Loki.Manual.TenantID = r.Spec.Loki.TenantID
-		dst.Spec.Loki.Manual.AuthToken = r.Spec.Loki.AuthToken
-		if err := Convert_v1alpha1_ClientTLS_To_v1beta2_ClientTLS(&r.Spec.Loki.TLS, &dst.Spec.Loki.Manual.TLS, nil); err != nil {
-			return fmt.Errorf("copying v1alplha1.Loki.TLS into v1beta2.Loki.Manual.TLS: %w", err)
-		}
 		return err
 	}
 
