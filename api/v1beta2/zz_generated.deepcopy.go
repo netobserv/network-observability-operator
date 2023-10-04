@@ -127,10 +127,14 @@ func (in *DebugConfig) DeepCopy() *DebugConfig {
 func (in *FLPMetrics) DeepCopyInto(out *FLPMetrics) {
 	*out = *in
 	in.Server.DeepCopyInto(&out.Server)
-	if in.IgnoreTags != nil {
-		in, out := &in.IgnoreTags, &out.IgnoreTags
-		*out = make([]string, len(*in))
-		copy(*out, *in)
+	if in.IncludeList != nil {
+		in, out := &in.IncludeList, &out.IncludeList
+		*out = new([]string)
+		if **in != nil {
+			in, out := *in, *out
+			*out = make([]string, len(*in))
+			copy(*out, *in)
+		}
 	}
 	if in.DisableAlerts != nil {
 		in, out := &in.DisableAlerts, &out.DisableAlerts

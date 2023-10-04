@@ -22,6 +22,7 @@ import (
 	"github.com/netobserv/network-observability-operator/api/v1beta2"
 	utilconversion "github.com/netobserv/network-observability-operator/pkg/conversion"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -72,6 +73,12 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 
 	// Loki
 	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
+
+	if restored.Spec.Processor.Metrics.IncludeList != nil {
+		list := make([]string, len(*restored.Spec.Processor.Metrics.IncludeList))
+		copy(list, *restored.Spec.Processor.Metrics.IncludeList)
+		dst.Spec.Processor.Metrics.IncludeList = &list
+	}
 
 	return nil
 }
@@ -171,4 +178,13 @@ func Convert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1beta2
 // // nolint:golint,stylecheck,revive
 func Convert_v1beta2_ServerTLS_To_v1alpha1_ServerTLS(in *v1beta2.ServerTLS, out *ServerTLS, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_ServerTLS_To_v1alpha1_ServerTLS(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1alpha1_FLPMetrics_To_v1beta2_FLPMetrics(in *FLPMetrics, out *v1beta2.FLPMetrics, s apiconversion.Scope) error {
+	includeList := metrics.GetEnabledNames(in.IgnoreTags, nil)
+	out.IncludeList = &includeList
+	return autoConvert_v1alpha1_FLPMetrics_To_v1beta2_FLPMetrics(in, out, s)
 }

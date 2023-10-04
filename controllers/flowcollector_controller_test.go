@@ -22,6 +22,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
+	"github.com/netobserv/network-observability-operator/pkg/test"
 )
 
 const (
@@ -117,7 +118,7 @@ func flowCollectorControllerSpecs() {
 							Duration: conntrackTerminatingTimeout,
 						},
 						Metrics: flowslatest.FLPMetrics{
-							IgnoreTags: []string{"flows"},
+							IncludeList: &[]string{"node_ingress_bytes_total", "namespace_ingress_bytes_total", "workload_ingress_bytes_total"},
 						},
 					},
 					Agent: flowslatest.FlowCollectorAgent{
@@ -277,7 +278,7 @@ func flowCollectorControllerSpecs() {
 						Duration: conntrackTerminatingTimeout,
 					},
 					Metrics: flowslatest.FLPMetrics{
-						IgnoreTags:    []string{"flows", "bytes", "packets"},
+						IncludeList:   &[]string{"node_ingress_bytes_total"},
 						DisableAlerts: []flowslatest.FLPAlert{flowslatest.AlertLokiError},
 					},
 				}
@@ -365,9 +366,16 @@ func flowCollectorControllerSpecs() {
 				}, &cm); err != nil {
 					return err
 				}
-				return cm.Data["netobserv-health-metrics.json"]
-			}, timeout, interval).Should(Satisfy(func(json string) bool {
-				return !strings.Contains(json, "flows") && strings.Contains(json, "Agents") && strings.Contains(json, "Processor") && strings.Contains(json, "Operator")
+				d, err := test.DashboardFromBytes([]byte(cm.Data["netobserv-health-metrics.json"]))
+				if err != nil {
+					return err
+				}
+				return d.Titles()
+			}, timeout, interval).Should(Equal([]string{
+				"Flows",
+				"Agents",
+				"Processor",
+				"Operator",
 			}))
 		})
 

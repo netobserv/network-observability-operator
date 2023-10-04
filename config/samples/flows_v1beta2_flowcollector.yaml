@@ -35,16 +35,11 @@ spec:
     metrics:
       server:
         port: 9102
-      ignoreTags:
-        - egress
-        - packets
-        - nodes-flows
-        - namespaces-flows
-        - workloads-flows
-        # Ignoring eihter "namespaces" or "workloads", as namespaces metrics are included in workload metrics
-        # This helps reduce total cardinality
-        - namespaces
       disableAlerts: []
+      includeList:
+        - node_ingress_bytes_total
+        - workload_ingress_bytes_total
+        - namespace_flows_total
     dropUnusedFields: true
     resources:
       requests:
@@ -80,7 +75,7 @@ spec:
     enable: true
     # Change mode to "LokiStack" to use with the loki operator
     mode: Monolithic
-    monolith:
+    monolithic:
       url: 'http://loki.netobserv.svc:3100/'
       tenantID: netobserv 
       tls:

@@ -22,6 +22,7 @@ import (
 	"github.com/netobserv/network-observability-operator/api/v1beta2"
 	utilconversion "github.com/netobserv/network-observability-operator/pkg/conversion"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -82,13 +83,6 @@ func Convert_v1beta2_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(in *v1beta2.Fl
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1beta1
 // nolint:golint,stylecheck,revive
-func Convert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in *v1beta2.FLPMetrics, out *FLPMetrics, s apiconversion.Scope) error {
-	return autoConvert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in, out, s)
-}
-
-// This function need to be manually created because conversion-gen not able to create it intentionally because
-// we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorLoki_To_v1beta1_FlowCollectorLoki(in *v1beta2.FlowCollectorLoki, out *FlowCollectorLoki, s apiconversion.Scope) error {
 	manual := helper.NewLokiConfig(in)
 	out.URL = manual.IngesterURL
@@ -128,4 +122,24 @@ func Convert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *FlowColl
 		return fmt.Errorf("copying v1beta1.Loki.StatusTLS into v1beta2.Loki.Manual.StatusTLS: %w", err)
 	}
 	return autoConvert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in *v1beta2.FLPMetrics, out *FLPMetrics, s apiconversion.Scope) error {
+	return autoConvert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta1_FLPMetrics_To_v1beta2_FLPMetrics(in *FLPMetrics, out *v1beta2.FLPMetrics, s apiconversion.Scope) error {
+	err := autoConvert_v1beta1_FLPMetrics_To_v1beta2_FLPMetrics(in, out, s)
+	if err != nil {
+		return err
+	}
+	includeList := metrics.GetEnabledNames(in.IgnoreTags, in.IncludeList)
+	out.IncludeList = &includeList
+	return nil
 }
