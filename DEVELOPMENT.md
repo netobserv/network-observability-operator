@@ -212,6 +212,10 @@ E.g:
 CSV=network-observability-operator.v1.2.0 USER=myself VERSION=test make set-agent-image set-flp-image set-plugin-image
 ```
 
+You can also do this by editing the CSV via the console by changing the image defined under `RELATED_IMAGE_EBPF_AGENT`, `RELATED_IMAGE_FLOWLOGS_PIPELINE`, and/or `RELATED_IMAGE_CONSOLE_PLUGIN`. If you are using this method, ensure that you are in the `openshift-netobserv-operator` namespace before updating the image value. If you are in a different namespace, then it reverts it back.
+
+![Alt text](./docs/assets/console-csv.png)
+
 ## Understanding the config / kustomize structure
 
 The [config](./config/) directory contains assets required for creating the Operator bundle (which comes in two flavours: for OpenShift and for "vanilla" Kubernetes), as well as other assets used in `make` scripts that are helpful to set up development environments.
