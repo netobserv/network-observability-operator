@@ -28,6 +28,7 @@ spec:
         - --flowlogs-pipeline-image=$(RELATED_IMAGE_FLOWLOGS_PIPELINE)
         - --console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)
         - --downstream-deployment=$(DOWNSTREAM_DEPLOYMENT)
+        - --profiling-bind-address=$(PROFILING_BIND_ADDRESS)
         env:
           - name: RELATED_IMAGE_EBPF_AGENT
             value: quay.io/netobserv/netobserv-ebpf-agent:v0.3.2
@@ -37,6 +38,8 @@ spec:
             value: quay.io/netobserv/network-observability-console-plugin:v0.1.11
           - name: DOWNSTREAM_DEPLOYMENT
             value: "false"
+          - name: PROFILING_BIND_ADDRESS
+            value: ""
         image: controller:latest
         name: manager
         imagePullPolicy: Always

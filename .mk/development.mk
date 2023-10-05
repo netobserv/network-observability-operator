@@ -188,3 +188,10 @@ set-release-kind-downstream:
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(NAMESPACE) --timeout=60s deployment netobserv-controller-manager
 	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
+
+.PHONY: enable-pprof
+enable-pprof:
+	kubectl -n $(NAMESPACE) set env deployment netobserv-controller-manager -c "manager" PROFILING_BIND_ADDRESS=:6060
+	@echo -e "\n==> Redeploying..."
+	kubectl rollout status -n $(NAMESPACE) --timeout=60s deployment netobserv-controller-manager
+	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
