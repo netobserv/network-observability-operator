@@ -189,9 +189,18 @@ set-release-kind-downstream:
 	kubectl rollout status -n $(NAMESPACE) --timeout=60s deployment netobserv-controller-manager
 	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
 
-.PHONY: enable-pprof
-enable-pprof:
+.PHONY: pprof
+pprof:
+	@echo -e "\n==> Enabling pprof... Check https://github.com/netobserv/network-observability-operator/blob/main/DEVELOPMENT.md#profiling for help."
 	kubectl -n $(NAMESPACE) set env deployment netobserv-controller-manager -c "manager" PROFILING_BIND_ADDRESS=:6060
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(NAMESPACE) --timeout=60s deployment netobserv-controller-manager
 	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
+	sleep 2
+	$(MAKE) pprof-pf
+
+.PHONY: pprof-pf
+pprof-pf:
+	@echo -e "\n==> Port-forwarding..."
+	oc get pods
+	kubectl port-forward -n $(NAMESPACE) $(shell kubectl get pod -l app=netobserv-operator -o jsonpath="{.items[0].metadata.name}") 6060
