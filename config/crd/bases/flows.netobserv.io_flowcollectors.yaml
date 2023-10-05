@@ -32,8 +32,9 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: FlowCollector is the Schema for the flowcollectors API, which
-          pilots and configures netflow collection.
+        description: "FlowCollector is the Schema for the flowcollectors API, which
+          pilots and configures netflow collection. \n Deprecated: This package will
+          be removed in one of the next releases."
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation

@@ -641,6 +641,7 @@ func flowCollectorControllerSpecs() {
 					Name:      "loki-ca",
 					Namespace: operatorNamespace,
 				},
+				Data: map[string]string{"ca.crt": "certificate data"},
 			})).Should(Succeed())
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
@@ -701,6 +702,7 @@ func flowCollectorControllerSpecs() {
 				}
 			})
 		})
+
 		It("Should have certificate mounted", func() {
 			By("Expecting certificate mounted")
 			Eventually(func() interface{} {

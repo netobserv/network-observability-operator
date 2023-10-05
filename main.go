@@ -46,7 +46,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/v1beta1"
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers"
@@ -65,7 +64,6 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(flowsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(flowsv1beta1.AddToScheme(scheme))
 	utilruntime.Must(flowsv1beta2.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
@@ -143,7 +141,7 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&flowsv1beta2.FlowCollector{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create v1beta1 webhook", "webhook", "FlowCollector")
+		setupLog.Error(err, "unable to create v1beta2 webhook", "webhook", "FlowCollector")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
