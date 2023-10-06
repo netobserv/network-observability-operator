@@ -20,14 +20,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
 
 	"go.uber.org/zap/zapcore"
-
-	"github.com/netobserv/network-observability-operator/controllers/operator"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
@@ -52,6 +48,7 @@ import (
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/operator"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -120,14 +117,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if pprofAddr != "" {
-		setupLog.WithValues("address", pprofAddr).Info("starting profiling server")
-		go func() {
-			err := http.ListenAndServe(pprofAddr, nil)
-			setupLog.Error(err, "stopped profiling server")
-		}()
-	}
-
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
 		Metrics: server.Options{
@@ -136,6 +125,7 @@ func main() {
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Port: 9443,
 		}),
+		PprofBindAddress:       pprofAddr,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "7a7ecdcd.netobserv.io",
