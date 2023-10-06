@@ -68,6 +68,9 @@ func (w *Watcher) watch(ctx context.Context, kind flowslatest.MountableType, obj
 	if err != nil {
 		return err
 	}
+	// Note that currently, watches are never removed (they can't - cf https://github.com/kubernetes-sigs/controller-runtime/issues/1884)
+	// This isn't a big deal here, as the number of watches that we set is very limited and not meant to grow over and over
+	// (unless user keeps reconfiguring cert references endlessly)
 	err = w.ctrl.Watch(
 		&source.Informer{Informer: i},
 		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
