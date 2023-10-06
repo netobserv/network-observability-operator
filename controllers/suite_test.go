@@ -93,7 +93,7 @@ var _ = BeforeSuite(func() {
 				// FIXME: till v1beta2 becomes the new storage version we will point to hack folder
 				// where v1beta2 is marked as the storage version
 				// filepath.Join("..", "config", "crd", "bases"),
-				filepath.Join("..", "config", "crd", "hack"),
+				filepath.Join("..", "hack"),
 				// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
 				filepath.Join("..", "vendor", "github.com", "openshift", "api", "console", "v1alpha1"),
 				filepath.Join("..", "vendor", "github.com", "openshift", "api", "config", "v1"),
@@ -101,6 +101,11 @@ var _ = BeforeSuite(func() {
 				filepath.Join("..", "test-assets"),
 			},
 			CleanUpAfterUse: true,
+			WebhookOptions: envtest.WebhookInstallOptions{
+				Paths: []string{
+					filepath.Join("..", "config", "webhook"),
+				},
+			},
 		},
 		ErrorIfCRDPathMissing: true,
 	}
