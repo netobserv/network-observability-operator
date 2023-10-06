@@ -71,13 +71,16 @@ type builder struct {
 	volumes  volumes.Builder
 }
 
-func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, ck ConfKind) builder {
+func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, ck ConfKind) (builder, error) {
 	version := helper.ExtractVersion(info.Image)
 	name := name(ck)
 	var promTLS *flowslatest.CertificateReference
 	switch desired.Processor.Metrics.Server.TLS.Type {
 	case flowslatest.ServerTLSProvided:
 		promTLS = desired.Processor.Metrics.Server.TLS.Provided
+		if promTLS == nil {
+			return builder{}, fmt.Errorf("processor tls configuration set to provided but none is provided")
+		}
 	case flowslatest.ServerTLSAuto:
 		promTLS = &flowslatest.CertificateReference{
 			Type:     "secret",
@@ -98,7 +101,7 @@ func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 		desired:  desired,
 		confKind: ck,
 		promTLS:  promTLS,
-	}
+	}, nil
 }
 
 func name(ck ConfKind) string                 { return constants.FLPName + FlpConfSuffix[ck] }

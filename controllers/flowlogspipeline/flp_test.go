@@ -157,12 +157,14 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 
 func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
 	info := reconcilers.Common{Namespace: ns}
-	return newMonolithBuilder(info.NewInstance(image), cfg)
+	b, _ := newMonolithBuilder(info.NewInstance(image), cfg)
+	return b
 }
 
 func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) transfoBuilder {
 	info := reconcilers.Common{Namespace: ns}
-	return newTransfoBuilder(info.NewInstance(image), cfg)
+	b, _ := newTransfoBuilder(info.NewInstance(image), cfg)
+	return b
 }
 
 func annotate(digest string) map[string]string {
@@ -536,7 +538,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2"}
-	b = newMonolithBuilder(info.NewInstance(image2), &cfg)
+	b, _ = newMonolithBuilder(info.NewInstance(image2), &cfg)
 	third := b.generic.serviceMonitor()
 
 	report = helper.NewChangeReport("")
@@ -544,7 +546,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 	assert.Contains(report.String(), "ServiceMonitor labels changed")
 
 	// Check scheme changed
-	b = newMonolithBuilder(info.NewInstance(image2), &cfg)
+	b, _ = newMonolithBuilder(info.NewInstance(image2), &cfg)
 	fourth := b.generic.serviceMonitor()
 	fourth.Spec.Endpoints[0].Scheme = "https"
 
@@ -589,7 +591,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2"}
-	b = newMonolithBuilder(info.NewInstance(image2), &cfg)
+	b, _ = newMonolithBuilder(info.NewInstance(image2), &cfg)
 	third := b.generic.prometheusRule()
 
 	report = helper.NewChangeReport("")
@@ -682,9 +684,9 @@ func TestLabels(t *testing.T) {
 
 	cfg := getConfig()
 	info := reconcilers.Common{Namespace: "ns"}
-	builder := newMonolithBuilder(info.NewInstance(image), &cfg)
-	tBuilder := newTransfoBuilder(info.NewInstance(image), &cfg)
-	iBuilder := newIngestBuilder(info.NewInstance(image), &cfg)
+	builder, _ := newMonolithBuilder(info.NewInstance(image), &cfg)
+	tBuilder, _ := newTransfoBuilder(info.NewInstance(image), &cfg)
+	iBuilder, _ := newIngestBuilder(info.NewInstance(image), &cfg)
 
 	// Deployment
 	depl := tBuilder.deployment(annotate("digest"))
@@ -763,7 +765,7 @@ func TestPipelineConfig(t *testing.T) {
 	// Kafka Ingester
 	cfg.DeploymentModel = flowslatest.DeploymentModelKafka
 	info := reconcilers.Common{Namespace: ns}
-	bi := newIngestBuilder(info.NewInstance(image), &cfg)
+	bi, _ := newIngestBuilder(info.NewInstance(image), &cfg)
 	stages, parameters, err = bi.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
