@@ -88,7 +88,10 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 		return nil
 	}
 
-	builder := newTransfoBuilder(r.Instance, &desired.Spec)
+	builder, err := newTransfoBuilder(r.Instance, &desired.Spec)
+	if err != nil {
+		return err
+	}
 	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err

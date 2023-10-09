@@ -84,7 +84,10 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowslat
 		return nil
 	}
 
-	builder := newIngestBuilder(r.Instance, &desired.Spec)
+	builder, err := newIngestBuilder(r.Instance, &desired.Spec)
+	if err != nil {
+		return err
+	}
 	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err

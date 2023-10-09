@@ -17,11 +17,11 @@ type monolithBuilder struct {
 	generic builder
 }
 
-func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) monolithBuilder {
-	gen := newBuilder(info, desired, ConfMonolith)
+func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) (monolithBuilder, error) {
+	gen, err := newBuilder(info, desired, ConfMonolith)
 	return monolithBuilder{
 		generic: gen,
-	}
+	}, err
 }
 
 func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.DaemonSet {

@@ -37,7 +37,7 @@ func (b *Builder) AddCACertificate(config *flowslatest.ClientTLS, namePrefix str
 }
 
 func (b *Builder) AddCertificate(ref *flowslatest.CertificateReference, volumeName string) (certPath, keyPath string) {
-	if ref.Name != "" {
+	if ref != nil && ref.Name != "" {
 		certPath = fmt.Sprintf("/var/%s/%s", volumeName, ref.CertFile)
 		keyPath = fmt.Sprintf("/var/%s/%s", volumeName, ref.CertKey)
 		vol, vm := buildVolumeAndMount(ref.Type, ref.Name, volumeName)

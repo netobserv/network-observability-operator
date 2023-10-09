@@ -18,11 +18,11 @@ type transfoBuilder struct {
 	generic builder
 }
 
-func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) transfoBuilder {
-	gen := newBuilder(info, desired, ConfKafkaTransformer)
+func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) (transfoBuilder, error) {
+	gen, err := newBuilder(info, desired, ConfKafkaTransformer)
 	return transfoBuilder{
 		generic: gen,
-	}
+	}, err
 }
 
 func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deployment {

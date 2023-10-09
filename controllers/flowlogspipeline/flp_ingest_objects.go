@@ -17,11 +17,11 @@ type ingestBuilder struct {
 	generic builder
 }
 
-func newIngestBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) ingestBuilder {
-	gen := newBuilder(info, desired, ConfKafkaIngester)
+func newIngestBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) (ingestBuilder, error) {
+	gen, err := newBuilder(info, desired, ConfKafkaIngester)
 	return ingestBuilder{
 		generic: gen,
-	}
+	}, err
 }
 
 func (b *ingestBuilder) daemonSet(annotations map[string]string) *appsv1.DaemonSet {

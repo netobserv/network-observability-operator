@@ -71,15 +71,18 @@ type builder struct {
 	volumes  volumes.Builder
 }
 
-func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, ck ConfKind) builder {
+func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, ck ConfKind) (builder, error) {
 	version := helper.ExtractVersion(info.Image)
 	name := name(ck)
-	var promTLS flowslatest.CertificateReference
+	var promTLS *flowslatest.CertificateReference
 	switch desired.Processor.Metrics.Server.TLS.Type {
 	case flowslatest.ServerTLSProvided:
-		promTLS = *desired.Processor.Metrics.Server.TLS.Provided
+		promTLS = desired.Processor.Metrics.Server.TLS.Provided
+		if promTLS == nil {
+			return builder{}, fmt.Errorf("processor tls configuration set to provided but none is provided")
+		}
 	case flowslatest.ServerTLSAuto:
-		promTLS = flowslatest.CertificateReference{
+		promTLS = &flowslatest.CertificateReference{
 			Type:     "secret",
 			Name:     promServiceName(ck),
 			CertFile: "tls.crt",
@@ -97,8 +100,8 @@ func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 		},
 		desired:  desired,
 		confKind: ck,
-		promTLS:  &promTLS,
-	}
+		promTLS:  promTLS,
+	}, nil
 }
 
 func name(ck ConfKind) string                 { return constants.FLPName + FlpConfSuffix[ck] }
@@ -658,9 +661,11 @@ func (b *builder) configMap(stages []config.Stage, parameters []config.StagePara
 	}
 	if b.desired.Processor.Metrics.Server.TLS.Type != flowslatest.ServerTLSDisabled {
 		cert, key := b.volumes.AddCertificate(b.promTLS, "prom-certs")
-		metricsSettings.TLS = &api.PromTLSConf{
-			CertPath: cert,
-			KeyPath:  key,
+		if cert != "" && key != "" {
+			metricsSettings.TLS = &api.PromTLSConf{
+				CertPath: cert,
+				KeyPath:  key,
+			}
 		}
 	}
 	config := map[string]interface{}{
@@ -811,7 +816,9 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 				InsecureSkipVerify: b.desired.Processor.Metrics.Server.TLS.InsecureSkipVerify,
 			},
 		}
-		if !b.desired.Processor.Metrics.Server.TLS.InsecureSkipVerify && b.desired.Processor.Metrics.Server.TLS.ProvidedCaFile.File != "" {
+		if !b.desired.Processor.Metrics.Server.TLS.InsecureSkipVerify &&
+			b.desired.Processor.Metrics.Server.TLS.ProvidedCaFile != nil &&
+			b.desired.Processor.Metrics.Server.TLS.ProvidedCaFile.File != "" {
 			flpServiceMonitorObject.Spec.Endpoints[0].TLSConfig.SafeTLSConfig.CA = helper.GetSecretOrConfigMap(b.desired.Processor.Metrics.Server.TLS.ProvidedCaFile)
 		}
 	}
