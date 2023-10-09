@@ -11,7 +11,20 @@ func TestIncludeExclude(t *testing.T) {
 
 	// IgnoreTags set, Include list unset => resolving ignore tags
 	res := GetEnabledNames([]string{"egress", "packets", "flows"}, nil)
-	assert.Equal([]string{"node_ingress_bytes_total", "namespace_ingress_bytes_total", "workload_ingress_bytes_total"}, res)
+	assert.Equal([]string{
+		"node_ingress_bytes_total",
+		"node_rtt",
+		"node_drop_packets_total",
+		"node_drop_bytes_total",
+		"namespace_ingress_bytes_total",
+		"namespace_rtt",
+		"namespace_drop_packets_total",
+		"namespace_drop_bytes_total",
+		"workload_ingress_bytes_total",
+		"workload_rtt",
+		"workload_drop_packets_total",
+		"workload_drop_bytes_total",
+	}, res)
 
 	// IgnoreTags set, Include list set => keep include list
 	res = GetEnabledNames([]string{"egress", "packets"}, &[]string{"namespace_flows_total"})

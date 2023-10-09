@@ -78,6 +78,49 @@ func init() {
 			},
 			tags: []string{group, group + "-flows", "flows"},
 		})
+		// RTT metrics
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			PromMetricsItem: flpapi.PromMetricsItem{
+				Name:     fmt.Sprintf("%s_rtt", groupTrimmed),
+				Type:     "histogram",
+				ValueKey: "TimeFlowRttNs",
+				Filters: []flpapi.PromMetricsFilter{
+					{Key: "TimeFlowRttNs", Value: "!nil"},
+				},
+				Labels: labels,
+				// TODO: Add Scaling to prom API to avoid having these poor buckets
+				// (convert ns => s)
+				Buckets: []float64{10, 1000, 100000, 10_000_000, 1_000_000_000},
+			},
+			tags: []string{group, "rtt"},
+		})
+		// Drops metrics
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			PromMetricsItem: flpapi.PromMetricsItem{
+				Name:     fmt.Sprintf("%s_drop_packets_total", groupTrimmed),
+				Type:     "counter",
+				ValueKey: "PktDropPackets",
+				Filters: []flpapi.PromMetricsFilter{
+					{Key: "Duplicate", Value: "false"},
+					{Key: "PktDropPackets", Value: "!nil"},
+				},
+				Labels: labels,
+			},
+			tags: []string{group, "drop-packets"},
+		})
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			PromMetricsItem: flpapi.PromMetricsItem{
+				Name:     fmt.Sprintf("%s_drop_bytes_total", groupTrimmed),
+				Type:     "counter",
+				ValueKey: "PktDropBytes",
+				Filters: []flpapi.PromMetricsFilter{
+					{Key: "Duplicate", Value: "false"},
+					{Key: "PktDropBytes", Value: "!nil"},
+				},
+				Labels: labels,
+			},
+			tags: []string{group, "drop-packets"},
+		})
 	}
 }
 
