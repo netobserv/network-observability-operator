@@ -10,7 +10,7 @@ The operator provides dashboards, metrics, and keeps flows accessible in a query
 
 - For a production or production-like environment usage, refer to [the operator documentation](https://docs.openshift.com/container-platform/latest/networking/network_observability/installing-operators.html).
 
-- For a quick try that is not suitable for production and not scalable (it deploys a single pod, configures a 1GB storage PVC, with 24 hours of retention), you can simply run the following commands:
+- For a quick try that is not suitable for production and not scalable (it deploys a single pod, configures a 10GB storage PVC, with 24 hours of retention), you can simply run the following commands:
 
 ```
 oc create namespace netobserv
