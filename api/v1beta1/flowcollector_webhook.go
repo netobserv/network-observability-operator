@@ -57,18 +57,6 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 		return err
 	}
 
-	// Processor
-	dst.Spec.Processor.LogTypes = restored.Spec.Processor.LogTypes
-	if restored.Spec.Processor.ConversationHeartbeatInterval != nil {
-		dst.Spec.Processor.ConversationHeartbeatInterval = restored.Spec.Processor.ConversationHeartbeatInterval
-	}
-	if restored.Spec.Processor.ConversationEndTimeout != nil {
-		dst.Spec.Processor.ConversationEndTimeout = restored.Spec.Processor.ConversationEndTimeout
-	}
-	if restored.Spec.Processor.Metrics.DisableAlerts != nil {
-		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
-	}
-
 	// Loki
 	dst.Spec.Loki.Mode = restored.Spec.Loki.Mode
 	dst.Spec.Loki.Manual = restored.Spec.Loki.Manual

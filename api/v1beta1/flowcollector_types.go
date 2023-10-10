@@ -57,7 +57,7 @@ type FlowCollectorSpec struct {
 	// enriches them, generates metrics, and forwards them to the Loki persistence layer and/or any available exporter.
 	Processor FlowCollectorFLP `json:"processor,omitempty"`
 
-	// loki, the flow store, client settings.
+	// `loki`, the flow store, client settings.
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
 
 	// `consolePlugin` defines the settings related to the OpenShift Console plugin, when available.

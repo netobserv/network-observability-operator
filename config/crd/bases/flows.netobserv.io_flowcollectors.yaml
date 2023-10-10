@@ -3694,7 +3694,7 @@ spec:
                 - topic
                 type: object
               loki:
-                description: loki, the flow store, client settings.
+                description: '`loki`, the flow store, client settings.'
                 properties:
                   authToken:
                     default: DISABLED
@@ -5953,7 +5953,7 @@ spec:
                   properties:
                     ipfix:
                       description: IPFIX configuration, such as the IP address and
-                        port to send enriched IPFIX flows to. [Unsupported (*)].
+                        port to send enriched IPFIX flows to.
                       properties:
                         targetHost:
                           default: ""
@@ -6151,7 +6151,7 @@ spec:
                       type: object
                     type:
                       description: '`type` selects the type of exporters. The available
-                        options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).'
+                        options are `KAFKA` and `IPFIX`.'
                       enum:
                       - KAFKA
                       - IPFIX
@@ -6329,7 +6329,7 @@ spec:
                 - topic
                 type: object
               loki:
-                description: loki, the flow store, client settings.
+                description: '`loki`, the flow store, client settings.'
                 properties:
                   batchSize:
                     default: 102400

@@ -4071,7 +4071,7 @@ Defines the desired state of the FlowCollector resource. <br><br> *: the mention
         <td><b><a href="#flowcollectorspecloki-1">loki</a></b></td>
         <td>object</td>
         <td>
-          loki, the flow store, client settings.<br/>
+          `loki`, the flow store, client settings.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6526,7 +6526,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
 
 
 
-loki, the flow store, client settings.
+`loki`, the flow store, client settings.
 
 <table>
     <thead>
@@ -8699,7 +8699,7 @@ Defines the desired state of the FlowCollector resource. <br><br> *: the mention
         <td><b><a href="#flowcollectorspecloki-1">loki</a></b></td>
         <td>object</td>
         <td>
-          loki, the flow store, client settings.<br/>
+          `loki`, the flow store, client settings.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10341,7 +10341,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`. `IPFIX` is unsupported (*).<br/>
+          `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`.<br/>
           <br/>
             <i>Enum</i>: KAFKA, IPFIX<br/>
         </td>
@@ -10350,7 +10350,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b><a href="#flowcollectorspecexportersindexipfix-1">ipfix</a></b></td>
         <td>object</td>
         <td>
-          IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].<br/>
+          IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10369,7 +10369,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to. [Unsupported (*)].
+IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
 
 <table>
     <thead>
@@ -11154,7 +11154,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
 
 
 
-loki, the flow store, client settings.
+`loki`, the flow store, client settings.
 
 <table>
     <thead>
