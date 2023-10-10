@@ -7,48 +7,47 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	rec "sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
+var (
+	secrets SecretWatchable
+	configs ConfigWatchable
+)
+
 type Watcher struct {
+	ctrl             controller.Controller
+	cache            cache.Cache
 	watched          map[string]interface{}
 	defaultNamespace string
-	secrets          SecretWatchable
-	configs          ConfigWatchable
 }
 
-func NewWatcher() Watcher {
-	return Watcher{
+func NewWatcher(ctrl controller.Controller, cache cache.Cache) *Watcher {
+	// Note that Watcher doesn't start any informer at this point, in order to keep informers watching strictly
+	// the desired object rather than the whole cluster.
+	// Since watched objects can be in any namespace, we cannot use namespace-based restriction to limit memory consumption.
+	return &Watcher{
+		ctrl:    ctrl,
+		cache:   cache,
 		watched: make(map[string]interface{}),
 	}
 }
 
-func RegisterWatcher(builder *builder.Builder) *Watcher {
-	w := NewWatcher()
-	w.registerWatches(builder, &w.secrets, flowslatest.RefTypeSecret)
-	w.registerWatches(builder, &w.configs, flowslatest.RefTypeConfigMap)
-	return &w
-}
-
-func (w *Watcher) registerWatches(builder *builder.Builder, watchable Watchable, kind flowslatest.MountableType) {
-	builder.Watches(
-		watchable.ProvidePlaceholder(),
-		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []rec.Request {
-			if w.isWatched(kind, o.GetName(), o.GetNamespace()) {
-				// Trigger FlowCollector reconcile
-				return []rec.Request{{NamespacedName: constants.FlowCollectorName}}
-			}
-			return []rec.Request{}
-		}),
-	)
+func kindToWatchable(kind flowslatest.MountableType) Watchable {
+	if kind == flowslatest.RefTypeConfigMap {
+		return &configs
+	}
+	return &secrets
 }
 
 func (w *Watcher) Reset(namespace string) {
@@ -60,8 +59,33 @@ func key(kind flowslatest.MountableType, name, namespace string) string {
 	return string(kind) + "/" + namespace + "/" + name
 }
 
-func (w *Watcher) watch(kind flowslatest.MountableType, name, namespace string) {
-	w.watched[key(kind, name, namespace)] = true
+func (w *Watcher) watch(ctx context.Context, kind flowslatest.MountableType, obj client.Object) error {
+	if w.isWatched(kind, obj.GetName(), obj.GetNamespace()) {
+		// This watcher was already registered
+		return nil
+	}
+	i, err := w.cache.GetInformer(ctx, obj)
+	if err != nil {
+		return err
+	}
+	// Note that currently, watches are never removed (they can't - cf https://github.com/kubernetes-sigs/controller-runtime/issues/1884)
+	// This isn't a big deal here, as the number of watches that we set is very limited and not meant to grow over and over
+	// (unless user keeps reconfiguring cert references endlessly)
+	err = w.ctrl.Watch(
+		&source.Informer{Informer: i},
+		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+			if w.isWatched(kind, o.GetName(), o.GetNamespace()) {
+				// Trigger FlowCollector reconcile
+				return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
+			}
+			return []reconcile.Request{}
+		}),
+	)
+	if err != nil {
+		return err
+	}
+	w.watched[key(kind, obj.GetName(), obj.GetNamespace())] = true
+	return nil
 }
 
 func (w *Watcher) isWatched(kind flowslatest.MountableType, name, namespace string) bool {
@@ -137,16 +161,13 @@ func (w *Watcher) reconcile(ctx context.Context, cl helper.Client, ref objectRef
 	report := helper.NewChangeReport("Watcher for " + string(ref.kind) + " " + ref.name)
 	defer report.LogIfNeeded(ctx)
 
-	w.watch(ref.kind, ref.name, ref.namespace)
-	var watchable Watchable
-	if ref.kind == flowslatest.RefTypeConfigMap {
-		watchable = &w.configs
-	} else {
-		watchable = &w.secrets
-	}
-
+	watchable := kindToWatchable(ref.kind)
 	obj := watchable.ProvidePlaceholder()
 	err := cl.Get(ctx, types.NamespacedName{Name: ref.name, Namespace: ref.namespace}, obj)
+	if err != nil {
+		return "", err
+	}
+	err = w.watch(ctx, ref.kind, obj)
 	if err != nil {
 		return "", err
 	}

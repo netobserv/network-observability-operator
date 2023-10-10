@@ -388,3 +388,18 @@ Remove the tag after you tested:
 git tag -d "0.0.0-rc0"
 git push --delete upstream 0.0.0-rc0
 ```
+
+## Profiling
+
+You can use `pprof` for profiling. Run `pprof` make target to start listening and port-forward on 6060: 
+
+```bash
+make pprof
+```
+
+In another terminal, run for instance:
+
+```bash
+curl "http://localhost:6060/debug/pprof/heap?gc" -o /tmp/heap
+go tool pprof -http localhost:3435 /tmp/heap
+```
