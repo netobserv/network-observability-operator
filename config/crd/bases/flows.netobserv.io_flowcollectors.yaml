@@ -4981,8 +4981,8 @@ spec:
                         description: '`debug` allows setting some aspects of the internal
                           configuration of the eBPF agent. This section is aimed exclusively
                           for debugging and fine-grained performance optimizations,
-                          such as GOGC and GOMAXPROCS env vars. Users setting its
-                          values do it at their own risk.'
+                          such as `GOGC` and `GOMAXPROCS` env vars. Users setting
+                          its values do it at their own risk.'
                         properties:
                           env:
                             additionalProperties:
@@ -4990,7 +4990,7 @@ spec:
                             description: '`env` allows passing custom environment
                               variables to underlying components. Useful for passing
                               some very concrete performance-tuning options, such
-                              as GOGC and GOMAXPROCS, that should not be publicly
+                              as `GOGC` and `GOMAXPROCS`, that should not be publicly
                               exposed as part of the FlowCollector descriptor, as
                               they are only useful in edge debug or support scenarios.'
                             type: object
@@ -4999,8 +4999,8 @@ spec:
                         default:
                         - lo
                         description: '`excludeInterfaces` contains the interface names
-                          that are excluded from flow tracing. An entry is enclosed
-                          by slashes, such as `/br-/`, is matched as a regular expression.
+                          that are excluded from flow tracing. An entry enclosed by
+                          slashes, such as `/br-/`, is matched as a regular expression.
                           Otherwise it is matched as a case-sensitive string.'
                         items:
                           type: string
@@ -5008,8 +5008,8 @@ spec:
                       features:
                         description: 'List of additional features to enable. They
                           are all disabled by default. Enabling additional features
-                          may have performance impacts. Possible values are:<br> -
-                          `PacketDrop`: enable the packets drop flows logging feature.
+                          might have performance impacts. Possible values are:<br>
+                          - `PacketDrop`: enable the packets drop flows logging feature.
                           This feature requires mounting the kernel debug filesystem,
                           so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged`
                           parameter is not set, an error is reported.<br> - `DNSTracking`:
@@ -5044,7 +5044,7 @@ spec:
                         description: '`interfaces` contains the interface names from
                           where flows are collected. If empty, the agent fetches all
                           the interfaces in the system, excepting the ones listed
-                          in ExcludeInterfaces. An entry is enclosed by slashes, such
+                          in ExcludeInterfaces. An entry enclosed by slashes, such
                           as `/br-/`, is matched as a regular expression. Otherwise
                           it is matched as a case-sensitive string.'
                         items:
@@ -5071,7 +5071,7 @@ spec:
                         type: string
                       privileged:
                         description: 'Privileged mode for the eBPF Agent container.
-                          In general this setting can be ignored or set to false:
+                          In general this setting can be ignored or set to `false`:
                           in that case, the operator sets granular capabilities (BPF,
                           PERFMON, NET_ADMIN, SYS_RESOURCE) to the container, to enable
                           its correct operation. If for some reason these capabilities
@@ -5178,8 +5178,8 @@ spec:
                           the IPFIX-based flow reporter. It is not recommended to
                           sample all the traffic with IPFIX, as it might generate
                           cluster instability. If you REALLY want to do that, set
-                          this flag to true. Use at your own risk. When it is set
-                          to true, the value of `sampling` is ignored.'
+                          this flag to `true`. Use at your own risk. When it is set
+                          to `true`, the value of `sampling` is ignored.'
                         type: boolean
                       ovnKubernetes:
                         description: '`ovnKubernetes` defines the settings of the
@@ -5764,8 +5764,8 @@ spec:
                     type: object
                   enable:
                     default: true
-                    description: enable the console plugin deployment. spec.Loki.enable
-                      must also be true
+                    description: Enables the console plugin deployment. `spec.Loki.enable`
+                      must also be `true`
                     type: boolean
                   imagePullPolicy:
                     default: IfNotPresent
@@ -5862,9 +5862,9 @@ spec:
                     type: array
                   register:
                     default: true
-                    description: '`register` allows, when set to true, to automatically
+                    description: '`register` allows, when set to `true`, to automatically
                       register the provided console plugin with the OpenShift Console
-                      operator. When set to false, you can still register it manually
+                      operator. When set to `false`, you can still register it manually
                       by editing console.operator.openshift.io/cluster with the following
                       command: `oc patch console.operator.openshift.io cluster --type=''json''
                       -p ''[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]''`'
@@ -6102,7 +6102,7 @@ spec:
                               default: false
                               description: '`insecureSkipVerify` allows skipping client-side
                                 verification of the server certificate. If set to
-                                true, the `caCert` field is ignored.'
+                                `true`, the `caCert` field is ignored.'
                               type: boolean
                             userCert:
                               description: '`userCert` defines the user certificate
@@ -6143,7 +6143,7 @@ spec:
                           type: object
                         topic:
                           default: ""
-                          description: Kafka topic to use. It must exist, NetObserv
+                          description: Kafka topic to use. It must exist. NetObserv
                             does not create it.
                           type: string
                       required:
@@ -6282,7 +6282,7 @@ spec:
                       insecureSkipVerify:
                         default: false
                         description: '`insecureSkipVerify` allows skipping client-side
-                          verification of the server certificate. If set to true,
+                          verification of the server certificate. If set to `true`,
                           the `caCert` field is ignored.'
                         type: boolean
                       userCert:
@@ -6322,7 +6322,7 @@ spec:
                     type: object
                   topic:
                     default: ""
-                    description: Kafka topic to use. It must exist, NetObserv does
+                    description: Kafka topic to use. It must exist. NetObserv does
                       not create it.
                     type: string
                 required:
@@ -6346,13 +6346,13 @@ spec:
                     type: string
                   enable:
                     default: true
-                    description: enable storing flows to Loki. It is required for
-                      the OpenShift Console plugin installation.
+                    description: Set `enable` to `true` to store flows in Loki. It
+                      is required for the OpenShift Console plugin installation.
                     type: boolean
                   lokiStack:
-                    description: Loki configuration for LOKISTACK mode. This is usefull
+                    description: Loki configuration for LOKISTACK mode. This is useful
                       for an easy loki-operator config. It will be ignored for other
-                      mods
+                      modes.
                     properties:
                       name:
                         default: loki
@@ -6363,7 +6363,7 @@ spec:
                     type: object
                   manual:
                     description: Loki configuration for MANUAL mode. This is the more
-                      flexible configuration. It will be ignored for other mods
+                      flexible configuration. It will be ignored for other modes.
                     properties:
                       authToken:
                         default: DISABLED
@@ -6438,7 +6438,7 @@ spec:
                           insecureSkipVerify:
                             default: false
                             description: '`insecureSkipVerify` allows skipping client-side
-                              verification of the server certificate. If set to true,
+                              verification of the server certificate. If set to `true`,
                               the `caCert` field is ignored.'
                             type: boolean
                           userCert:
@@ -6538,7 +6538,7 @@ spec:
                           insecureSkipVerify:
                             default: false
                             description: '`insecureSkipVerify` allows skipping client-side
-                              verification of the server certificate. If set to true,
+                              verification of the server certificate. If set to `true`,
                               the `caCert` field is ignored.'
                             type: boolean
                           userCert:
@@ -6653,15 +6653,15 @@ spec:
                     description: '`debug` allows setting some aspects of the internal
                       configuration of the flow processor. This section is aimed exclusively
                       for debugging and fine-grained performance optimizations, such
-                      as GOGC and GOMAXPROCS env vars. Users setting its values do
-                      it at their own risk.'
+                      as `GOGC` and `GOMAXPROCS` env vars. Users setting its values
+                      do it at their own risk.'
                     properties:
                       env:
                         additionalProperties:
                           type: string
                         description: '`env` allows passing custom environment variables
                           to underlying components. Useful for passing some very concrete
-                          performance-tuning options, such as GOGC and GOMAXPROCS,
+                          performance-tuning options, such as `GOGC` and `GOMAXPROCS`,
                           that should not be publicly exposed as part of the FlowCollector
                           descriptor, as they are only useful in edge debug or support
                           scenarios.'
@@ -6669,7 +6669,7 @@ spec:
                     type: object
                   dropUnusedFields:
                     default: true
-                    description: '`dropUnusedFields` allows, when set to true, to
+                    description: '`dropUnusedFields` allows, when set to `true`, to
                       drop fields that are known to be unused by OVS, to save storage
                       space.'
                     type: boolean
@@ -7330,9 +7330,10 @@ spec:
                             properties:
                               insecureSkipVerify:
                                 default: false
-                                description: insecureSkipVerify allows skipping client-side
-                                  verification of the provided certificate. If set
-                                  to true, the `providedCaFile` field is ignored.
+                                description: '`insecureSkipVerify` allows skipping
+                                  client-side verification of the provided certificate.
+                                  If set to `true`, the `providedCaFile` field is
+                                  ignored.'
                                 type: boolean
                               provided:
                                 description: TLS configuration when `type` is set

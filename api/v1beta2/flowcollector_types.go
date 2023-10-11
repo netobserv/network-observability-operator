@@ -134,8 +134,8 @@ type FlowCollectorIPFIX struct {
 	//+kubebuilder:default:=false
 	// `forceSampleAll` allows disabling sampling in the IPFIX-based flow reporter.
 	// It is not recommended to sample all the traffic with IPFIX, as it might generate cluster instability.
-	// If you REALLY want to do that, set this flag to true. Use at your own risk.
-	// When it is set to true, the value of `sampling` is ignored.
+	// If you REALLY want to do that, set this flag to `true`. Use at your own risk.
+	// When it is set to `true`, the value of `sampling` is ignored.
 	ForceSampleAll bool `json:"forceSampleAll,omitempty" mapstructure:"-"`
 
 	// `clusterNetworkOperator` defines the settings related to the OpenShift Cluster Network Operator, when available.
@@ -195,13 +195,13 @@ type FlowCollectorEBPF struct {
 
 	// `interfaces` contains the interface names from where flows are collected. If empty, the agent
 	// fetches all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
-	// An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression.
+	// An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 	// Otherwise it is matched as a case-sensitive string.
 	//+optional
 	Interfaces []string `json:"interfaces"`
 
 	// `excludeInterfaces` contains the interface names that are excluded from flow tracing.
-	// An entry is enclosed by slashes, such as `/br-/`, is matched as a regular expression.
+	// An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 	// Otherwise it is matched as a case-sensitive string.
 	//+kubebuilder:default=lo;
 	//+optional
@@ -212,7 +212,7 @@ type FlowCollectorEBPF struct {
 	// `logLevel` defines the log level for the NetObserv eBPF Agent
 	LogLevel string `json:"logLevel,omitempty"`
 
-	// Privileged mode for the eBPF Agent container. In general this setting can be ignored or set to false:
+	// Privileged mode for the eBPF Agent container. In general this setting can be ignored or set to `false`:
 	// in that case, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE)
 	// to the container, to enable its correct operation.
 	// If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF
@@ -227,11 +227,11 @@ type FlowCollectorEBPF struct {
 
 	// `debug` allows setting some aspects of the internal configuration of the eBPF agent.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
-	// such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.
+	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
 
-	// List of additional features to enable. They are all disabled by default. Enabling additional features may have performance impacts. Possible values are:<br>
+	// List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
 	// - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
 	// If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br>
@@ -252,7 +252,7 @@ type FlowCollectorKafka struct {
 	Address string `json:"address"`
 
 	//+kubebuilder:default:=""
-	// Kafka topic to use. It must exist, NetObserv does not create it.
+	// Kafka topic to use. It must exist. NetObserv does not create it.
 	Topic string `json:"topic"`
 
 	// TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
@@ -305,8 +305,8 @@ type ServerTLS struct {
 	Provided *CertificateReference `json:"provided"`
 
 	//+kubebuilder:default:=false
-	// insecureSkipVerify allows skipping client-side verification of the provided certificate.
-	// If set to true, the `providedCaFile` field is ignored.
+	// `insecureSkipVerify` allows skipping client-side verification of the provided certificate.
+	// If set to `true`, the `providedCaFile` field is ignored.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
 	// Reference to the CA file when `type` is set to `PROVIDED`.
@@ -416,7 +416,7 @@ type FlowCollectorFLP struct {
 	EnableKubeProbes *bool `json:"enableKubeProbes,omitempty"`
 
 	//+kubebuilder:default:=true
-	// `dropUnusedFields` allows, when set to true, to drop fields that are known to be unused by OVS, to save storage space.
+	// `dropUnusedFields` allows, when set to `true`, to drop fields that are known to be unused by OVS, to save storage space.
 	DropUnusedFields *bool `json:"dropUnusedFields,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
@@ -473,7 +473,7 @@ type FlowCollectorFLP struct {
 
 	// `debug` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
-	// such as GOGC and GOMAXPROCS env vars. Users setting its values do it at their own risk.
+	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
 }
@@ -515,7 +515,7 @@ const (
 	LokiAuthForwardUserToken = "FORWARD"
 )
 
-// LokiManualParams defines the parameters to connect loki
+// `LokiManualParams` defines the full connection parameters to Loki.
 type LokiManualParams struct {
 	//+kubebuilder:default:="http://loki:3100/"
 	// `ingesterUrl` is the address of an existing Loki service to push the flows to. When using the Loki Operator,
@@ -562,7 +562,7 @@ type LokiManualParams struct {
 	StatusTLS ClientTLS `json:"statusTls"`
 }
 
-// LokiStack defines the name and namespace of the loki-operator instance
+// `LokiStack` defines the name and namespace of the `LokiStack` instance when using the Loki Operator.
 type LokiStack struct {
 	//+kubebuilder:default:="loki"
 	Name string `json:"name,omitempty"`
@@ -575,24 +575,24 @@ const (
 	LokiModeLokiStack = "LOKISTACK"
 )
 
-// FlowCollectorLoki defines the desired state for FlowCollector's Loki client.
+// `FlowCollectorLoki` defines the desired state for FlowCollector's Loki client.
 type FlowCollectorLoki struct {
 	//+kubebuilder:validation:Enum=MANUAL;LOKISTACK
 	//+kubebuilder:default:="MANUAL"
 	Mode string `json:"mode,omitempty"`
 
 	// Loki configuration for MANUAL mode. This is the more flexible configuration.
-	// It will be ignored for other mods
+	// It will be ignored for other modes.
 	// +optional
 	Manual LokiManualParams `json:"manual,omitempty"`
 
-	// Loki configuration for LOKISTACK mode. This is usefull for an easy loki-operator config.
-	// It will be ignored for other mods
+	// Loki configuration for LOKISTACK mode. This is useful for an easy loki-operator config.
+	// It will be ignored for other modes.
 	// +optional
 	LokiStack *LokiStack `json:"lokiStack,omitempty"`
 
 	//+kubebuilder:default:=true
-	// enable storing flows to Loki. It is required for the OpenShift Console plugin installation.
+	// Set `enable` to `true` to store flows in Loki. It is required for the OpenShift Console plugin installation.
 	Enable *bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:="1s"
@@ -633,13 +633,13 @@ type FlowCollectorConsolePlugin struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:default:=true
-	// enable the console plugin deployment.
-	// spec.Loki.enable must also be true
+	// Enables the console plugin deployment.
+	// `spec.Loki.enable` must also be `true`
 	Enable *bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:=true
-	// `register` allows, when set to true, to automatically register the provided console plugin with the OpenShift Console operator.
-	// When set to false, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
+	// `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator.
+	// When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
 	// `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`
 	Register *bool `json:"register,omitempty"`
 
@@ -791,7 +791,7 @@ type ClientTLS struct {
 
 	//+kubebuilder:default:=false
 	// `insecureSkipVerify` allows skipping client-side verification of the server certificate.
-	// If set to true, the `caCert` field is ignored.
+	// If set to `true`, the `caCert` field is ignored.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
 	// `caCert` defines the reference of the certificate for the Certificate Authority
@@ -828,7 +828,7 @@ type SASLConfig struct {
 // They are aimed exclusively for debugging. Users setting these values do it at their own risk.
 type DebugConfig struct {
 	// `env` allows passing custom environment variables to underlying components. Useful for passing
-	// some very concrete performance-tuning options, such as GOGC and GOMAXPROCS, that should not be
+	// some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be
 	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
 	// in edge debug or support scenarios.
 	//+optional
