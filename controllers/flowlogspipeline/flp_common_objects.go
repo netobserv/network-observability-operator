@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/globals"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
@@ -319,10 +319,10 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 			MinBackoff:     helper.UnstructuredDuration(b.desired.Loki.MinBackoff),
 			StaticLabels:   model.LabelSet{},
 			Timeout:        helper.UnstructuredDuration(b.desired.Loki.Timeout),
-			URL:            b.desired.Loki.URL,
+			URL:            helper.LokiIngesterURL(&b.desired.Loki),
 			TimestampLabel: "TimeFlowEndMs",
 			TimestampScale: "1ms",
-			TenantID:       b.desired.Loki.TenantID,
+			TenantID:       helper.LokiTenantID(&b.desired.Loki),
 		}
 
 		for k, v := range b.desired.Loki.StaticLabels {
@@ -338,8 +338,9 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 			}
 		}
 
-		if b.desired.Loki.TLS.Enable {
-			if b.desired.Loki.TLS.InsecureSkipVerify {
+		clientTLS := helper.LokiTLS(&b.desired.Loki)
+		if clientTLS.Enable {
+			if clientTLS.InsecureSkipVerify {
 				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
 					Authorization: authorization,
 					TLSConfig: promConfig.TLSConfig{
@@ -347,7 +348,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 					},
 				}
 			} else {
-				caPath := b.volumes.AddCACertificate(&b.desired.Loki.TLS, "loki-certs")
+				caPath := b.volumes.AddCACertificate(clientTLS, "loki-certs")
 				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
 					Authorization: authorization,
 					TLSConfig: promConfig.TLSConfig{

@@ -6,7 +6,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
@@ -41,14 +41,14 @@ func (b *Builder) AddCertificate(ref *flowslatest.CertificateReference, volumeNa
 		certPath = fmt.Sprintf("/var/%s/%s", volumeName, ref.CertFile)
 		keyPath = fmt.Sprintf("/var/%s/%s", volumeName, ref.CertKey)
 		vol, vm := buildVolumeAndMount(ref.Type, ref.Name, volumeName)
-		b.info = append(b.info, VolumeInfo{Volume: vol, Mount: vm})
+		b.insertOrReplace(&VolumeInfo{Volume: vol, Mount: vm})
 	}
 	return
 }
 
 func (b *Builder) AddVolume(config *flowslatest.FileReference, volumeName string) string {
 	vol, vm := buildVolumeAndMount(config.Type, config.Name, volumeName)
-	b.info = append(b.info, VolumeInfo{Volume: vol, Mount: vm})
+	b.insertOrReplace(&VolumeInfo{Volume: vol, Mount: vm})
 	return path.Join("var", volumeName, config.File)
 }
 
@@ -128,4 +128,17 @@ func buildVolumeAndMount(refType flowslatest.MountableType, refName string, volu
 		ReadOnly:  true,
 		MountPath: "/var/" + volumeName,
 	}
+}
+
+func (b *Builder) insertOrReplace(vi *VolumeInfo) {
+	// find any existing volume info and replace it
+	for i := range b.info {
+		if b.info[i].Volume.Name == vi.Volume.Name || b.info[i].Mount.Name == vi.Mount.Name {
+			b.info[i] = *vi
+			return
+		}
+	}
+
+	// else just append new volume info
+	b.info = append(b.info, *vi)
 }

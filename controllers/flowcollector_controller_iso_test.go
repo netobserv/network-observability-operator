@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 )
 
 // nolint:cyclop
@@ -116,20 +116,12 @@ func flowCollectorIsoSpecs() {
 				},
 				QuickFilters: []flowslatest.QuickFilter{},
 			},
-			Loki: flowslatest.FlowCollectorLoki{
-				Enable:       pointer.Bool(true),
-				URL:          "http://loki",
-				QuerierURL:   "",
-				StatusURL:    "",
-				TenantID:     "test",
-				AuthToken:    "DISABLED",
-				BatchWait:    &metav1.Duration{Duration: time.Second},
-				BatchSize:    100,
-				Timeout:      &metav1.Duration{Duration: time.Second},
-				MinBackoff:   &metav1.Duration{Duration: time.Second},
-				MaxBackoff:   &metav1.Duration{Duration: time.Second},
-				MaxRetries:   &zero,
-				StaticLabels: map[string]string{},
+			Loki: flowslatest.FlowCollectorLoki{Manual: flowslatest.LokiManualParams{
+				IngesterURL: "http://loki",
+				QuerierURL:  "",
+				StatusURL:   "",
+				TenantID:    "test",
+				AuthToken:   "DISABLED",
 				TLS: flowslatest.ClientTLS{
 					Enable:             false,
 					InsecureSkipVerify: false,
@@ -162,6 +154,16 @@ func flowCollectorIsoSpecs() {
 						CertKey:  "",
 					},
 				},
+			},
+				Enable:       pointer.Bool(true),
+				Mode:         flowslatest.LokiModeManual,
+				BatchWait:    &metav1.Duration{Duration: time.Second},
+				BatchSize:    100,
+				Timeout:      &metav1.Duration{Duration: time.Second},
+				MinBackoff:   &metav1.Duration{Duration: time.Second},
+				MaxBackoff:   &metav1.Duration{Duration: time.Second},
+				MaxRetries:   &zero,
+				StaticLabels: map[string]string{},
 			},
 			Kafka: flowslatest.FlowCollectorKafka{
 				Address: "http://kafka",

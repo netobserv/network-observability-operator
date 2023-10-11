@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
@@ -108,7 +108,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	//equals specs
 	plugin := getPluginConfig()
-	loki := flowslatest.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv"}
+	loki := flowslatest.FlowCollectorLoki{Manual: flowslatest.LokiManualParams{IngesterURL: "http://loki:3100/", TenantID: "netobserv"}}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
 	builder := newBuilder(testNamespace, testImage, &spec)
 	old := builder.deployment("digest")
@@ -153,14 +153,14 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	//new loki config
-	loki = flowslatest.FlowCollectorLoki{URL: "http://loki:3100/", TenantID: "netobserv", TLS: flowslatest.ClientTLS{
+	loki = flowslatest.FlowCollectorLoki{Manual: flowslatest.LokiManualParams{IngesterURL: "http://loki:3100/", TenantID: "netobserv", TLS: flowslatest.ClientTLS{
 		Enable: true,
 		CACert: flowslatest.CertificateReference{
 			Type:     "configmap",
 			Name:     "cm-name",
 			CertFile: "ca.crt",
 		},
-	}}
+	}}}
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
 	builder = newBuilder(testNamespace, testImage, &spec)
 	nEw = builder.deployment("digest")
@@ -170,7 +170,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	//new loki cert name
-	loki.TLS.CACert.Name = "cm-name-2"
+	loki.Manual.TLS.CACert.Name = "cm-name-2"
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
 	builder = newBuilder(testNamespace, testImage, &spec)
 	nEw = builder.deployment("digest")
@@ -180,7 +180,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	//test again no change
-	loki.TLS.CACert.Name = "cm-name-2"
+	loki.Manual.TLS.CACert.Name = "cm-name-2"
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
 	builder = newBuilder(testNamespace, testImage, &spec)
 	nEw = builder.deployment("digest")
@@ -190,8 +190,8 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	//set status url and enable default tls
-	loki.StatusURL = "http://loki.status:3100/"
-	loki.StatusTLS.Enable = true
+	loki.Manual.StatusURL = "http://loki.status:3100/"
+	loki.Manual.StatusTLS.Enable = true
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
 	builder = newBuilder(testNamespace, testImage, &spec)
@@ -202,7 +202,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	//update status ca cert
-	loki.StatusTLS.CACert = flowslatest.CertificateReference{
+	loki.Manual.StatusTLS.CACert = flowslatest.CertificateReference{
 		Type:     "configmap",
 		Name:     "status-cm-name",
 		CertFile: "status-ca.crt",
@@ -217,7 +217,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	//update status user cert
-	loki.StatusTLS.UserCert = flowslatest.CertificateReference{
+	loki.Manual.StatusTLS.UserCert = flowslatest.CertificateReference{
 		Type:     "secret",
 		Name:     "sec-name",
 		CertFile: "tls.crt",
@@ -230,6 +230,42 @@ func TestContainerUpdateCheck(t *testing.T) {
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "Volumes changed")
+}
+
+func TestContainerUpdateWithLokistackMode(t *testing.T) {
+	assert := assert.New(t)
+
+	//equals specs
+	plugin := getPluginConfig()
+	loki := flowslatest.FlowCollectorLoki{Mode: "LOKISTACK", LokiStack: &flowslatest.LokiStack{Name: "lokistack", Namespace: "ls-namespace"}}
+	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder := newBuilder(testNamespace, testImage, &spec)
+	old := builder.deployment("digest")
+	nEw := builder.deployment("digest")
+	report := helper.NewChangeReport("")
+	assert.False(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "no change")
+
+	//update lokistack name
+	loki.LokiStack.Name = "lokistack-updated"
+
+	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder = newBuilder(testNamespace, testImage, &spec)
+	nEw = builder.deployment("digest")
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Volumes changed")
+	old = nEw
+
+	//update lokistack namespace
+	loki.LokiStack.Namespace = "ls-namespace-updated"
+
+	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
+	builder = newBuilder(testNamespace, testImage, &spec)
+	nEw = builder.deployment("digest")
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Container changed")
 }
 
 func TestServiceUpdateCheck(t *testing.T) {
@@ -262,7 +298,7 @@ func TestBuiltService(t *testing.T) {
 
 	//newly created service should not need update
 	plugin := getPluginConfig()
-	loki := flowslatest.FlowCollectorLoki{URL: "http://foo:1234"}
+	loki := flowslatest.FlowCollectorLoki{Manual: flowslatest.LokiManualParams{IngesterURL: "http://foo:1234"}}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
 	builder := newBuilder(testNamespace, testImage, &spec)
 	old := builder.mainService()
@@ -276,7 +312,7 @@ func TestLabels(t *testing.T) {
 	assert := assert.New(t)
 
 	plugin := getPluginConfig()
-	loki := flowslatest.FlowCollectorLoki{URL: "http://foo:1234"}
+	loki := flowslatest.FlowCollectorLoki{Manual: flowslatest.LokiManualParams{IngesterURL: "http://foo:1234"}}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
 	builder := newBuilder(testNamespace, testImage, &spec)
 

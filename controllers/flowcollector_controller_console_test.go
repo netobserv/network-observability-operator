@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 )
 
@@ -215,14 +215,14 @@ func flowCollectorConsolePluginSpecs() {
 		})
 		It("Should update the Loki URL in the Console Plugin if it changes in the Spec", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.URL = "http://loki.namespace:8888"
+				fc.Spec.Loki.Manual.IngesterURL = "http://loki.namespace:8888"
 			})
 			Eventually(getContainerArgumentAfter("netobserv-plugin", "-loki", cpKey),
 				timeout, interval).Should(Equal("http://loki.namespace:8888"))
 		})
 		It("Should use the Loki Querier URL instead of the Loki URL, if the first is defined", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.QuerierURL = "http://loki-querier:6789"
+				fc.Spec.Loki.Manual.QuerierURL = "http://loki-querier:6789"
 			})
 			Eventually(getContainerArgumentAfter("netobserv-plugin", "-loki", cpKey),
 				timeout, interval).Should(Equal("http://loki-querier:6789"))

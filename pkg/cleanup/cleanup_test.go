@@ -17,7 +17,7 @@ var oldDashboard = corev1.ConfigMap{
 		Name:      "grafana-dashboard-netobserv",
 		Namespace: "openshift-config-managed",
 		OwnerReferences: []v1.OwnerReference{{
-			APIVersion: "flows.netobserv.io/v1beta1",
+			APIVersion: "flows.netobserv.io/v1beta2",
 			Kind:       "FlowCollector",
 			Name:       "cluster",
 			Controller: pointer.Bool(true),
@@ -74,7 +74,7 @@ func TestCleanPastReferences_DifferentOwner(t *testing.T) {
 	clientMock := test.ClientMock{}
 	unmanaged := oldDashboard
 	unmanaged.OwnerReferences = []v1.OwnerReference{{
-		APIVersion: "something/v1beta1",
+		APIVersion: "something/v1beta2",
 		Kind:       "SomethingElse",
 		Name:       "SomethingElse",
 	}}

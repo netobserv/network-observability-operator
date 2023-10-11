@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
 	"github.com/netobserv/network-observability-operator/controllers/operator"

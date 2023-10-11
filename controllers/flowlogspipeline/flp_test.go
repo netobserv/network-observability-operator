@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -53,7 +53,8 @@ var outputRecordTypes = flowslatest.LogTypeAll
 
 const testNamespace = "flp"
 
-func getConfig() flowslatest.FlowCollectorSpec {
+func getConfig(lokiMode ...string) flowslatest.FlowCollectorSpec {
+
 	return flowslatest.FlowCollectorSpec{
 		DeploymentModel: flowslatest.DeploymentModelDirect,
 		Agent:           flowslatest.FlowCollectorAgent{Type: flowslatest.AgentIPFIX},
@@ -98,26 +99,54 @@ func getConfig() flowslatest.FlowCollectorSpec {
 				Duration: conntrackTerminatingTimeout,
 			},
 		},
-		Loki: flowslatest.FlowCollectorLoki{
-			Enable: pointer.Bool(true),
-			URL:    "http://loki:3100/",
-			BatchWait: &metav1.Duration{
-				Duration: 1,
-			},
-			BatchSize: 102400,
-			MinBackoff: &metav1.Duration{
-				Duration: 1,
-			},
-			MaxBackoff: &metav1.Duration{
-				Duration: 300,
-			},
-			MaxRetries:   pointer.Int32(10),
-			StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
-		},
+		Loki: getLoki(lokiMode...),
 		Kafka: flowslatest.FlowCollectorKafka{
 			Address: "kafka",
 			Topic:   "flp",
 		},
+	}
+}
+
+func getLoki(lokiMode ...string) flowslatest.FlowCollectorLoki {
+
+	if lokiMode != nil {
+		if lokiMode[0] == "LOKISTACK" {
+			return flowslatest.FlowCollectorLoki{Mode: "LOKISTACK", LokiStack: &flowslatest.LokiStack{
+				Name:      "lokistack",
+				Namespace: "ls-namespace",
+			},
+				BatchWait: &metav1.Duration{
+					Duration: 1,
+				},
+				BatchSize: 102400,
+				MinBackoff: &metav1.Duration{
+					Duration: 1,
+				},
+				MaxBackoff: &metav1.Duration{
+					Duration: 300,
+				},
+				Enable:       pointer.Bool(true),
+				MaxRetries:   pointer.Int32(10),
+				StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
+			}
+		}
+	}
+	// defaults to MANUAL mode if no other mode was selected
+	return flowslatest.FlowCollectorLoki{Mode: "MANUAL", Manual: flowslatest.LokiManualParams{
+		IngesterURL: "http://loki:3100/"},
+		BatchWait: &metav1.Duration{
+			Duration: 1,
+		},
+		BatchSize: 102400,
+		MinBackoff: &metav1.Duration{
+			Duration: 1,
+		},
+		MaxBackoff: &metav1.Duration{
+			Duration: 300,
+		},
+		Enable:       pointer.Bool(true),
+		MaxRetries:   pointer.Int32(10),
+		StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
 	}
 }
 
@@ -281,7 +310,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.Contains(report.String(), "no change")
 
 	// Check Loki config change
-	cfg.Loki.TLS = flowslatest.ClientTLS{
+	cfg.Loki.Manual.TLS = flowslatest.ClientTLS{
 		Enable: true,
 		CACert: flowslatest.CertificateReference{
 			Type:     "configmap",
@@ -299,7 +328,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.Contains(report.String(), "config-digest")
 
 	// Check volumes change
-	cfg.Loki.TLS = flowslatest.ClientTLS{
+	cfg.Loki.Manual.TLS = flowslatest.ClientTLS{
 		Enable: true,
 		CACert: flowslatest.CertificateReference{
 			Type:     "configmap",
@@ -599,7 +628,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	assert.Contains(report.String(), "PrometheusRule labels changed")
 }
 
-func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
+func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 	assert := assert.New(t)
 
 	ns := "namespace"
@@ -626,7 +655,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.Equal(cfg.Processor.Port, int32(params[0].Ingest.Collector.Port))
 
 	lokiCfg := params[3].Write.Loki
-	assert.Equal(loki.URL, lokiCfg.URL)
+	assert.Equal(loki.Manual.IngesterURL, lokiCfg.URL)
 	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg.BatchWait)
 	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg.MinBackoff)
 	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
@@ -643,6 +672,52 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 		"Duplicate",
 		"_RecordType",
 	}, lokiCfg.Labels)
+	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
+
+	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))
+}
+
+func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
+	assert := assert.New(t)
+
+	ns := "namespace"
+	cfg := getConfig("LOKISTACK")
+	loki := cfg.Loki
+	b := monoBuilder(ns, &cfg)
+	cm, digest, err := b.configMap()
+	assert.NoError(err)
+	assert.NotEmpty(t, digest)
+
+	assert.Equal("dev", cm.Labels["version"])
+
+	data, ok := cm.Data[configFile]
+	assert.True(ok)
+
+	var decoded config.ConfigFileStruct
+	err = json.Unmarshal([]byte(data), &decoded)
+
+	assert.Nil(err)
+	assert.Equal("trace", decoded.LogLevel)
+
+	params := decoded.Parameters
+	assert.Len(params, 6)
+	assert.Equal(cfg.Processor.Port, int32(params[0].Ingest.Collector.Port))
+
+	lokiCfg := params[3].Write.Loki
+	assert.Equal("https://lokistack-gateway-http.ls-namespace.svc:8080/api/logs/v1/network/", lokiCfg.URL)
+	assert.Equal("network", lokiCfg.TenantID)
+	assert.Equal("Bearer", lokiCfg.ClientConfig.Authorization.Type)
+	assert.Equal("/var/run/secrets/tokens/flowlogs-pipeline", lokiCfg.ClientConfig.Authorization.CredentialsFile)
+	assert.Equal(false, lokiCfg.ClientConfig.TLSConfig.InsecureSkipVerify)
+	assert.Equal("/var/loki-certs-ca/service-ca.crt", lokiCfg.ClientConfig.TLSConfig.CAFile)
+	assert.Equal("", lokiCfg.ClientConfig.TLSConfig.CertFile)
+	assert.Equal("", lokiCfg.ClientConfig.TLSConfig.KeyFile)
+	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg.BatchWait)
+	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg.MinBackoff)
+	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
+	assert.EqualValues(*loki.MaxRetries, lokiCfg.MaxRetries)
+	assert.EqualValues(loki.BatchSize, lokiCfg.BatchSize)
+	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type", "FlowDirection", "Duplicate", "_RecordType"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
 	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))

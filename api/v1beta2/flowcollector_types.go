@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package v1beta1
+package v1beta2
 
 import (
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -515,17 +515,13 @@ const (
 	LokiAuthForwardUserToken = "FORWARD"
 )
 
-// `FlowCollectorLoki` defines the desired state for FlowCollector's Loki client.
-type FlowCollectorLoki struct {
-	//+kubebuilder:default:=true
-	// enable storing flows to Loki. It is required for the OpenShift Console plugin installation.
-	Enable *bool `json:"enable,omitempty"`
-
+// LokiManualParams defines the parameters to connect loki
+type LokiManualParams struct {
 	//+kubebuilder:default:="http://loki:3100/"
-	// `url` is the address of an existing Loki service to push the flows to. When using the Loki Operator,
+	// `ingesterUrl` is the address of an existing Loki service to push the flows to. When using the Loki Operator,
 	// set it to the Loki gateway service with the `network` tenant set in path, for example
 	// https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.
-	URL string `json:"url,omitempty"`
+	IngesterURL string `json:"ingesterUrl,omitempty"`
 
 	//+kubebuilder:validation:optional
 	// `querierURL` specifies the address of the Loki querier service, in case it is different from the
@@ -556,6 +552,48 @@ type FlowCollectorLoki struct {
 	// - `HOST` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br>
 	// When using the Loki Operator, this must be set to `FORWARD`.
 	AuthToken string `json:"authToken,omitempty"`
+
+	// TLS client configuration for Loki URL.
+	// +optional
+	TLS ClientTLS `json:"tls"`
+
+	// TLS client configuration for Loki status URL.
+	// +optional
+	StatusTLS ClientTLS `json:"statusTls"`
+}
+
+// LokiStack defines the name and namespace of the loki-operator instance
+type LokiStack struct {
+	//+kubebuilder:default:="loki"
+	Name string `json:"name,omitempty"`
+	//+kubebuilder:default:="netobserv"
+	Namespace string `json:"namespace,omitempty"`
+}
+
+const (
+	LokiModeManual    = "MANUAL"
+	LokiModeLokiStack = "LOKISTACK"
+)
+
+// FlowCollectorLoki defines the desired state for FlowCollector's Loki client.
+type FlowCollectorLoki struct {
+	//+kubebuilder:validation:Enum=MANUAL;LOKISTACK
+	//+kubebuilder:default:="MANUAL"
+	Mode string `json:"mode,omitempty"`
+
+	// Loki configuration for MANUAL mode. This is the more flexible configuration.
+	// It will be ignored for other mods
+	// +optional
+	Manual LokiManualParams `json:"manual,omitempty"`
+
+	// Loki configuration for LOKISTACK mode. This is usefull for an easy loki-operator config.
+	// It will be ignored for other mods
+	// +optional
+	LokiStack *LokiStack `json:"lokiStack,omitempty"`
+
+	//+kubebuilder:default:=true
+	// enable storing flows to Loki. It is required for the OpenShift Console plugin installation.
+	Enable *bool `json:"enable,omitempty"`
 
 	//+kubebuilder:default:="1s"
 	// `batchWait` is the maximum time to wait before sending a batch.
@@ -588,14 +626,6 @@ type FlowCollectorLoki struct {
 	// +optional
 	// `staticLabels` is a map of common labels to set on each flow.
 	StaticLabels map[string]string `json:"staticLabels"`
-
-	// TLS client configuration for Loki URL.
-	// +optional
-	TLS ClientTLS `json:"tls"`
-
-	// TLS client configuration for Loki status URL.
-	// +optional
-	StatusTLS ClientTLS `json:"statusTls"`
 }
 
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector
@@ -848,7 +878,6 @@ type FlowCollectorStatus struct {
 // +kubebuilder:printcolumn:name="Sampling (EBPF)",type="string",JSONPath=`.spec.agent.ebpf.sampling`
 // +kubebuilder:printcolumn:name="Deployment Model",type="string",JSONPath=`.spec.deploymentModel`
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
-// +kubebuilder:storageversion
 // `FlowCollector` is the schema for the network flows collection API, which pilots and configures the underlying deployments.
 type FlowCollector struct {
 	metav1.TypeMeta   `json:",inline"`

@@ -1,7 +1,7 @@
 package watchers
 
 import (
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 )
 
 type objectRef struct {
