@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
 	"github.com/netobserv/network-observability-operator/controllers/operator"
@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -371,7 +371,7 @@ func requiredAction(current, desired *v1.DaemonSet) reconcileAction {
 
 func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *corev1.SecurityContext {
 	sc := corev1.SecurityContext{
-		RunAsUser: pointer.Int64(0),
+		RunAsUser: ptr.To(int64(0)),
 	}
 
 	if coll.Spec.Agent.EBPF.Privileged {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
@@ -17,11 +17,11 @@ type ingestBuilder struct {
 	generic builder
 }
 
-func newIngestBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) ingestBuilder {
-	gen := newBuilder(info, desired, ConfKafkaIngester)
+func newIngestBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) (ingestBuilder, error) {
+	gen, err := newBuilder(info, desired, ConfKafkaIngester)
 	return ingestBuilder{
 		generic: gen,
-	}
+	}, err
 }
 
 func (b *ingestBuilder) daemonSet(annotations map[string]string) *appsv1.DaemonSet {

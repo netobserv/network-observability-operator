@@ -8,7 +8,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 )
 
 type flowsConfig struct {

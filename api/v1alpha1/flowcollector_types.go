@@ -672,6 +672,8 @@ type FlowCollectorStatus struct {
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
 
 // FlowCollector is the Schema for the flowcollectors API, which pilots and configures netflow collection.
+//
+// Deprecated: This package will be removed in one of the next releases.
 type FlowCollector struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -680,9 +682,11 @@ type FlowCollector struct {
 	Status FlowCollectorStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // FlowCollectorList contains a list of FlowCollector
+//
+// Deprecated: This package will be removed in one of the next releases.
 type FlowCollectorList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

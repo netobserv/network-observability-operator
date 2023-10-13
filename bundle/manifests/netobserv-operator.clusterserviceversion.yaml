@@ -350,10 +350,193 @@ metadata:
               }
             }
           }
+        },
+        {
+          "apiVersion": "flows.netobserv.io/v1beta2",
+          "kind": "FlowCollector",
+          "metadata": {
+            "name": "cluster"
+          },
+          "spec": {
+            "agent": {
+              "ebpf": {
+                "cacheActiveTimeout": "5s",
+                "cacheMaxFlows": 100000,
+                "excludeInterfaces": [
+                  "lo"
+                ],
+                "imagePullPolicy": "IfNotPresent",
+                "interfaces": [],
+                "kafkaBatchSize": 10485760,
+                "logLevel": "info",
+                "resources": {
+                  "limits": {
+                    "memory": "800Mi"
+                  },
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "50Mi"
+                  }
+                },
+                "sampling": 50
+              },
+              "type": "EBPF"
+            },
+            "consolePlugin": {
+              "autoscaler": {
+                "maxReplicas": 3,
+                "metrics": [
+                  {
+                    "resource": {
+                      "name": "cpu",
+                      "target": {
+                        "averageUtilization": 50,
+                        "type": "Utilization"
+                      }
+                    },
+                    "type": "Resource"
+                  }
+                ],
+                "minReplicas": 1,
+                "status": "DISABLED"
+              },
+              "imagePullPolicy": "IfNotPresent",
+              "logLevel": "info",
+              "port": 9001,
+              "portNaming": {
+                "enable": true,
+                "portNames": {
+                  "3100": "loki"
+                }
+              },
+              "quickFilters": [
+                {
+                  "default": true,
+                  "filter": {
+                    "dst_namespace!": "openshift-,netobserv",
+                    "src_namespace!": "openshift-,netobserv"
+                  },
+                  "name": "Applications"
+                },
+                {
+                  "filter": {
+                    "dst_namespace": "openshift-,netobserv",
+                    "src_namespace": "openshift-,netobserv"
+                  },
+                  "name": "Infrastructure"
+                },
+                {
+                  "default": true,
+                  "filter": {
+                    "dst_kind": "Pod",
+                    "src_kind": "Pod"
+                  },
+                  "name": "Pods network"
+                },
+                {
+                  "filter": {
+                    "dst_kind": "Service"
+                  },
+                  "name": "Services network"
+                }
+              ],
+              "register": true
+            },
+            "deploymentModel": "DIRECT",
+            "exporters": [],
+            "kafka": {
+              "address": "kafka-cluster-kafka-bootstrap.netobserv",
+              "tls": {
+                "caCert": {
+                  "certFile": "ca.crt",
+                  "name": "kafka-cluster-cluster-ca-cert",
+                  "type": "secret"
+                },
+                "enable": false,
+                "userCert": {
+                  "certFile": "user.crt",
+                  "certKey": "user.key",
+                  "name": "flp-kafka",
+                  "type": "secret"
+                }
+              },
+              "topic": "network-flows"
+            },
+            "loki": {
+              "batchSize": 10485760,
+              "batchWait": "1s",
+              "manual": {
+                "ingesterUrl": "http://loki.netobserv.svc:3100/",
+                "statusTls": {
+                  "caCert": {
+                    "certFile": "service-ca.crt",
+                    "name": "loki-ca-bundle",
+                    "type": "configmap"
+                  },
+                  "enable": false,
+                  "insecureSkipVerify": false,
+                  "userCert": {
+                    "certFile": "tls.crt",
+                    "certKey": "tls.key",
+                    "name": "loki-query-frontend-http",
+                    "type": "secret"
+                  }
+                },
+                "tls": {
+                  "caCert": {
+                    "certFile": "service-ca.crt",
+                    "name": "loki-gateway-ca-bundle",
+                    "type": "configmap"
+                  },
+                  "enable": false,
+                  "insecureSkipVerify": false
+                }
+              },
+              "maxBackoff": "5s",
+              "maxRetries": 2,
+              "minBackoff": "1s",
+              "mode": "MANUAL"
+            },
+            "namespace": "netobserv",
+            "processor": {
+              "conversationEndTimeout": "10s",
+              "conversationHeartbeatInterval": "30s",
+              "conversationTerminatingTimeout": "5s",
+              "dropUnusedFields": true,
+              "imagePullPolicy": "IfNotPresent",
+              "kafkaConsumerAutoscaler": null,
+              "kafkaConsumerBatchSize": 10485760,
+              "kafkaConsumerQueueCapacity": 1000,
+              "kafkaConsumerReplicas": 3,
+              "logLevel": "info",
+              "logTypes": "FLOWS",
+              "metrics": {
+                "disableAlerts": [],
+                "ignoreTags": [
+                  "egress",
+                  "packets"
+                ],
+                "server": {
+                  "port": 9102
+                }
+              },
+              "port": 2055,
+              "profilePort": 6060,
+              "resources": {
+                "limits": {
+                  "memory": "800Mi"
+                },
+                "requests": {
+                  "cpu": "100m",
+                  "memory": "100Mi"
+                }
+              }
+            }
+          }
         }
       ]
     capabilities: Seamless Upgrades
-    categories: Monitoring, Networking, Observability
+    categories: Monitoring, Networking
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.0.4
     createdAt: ':created-at:'
@@ -386,6 +569,12 @@ spec:
       kind: FlowCollector
       name: flowcollectors.flows.netobserv.io
       version: v1beta1
+    - description: '`FlowCollector` is the schema for the network flows collection
+        API, which pilots and configures the underlying deployments.'
+      displayName: Flow Collector
+      kind: FlowCollector
+      name: flowcollectors.flows.netobserv.io
+      version: v1beta2
   description: |-
     NetObserv Operator is an OpenShift / Kubernetes operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by the NetObserv eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
 
@@ -403,7 +592,7 @@ spec:
 
     - Installing using [Grafana's official documentation](https://grafana.com/docs/loki/latest/). Here also we wrote a ["distributed Loki" step by step guide](https://github.com/netobserv/documents/blob/main/loki_distributed.md).
 
-    For a quick try that is not suitable for production and not scalable (it deploys a single pod, configures a 1GB storage PVC, with 24 hours of retention), you can simply run the following commands:
+    For a quick try that is not suitable for production and not scalable (it deploys a single pod, configures a 10GB storage PVC, with 24 hours of retention), you can simply run the following commands:
 
     ```
     kubectl create namespace netobserv
@@ -687,6 +876,7 @@ spec:
                 - --flowlogs-pipeline-image=$(RELATED_IMAGE_FLOWLOGS_PIPELINE)
                 - --console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)
                 - --downstream-deployment=$(DOWNSTREAM_DEPLOYMENT)
+                - --profiling-bind-address=$(PROFILING_BIND_ADDRESS)
                 command:
                 - /manager
                 env:
@@ -698,6 +888,7 @@ spec:
                   value: quay.io/netobserv/network-observability-console-plugin:v0.1.11
                 - name: DOWNSTREAM_DEPLOYMENT
                   value: "false"
+                - name: PROFILING_BIND_ADDRESS
                 image: quay.io/netobserv/network-observability-operator:1.0.4
                 imagePullPolicy: Always
                 livenessProbe:
@@ -859,6 +1050,7 @@ spec:
   - admissionReviewVersions:
     - v1alpha1
     - v1beta1
+    - v1beta2
     containerPort: 443
     conversionCRDs:
     - flowcollectors.flows.netobserv.io
@@ -878,7 +1070,7 @@ spec:
     - apiGroups:
       - netobserv.io
       apiVersions:
-      - v1beta1
+      - v1beta2
       operations:
       - CREATE
       - UPDATE
@@ -887,4 +1079,4 @@ spec:
     sideEffects: None
     targetPort: 9443
     type: ValidatingAdmissionWebhook
-    webhookPath: /validate-netobserv-io-v1beta1-flowcollector
+    webhookPath: /validate-netobserv-io-v1beta2-flowcollector

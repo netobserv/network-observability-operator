@@ -17,7 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
@@ -161,8 +161,8 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 }
 
 func (b *builder) buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
-	querierURL := querierURL(&desired.Loki)
-	statusURL := statusURL(&desired.Loki)
+	querierURL := helper.LokiQuerierURL(&desired.Loki)
+	statusURL := helper.LokiStatusURL(&desired.Loki)
 
 	// check for connection traking to list indexes
 	indexFields := constants.LokiIndexFields
@@ -175,7 +175,7 @@ func (b *builder) buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 		"-key", "/var/serving-cert/tls.key",
 		"-loki", querierURL,
 		"-loki-labels", strings.Join(indexFields, ","),
-		"-loki-tenant-id", desired.Loki.TenantID,
+		"-loki-tenant-id", helper.LokiTenantID(&desired.Loki),
 		"-loglevel", desired.ConsolePlugin.LogLevel,
 		"-frontend-config", filepath.Join(configPath, configFile),
 	}
@@ -188,23 +188,24 @@ func (b *builder) buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
 		args = append(args, "-loki-status", statusURL)
 	}
 
-	if desired.Loki.TLS.Enable {
-		if desired.Loki.TLS.InsecureSkipVerify {
+	clientTLS := helper.LokiTLS(&desired.Loki)
+	if clientTLS.Enable {
+		if clientTLS.InsecureSkipVerify {
 			args = append(args, "-loki-skip-tls")
 		} else {
-			caPath := b.volumes.AddCACertificate(&desired.Loki.TLS, "loki-certs")
+			caPath := b.volumes.AddCACertificate(clientTLS, "loki-certs")
 			if caPath != "" {
 				args = append(args, "-loki-ca-path", caPath)
 			}
 		}
 	}
 
-	statusTLS := helper.GetLokiStatusTLS(&desired.Loki)
+	statusTLS := helper.LokiStatusTLS(&desired.Loki)
 	if statusTLS.Enable {
 		if statusTLS.InsecureSkipVerify {
 			args = append(args, "-loki-status-skip-tls")
 		} else {
-			statusCaPath, userCertPath, userKeyPath := b.volumes.AddMutualTLSCertificates(&statusTLS, "loki-status-certs")
+			statusCaPath, userCertPath, userKeyPath := b.volumes.AddMutualTLSCertificates(statusTLS, "loki-status-certs")
 			if statusCaPath != "" {
 				args = append(args, "-loki-status-ca-path", statusCaPath)
 			}

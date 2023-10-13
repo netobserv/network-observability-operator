@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -84,7 +84,10 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowslat
 		return nil
 	}
 
-	builder := newIngestBuilder(r.Instance, &desired.Spec)
+	builder, err := newIngestBuilder(r.Instance, &desired.Spec)
+	if err != nil {
+		return err
+	}
 	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err

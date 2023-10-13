@@ -10,9 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -63,7 +63,7 @@ func flowCollectorEBPFSpecs() {
 					Agent: flowslatest.FlowCollectorAgent{
 						Type: "EBPF",
 						EBPF: flowslatest.FlowCollectorEBPF{
-							Sampling:           pointer.Int32(123),
+							Sampling:           ptr.To(int32(123)),
 							CacheActiveTimeout: "15s",
 							CacheMaxFlows:      100,
 							Interfaces:         []string{"veth0", "/^br-/"},

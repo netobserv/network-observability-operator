@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -88,7 +88,10 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 		return nil
 	}
 
-	builder := newTransfoBuilder(r.Instance, &desired.Spec)
+	builder, err := newTransfoBuilder(r.Instance, &desired.Spec)
+	if err != nil {
+		return err
+	}
 	newCM, configDigest, err := builder.configMap()
 	if err != nil {
 		return err
@@ -116,7 +119,8 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 
 	// Watch for Loki certificate if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
 	// because certificate is always reloaded from file
-	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &desired.Spec.Loki.TLS, r.Namespace); err != nil {
+	clientTLS := helper.LokiTLS(&desired.Spec.Loki)
+	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, clientTLS, r.Namespace); err != nil {
 		return err
 	}
 

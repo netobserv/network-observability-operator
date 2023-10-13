@@ -15,9 +15,9 @@ import (
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
@@ -123,11 +123,11 @@ func flowCollectorControllerSpecs() {
 						},
 					},
 					ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
-						Enable:          pointer.Bool(true),
+						Enable:          ptr.To(true),
 						Port:            9001,
 						ImagePullPolicy: "Never",
 						PortNaming: flowslatest.ConsolePluginPortConfig{
-							Enable: pointer.Bool(true),
+							Enable: ptr.To(true),
 							PortNames: map[string]string{
 								"3100": "loki",
 							},
@@ -369,7 +369,7 @@ func flowCollectorControllerSpecs() {
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.MaxRetries = pointer.Int32(7)
+				fc.Spec.Loki.MaxRetries = ptr.To(int32(7))
 			})
 
 			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
@@ -557,7 +557,7 @@ func flowCollectorControllerSpecs() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor.KafkaConsumerAutoscaler = flowslatest.FlowCollectorHPA{
 					Status:      flowslatest.HPAStatusEnabled,
-					MinReplicas: pointer.Int32(1),
+					MinReplicas: ptr.To(int32(1)),
 					MaxReplicas: 1,
 					Metrics: []ascv2.MetricSpec{{
 						Type: ascv2.ResourceMetricSourceType,
@@ -565,7 +565,7 @@ func flowCollectorControllerSpecs() {
 							Name: v1.ResourceCPU,
 							Target: ascv2.MetricTarget{
 								Type:               ascv2.UtilizationMetricType,
-								AverageUtilization: pointer.Int32(90),
+								AverageUtilization: ptr.To(int32(90)),
 							},
 						},
 					}},
@@ -585,7 +585,7 @@ func flowCollectorControllerSpecs() {
 
 		It("Should autoscale when the HPA options change", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Processor.KafkaConsumerAutoscaler.MinReplicas = pointer.Int32(2)
+				fc.Spec.Processor.KafkaConsumerAutoscaler.MinReplicas = ptr.To(int32(2))
 				fc.Spec.Processor.KafkaConsumerAutoscaler.MaxReplicas = 2
 			})
 
@@ -632,7 +632,7 @@ func flowCollectorControllerSpecs() {
 		})
 	})
 
-	Context("Using certificates", func() {
+	Context("Using certificates with loki manual mode", func() {
 		flpDS := appsv1.DaemonSet{}
 		It("Should update Loki to use TLS", func() {
 			// Create CM certificate
@@ -641,9 +641,10 @@ func flowCollectorControllerSpecs() {
 					Name:      "loki-ca",
 					Namespace: operatorNamespace,
 				},
+				Data: map[string]string{"ca.crt": "certificate data"},
 			})).Should(Succeed())
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.TLS = flowslatest.ClientTLS{
+				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
 					Enable: true,
 					CACert: flowslatest.CertificateReference{
 						Type:     flowslatest.RefTypeConfigMap,
@@ -668,7 +669,57 @@ func flowCollectorControllerSpecs() {
 
 		It("Should restore no TLS config", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.TLS = flowslatest.ClientTLS{
+				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
+					Enable: false,
+				}
+			})
+			Eventually(func() interface{} {
+				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
+					return err
+				}
+				return flpDS.Spec.Template.Spec.Volumes
+			}, timeout, interval).Should(HaveLen(1))
+			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+		})
+	})
+
+	Context("Using Certificates With Loki in LokiStack Mode", func() {
+		flpDS := appsv1.DaemonSet{}
+		It("Should update Loki config successfully", func() {
+			// Create CM certificate
+			Expect(k8sClient.Create(ctx, &v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "lokistack-gateway-ca-bundle",
+					Namespace: operatorNamespace,
+				},
+				Data: map[string]string{"service-ca.crt": "certificate data"},
+			})).Should(Succeed())
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Loki.Mode = "LOKISTACK"
+				fc.Spec.Loki.LokiStack = &flowslatest.LokiStack{
+					Name:      "lokistack",
+					Namespace: operatorNamespace,
+				}
+			})
+		})
+
+		It("Should have certificate mounted", func() {
+			By("Expecting certificate mounted")
+			Eventually(func() interface{} {
+				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
+					return err
+				}
+				return flpDS.Spec.Template.Spec.Volumes
+			}, timeout, interval).Should(HaveLen(3))
+			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("flowlogs-pipeline"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[2].Name).To(Equal("loki-certs-ca"))
+		})
+
+		It("Should restore no TLS config in manual mode", func() {
+			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Loki.Mode = "MANUAL"
+				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
 					Enable: false,
 				}
 			})

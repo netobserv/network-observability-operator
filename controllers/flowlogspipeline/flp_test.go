@@ -29,9 +29,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -53,7 +53,8 @@ var outputRecordTypes = flowslatest.LogTypeAll
 
 const testNamespace = "flp"
 
-func getConfig() flowslatest.FlowCollectorSpec {
+func getConfig(lokiMode ...string) flowslatest.FlowCollectorSpec {
+
 	return flowslatest.FlowCollectorSpec{
 		DeploymentModel: flowslatest.DeploymentModelDirect,
 		Agent:           flowslatest.FlowCollectorAgent{Type: flowslatest.AgentIPFIX},
@@ -71,7 +72,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 					},
 				},
 			},
-			KafkaConsumerReplicas: pointer.Int32(1),
+			KafkaConsumerReplicas: ptr.To(int32(1)),
 			KafkaConsumerAutoscaler: flowslatest.FlowCollectorHPA{
 				Status:      flowslatest.HPAStatusEnabled,
 				MinReplicas: &minReplicas,
@@ -98,26 +99,54 @@ func getConfig() flowslatest.FlowCollectorSpec {
 				Duration: conntrackTerminatingTimeout,
 			},
 		},
-		Loki: flowslatest.FlowCollectorLoki{
-			Enable: pointer.Bool(true),
-			URL:    "http://loki:3100/",
-			BatchWait: &metav1.Duration{
-				Duration: 1,
-			},
-			BatchSize: 102400,
-			MinBackoff: &metav1.Duration{
-				Duration: 1,
-			},
-			MaxBackoff: &metav1.Duration{
-				Duration: 300,
-			},
-			MaxRetries:   pointer.Int32(10),
-			StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
-		},
+		Loki: getLoki(lokiMode...),
 		Kafka: flowslatest.FlowCollectorKafka{
 			Address: "kafka",
 			Topic:   "flp",
 		},
+	}
+}
+
+func getLoki(lokiMode ...string) flowslatest.FlowCollectorLoki {
+
+	if lokiMode != nil {
+		if lokiMode[0] == "LOKISTACK" {
+			return flowslatest.FlowCollectorLoki{Mode: "LOKISTACK", LokiStack: &flowslatest.LokiStack{
+				Name:      "lokistack",
+				Namespace: "ls-namespace",
+			},
+				BatchWait: &metav1.Duration{
+					Duration: 1,
+				},
+				BatchSize: 102400,
+				MinBackoff: &metav1.Duration{
+					Duration: 1,
+				},
+				MaxBackoff: &metav1.Duration{
+					Duration: 300,
+				},
+				Enable:       ptr.To(true),
+				MaxRetries:   ptr.To(int32(10)),
+				StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
+			}
+		}
+	}
+	// defaults to MANUAL mode if no other mode was selected
+	return flowslatest.FlowCollectorLoki{Mode: "MANUAL", Manual: flowslatest.LokiManualParams{
+		IngesterURL: "http://loki:3100/"},
+		BatchWait: &metav1.Duration{
+			Duration: 1,
+		},
+		BatchSize: 102400,
+		MinBackoff: &metav1.Duration{
+			Duration: 1,
+		},
+		MaxBackoff: &metav1.Duration{
+			Duration: 300,
+		},
+		Enable:       ptr.To(true),
+		MaxRetries:   ptr.To(int32(10)),
+		StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
 	}
 }
 
@@ -157,12 +186,14 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 
 func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
 	info := reconcilers.Common{Namespace: ns}
-	return newMonolithBuilder(info.NewInstance(image), cfg)
+	b, _ := newMonolithBuilder(info.NewInstance(image), cfg)
+	return b
 }
 
 func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) transfoBuilder {
 	info := reconcilers.Common{Namespace: ns}
-	return newTransfoBuilder(info.NewInstance(image), cfg)
+	b, _ := newTransfoBuilder(info.NewInstance(image), cfg)
+	return b
 }
 
 func annotate(digest string) map[string]string {
@@ -206,7 +237,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	first := b.daemonSet(annotate(digest))
 
 	// Check probes enabled change
-	cfg.Processor.EnableKubeProbes = pointer.Bool(true)
+	cfg.Processor.EnableKubeProbes = ptr.To(true)
 	b = monoBuilder(ns, &cfg)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
@@ -279,7 +310,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.Contains(report.String(), "no change")
 
 	// Check Loki config change
-	cfg.Loki.TLS = flowslatest.ClientTLS{
+	cfg.Loki.Manual.TLS = flowslatest.ClientTLS{
 		Enable: true,
 		CACert: flowslatest.CertificateReference{
 			Type:     "configmap",
@@ -297,7 +328,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	assert.Contains(report.String(), "config-digest")
 
 	// Check volumes change
-	cfg.Loki.TLS = flowslatest.ClientTLS{
+	cfg.Loki.Manual.TLS = flowslatest.ClientTLS{
 		Enable: true,
 		CACert: flowslatest.CertificateReference{
 			Type:     "configmap",
@@ -350,7 +381,7 @@ func TestDeploymentChanged(t *testing.T) {
 	first := b.deployment(annotate(digest))
 
 	// Check probes enabled change
-	cfg.Processor.EnableKubeProbes = pointer.Bool(true)
+	cfg.Processor.EnableKubeProbes = ptr.To(true)
 	b = transfBuilder(ns, &cfg)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
@@ -408,7 +439,7 @@ func TestDeploymentChanged(t *testing.T) {
 
 	// Check replicas didn't change because HPA is used
 	cfg2 := cfg
-	cfg2.Processor.KafkaConsumerReplicas = pointer.Int32(5)
+	cfg2.Processor.KafkaConsumerReplicas = ptr.To(int32(5))
 	b = transfBuilder(ns, &cfg2)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
@@ -432,7 +463,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 
 	// Check replicas changed (need to copy flp, as Spec.Replicas stores a pointer)
 	cfg2 := cfg
-	cfg2.Processor.KafkaConsumerReplicas = pointer.Int32(5)
+	cfg2.Processor.KafkaConsumerReplicas = ptr.To(int32(5))
 	b = transfBuilder(ns, &cfg2)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
@@ -536,7 +567,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2"}
-	b = newMonolithBuilder(info.NewInstance(image2), &cfg)
+	b, _ = newMonolithBuilder(info.NewInstance(image2), &cfg)
 	third := b.generic.serviceMonitor()
 
 	report = helper.NewChangeReport("")
@@ -544,7 +575,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 	assert.Contains(report.String(), "ServiceMonitor labels changed")
 
 	// Check scheme changed
-	b = newMonolithBuilder(info.NewInstance(image2), &cfg)
+	b, _ = newMonolithBuilder(info.NewInstance(image2), &cfg)
 	fourth := b.generic.serviceMonitor()
 	fourth.Spec.Endpoints[0].Scheme = "https"
 
@@ -589,7 +620,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2"}
-	b = newMonolithBuilder(info.NewInstance(image2), &cfg)
+	b, _ = newMonolithBuilder(info.NewInstance(image2), &cfg)
 	third := b.generic.prometheusRule()
 
 	report = helper.NewChangeReport("")
@@ -597,7 +628,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	assert.Contains(report.String(), "PrometheusRule labels changed")
 }
 
-func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
+func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 	assert := assert.New(t)
 
 	ns := "namespace"
@@ -624,7 +655,7 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 	assert.Equal(cfg.Processor.Port, int32(params[0].Ingest.Collector.Port))
 
 	lokiCfg := params[3].Write.Loki
-	assert.Equal(loki.URL, lokiCfg.URL)
+	assert.Equal(loki.Manual.IngesterURL, lokiCfg.URL)
 	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg.BatchWait)
 	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg.MinBackoff)
 	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
@@ -641,6 +672,52 @@ func TestConfigMapShouldDeserializeAsJSON(t *testing.T) {
 		"Duplicate",
 		"_RecordType",
 	}, lokiCfg.Labels)
+	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
+
+	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))
+}
+
+func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
+	assert := assert.New(t)
+
+	ns := "namespace"
+	cfg := getConfig("LOKISTACK")
+	loki := cfg.Loki
+	b := monoBuilder(ns, &cfg)
+	cm, digest, err := b.configMap()
+	assert.NoError(err)
+	assert.NotEmpty(t, digest)
+
+	assert.Equal("dev", cm.Labels["version"])
+
+	data, ok := cm.Data[configFile]
+	assert.True(ok)
+
+	var decoded config.ConfigFileStruct
+	err = json.Unmarshal([]byte(data), &decoded)
+
+	assert.Nil(err)
+	assert.Equal("trace", decoded.LogLevel)
+
+	params := decoded.Parameters
+	assert.Len(params, 6)
+	assert.Equal(cfg.Processor.Port, int32(params[0].Ingest.Collector.Port))
+
+	lokiCfg := params[3].Write.Loki
+	assert.Equal("https://lokistack-gateway-http.ls-namespace.svc:8080/api/logs/v1/network/", lokiCfg.URL)
+	assert.Equal("network", lokiCfg.TenantID)
+	assert.Equal("Bearer", lokiCfg.ClientConfig.Authorization.Type)
+	assert.Equal("/var/run/secrets/tokens/flowlogs-pipeline", lokiCfg.ClientConfig.Authorization.CredentialsFile)
+	assert.Equal(false, lokiCfg.ClientConfig.TLSConfig.InsecureSkipVerify)
+	assert.Equal("/var/loki-certs-ca/service-ca.crt", lokiCfg.ClientConfig.TLSConfig.CAFile)
+	assert.Equal("", lokiCfg.ClientConfig.TLSConfig.CertFile)
+	assert.Equal("", lokiCfg.ClientConfig.TLSConfig.KeyFile)
+	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg.BatchWait)
+	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg.MinBackoff)
+	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
+	assert.EqualValues(*loki.MaxRetries, lokiCfg.MaxRetries)
+	assert.EqualValues(loki.BatchSize, lokiCfg.BatchSize)
+	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type", "FlowDirection", "Duplicate", "_RecordType"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
 	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))
@@ -682,9 +759,9 @@ func TestLabels(t *testing.T) {
 
 	cfg := getConfig()
 	info := reconcilers.Common{Namespace: "ns"}
-	builder := newMonolithBuilder(info.NewInstance(image), &cfg)
-	tBuilder := newTransfoBuilder(info.NewInstance(image), &cfg)
-	iBuilder := newIngestBuilder(info.NewInstance(image), &cfg)
+	builder, _ := newMonolithBuilder(info.NewInstance(image), &cfg)
+	tBuilder, _ := newTransfoBuilder(info.NewInstance(image), &cfg)
+	iBuilder, _ := newIngestBuilder(info.NewInstance(image), &cfg)
 
 	// Deployment
 	depl := tBuilder.deployment(annotate("digest"))
@@ -763,7 +840,7 @@ func TestPipelineConfig(t *testing.T) {
 	// Kafka Ingester
 	cfg.DeploymentModel = flowslatest.DeploymentModelKafka
 	info := reconcilers.Common{Namespace: ns}
-	bi := newIngestBuilder(info.NewInstance(image), &cfg)
+	bi, _ := newIngestBuilder(info.NewInstance(image), &cfg)
 	stages, parameters, err = bi.buildPipelineConfig()
 	assert.NoError(err)
 	assert.True(validatePipelineConfig(stages, parameters))
@@ -786,7 +863,7 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	cfg.Processor.LogLevel = "info"
-	cfg.Processor.DropUnusedFields = pointer.Bool(true)
+	cfg.Processor.DropUnusedFields = ptr.To(true)
 	b := monoBuilder(ns, &cfg)
 	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
@@ -912,7 +989,7 @@ func TestPipelineWithoutLoki(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Loki.Enable = pointer.Bool(false)
+	cfg.Loki.Enable = ptr.To(false)
 
 	b := monoBuilder("namespace", &cfg)
 	stages, parameters, err := b.buildPipelineConfig()

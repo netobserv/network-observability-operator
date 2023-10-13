@@ -4,7 +4,7 @@ metadata:
   annotations:
     alm-examples: '[]'
     capabilities: Seamless Upgrades
-    categories: Monitoring, Networking, Observability
+    categories: Monitoring, Networking
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: ':container-image:'
     createdAt: ':created-at:'
@@ -35,6 +35,12 @@ spec:
       kind: FlowCollector
       name: flowcollectors.flows.netobserv.io
       version: v1beta1
+    - description: '`FlowCollector` is the schema for the network flows collection
+        API, which pilots and configures the underlying deployments.'
+      displayName: Flow Collector
+      kind: FlowCollector
+      name: flowcollectors.flows.netobserv.io
+      version: v1beta2
   description: ':full-description:'
   displayName: NetObserv Operator
   icon:

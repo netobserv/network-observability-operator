@@ -20,12 +20,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	_ "net/http/pprof"
 	"os"
 
 	"go.uber.org/zap/zapcore"
-
-	"github.com/netobserv/network-observability-operator/controllers/operator"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
@@ -46,10 +44,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/operator"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -64,8 +63,8 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(flowsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(flowsv1beta1.AddToScheme(scheme))
+	utilruntime.Must(flowsv1beta2.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(ascv2.AddToScheme(scheme))
 	utilruntime.Must(osv1alpha1.AddToScheme(scheme))
@@ -81,12 +80,14 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+	var pprofAddr string
 	var versionFlag bool
 
 	config := operator.Config{}
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&pprofAddr, "profiling-bind-address", "", "The address the profiling endpoint binds to, such as ':6060'. Leave unset to disable profiling.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -124,6 +125,7 @@ func main() {
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Port: 9443,
 		}),
+		PprofBindAddress:       pprofAddr,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "7a7ecdcd.netobserv.io",
@@ -140,8 +142,8 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "FlowCollector")
 		os.Exit(1)
 	}
-	if err = (&flowsv1beta1.FlowCollector{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create v1beta1 webhook", "webhook", "FlowCollector")
+	if err = (&flowsv1beta2.FlowCollector{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create v1beta2 webhook", "webhook", "FlowCollector")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

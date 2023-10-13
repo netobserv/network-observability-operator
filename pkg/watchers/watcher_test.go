@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
@@ -12,10 +12,11 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/cache/informertest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const baseNamespace = "base-ns"
@@ -112,6 +113,12 @@ var kafkaSaslConfig = flowslatest.SASLConfig{
 	},
 }
 
+type fakeReconcile struct{}
+
+func (r *fakeReconcile) Reconcile(context.Context, reconcile.Request) (ctrl.Result, error) {
+	return ctrl.Result{}, nil
+}
+
 func initWatcher(t *testing.T) *Watcher {
 	m, err := manager.New(&rest.Config{}, manager.Options{
 		NewCache: func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
@@ -119,8 +126,10 @@ func initWatcher(t *testing.T) *Watcher {
 		},
 	})
 	assert.NoError(t, err)
-	b := builder.ControllerManagedBy(m)
-	return RegisterWatcher(b)
+	b := ctrl.NewControllerManagedBy(m).For(&corev1.Pod{})
+	ctrl, err := b.Build(&fakeReconcile{})
+	assert.NoError(t, err)
+	return NewWatcher(ctrl, m.GetCache())
 }
 
 func TestGenDigests(t *testing.T) {

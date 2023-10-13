@@ -77,13 +77,13 @@ func (c *Client) UpdateOwned(ctx context.Context, old, obj client.Object) error 
 }
 
 func (c *Client) CheckDeploymentInProgress(d *appsv1.Deployment) {
-	if d.Status.AvailableReplicas < d.Status.Replicas {
+	if d.Status.UpdatedReplicas < d.Status.Replicas {
 		c.SetInProgress(true)
 	}
 }
 
 func (c *Client) CheckDaemonSetInProgress(ds *appsv1.DaemonSet) {
-	if ds.Status.NumberAvailable < ds.Status.DesiredNumberScheduled {
+	if ds.Status.UpdatedNumberScheduled < ds.Status.DesiredNumberScheduled {
 		c.SetInProgress(true)
 	}
 }

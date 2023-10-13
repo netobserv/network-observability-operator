@@ -42,8 +42,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/operator"
 	//+kubebuilder:scaffold:imports
 )
@@ -87,13 +87,25 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths: []string{
-			filepath.Join("..", "config", "crd", "bases"),
-			// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
-			filepath.Join("..", "vendor", "github.com", "openshift", "api", "console", "v1alpha1"),
-			filepath.Join("..", "vendor", "github.com", "openshift", "api", "config", "v1"),
-			filepath.Join("..", "vendor", "github.com", "openshift", "api", "operator", "v1"),
-			filepath.Join("..", "test-assets"),
+		Scheme: scheme.Scheme,
+		CRDInstallOptions: envtest.CRDInstallOptions{
+			Paths: []string{
+				// FIXME: till v1beta2 becomes the new storage version we will point to hack folder
+				// where v1beta2 is marked as the storage version
+				// filepath.Join("..", "config", "crd", "bases"),
+				filepath.Join("..", "hack"),
+				// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
+				filepath.Join("..", "vendor", "github.com", "openshift", "api", "console", "v1alpha1"),
+				filepath.Join("..", "vendor", "github.com", "openshift", "api", "config", "v1"),
+				filepath.Join("..", "vendor", "github.com", "openshift", "api", "operator", "v1"),
+				filepath.Join("..", "test-assets"),
+			},
+			CleanUpAfterUse: true,
+			WebhookOptions: envtest.WebhookInstallOptions{
+				Paths: []string{
+					filepath.Join("..", "config", "webhook"),
+				},
+			},
 		},
 		ErrorIfCRDPathMissing: true,
 	}
@@ -102,10 +114,10 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	err = flowsv1alpha1.AddToScheme(scheme.Scheme)
+	err = flowsv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = flowsv1beta1.AddToScheme(scheme.Scheme)
+	err = flowsv1beta2.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = corev1.AddToScheme(scheme.Scheme)

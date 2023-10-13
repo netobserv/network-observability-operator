@@ -36,7 +36,7 @@ make deploy deploy-loki deploy-grafana
 
 It will deploy the operator in its latest version, with port-forwarded Loki and Grafana.
 
-> Note: the `loki-deploy` script is provided as a quick install path and is not suitable for production. It deploys a single pod, configures a 1GB storage PVC, with 24 hours of retention. For a scalable deployment, please refer to [our distributed Loki guide](https://github.com/netobserv/documents/blob/main/loki_distributed.md) or [Grafana's official documentation](https://grafana.com/docs/loki/latest/).
+> Note: the `loki-deploy` script is provided as a quick install path and is not suitable for production. It deploys a single pod, configures a 10GB storage PVC, with 24 hours of retention. For a scalable deployment, please refer to [our distributed Loki guide](https://github.com/netobserv/documents/blob/main/loki_distributed.md) or [Grafana's official documentation](https://grafana.com/docs/loki/latest/).
 
 To deploy the monitoring pipeline, this `make` target installs a `FlowCollector` with default values:
 
@@ -44,7 +44,7 @@ To deploy the monitoring pipeline, this `make` target installs a `FlowCollector`
 make deploy-sample-cr
 ```
 
-Alternatively, you can [grab and edit](./config/samples/flows_v1beta1_flowcollector.yaml) this config before installing it.
+Alternatively, you can [grab and edit](./config/samples/flows_v1beta2_flowcollector.yaml) this config before installing it.
 
 You can still edit the `FlowCollector` after it's installed: the operator will take care about reconciling everything with the updated configuration:
 
@@ -61,7 +61,7 @@ To deploy a specific version of the operator, you need to switch to the related 
 ```bash
 git checkout 0.1.2
 VERSION=0.1.2 make deploy deploy-loki deploy-grafana
-kubectl apply -f ./config/samples/flows_v1beta1_flowcollector_versioned.yaml
+kubectl apply -f ./config/samples/flows_v1beta2_flowcollector_versioned.yaml
 ```
 
 Beware that the version of the underlying components, such as flowlogs-pipeline, may be tied to the version of the operator (this is why we recommend switching the git branch). Breaking this correlation may result in crashes. The versions of the underlying components are defined in the `FlowCollector` resource as image tags.
@@ -110,7 +110,7 @@ To get dashboards, import [this file](./config/samples/dashboards/Network%20Obse
 
 ## Configuration
 
-The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](./docs/FlowCollector.md), and a full sample file [there](./config/samples/flows_v1beta1_flowcollector.yaml).
+The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](./docs/FlowCollector.md), and a full sample file [there](./config/samples/flows_v1beta2_flowcollector.yaml).
 
 To edit configuration in cluster, run:
 

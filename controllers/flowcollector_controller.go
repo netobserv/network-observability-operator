@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
@@ -243,9 +243,13 @@ func (r *FlowCollectorReconciler) SetupWithManager(ctx context.Context, mgr ctrl
 		return err
 	}
 
-	r.watcher = watchers.RegisterWatcher(builder)
+	ctrl, err := builder.Build(r)
+	if err != nil {
+		return err
+	}
+	r.watcher = watchers.NewWatcher(ctrl, mgr.GetCache())
 
-	return builder.Complete(r)
+	return nil
 }
 
 func (r *FlowCollectorReconciler) setupDiscovery(ctx context.Context, mgr ctrl.Manager, builder *builder.Builder) error {

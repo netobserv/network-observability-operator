@@ -9,7 +9,7 @@ import (
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
@@ -18,11 +18,11 @@ type transfoBuilder struct {
 	generic builder
 }
 
-func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) transfoBuilder {
-	gen := newBuilder(info, desired, ConfKafkaTransformer)
+func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) (transfoBuilder, error) {
+	gen, err := newBuilder(info, desired, ConfKafkaTransformer)
 	return transfoBuilder{
 		generic: gen,
-	}
+	}, err
 }
 
 func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deployment {
