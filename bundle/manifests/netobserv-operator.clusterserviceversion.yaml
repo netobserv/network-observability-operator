@@ -536,7 +536,7 @@ metadata:
         }
       ]
     capabilities: Seamless Upgrades
-    categories: Monitoring, Observability
+    categories: Monitoring
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.0.4
     createdAt: ':created-at:'
