@@ -9,7 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 var oldDashboard = corev1.ConfigMap{
@@ -20,7 +20,7 @@ var oldDashboard = corev1.ConfigMap{
 			APIVersion: "flows.netobserv.io/v1beta2",
 			Kind:       "FlowCollector",
 			Name:       "cluster",
-			Controller: pointer.Bool(true),
+			Controller: ptr.To(true),
 		}},
 	},
 	Data: map[string]string{},
