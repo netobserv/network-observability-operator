@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
@@ -76,13 +76,13 @@ func flowCollectorConsolePluginSpecs() {
 					DeploymentModel: flowslatest.DeploymentModelDirect,
 					Agent:           flowslatest.FlowCollectorAgent{Type: "IPFIX"},
 					ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
-						Enable:          pointer.Bool(true),
+						Enable:          ptr.To(true),
 						Port:            9001,
 						ImagePullPolicy: "Never",
-						Register:        pointer.Bool(true),
+						Register:        ptr.To(true),
 						Autoscaler: flowslatest.FlowCollectorHPA{
 							Status:      flowslatest.HPAStatusEnabled,
-							MinReplicas: pointer.Int32(1),
+							MinReplicas: ptr.To(int32(1)),
 							MaxReplicas: 1,
 							Metrics: []ascv2.MetricSpec{{
 								Type: ascv2.ResourceMetricSourceType,
@@ -90,13 +90,13 @@ func flowCollectorConsolePluginSpecs() {
 									Name: v1.ResourceCPU,
 									Target: ascv2.MetricTarget{
 										Type:               ascv2.UtilizationMetricType,
-										AverageUtilization: pointer.Int32(90),
+										AverageUtilization: ptr.To(int32(90)),
 									},
 								},
 							}},
 						},
 						PortNaming: flowslatest.ConsolePluginPortConfig{
-							Enable: pointer.Bool(true),
+							Enable: ptr.To(true),
 							PortNames: map[string]string{
 								"3100": "loki",
 							},
@@ -153,7 +153,7 @@ func flowCollectorConsolePluginSpecs() {
 					return err
 				}
 				fc.Spec.ConsolePlugin.Port = 9099
-				fc.Spec.ConsolePlugin.Replicas = pointer.Int32(2)
+				fc.Spec.ConsolePlugin.Replicas = ptr.To(int32(2))
 				fc.Spec.ConsolePlugin.Autoscaler.Status = flowslatest.HPAStatusDisabled
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
@@ -243,7 +243,7 @@ func flowCollectorConsolePluginSpecs() {
 		It("Should be unregistered", func() {
 			By("Update CR to unregister")
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.ConsolePlugin.Register = pointer.Bool(false)
+				fc.Spec.ConsolePlugin.Register = ptr.To(false)
 			})
 
 			By("Expecting the Console CR to not have plugin registered")
@@ -270,7 +270,7 @@ func flowCollectorConsolePluginSpecs() {
 
 		It("Should cleanup console plugin if disabled", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.ConsolePlugin.Enable = pointer.Bool(false)
+				fc.Spec.ConsolePlugin.Enable = ptr.To(false)
 			})
 			Eventually(func() error {
 				d := appsv1.Deployment{}
@@ -291,7 +291,7 @@ func flowCollectorConsolePluginSpecs() {
 
 		It("Should recreate console plugin if enabled back", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.ConsolePlugin.Enable = pointer.Bool(true)
+				fc.Spec.ConsolePlugin.Enable = ptr.To(true)
 			})
 			Eventually(func() error {
 				d := appsv1.Deployment{}
