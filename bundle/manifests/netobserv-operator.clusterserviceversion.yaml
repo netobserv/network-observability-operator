@@ -369,6 +369,7 @@ metadata:
                 "interfaces": [],
                 "kafkaBatchSize": 10485760,
                 "logLevel": "info",
+                "privileged": false,
                 "resources": {
                   "limits": {
                     "memory": "800Mi"
@@ -514,7 +515,11 @@ metadata:
                 "disableAlerts": [],
                 "ignoreTags": [
                   "egress",
-                  "packets"
+                  "packets",
+                  "nodes-flows",
+                  "namespaces-flows",
+                  "workloads-flows",
+                  "namespaces"
                 ],
                 "server": {
                   "port": 9102

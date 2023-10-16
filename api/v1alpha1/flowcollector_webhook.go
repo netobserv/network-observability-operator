@@ -84,6 +84,12 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
 	dst.Spec.Loki.Mode = restored.Spec.Loki.Mode
 	dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
+	if restored.Spec.Loki.Distributed != nil {
+		dst.Spec.Loki.Distributed = restored.Spec.Loki.Distributed
+	}
+	if restored.Spec.Loki.Monolith != nil {
+		dst.Spec.Loki.Monolith = restored.Spec.Loki.Monolith
+	}
 	if restored.Spec.Loki.LokiStack != nil {
 		dst.Spec.Loki.LokiStack = restored.Spec.Loki.LokiStack
 	}
@@ -101,7 +107,6 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 }
 
 func isExporterIn(restoredExporter *v1beta2.FlowCollectorExporter, dstExporters []*v1beta2.FlowCollectorExporter) bool {
-
 	for _, dstExp := range dstExporters {
 		if reflect.DeepEqual(restoredExporter, dstExp) {
 			return true

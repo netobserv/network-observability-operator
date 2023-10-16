@@ -60,6 +60,12 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	// Loki
 	dst.Spec.Loki.Mode = restored.Spec.Loki.Mode
 	dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
+	if restored.Spec.Loki.Distributed != nil {
+		dst.Spec.Loki.Distributed = restored.Spec.Loki.Distributed
+	}
+	if restored.Spec.Loki.Monolith != nil {
+		dst.Spec.Loki.Monolith = restored.Spec.Loki.Monolith
+	}
 	if restored.Spec.Loki.LokiStack != nil {
 		dst.Spec.Loki.LokiStack = restored.Spec.Loki.LokiStack
 	}
@@ -84,6 +90,8 @@ func (r *FlowCollector) ConvertFrom(srcRaw conversion.Hub) error {
 	switch src.Spec.Loki.Mode {
 	case v1beta2.LokiModeManual:
 		r.Spec.Loki.AuthToken = src.Spec.Loki.Manual.AuthToken
+	case v1beta2.LokiModeDistributed, v1beta2.LokiModeMonolith:
+		r.Spec.Loki.AuthToken = ""
 	case v1beta2.LokiModeLokiStack:
 		r.Spec.Loki.AuthToken = v1beta2.LokiAuthForwardUserToken
 	}

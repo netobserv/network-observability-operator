@@ -12,6 +12,11 @@ spec:
       sampling: 50
       cacheActiveTimeout: 5s
       cacheMaxFlows: 100000
+      privileged: false
+      # features: 
+      # - "PacketDrop"
+      # - "DNSTracking"
+      # - "FlowRTT"
       interfaces: [ ]
       excludeInterfaces: [ "lo" ]
       logLevel: info
@@ -33,6 +38,12 @@ spec:
       ignoreTags:
         - egress
         - packets
+        - nodes-flows
+        - namespaces-flows
+        - workloads-flows
+        # Ignoring eihter "namespaces" or "workloads", as namespaces metrics are included in workload metrics
+        # This helps reduce total cardinality
+        - namespaces
       disableAlerts: []
     dropUnusedFields: true
     resources:
@@ -49,6 +60,8 @@ spec:
     conversationTerminatingTimeout: 5s
     conversationHeartbeatInterval: 30s
     conversationEndTimeout: 10s
+    # Append a unique cluster name to each record
+    # clusterName: <CLUSTER NAME>
   kafka:
     address: "kafka-cluster-kafka-bootstrap.netobserv"
     topic: network-flows

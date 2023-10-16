@@ -907,6 +907,8 @@ func autoConvert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *Flow
 func autoConvert_v1beta2_FlowCollectorLoki_To_v1beta1_FlowCollectorLoki(in *v1beta2.FlowCollectorLoki, out *FlowCollectorLoki, s conversion.Scope) error {
 	// WARNING: in.Mode requires manual conversion: does not exist in peer-type
 	// WARNING: in.Manual requires manual conversion: does not exist in peer-type
+	// WARNING: in.Distributed requires manual conversion: does not exist in peer-type
+	// WARNING: in.Monolith requires manual conversion: does not exist in peer-type
 	// WARNING: in.LokiStack requires manual conversion: does not exist in peer-type
 	out.Enable = (*bool)(unsafe.Pointer(in.Enable))
 	out.BatchWait = (*v1.Duration)(unsafe.Pointer(in.BatchWait))

@@ -87,6 +87,8 @@ func LokiNoAuthToken(spec *flowslatest.FlowCollectorLoki) bool {
 	switch spec.Mode {
 	case flowslatest.LokiModeLokiStack:
 		return false
+	case flowslatest.LokiModeMonolith, flowslatest.LokiModeDistributed:
+		return true
 	default:
 		return spec.Manual.AuthToken == flowslatest.LokiAuthDisabled
 	}
@@ -94,7 +96,7 @@ func LokiNoAuthToken(spec *flowslatest.FlowCollectorLoki) bool {
 
 func LokiUseHostToken(spec *flowslatest.FlowCollectorLoki) bool {
 	switch spec.Mode {
-	case flowslatest.LokiModeLokiStack:
+	case flowslatest.LokiModeLokiStack, flowslatest.LokiModeMonolith, flowslatest.LokiModeDistributed:
 		return false
 	default:
 		return spec.Manual.AuthToken == flowslatest.LokiAuthUseHostToken
@@ -105,6 +107,8 @@ func LokiForwardUserToken(spec *flowslatest.FlowCollectorLoki) bool {
 	switch spec.Mode {
 	case flowslatest.LokiModeLokiStack:
 		return true
+	case flowslatest.LokiModeMonolith, flowslatest.LokiModeDistributed:
+		return false
 	default:
 		return spec.Manual.AuthToken == flowslatest.LokiAuthForwardUserToken
 	}
@@ -131,6 +135,10 @@ func LokiIngesterURL(spec *flowslatest.FlowCollectorLoki) string {
 	switch spec.Mode {
 	case flowslatest.LokiModeLokiStack:
 		return lokiStackGatewayURL(spec)
+	case flowslatest.LokiModeMonolith:
+		return spec.Monolith.URL
+	case flowslatest.LokiModeDistributed:
+		return spec.Distributed.IngesterURL
 	default:
 		return spec.Manual.IngesterURL
 	}
@@ -140,6 +148,13 @@ func LokiQuerierURL(spec *flowslatest.FlowCollectorLoki) string {
 	switch spec.Mode {
 	case flowslatest.LokiModeLokiStack:
 		return lokiStackGatewayURL(spec)
+	case flowslatest.LokiModeMonolith:
+		return spec.Monolith.URL
+	case flowslatest.LokiModeDistributed:
+		if spec.Distributed.QuerierURL != "" {
+			return spec.Distributed.QuerierURL
+		}
+		return spec.Distributed.IngesterURL
 	default:
 		if spec.Manual.QuerierURL != "" {
 			return spec.Manual.QuerierURL
@@ -152,6 +167,8 @@ func LokiStatusURL(spec *flowslatest.FlowCollectorLoki) string {
 	switch spec.Mode {
 	case flowslatest.LokiModeLokiStack:
 		return lokiStackStatusURL(spec)
+	case flowslatest.LokiModeMonolith, flowslatest.LokiModeDistributed:
+		return LokiQuerierURL(spec)
 	default:
 		if spec.Manual.StatusURL != "" {
 			return spec.Manual.StatusURL
@@ -164,6 +181,8 @@ func LokiTenantID(spec *flowslatest.FlowCollectorLoki) string {
 	switch spec.Mode {
 	case flowslatest.LokiModeLokiStack:
 		return "network"
+	case flowslatest.LokiModeMonolith, flowslatest.LokiModeDistributed:
+		return "netobserv"
 	default:
 		return spec.Manual.TenantID
 	}
@@ -183,6 +202,10 @@ func LokiTLS(spec *flowslatest.FlowCollectorLoki) *flowslatest.ClientTLS {
 			InsecureSkipVerify: false,
 		}
 		return clientTLS
+	case flowslatest.LokiModeMonolith:
+		return &spec.Monolith.TLS
+	case flowslatest.LokiModeDistributed:
+		return &spec.Distributed.TLS
 	default:
 		return &spec.Manual.TLS
 	}
@@ -208,6 +231,8 @@ func LokiStatusTLS(spec *flowslatest.FlowCollectorLoki) *flowslatest.ClientTLS {
 			},
 		}
 		return clientTLS
+	case flowslatest.LokiModeMonolith, flowslatest.LokiModeDistributed:
+		return LokiTLS(spec)
 	default:
 		if spec.Manual.StatusURL != "" {
 			return &spec.Manual.StatusTLS

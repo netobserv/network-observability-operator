@@ -518,7 +518,7 @@ const (
 // `LokiManualParams` defines the full connection parameters to Loki.
 type LokiManualParams struct {
 	//+kubebuilder:default:="http://loki:3100/"
-	// `ingesterUrl` is the address of an existing Loki service to push the flows to. When using the Loki Operator,
+	// `ingesterUrl` is the address of an existing Loki ingester service to push the flows to. When using the Loki Operator,
 	// set it to the Loki gateway service with the `network` tenant set in path, for example
 	// https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.
 	IngesterURL string `json:"ingesterUrl,omitempty"`
@@ -562,7 +562,35 @@ type LokiManualParams struct {
 	StatusTLS ClientTLS `json:"statusTls"`
 }
 
-// `LokiStack` defines the name and namespace of the `LokiStack` instance when using the Loki Operator.
+// LokiDistributedParams defines the parameters to connect loki for microservices mode
+type LokiDistributedParams struct {
+	//+kubebuilder:default:="http://loki:3100/"
+	// `ingesterUrl` is the address of an existing Loki ingester service to push the flows to.
+	IngesterURL string `json:"ingesterUrl,omitempty"`
+
+	//+kubebuilder:validation:optional
+	// `querierURL` specifies the address of the Loki querier service, in case it is different from the
+	// Loki ingester URL. If empty, the URL value is used (assuming that the Loki ingester
+	// and querier are in the same server).
+	QuerierURL string `json:"querierUrl,omitempty"`
+
+	// TLS client configuration for Loki URL.
+	// +optional
+	TLS ClientTLS `json:"tls"`
+}
+
+// LokiMonolithParams defines the parameters to connect loki for monolithic mode
+type LokiMonolithParams struct {
+	//+kubebuilder:default:="http://loki:3100/"
+	// `url` is the unique address of an existing Loki service that point both ingester and querier.
+	URL string `json:"url,omitempty"`
+
+	// TLS client configuration for Loki URL.
+	// +optional
+	TLS ClientTLS `json:"tls"`
+}
+
+// LokiStack defines the name and namespace of the loki-operator instance
 type LokiStack struct {
 	//+kubebuilder:default:="loki"
 	Name string `json:"name,omitempty"`
@@ -571,13 +599,15 @@ type LokiStack struct {
 }
 
 const (
-	LokiModeManual    = "MANUAL"
-	LokiModeLokiStack = "LOKISTACK"
+	LokiModeManual      = "MANUAL"
+	LokiModeDistributed = "DISTRIBUTED"
+	LokiModeMonolith    = "MONOLITH"
+	LokiModeLokiStack   = "LOKISTACK"
 )
 
 // `FlowCollectorLoki` defines the desired state for FlowCollector's Loki client.
 type FlowCollectorLoki struct {
-	//+kubebuilder:validation:Enum=MANUAL;LOKISTACK
+	//+kubebuilder:validation:Enum=MANUAL;DISTRIBUTED;MONOLITH;LOKISTACK;
 	//+kubebuilder:default:="MANUAL"
 	Mode string `json:"mode,omitempty"`
 
@@ -586,8 +616,18 @@ type FlowCollectorLoki struct {
 	// +optional
 	Manual LokiManualParams `json:"manual,omitempty"`
 
-	// Loki configuration for LOKISTACK mode. This is useful for an easy loki-operator config.
-	// It will be ignored for other modes.
+	// Loki configuration for DISTRIBUTED mode. This is usefull for an easy microservices loki config.
+	// It will be ignored for other mods
+	// +optional
+	Distributed *LokiDistributedParams `json:"distributed,omitempty"`
+
+	// Loki configuration for MONOLITH mode. This is usefull for an easy monolithic loki config.
+	// It will be ignored for other mods
+	// +optional
+	Monolith *LokiMonolithParams `json:"monolith,omitempty"`
+
+	// Loki configuration for LOKISTACK mode. This is usefull for an easy loki-operator config.
+	// It will be ignored for other mods
 	// +optional
 	LokiStack *LokiStack `json:"lokiStack,omitempty"`
 
