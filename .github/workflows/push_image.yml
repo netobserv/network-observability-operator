@@ -1,7 +1,7 @@
 name: Build and push to quay.io
 on:
   push:
-    branches: [ main, workflow-test ]
+    branches: [ main, release-*, workflow-test ]
 
 env:
   WF_REGISTRY_USER: netobserv+github_ci
