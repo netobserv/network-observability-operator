@@ -206,9 +206,9 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
 
-	if helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketDrop) || helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.DNSTracking) {
+	if helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketDrop) {
 		if !coll.Spec.Agent.EBPF.Privileged {
-			rlog.Error(fmt.Errorf("invalid configuration"), "To use PacketsDrop and/or DNSTracking feature(s) privileged mode needs to be enabled")
+			rlog.Error(fmt.Errorf("invalid configuration"), "To use PacketsDrop feature privileged mode needs to be enabled")
 		} else {
 			volume := corev1.Volume{
 				Name: bpfTraceMountName,

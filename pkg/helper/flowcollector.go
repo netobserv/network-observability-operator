@@ -243,10 +243,7 @@ func IsPktDropEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 }
 
 func IsDNSTrackingEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	if IsPrivileged(spec) && IsFeatureEnabled(spec, flowslatest.DNSTracking) {
-		return true
-	}
-	return false
+	return IsFeatureEnabled(spec, flowslatest.DNSTracking)
 }
 
 func IsFlowRTTEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
