@@ -8,6 +8,7 @@ env:
   WF_REGISTRY: quay.io/netobserv
   WF_IMAGE: network-observability-operator
   WF_ORG: netobserv
+  WF_RELIMG_VERSION: main
 
 jobs:
   push-pr-image:
@@ -42,8 +43,12 @@ jobs:
         run: IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make image-push
       - name: build and push manifest
         run: IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make manifest-build manifest-push
+      - name: get related images target
+        if: startsWith(github.ref_name, 'workflow-')
+        run: |
+          echo "WF_RELIMG_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
       - name: build bundle
-        run: OCI_BUILD_OPTS="--label quay.expires-after=2w" IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} PLG_VERSION=main FLP_VERSION=main BPF_VERSION=main BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle bundle-build
+        run: OCI_BUILD_OPTS="--label quay.expires-after=2w" IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} PLG_VERSION=${{ env.WF_RELIMG_VERSION }} FLP_VERSION=${{ env.WF_RELIMG_VERSION }} BPF_VERSION=${{ env.WF_RELIMG_VERSION }} BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle bundle-build
       - name: push bundle to quay.io
         run: IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle-push
       - name: build catalog
