@@ -18,7 +18,7 @@ encode:
         valuekey: Bytes
         filters:
         - key: FlowDirection
-          value: "1"
+          value: "1|2"
         - key: Duplicate
           value: "false"
         labels:
