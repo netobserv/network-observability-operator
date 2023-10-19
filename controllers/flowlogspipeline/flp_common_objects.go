@@ -178,6 +178,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	for _, pair := range helper.KeySorted(b.desired.Processor.Debug.Env) {
 		envs = append(envs, corev1.EnvVar{Name: pair[0], Value: pair[1]})
 	}
+	envs = append(envs, constants.EnvNoHTTP2)
 
 	container := corev1.Container{
 		Name:            constants.FLPName,

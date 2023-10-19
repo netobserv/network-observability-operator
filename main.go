@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	_ "net/http/pprof"
@@ -81,6 +82,7 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	var pprofAddr string
+	var enableHTTP2 bool
 	var versionFlag bool
 
 	config := operator.Config{}
@@ -95,6 +97,7 @@ func main() {
 	flag.StringVar(&config.FlowlogsPipelineImage, "flowlogs-pipeline-image", "quay.io/netobserv/flowlogs-pipeline:main", "The image of Flowlogs Pipeline")
 	flag.StringVar(&config.ConsolePluginImage, "console-plugin-image", "quay.io/netobserv/network-observability-console-plugin:main", "The image of the Console Plugin")
 	flag.BoolVar(&config.DownstreamDeployment, "downstream-deployment", false, "Either this deployment is a downstream deployment ot not")
+	flag.BoolVar(&enableHTTP2, "enable-http2", enableHTTP2, "If HTTP/2 should be enabled for the metrics and webhook servers.")
 	flag.BoolVar(&versionFlag, "v", false, "print version")
 	opts := zap.Options{
 		Development: true,
@@ -117,13 +120,22 @@ func main() {
 		os.Exit(1)
 	}
 
+	disableHTTP2 := func(c *tls.Config) {
+		if enableHTTP2 {
+			return
+		}
+		c.NextProtos = []string{"http/1.1"}
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
 		Metrics: server.Options{
 			BindAddress: metricsAddr,
+			TLSOpts:     []func(*tls.Config){disableHTTP2},
 		},
 		WebhookServer: webhook.NewServer(webhook.Options{
-			Port: 9443,
+			Port:    9443,
+			TLSOpts: []func(*tls.Config){disableHTTP2},
 		}),
 		PprofBindAddress:       pprofAddr,
 		HealthProbeBindAddress: probeAddr,

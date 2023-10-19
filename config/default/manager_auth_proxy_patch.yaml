@@ -18,7 +18,7 @@ spec:
         - "--flowlogs-pipeline-image=$(RELATED_IMAGE_FLOWLOGS_PIPELINE)"
         - "--console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)"
       - name: kube-rbac-proxy
-        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.4
         args:
           - "--secure-listen-address=0.0.0.0:8443"
           - "--upstream=http://127.0.0.1:8080/"
