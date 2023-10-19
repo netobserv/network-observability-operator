@@ -12,7 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	rec "sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -41,8 +40,8 @@ func RegisterWatcher(builder *builder.Builder) *Watcher {
 
 func (w *Watcher) registerWatches(builder *builder.Builder, watchable Watchable, kind flowslatest.MountableType) {
 	builder.Watches(
-		&source.Kind{Type: watchable.ProvidePlaceholder()},
-		handler.EnqueueRequestsFromMapFunc(func(o client.Object) []rec.Request {
+		watchable.ProvidePlaceholder(),
+		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []rec.Request {
 			if w.isWatched(kind, o.GetName(), o.GetNamespace()) {
 				// Trigger FlowCollector reconcile
 				return []rec.Request{{NamespacedName: constants.FlowCollectorName}}

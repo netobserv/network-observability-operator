@@ -1,7 +1,10 @@
 // Package constants defines some values that are shared across multiple packages
 package constants
 
-import "k8s.io/apimachinery/pkg/types"
+import (
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+)
 
 const (
 	DefaultOperatorNamespace = "netobserv"
@@ -40,3 +43,7 @@ const (
 var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_Namespace", "DstK8S_OwnerName", "FlowDirection"}
 var LokiConnectionIndexFields = []string{"_RecordType"}
 var FlowCollectorName = types.NamespacedName{Name: "cluster"}
+var EnvNoHTTP2 = corev1.EnvVar{
+	Name:  "GODEBUG",
+	Value: "http2server=0",
+}

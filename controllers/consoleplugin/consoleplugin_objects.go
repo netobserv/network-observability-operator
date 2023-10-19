@@ -270,6 +270,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 				Resources:       *b.desired.ConsolePlugin.Resources.DeepCopy(),
 				VolumeMounts:    b.volumes.AppendMounts(volumeMounts),
 				Args:            args,
+				Env:             []corev1.EnvVar{constants.EnvNoHTTP2},
 			}},
 			Volumes:            b.volumes.AppendVolumes(volumes),
 			ServiceAccountName: constants.PluginName,

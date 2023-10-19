@@ -15,7 +15,7 @@ import (
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -123,11 +123,11 @@ func flowCollectorControllerSpecs() {
 						},
 					},
 					ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
-						Enable:          pointer.Bool(true),
+						Enable:          ptr.To(true),
 						Port:            9001,
 						ImagePullPolicy: "Never",
 						PortNaming: flowslatest.ConsolePluginPortConfig{
-							Enable: pointer.Bool(true),
+							Enable: ptr.To(true),
 							PortNames: map[string]string{
 								"3100": "loki",
 							},
@@ -335,7 +335,7 @@ func flowCollectorControllerSpecs() {
 					Protocol:      "UDP",
 				}))
 				Expect(cnt.Env).To(Equal([]v1.EnvVar{
-					{Name: "GOGC", Value: "400"}, {Name: "GOMAXPROCS", Value: "33"},
+					{Name: "GOGC", Value: "400"}, {Name: "GOMAXPROCS", Value: "33"}, {Name: "GODEBUG", Value: "http2server=0"},
 				}))
 			})
 
@@ -369,7 +369,7 @@ func flowCollectorControllerSpecs() {
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.MaxRetries = pointer.Int32(7)
+				fc.Spec.Loki.MaxRetries = ptr.To(int32(7))
 			})
 
 			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
@@ -557,7 +557,7 @@ func flowCollectorControllerSpecs() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor.KafkaConsumerAutoscaler = flowslatest.FlowCollectorHPA{
 					Status:      flowslatest.HPAStatusEnabled,
-					MinReplicas: pointer.Int32(1),
+					MinReplicas: ptr.To(int32(1)),
 					MaxReplicas: 1,
 					Metrics: []ascv2.MetricSpec{{
 						Type: ascv2.ResourceMetricSourceType,
@@ -565,7 +565,7 @@ func flowCollectorControllerSpecs() {
 							Name: v1.ResourceCPU,
 							Target: ascv2.MetricTarget{
 								Type:               ascv2.UtilizationMetricType,
-								AverageUtilization: pointer.Int32(90),
+								AverageUtilization: ptr.To(int32(90)),
 							},
 						},
 					}},
@@ -585,7 +585,7 @@ func flowCollectorControllerSpecs() {
 
 		It("Should autoscale when the HPA options change", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Processor.KafkaConsumerAutoscaler.MinReplicas = pointer.Int32(2)
+				fc.Spec.Processor.KafkaConsumerAutoscaler.MinReplicas = ptr.To(int32(2))
 				fc.Spec.Processor.KafkaConsumerAutoscaler.MaxReplicas = 2
 			})
 

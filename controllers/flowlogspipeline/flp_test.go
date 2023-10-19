@@ -29,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -71,7 +71,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 					},
 				},
 			},
-			KafkaConsumerReplicas: pointer.Int32(1),
+			KafkaConsumerReplicas: ptr.To(int32(1)),
 			KafkaConsumerAutoscaler: flowslatest.FlowCollectorHPA{
 				Status:      flowslatest.HPAStatusEnabled,
 				MinReplicas: &minReplicas,
@@ -99,7 +99,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 			},
 		},
 		Loki: flowslatest.FlowCollectorLoki{
-			Enable: pointer.Bool(true),
+			Enable: ptr.To(true),
 			URL:    "http://loki:3100/",
 			BatchWait: &metav1.Duration{
 				Duration: 1,
@@ -111,7 +111,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 			MaxBackoff: &metav1.Duration{
 				Duration: 300,
 			},
-			MaxRetries:   pointer.Int32(10),
+			MaxRetries:   ptr.To(int32(10)),
 			StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
 		},
 		Kafka: flowslatest.FlowCollectorKafka{
@@ -206,7 +206,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	first := b.daemonSet(annotate(digest))
 
 	// Check probes enabled change
-	cfg.Processor.EnableKubeProbes = pointer.Bool(true)
+	cfg.Processor.EnableKubeProbes = ptr.To(true)
 	b = monoBuilder(ns, &cfg)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
@@ -350,7 +350,7 @@ func TestDeploymentChanged(t *testing.T) {
 	first := b.deployment(annotate(digest))
 
 	// Check probes enabled change
-	cfg.Processor.EnableKubeProbes = pointer.Bool(true)
+	cfg.Processor.EnableKubeProbes = ptr.To(true)
 	b = transfBuilder(ns, &cfg)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
@@ -408,7 +408,7 @@ func TestDeploymentChanged(t *testing.T) {
 
 	// Check replicas didn't change because HPA is used
 	cfg2 := cfg
-	cfg2.Processor.KafkaConsumerReplicas = pointer.Int32(5)
+	cfg2.Processor.KafkaConsumerReplicas = ptr.To(int32(5))
 	b = transfBuilder(ns, &cfg2)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
@@ -432,7 +432,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 
 	// Check replicas changed (need to copy flp, as Spec.Replicas stores a pointer)
 	cfg2 := cfg
-	cfg2.Processor.KafkaConsumerReplicas = pointer.Int32(5)
+	cfg2.Processor.KafkaConsumerReplicas = ptr.To(int32(5))
 	b = transfBuilder(ns, &cfg2)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
@@ -776,7 +776,7 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	cfg.Processor.LogLevel = "info"
-	cfg.Processor.DropUnusedFields = pointer.Bool(true)
+	cfg.Processor.DropUnusedFields = ptr.To(true)
 	b := monoBuilder(ns, &cfg)
 	stages, parameters, err := b.buildPipelineConfig()
 	assert.NoError(err)
@@ -902,7 +902,7 @@ func TestPipelineWithoutLoki(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Loki.Enable = pointer.Bool(false)
+	cfg.Loki.Enable = ptr.To(false)
 
 	b := monoBuilder("namespace", &cfg)
 	stages, parameters, err := b.buildPipelineConfig()
