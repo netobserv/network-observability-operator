@@ -11186,6 +11186,13 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspeclokidistributed">distributed</a></b></td>
+        <td>object</td>
+        <td>
+          Loki configuration for DISTRIBUTED mode. This is usefull for an easy microservices loki config. It will be ignored for other mods<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
@@ -11198,7 +11205,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b><a href="#flowcollectorspeclokilokistack">lokiStack</a></b></td>
         <td>object</td>
         <td>
-          Loki configuration for LOKISTACK mode. This is useful for an easy loki-operator config. It will be ignored for other modes.<br/>
+          Loki configuration for LOKISTACK mode. This is usefull for an easy loki-operator config. It will be ignored for other mods<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11243,8 +11250,15 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td>
           <br/>
           <br/>
-            <i>Enum</i>: MANUAL, LOKISTACK<br/>
+            <i>Enum</i>: MANUAL, DISTRIBUTED, MONOLITH, LOKISTACK<br/>
             <i>Default</i>: MANUAL<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeclokimonolith">monolith</a></b></td>
+        <td>object</td>
+        <td>
+          Loki configuration for MONOLITH mode. This is usefull for an easy monolithic loki config. It will be ignored for other mods<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11269,12 +11283,225 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
 </table>
 
 
+### FlowCollector.spec.loki.distributed
+<sup><sup>[↩ Parent](#flowcollectorspecloki-1)</sup></sup>
+
+
+
+Loki configuration for DISTRIBUTED mode. This is usefull for an easy microservices loki config. It will be ignored for other mods
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>ingesterUrl</b></td>
+        <td>string</td>
+        <td>
+          `ingesterUrl` is the address of an existing Loki ingester service to push the flows to.<br/>
+          <br/>
+            <i>Default</i>: http://loki:3100/<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>querierUrl</b></td>
+        <td>string</td>
+        <td>
+          `querierURL` specifies the address of the Loki querier service, in case it is different from the Loki ingester URL. If empty, the URL value is used (assuming that the Loki ingester and querier are in the same server).<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeclokidistributedtls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS client configuration for Loki URL.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.distributed.tls
+<sup><sup>[↩ Parent](#flowcollectorspeclokidistributed)</sup></sup>
+
+
+
+TLS client configuration for Loki URL.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeclokidistributedtlscacert">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to `true`, the `caCert` field is ignored.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeclokidistributedtlsusercert">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.distributed.tls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspeclokidistributedtls)</sup></sup>
+
+
+
+`caCert` defines the reference of the certificate for the Certificate Authority
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.distributed.tls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspeclokidistributedtls)</sup></sup>
+
+
+
+`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### FlowCollector.spec.loki.lokiStack
 <sup><sup>[↩ Parent](#flowcollectorspecloki-1)</sup></sup>
 
 
 
-Loki configuration for LOKISTACK mode. This is useful for an easy loki-operator config. It will be ignored for other modes.
+Loki configuration for LOKISTACK mode. This is usefull for an easy loki-operator config. It will be ignored for other mods
 
 <table>
     <thead>
@@ -11337,7 +11564,7 @@ Loki configuration for MANUAL mode. This is the more flexible configuration. It 
         <td><b>ingesterUrl</b></td>
         <td>string</td>
         <td>
-          `ingesterUrl` is the address of an existing Loki service to push the flows to. When using the Loki Operator, set it to the Loki gateway service with the `network` tenant set in path, for example https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.<br/>
+          `ingesterUrl` is the address of an existing Loki ingester service to push the flows to. When using the Loki Operator, set it to the Loki gateway service with the `network` tenant set in path, for example https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.<br/>
           <br/>
             <i>Default</i>: http://loki:3100/<br/>
         </td>
@@ -11666,6 +11893,212 @@ TLS client configuration for Loki URL.
 
 ### FlowCollector.spec.loki.manual.tls.userCert
 <sup><sup>[↩ Parent](#flowcollectorspeclokimanualtls)</sup></sup>
+
+
+
+`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.monolith
+<sup><sup>[↩ Parent](#flowcollectorspecloki-1)</sup></sup>
+
+
+
+Loki configuration for MONOLITH mode. This is usefull for an easy monolithic loki config. It will be ignored for other mods
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeclokimonolithtls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS client configuration for Loki URL.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          `url` is the unique address of an existing Loki service that point both ingester and querier.<br/>
+          <br/>
+            <i>Default</i>: http://loki:3100/<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.monolith.tls
+<sup><sup>[↩ Parent](#flowcollectorspeclokimonolith)</sup></sup>
+
+
+
+TLS client configuration for Loki URL.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeclokimonolithtlscacert">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate. If set to `true`, the `caCert` field is ignored.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeclokimonolithtlsusercert">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.monolith.tls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspeclokimonolithtls)</sup></sup>
+
+
+
+`caCert` defines the reference of the certificate for the Certificate Authority
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.monolith.tls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspeclokimonolithtls)</sup></sup>
 
 
 

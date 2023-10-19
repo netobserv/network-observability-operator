@@ -382,6 +382,7 @@ bundle: bundle-prepare ## Generate final bundle files.
 update-bundle: VERSION=$(BUNDLE_VERSION)
 update-bundle: IMAGE_ORG=netobserv
 update-bundle: bundle ## Prepare a clean bundle to be commited
+	cat ./config/crd/bases/flows.netobserv.io_flowcollectors.yaml | yq eval-all '(.spec.versions.[]|select(.name != "v1beta2").storage) = false,(.spec.versions.[]|select(.name == "v1beta2").storage) = true' > ./hack/cloned.flows.netobserv.io_flowcollectors.yaml
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
