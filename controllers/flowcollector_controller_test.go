@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -73,6 +74,9 @@ func flowCollectorControllerSpecs() {
 	rbKeyIngestMono := types.NamespacedName{Name: flowlogspipeline.RoleBindingMonoName(flowlogspipeline.ConfKafkaIngester)}
 	rbKeyTransformMono := types.NamespacedName{Name: flowlogspipeline.RoleBindingMonoName(flowlogspipeline.ConfKafkaTransformer)}
 	rbKeyPlugin := types.NamespacedName{Name: constants.PluginName}
+
+	// Created objects to cleanup
+	cleanupList := []client.Object{}
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
@@ -636,15 +640,17 @@ func flowCollectorControllerSpecs() {
 		flpDS := appsv1.DaemonSet{}
 		It("Should update Loki to use TLS", func() {
 			// Create CM certificate
-			Expect(k8sClient.Create(ctx, &v1.ConfigMap{
+			cm := &v1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "loki-ca",
 					Namespace: operatorNamespace,
 				},
 				Data: map[string]string{"ca.crt": "certificate data"},
-			})).Should(Succeed())
+			}
+			cleanupList = append(cleanupList, cm)
+			Expect(k8sClient.Create(ctx, cm)).Should(Succeed())
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.Mode = "MANUAL"
+				fc.Spec.Loki.Mode = flowslatest.LokiModeManual
 				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
 					Enable: true,
 					CACert: flowslatest.CertificateReference{
@@ -688,16 +694,18 @@ func flowCollectorControllerSpecs() {
 		flpDS := appsv1.DaemonSet{}
 		It("Should update Loki to use TLS", func() {
 			// Create CM certificate
-			Expect(k8sClient.Create(ctx, &v1.ConfigMap{
+			cm := &v1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "loki-distri-ca",
 					Namespace: operatorNamespace,
 				},
 				Data: map[string]string{"ca.crt": "certificate data"},
-			})).Should(Succeed())
+			}
+			cleanupList = append(cleanupList, cm)
+			Expect(k8sClient.Create(ctx, cm)).Should(Succeed())
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.Mode = "DISTRIBUTED"
-				fc.Spec.Loki.Distributed = &flowslatest.LokiDistributedParams{
+				fc.Spec.Loki.Mode = flowslatest.LokiModeMicroservices
+				fc.Spec.Loki.Microservices = flowslatest.LokiMicroservicesParams{
 					IngesterURL: "http://loki-ingested:3100/",
 					QuerierURL:  "http://loki-queries:3100/",
 					TLS: flowslatest.ClientTLS{
@@ -726,7 +734,7 @@ func flowCollectorControllerSpecs() {
 
 		It("Should restore no TLS config", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.Distributed.TLS = flowslatest.ClientTLS{
+				fc.Spec.Loki.Microservices.TLS = flowslatest.ClientTLS{
 					Enable: false,
 				}
 			})
@@ -744,16 +752,18 @@ func flowCollectorControllerSpecs() {
 		flpDS := appsv1.DaemonSet{}
 		It("Should update Loki to use TLS", func() {
 			// Create CM certificate
-			Expect(k8sClient.Create(ctx, &v1.ConfigMap{
+			cm := &v1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "loki-mono-ca",
 					Namespace: operatorNamespace,
 				},
 				Data: map[string]string{"ca.crt": "certificate data"},
-			})).Should(Succeed())
+			}
+			cleanupList = append(cleanupList, cm)
+			Expect(k8sClient.Create(ctx, cm)).Should(Succeed())
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.Mode = "MONOLITH"
-				fc.Spec.Loki.Monolith = &flowslatest.LokiMonolithParams{
+				fc.Spec.Loki.Mode = flowslatest.LokiModeMonolithic
+				fc.Spec.Loki.Monolithic = flowslatest.LokiMonolithParams{
 					URL: "http://loki-mono:3100/",
 					TLS: flowslatest.ClientTLS{
 						Enable: true,
@@ -781,7 +791,7 @@ func flowCollectorControllerSpecs() {
 
 		It("Should restore no TLS config", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.Monolith.TLS = flowslatest.ClientTLS{
+				fc.Spec.Loki.Monolithic.TLS = flowslatest.ClientTLS{
 					Enable: false,
 				}
 			})
@@ -799,16 +809,18 @@ func flowCollectorControllerSpecs() {
 		flpDS := appsv1.DaemonSet{}
 		It("Should update Loki config successfully", func() {
 			// Create CM certificate
-			Expect(k8sClient.Create(ctx, &v1.ConfigMap{
+			cm := &v1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "lokistack-gateway-ca-bundle",
 					Namespace: operatorNamespace,
 				},
 				Data: map[string]string{"service-ca.crt": "certificate data"},
-			})).Should(Succeed())
+			}
+			cleanupList = append(cleanupList, cm)
+			Expect(k8sClient.Create(ctx, cm)).Should(Succeed())
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.Mode = "LOKISTACK"
-				fc.Spec.Loki.LokiStack = &flowslatest.LokiStack{
+				fc.Spec.Loki.Mode = flowslatest.LokiModeLokiStack
+				fc.Spec.Loki.LokiStack = flowslatest.LokiStackRef{
 					Name:      "lokistack",
 					Namespace: operatorNamespace,
 				}
@@ -830,7 +842,7 @@ func flowCollectorControllerSpecs() {
 
 		It("Should restore no TLS config in manual mode", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.Mode = "MANUAL"
+				fc.Spec.Loki.Mode = flowslatest.LokiModeManual
 				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
 					Enable: false,
 				}
@@ -1005,6 +1017,14 @@ func flowCollectorControllerSpecs() {
 				err := k8sClient.Get(ctx, crKey, &flowCR)
 				return kerr.IsNotFound(err)
 			}, timeout, interval).Should(BeTrue())
+		})
+
+		It("Should cleanup other data", func() {
+			for _, obj := range cleanupList {
+				Eventually(func() error {
+					return k8sClient.Delete(ctx, obj)
+				}, timeout, interval).Should(Succeed())
+			}
 		})
 	})
 }

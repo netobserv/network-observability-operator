@@ -40,15 +40,15 @@ func flowCollectorCertificatesSpecs() {
 	}
 	lokiCert := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "loki-ca",
+			Name:      "loki-gateway-ca-bundle",
 			Namespace: "loki-namespace",
 		},
 		Data: map[string]string{
-			"cert.crt": "--- LOKI CA CERT ---",
-			"other":    "any",
+			"service-ca.crt": "--- LOKI CA CERT ---",
+			"other":          "any",
 		},
 	}
-	expectedLokiHash, _ := cmw.GetDigest(&lokiCert, []string{"cert.crt"})
+	expectedLokiHash, _ := cmw.GetDigest(&lokiCert, []string{"service-ca.crt"})
 	kafkaCert := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kafka-ca",
@@ -145,18 +145,12 @@ func flowCollectorCertificatesSpecs() {
 			},
 			Loki: flowslatest.FlowCollectorLoki{
 				Enable: ptr.To(true),
-				Manual: flowslatest.LokiManualParams{
-					AuthToken: flowslatest.LokiAuthForwardUserToken,
-					TLS: flowslatest.ClientTLS{
-						Enable: true,
-						CACert: flowslatest.CertificateReference{
-							Type:      flowslatest.RefTypeConfigMap,
-							Name:      lokiCert.Name,
-							Namespace: lokiCert.Namespace,
-							CertFile:  "cert.crt",
-						},
-					},
-				}},
+				Mode:   flowslatest.LokiModeLokiStack,
+				LokiStack: flowslatest.LokiStackRef{
+					Name:      "loki",
+					Namespace: "loki-namespace",
+				},
+			},
 			Kafka: flowslatest.FlowCollectorKafka{
 				TLS: flowslatest.ClientTLS{
 					Enable: true,
@@ -224,8 +218,8 @@ func flowCollectorCertificatesSpecs() {
 				}
 				return cm.Data
 			}, timeout, interval).Should(Equal(map[string]string{
-				"cert.crt": "--- LOKI CA CERT ---",
-				"other":    "any",
+				"service-ca.crt": "--- LOKI CA CERT ---",
+				"other":          "any",
 			}))
 			By("Expecting Kafka CA cert copied to privileged namespace")
 			Eventually(func() interface{} {
@@ -273,12 +267,13 @@ func flowCollectorCertificatesSpecs() {
 					return err
 				}
 				return plugin.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(4))
+			}, timeout, interval).Should(HaveLen(5))
 			Expect(plugin.Spec.Template.Annotations).To(HaveLen(1))
 			Expect(plugin.Spec.Template.Spec.Volumes[0].Name).To(Equal("console-serving-cert"))
 			Expect(plugin.Spec.Template.Spec.Volumes[1].Name).To(Equal("config-volume"))
 			Expect(plugin.Spec.Template.Spec.Volumes[2].Name).To(Equal("loki-certs-ca"))
 			Expect(plugin.Spec.Template.Spec.Volumes[3].Name).To(Equal("loki-status-certs-ca"))
+			Expect(plugin.Spec.Template.Spec.Volumes[4].Name).To(Equal("loki-status-certs-user"))
 			lastPluginAnnots = plugin.Spec.Template.Annotations
 
 			By("Expecting Loki and Kafka certificates for FLP mounted")
@@ -366,7 +361,7 @@ func flowCollectorCertificatesSpecs() {
 	Context("Updating Loki certificate", func() {
 		It("Should update Loki certificate", func() {
 			By("Updating Loki CA certificate")
-			lokiCert.Data["cert.crt"] = "--- LOKI CA CERT MODIFIED ---"
+			lokiCert.Data["service-ca.crt"] = "--- LOKI CA CERT MODIFIED ---"
 			Eventually(func() interface{} { return k8sClient.Update(ctx, &lokiCert) }, timeout, interval).Should(Succeed())
 		})
 
@@ -379,8 +374,8 @@ func flowCollectorCertificatesSpecs() {
 				}
 				return cm.Data
 			}, timeout, interval).Should(Equal(map[string]string{
-				"cert.crt": "--- LOKI CA CERT MODIFIED ---",
-				"other":    "any",
+				"service-ca.crt": "--- LOKI CA CERT MODIFIED ---",
+				"other":          "any",
 			}))
 		})
 

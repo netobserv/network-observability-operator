@@ -110,8 +110,8 @@ func getConfig(lokiMode ...string) flowslatest.FlowCollectorSpec {
 func getLoki(lokiMode ...string) flowslatest.FlowCollectorLoki {
 
 	if lokiMode != nil {
-		if lokiMode[0] == "LOKISTACK" {
-			return flowslatest.FlowCollectorLoki{Mode: "LOKISTACK", LokiStack: &flowslatest.LokiStack{
+		if lokiMode[0] == string(flowslatest.LokiModeLokiStack) {
+			return flowslatest.FlowCollectorLoki{Mode: flowslatest.LokiModeLokiStack, LokiStack: flowslatest.LokiStackRef{
 				Name:      "lokistack",
 				Namespace: "ls-namespace",
 			},
@@ -132,7 +132,7 @@ func getLoki(lokiMode ...string) flowslatest.FlowCollectorLoki {
 		}
 	}
 	// defaults to MANUAL mode if no other mode was selected
-	return flowslatest.FlowCollectorLoki{Mode: "MANUAL", Manual: flowslatest.LokiManualParams{
+	return flowslatest.FlowCollectorLoki{Mode: flowslatest.LokiModeManual, Manual: flowslatest.LokiManualParams{
 		IngesterURL: "http://loki:3100/"},
 		BatchWait: &metav1.Duration{
 			Duration: 1,
@@ -185,13 +185,15 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 }
 
 func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
-	info := reconcilers.Common{Namespace: ns}
+	loki := helper.NewLokiConfig(&cfg.Loki)
+	info := reconcilers.Common{Namespace: ns, Loki: &loki}
 	b, _ := newMonolithBuilder(info.NewInstance(image), cfg)
 	return b
 }
 
 func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) transfoBuilder {
-	info := reconcilers.Common{Namespace: ns}
+	loki := helper.NewLokiConfig(&cfg.Loki)
+	info := reconcilers.Common{Namespace: ns, Loki: &loki}
 	b, _ := newTransfoBuilder(info.NewInstance(image), cfg)
 	return b
 }
@@ -681,7 +683,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	assert := assert.New(t)
 
 	ns := "namespace"
-	cfg := getConfig("LOKISTACK")
+	cfg := getConfig(string(flowslatest.LokiModeLokiStack))
 	loki := cfg.Loki
 	b := monoBuilder(ns, &cfg)
 	cm, digest, err := b.configMap()

@@ -544,7 +544,7 @@ type LokiManualParams struct {
 	// When using the Loki Operator, set it to `network`, which corresponds to a special tenant mode.
 	TenantID string `json:"tenantID,omitempty"`
 
-	// +kubebuilder:validation:Enum:="DISABLED";"HOST";"FORWARD"
+	//+kubebuilder:validation:Enum:="DISABLED";"HOST";"FORWARD"
 	//+kubebuilder:default:="DISABLED"
 	// `authToken` describes the way to get a token to authenticate to Loki.<br>
 	// - `DISABLED` does not send any token with the request.<br>
@@ -562,74 +562,95 @@ type LokiManualParams struct {
 	StatusTLS ClientTLS `json:"statusTls"`
 }
 
-// LokiDistributedParams defines the parameters to connect loki for microservices mode
-type LokiDistributedParams struct {
-	//+kubebuilder:default:="http://loki:3100/"
+// LokiMicroservicesParams is the configuration for microservices Loki (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode)
+type LokiMicroservicesParams struct {
+	//+kubebuilder:default:="http://loki-distributor:3100/"
 	// `ingesterUrl` is the address of an existing Loki ingester service to push the flows to.
 	IngesterURL string `json:"ingesterUrl,omitempty"`
 
-	//+kubebuilder:validation:optional
-	// `querierURL` specifies the address of the Loki querier service, in case it is different from the
-	// Loki ingester URL. If empty, the URL value is used (assuming that the Loki ingester
-	// and querier are in the same server).
+	//+kubebuilder:default:="http://loki-query-frontend:3100/"
+	// `querierURL` specifies the address of the Loki querier service.
 	QuerierURL string `json:"querierUrl,omitempty"`
 
+	//+kubebuilder:default:="netobserv"
+	// `tenantID`` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.
+	TenantID string `json:"tenantID,omitempty"`
+
 	// TLS client configuration for Loki URL.
 	// +optional
 	TLS ClientTLS `json:"tls"`
 }
 
-// LokiMonolithParams defines the parameters to connect loki for monolithic mode
+// LokiMonolithParams is the configuration for monolithic Loki (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode)
 type LokiMonolithParams struct {
 	//+kubebuilder:default:="http://loki:3100/"
-	// `url` is the unique address of an existing Loki service that point both ingester and querier.
+	// `url` is the unique address of an existing Loki service that points to both the ingester and the querier.
 	URL string `json:"url,omitempty"`
+
+	//+kubebuilder:default:="netobserv"
+	// `tenantID`` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.
+	TenantID string `json:"tenantID,omitempty"`
 
 	// TLS client configuration for Loki URL.
 	// +optional
 	TLS ClientTLS `json:"tls"`
 }
 
-// LokiStack defines the name and namespace of the loki-operator instance
-type LokiStack struct {
+// LokiStackRef defines the name and namespace of the LokiStack instance
+type LokiStackRef struct {
+	// Name of an existing LokiStack resource to use.
 	//+kubebuilder:default:="loki"
+	//+kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
-	//+kubebuilder:default:="netobserv"
+
+	// Namespace where this `LokiStack` resource is located. If omited, it is assumed to be the same as `spec.namespace`.
+	// +optional
 	Namespace string `json:"namespace,omitempty"`
 }
 
+type LokiMode string
+
 const (
-	LokiModeManual      = "MANUAL"
-	LokiModeDistributed = "DISTRIBUTED"
-	LokiModeMonolith    = "MONOLITH"
-	LokiModeLokiStack   = "LOKISTACK"
+	LokiModeManual        LokiMode = "Manual"
+	LokiModeLokiStack     LokiMode = "LokiStack"
+	LokiModeMonolithic    LokiMode = "Monolithic"
+	LokiModeMicroservices LokiMode = "Microservices"
 )
 
 // `FlowCollectorLoki` defines the desired state for FlowCollector's Loki client.
 type FlowCollectorLoki struct {
-	//+kubebuilder:validation:Enum=MANUAL;DISTRIBUTED;MONOLITH;LOKISTACK;
-	//+kubebuilder:default:="MANUAL"
-	Mode string `json:"mode,omitempty"`
+	// `mode` must be set according to the installation mode of Loki:<br>
+	// - Use "LokiStack" when Loki is managed using the Loki Operator<br>
+	// - Use "Monolithic" when Loki is installed as a monolithic workload<br>
+	// - Use "Microservices" when Loki is installed as microservices, but without Loki Operator<br>
+	// - Use "Manual" if none of the options above match your setup<br>
+	//+unionDiscriminator
+	//+kubebuilder:validation:Enum=Manual;LokiStack;Monolithic;Microservices
+	//+kubebuilder:default:="Monolithic"
+	//+kubebuilder:validation:Required
+	Mode LokiMode `json:"mode,omitempty"`
 
-	// Loki configuration for MANUAL mode. This is the more flexible configuration.
-	// It will be ignored for other modes.
+	// Loki configuration for "Manual" mode. This is the most flexible configuration.
+	// It is ignored for other modes.
 	// +optional
 	Manual LokiManualParams `json:"manual,omitempty"`
 
-	// Loki configuration for DISTRIBUTED mode. This is usefull for an easy microservices loki config.
-	// It will be ignored for other mods
+	// Loki configuration for "Microservices" mode.
+	// Use this option when Loki is installed using the microservices deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode).
+	// It is ignored for other modes.
 	// +optional
-	Distributed *LokiDistributedParams `json:"distributed,omitempty"`
+	Microservices LokiMicroservicesParams `json:"microservices,omitempty"`
 
-	// Loki configuration for MONOLITH mode. This is usefull for an easy monolithic loki config.
-	// It will be ignored for other mods
+	// Loki configuration for "Monolithic" mode.
+	// Use this option when Loki is installed using the monolithic deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode).
+	// It is ignored for other modes.
 	// +optional
-	Monolith *LokiMonolithParams `json:"monolith,omitempty"`
+	Monolithic LokiMonolithParams `json:"monolithic,omitempty"`
 
-	// Loki configuration for LOKISTACK mode. This is usefull for an easy loki-operator config.
-	// It will be ignored for other mods
+	// Loki configuration for "LokiStack" mode. This is useful for an easy loki-operator configuration.
+	// It is ignored for other modes.
 	// +optional
-	LokiStack *LokiStack `json:"lokiStack,omitempty"`
+	LokiStack LokiStackRef `json:"lokiStack,omitempty"`
 
 	//+kubebuilder:default:=true
 	// Set `enable` to `true` to store flows in Loki. It is required for the OpenShift Console plugin installation.

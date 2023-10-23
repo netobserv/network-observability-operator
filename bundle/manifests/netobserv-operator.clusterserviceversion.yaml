@@ -466,37 +466,13 @@ metadata:
             "loki": {
               "batchSize": 10485760,
               "batchWait": "1s",
-              "manual": {
-                "ingesterUrl": "http://loki.netobserv.svc:3100/",
-                "statusTls": {
-                  "caCert": {
-                    "certFile": "service-ca.crt",
-                    "name": "loki-ca-bundle",
-                    "type": "configmap"
-                  },
-                  "enable": false,
-                  "insecureSkipVerify": false,
-                  "userCert": {
-                    "certFile": "tls.crt",
-                    "certKey": "tls.key",
-                    "name": "loki-query-frontend-http",
-                    "type": "secret"
-                  }
-                },
-                "tls": {
-                  "caCert": {
-                    "certFile": "service-ca.crt",
-                    "name": "loki-gateway-ca-bundle",
-                    "type": "configmap"
-                  },
-                  "enable": false,
-                  "insecureSkipVerify": false
-                }
+              "lokiStack": {
+                "name": "loki"
               },
               "maxBackoff": "5s",
               "maxRetries": 2,
               "minBackoff": "1s",
-              "mode": "MANUAL"
+              "mode": "Monolithic"
             },
             "namespace": "netobserv",
             "processor": {

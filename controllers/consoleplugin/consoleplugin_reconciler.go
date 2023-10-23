@@ -83,7 +83,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 
 	if helper.UseConsolePlugin(&desired.Spec) {
 		// Create object builder
-		builder := newBuilder(ns, r.Instance.Image, &desired.Spec)
+		builder := newBuilder(ns, r.Instance.Image, &desired.Spec, r.Loki)
 
 		if err := r.reconcilePermissions(ctx, &builder); err != nil {
 			return err
@@ -112,12 +112,10 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 
 		// Watch for Loki certificates if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
 		// because certificate is always reloaded from file
-		clientTLS := helper.LokiTLS(&desired.Spec.Loki)
-		if _, err = r.Watcher.ProcessCACert(ctx, r.Client, clientTLS, r.Namespace); err != nil {
+		if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &r.Loki.TLS, r.Namespace); err != nil {
 			return err
 		}
-		statusTLS := helper.LokiStatusTLS(&desired.Spec.Loki)
-		if _, _, err = r.Watcher.ProcessMTLSCerts(ctx, r.Client, statusTLS, r.Namespace); err != nil {
+		if _, _, err = r.Watcher.ProcessMTLSCerts(ctx, r.Client, &r.Loki.StatusTLS, r.Namespace); err != nil {
 			return err
 		}
 	} else {
