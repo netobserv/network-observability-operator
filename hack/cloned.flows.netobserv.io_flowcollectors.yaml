@@ -4582,7 +4582,7 @@ spec:
                           type: string
                         tenantID:
                           default: netobserv
-                          description: '`tenantID`` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.'
+                          description: '`tenantID` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.'
                           type: string
                         tls:
                           description: TLS client configuration for Loki URL.
@@ -4661,7 +4661,7 @@ spec:
                       properties:
                         tenantID:
                           default: netobserv
-                          description: '`tenantID`` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.'
+                          description: '`tenantID` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.'
                           type: string
                         tls:
                           description: TLS client configuration for Loki URL.

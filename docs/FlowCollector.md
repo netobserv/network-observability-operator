@@ -11773,7 +11773,7 @@ Loki configuration for "Microservices" mode. Use this option when Loki is instal
         <td><b>tenantID</b></td>
         <td>string</td>
         <td>
-          `tenantID`` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.<br/>
+          `tenantID` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.<br/>
           <br/>
             <i>Default</i>: netobserv<br/>
         </td>
@@ -11979,7 +11979,7 @@ Loki configuration for "Monolithic" mode. Use this option when Loki is installed
         <td><b>tenantID</b></td>
         <td>string</td>
         <td>
-          `tenantID`` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.<br/>
+          `tenantID` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.<br/>
           <br/>
             <i>Default</i>: netobserv<br/>
         </td>

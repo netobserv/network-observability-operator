@@ -573,7 +573,7 @@ type LokiMicroservicesParams struct {
 	QuerierURL string `json:"querierUrl,omitempty"`
 
 	//+kubebuilder:default:="netobserv"
-	// `tenantID`` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.
+	// `tenantID` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.
 	TenantID string `json:"tenantID,omitempty"`
 
 	// TLS client configuration for Loki URL.
@@ -588,7 +588,7 @@ type LokiMonolithParams struct {
 	URL string `json:"url,omitempty"`
 
 	//+kubebuilder:default:="netobserv"
-	// `tenantID`` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.
+	// `tenantID` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.
 	TenantID string `json:"tenantID,omitempty"`
 
 	// TLS client configuration for Loki URL.
