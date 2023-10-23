@@ -930,9 +930,10 @@ spec:
                 - --upstream=http://127.0.0.1:8080/
                 - --logtostderr=true
                 - --v=10
+                - --http2-disable
                 - --tls-cert-file=/etc/tls/private/tls.crt
                 - --tls-private-key-file=/etc/tls/private/tls.key
-                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.14.4
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
                 name: kube-rbac-proxy
                 ports:
                 - containerPort: 8443
