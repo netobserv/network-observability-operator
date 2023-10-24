@@ -7,6 +7,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/loki"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
@@ -120,7 +121,7 @@ func reconcileMonitoringCerts(ctx context.Context, info *reconcilers.Common, tls
 }
 
 func reconcileLokiRoles(ctx context.Context, r *reconcilers.Common, b *builder) error {
-	roles := b.buildLokiClusterRoles()
+	roles := loki.ClusterRoles(b.desired.Loki.Mode)
 	if len(roles) > 0 {
 		for i := range roles {
 			if err := r.ReconcileClusterRole(ctx, &roles[i]); err != nil {
@@ -128,7 +129,7 @@ func reconcileLokiRoles(ctx context.Context, r *reconcilers.Common, b *builder) 
 			}
 		}
 		// Binding
-		crb := b.lokiClusterRoleBinding()
+		crb := loki.ClusterRoleBinding(b.name(), b.name(), b.info.Namespace)
 		if err := r.ReconcileClusterRoleBinding(ctx, crb); err != nil {
 			return err
 		}

@@ -840,6 +840,24 @@ func flowCollectorControllerSpecs() {
 			Expect(flpDS.Spec.Template.Spec.Volumes[2].Name).To(Equal("loki-certs-ca"))
 		})
 
+		It("Should deploy Loki roles", func() {
+			By("Expecting Writer ClusterRole")
+			Eventually(func() interface{} {
+				var cr rbacv1.ClusterRole
+				return k8sClient.Get(ctx, types.NamespacedName{Name: constants.LokiCRWriter}, &cr)
+			}, timeout, interval).Should(Succeed())
+			By("Expecting Reader ClusterRole")
+			Eventually(func() interface{} {
+				var cr rbacv1.ClusterRole
+				return k8sClient.Get(ctx, types.NamespacedName{Name: constants.LokiCRReader}, &cr)
+			}, timeout, interval).Should(Succeed())
+			By("Expecting FLP Writer ClusterRoleBinding")
+			Eventually(func() interface{} {
+				var crb rbacv1.ClusterRoleBinding
+				return k8sClient.Get(ctx, types.NamespacedName{Name: constants.LokiCRBWriter}, &crb)
+			}, timeout, interval).Should(Succeed())
+		})
+
 		It("Should restore no TLS config in manual mode", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Mode = flowslatest.LokiModeManual
