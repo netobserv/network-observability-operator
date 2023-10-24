@@ -775,6 +775,57 @@ func (b *builder) clusterRoleBinding(ck ConfKind, mono bool) *rbacv1.ClusterRole
 	}
 }
 
+func (b *builder) buildLokiClusterRoles() []rbacv1.ClusterRole {
+	if b.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
+		return []rbacv1.ClusterRole{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: constants.LokiCRWriter,
+				},
+				Rules: []rbacv1.PolicyRule{{
+					APIGroups:     []string{"loki.grafana.com"},
+					Resources:     []string{"network"},
+					ResourceNames: []string{"logs"},
+					Verbs:         []string{"create"},
+				}},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: constants.LokiCRReader,
+				},
+				Rules: []rbacv1.PolicyRule{{
+					APIGroups:     []string{"loki.grafana.com"},
+					Resources:     []string{"network"},
+					ResourceNames: []string{"logs"},
+					Verbs:         []string{"get"},
+				}},
+			},
+		}
+	}
+	return []rbacv1.ClusterRole{}
+}
+
+func (b *builder) lokiClusterRoleBinding() *rbacv1.ClusterRoleBinding {
+	return &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: constants.LokiCRBWriter,
+			Labels: map[string]string{
+				"app": b.name(),
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     constants.LokiCRWriter,
+		},
+		Subjects: []rbacv1.Subject{{
+			Kind:      "ServiceAccount",
+			Name:      b.name(),
+			Namespace: b.info.Namespace,
+		}},
+	}
+}
+
 func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 	serverName := fmt.Sprintf("%s.%s.svc", b.promServiceName(), b.info.Namespace)
 	flpServiceMonitorObject := monitoringv1.ServiceMonitor{

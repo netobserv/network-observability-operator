@@ -77,6 +77,7 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme, co
 //+kubebuilder:rbac:groups=apiregistration.k8s.io,resources=apiservices,verbs=list;get;watch
 //+kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors;prometheusrules,verbs=get;create;delete;update;patch;list;watch
 //+kubebuilder:rbac:groups=config.openshift.io,resources=clusterversions,verbs=get;list;watch
+//+kubebuilder:rbac:groups=loki.grafana.com,resources=network,resourceNames=logs,verbs=get;create
 //+kubebuilder:rbac:urls="/metrics",verbs=get
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to

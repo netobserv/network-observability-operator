@@ -193,5 +193,6 @@ func (r *flpMonolithReconciler) reconcilePermissions(ctx context.Context, builde
 			return err
 		}
 	}
-	return nil
+
+	return reconcileLokiRoles(ctx, r.Common, &builder.generic)
 }

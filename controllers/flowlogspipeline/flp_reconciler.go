@@ -118,3 +118,20 @@ func reconcileMonitoringCerts(ctx context.Context, info *reconcilers.Common, tls
 
 	return nil
 }
+
+func reconcileLokiRoles(ctx context.Context, r *reconcilers.Common, b *builder) error {
+	roles := b.buildLokiClusterRoles()
+	if len(roles) > 0 {
+		for i := range roles {
+			if err := r.ReconcileClusterRole(ctx, &roles[i]); err != nil {
+				return err
+			}
+		}
+		// Binding
+		crb := b.lokiClusterRoleBinding()
+		if err := r.ReconcileClusterRoleBinding(ctx, crb); err != nil {
+			return err
+		}
+	}
+	return nil
+}

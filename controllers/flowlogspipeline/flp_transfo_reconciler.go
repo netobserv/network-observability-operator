@@ -209,5 +209,9 @@ func (r *flpTransformerReconciler) reconcilePermissions(ctx context.Context, bui
 	}
 
 	desired := builder.clusterRoleBinding()
-	return r.ReconcileClusterRoleBinding(ctx, desired)
+	if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
+		return err
+	}
+
+	return reconcileLokiRoles(ctx, r.Common, &builder.generic)
 }

@@ -38,6 +38,11 @@ const (
 
 	MonitoringNamespace      = "openshift-monitoring"
 	MonitoringServiceAccount = "prometheus-k8s"
+
+	// Loki roles
+	LokiCRWriter  = "netobserv-writer"
+	LokiCRBWriter = "netobserv-writer-flp"
+	LokiCRReader  = "netobserv-reader"
 )
 
 var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type", "FlowDirection", "Duplicate"}

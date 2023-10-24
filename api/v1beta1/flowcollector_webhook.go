@@ -43,6 +43,7 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	if ok, err := utilconversion.UnmarshalData(r, restored); err != nil || !ok {
 		return err
 	}
+	dst.Spec.Loki = restored.Spec.Loki
 
 	return nil
 }
