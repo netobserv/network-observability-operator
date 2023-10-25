@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/netobserv/network-observability-operator/controllers/globals"
 	configv1 "github.com/openshift/api/config/v1"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	securityv1 "github.com/openshift/api/security/v1"
@@ -28,6 +27,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
+	"github.com/netobserv/network-observability-operator/controllers/globals"
 	"github.com/netobserv/network-observability-operator/controllers/operator"
 	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
@@ -233,7 +233,6 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 func (r *FlowCollectorReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}).
-		Owns(&corev1.ConfigMap{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&appsv1.DaemonSet{}).
 		Owns(&ascv2.HorizontalPodAutoscaler{}).
