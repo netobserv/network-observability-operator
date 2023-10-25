@@ -61,12 +61,13 @@ spec:
             cpu: 100m
             memory: 100Mi
       - name: kube-rbac-proxy
-        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
         args:
           - "--secure-listen-address=0.0.0.0:8443"
           - "--upstream=http://127.0.0.1:8080/"
           - "--logtostderr=true"
           - "--v=10"
+          - "--http2-disable"
         ports:
           - containerPort: 8443
             protocol: TCP
