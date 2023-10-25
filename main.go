@@ -44,6 +44,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	// nolint:staticcheck
+	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/v1beta1"
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers"
@@ -63,6 +65,7 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(flowsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(flowsv1beta1.AddToScheme(scheme))
 	utilruntime.Must(flowsv1beta2.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))

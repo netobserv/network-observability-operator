@@ -663,6 +663,7 @@ type FlowCollectorStatus struct {
 	Namespace string `json:"namespace,omitempty"`
 }
 
+// +kubebuilder:deprecatedversion
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
