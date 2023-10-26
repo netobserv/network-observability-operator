@@ -139,7 +139,7 @@ func (c *AgentController) Reconcile(
 		return c.CreateOwned(ctx, desired)
 	case actionUpdate:
 		rlog.Info("action: update agent")
-		return c.UpdateOwned(ctx, current, desired)
+		return c.UpdateIfOwned(ctx, current, desired)
 	default:
 		rlog.Info("action: nothing to do")
 		c.CheckDaemonSetInProgress(current)

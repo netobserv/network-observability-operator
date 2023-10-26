@@ -76,6 +76,18 @@ func (c *Client) UpdateOwned(ctx context.Context, old, obj client.Object) error 
 	return nil
 }
 
+// UpdateIfOwned is an helper function that updates an object if currently owned by the operator
+func (c *Client) UpdateIfOwned(ctx context.Context, old, obj client.Object) error {
+	log := log.FromContext(ctx)
+
+	if old != nil && !IsOwned(old) {
+		kind := reflect.TypeOf(obj).String()
+		log.Info("SKIP "+kind+" update since not owned", "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+		return nil
+	}
+	return c.UpdateOwned(ctx, old, obj)
+}
+
 func (c *Client) CheckDeploymentInProgress(d *appsv1.Deployment) {
 	if d.Status.UpdatedReplicas < d.Status.Replicas {
 		c.SetInProgress(true)

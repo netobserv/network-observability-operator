@@ -104,7 +104,7 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 			return err
 		}
 	} else if !equality.Semantic.DeepDerivative(newCM.Data, r.owned.configMap.Data) {
-		if err := r.UpdateOwned(ctx, r.owned.configMap, newCM); err != nil {
+		if err := r.UpdateIfOwned(ctx, r.owned.configMap, newCM); err != nil {
 			return err
 		}
 	}
@@ -150,7 +150,7 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 			return err
 		}
 	} else if helper.DeploymentChanged(r.owned.deployment, newDep, constants.FLPName, helper.HPADisabled(&desiredFLP.KafkaConsumerAutoscaler), helper.PtrInt32(desiredFLP.KafkaConsumerReplicas), &report) {
-		if err := r.UpdateOwned(ctx, r.owned.deployment, newDep); err != nil {
+		if err := r.UpdateIfOwned(ctx, r.owned.deployment, newDep); err != nil {
 			return err
 		}
 	} else {
@@ -168,7 +168,7 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 				return err
 			}
 		} else if helper.AutoScalerChanged(r.owned.hpa, desiredFLP.KafkaConsumerAutoscaler, &report) {
-			if err := r.UpdateOwned(ctx, r.owned.hpa, newASC); err != nil {
+			if err := r.UpdateIfOwned(ctx, r.owned.hpa, newASC); err != nil {
 				return err
 			}
 		}

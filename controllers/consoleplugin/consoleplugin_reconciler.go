@@ -181,7 +181,7 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, de
 			return err
 		}
 	} else if pluginNeedsUpdate(&oldPlg, &desired.ConsolePlugin) {
-		if err := r.UpdateOwned(ctx, &oldPlg, consolePlugin); err != nil {
+		if err := r.UpdateIfOwned(ctx, &oldPlg, consolePlugin); err != nil {
 			return err
 		}
 	}
@@ -189,13 +189,16 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, de
 }
 
 func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder *builder) (string, error) {
-	newCM, configDigest := builder.configMap()
+	newCM, configDigest, err := builder.configMap()
+	if err != nil {
+		return "", err
+	}
 	if !r.Managed.Exists(r.owned.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
 			return "", err
 		}
 	} else if !reflect.DeepEqual(newCM.Data, r.owned.configMap.Data) {
-		if err := r.UpdateOwned(ctx, r.owned.configMap, newCM); err != nil {
+		if err := r.UpdateIfOwned(ctx, r.owned.configMap, newCM); err != nil {
 			return "", err
 		}
 	}
@@ -212,7 +215,7 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder *builder
 			return err
 		}
 	} else if helper.DeploymentChanged(r.owned.deployment, newDepl, constants.PluginName, helper.HPADisabled(&desired.ConsolePlugin.Autoscaler), helper.PtrInt32(desired.ConsolePlugin.Replicas), &report) {
-		if err := r.UpdateOwned(ctx, r.owned.deployment, newDepl); err != nil {
+		if err := r.UpdateIfOwned(ctx, r.owned.deployment, newDepl); err != nil {
 			return err
 		}
 	} else {
@@ -254,7 +257,7 @@ func (r *CPReconciler) reconcileHPA(ctx context.Context, builder *builder, desir
 				return err
 			}
 		} else if helper.AutoScalerChanged(r.owned.hpa, desired.ConsolePlugin.Autoscaler, &report) {
-			if err := r.UpdateOwned(ctx, r.owned.hpa, newASC); err != nil {
+			if err := r.UpdateIfOwned(ctx, r.owned.hpa, newASC); err != nil {
 				return err
 			}
 		}

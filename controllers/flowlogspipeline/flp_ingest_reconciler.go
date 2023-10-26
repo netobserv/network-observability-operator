@@ -100,7 +100,7 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowslat
 			return err
 		}
 	} else if !equality.Semantic.DeepDerivative(newCM.Data, r.owned.configMap.Data) {
-		if err := r.UpdateOwned(ctx, r.owned.configMap, newCM); err != nil {
+		if err := r.UpdateIfOwned(ctx, r.owned.configMap, newCM); err != nil {
 			return err
 		}
 	}
@@ -156,7 +156,7 @@ func (r *flpIngesterReconciler) reconcileDaemonSet(ctx context.Context, desiredD
 	if !r.Managed.Exists(r.owned.daemonSet) {
 		return r.CreateOwned(ctx, desiredDS)
 	} else if helper.PodChanged(&r.owned.daemonSet.Spec.Template, &desiredDS.Spec.Template, constants.FLPName, &report) {
-		return r.UpdateOwned(ctx, r.owned.daemonSet, desiredDS)
+		return r.UpdateIfOwned(ctx, r.owned.daemonSet, desiredDS)
 	} else {
 		// DaemonSet up to date, check if it's ready
 		r.CheckDaemonSetInProgress(r.owned.daemonSet)

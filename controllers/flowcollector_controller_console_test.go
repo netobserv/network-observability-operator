@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	operatorsv1 "github.com/openshift/api/operator/v1"
@@ -137,13 +135,8 @@ func flowCollectorConsolePluginSpecs() {
 			}, timeout, interval).Should(Equal(int32(9001)))
 
 			By("Creating the console plugin configmap")
-			Eventually(func() interface{} {
-				ofc := v1.ConfigMap{}
-				if err := k8sClient.Get(ctx, configKey, &ofc); err != nil {
-					return err
-				}
-				return ofc.Data["config.yaml"]
-			}, timeout, interval).Should(ContainSubstring("portNaming:\n  enable: true\n  portNames:\n    \"3100\": loki\nquickFilters:\n- name: Applications"))
+			Eventually(getConfigMapData(configKey),
+				timeout, interval).Should(ContainSubstring("url: http://loki:3100/"))
 		})
 
 		It("Should update successfully", func() {
@@ -210,23 +203,23 @@ func flowCollectorConsolePluginSpecs() {
 
 	Context("Configuring the Loki URL", func() {
 		It("Should be initially configured with default Loki URL", func() {
-			Eventually(getContainerArgumentAfter("netobserv-plugin", "-loki", cpKey),
-				timeout, interval).Should(Equal("http://loki:3100/"))
+			Eventually(getConfigMapData(configKey),
+				timeout, interval).Should(ContainSubstring("url: http://loki:3100/"))
 		})
 		It("Should update the Loki URL in the Console Plugin if it changes in the Spec", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Monolithic.URL = "http://loki.namespace:8888"
 			})
-			Eventually(getContainerArgumentAfter("netobserv-plugin", "-loki", cpKey),
-				timeout, interval).Should(Equal("http://loki.namespace:8888"))
+			Eventually(getConfigMapData(configKey),
+				timeout, interval).Should(ContainSubstring("url: http://loki.namespace:8888"))
 		})
 		It("Should use the Loki Querier URL instead of the Loki URL, when switching to manual mode", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Mode = flowslatest.LokiModeManual
 				fc.Spec.Loki.Manual.QuerierURL = "http://loki-querier:6789"
 			})
-			Eventually(getContainerArgumentAfter("netobserv-plugin", "-loki", cpKey),
-				timeout, interval).Should(Equal("http://loki-querier:6789"))
+			Eventually(getConfigMapData(configKey),
+				timeout, interval).Should(ContainSubstring("url: http://loki-querier:6789"))
 		})
 	})
 
@@ -362,30 +355,12 @@ func flowCollectorConsolePluginSpecs() {
 	})
 }
 
-func getContainerArgumentAfter(containerName, argName string, dpKey types.NamespacedName) func() interface{} {
+func getConfigMapData(configKey types.NamespacedName) func() interface{} {
 	return func() interface{} {
-		deployment := appsv1.Deployment{}
-		if err := k8sClient.Get(ctx, dpKey, &deployment); err != nil {
+		ofc := v1.ConfigMap{}
+		if err := k8sClient.Get(ctx, configKey, &ofc); err != nil {
 			return err
 		}
-		for i := range deployment.Spec.Template.Spec.Containers {
-			cnt := &deployment.Spec.Template.Spec.Containers[i]
-			if cnt.Name == containerName {
-				args := cnt.Args
-				for len(args) > 0 {
-					if args[0] == argName {
-						if len(args) < 2 {
-							return fmt.Errorf("container %q: arg %v has no value. Actual args: %v",
-								containerName, argName, cnt.Args)
-						}
-						return args[1]
-					}
-					args = args[1:]
-				}
-				return fmt.Errorf("container %q: arg %v not found. Actual args: %v",
-					containerName, argName, cnt.Args)
-			}
-		}
-		return fmt.Errorf("container not found: %v", containerName)
+		return ofc.Data["config.yaml"]
 	}
 }

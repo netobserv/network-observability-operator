@@ -88,7 +88,7 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 				"pod-security.kubernetes.io/enforce": "privileged",
 			}) {
 			rlog.Info("updating namespace")
-			return c.UpdateOwned(ctx, actual, desired)
+			return c.UpdateIfOwned(ctx, actual, desired)
 		}
 	}
 	rlog.Info("namespace is already reconciled. Doing nothing")
@@ -176,7 +176,7 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 		!equality.Semantic.DeepDerivative(&scc.AllowedCapabilities, &actual.AllowedCapabilities) {
 
 		rlog.Info("updating SecurityContextConstraints")
-		return c.UpdateOwned(ctx, actual, scc)
+		return c.UpdateIfOwned(ctx, actual, scc)
 	}
 	rlog.Info("SecurityContextConstraints already reconciled. Doing nothing")
 	return nil

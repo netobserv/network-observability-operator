@@ -1,11 +1,11 @@
 package consoleplugin
 
 import (
+	_ "embed"
 	"fmt"
 	"hash/fnv"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	config "github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
@@ -162,94 +163,49 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 	}
 }
 
-func (b *builder) buildArgs() []string {
-	// check for connection traking to list indexes
-	indexFields := constants.LokiIndexFields
-	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
-		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
-	}
-
-	args := []string{
-		"-cert", "/var/serving-cert/tls.crt",
-		"-key", "/var/serving-cert/tls.key",
-		"-loki", b.loki.QuerierURL,
-		"-loki-labels", strings.Join(indexFields, ","),
-		"-loki-tenant-id", b.loki.TenantID,
-		"-loglevel", b.desired.ConsolePlugin.LogLevel,
-		"-frontend-config", filepath.Join(configPath, configFile),
-	}
-
-	if b.loki.TLS.Enable {
-		if b.loki.TLS.InsecureSkipVerify {
-			args = append(args, "-loki-skip-tls")
-		} else {
-			caPath := b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
-			if caPath != "" {
-				args = append(args, "-loki-ca-path", caPath)
-			}
-		}
-	}
-
-	if b.loki.QuerierURL != b.loki.StatusURL {
-		args = append(args, "-loki-status", b.loki.StatusURL)
-		if b.loki.StatusTLS.Enable {
-			if b.loki.StatusTLS.InsecureSkipVerify {
-				args = append(args, "-loki-status-skip-tls")
-			} else {
-				statusCaPath, userCertPath, userKeyPath := b.volumes.AddMutualTLSCertificates(&b.loki.StatusTLS, "loki-status-certs")
-				if statusCaPath != "" {
-					args = append(args, "-loki-status-ca-path", statusCaPath)
-				}
-				if userCertPath != "" && userKeyPath != "" {
-					args = append(args, "-loki-status-user-cert-path", userCertPath)
-					args = append(args, "-loki-status-user-key-path", userKeyPath)
-				}
-			}
-		}
-	}
-
-	if b.loki.UseForwardToken() {
-		args = append(args, "-loki-forward-user-token")
-	} else if b.loki.UseHostToken() {
-		tokenPath := b.volumes.AddToken(constants.PluginName)
-		args = append(args, "-loki-token-path", tokenPath)
-	}
-
-	return args
-}
-
 func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
-	volumes := []corev1.Volume{{
-		Name: secretName,
-		VolumeSource: corev1.VolumeSource{
-			Secret: &corev1.SecretVolumeSource{
-				SecretName: secretName,
+	volumes := []corev1.Volume{
+		{
+			Name: secretName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: secretName,
+				},
 			},
-		},
-	}, {
-		Name: configVolume,
-		VolumeSource: corev1.VolumeSource{
-			ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: configMapName,
+		}, {
+			Name: configVolume,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: configMapName,
+					},
 				},
 			},
 		},
-	},
 	}
 
-	volumeMounts := []corev1.VolumeMount{{
-		Name:      secretName,
-		MountPath: "/var/serving-cert",
-		ReadOnly:  true,
-	}, {
-		Name:      configVolume,
-		MountPath: configPath,
-		ReadOnly:  true,
-	},
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      secretName,
+			MountPath: "/var/serving-cert",
+			ReadOnly:  true,
+		}, {
+			Name:      configVolume,
+			MountPath: configPath,
+			ReadOnly:  true,
+		},
 	}
 
-	args := b.buildArgs()
+	// ensure volumes are up to date
+	if b.loki.TLS.Enable && !b.loki.TLS.InsecureSkipVerify {
+		b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
+	}
+	if b.loki.StatusTLS.Enable && !b.loki.StatusTLS.InsecureSkipVerify {
+		b.volumes.AddMutualTLSCertificates(&b.loki.StatusTLS, "loki-status-certs")
+	}
+	if b.loki.UseHostToken() {
+		b.volumes.AddToken(constants.PluginName)
+	}
 
 	return &corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -265,8 +221,12 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 				ImagePullPolicy: corev1.PullPolicy(b.desired.ConsolePlugin.ImagePullPolicy),
 				Resources:       *b.desired.ConsolePlugin.Resources.DeepCopy(),
 				VolumeMounts:    b.volumes.AppendMounts(volumeMounts),
-				Args:            args,
 				Env:             []corev1.EnvVar{constants.EnvNoHTTP2},
+				Args: []string{
+
+					"-loglevel", b.desired.ConsolePlugin.LogLevel,
+					"-config", filepath.Join(configPath, configFile),
+				},
 			}},
 			Volumes:            b.volumes.AppendVolumes(volumes),
 			ServiceAccountName: constants.PluginName,
@@ -340,38 +300,97 @@ func (b *builder) metricsService() *corev1.Service {
 	}
 }
 
-// returns a configmap with a digest of its configuration contents, which will be used to
-// detect any configuration change
-func (b *builder) configMap() (*corev1.ConfigMap, string) {
-	outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
+func (b *builder) setLokiConfig(lconf *config.LokiConfig) {
+	lconf.URL = b.loki.QuerierURL
+	statusURL := b.loki.StatusURL
+	if lconf.URL != statusURL {
+		lconf.StatusURL = statusURL
+	}
+	// check for connection traking to list indexes
+	indexFields := constants.LokiIndexFields
+	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
+		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
+	}
+	lconf.Labels = indexFields
+	lconf.TenantID = b.loki.TenantID
+	lconf.ForwardUserToken = b.loki.UseForwardToken()
+	if b.loki.TLS.Enable {
+		if b.loki.TLS.InsecureSkipVerify {
+			lconf.SkipTLS = true
+		} else {
+			caPath := b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
+			if caPath != "" {
+				lconf.CAPath = caPath
+			}
+		}
+	}
+	if b.loki.StatusTLS.Enable {
+		if b.loki.StatusTLS.InsecureSkipVerify {
+			lconf.StatusSkipTLS = true
+		} else {
+			statusCaPath, userCertPath, userKeyPath := b.volumes.AddMutualTLSCertificates(&b.loki.StatusTLS, "loki-status-certs")
+			if statusCaPath != "" {
+				lconf.StatusCAPath = statusCaPath
+			}
+			if userCertPath != "" && userKeyPath != "" {
+				lconf.StatusUserCertPath = userCertPath
+				lconf.StatusUserKeyPath = userKeyPath
+			}
+		}
+	}
+	if b.loki.UseHostToken() {
+		lconf.TokenPath = b.volumes.AddToken(constants.PluginName)
+	}
+}
 
-	var features []string
+func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) {
 	if helper.UseEBPF(b.desired) {
 		if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
-			features = append(features, "pktDrop")
+			fconf.Features = append(fconf.Features, "pktDrop")
 		}
 
 		if helper.IsDNSTrackingEnabled(&b.desired.Agent.EBPF) {
-			features = append(features, "dnsTracking")
+			fconf.Features = append(fconf.Features, "dnsTracking")
 		}
 
 		if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
-			features = append(features, "flowRTT")
+			fconf.Features = append(fconf.Features, "flowRTT")
 		}
 	}
+	fconf.RecordTypes = helper.GetRecordTypes(&b.desired.Processor)
+	fconf.PortNaming = b.desired.ConsolePlugin.PortNaming
+	fconf.QuickFilters = b.desired.ConsolePlugin.QuickFilters
+	fconf.AlertNamespaces = []string{b.namespace}
+	fconf.Sampling = helper.GetSampling(b.desired)
+}
 
-	config := map[string]interface{}{
-		"recordTypes":     outputRecordTypes,
-		"portNaming":      b.desired.ConsolePlugin.PortNaming,
-		"quickFilters":    b.desired.ConsolePlugin.QuickFilters,
-		"alertNamespaces": []string{b.namespace},
-		"sampling":        helper.GetSampling(b.desired),
-		"features":        features,
+//go:embed config/static-frontend-config.yaml
+var staticFrontendConfig []byte
+
+// returns a configmap with a digest of its configuration contents, which will be used to
+// detect any configuration change
+func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
+	config := config.PluginConfig{}
+	// configure server
+	config.Server.CertPath = "/var/serving-cert/tls.crt"
+	config.Server.KeyPath = "/var/serving-cert/tls.key"
+
+	// configure loki
+	b.setLokiConfig(&config.Loki)
+
+	// configure frontend from embedded static file
+	err := yaml.Unmarshal(staticFrontendConfig, &config.Frontend)
+	if err != nil {
+		return nil, "", err
 	}
+	b.setFrontendConfig(&config.Frontend)
 
-	configStr := "{}"
-	if bs, err := yaml.Marshal(config); err == nil {
+	var configStr string
+	bs, err := yaml.Marshal(config)
+	if err == nil {
 		configStr = string(bs)
+	} else {
+		return nil, "", err
 	}
 
 	configMap := corev1.ConfigMap{
@@ -387,7 +406,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string) {
 	hasher := fnv.New64a()
 	_, _ = hasher.Write([]byte(configStr))
 	digest := strconv.FormatUint(hasher.Sum64(), 36)
-	return &configMap, digest
+	return &configMap, digest, nil
 }
 
 func (b *builder) serviceAccount() *corev1.ServiceAccount {
