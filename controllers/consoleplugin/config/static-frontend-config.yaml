@@ -387,7 +387,7 @@ columns:
     group: DNS
     name: DNS Latency
     tooltip: Time elapsed between DNS request and response.
-    default: false
+    default: true
     width: 5
   - id: DNSResponseCode
     group: DNS
@@ -395,7 +395,7 @@ columns:
     tooltip: DNS RCODE name from response header.
     field: DnsFlagsResponseCode
     filter: dns_flag_response_code
-    default: false
+    default: true
     width: 5
 filters:
   - id: src_namespace
