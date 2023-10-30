@@ -335,7 +335,7 @@ func flowCollectorControllerSpecs() {
 					Protocol:      "UDP",
 				}))
 				Expect(cnt.Env).To(Equal([]v1.EnvVar{
-					{Name: "GOGC", Value: "400"}, {Name: "GOMAXPROCS", Value: "33"},
+					{Name: "GOGC", Value: "400"}, {Name: "GOMAXPROCS", Value: "33"}, {Name: "GODEBUG", Value: "http2server=0"},
 				}))
 			})
 
