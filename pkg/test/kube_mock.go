@@ -8,15 +8,26 @@ import (
 	"github.com/stretchr/testify/mock"
 	v1 "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 type ClientMock struct {
 	mock.Mock
 	client.Client
 	objs map[string]client.Object
+}
+
+func NewClient() *ClientMock {
+	m := ClientMock{
+		objs: map[string]client.Object{},
+	}
+	m.MockCreateUpdate()
+	return &m
 }
 
 func key(obj client.Object) string {
@@ -30,6 +41,10 @@ func (o *ClientMock) Len() int {
 func (o *ClientMock) Get(ctx context.Context, nsname types.NamespacedName, obj client.Object, opts ...client.GetOption) error {
 	args := o.Called(ctx, nsname, obj, opts)
 	return args.Error(0)
+}
+
+func (o *ClientMock) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+	return apiutil.GVKForObject(obj, scheme.Scheme)
 }
 
 func (o *ClientMock) AssertGetCalledWith(t *testing.T, nsname types.NamespacedName) {
@@ -94,9 +109,6 @@ func (o *ClientMock) AssertDeleteNotCalled(t *testing.T) {
 }
 
 func (o *ClientMock) MockSecret(obj *v1.Secret) {
-	if o.objs == nil {
-		o.objs = map[string]client.Object{}
-	}
 	o.objs[key(obj)] = obj
 	o.On("Get", mock.Anything, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		arg := args.Get(2).(*v1.Secret)
@@ -109,9 +121,6 @@ func (o *ClientMock) MockSecret(obj *v1.Secret) {
 }
 
 func (o *ClientMock) MockConfigMap(obj *v1.ConfigMap) {
-	if o.objs == nil {
-		o.objs = map[string]client.Object{}
-	}
 	o.objs[key(obj)] = obj
 	o.On("Get", mock.Anything, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		arg := args.Get(2).(*v1.ConfigMap)

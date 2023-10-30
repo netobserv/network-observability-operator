@@ -28,12 +28,12 @@ var oldDashboard = corev1.ConfigMap{
 
 func TestCleanPastReferences(t *testing.T) {
 	assert := assert.New(t)
-	clientMock := test.ClientMock{}
+	clientMock := test.NewClient()
 	clientMock.MockConfigMap(&oldDashboard)
 	assert.Equal(1, clientMock.Len())
 	didRun = false
 
-	err := CleanPastReferences(context.Background(), &clientMock, "netobserv")
+	err := CleanPastReferences(context.Background(), clientMock, "netobserv")
 	assert.NoError(err)
 	clientMock.AssertGetCalledWith(t, types.NamespacedName{Name: "grafana-dashboard-netobserv", Namespace: "openshift-config-managed"})
 	clientMock.AssertDeleteCalled(t)
@@ -42,12 +42,12 @@ func TestCleanPastReferences(t *testing.T) {
 
 func TestCleanPastReferences_Empty(t *testing.T) {
 	assert := assert.New(t)
-	clientMock := test.ClientMock{}
+	clientMock := test.NewClient()
 	clientMock.MockNonExisting(types.NamespacedName{Name: "grafana-dashboard-netobserv", Namespace: "openshift-config-managed"})
 	assert.Equal(0, clientMock.Len())
 	didRun = false
 
-	err := CleanPastReferences(context.Background(), &clientMock, "netobserv")
+	err := CleanPastReferences(context.Background(), clientMock, "netobserv")
 	assert.NoError(err)
 	clientMock.AssertGetCalledWith(t, types.NamespacedName{Name: "grafana-dashboard-netobserv", Namespace: "openshift-config-managed"})
 	clientMock.AssertDeleteNotCalled(t)
@@ -55,14 +55,14 @@ func TestCleanPastReferences_Empty(t *testing.T) {
 
 func TestCleanPastReferences_NotManaged(t *testing.T) {
 	assert := assert.New(t)
-	clientMock := test.ClientMock{}
+	clientMock := test.NewClient()
 	unmanaged := oldDashboard
 	unmanaged.OwnerReferences = nil
 	clientMock.MockConfigMap(&unmanaged)
 	assert.Equal(1, clientMock.Len())
 	didRun = false
 
-	err := CleanPastReferences(context.Background(), &clientMock, "netobserv")
+	err := CleanPastReferences(context.Background(), clientMock, "netobserv")
 	assert.NoError(err)
 	clientMock.AssertGetCalledWith(t, types.NamespacedName{Name: "grafana-dashboard-netobserv", Namespace: "openshift-config-managed"})
 	clientMock.AssertDeleteNotCalled(t)
@@ -71,7 +71,7 @@ func TestCleanPastReferences_NotManaged(t *testing.T) {
 
 func TestCleanPastReferences_DifferentOwner(t *testing.T) {
 	assert := assert.New(t)
-	clientMock := test.ClientMock{}
+	clientMock := test.NewClient()
 	unmanaged := oldDashboard
 	unmanaged.OwnerReferences = []v1.OwnerReference{{
 		APIVersion: "something/v1beta2",
@@ -82,7 +82,7 @@ func TestCleanPastReferences_DifferentOwner(t *testing.T) {
 	assert.Equal(1, clientMock.Len())
 	didRun = false
 
-	err := CleanPastReferences(context.Background(), &clientMock, "netobserv")
+	err := CleanPastReferences(context.Background(), clientMock, "netobserv")
 	assert.NoError(err)
 	clientMock.AssertGetCalledWith(t, types.NamespacedName{Name: "grafana-dashboard-netobserv", Namespace: "openshift-config-managed"})
 	clientMock.AssertDeleteNotCalled(t)

@@ -45,6 +45,7 @@ import (
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/v1beta1"
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/operator"
+	"github.com/netobserv/network-observability-operator/pkg/narrowcache"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -149,11 +150,18 @@ var _ = BeforeSuite(func() {
 
 	Expect(prepareNamespaces()).NotTo(HaveOccurred())
 
-	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{Scheme: scheme.Scheme})
+	narrowCache := narrowcache.NewConfig(cfg, narrowcache.ConfigMaps, narrowcache.Secrets)
+	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: scheme.Scheme,
+		Client: client.Options{Cache: narrowCache.ControllerRuntimeClientCacheOptions()},
+	})
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sManager).NotTo(BeNil())
 
-	err = NewTestFlowCollectorReconciler(k8sManager.GetClient(), k8sManager.GetScheme()).
+	client, err := narrowCache.CreateClient(k8sManager.GetClient())
+	Expect(err).ToNot(HaveOccurred())
+
+	err = NewTestFlowCollectorReconciler(client, k8sManager.GetScheme()).
 		SetupWithManager(ctx, k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
