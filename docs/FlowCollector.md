@@ -1754,16 +1754,68 @@ FlowCollectorExporter defines an additional exporter to send enriched flows to
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          type selects the type of exporters. Only "KAFKA" is available at the moment.<br/>
+          `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`.<br/>
           <br/>
-            <i>Enum</i>: KAFKA<br/>
+            <i>Enum</i>: KAFKA, IPFIX<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexipfix">ipfix</a></b></td>
+        <td>object</td>
+        <td>
+          IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.<br/>
+        </td>
+        <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindexkafka">kafka</a></b></td>
         <td>object</td>
         <td>
           kafka configuration, such as address or topic, to send enriched flows to.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].ipfix
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindex)</sup></sup>
+
+
+
+IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>targetHost</b></td>
+        <td>string</td>
+        <td>
+          Address of the IPFIX external receiver<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>targetPort</b></td>
+        <td>integer</td>
+        <td>
+          Port for the IPFIX external receiver<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>transport</b></td>
+        <td>enum</td>
+        <td>
+          Transport protocol (`TCP` or `UDP`) to be used for the IPFIX connection, defaults to `TCP`.<br/>
+          <br/>
+            <i>Enum</i>: TCP, UDP<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1805,10 +1857,165 @@ kafka configuration, such as address or topic, to send enriched flows to.
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkasasl">sasl</a></b></td>
+        <td>object</td>
+        <td>
+          SASL authentication configuration. [Unsupported (*)].<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindexkafkatls">tls</a></b></td>
         <td>object</td>
         <td>
           tls client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.sasl
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafka)</sup></sup>
+
+
+
+SASL authentication configuration. [Unsupported (*)].
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkasaslclientidreference">clientIDReference</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the secret or config map containing the client ID<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexkafkasaslclientsecretreference">clientSecretReference</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the secret or config map containing the client secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type of SASL authentication to use, or `DISABLED` if SASL is not used<br/>
+          <br/>
+            <i>Enum</i>: DISABLED, PLAIN, SCRAM-SHA512<br/>
+            <i>Default</i>: DISABLED<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.sasl.clientIDReference
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkasasl)</sup></sup>
+
+
+
+Reference to the secret or config map containing the client ID
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing the file<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the file reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].kafka.sasl.clientSecretReference
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkasasl)</sup></sup>
+
+
+
+Reference to the secret or config map containing the client secret
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing the file<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the file reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -2020,10 +2227,165 @@ kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         </td>
         <td>true</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkasasl">sasl</a></b></td>
+        <td>object</td>
+        <td>
+          SASL authentication configuration. [Unsupported (*)].<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspeckafkatls">tls</a></b></td>
         <td>object</td>
         <td>
           tls client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093. Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.sasl
+<sup><sup>[↩ Parent](#flowcollectorspeckafka)</sup></sup>
+
+
+
+SASL authentication configuration. [Unsupported (*)].
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspeckafkasaslclientidreference">clientIDReference</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the secret or config map containing the client ID<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeckafkasaslclientsecretreference">clientSecretReference</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the secret or config map containing the client secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type of SASL authentication to use, or `DISABLED` if SASL is not used<br/>
+          <br/>
+            <i>Enum</i>: DISABLED, PLAIN, SCRAM-SHA512<br/>
+            <i>Default</i>: DISABLED<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.sasl.clientIDReference
+<sup><sup>[↩ Parent](#flowcollectorspeckafkasasl)</sup></sup>
+
+
+
+Reference to the secret or config map containing the client ID
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing the file<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the file reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.kafka.sasl.clientSecretReference
+<sup><sup>[↩ Parent](#flowcollectorspeckafkasasl)</sup></sup>
+
+
+
+Reference to the secret or config map containing the client secret
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing the file<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the file reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5719,7 +6081,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecexportersindexipfix">ipfix</a></b></td>
+        <td><b><a href="#flowcollectorspecexportersindexipfix-1">ipfix</a></b></td>
         <td>object</td>
         <td>
           IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.<br/>
@@ -5816,7 +6178,7 @@ Kafka configuration, such as the address and topic, to send enriched flows to.
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecexportersindexkafkasasl">sasl</a></b></td>
+        <td><b><a href="#flowcollectorspecexportersindexkafkasasl-1">sasl</a></b></td>
         <td>object</td>
         <td>
           SASL authentication configuration. [Unsupported (*)].<br/>
@@ -5850,14 +6212,14 @@ SASL authentication configuration. [Unsupported (*)].
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecexportersindexkafkasaslclientidreference">clientIDReference</a></b></td>
+        <td><b><a href="#flowcollectorspecexportersindexkafkasaslclientidreference-1">clientIDReference</a></b></td>
         <td>object</td>
         <td>
           Reference to the secret or config map containing the client ID<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecexportersindexkafkasaslclientsecretreference">clientSecretReference</a></b></td>
+        <td><b><a href="#flowcollectorspecexportersindexkafkasaslclientsecretreference-1">clientSecretReference</a></b></td>
         <td>object</td>
         <td>
           Reference to the secret or config map containing the client secret<br/>
@@ -5878,7 +6240,7 @@ SASL authentication configuration. [Unsupported (*)].
 
 
 ### FlowCollector.spec.exporters[index].kafka.sasl.clientIDReference
-<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkasasl)</sup></sup>
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkasasl-1)</sup></sup>
 
 
 
@@ -5930,7 +6292,7 @@ Reference to the secret or config map containing the client ID
 
 
 ### FlowCollector.spec.exporters[index].kafka.sasl.clientSecretReference
-<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkasasl)</sup></sup>
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkasasl-1)</sup></sup>
 
 
 
@@ -6186,7 +6548,7 @@ Kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspeckafkasasl">sasl</a></b></td>
+        <td><b><a href="#flowcollectorspeckafkasasl-1">sasl</a></b></td>
         <td>object</td>
         <td>
           SASL authentication configuration. [Unsupported (*)].<br/>
@@ -6220,14 +6582,14 @@ SASL authentication configuration. [Unsupported (*)].
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspeckafkasaslclientidreference">clientIDReference</a></b></td>
+        <td><b><a href="#flowcollectorspeckafkasaslclientidreference-1">clientIDReference</a></b></td>
         <td>object</td>
         <td>
           Reference to the secret or config map containing the client ID<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspeckafkasaslclientsecretreference">clientSecretReference</a></b></td>
+        <td><b><a href="#flowcollectorspeckafkasaslclientsecretreference-1">clientSecretReference</a></b></td>
         <td>object</td>
         <td>
           Reference to the secret or config map containing the client secret<br/>
@@ -6248,7 +6610,7 @@ SASL authentication configuration. [Unsupported (*)].
 
 
 ### FlowCollector.spec.kafka.sasl.clientIDReference
-<sup><sup>[↩ Parent](#flowcollectorspeckafkasasl)</sup></sup>
+<sup><sup>[↩ Parent](#flowcollectorspeckafkasasl-1)</sup></sup>
 
 
 
@@ -6300,7 +6662,7 @@ Reference to the secret or config map containing the client ID
 
 
 ### FlowCollector.spec.kafka.sasl.clientSecretReference
-<sup><sup>[↩ Parent](#flowcollectorspeckafkasasl)</sup></sup>
+<sup><sup>[↩ Parent](#flowcollectorspeckafkasasl-1)</sup></sup>
 
 
 
