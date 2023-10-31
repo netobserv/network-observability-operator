@@ -422,6 +422,14 @@ columns:
     filter: dns_flag_response_code
     default: true
     width: 5
+  - id: DNSErrNo
+    group: DNS
+    name: DNS Error
+    tooltip: DNS error number returned by bpf_skb_load_bytes function.
+    field: DnsErrno
+    filter: dns_errno
+    default: false
+    width: 5
 filters:
   - id: src_namespace
     name: Namespace
@@ -741,6 +749,10 @@ filters:
               - A IANA RCODE number like 0, 3, 9
               - A IANA RCODE name like NoError, NXDomain, NotAuth
     docUrl: https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-6
+  - id: dns_errno
+    name: DNS Error
+    component: autocomplete
+    hint: Specify a single DNS error number.
   - id: time_flow_rtt
     name: Flow RTT
     component: number
