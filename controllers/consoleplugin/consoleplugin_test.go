@@ -108,9 +108,11 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	//equals specs
 	plugin := getPluginConfig()
-	loki := flowslatest.FlowCollectorLoki{Manual: flowslatest.LokiManualParams{IngesterURL: "http://loki:3100/", TenantID: "netobserv"}}
-	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder := newBuilder(testNamespace, testImage, &spec)
+	loki := helper.LokiConfig{
+		LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://loki:3100/", TenantID: "netobserv"},
+	}
+	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin}
+	builder := newBuilder(testNamespace, testImage, &spec, &loki)
 	old := builder.deployment("digest")
 	nEw := builder.deployment("digest")
 	report := helper.NewChangeReport("")
@@ -153,16 +155,16 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	//new loki config
-	loki = flowslatest.FlowCollectorLoki{Manual: flowslatest.LokiManualParams{IngesterURL: "http://loki:3100/", TenantID: "netobserv", TLS: flowslatest.ClientTLS{
-		Enable: true,
-		CACert: flowslatest.CertificateReference{
-			Type:     "configmap",
-			Name:     "cm-name",
-			CertFile: "ca.crt",
-		},
-	}}}
-	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	loki = helper.LokiConfig{
+		LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://loki:3100/", TenantID: "netobserv", TLS: flowslatest.ClientTLS{
+			Enable: true,
+			CACert: flowslatest.CertificateReference{
+				Type:     "configmap",
+				Name:     "cm-name",
+				CertFile: "ca.crt",
+			},
+		}}}
+	builder = newBuilder(testNamespace, testImage, &spec, &loki)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -170,9 +172,8 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	//new loki cert name
-	loki.Manual.TLS.CACert.Name = "cm-name-2"
-	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	loki.LokiManualParams.TLS.CACert.Name = "cm-name-2"
+	builder = newBuilder(testNamespace, testImage, &spec, &loki)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -180,9 +181,8 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	//test again no change
-	loki.Manual.TLS.CACert.Name = "cm-name-2"
-	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	loki.LokiManualParams.TLS.CACert.Name = "cm-name-2"
+	builder = newBuilder(testNamespace, testImage, &spec, &loki)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.False(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -190,11 +190,10 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	//set status url and enable default tls
-	loki.Manual.StatusURL = "http://loki.status:3100/"
-	loki.Manual.StatusTLS.Enable = true
+	loki.LokiManualParams.StatusURL = "http://loki.status:3100/"
+	loki.LokiManualParams.StatusTLS.Enable = true
 
-	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = newBuilder(testNamespace, testImage, &spec, &loki)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -202,14 +201,13 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	//update status ca cert
-	loki.Manual.StatusTLS.CACert = flowslatest.CertificateReference{
+	loki.LokiManualParams.StatusTLS.CACert = flowslatest.CertificateReference{
 		Type:     "configmap",
 		Name:     "status-cm-name",
 		CertFile: "status-ca.crt",
 	}
 
-	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = newBuilder(testNamespace, testImage, &spec, &loki)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -217,15 +215,14 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	//update status user cert
-	loki.Manual.StatusTLS.UserCert = flowslatest.CertificateReference{
+	loki.LokiManualParams.StatusTLS.UserCert = flowslatest.CertificateReference{
 		Type:     "secret",
 		Name:     "sec-name",
 		CertFile: "tls.crt",
 		CertKey:  "tls.key",
 	}
 
-	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	builder = newBuilder(testNamespace, testImage, &spec, &loki)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -237,9 +234,13 @@ func TestContainerUpdateWithLokistackMode(t *testing.T) {
 
 	//equals specs
 	plugin := getPluginConfig()
-	loki := flowslatest.FlowCollectorLoki{Mode: "LOKISTACK", LokiStack: &flowslatest.LokiStack{Name: "lokistack", Namespace: "ls-namespace"}}
-	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder := newBuilder(testNamespace, testImage, &spec)
+	lokiSpec := flowslatest.FlowCollectorLoki{
+		Mode:      flowslatest.LokiModeLokiStack,
+		LokiStack: flowslatest.LokiStackRef{Name: "lokistack", Namespace: "ls-namespace"},
+	}
+	loki := helper.NewLokiConfig(&lokiSpec)
+	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
+	builder := newBuilder(testNamespace, testImage, &spec, &loki)
 	old := builder.deployment("digest")
 	nEw := builder.deployment("digest")
 	report := helper.NewChangeReport("")
@@ -247,10 +248,11 @@ func TestContainerUpdateWithLokistackMode(t *testing.T) {
 	assert.Contains(report.String(), "no change")
 
 	//update lokistack name
-	loki.LokiStack.Name = "lokistack-updated"
+	lokiSpec.LokiStack.Name = "lokistack-updated"
+	loki = helper.NewLokiConfig(&lokiSpec)
 
-	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
+	builder = newBuilder(testNamespace, testImage, &spec, &loki)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -258,10 +260,11 @@ func TestContainerUpdateWithLokistackMode(t *testing.T) {
 	old = nEw
 
 	//update lokistack namespace
-	loki.LokiStack.Namespace = "ls-namespace-updated"
+	lokiSpec.LokiStack.Namespace = "ls-namespace-updated"
+	loki = helper.NewLokiConfig(&lokiSpec)
 
-	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder = newBuilder(testNamespace, testImage, &spec)
+	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
+	builder = newBuilder(testNamespace, testImage, &spec, &loki)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -298,9 +301,9 @@ func TestBuiltService(t *testing.T) {
 
 	//newly created service should not need update
 	plugin := getPluginConfig()
-	loki := flowslatest.FlowCollectorLoki{Manual: flowslatest.LokiManualParams{IngesterURL: "http://foo:1234"}}
-	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder := newBuilder(testNamespace, testImage, &spec)
+	loki := helper.LokiConfig{LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://foo:1234"}}
+	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin}
+	builder := newBuilder(testNamespace, testImage, &spec, &loki)
 	old := builder.mainService()
 	nEw := builder.mainService()
 	report := helper.NewChangeReport("")
@@ -312,9 +315,9 @@ func TestLabels(t *testing.T) {
 	assert := assert.New(t)
 
 	plugin := getPluginConfig()
-	loki := flowslatest.FlowCollectorLoki{Manual: flowslatest.LokiManualParams{IngesterURL: "http://foo:1234"}}
-	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: loki}
-	builder := newBuilder(testNamespace, testImage, &spec)
+	loki := helper.LokiConfig{LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://foo:1234"}}
+	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin}
+	builder := newBuilder(testNamespace, testImage, &spec, &loki)
 
 	// Deployment
 	depl := builder.deployment("digest")

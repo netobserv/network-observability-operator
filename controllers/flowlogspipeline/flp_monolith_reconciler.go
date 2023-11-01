@@ -119,7 +119,7 @@ func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslat
 
 	// Watch for Loki certificate if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
 	// because certificate is always reloaded from file
-	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, helper.LokiTLS(&desired.Spec.Loki), r.Namespace); err != nil {
+	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &r.Loki.TLS, r.Namespace); err != nil {
 		return err
 	}
 
@@ -193,5 +193,6 @@ func (r *flpMonolithReconciler) reconcilePermissions(ctx context.Context, builde
 			return err
 		}
 	}
-	return nil
+
+	return reconcileLokiRoles(ctx, r.Common, &builder.generic)
 }

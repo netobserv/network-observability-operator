@@ -42,9 +42,10 @@ type builder struct {
 	desired   *flowslatest.FlowCollectorSpec
 	imageName string
 	volumes   volumes.Builder
+	loki      *helper.LokiConfig
 }
 
-func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec) builder {
+func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec, loki *helper.LokiConfig) builder {
 	version := helper.ExtractVersion(imageName)
 	return builder{
 		namespace: ns,
@@ -57,6 +58,7 @@ func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec) bu
 		},
 		desired:   desired,
 		imageName: imageName,
+		loki:      loki,
 	}
 }
 
@@ -160,66 +162,59 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 	}
 }
 
-func (b *builder) buildArgs(desired *flowslatest.FlowCollectorSpec) []string {
-	querierURL := helper.LokiQuerierURL(&desired.Loki)
-	statusURL := helper.LokiStatusURL(&desired.Loki)
-
+func (b *builder) buildArgs() []string {
 	// check for connection traking to list indexes
 	indexFields := constants.LokiIndexFields
-	if desired.Processor.LogTypes != nil && *desired.Processor.LogTypes != flowslatest.LogTypeFlows {
+	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
 	}
 
 	args := []string{
 		"-cert", "/var/serving-cert/tls.crt",
 		"-key", "/var/serving-cert/tls.key",
-		"-loki", querierURL,
+		"-loki", b.loki.QuerierURL,
 		"-loki-labels", strings.Join(indexFields, ","),
-		"-loki-tenant-id", helper.LokiTenantID(&desired.Loki),
-		"-loglevel", desired.ConsolePlugin.LogLevel,
+		"-loki-tenant-id", b.loki.TenantID,
+		"-loglevel", b.desired.ConsolePlugin.LogLevel,
 		"-frontend-config", filepath.Join(configPath, configFile),
 	}
 
-	if helper.LokiForwardUserToken(&desired.Loki) {
-		args = append(args, "-loki-forward-user-token")
-	}
-
-	if querierURL != statusURL {
-		args = append(args, "-loki-status", statusURL)
-	}
-
-	clientTLS := helper.LokiTLS(&desired.Loki)
-	if clientTLS.Enable {
-		if clientTLS.InsecureSkipVerify {
+	if b.loki.TLS.Enable {
+		if b.loki.TLS.InsecureSkipVerify {
 			args = append(args, "-loki-skip-tls")
 		} else {
-			caPath := b.volumes.AddCACertificate(clientTLS, "loki-certs")
+			caPath := b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
 			if caPath != "" {
 				args = append(args, "-loki-ca-path", caPath)
 			}
 		}
 	}
 
-	statusTLS := helper.LokiStatusTLS(&desired.Loki)
-	if statusTLS.Enable {
-		if statusTLS.InsecureSkipVerify {
-			args = append(args, "-loki-status-skip-tls")
-		} else {
-			statusCaPath, userCertPath, userKeyPath := b.volumes.AddMutualTLSCertificates(statusTLS, "loki-status-certs")
-			if statusCaPath != "" {
-				args = append(args, "-loki-status-ca-path", statusCaPath)
-			}
-			if userCertPath != "" && userKeyPath != "" {
-				args = append(args, "-loki-status-user-cert-path", userCertPath)
-				args = append(args, "-loki-status-user-key-path", userKeyPath)
+	if b.loki.QuerierURL != b.loki.StatusURL {
+		args = append(args, "-loki-status", b.loki.StatusURL)
+		if b.loki.StatusTLS.Enable {
+			if b.loki.StatusTLS.InsecureSkipVerify {
+				args = append(args, "-loki-status-skip-tls")
+			} else {
+				statusCaPath, userCertPath, userKeyPath := b.volumes.AddMutualTLSCertificates(&b.loki.StatusTLS, "loki-status-certs")
+				if statusCaPath != "" {
+					args = append(args, "-loki-status-ca-path", statusCaPath)
+				}
+				if userCertPath != "" && userKeyPath != "" {
+					args = append(args, "-loki-status-user-cert-path", userCertPath)
+					args = append(args, "-loki-status-user-key-path", userKeyPath)
+				}
 			}
 		}
 	}
 
-	if helper.LokiUseHostToken(&desired.Loki) {
+	if b.loki.UseForwardToken() {
+		args = append(args, "-loki-forward-user-token")
+	} else if b.loki.UseHostToken() {
 		tokenPath := b.volumes.AddToken(constants.PluginName)
 		args = append(args, "-loki-token-path", tokenPath)
 	}
+
 	return args
 }
 
@@ -254,7 +249,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 	},
 	}
 
-	args := b.buildArgs(b.desired)
+	args := b.buildArgs()
 
 	return &corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{

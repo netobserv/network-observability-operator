@@ -69,6 +69,7 @@ type builder struct {
 	promTLS  *flowslatest.CertificateReference
 	confKind ConfKind
 	volumes  volumes.Builder
+	loki     *helper.LokiConfig
 }
 
 func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, ck ConfKind) (builder, error) {
@@ -101,6 +102,7 @@ func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 		desired:  desired,
 		confKind: ck,
 		promTLS:  promTLS,
+		loki:     info.Loki,
 	}, nil
 }
 
@@ -313,17 +315,17 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 	if helper.UseLoki(b.desired) {
 		lokiWrite := api.WriteLoki{
 			Labels:         indexFields,
-			BatchSize:      int(b.desired.Loki.BatchSize),
-			BatchWait:      helper.UnstructuredDuration(b.desired.Loki.BatchWait),
-			MaxBackoff:     helper.UnstructuredDuration(b.desired.Loki.MaxBackoff),
-			MaxRetries:     int(helper.PtrInt32(b.desired.Loki.MaxRetries)),
-			MinBackoff:     helper.UnstructuredDuration(b.desired.Loki.MinBackoff),
+			BatchSize:      int(b.loki.BatchSize),
+			BatchWait:      helper.UnstructuredDuration(b.loki.BatchWait),
+			MaxBackoff:     helper.UnstructuredDuration(b.loki.MaxBackoff),
+			MaxRetries:     int(helper.PtrInt32(b.loki.MaxRetries)),
+			MinBackoff:     helper.UnstructuredDuration(b.loki.MinBackoff),
 			StaticLabels:   model.LabelSet{},
-			Timeout:        helper.UnstructuredDuration(b.desired.Loki.Timeout),
-			URL:            helper.LokiIngesterURL(&b.desired.Loki),
+			Timeout:        helper.UnstructuredDuration(b.loki.Timeout),
+			URL:            b.loki.IngesterURL,
 			TimestampLabel: "TimeFlowEndMs",
 			TimestampScale: "1ms",
-			TenantID:       helper.LokiTenantID(&b.desired.Loki),
+			TenantID:       b.loki.TenantID,
 		}
 
 		for k, v := range b.desired.Loki.StaticLabels {
@@ -331,7 +333,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 		}
 
 		var authorization *promConfig.Authorization
-		if helper.LokiUseHostToken(&b.desired.Loki) || helper.LokiForwardUserToken(&b.desired.Loki) {
+		if b.loki.UseHostToken() || b.loki.UseForwardToken() {
 			b.volumes.AddToken(constants.FLPName)
 			authorization = &promConfig.Authorization{
 				Type:            "Bearer",
@@ -339,9 +341,8 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 			}
 		}
 
-		clientTLS := helper.LokiTLS(&b.desired.Loki)
-		if clientTLS.Enable {
-			if clientTLS.InsecureSkipVerify {
+		if b.loki.TLS.Enable {
+			if b.loki.TLS.InsecureSkipVerify {
 				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
 					Authorization: authorization,
 					TLSConfig: promConfig.TLSConfig{
@@ -349,7 +350,7 @@ func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
 					},
 				}
 			} else {
-				caPath := b.volumes.AddCACertificate(clientTLS, "loki-certs")
+				caPath := b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
 				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
 					Authorization: authorization,
 					TLSConfig: promConfig.TLSConfig{

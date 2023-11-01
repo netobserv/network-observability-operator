@@ -830,8 +830,8 @@ func autoConvert_v1alpha1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *Flo
 func autoConvert_v1beta2_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1beta2.FlowCollectorLoki, out *FlowCollectorLoki, s conversion.Scope) error {
 	// WARNING: in.Mode requires manual conversion: does not exist in peer-type
 	// WARNING: in.Manual requires manual conversion: does not exist in peer-type
-	// WARNING: in.Distributed requires manual conversion: does not exist in peer-type
-	// WARNING: in.Monolith requires manual conversion: does not exist in peer-type
+	// WARNING: in.Microservices requires manual conversion: does not exist in peer-type
+	// WARNING: in.Monolithic requires manual conversion: does not exist in peer-type
 	// WARNING: in.LokiStack requires manual conversion: does not exist in peer-type
 	// WARNING: in.Enable requires manual conversion: does not exist in peer-type
 	if err := v1.Convert_Pointer_v1_Duration_To_v1_Duration(&in.BatchWait, &out.BatchWait, s); err != nil {

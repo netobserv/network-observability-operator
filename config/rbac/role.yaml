@@ -138,6 +138,15 @@ rules:
   - patch
   - update
 - apiGroups:
+  - loki.grafana.com
+  resourceNames:
+  - logs
+  resources:
+  - network
+  verbs:
+  - create
+  - get
+- apiGroups:
   - monitoring.coreos.com
   resources:
   - prometheusrules

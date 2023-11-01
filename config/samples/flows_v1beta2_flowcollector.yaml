@@ -77,33 +77,10 @@ spec:
         certFile: user.crt
         certKey: user.key
   loki:
-    mode: MANUAL
-    manual:
-      ingesterUrl: 'http://loki.netobserv.svc:3100/'
-      # Uncomment lines below for typical installation with loki-operator (5.6+ needed)
-      # and ensure tls and statusTls are enabled
-      # ingesterUrl: 'https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network/'
-      # statusUrl: 'https://loki-query-frontend-http.netobserv.svc:3100/'
-      # authToken: FORWARD
-      tls:
-        enable: false
-        caCert:
-          type: configmap
-          name: loki-gateway-ca-bundle
-          certFile: service-ca.crt
-        insecureSkipVerify: false
-      statusTls:
-        enable: false
-        caCert:
-          certFile: service-ca.crt
-          name: loki-ca-bundle
-          type: configmap
-        insecureSkipVerify: false
-        userCert:
-          certFile: tls.crt
-          certKey: tls.key
-          name: loki-query-frontend-http
-          type: secret
+    # Change mode to "LokiStack" to use with the loki operator
+    mode: Monolithic
+    lokiStack:
+      name: loki
     batchWait: 1s
     batchSize: 10485760
     minBackoff: 1s

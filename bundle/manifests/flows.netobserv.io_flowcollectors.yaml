@@ -6359,126 +6359,28 @@ spec:
                     description: '`batchWait` is the maximum time to wait before sending
                       a batch.'
                     type: string
-                  distributed:
-                    description: Loki configuration for DISTRIBUTED mode. This is
-                      usefull for an easy microservices loki config. It will be ignored
-                      for other mods
-                    properties:
-                      ingesterUrl:
-                        default: http://loki:3100/
-                        description: '`ingesterUrl` is the address of an existing
-                          Loki ingester service to push the flows to.'
-                        type: string
-                      querierUrl:
-                        description: '`querierURL` specifies the address of the Loki
-                          querier service, in case it is different from the Loki ingester
-                          URL. If empty, the URL value is used (assuming that the
-                          Loki ingester and querier are in the same server).'
-                        type: string
-                      tls:
-                        description: TLS client configuration for Loki URL.
-                        properties:
-                          caCert:
-                            description: '`caCert` defines the reference of the certificate
-                              for the Certificate Authority'
-                            properties:
-                              certFile:
-                                description: '`certFile` defines the path to the certificate
-                                  file name within the config map or secret'
-                                type: string
-                              certKey:
-                                description: '`certKey` defines the path to the certificate
-                                  private key file name within the config map or secret.
-                                  Omit when the key is not necessary.'
-                                type: string
-                              name:
-                                description: Name of the config map or secret containing
-                                  certificates
-                                type: string
-                              namespace:
-                                default: ""
-                                description: Namespace of the config map or secret
-                                  containing certificates. If omitted, the default
-                                  is to use the same namespace as where NetObserv
-                                  is deployed. If the namespace is different, the
-                                  config map or the secret is copied so that it can
-                                  be mounted as required.
-                                type: string
-                              type:
-                                description: 'Type for the certificate reference:
-                                  `configmap` or `secret`'
-                                enum:
-                                - configmap
-                                - secret
-                                type: string
-                            type: object
-                          enable:
-                            default: false
-                            description: Enable TLS
-                            type: boolean
-                          insecureSkipVerify:
-                            default: false
-                            description: '`insecureSkipVerify` allows skipping client-side
-                              verification of the server certificate. If set to `true`,
-                              the `caCert` field is ignored.'
-                            type: boolean
-                          userCert:
-                            description: '`userCert` defines the user certificate
-                              reference and is used for mTLS (you can ignore it when
-                              using one-way TLS)'
-                            properties:
-                              certFile:
-                                description: '`certFile` defines the path to the certificate
-                                  file name within the config map or secret'
-                                type: string
-                              certKey:
-                                description: '`certKey` defines the path to the certificate
-                                  private key file name within the config map or secret.
-                                  Omit when the key is not necessary.'
-                                type: string
-                              name:
-                                description: Name of the config map or secret containing
-                                  certificates
-                                type: string
-                              namespace:
-                                default: ""
-                                description: Namespace of the config map or secret
-                                  containing certificates. If omitted, the default
-                                  is to use the same namespace as where NetObserv
-                                  is deployed. If the namespace is different, the
-                                  config map or the secret is copied so that it can
-                                  be mounted as required.
-                                type: string
-                              type:
-                                description: 'Type for the certificate reference:
-                                  `configmap` or `secret`'
-                                enum:
-                                - configmap
-                                - secret
-                                type: string
-                            type: object
-                        type: object
-                    type: object
                   enable:
                     default: true
                     description: Set `enable` to `true` to store flows in Loki. It
                       is required for the OpenShift Console plugin installation.
                     type: boolean
                   lokiStack:
-                    description: Loki configuration for LOKISTACK mode. This is usefull
-                      for an easy loki-operator config. It will be ignored for other
-                      mods
+                    description: Loki configuration for "LokiStack" mode. This is
+                      useful for an easy loki-operator configuration. It is ignored
+                      for other modes.
                     properties:
                       name:
                         default: loki
+                        description: Name of an existing LokiStack resource to use.
                         type: string
                       namespace:
-                        default: netobserv
+                        description: Namespace where this `LokiStack` resource is
+                          located. If omited, it is assumed to be the same as `spec.namespace`.
                         type: string
                     type: object
                   manual:
-                    description: Loki configuration for MANUAL mode. This is the more
-                      flexible configuration. It will be ignored for other modes.
+                    description: Loki configuration for "Manual" mode. This is the
+                      most flexible configuration. It is ignored for other modes.
                     properties:
                       authToken:
                         default: DISABLED
@@ -6705,24 +6607,141 @@ spec:
                     format: int32
                     minimum: 0
                     type: integer
+                  microservices:
+                    description: Loki configuration for "Microservices" mode. Use
+                      this option when Loki is installed using the microservices deployment
+                      mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode).
+                      It is ignored for other modes.
+                    properties:
+                      ingesterUrl:
+                        default: http://loki-distributor:3100/
+                        description: '`ingesterUrl` is the address of an existing
+                          Loki ingester service to push the flows to.'
+                        type: string
+                      querierUrl:
+                        default: http://loki-query-frontend:3100/
+                        description: '`querierURL` specifies the address of the Loki
+                          querier service.'
+                        type: string
+                      tenantID:
+                        default: netobserv
+                        description: '`tenantID` is the Loki `X-Scope-OrgID` header
+                          that identifies the tenant for each request.'
+                        type: string
+                      tls:
+                        description: TLS client configuration for Loki URL.
+                        properties:
+                          caCert:
+                            description: '`caCert` defines the reference of the certificate
+                              for the Certificate Authority'
+                            properties:
+                              certFile:
+                                description: '`certFile` defines the path to the certificate
+                                  file name within the config map or secret'
+                                type: string
+                              certKey:
+                                description: '`certKey` defines the path to the certificate
+                                  private key file name within the config map or secret.
+                                  Omit when the key is not necessary.'
+                                type: string
+                              name:
+                                description: Name of the config map or secret containing
+                                  certificates
+                                type: string
+                              namespace:
+                                default: ""
+                                description: Namespace of the config map or secret
+                                  containing certificates. If omitted, the default
+                                  is to use the same namespace as where NetObserv
+                                  is deployed. If the namespace is different, the
+                                  config map or the secret is copied so that it can
+                                  be mounted as required.
+                                type: string
+                              type:
+                                description: 'Type for the certificate reference:
+                                  `configmap` or `secret`'
+                                enum:
+                                - configmap
+                                - secret
+                                type: string
+                            type: object
+                          enable:
+                            default: false
+                            description: Enable TLS
+                            type: boolean
+                          insecureSkipVerify:
+                            default: false
+                            description: '`insecureSkipVerify` allows skipping client-side
+                              verification of the server certificate. If set to `true`,
+                              the `caCert` field is ignored.'
+                            type: boolean
+                          userCert:
+                            description: '`userCert` defines the user certificate
+                              reference and is used for mTLS (you can ignore it when
+                              using one-way TLS)'
+                            properties:
+                              certFile:
+                                description: '`certFile` defines the path to the certificate
+                                  file name within the config map or secret'
+                                type: string
+                              certKey:
+                                description: '`certKey` defines the path to the certificate
+                                  private key file name within the config map or secret.
+                                  Omit when the key is not necessary.'
+                                type: string
+                              name:
+                                description: Name of the config map or secret containing
+                                  certificates
+                                type: string
+                              namespace:
+                                default: ""
+                                description: Namespace of the config map or secret
+                                  containing certificates. If omitted, the default
+                                  is to use the same namespace as where NetObserv
+                                  is deployed. If the namespace is different, the
+                                  config map or the secret is copied so that it can
+                                  be mounted as required.
+                                type: string
+                              type:
+                                description: 'Type for the certificate reference:
+                                  `configmap` or `secret`'
+                                enum:
+                                - configmap
+                                - secret
+                                type: string
+                            type: object
+                        type: object
+                    type: object
                   minBackoff:
                     default: 1s
                     description: '`minBackoff` is the initial backoff time for client
                       connection between retries.'
                     type: string
                   mode:
-                    default: MANUAL
+                    default: Monolithic
+                    description: '`mode` must be set according to the installation
+                      mode of Loki:<br> - Use "LokiStack" when Loki is managed using
+                      the Loki Operator<br> - Use "Monolithic" when Loki is installed
+                      as a monolithic workload<br> - Use "Microservices" when Loki
+                      is installed as microservices, but without Loki Operator<br>
+                      - Use "Manual" if none of the options above match your setup<br>'
                     enum:
-                    - MANUAL
-                    - DISTRIBUTED
-                    - MONOLITH
-                    - LOKISTACK
+                    - Manual
+                    - LokiStack
+                    - Monolithic
+                    - Microservices
                     type: string
-                  monolith:
-                    description: Loki configuration for MONOLITH mode. This is usefull
-                      for an easy monolithic loki config. It will be ignored for other
-                      mods
+                  monolithic:
+                    description: Loki configuration for "Monolithic" mode. Use this
+                      option when Loki is installed using the monolithic deployment
+                      mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode).
+                      It is ignored for other modes.
                     properties:
+                      tenantID:
+                        default: netobserv
+                        description: '`tenantID` is the Loki `X-Scope-OrgID` header
+                          that identifies the tenant for each request.'
+                        type: string
                       tls:
                         description: TLS client configuration for Loki URL.
                         properties:
@@ -6809,7 +6828,7 @@ spec:
                       url:
                         default: http://loki:3100/
                         description: '`url` is the unique address of an existing Loki
-                          service that point both ingester and querier.'
+                          service that points to both the ingester and the querier.'
                         type: string
                     type: object
                   staticLabels:

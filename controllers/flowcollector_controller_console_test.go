@@ -215,13 +215,14 @@ func flowCollectorConsolePluginSpecs() {
 		})
 		It("Should update the Loki URL in the Console Plugin if it changes in the Spec", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Loki.Manual.IngesterURL = "http://loki.namespace:8888"
+				fc.Spec.Loki.Monolithic.URL = "http://loki.namespace:8888"
 			})
 			Eventually(getContainerArgumentAfter("netobserv-plugin", "-loki", cpKey),
 				timeout, interval).Should(Equal("http://loki.namespace:8888"))
 		})
-		It("Should use the Loki Querier URL instead of the Loki URL, if the first is defined", func() {
+		It("Should use the Loki Querier URL instead of the Loki URL, when switching to manual mode", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Loki.Mode = flowslatest.LokiModeManual
 				fc.Spec.Loki.Manual.QuerierURL = "http://loki-querier:6789"
 			})
 			Eventually(getContainerArgumentAfter("netobserv-plugin", "-loki", cpKey),

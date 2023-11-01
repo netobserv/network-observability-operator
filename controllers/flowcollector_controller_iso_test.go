@@ -36,6 +36,23 @@ func flowCollectorIsoSpecs() {
 	// The typical workaround is to use pointers on fields (*bool) so 0-value is nil.
 	Context("Isomorphic ser/de", func() {
 		zero := int32(0)
+		defaultTLS := flowslatest.ClientTLS{
+			Enable:             false,
+			InsecureSkipVerify: false,
+			CACert: flowslatest.CertificateReference{
+				Type:     "configmap",
+				Name:     "",
+				CertFile: "",
+				CertKey:  "",
+			},
+			UserCert: flowslatest.CertificateReference{
+				Type:     "configmap",
+				Name:     "",
+				CertFile: "",
+				CertKey:  "",
+			},
+		}
+
 		specInput := flowslatest.FlowCollectorSpec{
 			Namespace:       operatorNamespace,
 			DeploymentModel: flowslatest.DeploymentModelDirect,
@@ -116,47 +133,33 @@ func flowCollectorIsoSpecs() {
 				},
 				QuickFilters: []flowslatest.QuickFilter{},
 			},
-			Loki: flowslatest.FlowCollectorLoki{Manual: flowslatest.LokiManualParams{
-				IngesterURL: "http://loki",
-				QuerierURL:  "",
-				StatusURL:   "",
-				TenantID:    "test",
-				AuthToken:   "DISABLED",
-				TLS: flowslatest.ClientTLS{
-					Enable:             false,
-					InsecureSkipVerify: false,
-					CACert: flowslatest.CertificateReference{
-						Type:     "configmap",
-						Name:     "",
-						CertFile: "",
-						CertKey:  "",
-					},
-					UserCert: flowslatest.CertificateReference{
-						Type:     "configmap",
-						Name:     "",
-						CertFile: "",
-						CertKey:  "",
-					},
+			Loki: flowslatest.FlowCollectorLoki{
+				Enable: ptr.To(true),
+				Mode:   flowslatest.LokiModeManual,
+				Manual: flowslatest.LokiManualParams{
+					IngesterURL: "http://loki",
+					QuerierURL:  "",
+					StatusURL:   "",
+					TenantID:    "test",
+					AuthToken:   "DISABLED",
+					TLS:         defaultTLS,
+					StatusTLS:   defaultTLS,
 				},
-				StatusTLS: flowslatest.ClientTLS{
-					Enable:             false,
-					InsecureSkipVerify: false,
-					CACert: flowslatest.CertificateReference{
-						Type:     "configmap",
-						Name:     "",
-						CertFile: "",
-						CertKey:  "",
-					},
-					UserCert: flowslatest.CertificateReference{
-						Type:     "configmap",
-						Name:     "",
-						CertFile: "",
-						CertKey:  "",
-					},
+				Microservices: flowslatest.LokiMicroservicesParams{
+					IngesterURL: "http://loki-distributor:3100/",
+					QuerierURL:  "http://loki-query-frontend:3100/",
+					TenantID:    "netobserv",
+					TLS:         defaultTLS,
 				},
-			},
-				Enable:       ptr.To(true),
-				Mode:         flowslatest.LokiModeManual,
+				Monolithic: flowslatest.LokiMonolithParams{
+					URL:      "http://loki:3100/",
+					TenantID: "netobserv",
+					TLS:      defaultTLS,
+				},
+				LokiStack: flowslatest.LokiStackRef{
+					Name:      "loki",
+					Namespace: "",
+				},
 				BatchWait:    &metav1.Duration{Duration: time.Second},
 				BatchSize:    100,
 				Timeout:      &metav1.Duration{Duration: time.Second},
@@ -168,22 +171,7 @@ func flowCollectorIsoSpecs() {
 			Kafka: flowslatest.FlowCollectorKafka{
 				Address: "http://kafka",
 				Topic:   "topic",
-				TLS: flowslatest.ClientTLS{
-					Enable:             false,
-					InsecureSkipVerify: false,
-					CACert: flowslatest.CertificateReference{
-						Type:     "configmap",
-						Name:     "",
-						CertFile: "",
-						CertKey:  "",
-					},
-					UserCert: flowslatest.CertificateReference{
-						Type:     "configmap",
-						Name:     "",
-						CertFile: "",
-						CertKey:  "",
-					},
-				},
+				TLS:     defaultTLS,
 				SASL: flowslatest.SASLConfig{
 					Type: "DISABLED",
 					ClientIDReference: flowslatest.FileReference{

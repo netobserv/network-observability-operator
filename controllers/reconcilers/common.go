@@ -24,6 +24,7 @@ type Common struct {
 	PreviousNamespace string
 	UseOpenShiftSCC   bool
 	AvailableAPIs     *discover.AvailableAPIs
+	Loki              *helper.LokiConfig
 }
 
 func (c *Common) PrivilegedNamespace() string {

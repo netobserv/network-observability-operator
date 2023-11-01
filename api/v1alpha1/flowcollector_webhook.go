@@ -22,6 +22,7 @@ import (
 
 	"github.com/netobserv/network-observability-operator/api/v1beta2"
 	utilconversion "github.com/netobserv/network-observability-operator/pkg/conversion"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -41,16 +42,6 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	// Manually restore data.
 	restored := &v1beta2.FlowCollector{}
 	if ok, err := utilconversion.UnmarshalData(r, restored); err != nil || !ok {
-		// fallback on current loki config as Manual mode if metadata are not available
-		dst.Spec.Loki.Mode = v1beta2.LokiModeManual
-		dst.Spec.Loki.Manual.IngesterURL = r.Spec.Loki.URL
-		dst.Spec.Loki.Manual.QuerierURL = r.Spec.Loki.QuerierURL
-		dst.Spec.Loki.Manual.StatusURL = r.Spec.Loki.StatusURL
-		dst.Spec.Loki.Manual.TenantID = r.Spec.Loki.TenantID
-		dst.Spec.Loki.Manual.AuthToken = r.Spec.Loki.AuthToken
-		if err := Convert_v1alpha1_ClientTLS_To_v1beta2_ClientTLS(&r.Spec.Loki.TLS, &dst.Spec.Loki.Manual.TLS, nil); err != nil {
-			return fmt.Errorf("copying v1alplha1.Loki.TLS into v1beta2.Loki.Manual.TLS: %w", err)
-		}
 		return err
 	}
 
@@ -82,17 +73,6 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 
 	// Loki
 	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
-	dst.Spec.Loki.Mode = restored.Spec.Loki.Mode
-	dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
-	if restored.Spec.Loki.Distributed != nil {
-		dst.Spec.Loki.Distributed = restored.Spec.Loki.Distributed
-	}
-	if restored.Spec.Loki.Monolith != nil {
-		dst.Spec.Loki.Monolith = restored.Spec.Loki.Monolith
-	}
-	if restored.Spec.Loki.LokiStack != nil {
-		dst.Spec.Loki.LokiStack = restored.Spec.Loki.LokiStack
-	}
 
 	// Exporters
 	if restored.Spec.Exporters != nil {
@@ -157,6 +137,15 @@ func Convert_v1beta2_FLPMetrics_To_v1alpha1_FLPMetrics(in *v1beta2.FLPMetrics, o
 // we have new defined fields in v1beta2 not in v1alpha1
 // nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1beta2.FlowCollectorLoki, out *FlowCollectorLoki, s apiconversion.Scope) error {
+	manual := helper.NewLokiConfig(in)
+	out.URL = manual.IngesterURL
+	out.QuerierURL = manual.QuerierURL
+	out.StatusURL = manual.StatusURL
+	out.TenantID = manual.TenantID
+	out.AuthToken = manual.AuthToken
+	if err := Convert_v1beta2_ClientTLS_To_v1alpha1_ClientTLS(&manual.TLS, &out.TLS, nil); err != nil {
+		return fmt.Errorf("copying v1beta2.Loki.TLS into v1alpha1.Loki.TLS: %w", err)
+	}
 	return autoConvert_v1beta2_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in, out, s)
 }
 
@@ -164,6 +153,17 @@ func Convert_v1beta2_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1beta2
 // we have new defined fields in v1beta2 not in v1alpha1
 // nolint:golint,stylecheck,revive
 func Convert_v1alpha1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *FlowCollectorLoki, out *v1beta2.FlowCollectorLoki, s apiconversion.Scope) error {
+	out.Mode = v1beta2.LokiModeManual
+	out.Manual = v1beta2.LokiManualParams{
+		IngesterURL: in.URL,
+		QuerierURL:  in.QuerierURL,
+		StatusURL:   in.StatusURL,
+		TenantID:    in.TenantID,
+		AuthToken:   in.AuthToken,
+	}
+	if err := Convert_v1alpha1_ClientTLS_To_v1beta2_ClientTLS(&in.TLS, &out.Manual.TLS, nil); err != nil {
+		return fmt.Errorf("copying v1alpha1.Loki.TLS into v1beta2.Loki.Manual.TLS: %w", err)
+	}
 	return autoConvert_v1alpha1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in, out, s)
 }
 

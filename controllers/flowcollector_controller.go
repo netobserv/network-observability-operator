@@ -77,6 +77,7 @@ func NewFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme, co
 //+kubebuilder:rbac:groups=apiregistration.k8s.io,resources=apiservices,verbs=list;get;watch
 //+kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors;prometheusrules,verbs=get;create;delete;update;patch;list;watch
 //+kubebuilder:rbac:groups=config.openshift.io,resources=clusterversions,verbs=get;list;watch
+//+kubebuilder:rbac:groups=loki.grafana.com,resources=network,resourceNames=logs,verbs=get;create
 //+kubebuilder:rbac:urls="/metrics",verbs=get
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -118,7 +119,8 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 		}
 	}
 
-	reconcilersInfo := r.newCommonInfo(ctx, desired, ns, previousNamespace, func(b bool) { didChange = b }, func(b bool) { isInProgress = b })
+	loki := helper.NewLokiConfig(&desired.Spec.Loki)
+	reconcilersInfo := r.newCommonInfo(ctx, desired, ns, previousNamespace, &loki, func(b bool) { didChange = b }, func(b bool) { isInProgress = b })
 
 	err = r.reconcileOperator(ctx, &reconcilersInfo, desired)
 	if err != nil {
@@ -377,7 +379,7 @@ func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *f
 func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	if !r.availableAPIs.HasCNO() {
 		ns := getNamespaceName(desired)
-		info := r.newCommonInfo(ctx, desired, ns, ns, func(b bool) {}, func(b bool) {})
+		info := r.newCommonInfo(ctx, desired, ns, ns, nil, func(b bool) {}, func(b bool) {})
 		ovsConfigController := ovs.NewFlowsConfigOVNKController(&info, desired.Spec.Agent.IPFIX.OVNKubernetes)
 		if err := ovsConfigController.Finalize(ctx, desired); err != nil {
 			return fmt.Errorf("failed to finalize ovn-kubernetes reconciler: %w", err)
@@ -386,7 +388,7 @@ func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsla
 	return nil
 }
 
-func (r *FlowCollectorReconciler) newCommonInfo(ctx context.Context, desired *flowslatest.FlowCollector, ns, prevNs string, changeHook, inProgressHook func(bool)) reconcilers.Common {
+func (r *FlowCollectorReconciler) newCommonInfo(ctx context.Context, desired *flowslatest.FlowCollector, ns, prevNs string, loki *helper.LokiConfig, changeHook, inProgressHook func(bool)) reconcilers.Common {
 	return reconcilers.Common{
 		Client: helper.Client{
 			Client: r.Client,
@@ -401,6 +403,7 @@ func (r *FlowCollectorReconciler) newCommonInfo(ctx context.Context, desired *fl
 		UseOpenShiftSCC:   r.permissions.Vendor(ctx) == discover.VendorOpenShift,
 		AvailableAPIs:     r.availableAPIs,
 		Watcher:           r.watcher,
+		Loki:              loki,
 	}
 }
 
