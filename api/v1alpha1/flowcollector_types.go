@@ -76,7 +76,6 @@ type FlowCollectorSpec struct {
 
 	// exporters defines additional optional exporters for custom consumption or storage. This is an experimental feature. Currently, only KAFKA exporter is available.
 	// +optional
-	// +k8s:conversion-gen=false
 	Exporters []*FlowCollectorExporter `json:"exporters"`
 }
 
@@ -232,6 +231,25 @@ type FlowCollectorKafka struct {
 	// Note that, when eBPF agents are used, Kafka certificate needs to be copied in the agent namespace (by default it's netobserv-privileged).
 	// +optional
 	TLS ClientTLS `json:"tls"`
+
+	// SASL authentication configuration. [Unsupported (*)].
+	// +optional
+	SASL SASLConfig `json:"sasl"`
+}
+
+type FlowCollectorIPFIXReceiver struct {
+	//+kubebuilder:default:=""
+	// Address of the IPFIX external receiver
+	TargetHost string `json:"targetHost"`
+
+	// Port for the IPFIX external receiver
+	TargetPort int `json:"targetPort"`
+
+	// Transport protocol (`TCP` or `UDP`) to be used for the IPFIX connection, defaults to `TCP`.
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="TCP";"UDP"
+	// +optional
+	Transport string `json:"transport,omitempty"`
 }
 
 const (
@@ -580,6 +598,24 @@ const (
 	CertRefTypeConfigMap MountableType = "configmap"
 )
 
+type FileReference struct {
+	//+kubebuilder:validation:Enum=configmap;secret
+	// Type for the file reference: "configmap" or "secret"
+	Type MountableType `json:"type,omitempty"`
+
+	// Name of the config map or secret containing the file
+	Name string `json:"name,omitempty"`
+
+	// Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+	// If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
+	// +optional
+	//+kubebuilder:default:=""
+	Namespace string `json:"namespace,omitempty"`
+
+	// File name within the config map or secret
+	File string `json:"file,omitempty"`
+}
+
 type CertificateReference struct {
 	//+kubebuilder:validation:Enum=configmap;secret
 	// type for the certificate reference: "configmap" or "secret"
@@ -621,6 +657,28 @@ type ClientTLS struct {
 	UserCert CertificateReference `json:"userCert,omitempty"`
 }
 
+type SASLType string
+
+const (
+	SASLDisabled    SASLType = "DISABLED"
+	SASLPlain       SASLType = "PLAIN"
+	SASLScramSHA512 SASLType = "SCRAM-SHA512"
+)
+
+// `SASLConfig` defines SASL configuration
+type SASLConfig struct {
+	//+kubebuilder:validation:Enum=DISABLED;PLAIN;SCRAM-SHA512
+	//+kubebuilder:default:=DISABLED
+	// Type of SASL authentication to use, or `DISABLED` if SASL is not used
+	Type SASLType `json:"type,omitempty"`
+
+	// Reference to the secret or config map containing the client ID
+	ClientIDReference FileReference `json:"clientIDReference,omitempty"`
+
+	// Reference to the secret or config map containing the client secret
+	ClientSecretReference FileReference `json:"clientSecretReference,omitempty"`
+}
+
 // DebugConfig allows tweaking some aspects of the internal configuration of the agent and FLP.
 // They are aimed exclusively for debugging. Users setting these values do it at their own risk.
 type DebugConfig struct {
@@ -641,15 +699,19 @@ const (
 
 // FlowCollectorExporter defines an additional exporter to send enriched flows to
 type FlowCollectorExporter struct {
-	// type selects the type of exporters. Only "KAFKA" is available at the moment.
+	// `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`.
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="KAFKA"
+	// +kubebuilder:validation:Enum:="KAFKA";"IPFIX"
 	// +kubebuilder:validation:Required
 	Type ExporterType `json:"type"`
 
 	// kafka configuration, such as address or topic, to send enriched flows to.
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
+
+	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
+	// +optional
+	IPFIX FlowCollectorIPFIXReceiver `json:"ipfix,omitempty"`
 }
 
 // FlowCollectorStatus defines the observed state of FlowCollector

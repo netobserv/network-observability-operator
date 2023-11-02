@@ -1042,6 +1042,28 @@ spec:
                   description: FlowCollectorExporter defines an additional exporter
                     to send enriched flows to
                   properties:
+                    ipfix:
+                      description: IPFIX configuration, such as the IP address and
+                        port to send enriched IPFIX flows to.
+                      properties:
+                        targetHost:
+                          default: ""
+                          description: Address of the IPFIX external receiver
+                          type: string
+                        targetPort:
+                          description: Port for the IPFIX external receiver
+                          type: integer
+                        transport:
+                          description: Transport protocol (`TCP` or `UDP`) to be used
+                            for the IPFIX connection, defaults to `TCP`.
+                          enum:
+                          - TCP
+                          - UDP
+                          type: string
+                      required:
+                      - targetHost
+                      - targetPort
+                      type: object
                     kafka:
                       description: kafka configuration, such as address or topic,
                         to send enriched flows to.
@@ -1050,6 +1072,78 @@ spec:
                           default: ""
                           description: address of the Kafka server
                           type: string
+                        sasl:
+                          description: SASL authentication configuration. [Unsupported
+                            (*)].
+                          properties:
+                            clientIDReference:
+                              description: Reference to the secret or config map containing
+                                the client ID
+                              properties:
+                                file:
+                                  description: File name within the config map or
+                                    secret
+                                  type: string
+                                name:
+                                  description: Name of the config map or secret containing
+                                    the file
+                                  type: string
+                                namespace:
+                                  default: ""
+                                  description: Namespace of the config map or secret
+                                    containing the file. If omitted, the default is
+                                    to use the same namespace as where NetObserv is
+                                    deployed. If the namespace is different, the config
+                                    map or the secret is copied so that it can be
+                                    mounted as required.
+                                  type: string
+                                type:
+                                  description: 'Type for the file reference: "configmap"
+                                    or "secret"'
+                                  enum:
+                                  - configmap
+                                  - secret
+                                  type: string
+                              type: object
+                            clientSecretReference:
+                              description: Reference to the secret or config map containing
+                                the client secret
+                              properties:
+                                file:
+                                  description: File name within the config map or
+                                    secret
+                                  type: string
+                                name:
+                                  description: Name of the config map or secret containing
+                                    the file
+                                  type: string
+                                namespace:
+                                  default: ""
+                                  description: Namespace of the config map or secret
+                                    containing the file. If omitted, the default is
+                                    to use the same namespace as where NetObserv is
+                                    deployed. If the namespace is different, the config
+                                    map or the secret is copied so that it can be
+                                    mounted as required.
+                                  type: string
+                                type:
+                                  description: 'Type for the file reference: "configmap"
+                                    or "secret"'
+                                  enum:
+                                  - configmap
+                                  - secret
+                                  type: string
+                              type: object
+                            type:
+                              default: DISABLED
+                              description: Type of SASL authentication to use, or
+                                `DISABLED` if SASL is not used
+                              enum:
+                              - DISABLED
+                              - PLAIN
+                              - SCRAM-SHA512
+                              type: string
+                          type: object
                         tls:
                           description: tls client configuration. When using TLS, verify
                             that the address matches the Kafka port used for TLS,
@@ -1147,10 +1241,11 @@ spec:
                       - topic
                       type: object
                     type:
-                      description: type selects the type of exporters. Only "KAFKA"
-                        is available at the moment.
+                      description: '`type` selects the type of exporters. The available
+                        options are `KAFKA` and `IPFIX`.'
                       enum:
                       - KAFKA
+                      - IPFIX
                       type: string
                   required:
                   - type
@@ -1165,6 +1260,73 @@ spec:
                     default: ""
                     description: address of the Kafka server
                     type: string
+                  sasl:
+                    description: SASL authentication configuration. [Unsupported (*)].
+                    properties:
+                      clientIDReference:
+                        description: Reference to the secret or config map containing
+                          the client ID
+                        properties:
+                          file:
+                            description: File name within the config map or secret
+                            type: string
+                          name:
+                            description: Name of the config map or secret containing
+                              the file
+                            type: string
+                          namespace:
+                            default: ""
+                            description: Namespace of the config map or secret containing
+                              the file. If omitted, the default is to use the same
+                              namespace as where NetObserv is deployed. If the namespace
+                              is different, the config map or the secret is copied
+                              so that it can be mounted as required.
+                            type: string
+                          type:
+                            description: 'Type for the file reference: "configmap"
+                              or "secret"'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      clientSecretReference:
+                        description: Reference to the secret or config map containing
+                          the client secret
+                        properties:
+                          file:
+                            description: File name within the config map or secret
+                            type: string
+                          name:
+                            description: Name of the config map or secret containing
+                              the file
+                            type: string
+                          namespace:
+                            default: ""
+                            description: Namespace of the config map or secret containing
+                              the file. If omitted, the default is to use the same
+                              namespace as where NetObserv is deployed. If the namespace
+                              is different, the config map or the secret is copied
+                              so that it can be mounted as required.
+                            type: string
+                          type:
+                            description: 'Type for the file reference: "configmap"
+                              or "secret"'
+                            enum:
+                            - configmap
+                            - secret
+                            type: string
+                        type: object
+                      type:
+                        default: DISABLED
+                        description: Type of SASL authentication to use, or `DISABLED`
+                          if SASL is not used
+                        enum:
+                        - DISABLED
+                        - PLAIN
+                        - SCRAM-SHA512
+                        type: string
+                    type: object
                   tls:
                     description: tls client configuration. When using TLS, verify
                       that the address matches the Kafka port used for TLS, generally

@@ -819,7 +819,9 @@ func autoConvert_v1beta1_FlowCollectorKafka_To_v1beta2_FlowCollectorKafka(in *Fl
 	if err := Convert_v1beta1_ClientTLS_To_v1beta2_ClientTLS(&in.TLS, &out.TLS, s); err != nil {
 		return err
 	}
-	// INFO: in.SASL opted out of conversion generation
+	if err := Convert_v1beta1_SASLConfig_To_v1beta2_SASLConfig(&in.SASL, &out.SASL, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -834,7 +836,9 @@ func autoConvert_v1beta2_FlowCollectorKafka_To_v1beta1_FlowCollectorKafka(in *v1
 	if err := Convert_v1beta2_ClientTLS_To_v1beta1_ClientTLS(&in.TLS, &out.TLS, s); err != nil {
 		return err
 	}
-	// INFO: in.SASL opted out of conversion generation
+	if err := Convert_v1beta2_SASLConfig_To_v1beta1_SASLConfig(&in.SASL, &out.SASL, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -939,7 +943,7 @@ func autoConvert_v1beta1_FlowCollectorSpec_To_v1beta2_FlowCollectorSpec(in *Flow
 	if err := Convert_v1beta1_FlowCollectorKafka_To_v1beta2_FlowCollectorKafka(&in.Kafka, &out.Kafka, s); err != nil {
 		return err
 	}
-	// INFO: in.Exporters opted out of conversion generation
+	out.Exporters = *(*[]*v1beta2.FlowCollectorExporter)(unsafe.Pointer(&in.Exporters))
 	return nil
 }
 
@@ -966,7 +970,7 @@ func autoConvert_v1beta2_FlowCollectorSpec_To_v1beta1_FlowCollectorSpec(in *v1be
 	if err := Convert_v1beta2_FlowCollectorKafka_To_v1beta1_FlowCollectorKafka(&in.Kafka, &out.Kafka, s); err != nil {
 		return err
 	}
-	// INFO: in.Exporters opted out of conversion generation
+	out.Exporters = *(*[]*FlowCollectorExporter)(unsafe.Pointer(&in.Exporters))
 	return nil
 }
 
