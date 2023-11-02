@@ -466,13 +466,26 @@ metadata:
             "loki": {
               "batchSize": 10485760,
               "batchWait": "1s",
+              "enable": true,
               "lokiStack": {
                 "name": "loki"
               },
               "maxBackoff": "5s",
               "maxRetries": 2,
               "minBackoff": "1s",
-              "mode": "Monolithic"
+              "mode": "Monolithic",
+              "monolith": {
+                "tenantID": "netobserv",
+                "tls": {
+                  "caCert": {
+                    "certFile": "service-ca.crt",
+                    "name": "loki-gateway-ca-bundle",
+                    "type": "configmap"
+                  },
+                  "enable": false
+                },
+                "url": "http://loki.netobserv.svc:3100/"
+              }
             },
             "namespace": "netobserv",
             "processor": {
