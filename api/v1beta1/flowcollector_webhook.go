@@ -117,6 +117,10 @@ func Convert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *FlowColl
 		TenantID:    in.TenantID,
 		AuthToken:   in.AuthToken,
 	}
+	// fallback on ingester url if querier is not set
+	if len(out.Manual.QuerierURL) == 0 {
+		out.Manual.QuerierURL = out.Manual.IngesterURL
+	}
 	if err := Convert_v1beta1_ClientTLS_To_v1beta2_ClientTLS(&in.TLS, &out.Manual.TLS, nil); err != nil {
 		return fmt.Errorf("copying v1beta1.Loki.TLS into v1beta2.Loki.Manual.TLS: %w", err)
 	}
