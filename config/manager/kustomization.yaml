@@ -14,7 +14,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: quay.io/amoghrd/network-observability-operator
-  newTag: main
+  newName: quay.io/netobserv/network-observability-operator
+  newTag: 1.0.4
 commonLabels:
   app: netobserv-operator
