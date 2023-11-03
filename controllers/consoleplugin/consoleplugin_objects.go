@@ -344,16 +344,16 @@ func (b *builder) setLokiConfig(lconf *config.LokiConfig) {
 }
 
 func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) {
-	if helper.UseEBPF(b.desired) {
-		if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
+	if helper.UseEbpf(b.desired) {
+		if helper.IsPktDropEnabled(&b.desired.Agent.Ebpf) {
 			fconf.Features = append(fconf.Features, "pktDrop")
 		}
 
-		if helper.IsDNSTrackingEnabled(&b.desired.Agent.EBPF) {
+		if helper.IsDNSTrackingEnabled(&b.desired.Agent.Ebpf) {
 			fconf.Features = append(fconf.Features, "dnsTracking")
 		}
 
-		if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
+		if helper.IsFlowRTTEnabled(&b.desired.Agent.Ebpf) {
 			fconf.Features = append(fconf.Features, "flowRTT")
 		}
 	}

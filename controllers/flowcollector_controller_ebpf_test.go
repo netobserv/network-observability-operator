@@ -61,8 +61,8 @@ func flowCollectorEBPFSpecs() {
 						LogLevel:        "error",
 					},
 					Agent: flowslatest.FlowCollectorAgent{
-						Type: "eBPF",
-						EBPF: flowslatest.FlowCollectorEBPF{
+						Type: "EBPF",
+						Ebpf: flowslatest.FlowCollectorEbpf{
 							Sampling:           ptr.To(int32(123)),
 							CacheActiveTimeout: "15s",
 							CacheMaxFlows:      100,
@@ -148,9 +148,9 @@ func flowCollectorEBPFSpecs() {
 
 		It("Should update fields that have changed", func() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				Expect(*fc.Spec.Agent.EBPF.Sampling).To(Equal(int32(123)))
-				*fc.Spec.Agent.EBPF.Sampling = 4
-				fc.Spec.Agent.EBPF.Privileged = true
+				Expect(*fc.Spec.Agent.Ebpf.Sampling).To(Equal(int32(123)))
+				*fc.Spec.Agent.Ebpf.Sampling = 4
+				fc.Spec.Agent.Ebpf.Privileged = true
 			})
 
 			ds := appsv1.DaemonSet{}
@@ -281,7 +281,7 @@ func flowCollectorEBPFKafkaSpecs() {
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 				Spec: flowslatest.FlowCollectorSpec{
 					Namespace:       operatorNamespace,
-					Agent:           flowslatest.FlowCollectorAgent{Type: "eBPF"},
+					Agent:           flowslatest.FlowCollectorAgent{Type: "Ebpf"},
 					DeploymentModel: flowslatest.DeploymentModelKafka,
 					Kafka: flowslatest.FlowCollectorKafka{
 						Address: "kafka-cluster-kafka-bootstrap",

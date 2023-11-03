@@ -113,8 +113,13 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*FlowCollectorEBPF)(nil), (*v1beta2.FlowCollectorEBPF)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(a.(*FlowCollectorEBPF), b.(*v1beta2.FlowCollectorEBPF), scope)
+	if err := s.AddGeneratedConversionFunc((*FlowCollectorExporter)(nil), (*v1beta2.FlowCollectorExporter)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_FlowCollectorExporter_To_v1beta2_FlowCollectorExporter(a.(*FlowCollectorExporter), b.(*v1beta2.FlowCollectorExporter), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.FlowCollectorExporter)(nil), (*FlowCollectorExporter)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(a.(*v1beta2.FlowCollectorExporter), b.(*FlowCollectorExporter), scope)
 	}); err != nil {
 		return err
 	}
@@ -123,23 +128,13 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*FlowCollectorIPFIX)(nil), (*v1beta2.FlowCollectorIPFIX)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_FlowCollectorIPFIX_To_v1beta2_FlowCollectorIPFIX(a.(*FlowCollectorIPFIX), b.(*v1beta2.FlowCollectorIPFIX), scope)
+	if err := s.AddGeneratedConversionFunc((*FlowCollectorHPA)(nil), (*v1beta2.FlowCollectorHPA)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_FlowCollectorHPA_To_v1beta2_FlowCollectorHPA(a.(*FlowCollectorHPA), b.(*v1beta2.FlowCollectorHPA), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*v1beta2.FlowCollectorIPFIX)(nil), (*FlowCollectorIPFIX)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_FlowCollectorIPFIX_To_v1alpha1_FlowCollectorIPFIX(a.(*v1beta2.FlowCollectorIPFIX), b.(*FlowCollectorIPFIX), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*FlowCollectorIPFIXReceiver)(nil), (*v1beta2.FlowCollectorIPFIXReceiver)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_FlowCollectorIPFIXReceiver_To_v1beta2_FlowCollectorIPFIXReceiver(a.(*FlowCollectorIPFIXReceiver), b.(*v1beta2.FlowCollectorIPFIXReceiver), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*v1beta2.FlowCollectorIPFIXReceiver)(nil), (*FlowCollectorIPFIXReceiver)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_FlowCollectorIPFIXReceiver_To_v1alpha1_FlowCollectorIPFIXReceiver(a.(*v1beta2.FlowCollectorIPFIXReceiver), b.(*FlowCollectorIPFIXReceiver), scope)
+	if err := s.AddGeneratedConversionFunc((*v1beta2.FlowCollectorHPA)(nil), (*FlowCollectorHPA)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_FlowCollectorHPA_To_v1alpha1_FlowCollectorHPA(a.(*v1beta2.FlowCollectorHPA), b.(*FlowCollectorHPA), scope)
 	}); err != nil {
 		return err
 	}
@@ -255,16 +250,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddConversionFunc((*v1beta2.FlowCollectorConsolePlugin)(nil), (*FlowCollectorConsolePlugin)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorConsolePlugin(a.(*v1beta2.FlowCollectorConsolePlugin), b.(*FlowCollectorConsolePlugin), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.FlowCollectorEBPF)(nil), (*FlowCollectorEBPF)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(a.(*v1beta2.FlowCollectorEBPF), b.(*FlowCollectorEBPF), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddConversionFunc((*v1beta2.FlowCollectorExporter)(nil), (*FlowCollectorExporter)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(a.(*v1beta2.FlowCollectorExporter), b.(*FlowCollectorExporter), scope)
 	}); err != nil {
 		return err
 	}
@@ -505,24 +490,16 @@ func Convert_v1beta2_FlowCollector_To_v1alpha1_FlowCollector(in *v1beta2.FlowCol
 }
 
 func autoConvert_v1alpha1_FlowCollectorAgent_To_v1beta2_FlowCollectorAgent(in *FlowCollectorAgent, out *v1beta2.FlowCollectorAgent, s conversion.Scope) error {
-	out.Type = v1beta2.FlowCollectorAgentType(in.Type)
-	if err := Convert_v1alpha1_FlowCollectorIPFIX_To_v1beta2_FlowCollectorIPFIX(&in.IPFIX, &out.IPFIX, s); err != nil {
-		return err
-	}
-	if err := Convert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(&in.EBPF, &out.EBPF, s); err != nil {
-		return err
-	}
+	out.Type = in.Type
+	// WARNING: in.IPFIX requires manual conversion: does not exist in peer-type
+	// WARNING: in.EBPF requires manual conversion: does not exist in peer-type
 	return nil
 }
 
 func autoConvert_v1beta2_FlowCollectorAgent_To_v1alpha1_FlowCollectorAgent(in *v1beta2.FlowCollectorAgent, out *FlowCollectorAgent, s conversion.Scope) error {
-	out.Type = string(in.Type)
-	if err := Convert_v1beta2_FlowCollectorIPFIX_To_v1alpha1_FlowCollectorIPFIX(&in.IPFIX, &out.IPFIX, s); err != nil {
-		return err
-	}
-	if err := Convert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(&in.EBPF, &out.EBPF, s); err != nil {
-		return err
-	}
+	out.Type = in.Type
+	// WARNING: in.Ipfix requires manual conversion: does not exist in peer-type
+	// WARNING: in.Ebpf requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -574,52 +551,12 @@ func autoConvert_v1beta2_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorCon
 	return nil
 }
 
-func autoConvert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in *FlowCollectorEBPF, out *v1beta2.FlowCollectorEBPF, s conversion.Scope) error {
-	out.ImagePullPolicy = in.ImagePullPolicy
-	out.Resources = in.Resources
-	out.Sampling = (*int32)(unsafe.Pointer(in.Sampling))
-	out.CacheActiveTimeout = in.CacheActiveTimeout
-	out.CacheMaxFlows = in.CacheMaxFlows
-	out.Interfaces = *(*[]string)(unsafe.Pointer(&in.Interfaces))
-	out.ExcludeInterfaces = *(*[]string)(unsafe.Pointer(&in.ExcludeInterfaces))
-	out.LogLevel = in.LogLevel
-	out.Privileged = in.Privileged
-	out.KafkaBatchSize = in.KafkaBatchSize
-	if err := Convert_v1alpha1_DebugConfig_To_v1beta2_DebugConfig(&in.Debug, &out.Debug, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Convert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF is an autogenerated conversion function.
-func Convert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in *FlowCollectorEBPF, out *v1beta2.FlowCollectorEBPF, s conversion.Scope) error {
-	return autoConvert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in, out, s)
-}
-
-func autoConvert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1beta2.FlowCollectorEBPF, out *FlowCollectorEBPF, s conversion.Scope) error {
-	out.ImagePullPolicy = in.ImagePullPolicy
-	out.Resources = in.Resources
-	out.Sampling = (*int32)(unsafe.Pointer(in.Sampling))
-	out.CacheActiveTimeout = in.CacheActiveTimeout
-	out.CacheMaxFlows = in.CacheMaxFlows
-	out.Interfaces = *(*[]string)(unsafe.Pointer(&in.Interfaces))
-	out.ExcludeInterfaces = *(*[]string)(unsafe.Pointer(&in.ExcludeInterfaces))
-	out.LogLevel = in.LogLevel
-	out.Privileged = in.Privileged
-	out.KafkaBatchSize = in.KafkaBatchSize
-	if err := Convert_v1beta2_DebugConfig_To_v1alpha1_DebugConfig(&in.Debug, &out.Debug, s); err != nil {
-		return err
-	}
-	// WARNING: in.Features requires manual conversion: does not exist in peer-type
-	return nil
-}
-
 func autoConvert_v1alpha1_FlowCollectorExporter_To_v1beta2_FlowCollectorExporter(in *FlowCollectorExporter, out *v1beta2.FlowCollectorExporter, s conversion.Scope) error {
 	out.Type = v1beta2.ExporterType(in.Type)
 	if err := Convert_v1alpha1_FlowCollectorKafka_To_v1beta2_FlowCollectorKafka(&in.Kafka, &out.Kafka, s); err != nil {
 		return err
 	}
-	if err := Convert_v1alpha1_FlowCollectorIPFIXReceiver_To_v1beta2_FlowCollectorIPFIXReceiver(&in.IPFIX, &out.IPFIX, s); err != nil {
+	if err := Convert_v1alpha1_FlowCollectorIPFIXReceiver_To_v1beta2_FlowCollectorIpfixReceiver(&in.IPFIX, &out.IPFIX, s); err != nil {
 		return err
 	}
 	return nil
@@ -630,7 +567,7 @@ func autoConvert_v1beta2_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter
 	if err := Convert_v1beta2_FlowCollectorKafka_To_v1alpha1_FlowCollectorKafka(&in.Kafka, &out.Kafka, s); err != nil {
 		return err
 	}
-	if err := Convert_v1beta2_FlowCollectorIPFIXReceiver_To_v1alpha1_FlowCollectorIPFIXReceiver(&in.IPFIX, &out.IPFIX, s); err != nil {
+	if err := Convert_v1beta2_FlowCollectorIpfixReceiver_To_v1alpha1_FlowCollectorIPFIXReceiver(&in.IPFIX, &out.IPFIX, s); err != nil {
 		return err
 	}
 	return nil
@@ -722,66 +659,9 @@ func autoConvert_v1beta2_FlowCollectorHPA_To_v1alpha1_FlowCollectorHPA(in *v1bet
 	return nil
 }
 
-func autoConvert_v1alpha1_FlowCollectorIPFIX_To_v1beta2_FlowCollectorIPFIX(in *FlowCollectorIPFIX, out *v1beta2.FlowCollectorIPFIX, s conversion.Scope) error {
-	out.CacheActiveTimeout = in.CacheActiveTimeout
-	out.CacheMaxFlows = in.CacheMaxFlows
-	out.Sampling = in.Sampling
-	out.ForceSampleAll = in.ForceSampleAll
-	if err := Convert_v1alpha1_ClusterNetworkOperatorConfig_To_v1beta2_ClusterNetworkOperatorConfig(&in.ClusterNetworkOperator, &out.ClusterNetworkOperator, s); err != nil {
-		return err
-	}
-	if err := Convert_v1alpha1_OVNKubernetesConfig_To_v1beta2_OVNKubernetesConfig(&in.OVNKubernetes, &out.OVNKubernetes, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Convert_v1alpha1_FlowCollectorIPFIX_To_v1beta2_FlowCollectorIPFIX is an autogenerated conversion function.
-func Convert_v1alpha1_FlowCollectorIPFIX_To_v1beta2_FlowCollectorIPFIX(in *FlowCollectorIPFIX, out *v1beta2.FlowCollectorIPFIX, s conversion.Scope) error {
-	return autoConvert_v1alpha1_FlowCollectorIPFIX_To_v1beta2_FlowCollectorIPFIX(in, out, s)
-}
-
-func autoConvert_v1beta2_FlowCollectorIPFIX_To_v1alpha1_FlowCollectorIPFIX(in *v1beta2.FlowCollectorIPFIX, out *FlowCollectorIPFIX, s conversion.Scope) error {
-	out.CacheActiveTimeout = in.CacheActiveTimeout
-	out.CacheMaxFlows = in.CacheMaxFlows
-	out.Sampling = in.Sampling
-	out.ForceSampleAll = in.ForceSampleAll
-	if err := Convert_v1beta2_ClusterNetworkOperatorConfig_To_v1alpha1_ClusterNetworkOperatorConfig(&in.ClusterNetworkOperator, &out.ClusterNetworkOperator, s); err != nil {
-		return err
-	}
-	if err := Convert_v1beta2_OVNKubernetesConfig_To_v1alpha1_OVNKubernetesConfig(&in.OVNKubernetes, &out.OVNKubernetes, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Convert_v1beta2_FlowCollectorIPFIX_To_v1alpha1_FlowCollectorIPFIX is an autogenerated conversion function.
-func Convert_v1beta2_FlowCollectorIPFIX_To_v1alpha1_FlowCollectorIPFIX(in *v1beta2.FlowCollectorIPFIX, out *FlowCollectorIPFIX, s conversion.Scope) error {
-	return autoConvert_v1beta2_FlowCollectorIPFIX_To_v1alpha1_FlowCollectorIPFIX(in, out, s)
-}
-
-func autoConvert_v1alpha1_FlowCollectorIPFIXReceiver_To_v1beta2_FlowCollectorIPFIXReceiver(in *FlowCollectorIPFIXReceiver, out *v1beta2.FlowCollectorIPFIXReceiver, s conversion.Scope) error {
-	out.TargetHost = in.TargetHost
-	out.TargetPort = in.TargetPort
-	out.Transport = in.Transport
-	return nil
-}
-
-// Convert_v1alpha1_FlowCollectorIPFIXReceiver_To_v1beta2_FlowCollectorIPFIXReceiver is an autogenerated conversion function.
-func Convert_v1alpha1_FlowCollectorIPFIXReceiver_To_v1beta2_FlowCollectorIPFIXReceiver(in *FlowCollectorIPFIXReceiver, out *v1beta2.FlowCollectorIPFIXReceiver, s conversion.Scope) error {
-	return autoConvert_v1alpha1_FlowCollectorIPFIXReceiver_To_v1beta2_FlowCollectorIPFIXReceiver(in, out, s)
-}
-
-func autoConvert_v1beta2_FlowCollectorIPFIXReceiver_To_v1alpha1_FlowCollectorIPFIXReceiver(in *v1beta2.FlowCollectorIPFIXReceiver, out *FlowCollectorIPFIXReceiver, s conversion.Scope) error {
-	out.TargetHost = in.TargetHost
-	out.TargetPort = in.TargetPort
-	out.Transport = in.Transport
-	return nil
-}
-
-// Convert_v1beta2_FlowCollectorIPFIXReceiver_To_v1alpha1_FlowCollectorIPFIXReceiver is an autogenerated conversion function.
-func Convert_v1beta2_FlowCollectorIPFIXReceiver_To_v1alpha1_FlowCollectorIPFIXReceiver(in *v1beta2.FlowCollectorIPFIXReceiver, out *FlowCollectorIPFIXReceiver, s conversion.Scope) error {
-	return autoConvert_v1beta2_FlowCollectorIPFIXReceiver_To_v1alpha1_FlowCollectorIPFIXReceiver(in, out, s)
+// Convert_v1beta2_FlowCollectorHPA_To_v1alpha1_FlowCollectorHPA is an autogenerated conversion function.
+func Convert_v1beta2_FlowCollectorHPA_To_v1alpha1_FlowCollectorHPA(in *v1beta2.FlowCollectorHPA, out *FlowCollectorHPA, s conversion.Scope) error {
+	return autoConvert_v1beta2_FlowCollectorHPA_To_v1alpha1_FlowCollectorHPA(in, out, s)
 }
 
 func autoConvert_v1alpha1_FlowCollectorKafka_To_v1beta2_FlowCollectorKafka(in *FlowCollectorKafka, out *v1beta2.FlowCollectorKafka, s conversion.Scope) error {

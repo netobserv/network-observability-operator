@@ -59,7 +59,7 @@ func getConfig(lokiMode ...string) flowslatest.FlowCollectorSpec {
 
 	return flowslatest.FlowCollectorSpec{
 		DeploymentModel: flowslatest.DeploymentModelDirect,
-		Agent:           flowslatest.FlowCollectorAgent{Type: flowslatest.AgentIPFIX},
+		Agent:           flowslatest.FlowCollectorAgent{Type: flowslatest.AgentIpfix},
 		Processor: flowslatest.FlowCollectorFLP{
 			Port:            2055,
 			ImagePullPolicy: string(pullPolicy),
@@ -970,7 +970,7 @@ func TestPipelineWithExporter(t *testing.T) {
 
 	cfg.Exporters = append(cfg.Exporters, &flowslatest.FlowCollectorExporter{
 		Type: flowslatest.IpfixExporter,
-		IPFIX: flowslatest.FlowCollectorIPFIXReceiver{
+		IPFIX: flowslatest.FlowCollectorIpfixReceiver{
 			TargetHost: "ipfix-receiver-test",
 			TargetPort: 9999,
 			Transport:  "TCP",

@@ -10,18 +10,18 @@ import (
 )
 
 func GetSampling(spec *flowslatest.FlowCollectorSpec) int {
-	if UseEBPF(spec) {
-		return int(*spec.Agent.EBPF.Sampling)
+	if UseEbpf(spec) {
+		return int(*spec.Agent.Ebpf.Sampling)
 	}
-	return int(spec.Agent.IPFIX.Sampling)
+	return int(spec.Agent.Ipfix.Sampling)
 }
 
-func UseEBPF(spec *flowslatest.FlowCollectorSpec) bool {
-	return spec.Agent.Type == flowslatest.AgentEBPF
+func UseEbpf(spec *flowslatest.FlowCollectorSpec) bool {
+	return spec.Agent.Type == flowslatest.AgentEbpf
 }
 
-func UseIPFIX(spec *flowslatest.FlowCollectorSpec) bool {
-	return spec.Agent.Type == flowslatest.AgentIPFIX
+func UseIpfix(spec *flowslatest.FlowCollectorSpec) bool {
+	return spec.Agent.Type == flowslatest.AgentIpfix
 }
 
 func UseKafka(spec *flowslatest.FlowCollectorSpec) bool {
@@ -90,7 +90,7 @@ func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
 		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
 }
 
-func IsFeatureEnabled(spec *flowslatest.FlowCollectorEBPF, feature flowslatest.AgentFeature) bool {
+func IsFeatureEnabled(spec *flowslatest.FlowCollectorEbpf, feature flowslatest.AgentFeature) bool {
 	for _, f := range spec.Features {
 		if f == feature {
 			return true
@@ -99,22 +99,22 @@ func IsFeatureEnabled(spec *flowslatest.FlowCollectorEBPF, feature flowslatest.A
 	return false
 }
 
-func IsPrivileged(spec *flowslatest.FlowCollectorEBPF) bool {
+func IsPrivileged(spec *flowslatest.FlowCollectorEbpf) bool {
 	return spec.Privileged
 }
 
-func IsPktDropEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+func IsPktDropEnabled(spec *flowslatest.FlowCollectorEbpf) bool {
 	if IsPrivileged(spec) && IsFeatureEnabled(spec, flowslatest.PacketDrop) {
 		return true
 	}
 	return false
 }
 
-func IsDNSTrackingEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+func IsDNSTrackingEnabled(spec *flowslatest.FlowCollectorEbpf) bool {
 	return IsFeatureEnabled(spec, flowslatest.DNSTracking)
 }
 
-func IsFlowRTTEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+func IsFlowRTTEnabled(spec *flowslatest.FlowCollectorEbpf) bool {
 	return IsFeatureEnabled(spec, flowslatest.FlowRTT)
 }
 

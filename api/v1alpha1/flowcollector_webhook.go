@@ -46,9 +46,9 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	// Agent
-	if restored.Spec.Agent.EBPF.Features != nil {
-		dst.Spec.Agent.EBPF.Features = make([]v1beta2.AgentFeature, len(restored.Spec.Agent.EBPF.Features))
-		copy(dst.Spec.Agent.EBPF.Features, restored.Spec.Agent.EBPF.Features)
+	if restored.Spec.Agent.Ebpf.Features != nil {
+		dst.Spec.Agent.Ebpf.Features = make([]v1beta2.AgentFeature, len(restored.Spec.Agent.Ebpf.Features))
+		copy(dst.Spec.Agent.Ebpf.Features, restored.Spec.Agent.Ebpf.Features)
 	}
 
 	// Processor
@@ -169,8 +169,8 @@ func Convert_v1beta2_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorConsole
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta1 not in v1alpha1
 // nolint:golint,stylecheck,revive
-func Convert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1beta2.FlowCollectorEBPF, out *FlowCollectorEBPF, s apiconversion.Scope) error {
-	return autoConvert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in, out, s)
+func Convert_v1beta2_FlowCollectorEbpf_To_v1alpha1_FlowCollectorEBPF(in *v1beta2.FlowCollectorEbpf, out *FlowCollectorEBPF, s apiconversion.Scope) error {
+	return autoConvert_v1beta2_FlowCollectorEbpf_To_v1alpha1_FlowCollectorEBPF(in, out, s)
 }
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
