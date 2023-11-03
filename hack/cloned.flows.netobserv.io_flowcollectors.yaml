@@ -3535,7 +3535,7 @@ spec:
           name: Agent
           type: string
         - jsonPath: .spec.agent.ebpf.sampling
-          name: Sampling (EBPF)
+          name: Sampling (Ebpf)
           type: string
         - jsonPath: .spec.deploymentModel
           name: Deployment Model
@@ -3563,7 +3563,7 @@ spec:
                   description: Agent configuration for flows extraction.
                   properties:
                     ebpf:
-                      description: '`ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `EBPF`.'
+                      description: '`ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `Ebpf`.'
                       properties:
                         cacheActiveTimeout:
                           default: 5s
@@ -3685,7 +3685,7 @@ spec:
                           type: integer
                       type: object
                     ipfix:
-                      description: '`ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.'
+                      description: '`ipfix` [deprecated (*)] - describes the settings related to the Ipfix-based flow reporter when `spec.agent.type` is set to `Ipfix`.'
                       properties:
                         cacheActiveTimeout:
                           default: 20s
@@ -3708,10 +3708,10 @@ spec:
                           type: object
                         forceSampleAll:
                           default: false
-                          description: '`forceSampleAll` allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it might generate cluster instability. If you REALLY want to do that, set this flag to `true`. Use at your own risk. When it is set to `true`, the value of `sampling` is ignored.'
+                          description: '`forceSampleAll` allows disabling sampling in the Ipfix-based flow reporter. It is not recommended to sample all the traffic with Ipfix, as it might generate cluster instability. If you REALLY want to do that, set this flag to `true`. Use at your own risk. When it is set to `true`, the value of `sampling` is ignored.'
                           type: boolean
                         ovnKubernetes:
-                          description: '`ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN''s IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.'
+                          description: '`ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN''s Ipfix exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.'
                           properties:
                             containerName:
                               default: ovnkube-node
@@ -3728,17 +3728,17 @@ spec:
                           type: object
                         sampling:
                           default: 400
-                          description: '`sampling` is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which might impact the cluster stability, refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of IPFIX.'
+                          description: '`sampling` is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which might impact the cluster stability, refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of Ipfix.'
                           format: int32
                           minimum: 2
                           type: integer
                       type: object
                     type:
-                      default: EBPF
-                      description: '`type` selects the flows tracing agent. Possible values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br> `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).'
+                      default: Ebpf
+                      description: '`type` selects the flows tracing agent. Possible values are:<br> - `Ebpf` (default) to use NetObserv eBPF agent.<br> - `Ipfix` [deprecated (*)] - to use the legacy Ipfix collector.<br> `Ebpf` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `Ipfix` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting Ipfix, but they would require manual configuration).'
                       enum:
-                        - EBPF
-                        - IPFIX
+                        - Ebpf
+                        - Ipfix
                       type: string
                   type: object
                 consolePlugin:
@@ -4083,11 +4083,11 @@ spec:
                           format: int32
                           type: integer
                         status:
-                          default: DISABLED
-                          description: '`status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `DISABLED` does not deploy an horizontal pod autoscaler.<br> - `ENABLED` deploys an horizontal pod autoscaler.<br>'
+                          default: Disabled
+                          description: '`status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `Disabled` does not deploy an horizontal pod autoscaler.<br> - `Enabled` deploys an horizontal pod autoscaler.<br>'
                           enum:
-                            - DISABLED
-                            - ENABLED
+                            - Disabled
+                            - Enabled
                           type: string
                       type: object
                     enable:
@@ -4230,11 +4230,11 @@ spec:
                       type: object
                   type: object
                 deploymentModel:
-                  default: DIRECT
-                  description: '`deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br> - `DIRECT` (default) to make the flow processor listening directly from the agents.<br> - `KAFKA` to make flows sent to a Kafka pipeline before consumption by the processor.<br> Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).'
+                  default: Direct
+                  description: '`deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br> - `Direct` (default) to make the flow processor listening directly from the agents.<br> - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br> Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).'
                   enum:
-                    - DIRECT
-                    - KAFKA
+                    - Direct
+                    - Kafka
                   type: string
                 exporters:
                   description: '`exporters` define additional optional exporters for custom consumption or storage.'
@@ -4242,17 +4242,17 @@ spec:
                     description: '`FlowCollectorExporter` defines an additional exporter to send enriched flows to.'
                     properties:
                       ipfix:
-                        description: IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
+                        description: Ipfix configuration, such as the IP address and port to send enriched Ipfix flows to.
                         properties:
                           targetHost:
                             default: ""
-                            description: Address of the IPFIX external receiver
+                            description: Address of the Ipfix external receiver
                             type: string
                           targetPort:
-                            description: Port for the IPFIX external receiver
+                            description: Port for the Ipfix external receiver
                             type: integer
                           transport:
-                            description: Transport protocol (`TCP` or `UDP`) to be used for the IPFIX connection, defaults to `TCP`.
+                            description: Transport protocol (`TCP` or `UDP`) to be used for the Ipfix connection, defaults to `TCP`.
                             enum:
                               - TCP
                               - UDP
@@ -4312,12 +4312,12 @@ spec:
                                     type: string
                                 type: object
                               type:
-                                default: DISABLED
-                                description: Type of SASL authentication to use, or `DISABLED` if SASL is not used
+                                default: Disabled
+                                description: Type of SASL authentication to use, or `Disabled` if SASL is not used
                                 enum:
-                                  - DISABLED
-                                  - PLAIN
-                                  - SCRAM-SHA512
+                                  - Disabled
+                                  - Plain
+                                  - ScramSHA512
                                 type: string
                             type: object
                           tls:
@@ -4387,17 +4387,17 @@ spec:
                           - topic
                         type: object
                       type:
-                        description: '`type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`.'
+                        description: '`type` selects the type of exporters. The available options are `Kafka` and `Ipfix`.'
                         enum:
-                          - KAFKA
-                          - IPFIX
+                          - Kafka
+                          - Ipfix
                         type: string
                     required:
                       - type
                     type: object
                   type: array
                 kafka:
-                  description: Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `KAFKA`.
+                  description: Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `Kafka`.
                   properties:
                     address:
                       default: ""
@@ -4447,12 +4447,12 @@ spec:
                               type: string
                           type: object
                         type:
-                          default: DISABLED
-                          description: Type of SASL authentication to use, or `DISABLED` if SASL is not used
+                          default: Disabled
+                          description: Type of SASL authentication to use, or `Disabled` if SASL is not used
                           enum:
-                            - DISABLED
-                            - PLAIN
-                            - SCRAM-SHA512
+                            - Disabled
+                            - Plain
+                            - ScramSHA512
                           type: string
                       type: object
                     tls:
@@ -4553,12 +4553,12 @@ spec:
                       description: Loki configuration for "Manual" mode. This is the most flexible configuration. It is ignored for other modes.
                       properties:
                         authToken:
-                          default: DISABLED
-                          description: '`authToken` describes the way to get a token to authenticate to Loki.<br> - `DISABLED` does not send any token with the request.<br> - `FORWARD` forwards the user token for authorization.<br> - `HOST` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `FORWARD`.'
+                          default: Disabled
+                          description: '`authToken` describes the way to get a token to authenticate to Loki.<br> - `Disabled` does not send any token with the request.<br> - `Forward` forwards the user token for authorization.<br> - `Host` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `Forward`.'
                           enum:
-                            - DISABLED
-                            - HOST
-                            - FORWARD
+                            - Disabled
+                            - Host
+                            - Forward
                           type: string
                         ingesterUrl:
                           default: http://loki:3100/
@@ -5265,11 +5265,11 @@ spec:
                           format: int32
                           type: integer
                         status:
-                          default: DISABLED
-                          description: '`status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `DISABLED` does not deploy an horizontal pod autoscaler.<br> - `ENABLED` deploys an horizontal pod autoscaler.<br>'
+                          default: Disabled
+                          description: '`status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `Disabled` does not deploy an horizontal pod autoscaler.<br> - `Enabled` deploys an horizontal pod autoscaler.<br>'
                           enum:
-                            - DISABLED
-                            - ENABLED
+                            - Disabled
+                            - Enabled
                           type: string
                       type: object
                     kafkaConsumerBatchSize:
@@ -5342,7 +5342,7 @@ spec:
                                   description: '`insecureSkipVerify` allows skipping client-side verification of the provided certificate. If set to `true`, the `providedCaFile` field is ignored.'
                                   type: boolean
                                 provided:
-                                  description: TLS configuration when `type` is set to `PROVIDED`.
+                                  description: TLS configuration when `type` is set to `Provided`.
                                   properties:
                                     certFile:
                                       description: '`certFile` defines the path to the certificate file name within the config map or secret'
@@ -5365,7 +5365,7 @@ spec:
                                       type: string
                                   type: object
                                 providedCaFile:
-                                  description: Reference to the CA file when `type` is set to `PROVIDED`.
+                                  description: Reference to the CA file when `type` is set to `Provided`.
                                   properties:
                                     file:
                                       description: File name within the config map or secret
@@ -5385,12 +5385,12 @@ spec:
                                       type: string
                                   type: object
                                 type:
-                                  default: DISABLED
-                                  description: Select the type of TLS configuration:<br> - `DISABLED` (default) to not configure TLS for the endpoint. - `PROVIDED` to manually provide cert file and a key file. - `AUTO` to use OpenShift auto generated certificate using annotations.
+                                  default: Disabled
+                                  description: Select the type of TLS configuration:<br> - `Disabled` (default) to not configure TLS for the endpoint. - `Provided` to manually provide cert file and a key file. - `Auto` to use OpenShift auto generated certificate using annotations.
                                   enum:
-                                    - DISABLED
-                                    - PROVIDED
-                                    - AUTO
+                                    - Disabled
+                                    - Provided
+                                    - Auto
                                   type: string
                               type: object
                           type: object

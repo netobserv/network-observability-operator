@@ -9044,10 +9044,10 @@ Defines the desired state of the FlowCollector resource. <br><br> *: the mention
         <td><b>deploymentModel</b></td>
         <td>enum</td>
         <td>
-          `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br> - `DIRECT` (default) to make the flow processor listening directly from the agents.<br> - `KAFKA` to make flows sent to a Kafka pipeline before consumption by the processor.<br> Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
+          `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br> - `Direct` (default) to make the flow processor listening directly from the agents.<br> - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br> Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
           <br/>
-            <i>Enum</i>: DIRECT, KAFKA<br/>
-            <i>Default</i>: DIRECT<br/>
+            <i>Enum</i>: Direct, Kafka<br/>
+            <i>Default</i>: Direct<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9061,7 +9061,7 @@ Defines the desired state of the FlowCollector resource. <br><br> *: the mention
         <td><b><a href="#flowcollectorspeckafka-1">kafka</a></b></td>
         <td>object</td>
         <td>
-          Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `KAFKA`.<br/>
+          Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `Kafka`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9111,24 +9111,24 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentebpf-1">ebpf</a></b></td>
         <td>object</td>
         <td>
-          `ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `EBPF`.<br/>
+          `ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `Ebpf`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentipfix-1">ipfix</a></b></td>
         <td>object</td>
         <td>
-          `ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.<br/>
+          `ipfix` [deprecated (*)] - describes the settings related to the Ipfix-based flow reporter when `spec.agent.type` is set to `Ipfix`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the flows tracing agent. Possible values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br> `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
+          `type` selects the flows tracing agent. Possible values are:<br> - `Ebpf` (default) to use NetObserv eBPF agent.<br> - `Ipfix` [deprecated (*)] - to use the legacy Ipfix collector.<br> `Ebpf` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `Ipfix` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting Ipfix, but they would require manual configuration).<br/>
           <br/>
-            <i>Enum</i>: EBPF, IPFIX<br/>
-            <i>Default</i>: EBPF<br/>
+            <i>Enum</i>: Ebpf, Ipfix<br/>
+            <i>Default</i>: Ebpf<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9140,7 +9140,7 @@ Agent configuration for flows extraction.
 
 
 
-`ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `EBPF`.
+`ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `Ebpf`.
 
 <table>
     <thead>
@@ -9363,7 +9363,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-`ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.
+`ipfix` [deprecated (*)] - describes the settings related to the Ipfix-based flow reporter when `spec.agent.type` is set to `Ipfix`.
 
 <table>
     <thead>
@@ -9405,7 +9405,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>forceSampleAll</b></td>
         <td>boolean</td>
         <td>
-          `forceSampleAll` allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it might generate cluster instability. If you REALLY want to do that, set this flag to `true`. Use at your own risk. When it is set to `true`, the value of `sampling` is ignored.<br/>
+          `forceSampleAll` allows disabling sampling in the Ipfix-based flow reporter. It is not recommended to sample all the traffic with Ipfix, as it might generate cluster instability. If you REALLY want to do that, set this flag to `true`. Use at your own risk. When it is set to `true`, the value of `sampling` is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -9414,14 +9414,14 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b><a href="#flowcollectorspecagentipfixovnkubernetes-1">ovnKubernetes</a></b></td>
         <td>object</td>
         <td>
-          `ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.<br/>
+          `ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's Ipfix exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          `sampling` is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which might impact the cluster stability, refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of IPFIX.<br/>
+          `sampling` is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which might impact the cluster stability, refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of Ipfix.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 400<br/>
@@ -9466,7 +9466,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-`ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
+`ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's Ipfix exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
 
 <table>
     <thead>
@@ -9669,10 +9669,10 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>status</b></td>
         <td>enum</td>
         <td>
-          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `DISABLED` does not deploy an horizontal pod autoscaler.<br> - `ENABLED` deploys an horizontal pod autoscaler.<br><br/>
+          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `Disabled` does not deploy an horizontal pod autoscaler.<br> - `Enabled` deploys an horizontal pod autoscaler.<br><br/>
           <br/>
-            <i>Enum</i>: DISABLED, ENABLED<br/>
-            <i>Default</i>: DISABLED<br/>
+            <i>Enum</i>: Disabled, Enabled<br/>
+            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -10710,16 +10710,16 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`.<br/>
+          `type` selects the type of exporters. The available options are `Kafka` and `Ipfix`.<br/>
           <br/>
-            <i>Enum</i>: KAFKA, IPFIX<br/>
+            <i>Enum</i>: Kafka, Ipfix<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindexipfix-1">ipfix</a></b></td>
         <td>object</td>
         <td>
-          IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.<br/>
+          Ipfix configuration, such as the IP address and port to send enriched Ipfix flows to.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10738,7 +10738,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
+Ipfix configuration, such as the IP address and port to send enriched Ipfix flows to.
 
 <table>
     <thead>
@@ -10753,7 +10753,7 @@ IPFIX configuration, such as the IP address and port to send enriched IPFIX flow
         <td><b>targetHost</b></td>
         <td>string</td>
         <td>
-          Address of the IPFIX external receiver<br/>
+          Address of the Ipfix external receiver<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -10762,14 +10762,14 @@ IPFIX configuration, such as the IP address and port to send enriched IPFIX flow
         <td><b>targetPort</b></td>
         <td>integer</td>
         <td>
-          Port for the IPFIX external receiver<br/>
+          Port for the Ipfix external receiver<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>transport</b></td>
         <td>enum</td>
         <td>
-          Transport protocol (`TCP` or `UDP`) to be used for the IPFIX connection, defaults to `TCP`.<br/>
+          Transport protocol (`TCP` or `UDP`) to be used for the Ipfix connection, defaults to `TCP`.<br/>
           <br/>
             <i>Enum</i>: TCP, UDP<br/>
         </td>
@@ -10864,10 +10864,10 @@ SASL authentication configuration. [Unsupported (*)].
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type of SASL authentication to use, or `DISABLED` if SASL is not used<br/>
+          Type of SASL authentication to use, or `Disabled` if SASL is not used<br/>
           <br/>
-            <i>Enum</i>: DISABLED, PLAIN, SCRAM-SHA512<br/>
-            <i>Default</i>: DISABLED<br/>
+            <i>Enum</i>: Disabled, Plain, ScramSHA512<br/>
+            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11153,7 +11153,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
 
 
 
-Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `KAFKA`.
+Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `Kafka`.
 
 <table>
     <thead>
@@ -11234,10 +11234,10 @@ SASL authentication configuration. [Unsupported (*)].
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type of SASL authentication to use, or `DISABLED` if SASL is not used<br/>
+          Type of SASL authentication to use, or `Disabled` if SASL is not used<br/>
           <br/>
-            <i>Enum</i>: DISABLED, PLAIN, SCRAM-SHA512<br/>
-            <i>Default</i>: DISABLED<br/>
+            <i>Enum</i>: Disabled, Plain, ScramSHA512<br/>
+            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11708,10 +11708,10 @@ Loki configuration for "Manual" mode. This is the most flexible configuration. I
         <td><b>authToken</b></td>
         <td>enum</td>
         <td>
-          `authToken` describes the way to get a token to authenticate to Loki.<br> - `DISABLED` does not send any token with the request.<br> - `FORWARD` forwards the user token for authorization.<br> - `HOST` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `FORWARD`.<br/>
+          `authToken` describes the way to get a token to authenticate to Loki.<br> - `Disabled` does not send any token with the request.<br> - `Forward` forwards the user token for authorization.<br> - `Host` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `Forward`.<br/>
           <br/>
-            <i>Enum</i>: DISABLED, HOST, FORWARD<br/>
-            <i>Default</i>: DISABLED<br/>
+            <i>Enum</i>: Disabled, Host, Forward<br/>
+            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12816,10 +12816,10 @@ TLS client configuration for Loki URL.
         <td><b>status</b></td>
         <td>enum</td>
         <td>
-          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `DISABLED` does not deploy an horizontal pod autoscaler.<br> - `ENABLED` deploys an horizontal pod autoscaler.<br><br/>
+          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `Disabled` does not deploy an horizontal pod autoscaler.<br> - `Enabled` deploys an horizontal pod autoscaler.<br><br/>
           <br/>
-            <i>Enum</i>: DISABLED, ENABLED<br/>
-            <i>Default</i>: DISABLED<br/>
+            <i>Enum</i>: Disabled, Enabled<br/>
+            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13799,24 +13799,24 @@ TLS configuration.
         <td><b><a href="#flowcollectorspecprocessormetricsservertlsprovided-1">provided</a></b></td>
         <td>object</td>
         <td>
-          TLS configuration when `type` is set to `PROVIDED`.<br/>
+          TLS configuration when `type` is set to `Provided`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessormetricsservertlsprovidedcafile-1">providedCaFile</a></b></td>
         <td>object</td>
         <td>
-          Reference to the CA file when `type` is set to `PROVIDED`.<br/>
+          Reference to the CA file when `type` is set to `Provided`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Select the type of TLS configuration:<br> - `DISABLED` (default) to not configure TLS for the endpoint. - `PROVIDED` to manually provide cert file and a key file. - `AUTO` to use OpenShift auto generated certificate using annotations.<br/>
+          Select the type of TLS configuration:<br> - `Disabled` (default) to not configure TLS for the endpoint. - `Provided` to manually provide cert file and a key file. - `Auto` to use OpenShift auto generated certificate using annotations.<br/>
           <br/>
-            <i>Enum</i>: DISABLED, PROVIDED, AUTO<br/>
-            <i>Default</i>: DISABLED<br/>
+            <i>Enum</i>: Disabled, Provided, Auto<br/>
+            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13828,7 +13828,7 @@ TLS configuration.
 
 
 
-TLS configuration when `type` is set to `PROVIDED`.
+TLS configuration when `type` is set to `Provided`.
 
 <table>
     <thead>
@@ -13887,7 +13887,7 @@ TLS configuration when `type` is set to `PROVIDED`.
 
 
 
-Reference to the CA file when `type` is set to `PROVIDED`.
+Reference to the CA file when `type` is set to `Provided`.
 
 <table>
     <thead>

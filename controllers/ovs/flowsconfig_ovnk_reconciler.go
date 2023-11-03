@@ -51,15 +51,15 @@ func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flows
 		Name:      c.config.DaemonSetName,
 		Namespace: c.config.Namespace,
 	}, ds); err != nil {
-		if kerr.IsNotFound(err) && !helper.UseIPFIX(&target.Spec) {
-			// If we don't want IPFIX and ovn-k daemonset is not found, assume there no ovn-k, just succeed
+		if kerr.IsNotFound(err) && !helper.UseIpfix(&target.Spec) {
+			// If we don't want Ipfix and ovn-k daemonset is not found, assume there no ovn-k, just succeed
 			rlog.Info("Skip reconciling OVN: OVN DaemonSet not found")
 			return nil
 		}
 		return fmt.Errorf("retrieving %s/%s daemonset: %w", c.config.Namespace, c.config.DaemonSetName, err)
 	}
 
-	ovnkubeNode := helper.FindContainer(&ds.Spec.Template.Spec, target.Spec.Agent.IPFIX.OVNKubernetes.ContainerName)
+	ovnkubeNode := helper.FindContainer(&ds.Spec.Template.Spec, target.Spec.Agent.Ipfix.OVNKubernetes.ContainerName)
 	if ovnkubeNode == nil {
 		return errors.New("could not find container ovnkube-node")
 	}
@@ -71,7 +71,7 @@ func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flows
 		}
 	}
 	if anyUpdate {
-		rlog.Info("Provided IPFIX configuration differs current configuration. Updating")
+		rlog.Info("Provided Ipfix configuration differs current configuration. Updating")
 		return c.Update(ctx, ds)
 	}
 
@@ -80,21 +80,21 @@ func (c *FlowsConfigOVNKController) updateEnv(ctx context.Context, target *flows
 }
 
 func (c *FlowsConfigOVNKController) desiredEnv(ctx context.Context, coll *flowslatest.FlowCollector) (map[string]string, error) {
-	cacheTimeout, err := time.ParseDuration(coll.Spec.Agent.IPFIX.CacheActiveTimeout)
+	cacheTimeout, err := time.ParseDuration(coll.Spec.Agent.Ipfix.CacheActiveTimeout)
 	if err != nil {
 		return nil, err
 	}
-	sampling := getSampling(ctx, &coll.Spec.Agent.IPFIX)
+	sampling := getSampling(ctx, &coll.Spec.Agent.Ipfix)
 
 	envs := map[string]string{
 		"OVN_IPFIX_TARGETS":              "",
 		"OVN_IPFIX_CACHE_ACTIVE_TIMEOUT": strconv.Itoa(int(cacheTimeout.Seconds())),
-		"OVN_IPFIX_CACHE_MAX_FLOWS":      strconv.Itoa(int(coll.Spec.Agent.IPFIX.CacheMaxFlows)),
+		"OVN_IPFIX_CACHE_MAX_FLOWS":      strconv.Itoa(int(coll.Spec.Agent.Ipfix.CacheMaxFlows)),
 		"OVN_IPFIX_SAMPLING":             strconv.Itoa(int(sampling)),
 	}
 
-	if !helper.UseIPFIX(&coll.Spec) {
-		// No IPFIX => leave target empty and return
+	if !helper.UseIpfix(&coll.Spec) {
+		// No Ipfix => leave target empty and return
 		return envs, nil
 	}
 

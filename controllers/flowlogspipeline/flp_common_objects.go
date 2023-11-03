@@ -117,7 +117,7 @@ func (b *builder) serviceMonitorName() string { return serviceMonitorName(b.conf
 func (b *builder) prometheusRuleName() string { return prometheusRuleName(b.confKind) }
 
 func (b *builder) portProtocol() corev1.Protocol {
-	if helper.UseEBPF(b.desired) {
+	if helper.UseEbpf(b.desired) {
 		return corev1.ProtocolTCP
 	}
 	return corev1.ProtocolUDP
@@ -393,7 +393,7 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 		},
 	}
 
-	if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
+	if helper.IsPktDropEnabled(&b.desired.Agent.Ebpf) {
 		outputPktDropFields := []api.OutputField{
 			{
 				Name:      "PktDropBytes",
@@ -425,7 +425,7 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 		outputFields = append(outputFields, outputPktDropFields...)
 	}
 
-	if helper.IsDNSTrackingEnabled(&b.desired.Agent.EBPF) {
+	if helper.IsDNSTrackingEnabled(&b.desired.Agent.Ebpf) {
 		outDNSTrackingFields := []api.OutputField{
 			{
 				Name:      "DnsFlagsResponseCode",
@@ -439,7 +439,7 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 		outputFields = append(outputFields, outDNSTrackingFields...)
 	}
 
-	if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
+	if helper.IsFlowRTTEnabled(&b.desired.Agent.Ebpf) {
 		outputFields = append(outputFields, api.OutputField{
 			Name:      "MaxTimeFlowRttNs",
 			Operation: "max",
@@ -524,7 +524,7 @@ func (b *builder) addTransformFilter(lastStage config.PipelineBuilderStage) conf
 
 	// Filter-out unused fields?
 	if helper.PtrBool(b.desired.Processor.DropUnusedFields) {
-		if helper.UseIPFIX(b.desired) {
+		if helper.UseIpfix(b.desired) {
 			rules := filters.GetOVSGoflowUnusedRules()
 			transformFilterRules = append(transformFilterRules, rules...)
 		}
@@ -544,7 +544,7 @@ func (b *builder) addCustomExportStages(enrichedStage *config.PipelineBuilderSta
 			b.createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), &exporter.Kafka, enrichedStage)
 		}
 		if exporter.Type == flowslatest.IpfixExporter {
-			createIPFIXWriteStage(fmt.Sprintf("IPFIX-export-%d", i), &exporter.IPFIX, enrichedStage)
+			createIpfixWriteStage(fmt.Sprintf("IPFIX-export-%d", i), &exporter.IPFIX, enrichedStage)
 		}
 	}
 }
@@ -558,11 +558,11 @@ func (b *builder) createKafkaWriteStage(name string, spec *flowslatest.FlowColle
 	})
 }
 
-func createIPFIXWriteStage(name string, spec *flowslatest.FlowCollectorIPFIXReceiver, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
+func createIpfixWriteStage(name string, spec *flowslatest.FlowCollectorIpfixReceiver, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
 	return fromStage.WriteIpfix(name, api.WriteIpfix{
 		TargetHost:   spec.TargetHost,
 		TargetPort:   spec.TargetPort,
-		Transport:    getIPFIXTransport(spec.Transport),
+		Transport:    getIpfixTransport(spec.Transport),
 		EnterpriseID: 2,
 	})
 }
@@ -597,7 +597,7 @@ func (b *builder) getKafkaSASL(sasl *flowslatest.SASLConfig, volumePrefix string
 	}
 }
 
-func getIPFIXTransport(transport string) string {
+func getIpfixTransport(transport string) string {
 	switch transport {
 	case "UDP":
 		return "udp"

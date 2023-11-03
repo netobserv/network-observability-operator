@@ -122,8 +122,8 @@ func flowCollectorControllerSpecs() {
 						},
 					},
 					Agent: flowslatest.FlowCollectorAgent{
-						Type: "IPFIX",
-						IPFIX: flowslatest.FlowCollectorIPFIX{
+						Type: "Ipfix",
+						Ipfix: flowslatest.FlowCollectorIpfix{
 							Sampling: 200,
 						},
 					},
@@ -283,7 +283,7 @@ func flowCollectorControllerSpecs() {
 					},
 				}
 				fc.Spec.Loki = flowslatest.FlowCollectorLoki{}
-				fc.Spec.Agent.IPFIX = flowslatest.FlowCollectorIPFIX{
+				fc.Spec.Agent.Ipfix = flowslatest.FlowCollectorIpfix{
 					Sampling:           400,
 					CacheActiveTimeout: "30s",
 					CacheMaxFlows:      1000,
@@ -399,7 +399,7 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.Agent.IPFIX.Sampling = 1
+				fc.Spec.Agent.Ipfix.Sampling = 1
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Satisfy(func(err error) bool {
 				return err != nil && strings.Contains(err.Error(), "spec.agent.ipfix.sampling: Invalid value: 1")
@@ -410,8 +410,8 @@ func flowCollectorControllerSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.Agent.IPFIX.Sampling = 10
-				fc.Spec.Agent.IPFIX.ForceSampleAll = true
+				fc.Spec.Agent.Ipfix.Sampling = 10
+				fc.Spec.Agent.Ipfix.ForceSampleAll = true
 				return k8sClient.Update(ctx, &fc)
 			}).Should(Succeed())
 
@@ -888,7 +888,7 @@ func flowCollectorControllerSpecs() {
 			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor.Port = 9999
 				fc.Spec.Namespace = otherNamespace
-				fc.Spec.Agent.IPFIX = flowslatest.FlowCollectorIPFIX{
+				fc.Spec.Agent.Ipfix = flowslatest.FlowCollectorIpfix{
 					Sampling: 200,
 				}
 			})

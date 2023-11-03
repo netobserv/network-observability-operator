@@ -38,7 +38,7 @@ func (c *FlowsConfigCNOController) Reconcile(ctx context.Context, target *flowsl
 	if err != nil {
 		return err
 	}
-	if !helper.UseIPFIX(&target.Spec) {
+	if !helper.UseIpfix(&target.Spec) {
 		if current == nil {
 			return nil
 		}
@@ -58,7 +58,7 @@ func (c *FlowsConfigCNOController) Reconcile(ctx context.Context, target *flowsl
 
 	// compare current and desired
 	if current == nil {
-		rlog.Info("Provided IPFIX configuration. Creating " + c.ovsConfigMapName + " ConfigMap")
+		rlog.Info("Provided Ipfix configuration. Creating " + c.ovsConfigMapName + " ConfigMap")
 		cm, err := c.flowsConfigMap(desired)
 		if err != nil {
 			return err
@@ -67,7 +67,7 @@ func (c *FlowsConfigCNOController) Reconcile(ctx context.Context, target *flowsl
 	}
 
 	if desired != nil && *desired != *current {
-		rlog.Info("Provided IPFIX configuration differs current configuration. Updating")
+		rlog.Info("Provided Ipfix configuration differs current configuration. Updating")
 		cm, err := c.flowsConfigMap(desired)
 		if err != nil {
 			return err
@@ -101,11 +101,11 @@ func (c *FlowsConfigCNOController) current(ctx context.Context) (*flowsConfig, e
 func (c *FlowsConfigCNOController) desired(
 	ctx context.Context, coll *flowslatest.FlowCollector) *flowsConfig {
 
-	corrected := coll.Spec.Agent.IPFIX.DeepCopy()
+	corrected := coll.Spec.Agent.Ipfix.DeepCopy()
 	corrected.Sampling = getSampling(ctx, corrected)
 
 	return &flowsConfig{
-		FlowCollectorIPFIX: *corrected,
+		FlowCollectorIpfix: *corrected,
 		NodePort:           coll.Spec.Processor.Port,
 	}
 }
