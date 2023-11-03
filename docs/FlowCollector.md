@@ -12694,10 +12694,10 @@ TLS client configuration for Loki URL.
         <td><b>logTypes</b></td>
         <td>enum</td>
         <td>
-          `logTypes` defines the desired record types to generate. Possible values are:<br> - `FLOWS` (default) to export regular network flows<br> - `CONVERSATIONS` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br> - `ENDED_CONVERSATIONS` to generate only ended conversations events<br> - `ALL` to generate both network flows and all conversations events<br><br/>
+          `logTypes` defines the desired record types to generate. Possible values are:<br> - `Flows` (default) to export regular network flows<br> - `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br> - `EndedConversations` to generate only ended conversations events<br> - `All` to generate both network flows and all conversations events<br><br/>
           <br/>
-            <i>Enum</i>: FLOWS, CONVERSATIONS, ENDED_CONVERSATIONS, ALL<br/>
-            <i>Default</i>: FLOWS<br/>
+            <i>Enum</i>: Flows, Conversations, EndedConversations, All<br/>
+            <i>Default</i>: Flows<br/>
         </td>
         <td>false</td>
       </tr><tr>

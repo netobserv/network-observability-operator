@@ -51,7 +51,7 @@ spec:
     kafkaConsumerAutoscaler: null
     kafkaConsumerQueueCapacity: 1000
     kafkaConsumerBatchSize: 10485760
-    logTypes: FLOWS
+    logTypes: Flows
     conversationTerminatingTimeout: 5s
     conversationHeartbeatInterval: 30s
     conversationEndTimeout: 10s

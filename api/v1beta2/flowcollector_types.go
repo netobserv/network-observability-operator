@@ -363,10 +363,10 @@ type FLPMetrics struct {
 }
 
 const (
-	LogTypeFlows              = "FLOWS"
-	LogTypeConversations      = "CONVERSATIONS"
-	LogTypeEndedConversations = "ENDED_CONVERSATIONS"
-	LogTypeAll                = "ALL"
+	LogTypeFlows              = "Flows"
+	LogTypeConversations      = "Conversations"
+	LogTypeEndedConversations = "EndedConversations"
+	LogTypeAll                = "All"
 )
 
 // `FlowCollectorFLP` defines the desired flowlogs-pipeline state of FlowCollector
@@ -442,13 +442,13 @@ type FlowCollectorFLP struct {
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
 
 	// `logTypes` defines the desired record types to generate. Possible values are:<br>
-	// - `FLOWS` (default) to export regular network flows<br>
-	// - `CONVERSATIONS` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br>
-	// - `ENDED_CONVERSATIONS` to generate only ended conversations events<br>
-	// - `ALL` to generate both network flows and all conversations events<br>
+	// - `Flows` (default) to export regular network flows<br>
+	// - `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br>
+	// - `EndedConversations` to generate only ended conversations events<br>
+	// - `All` to generate both network flows and all conversations events<br>
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Enum:="FLOWS";"CONVERSATIONS";"ENDED_CONVERSATIONS";"ALL"
-	// +kubebuilder:default:=FLOWS
+	// +kubebuilder:validation:Enum:="Flows";"Conversations";"EndedConversations";"All"
+	// +kubebuilder:default:=Flows
 	LogTypes *string `json:"logTypes,omitempty"`
 
 	//+kubebuilder:default:="30s"

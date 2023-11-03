@@ -5299,13 +5299,13 @@ spec:
                         - panic
                       type: string
                     logTypes:
-                      default: FLOWS
-                      description: '`logTypes` defines the desired record types to generate. Possible values are:<br> - `FLOWS` (default) to export regular network flows<br> - `CONVERSATIONS` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br> - `ENDED_CONVERSATIONS` to generate only ended conversations events<br> - `ALL` to generate both network flows and all conversations events<br>'
+                      default: Flows
+                      description: '`logTypes` defines the desired record types to generate. Possible values are:<br> - `Flows` (default) to export regular network flows<br> - `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br> - `EndedConversations` to generate only ended conversations events<br> - `All` to generate both network flows and all conversations events<br>'
                       enum:
-                        - FLOWS
-                        - CONVERSATIONS
-                        - ENDED_CONVERSATIONS
-                        - ALL
+                        - Flows
+                        - Conversations
+                        - EndedConversations
+                        - All
                       type: string
                     metrics:
                       description: '`Metrics` define the processor configuration regarding metrics'

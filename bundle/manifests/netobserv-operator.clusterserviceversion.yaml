@@ -496,7 +496,7 @@ metadata:
               "kafkaConsumerQueueCapacity": 1000,
               "kafkaConsumerReplicas": 3,
               "logLevel": "info",
-              "logTypes": "FLOWS",
+              "logTypes": "Flows",
               "metrics": {
                 "disableAlerts": [],
                 "includeList": [
