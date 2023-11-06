@@ -57,7 +57,7 @@ func (b *transfoBuilder) buildPipelineConfig() ([]config.Stage, []config.StagePa
 	// For now, we leave this communication via JSON and just setup protobuf ingestion when
 	// the transformer is communicating directly via eBPF agent
 	decoder := api.Decoder{Type: "protobuf"}
-	if helper.UseIpfix(b.generic.desired) {
+	if helper.UseIPFIX(b.generic.desired) {
 		decoder = api.Decoder{Type: "json"}
 	}
 	pipeline := config.NewKafkaPipeline("kafka-read", api.IngestKafka{

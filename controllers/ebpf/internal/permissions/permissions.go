@@ -33,7 +33,7 @@ func NewReconciler(cmn *reconcilers.Common) Reconciler {
 	return Reconciler{Common: *cmn}
 }
 
-func (c *Reconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCollectorEbpf) error {
+func (c *Reconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCollectorEBPF) error {
 	log.IntoContext(ctx, log.FromContext(ctx).WithName("permissions"))
 
 	if err := c.reconcileNamespace(ctx); err != nil {
@@ -121,7 +121,7 @@ func (c *Reconciler) reconcileServiceAccount(ctx context.Context) error {
 }
 
 func (c *Reconciler) reconcileVendorPermissions(
-	ctx context.Context, desired *flowslatest.FlowCollectorEbpf,
+	ctx context.Context, desired *flowslatest.FlowCollectorEBPF,
 ) error {
 	if c.UseOpenShiftSCC {
 		return c.reconcileOpenshiftPermissions(ctx, desired)
@@ -130,7 +130,7 @@ func (c *Reconciler) reconcileVendorPermissions(
 }
 
 func (c *Reconciler) reconcileOpenshiftPermissions(
-	ctx context.Context, desired *flowslatest.FlowCollectorEbpf,
+	ctx context.Context, desired *flowslatest.FlowCollectorEBPF,
 ) error {
 	rlog := log.FromContext(ctx,
 		"securityContextConstraints", constants.EBPFSecurityContext)

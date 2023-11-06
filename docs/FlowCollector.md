@@ -9111,24 +9111,24 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentebpf-1">ebpf</a></b></td>
         <td>object</td>
         <td>
-          `ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `Ebpf`.<br/>
+          `ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `EBPF`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentipfix-1">ipfix</a></b></td>
         <td>object</td>
         <td>
-          `ipfix` [deprecated (*)] - describes the settings related to the Ipfix-based flow reporter when `spec.agent.type` is set to `Ipfix`.<br/>
+          `ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the flows tracing agent. Possible values are:<br> - `Ebpf` (default) to use NetObserv eBPF agent.<br> - `Ipfix` [deprecated (*)] - to use the legacy Ipfix collector.<br> `Ebpf` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `Ipfix` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting Ipfix, but they would require manual configuration).<br/>
+          `type` selects the flows tracing agent. Possible values are:<br> - `eBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br> `eBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
           <br/>
-            <i>Enum</i>: Ebpf, Ipfix<br/>
-            <i>Default</i>: Ebpf<br/>
+            <i>Enum</i>: eBPF, IPFIX<br/>
+            <i>Default</i>: eBPF<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9140,7 +9140,7 @@ Agent configuration for flows extraction.
 
 
 
-`ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `Ebpf`.
+`ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `EBPF`.
 
 <table>
     <thead>
@@ -9363,7 +9363,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-`ipfix` [deprecated (*)] - describes the settings related to the Ipfix-based flow reporter when `spec.agent.type` is set to `Ipfix`.
+`ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.
 
 <table>
     <thead>
@@ -9405,7 +9405,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>forceSampleAll</b></td>
         <td>boolean</td>
         <td>
-          `forceSampleAll` allows disabling sampling in the Ipfix-based flow reporter. It is not recommended to sample all the traffic with Ipfix, as it might generate cluster instability. If you REALLY want to do that, set this flag to `true`. Use at your own risk. When it is set to `true`, the value of `sampling` is ignored.<br/>
+          `forceSampleAll` allows disabling sampling in the IPFIX-based flow reporter. It is not recommended to sample all the traffic with IPFIX, as it might generate cluster instability. If you REALLY want to do that, set this flag to `true`. Use at your own risk. When it is set to `true`, the value of `sampling` is ignored.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -9414,14 +9414,14 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b><a href="#flowcollectorspecagentipfixovnkubernetes-1">ovnKubernetes</a></b></td>
         <td>object</td>
         <td>
-          `ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's Ipfix exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.<br/>
+          `ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          `sampling` is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which might impact the cluster stability, refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of Ipfix.<br/>
+          `sampling` is the sampling rate on the reporter. 100 means one flow on 100 is sent. To ensure cluster stability, it is not possible to set a value below 2. If you really want to sample every packet, which might impact the cluster stability, refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of IPFIX.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 400<br/>
@@ -9466,7 +9466,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-`ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's Ipfix exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
+`ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
 
 <table>
     <thead>
@@ -10710,16 +10710,16 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the type of exporters. The available options are `Kafka` and `Ipfix`.<br/>
+          `type` selects the type of exporters. The available options are `Kafka` and `IPFIX`.<br/>
           <br/>
-            <i>Enum</i>: Kafka, Ipfix<br/>
+            <i>Enum</i>: Kafka, IPFIX<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindexipfix-1">ipfix</a></b></td>
         <td>object</td>
         <td>
-          Ipfix configuration, such as the IP address and port to send enriched Ipfix flows to.<br/>
+          IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10738,7 +10738,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-Ipfix configuration, such as the IP address and port to send enriched Ipfix flows to.
+IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
 
 <table>
     <thead>
@@ -10753,7 +10753,7 @@ Ipfix configuration, such as the IP address and port to send enriched Ipfix flow
         <td><b>targetHost</b></td>
         <td>string</td>
         <td>
-          Address of the Ipfix external receiver<br/>
+          Address of the IPFIX external receiver<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -10762,14 +10762,14 @@ Ipfix configuration, such as the IP address and port to send enriched Ipfix flow
         <td><b>targetPort</b></td>
         <td>integer</td>
         <td>
-          Port for the Ipfix external receiver<br/>
+          Port for the IPFIX external receiver<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>transport</b></td>
         <td>enum</td>
         <td>
-          Transport protocol (`TCP` or `UDP`) to be used for the Ipfix connection, defaults to `TCP`.<br/>
+          Transport protocol (`TCP` or `UDP`) to be used for the IPFIX connection, defaults to `TCP`.<br/>
           <br/>
             <i>Enum</i>: TCP, UDP<br/>
         </td>

@@ -23,11 +23,11 @@ import (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type FlowCollectorDeploymentModel string
+
 const (
-	AgentIpfix            = "Ipfix"
-	AgentEbpf             = "Ebpf"
-	DeploymentModelDirect = "Direct"
-	DeploymentModelKafka  = "Kafka"
+	DeploymentModelDirect FlowCollectorDeploymentModel = "Direct"
+	DeploymentModelKafka  FlowCollectorDeploymentModel = "Kafka"
 )
 
 // Please notice that the FlowCollectorSpec's properties MUST redefine one of the default
@@ -70,7 +70,7 @@ type FlowCollectorSpec struct {
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Direct";"Kafka"
 	// +kubebuilder:default:=Direct
-	DeploymentModel string `json:"deploymentModel,omitempty"`
+	DeploymentModel FlowCollectorDeploymentModel `json:"deploymentModel,omitempty"`
 
 	// Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `Kafka`.
 	// +optional
@@ -78,38 +78,46 @@ type FlowCollectorSpec struct {
 
 	// `exporters` define additional optional exporters for custom consumption or storage.
 	// +optional
+	// +k8s:conversion-gen=false
 	Exporters []*FlowCollectorExporter `json:"exporters"`
 }
+
+type FlowCollectorAgentType string
+
+const (
+	AgentIPFIX FlowCollectorAgentType = "IPFIX"
+	AgentEBPF  FlowCollectorAgentType = "eBPF"
+)
 
 // `FlowCollectorAgent` is a discriminated union that allows to select either ipfix or ebpf, but does not
 // allow defining both fields.
 // +union
 type FlowCollectorAgent struct {
 	// `type` selects the flows tracing agent. Possible values are:<br>
-	// - `Ebpf` (default) to use NetObserv eBPF agent.<br>
-	// - `Ipfix` [deprecated (*)] - to use the legacy Ipfix collector.<br>
-	// `Ebpf` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster.
-	// `Ipfix` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting Ipfix,
+	// - `eBPF` (default) to use NetObserv eBPF agent.<br>
+	// - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br>
+	// `eBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster.
+	// `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX,
 	// but they would require manual configuration).
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="Ebpf";"Ipfix"
-	// +kubebuilder:default:=Ebpf
-	Type string `json:"type,omitempty"`
+	// +kubebuilder:validation:Enum:="eBPF";"IPFIX"
+	// +kubebuilder:default:=eBPF
+	Type FlowCollectorAgentType `json:"type,omitempty"`
 
-	// `ipfix` [deprecated (*)] - describes the settings related to the Ipfix-based flow reporter when `spec.agent.type`
-	// is set to `Ipfix`.
+	// `ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type`
+	// is set to `IPFIX`.
 	// +optional
-	Ipfix FlowCollectorIpfix `json:"ipfix,omitempty"`
+	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
 
 	// `ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type`
-	// is set to `Ebpf`.
+	// is set to `EBPF`.
 	// +optional
-	Ebpf FlowCollectorEbpf `json:"ebpf,omitempty"`
+	EBPF FlowCollectorEBPF `json:"ebpf,omitempty"`
 }
 
-// `FlowCollectorIpfix` defines a FlowCollector that uses Ipfix on OVN-Kubernetes to collect the
+// `FlowCollectorIPFIX` defines a FlowCollector that uses IPFIX on OVN-Kubernetes to collect the
 // flows information
-type FlowCollectorIpfix struct {
+type FlowCollectorIPFIX struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:validation:Pattern:=^\d+(ns|ms|s|m)?$
@@ -127,12 +135,12 @@ type FlowCollectorIpfix struct {
 	// `sampling` is the sampling rate on the reporter. 100 means one flow on 100 is sent.
 	// To ensure cluster stability, it is not possible to set a value below 2.
 	// If you really want to sample every packet, which might impact the cluster stability,
-	// refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of Ipfix.
+	// refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of IPFIX.
 	Sampling int32 `json:"sampling,omitempty" mapstructure:"sampling,omitempty"`
 
 	//+kubebuilder:default:=false
-	// `forceSampleAll` allows disabling sampling in the Ipfix-based flow reporter.
-	// It is not recommended to sample all the traffic with Ipfix, as it might generate cluster instability.
+	// `forceSampleAll` allows disabling sampling in the IPFIX-based flow reporter.
+	// It is not recommended to sample all the traffic with IPFIX, as it might generate cluster instability.
 	// If you REALLY want to do that, set this flag to `true`. Use at your own risk.
 	// When it is set to `true`, the value of `sampling` is ignored.
 	ForceSampleAll bool `json:"forceSampleAll,omitempty" mapstructure:"-"`
@@ -140,7 +148,7 @@ type FlowCollectorIpfix struct {
 	// `clusterNetworkOperator` defines the settings related to the OpenShift Cluster Network Operator, when available.
 	ClusterNetworkOperator ClusterNetworkOperatorConfig `json:"clusterNetworkOperator,omitempty" mapstructure:"-"`
 
-	// `ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's Ipfix exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
+	// `ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
 	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty" mapstructure:"-"`
 }
 
@@ -157,8 +165,8 @@ const (
 	FlowRTT     AgentFeature = "FlowRTT"
 )
 
-// `FlowCollectorEbpf` defines a FlowCollector that uses eBPF to collect the flows information
-type FlowCollectorEbpf struct {
+// `FlowCollectorEBPF` defines a FlowCollector that uses eBPF to collect the flows information
+type FlowCollectorEBPF struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
@@ -263,28 +271,28 @@ type FlowCollectorKafka struct {
 	SASL SASLConfig `json:"sasl"`
 }
 
-type FlowCollectorIpfixReceiver struct {
+type FlowCollectorIPFIXReceiver struct {
 	//+kubebuilder:default:=""
-	// Address of the Ipfix external receiver
+	// Address of the IPFIX external receiver
 	TargetHost string `json:"targetHost"`
 
-	// Port for the Ipfix external receiver
+	// Port for the IPFIX external receiver
 	TargetPort int `json:"targetPort"`
 
-	// Transport protocol (`TCP` or `UDP`) to be used for the Ipfix connection, defaults to `TCP`.
+	// Transport protocol (`TCP` or `UDP`) to be used for the IPFIX connection, defaults to `TCP`.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="TCP";"UDP"
 	// +optional
 	Transport string `json:"transport,omitempty"`
 }
 
-const (
-	ServerTLSDisabled = "Disabled"
-	ServerTLSProvided = "Provided"
-	ServerTLSAuto     = "Auto"
-)
-
 type ServerTLSConfigType string
+
+const (
+	ServerTLSDisabled ServerTLSConfigType = "Disabled"
+	ServerTLSProvided ServerTLSConfigType = "Provided"
+	ServerTLSAuto     ServerTLSConfigType = "Auto"
+)
 
 // `ServerTLS` define the TLS configuration, server side
 type ServerTLS struct {
@@ -326,17 +334,17 @@ type MetricsServerConfig struct {
 	TLS ServerTLS `json:"tls"`
 }
 
-const (
-	AlertNoFlows   = "NetObservNoFlows"
-	AlertLokiError = "NetObservLokiError"
-)
-
 // Name of a processor alert.
 // Possible values are:<br>
 // - `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
 // - `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br>
 // +kubebuilder:validation:Enum:="NetObservNoFlows";"NetObservLokiError"
 type FLPAlert string
+
+const (
+	AlertNoFlows   FLPAlert = "NetObservNoFlows"
+	AlertLokiError FLPAlert = "NetObservLokiError"
+)
 
 // `FLPMetrics` define the desired FLP configuration regarding metrics
 type FLPMetrics struct {
@@ -362,11 +370,13 @@ type FLPMetrics struct {
 	DisableAlerts []FLPAlert `json:"disableAlerts"`
 }
 
+type FLPLogTypes string
+
 const (
-	LogTypeFlows              = "Flows"
-	LogTypeConversations      = "Conversations"
-	LogTypeEndedConversations = "EndedConversations"
-	LogTypeAll                = "All"
+	LogTypeFlows              FLPLogTypes = "Flows"
+	LogTypeConversations      FLPLogTypes = "Conversations"
+	LogTypeEndedConversations FLPLogTypes = "EndedConversations"
+	LogTypeAll                FLPLogTypes = "All"
 )
 
 // `FlowCollectorFLP` defines the desired flowlogs-pipeline state of FlowCollector
@@ -449,7 +459,7 @@ type FlowCollectorFLP struct {
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum:="Flows";"Conversations";"EndedConversations";"All"
 	// +kubebuilder:default:=Flows
-	LogTypes *string `json:"logTypes,omitempty"`
+	LogTypes *FLPLogTypes `json:"logTypes,omitempty"`
 
 	//+kubebuilder:default:="30s"
 	// +optional
@@ -479,9 +489,11 @@ type FlowCollectorFLP struct {
 	Debug DebugConfig `json:"debug,omitempty"`
 }
 
+type HPAStatus string
+
 const (
-	HPAStatusDisabled = "Disabled"
-	HPAStatusEnabled  = "Enabled"
+	HPAStatusDisabled HPAStatus = "Disabled"
+	HPAStatusEnabled  HPAStatus = "Enabled"
 )
 
 type FlowCollectorHPA struct {
@@ -490,7 +502,7 @@ type FlowCollectorHPA struct {
 	// `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br>
 	// - `Disabled` does not deploy an horizontal pod autoscaler.<br>
 	// - `Enabled` deploys an horizontal pod autoscaler.<br>
-	Status string `json:"status,omitempty"`
+	Status HPAStatus `json:"status,omitempty"`
 
 	// `minReplicas` is the lower limit for the number of replicas to which the autoscaler
 	// can scale down. It defaults to 1 pod. minReplicas is allowed to be 0 if the
@@ -510,10 +522,12 @@ type FlowCollectorHPA struct {
 	Metrics []ascv2.MetricSpec `json:"metrics"`
 }
 
+type LokiAuthToken string
+
 const (
-	LokiAuthDisabled         = "Disabled"
-	LokiAuthUseHostToken     = "Host"
-	LokiAuthForwardUserToken = "Forward"
+	LokiAuthDisabled         LokiAuthToken = "Disabled"
+	LokiAuthUseHostToken     LokiAuthToken = "Host"
+	LokiAuthForwardUserToken LokiAuthToken = "Forward"
 )
 
 // `LokiManualParams` defines the full connection parameters to Loki.
@@ -551,7 +565,7 @@ type LokiManualParams struct {
 	// - `Forward` forwards the user token for authorization.<br>
 	// - `Host` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br>
 	// When using the Loki Operator, this must be set to `Forward`.
-	AuthToken string `json:"authToken,omitempty"`
+	AuthToken LokiAuthToken `json:"authToken,omitempty"`
 
 	// TLS client configuration for Loki URL.
 	// +optional
@@ -896,19 +910,18 @@ type DebugConfig struct {
 	Env map[string]string `json:"env,omitempty"`
 }
 
-// Add more exporter types below
 type ExporterType string
 
 const (
 	KafkaExporter ExporterType = "Kafka"
-	IpfixExporter ExporterType = "Ipfix"
+	IpfixExporter ExporterType = "IPFIX"
 )
 
 // `FlowCollectorExporter` defines an additional exporter to send enriched flows to.
 type FlowCollectorExporter struct {
-	// `type` selects the type of exporters. The available options are `Kafka` and `Ipfix`.
+	// `type` selects the type of exporters. The available options are `Kafka` and `IPFIX`.
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="Kafka";"Ipfix"
+	// +kubebuilder:validation:Enum:="Kafka";"IPFIX"
 	// +kubebuilder:validation:Required
 	Type ExporterType `json:"type"`
 
@@ -916,9 +929,9 @@ type FlowCollectorExporter struct {
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
-	// Ipfix configuration, such as the IP address and port to send enriched Ipfix flows to.
+	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
 	// +optional
-	IPFIX FlowCollectorIpfixReceiver `json:"ipfix,omitempty"`
+	IPFIX FlowCollectorIPFIXReceiver `json:"ipfix,omitempty"`
 }
 
 // `FlowCollectorStatus` defines the observed state of FlowCollector
@@ -936,7 +949,7 @@ type FlowCollectorStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.spec.agent.type`
-// +kubebuilder:printcolumn:name="Sampling (Ebpf)",type="string",JSONPath=`.spec.agent.ebpf.sampling`
+// +kubebuilder:printcolumn:name="Sampling (EBPF)",type="string",JSONPath=`.spec.agent.ebpf.sampling`
 // +kubebuilder:printcolumn:name="Deployment Model",type="string",JSONPath=`.spec.deploymentModel`
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
 // `FlowCollector` is the schema for the network flows collection API, which pilots and configures the underlying deployments.

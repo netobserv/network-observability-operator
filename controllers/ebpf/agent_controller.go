@@ -105,7 +105,7 @@ func (c *AgentController) Reconcile(
 	if err != nil {
 		return fmt.Errorf("fetching current EBPF Agent: %w", err)
 	}
-	if !helper.UseEbpf(&target.Spec) || c.PreviousPrivilegedNamespace() != c.PrivilegedNamespace() {
+	if !helper.UseEBPF(&target.Spec) || c.PreviousPrivilegedNamespace() != c.PrivilegedNamespace() {
 		if current == nil {
 			rlog.Info("nothing to do, as the requested agent is not eBPF",
 				"currentAgent", target.Spec.Agent)
@@ -125,7 +125,7 @@ func (c *AgentController) Reconcile(
 		current = nil
 	}
 
-	if err := c.permissions.Reconcile(ctx, &target.Spec.Agent.Ebpf); err != nil {
+	if err := c.permissions.Reconcile(ctx, &target.Spec.Agent.EBPF); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
 	desired, err := c.desired(ctx, target, rlog)
@@ -175,7 +175,7 @@ func newMountPropagationMode(m corev1.MountPropagationMode) *corev1.MountPropaga
 }
 
 func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector, rlog logr.Logger) (*v1.DaemonSet, error) {
-	if coll == nil || !helper.UseEbpf(&coll.Spec) {
+	if coll == nil || !helper.UseEBPF(&coll.Spec) {
 		return nil, nil
 	}
 	version := helper.ExtractVersion(c.config.EBPFAgentImage)
@@ -187,7 +187,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	volumeMounts := c.volumes.GetMounts()
 	volumes := c.volumes.GetVolumes()
 
-	if helper.IsPrivileged(&coll.Spec.Agent.Ebpf) {
+	if helper.IsPrivileged(&coll.Spec.Agent.EBPF) {
 		volume := corev1.Volume{
 			Name: bpfNetNSMountName,
 			VolumeSource: corev1.VolumeSource{
@@ -206,8 +206,8 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
 
-	if helper.IsFeatureEnabled(&coll.Spec.Agent.Ebpf, flowslatest.PacketDrop) {
-		if !coll.Spec.Agent.Ebpf.Privileged {
+	if helper.IsFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketDrop) {
+		if !coll.Spec.Agent.EBPF.Privileged {
 			rlog.Error(fmt.Errorf("invalid configuration"), "To use PacketsDrop feature privileged mode needs to be enabled")
 		} else {
 			volume := corev1.Volume{
@@ -257,8 +257,8 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 					Containers: []corev1.Container{{
 						Name:            constants.EBPFAgentName,
 						Image:           c.config.EBPFAgentImage,
-						ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.Ebpf.ImagePullPolicy),
-						Resources:       coll.Spec.Agent.Ebpf.Resources,
+						ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.ImagePullPolicy),
+						Resources:       coll.Spec.Agent.EBPF.Resources,
 						SecurityContext: c.securityContext(coll),
 						Env:             env,
 						VolumeMounts:    volumeMounts,
@@ -277,9 +277,9 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			corev1.EnvVar{Name: envExport, Value: exportKafka},
 			corev1.EnvVar{Name: envKafkaBrokers, Value: coll.Spec.Kafka.Address},
 			corev1.EnvVar{Name: envKafkaTopic, Value: coll.Spec.Kafka.Topic},
-			corev1.EnvVar{Name: envKafkaBatchSize, Value: strconv.Itoa(coll.Spec.Agent.Ebpf.KafkaBatchSize)},
+			corev1.EnvVar{Name: envKafkaBatchSize, Value: strconv.Itoa(coll.Spec.Agent.EBPF.KafkaBatchSize)},
 			// For easier user configuration, we can assume a constant message size per flow (~100B in protobuf)
-			corev1.EnvVar{Name: envKafkaBatchMessages, Value: strconv.Itoa(coll.Spec.Agent.Ebpf.KafkaBatchSize / averageMessageSize)},
+			corev1.EnvVar{Name: envKafkaBatchMessages, Value: strconv.Itoa(coll.Spec.Agent.EBPF.KafkaBatchSize / averageMessageSize)},
 		)
 		if coll.Spec.Kafka.TLS.Enable {
 			// Annotate pod with certificate reference so that it is reloaded if modified
@@ -374,8 +374,8 @@ func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *core
 		RunAsUser: ptr.To(int64(0)),
 	}
 
-	if coll.Spec.Agent.Ebpf.Privileged {
-		sc.Privileged = &coll.Spec.Agent.Ebpf.Privileged
+	if coll.Spec.Agent.EBPF.Privileged {
+		sc.Privileged = &coll.Spec.Agent.EBPF.Privileged
 	} else {
 		sc.Capabilities = &corev1.Capabilities{Add: permissions.AllowedCapabilities}
 	}
@@ -386,42 +386,42 @@ func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *core
 func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1.EnvVar {
 	var config []corev1.EnvVar
 
-	if coll.Spec.Agent.Ebpf.CacheActiveTimeout != "" {
+	if coll.Spec.Agent.EBPF.CacheActiveTimeout != "" {
 		config = append(config, corev1.EnvVar{
 			Name:  envCacheActiveTimeout,
-			Value: coll.Spec.Agent.Ebpf.CacheActiveTimeout,
+			Value: coll.Spec.Agent.EBPF.CacheActiveTimeout,
 		})
 	}
 
-	if coll.Spec.Agent.Ebpf.CacheMaxFlows != 0 {
+	if coll.Spec.Agent.EBPF.CacheMaxFlows != 0 {
 		config = append(config, corev1.EnvVar{
 			Name:  envCacheMaxFlows,
-			Value: strconv.Itoa(int(coll.Spec.Agent.Ebpf.CacheMaxFlows)),
+			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.CacheMaxFlows)),
 		})
 	}
 
-	if coll.Spec.Agent.Ebpf.LogLevel != "" {
+	if coll.Spec.Agent.EBPF.LogLevel != "" {
 		config = append(config, corev1.EnvVar{
 			Name:  envLogLevel,
-			Value: coll.Spec.Agent.Ebpf.LogLevel,
+			Value: coll.Spec.Agent.EBPF.LogLevel,
 		})
 	}
 
-	if len(coll.Spec.Agent.Ebpf.Interfaces) > 0 {
+	if len(coll.Spec.Agent.EBPF.Interfaces) > 0 {
 		config = append(config, corev1.EnvVar{
 			Name:  envInterfaces,
-			Value: strings.Join(coll.Spec.Agent.Ebpf.Interfaces, envListSeparator),
+			Value: strings.Join(coll.Spec.Agent.EBPF.Interfaces, envListSeparator),
 		})
 	}
 
-	if len(coll.Spec.Agent.Ebpf.ExcludeInterfaces) > 0 {
+	if len(coll.Spec.Agent.EBPF.ExcludeInterfaces) > 0 {
 		config = append(config, corev1.EnvVar{
 			Name:  envExcludeInterfaces,
-			Value: strings.Join(coll.Spec.Agent.Ebpf.ExcludeInterfaces, envListSeparator),
+			Value: strings.Join(coll.Spec.Agent.EBPF.ExcludeInterfaces, envListSeparator),
 		})
 	}
 
-	sampling := coll.Spec.Agent.Ebpf.Sampling
+	sampling := coll.Spec.Agent.EBPF.Sampling
 	if sampling != nil && *sampling > 1 {
 		config = append(config, corev1.EnvVar{
 			Name:  envSampling,
@@ -429,7 +429,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		})
 	}
 
-	if helper.IsFlowRTTEnabled(&coll.Spec.Agent.Ebpf) {
+	if helper.IsFlowRTTEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableFlowRTT,
 			Value: "true",
@@ -438,8 +438,8 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 
 	// set GOMEMLIMIT which allows specifying a soft memory cap to force GC when resource limit is reached
 	// to prevent OOM
-	if coll.Spec.Agent.Ebpf.Resources.Limits.Memory() != nil {
-		if memLimit, ok := coll.Spec.Agent.Ebpf.Resources.Limits.Memory().AsInt64(); ok {
+	if coll.Spec.Agent.EBPF.Resources.Limits.Memory() != nil {
+		if memLimit, ok := coll.Spec.Agent.EBPF.Resources.Limits.Memory().AsInt64(); ok {
 			// we will set the GOMEMLIMIT to current memlimit - 10% as a headroom to account for
 			// memory sources the Go runtime is unaware of
 			memLimit -= int64(float64(memLimit) * 0.1)
@@ -447,14 +447,14 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		}
 	}
 
-	if helper.IsPktDropEnabled(&coll.Spec.Agent.Ebpf) {
+	if helper.IsPktDropEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnablePktDrop,
 			Value: "true",
 		})
 	}
 
-	if helper.IsDNSTrackingEnabled(&coll.Spec.Agent.Ebpf) {
+	if helper.IsDNSTrackingEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableDNSTracking,
 			Value: "true",
@@ -465,7 +465,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	dedupJustMark := dedupeJustMarkDefault
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
-	for _, pair := range helper.KeySorted(coll.Spec.Agent.Ebpf.Debug.Env) {
+	for _, pair := range helper.KeySorted(coll.Spec.Agent.EBPF.Debug.Env) {
 		k, v := pair[0], pair[1]
 		if k == envDedupe {
 			dedup = v

@@ -51,7 +51,7 @@ func (b *ingestBuilder) configMap() (*corev1.ConfigMap, string, error) {
 
 func (b *ingestBuilder) buildPipelineConfig() ([]config.Stage, []config.StageParam, error) {
 	var pipeline config.PipelineBuilderStage
-	if helper.UseIpfix(b.generic.desired) {
+	if helper.UseIPFIX(b.generic.desired) {
 		// IPFIX collector
 		pipeline = config.NewCollectorPipeline("ipfix", api.IngestCollector{
 			Port:     int(b.generic.desired.Processor.Port),

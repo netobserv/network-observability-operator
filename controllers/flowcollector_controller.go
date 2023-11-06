@@ -148,12 +148,12 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 
 	// OVS config map for CNO
 	if r.availableAPIs.HasCNO() {
-		ovsConfigController := ovs.NewFlowsConfigCNOController(&reconcilersInfo, desired.Spec.Agent.Ipfix.ClusterNetworkOperator.Namespace, ovsFlowsConfigMapName)
+		ovsConfigController := ovs.NewFlowsConfigCNOController(&reconcilersInfo, desired.Spec.Agent.IPFIX.ClusterNetworkOperator.Namespace, ovsFlowsConfigMapName)
 		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
 			return ctrl.Result{}, r.failure(ctx, conditions.ReconcileCNOFailed(err), desired)
 		}
 	} else {
-		ovsConfigController := ovs.NewFlowsConfigOVNKController(&reconcilersInfo, desired.Spec.Agent.Ipfix.OVNKubernetes)
+		ovsConfigController := ovs.NewFlowsConfigOVNKController(&reconcilersInfo, desired.Spec.Agent.IPFIX.OVNKubernetes)
 		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
 			return ctrl.Result{}, r.failure(ctx, conditions.ReconcileOVNKFailed(err), desired)
 		}
@@ -380,7 +380,7 @@ func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsla
 	if !r.availableAPIs.HasCNO() {
 		ns := getNamespaceName(desired)
 		info := r.newCommonInfo(ctx, desired, ns, ns, nil, func(b bool) {}, func(b bool) {})
-		ovsConfigController := ovs.NewFlowsConfigOVNKController(&info, desired.Spec.Agent.Ipfix.OVNKubernetes)
+		ovsConfigController := ovs.NewFlowsConfigOVNKController(&info, desired.Spec.Agent.IPFIX.OVNKubernetes)
 		if err := ovsConfigController.Finalize(ctx, desired); err != nil {
 			return fmt.Errorf("failed to finalize ovn-kubernetes reconciler: %w", err)
 		}

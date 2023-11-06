@@ -46,9 +46,9 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	// Agent
-	if restored.Spec.Agent.Ebpf.Features != nil {
-		dst.Spec.Agent.Ebpf.Features = make([]v1beta2.AgentFeature, len(restored.Spec.Agent.Ebpf.Features))
-		copy(dst.Spec.Agent.Ebpf.Features, restored.Spec.Agent.Ebpf.Features)
+	if restored.Spec.Agent.EBPF.Features != nil {
+		dst.Spec.Agent.EBPF.Features = make([]v1beta2.AgentFeature, len(restored.Spec.Agent.EBPF.Features))
+		copy(dst.Spec.Agent.EBPF.Features, restored.Spec.Agent.EBPF.Features)
 	}
 
 	// Processor
@@ -130,7 +130,7 @@ func Convert_v1beta2_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1beta2
 	out.QuerierURL = manual.QuerierURL
 	out.StatusURL = manual.StatusURL
 	out.TenantID = manual.TenantID
-	out.AuthToken = manual.AuthToken
+	out.AuthToken = utilconversion.PascalToUpper(string(manual.AuthToken), '_')
 	if err := Convert_v1beta2_ClientTLS_To_v1alpha1_ClientTLS(&manual.TLS, &out.TLS, nil); err != nil {
 		return fmt.Errorf("copying v1beta2.Loki.TLS into v1alpha1.Loki.TLS: %w", err)
 	}
@@ -147,7 +147,7 @@ func Convert_v1alpha1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *FlowCol
 		QuerierURL:  in.QuerierURL,
 		StatusURL:   in.StatusURL,
 		TenantID:    in.TenantID,
-		AuthToken:   in.AuthToken,
+		AuthToken:   v1beta2.LokiAuthToken(utilconversion.UpperToPascal(in.AuthToken)),
 	}
 	// fallback on ingester url if querier is not set
 	if len(out.Manual.QuerierURL) == 0 {
@@ -169,15 +169,156 @@ func Convert_v1beta2_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorConsole
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta1 not in v1alpha1
 // nolint:golint,stylecheck,revive
-func Convert_v1beta2_FlowCollectorEbpf_To_v1alpha1_FlowCollectorEBPF(in *v1beta2.FlowCollectorEbpf, out *FlowCollectorEBPF, s apiconversion.Scope) error {
-	return autoConvert_v1beta2_FlowCollectorEbpf_To_v1alpha1_FlowCollectorEBPF(in, out, s)
+func Convert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1beta2.FlowCollectorEBPF, out *FlowCollectorEBPF, s apiconversion.Scope) error {
+	return autoConvert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in, out, s)
 }
 
-// // This function need to be manually created because conversion-gen not able to create it intentionally because
-// // we have new defined fields in v1beta2 not in v1alpha1
-// // nolint:golint,stylecheck,revive
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have camel case enum in v1beta2 which were uppercase in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1alpha1_FlowCollectorSpec_To_v1beta2_FlowCollectorSpec(in *FlowCollectorSpec, out *v1beta2.FlowCollectorSpec, s apiconversion.Scope) error {
+	if err := autoConvert_v1alpha1_FlowCollectorSpec_To_v1beta2_FlowCollectorSpec(in, out, s); err != nil {
+		return err
+	}
+	out.DeploymentModel = v1beta2.FlowCollectorDeploymentModel(utilconversion.UpperToPascal(in.DeploymentModel))
+	out.Exporters = []*v1beta2.FlowCollectorExporter{}
+	for _, inExporter := range in.Exporters {
+		outExporter := &v1beta2.FlowCollectorExporter{}
+		if err := Convert_v1alpha1_FlowCollectorExporter_To_v1beta2_FlowCollectorExporter(inExporter, outExporter, s); err != nil {
+			return err
+		}
+		out.Exporters = append(out.Exporters, outExporter)
+	}
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have camel case enum in v1beta2 which were uppercase in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_FlowCollectorSpec_To_v1alpha1_FlowCollectorSpec(in *v1beta2.FlowCollectorSpec, out *FlowCollectorSpec, s apiconversion.Scope) error {
+	if err := autoConvert_v1beta2_FlowCollectorSpec_To_v1alpha1_FlowCollectorSpec(in, out, s); err != nil {
+		return err
+	}
+	out.DeploymentModel = utilconversion.PascalToUpper(string(in.DeploymentModel), '_')
+	out.Exporters = []*FlowCollectorExporter{}
+	for _, inExporter := range in.Exporters {
+		outExporter := &FlowCollectorExporter{}
+		if err := Convert_v1beta2_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(inExporter, outExporter, s); err != nil {
+			return err
+		}
+		out.Exporters = append(out.Exporters, outExporter)
+	}
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have camel case enum in v1beta2 which were uppercase in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1alpha1_FlowCollectorAgent_To_v1beta2_FlowCollectorAgent(in *FlowCollectorAgent, out *v1beta2.FlowCollectorAgent, s apiconversion.Scope) error {
+	if err := autoConvert_v1alpha1_FlowCollectorAgent_To_v1beta2_FlowCollectorAgent(in, out, s); err != nil {
+		return err
+	}
+	out.Type = v1beta2.FlowCollectorAgentType(utilconversion.UpperToPascal(in.Type))
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have camel case enum in v1beta2 which were uppercase in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_FlowCollectorAgent_To_v1alpha1_FlowCollectorAgent(in *v1beta2.FlowCollectorAgent, out *FlowCollectorAgent, s apiconversion.Scope) error {
+	if err := autoConvert_v1beta2_FlowCollectorAgent_To_v1alpha1_FlowCollectorAgent(in, out, s); err != nil {
+		return err
+	}
+	out.Type = utilconversion.PascalToUpper(string(in.Type), '_')
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have camel case enum in v1beta2 which were uppercase in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1alpha1_ServerTLS_To_v1beta2_ServerTLS(in *ServerTLS, out *v1beta2.ServerTLS, s apiconversion.Scope) error {
+	if err := autoConvert_v1alpha1_ServerTLS_To_v1beta2_ServerTLS(in, out, s); err != nil {
+		return err
+	}
+	out.Type = v1beta2.ServerTLSConfigType(utilconversion.UpperToPascal(string(in.Type)))
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have camel case enum in v1beta2 which were uppercase in v1alpha1
+// nolint:golint,stylecheck,revive
 func Convert_v1beta2_ServerTLS_To_v1alpha1_ServerTLS(in *v1beta2.ServerTLS, out *ServerTLS, s apiconversion.Scope) error {
-	return autoConvert_v1beta2_ServerTLS_To_v1alpha1_ServerTLS(in, out, s)
+	if err := autoConvert_v1beta2_ServerTLS_To_v1alpha1_ServerTLS(in, out, s); err != nil {
+		return err
+	}
+	out.Type = ServerTLSConfigType(utilconversion.PascalToUpper(string(in.Type), '_'))
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have camel case enum in v1beta2 which were uppercase in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1alpha1_FlowCollectorHPA_To_v1beta2_FlowCollectorHPA(in *FlowCollectorHPA, out *v1beta2.FlowCollectorHPA, s apiconversion.Scope) error {
+	if err := autoConvert_v1alpha1_FlowCollectorHPA_To_v1beta2_FlowCollectorHPA(in, out, s); err != nil {
+		return err
+	}
+	out.Status = v1beta2.HPAStatus(utilconversion.UpperToPascal(in.Status))
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have camel case enum in v1beta2 which were uppercase in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_FlowCollectorHPA_To_v1alpha1_FlowCollectorHPA(in *v1beta2.FlowCollectorHPA, out *FlowCollectorHPA, s apiconversion.Scope) error {
+	if err := autoConvert_v1beta2_FlowCollectorHPA_To_v1alpha1_FlowCollectorHPA(in, out, s); err != nil {
+		return err
+	}
+	out.Status = utilconversion.PascalToUpper(string(in.Status), '_')
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have camel case enum in v1beta2 which were uppercase in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1alpha1_SASLConfig_To_v1beta2_SASLConfig(in *SASLConfig, out *v1beta2.SASLConfig, s apiconversion.Scope) error {
+	if err := autoConvert_v1alpha1_SASLConfig_To_v1beta2_SASLConfig(in, out, s); err != nil {
+		return err
+	}
+	out.Type = v1beta2.SASLType(utilconversion.UpperToPascal(string(in.Type)))
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have camel case enum in v1beta2 which were uppercase in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_SASLConfig_To_v1alpha1_SASLConfig(in *v1beta2.SASLConfig, out *SASLConfig, s apiconversion.Scope) error {
+	if err := autoConvert_v1beta2_SASLConfig_To_v1alpha1_SASLConfig(in, out, s); err != nil {
+		return err
+	}
+	out.Type = SASLType(utilconversion.PascalToUpper(string(in.Type), '_'))
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have camel case enum in v1beta2 which were uppercase in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1alpha1_FlowCollectorExporter_To_v1beta2_FlowCollectorExporter(in *FlowCollectorExporter, out *v1beta2.FlowCollectorExporter, s apiconversion.Scope) error {
+	if err := autoConvert_v1alpha1_FlowCollectorExporter_To_v1beta2_FlowCollectorExporter(in, out, s); err != nil {
+		return err
+	}
+	out.Type = v1beta2.ExporterType(utilconversion.UpperToPascal(string(in.Type)))
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have camel case enum in v1beta2 which were uppercase in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(in *v1beta2.FlowCollectorExporter, out *FlowCollectorExporter, s apiconversion.Scope) error {
+	if err := autoConvert_v1beta2_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(in, out, s); err != nil {
+		return err
+	}
+	out.Type = ExporterType(utilconversion.PascalToUpper(string(in.Type), '_'))
+	return nil
 }
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because

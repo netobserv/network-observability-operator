@@ -44,7 +44,7 @@ func TestBeta1ConversionRoundtrip_Loki(t *testing.T) {
 	assert.Equal("http://loki/status", converted.Spec.Loki.Manual.StatusURL)
 	assert.Equal("http://loki/querier", converted.Spec.Loki.Manual.QuerierURL)
 	assert.Equal("tenant", converted.Spec.Loki.Manual.TenantID)
-	assert.Equal(LokiAuthForwardUserToken, converted.Spec.Loki.Manual.AuthToken)
+	assert.Equal(v1beta2.LokiAuthForwardUserToken, converted.Spec.Loki.Manual.AuthToken)
 	assert.True(converted.Spec.Loki.Manual.TLS.Enable)
 	assert.True(converted.Spec.Loki.Manual.TLS.InsecureSkipVerify)
 	assert.True(converted.Spec.Loki.Manual.StatusTLS.Enable)

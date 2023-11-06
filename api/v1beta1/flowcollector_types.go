@@ -78,6 +78,7 @@ type FlowCollectorSpec struct {
 
 	// `exporters` define additional optional exporters for custom consumption or storage.
 	// +optional
+	// +k8s:conversion-gen=false
 	Exporters []*FlowCollectorExporter `json:"exporters"`
 }
 

@@ -87,8 +87,8 @@ func flowCollectorIsoSpecs() {
 				DropUnusedFields: ptr.To(false),
 			},
 			Agent: flowslatest.FlowCollectorAgent{
-				Type: "Ebpf",
-				Ipfix: flowslatest.FlowCollectorIpfix{
+				Type: "eBPF",
+				IPFIX: flowslatest.FlowCollectorIPFIX{
 					Sampling:           2, // 0 is forbidden here
 					CacheActiveTimeout: "5s",
 					CacheMaxFlows:      100,
@@ -102,7 +102,7 @@ func flowCollectorIsoSpecs() {
 						ContainerName: "test",
 					},
 				},
-				Ebpf: flowslatest.FlowCollectorEbpf{
+				EBPF: flowslatest.FlowCollectorEBPF{
 					Sampling:           &zero,
 					CacheActiveTimeout: "5s",
 					CacheMaxFlows:      100,

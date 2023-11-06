@@ -74,6 +74,8 @@ func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 	name := name(ck)
 	var promTLS *flowslatest.CertificateReference
 	switch desired.Processor.Metrics.Server.TLS.Type {
+	case flowslatest.ServerTLSDisabled:
+		// nothing to do here
 	case flowslatest.ServerTLSProvided:
 		promTLS = desired.Processor.Metrics.Server.TLS.Provided
 		if promTLS == nil {
@@ -117,7 +119,7 @@ func (b *builder) serviceMonitorName() string { return serviceMonitorName(b.conf
 func (b *builder) prometheusRuleName() string { return prometheusRuleName(b.confKind) }
 
 func (b *builder) portProtocol() corev1.Protocol {
-	if helper.UseEbpf(b.desired) {
+	if helper.UseEBPF(b.desired) {
 		return corev1.ProtocolTCP
 	}
 	return corev1.ProtocolUDP
@@ -393,7 +395,7 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 		},
 	}
 
-	if helper.IsPktDropEnabled(&b.desired.Agent.Ebpf) {
+	if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
 		outputPktDropFields := []api.OutputField{
 			{
 				Name:      "PktDropBytes",
@@ -425,7 +427,7 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 		outputFields = append(outputFields, outputPktDropFields...)
 	}
 
-	if helper.IsDNSTrackingEnabled(&b.desired.Agent.Ebpf) {
+	if helper.IsDNSTrackingEnabled(&b.desired.Agent.EBPF) {
 		outDNSTrackingFields := []api.OutputField{
 			{
 				Name:      "DnsFlagsResponseCode",
@@ -439,7 +441,7 @@ func (b *builder) addConnectionTracking(indexFields []string, lastStage config.P
 		outputFields = append(outputFields, outDNSTrackingFields...)
 	}
 
-	if helper.IsFlowRTTEnabled(&b.desired.Agent.Ebpf) {
+	if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
 		outputFields = append(outputFields, api.OutputField{
 			Name:      "MaxTimeFlowRttNs",
 			Operation: "max",
@@ -524,7 +526,7 @@ func (b *builder) addTransformFilter(lastStage config.PipelineBuilderStage) conf
 
 	// Filter-out unused fields?
 	if helper.PtrBool(b.desired.Processor.DropUnusedFields) {
-		if helper.UseIpfix(b.desired) {
+		if helper.UseIPFIX(b.desired) {
 			rules := filters.GetOVSGoflowUnusedRules()
 			transformFilterRules = append(transformFilterRules, rules...)
 		}
@@ -544,7 +546,7 @@ func (b *builder) addCustomExportStages(enrichedStage *config.PipelineBuilderSta
 			b.createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), &exporter.Kafka, enrichedStage)
 		}
 		if exporter.Type == flowslatest.IpfixExporter {
-			createIpfixWriteStage(fmt.Sprintf("IPFIX-export-%d", i), &exporter.IPFIX, enrichedStage)
+			createIPFIXWriteStage(fmt.Sprintf("IPFIX-export-%d", i), &exporter.IPFIX, enrichedStage)
 		}
 	}
 }
@@ -558,11 +560,11 @@ func (b *builder) createKafkaWriteStage(name string, spec *flowslatest.FlowColle
 	})
 }
 
-func createIpfixWriteStage(name string, spec *flowslatest.FlowCollectorIpfixReceiver, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
+func createIPFIXWriteStage(name string, spec *flowslatest.FlowCollectorIPFIXReceiver, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
 	return fromStage.WriteIpfix(name, api.WriteIpfix{
 		TargetHost:   spec.TargetHost,
 		TargetPort:   spec.TargetPort,
-		Transport:    getIpfixTransport(spec.Transport),
+		Transport:    getIPFIXTransport(spec.Transport),
 		EnterpriseID: 2,
 	})
 }
@@ -597,7 +599,7 @@ func (b *builder) getKafkaSASL(sasl *flowslatest.SASLConfig, volumePrefix string
 	}
 }
 
-func getIpfixTransport(transport string) string {
+func getIPFIXTransport(transport string) string {
 	switch transport {
 	case "UDP":
 		return "udp"
@@ -797,7 +799,7 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 	// Not receiving flows
 	if shouldAddAlert(flowslatest.AlertNoFlows, b.desired.Processor.Metrics.DisableAlerts) {
 		rules = append(rules, monitoringv1.Rule{
-			Alert: flowslatest.AlertNoFlows,
+			Alert: string(flowslatest.AlertNoFlows),
 			Annotations: map[string]string{
 				"description": "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
 				"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
@@ -814,7 +816,7 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 	// Flows getting dropped by loki library
 	if shouldAddAlert(flowslatest.AlertLokiError, b.desired.Processor.Metrics.DisableAlerts) {
 		rules = append(rules, monitoringv1.Rule{
-			Alert: flowslatest.AlertLokiError,
+			Alert: string(flowslatest.AlertLokiError),
 			Annotations: map[string]string{
 				"description": "NetObserv flowlogs-pipeline is dropping flows because of loki errors, loki may be down or having issues ingesting every flows. Please check loki and flowlogs-pipeline logs.",
 				"summary":     "NetObserv flowlogs-pipeline is dropping flows because of loki errors",

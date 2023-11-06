@@ -141,7 +141,7 @@ func flowCollectorCertificatesSpecs() {
 			Namespace:       operatorNamespace,
 			DeploymentModel: flowslatest.DeploymentModelKafka,
 			Agent: flowslatest.FlowCollectorAgent{
-				Type: "EBPF",
+				Type: "eBPF",
 			},
 			Loki: flowslatest.FlowCollectorLoki{
 				Enable: ptr.To(true),
@@ -182,7 +182,7 @@ func flowCollectorCertificatesSpecs() {
 						},
 					},
 					SASL: flowslatest.SASLConfig{
-						Type: "PLAIN",
+						Type: "Plain",
 						ClientIDReference: flowslatest.FileReference{
 							Type: flowslatest.RefTypeSecret,
 							Name: kafka2Sasl.Name,
