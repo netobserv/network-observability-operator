@@ -80,7 +80,7 @@ spec:
     enable: true
     # Change mode to "LokiStack" to use with the loki operator
     mode: Monolithic
-    monolith:
+    monolithic:
       url: 'http://loki.netobserv.svc:3100/'
       tenantID: netobserv 
       tls:

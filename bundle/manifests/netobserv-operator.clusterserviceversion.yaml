@@ -474,7 +474,7 @@ metadata:
               "maxRetries": 2,
               "minBackoff": "1s",
               "mode": "Monolithic",
-              "monolith": {
+              "monolithic": {
                 "tenantID": "netobserv",
                 "tls": {
                   "caCert": {
