@@ -521,16 +521,15 @@ type LokiManualParams struct {
 	// https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.
 	IngesterURL string `json:"ingesterUrl,omitempty"`
 
-	//+kubebuilder:validation:optional
-	// `querierURL` specifies the address of the Loki querier service, in case it is different from the
-	// Loki ingester URL. If empty, the URL value is used (assuming that the Loki ingester
-	// and querier are in the same server). When using the Loki Operator, do not set it, since
-	// ingestion and queries use the Loki gateway.
+	//+kubebuilder:default:="http://loki:3100/"
+	// `querierUrl` specifies the address of the Loki querier service.
+	// When using the Loki Operator, set it to the Loki gateway service with the `network` tenant set in path, for example
+	// https://loki-gateway-http.netobserv.svc:8080/api/logs/v1/network.
 	QuerierURL string `json:"querierUrl,omitempty"`
 
 	//+kubebuilder:validation:optional
-	// `statusURL` specifies the address of the Loki `/ready`, `/metrics` and `/config` endpoints, in case it is different from the
-	// Loki querier URL. If empty, the `querierURL` value is used.
+	// `statusUrl` specifies the address of the Loki `/ready`, `/metrics` and `/config` endpoints, in case it is different from the
+	// Loki querier URL. If empty, the `querierUrl` value is used.
 	// This is useful to show error messages and some context in the frontend.
 	// When using the Loki Operator, set it to the Loki HTTP query frontend service, for example
 	// https://loki-query-frontend-http.netobserv.svc:3100/.
