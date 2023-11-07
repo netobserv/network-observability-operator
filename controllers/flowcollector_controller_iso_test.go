@@ -138,7 +138,7 @@ func flowCollectorIsoSpecs() {
 				Mode:   flowslatest.LokiModeManual,
 				Manual: flowslatest.LokiManualParams{
 					IngesterURL: "http://loki",
-					QuerierURL:  "",
+					QuerierURL:  "http://loki",
 					StatusURL:   "",
 					TenantID:    "test",
 					AuthToken:   "DISABLED",
