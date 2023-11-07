@@ -74,7 +74,7 @@ func (c *Common) ReconcileClusterRoleBinding(ctx context.Context, desired *rbacv
 		// cluster role binding already reconciled. Exiting
 		return nil
 	}
-	return c.UpdateOwned(ctx, &actual, desired)
+	return c.UpdateIfOwned(ctx, &actual, desired)
 }
 
 func (c *Common) ReconcileRoleBinding(ctx context.Context, desired *rbacv1.RoleBinding) error {
@@ -101,7 +101,7 @@ func (c *Common) ReconcileRoleBinding(ctx context.Context, desired *rbacv1.RoleB
 		// role binding already reconciled. Exiting
 		return nil
 	}
-	return c.UpdateOwned(ctx, &actual, desired)
+	return c.UpdateIfOwned(ctx, &actual, desired)
 }
 
 func (c *Common) ReconcileClusterRole(ctx context.Context, desired *rbacv1.ClusterRole) error {
@@ -119,7 +119,7 @@ func (c *Common) ReconcileClusterRole(ctx context.Context, desired *rbacv1.Clust
 		return nil
 	}
 
-	return c.UpdateOwned(ctx, &actual, desired)
+	return c.UpdateIfOwned(ctx, &actual, desired)
 }
 
 func (c *Common) ReconcileRole(ctx context.Context, desired *rbacv1.Role) error {
@@ -137,7 +137,7 @@ func (c *Common) ReconcileRole(ctx context.Context, desired *rbacv1.Role) error 
 		return nil
 	}
 
-	return c.UpdateOwned(ctx, &actual, desired)
+	return c.UpdateIfOwned(ctx, &actual, desired)
 }
 
 func (c *Common) ReconcileConfigMap(ctx context.Context, desired *corev1.ConfigMap, delete bool) error {
@@ -162,7 +162,7 @@ func (c *Common) ReconcileConfigMap(ctx context.Context, desired *corev1.ConfigM
 		return nil
 	}
 
-	return c.UpdateOwned(ctx, &actual, desired)
+	return c.UpdateIfOwned(ctx, &actual, desired)
 }
 
 func (i *Instance) ReconcileService(ctx context.Context, old, new *corev1.Service, report *helper.ChangeReport) error {
@@ -175,7 +175,7 @@ func (i *Instance) ReconcileService(ctx context.Context, old, new *corev1.Servic
 		newSVC := old.DeepCopy()
 		newSVC.Spec.Ports = new.Spec.Ports
 		newSVC.ObjectMeta.Annotations = new.ObjectMeta.Annotations
-		if err := i.UpdateOwned(ctx, old, newSVC); err != nil {
+		if err := i.UpdateIfOwned(ctx, old, newSVC); err != nil {
 			return err
 		}
 	}
@@ -187,7 +187,7 @@ func GenericReconcile[K client.Object](ctx context.Context, m *NamespacedObjectM
 		return cl.CreateOwned(ctx, new)
 	}
 	if changeFunc(old, new, report) {
-		return cl.UpdateOwned(ctx, old, new)
+		return cl.UpdateIfOwned(ctx, old, new)
 	}
 	return nil
 }

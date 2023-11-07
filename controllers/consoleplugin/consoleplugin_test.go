@@ -187,17 +187,44 @@ func TestContainerUpdateCheck(t *testing.T) {
 	report = helper.NewChangeReport("")
 	assert.False(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "no change")
+}
+
+func TestConfigMapUpdateCheck(t *testing.T) {
+	assert := assert.New(t)
+
+	//equals specs
+	plugin := getPluginConfig()
+	loki := helper.LokiConfig{
+		LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://loki:3100/", TenantID: "netobserv"},
+	}
+	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin}
+	builder := newBuilder(testNamespace, testImage, &spec, &loki)
+	old, _, _ := builder.configMap()
+	nEw, _, _ := builder.configMap()
+	assert.Equal(old.Data, nEw.Data)
+
+	//update loki
+	loki = helper.LokiConfig{
+		LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://loki:3100/", TenantID: "netobserv", TLS: flowslatest.ClientTLS{
+			Enable: true,
+			CACert: flowslatest.CertificateReference{
+				Type:     "configmap",
+				Name:     "cm-name",
+				CertFile: "ca.crt",
+			},
+		}},
+	}
+	builder = newBuilder(testNamespace, testImage, &spec, &loki)
+	nEw, _, _ = builder.configMap()
+	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
 	//set status url and enable default tls
 	loki.LokiManualParams.StatusURL = "http://loki.status:3100/"
 	loki.LokiManualParams.StatusTLS.Enable = true
-
 	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	nEw = builder.deployment("digest")
-	report = helper.NewChangeReport("")
-	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
-	assert.Contains(report.String(), "Container changed")
+	nEw, _, _ = builder.configMap()
+	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
 	//update status ca cert
@@ -206,12 +233,9 @@ func TestContainerUpdateCheck(t *testing.T) {
 		Name:     "status-cm-name",
 		CertFile: "status-ca.crt",
 	}
-
 	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	nEw = builder.deployment("digest")
-	report = helper.NewChangeReport("")
-	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
-	assert.Contains(report.String(), "Volumes changed")
+	nEw, _, _ = builder.configMap()
+	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
 	//update status user cert
@@ -221,15 +245,12 @@ func TestContainerUpdateCheck(t *testing.T) {
 		CertFile: "tls.crt",
 		CertKey:  "tls.key",
 	}
-
 	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	nEw = builder.deployment("digest")
-	report = helper.NewChangeReport("")
-	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
-	assert.Contains(report.String(), "Volumes changed")
+	nEw, _, _ = builder.configMap()
+	assert.NotEqual(old.Data, nEw.Data)
 }
 
-func TestContainerUpdateWithLokistackMode(t *testing.T) {
+func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 	assert := assert.New(t)
 
 	//equals specs
@@ -241,11 +262,9 @@ func TestContainerUpdateWithLokistackMode(t *testing.T) {
 	loki := helper.NewLokiConfig(&lokiSpec)
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder := newBuilder(testNamespace, testImage, &spec, &loki)
-	old := builder.deployment("digest")
-	nEw := builder.deployment("digest")
-	report := helper.NewChangeReport("")
-	assert.False(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
-	assert.Contains(report.String(), "no change")
+	old, _, _ := builder.configMap()
+	nEw, _, _ := builder.configMap()
+	assert.Equal(old.Data, nEw.Data)
 
 	//update lokistack name
 	lokiSpec.LokiStack.Name = "lokistack-updated"
@@ -253,10 +272,8 @@ func TestContainerUpdateWithLokistackMode(t *testing.T) {
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	nEw = builder.deployment("digest")
-	report = helper.NewChangeReport("")
-	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
-	assert.Contains(report.String(), "Volumes changed")
+	nEw, _, _ = builder.configMap()
+	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
 	//update lokistack namespace
@@ -265,10 +282,8 @@ func TestContainerUpdateWithLokistackMode(t *testing.T) {
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	nEw = builder.deployment("digest")
-	report = helper.NewChangeReport("")
-	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
-	assert.Contains(report.String(), "Container changed")
+	nEw, _, _ = builder.configMap()
+	assert.NotEqual(old.Data, nEw.Data)
 }
 
 func TestServiceUpdateCheck(t *testing.T) {
