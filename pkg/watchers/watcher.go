@@ -8,17 +8,16 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/narrowcache"
 )
 
 var (
@@ -28,19 +27,17 @@ var (
 
 type Watcher struct {
 	ctrl             controller.Controller
-	cache            cache.Cache
 	watches          map[string]bool
 	wmut             sync.RWMutex
 	defaultNamespace string
 }
 
-func NewWatcher(ctrl controller.Controller, cache cache.Cache) *Watcher {
+func NewWatcher(ctrl controller.Controller) *Watcher {
 	// Note that Watcher doesn't start any informer at this point, in order to keep informers watching strictly
 	// the desired object rather than the whole cluster.
 	// Since watched objects can be in any namespace, we cannot use namespace-based restriction to limit memory consumption.
 	return &Watcher{
 		ctrl:    ctrl,
-		cache:   cache,
 		watches: make(map[string]bool),
 	}
 }
@@ -74,7 +71,7 @@ func (w *Watcher) setActiveWatch(key string) bool {
 	return exists
 }
 
-func (w *Watcher) watch(ctx context.Context, kind flowslatest.MountableType, obj client.Object) error {
+func (w *Watcher) watch(ctx context.Context, cl *narrowcache.Client, kind flowslatest.MountableType, obj client.Object) error {
 	k := key(kind, obj.GetName(), obj.GetNamespace())
 	// Mark as active
 	exists := w.setActiveWatch(k)
@@ -82,7 +79,7 @@ func (w *Watcher) watch(ctx context.Context, kind flowslatest.MountableType, obj
 		// Don't register again
 		return nil
 	}
-	i, err := w.cache.GetInformer(ctx, obj)
+	s, err := cl.GetSource(ctx, obj)
 	if err != nil {
 		return err
 	}
@@ -90,7 +87,7 @@ func (w *Watcher) watch(ctx context.Context, kind flowslatest.MountableType, obj
 	// This isn't a big deal here, as the number of watches that we set is very limited and not meant to grow over and over
 	// (unless user keeps reconfiguring cert references endlessly)
 	err = w.ctrl.Watch(
-		&source.Informer{Informer: i},
+		s,
 		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
 			// The watch might be registered, but inactive
 			k := key(kind, o.GetName(), o.GetNamespace())
@@ -173,6 +170,7 @@ func (w *Watcher) ProcessSASL(ctx context.Context, cl helper.Client, sasl *flows
 
 func (w *Watcher) reconcile(ctx context.Context, cl helper.Client, ref objectRef, destNamespace string) (string, error) {
 	rlog := log.FromContext(ctx, "Name", ref.name, "Source namespace", ref.namespace, "Target namespace", destNamespace)
+	ctx = log.IntoContext(ctx, rlog)
 	report := helper.NewChangeReport("Watcher for " + string(ref.kind) + " " + ref.name)
 	defer report.LogIfNeeded(ctx)
 
@@ -182,7 +180,7 @@ func (w *Watcher) reconcile(ctx context.Context, cl helper.Client, ref objectRef
 	if err != nil {
 		return "", err
 	}
-	err = w.watch(ctx, ref.kind, obj)
+	err = w.watch(ctx, cl.Client.(*narrowcache.Client), ref.kind, obj)
 	if err != nil {
 		return "", err
 	}
