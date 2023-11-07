@@ -404,7 +404,10 @@ func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
 		},
 	}
 	hasher := fnv.New64a()
-	_, _ = hasher.Write([]byte(configStr))
+	_, err = hasher.Write([]byte(configStr))
+	if err != nil {
+		return nil, "", err
+	}
 	digest := strconv.FormatUint(hasher.Sum64(), 36)
 	return &configMap, digest, nil
 }
