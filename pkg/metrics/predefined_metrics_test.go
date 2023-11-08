@@ -13,16 +13,13 @@ func TestIncludeExclude(t *testing.T) {
 	res := GetEnabledNames([]string{"egress", "packets", "flows"}, nil)
 	assert.Equal([]string{
 		"node_ingress_bytes_total",
-		"node_rtt",
-		"node_drop_packets_total",
+		"node_rtt_seconds",
 		"node_drop_bytes_total",
 		"namespace_ingress_bytes_total",
-		"namespace_rtt",
-		"namespace_drop_packets_total",
+		"namespace_rtt_seconds",
 		"namespace_drop_bytes_total",
 		"workload_ingress_bytes_total",
-		"workload_rtt",
-		"workload_drop_packets_total",
+		"workload_rtt_seconds",
 		"workload_drop_bytes_total",
 	}, res)
 

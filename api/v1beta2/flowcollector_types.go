@@ -351,6 +351,11 @@ type FLPMetrics struct {
 	// `namespace_ingress_packets_total`, `namespace_flows_total`, `node_egress_bytes_total`, `node_egress_packets_total`,
 	// `node_ingress_bytes_total`, `node_ingress_packets_total`, `node_flows_total`, `workload_egress_bytes_total`,
 	// `workload_egress_packets_total`, `workload_ingress_bytes_total`, `workload_ingress_packets_total`, `workload_flows_total`.
+	// When the `PacketDrop` feature is enabled in `spec.agent.ebpf.features`, these additional metrics are available:
+	// `namespace_drop_bytes_total`, `namespace_drop_packets_total`, `node_drop_bytes_total`, `node_drop_packets_total`,
+	// `workload_drop_bytes_total`, `workload_drop_packets_total`.
+	// When the `FlowRTT` feature is enabled in `spec.agent.ebpf.features`, these additional metrics are available:
+	// `namespace_rtt_seconds`, `node_rtt_seconds`, `workload_rtt_seconds`.
 	// +optional
 	IncludeList *[]string `json:"includeList,omitempty"`
 

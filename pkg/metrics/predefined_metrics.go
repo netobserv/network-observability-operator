@@ -61,7 +61,7 @@ func init() {
 						ValueKey: valueField,
 						Filters: []flpapi.PromMetricsFilter{
 							{Key: "Duplicate", Value: "false"},
-							{Key: "FlowDirection", Value: mapDirection[dir], Type: "regex"},
+							{Key: "FlowDirection", Value: mapDirection[dir], Type: flpapi.PromFilterRegex},
 						},
 						Labels: labels,
 					},
@@ -81,16 +81,14 @@ func init() {
 		// RTT metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 			PromMetricsItem: flpapi.PromMetricsItem{
-				Name:     fmt.Sprintf("%s_rtt", groupTrimmed),
+				Name:     fmt.Sprintf("%s_rtt_seconds", groupTrimmed),
 				Type:     "histogram",
 				ValueKey: "TimeFlowRttNs",
 				Filters: []flpapi.PromMetricsFilter{
-					{Key: "TimeFlowRttNs", Value: "!nil"},
+					{Key: "TimeFlowRttNs", Type: flpapi.PromFilterPresence},
 				},
-				Labels: labels,
-				// TODO: Add Scaling to prom API to avoid having these poor buckets
-				// (convert ns => s)
-				Buckets: []float64{10, 1000, 100000, 10_000_000, 1_000_000_000},
+				Labels:     labels,
+				ValueScale: 1_000_000_000, // ns => s
 			},
 			tags: []string{group, "rtt"},
 		})
@@ -102,11 +100,11 @@ func init() {
 				ValueKey: "PktDropPackets",
 				Filters: []flpapi.PromMetricsFilter{
 					{Key: "Duplicate", Value: "false"},
-					{Key: "PktDropPackets", Value: "!nil"},
+					{Key: "PktDropPackets", Type: flpapi.PromFilterPresence},
 				},
 				Labels: labels,
 			},
-			tags: []string{group, "drop-packets"},
+			tags: []string{group, tagPackets, "drops"},
 		})
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 			PromMetricsItem: flpapi.PromMetricsItem{
@@ -115,11 +113,11 @@ func init() {
 				ValueKey: "PktDropBytes",
 				Filters: []flpapi.PromMetricsFilter{
 					{Key: "Duplicate", Value: "false"},
-					{Key: "PktDropBytes", Value: "!nil"},
+					{Key: "PktDropBytes", Type: flpapi.PromFilterPresence},
 				},
 				Labels: labels,
 			},
-			tags: []string{group, "drop-packets"},
+			tags: []string{group, tagBytes, "drop"},
 		})
 	}
 }
