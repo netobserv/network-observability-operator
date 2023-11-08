@@ -34,7 +34,13 @@ var (
 	}
 	predefinedMetrics []taggedMetricDefinition
 	// Note that we set default in-code rather than in CRD, in order to keep track of value being unset or set intentionnally in FlowCollector
-	DefaultIncludeList = []string{"node_ingress_bytes_total", "workload_ingress_bytes_total", "namespace_flows_total"}
+	DefaultIncludeList = []string{
+		"node_ingress_bytes_total",
+		"workload_ingress_bytes_total",
+		"namespace_flows_total",
+		"namespace_drop_packets_total",
+		"namespace_rtt_seconds",
+	}
 	// Pre-deprecation default IgnoreTags list (1.4) - used before switching to whitelist approach,
 	// to make sure there is no unintended new metrics being collected
 	// Don't add anything here: this is not meant to evolve

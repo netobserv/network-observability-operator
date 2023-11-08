@@ -88,7 +88,7 @@ func TestCreateFlowMetricsDashboard_DefaultList(t *testing.T) {
 	assert.NoError(err)
 
 	assert.Equal("NetObserv", d.Title)
-	assert.Len(d.Rows, 3)
+	assert.Len(d.Rows, 4)
 
 	// First row
 	row := 0
@@ -113,8 +113,8 @@ func TestCreateFlowMetricsDashboard_DefaultList(t *testing.T) {
 		`label_replace(label_replace(topk(10,sum(rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace=~"netobserv|openshift.*"}[1m]) or rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace!~"netobserv|openshift.*",DstK8S_Namespace=~"netobserv|openshift.*"}[1m])) by (SrcK8S_Namespace, DstK8S_Namespace))`,
 	)
 
-	// 3rd row
-	row = 2
+	// 4th row
+	row = 3
 	assert.Equal("Top byte rates received per source and destination workloads", d.Rows[row].Title)
 	assert.Len(d.Rows[row].Panels, 2)
 	assert.Equal("Applications", d.Rows[row].Panels[0].Title)
