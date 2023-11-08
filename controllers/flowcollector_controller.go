@@ -119,7 +119,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 		}
 	}
 
-	loki := helper.NewLokiConfig(&desired.Spec.Loki)
+	loki := helper.NewLokiConfig(&desired.Spec.Loki, ns)
 	reconcilersInfo := r.newCommonInfo(ctx, desired, ns, previousNamespace, &loki, func(b bool) { didChange = b }, func(b bool) { isInProgress = b })
 
 	err = r.reconcileOperator(ctx, &reconcilersInfo, desired)

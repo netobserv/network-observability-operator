@@ -238,7 +238,7 @@ func TestContainerUpdateWithLokistackMode(t *testing.T) {
 		Mode:      flowslatest.LokiModeLokiStack,
 		LokiStack: flowslatest.LokiStackRef{Name: "lokistack", Namespace: "ls-namespace"},
 	}
-	loki := helper.NewLokiConfig(&lokiSpec)
+	loki := helper.NewLokiConfig(&lokiSpec, "any")
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder := newBuilder(testNamespace, testImage, &spec, &loki)
 	old := builder.deployment("digest")
@@ -249,7 +249,7 @@ func TestContainerUpdateWithLokistackMode(t *testing.T) {
 
 	//update lokistack name
 	lokiSpec.LokiStack.Name = "lokistack-updated"
-	loki = helper.NewLokiConfig(&lokiSpec)
+	loki = helper.NewLokiConfig(&lokiSpec, "any")
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder = newBuilder(testNamespace, testImage, &spec, &loki)
@@ -261,7 +261,7 @@ func TestContainerUpdateWithLokistackMode(t *testing.T) {
 
 	//update lokistack namespace
 	lokiSpec.LokiStack.Namespace = "ls-namespace-updated"
-	loki = helper.NewLokiConfig(&lokiSpec)
+	loki = helper.NewLokiConfig(&lokiSpec, "any")
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder = newBuilder(testNamespace, testImage, &spec, &loki)
