@@ -81,7 +81,6 @@ func flowCollectorIsoSpecs() {
 							Provided: nil,
 						},
 					},
-					IgnoreTags:    []string{},
 					DisableAlerts: []flowslatest.FLPAlert{},
 				},
 				EnableKubeProbes: ptr.To(false),

@@ -121,9 +121,6 @@
       "repeatIteration": null,
       "repeatRowId": null,
       "showTitle": true,
-      "tags": [
-        "flows"
-      ],
       "title": "Flows",
       "titleSize": "h6"
     },
@@ -222,9 +219,7 @@
       "repeatRowId": null,
       "showTitle": true,
       "tags": [
-        "flows",
-        "overhead",
-        "flows-overhead"
+        "dynamic"
       ],
       "title": "Flows Overhead",
       "titleSize": "h6"
@@ -323,11 +318,9 @@
       ],
       "showTitle": true,
       "tags": [
-        "flows",
-        "nodes",
-        "nodes-flows"
+        "dynamic"
       ],
-      "title": "Top flow rates per source and destination nodes (1-min rates)"
+      "title": "Top flow rates per source and destination nodes"
     },
     {
       "collapse": false,
@@ -509,11 +502,9 @@
       ],
       "showTitle": true,
       "tags": [
-        "flows",
-        "namespaces",
-        "namespaces-flows"
+        "dynamic"
       ],
-      "title": "Top flow rates per source and destination namespaces (1-min rates)",
+      "title": "Top flow rates per source and destination namespaces",
       "titleSize": "h6"
     },
     {
@@ -694,11 +685,9 @@
       ],
       "showTitle": true,
       "tags": [
-        "flows",
-        "workloads",
-        "workloads-flows"
+        "dynamic"
       ],
-      "title": "Top flow rates per source and destination workloads (1-min rates)"
+      "title": "Top flow rates per source and destination workloads"
     },
     {
       "collapse": false,

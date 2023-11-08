@@ -344,12 +344,15 @@ type FLPMetrics struct {
 	// +optional
 	Server MetricsServerConfig `json:"server,omitempty"`
 
-	// `ignoreTags` is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions .
-	// Available tags are: `egress`, `ingress`, `flows`, `bytes`, `packets`, `namespaces`, `nodes`, `workloads`, `nodes-flows`, `namespaces-flows`, `workloads-flows`.
-	// Namespace-based metrics are covered by both `workloads` and `namespaces` tags, hence it is recommended to always ignore one of them (`workloads` offering a finer granularity).
-	//+kubebuilder:default:={"egress","packets","nodes-flows","namespaces-flows","workloads-flows","namespaces"}
+	// `includeList` is a list of metric names to specify which metrics to generate.
+	// The names correspond to the name in Prometheus, without the prefix. For example,
+	// `namespace_egress_packets_total` will show up as `netobserv_namespace_egress_packets_total` in Prometheus.
+	// Available names are: `namespace_egress_bytes_total`, `namespace_egress_packets_total`, `namespace_ingress_bytes_total`,
+	// `namespace_ingress_packets_total`, `namespace_flows_total`, `node_egress_bytes_total`, `node_egress_packets_total`,
+	// `node_ingress_bytes_total`, `node_ingress_packets_total`, `node_flows_total`, `workload_egress_bytes_total`,
+	// `workload_egress_packets_total`, `workload_ingress_bytes_total`, `workload_ingress_packets_total`, `workload_flows_total`.
 	// +optional
-	IgnoreTags []string `json:"ignoreTags"`
+	IncludeList *[]string `json:"includeList,omitempty"`
 
 	// `disableAlerts` is a list of alerts that should be disabled.
 	// Possible values are:<br>

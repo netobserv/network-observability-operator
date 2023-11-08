@@ -1,7 +1,6 @@
-package helper
+package dashboards
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -238,26 +237,21 @@ func flowMetricsRow(netobsNs string, rowInfo rowInfo) string {
 	`, panels, title)
 }
 
-func CreateFlowMetricsDashboard(netobsNs string, ignoreFlags []string) (string, error) {
+func CreateFlowMetricsDashboard(netobsNs string, metrics []string) (string, error) {
 	var rows []string
 
-	ignoreNamespace := slices.Contains(ignoreFlags, metricTagNamespaces)
 	for _, ri := range rowsInfo {
-		groupToCheck := ri.group
-
-		// Replace *_namespace_* with *_workload_* metrics when relevant, as they can show the same information
-		if ignoreNamespace && strings.Contains(ri.metric, "_namespace_") {
-			// ri is a copy, safe to change
-			ri.metric = strings.Replace(ri.metric, "_namespace_", "_workload_", 1)
-			groupToCheck = metricTagWorkloads
-		}
-
-		if !slices.Contains(ignoreFlags, ri.dir) &&
-			!slices.Contains(ignoreFlags, groupToCheck) &&
-			!slices.Contains(ignoreFlags, ri.valueType) &&
-			!slices.Contains(ignoreFlags, ri.metric) {
-
+		trimmed := strings.TrimPrefix(ri.metric, "netobserv_")
+		if slices.Contains(metrics, trimmed) {
 			rows = append(rows, flowMetricsRow(netobsNs, ri))
+		} else if strings.Contains(ri.metric, "_namespace_") {
+			// namespace-based panels can also be displayed using workload-based metrics
+			// Try again, replacing *_namespace_* with *_workload_*
+			ri.metric = strings.Replace(ri.metric, "_namespace_", "_workload_", 1)
+			trimmed = strings.TrimPrefix(ri.metric, "netobserv_")
+			if slices.Contains(metrics, trimmed) {
+				rows = append(rows, flowMetricsRow(netobsNs, ri))
+			}
 		}
 	}
 
@@ -323,48 +317,4 @@ func CreateFlowMetricsDashboard(netobsNs string, ignoreFlags []string) (string, 
 		"version": 0
 	}
 	`, rowsStr), nil
-}
-
-func FilterDashboardRows(dashboard string, netobsNs string, ignoreFlags []string) (string, error) {
-	var result map[string]any
-	err := json.Unmarshal([]byte(dashboard), &result)
-	if err != nil {
-		return "", err
-	}
-
-	// return dashboard as is if not containing rows
-	if result["rows"] == nil {
-		return dashboard, nil
-	}
-
-	rows := result["rows"].([]any)
-	filteredRows := []map[string]any{}
-	for _, r := range rows {
-		row := r.(map[string]any)
-
-		if row["tags"] != nil {
-			t := row["tags"].([]any)
-			tags := make([]string, len(t))
-			for i := range t {
-				tags[i] = t[i].(string)
-			}
-
-			// add any row that has tags not included in ignored flags
-			if !Intersect(tags, ignoreFlags) {
-				filteredRows = append(filteredRows, row)
-			}
-		} else {
-			// add any row that doesn't have tags
-			filteredRows = append(filteredRows, row)
-		}
-	}
-
-	// return empty if dashboard doesn't contains rows anymore
-	if len(filteredRows) == 0 {
-		return "", nil
-	}
-
-	result["rows"] = filteredRows
-	bytes, err := json.Marshal(result)
-	return strings.ReplaceAll(string(bytes), "$NETOBSERV_NS", netobsNs), err
 }

@@ -132,6 +132,15 @@ func (in *FLPMetrics) DeepCopyInto(out *FLPMetrics) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.IncludeList != nil {
+		in, out := &in.IncludeList, &out.IncludeList
+		*out = new([]string)
+		if **in != nil {
+			in, out := *in, *out
+			*out = make([]string, len(*in))
+			copy(*out, *in)
+		}
+	}
 	if in.DisableAlerts != nil {
 		in, out := &in.DisableAlerts, &out.DisableAlerts
 		*out = make([]FLPAlert, len(*in))

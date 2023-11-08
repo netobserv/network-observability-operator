@@ -1,17 +1,12 @@
 package controllers
 
 import (
-	_ "embed"
-
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/dashboards"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-//go:embed infra_health_dashboard.json
-var healthDashboardEmbed string
 
 const (
 	downstreamLabelKey    = "openshift.io/cluster-monitoring"
@@ -78,8 +73,8 @@ func buildRoleBindingMonitoringReader(ns string) *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func buildFlowMetricsDashboard(namespace string, ignoreFlags []string) (*corev1.ConfigMap, bool, error) {
-	dashboard, err := helper.CreateFlowMetricsDashboard(namespace, ignoreFlags)
+func buildFlowMetricsDashboard(namespace string, metrics []string) (*corev1.ConfigMap, bool, error) {
+	dashboard, err := dashboards.CreateFlowMetricsDashboard(namespace, metrics)
 	if err != nil {
 		return nil, false, err
 	}
@@ -99,8 +94,8 @@ func buildFlowMetricsDashboard(namespace string, ignoreFlags []string) (*corev1.
 	return &configMap, len(dashboard) == 0, nil
 }
 
-func buildHealthDashboard(namespace string, ignoreFlags []string) (*corev1.ConfigMap, bool, error) {
-	dashboard, err := helper.FilterDashboardRows(healthDashboardEmbed, namespace, ignoreFlags)
+func buildHealthDashboard(namespace string, metrics []string) (*corev1.ConfigMap, bool, error) {
+	dashboard, err := dashboards.CreateHealthDashboard(namespace, metrics)
 	if err != nil {
 		return nil, false, err
 	}

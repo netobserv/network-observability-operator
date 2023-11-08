@@ -5,6 +5,7 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -134,4 +135,11 @@ func PtrInt32(i *int32) int32 {
 func IsOwned(obj client.Object) bool {
 	refs := obj.GetOwnerReferences()
 	return len(refs) > 0 && strings.HasPrefix(refs[0].APIVersion, flowslatest.GroupVersion.Group)
+}
+
+func GetIncludeList(spec *flowslatest.FLPMetrics) []string {
+	if spec.IncludeList == nil {
+		return metrics.DefaultIncludeList
+	}
+	return *spec.IncludeList
 }
