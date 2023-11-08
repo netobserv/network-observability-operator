@@ -41,13 +41,14 @@ func PromEncodeOperationName(operation string) string {
 }
 
 type PromMetricsItem struct {
-	Name     string              `yaml:"name" json:"name" doc:"the metric name"`
-	Type     string              `yaml:"type" json:"type" enum:"PromEncodeOperationEnum" doc:"one of the following:"`
-	Filter   PromMetricsFilter   `yaml:"filter,omitempty" json:"filter,omitempty" doc:"an optional criterion to filter entries by. Deprecated: use filters instead."`
-	Filters  []PromMetricsFilter `yaml:"filters" json:"filters" doc:"a list of criteria to filter entries by"`
-	ValueKey string              `yaml:"valueKey" json:"valueKey" doc:"entry key from which to resolve metric value"`
-	Labels   []string            `yaml:"labels" json:"labels" doc:"labels to be associated with the metric"`
-	Buckets  []float64           `yaml:"buckets" json:"buckets" doc:"histogram buckets"`
+	Name       string              `yaml:"name" json:"name" doc:"the metric name"`
+	Type       string              `yaml:"type" json:"type" enum:"PromEncodeOperationEnum" doc:"one of the following:"`
+	Filter     PromMetricsFilter   `yaml:"filter,omitempty" json:"filter,omitempty" doc:"an optional criterion to filter entries by. Deprecated: use filters instead."`
+	Filters    []PromMetricsFilter `yaml:"filters" json:"filters" doc:"a list of criteria to filter entries by"`
+	ValueKey   string              `yaml:"valueKey" json:"valueKey" doc:"entry key from which to resolve metric value"`
+	Labels     []string            `yaml:"labels" json:"labels" doc:"labels to be associated with the metric"`
+	Buckets    []float64           `yaml:"buckets" json:"buckets" doc:"histogram buckets"`
+	ValueScale float64             `yaml:"valueScale" json:"valueScale" doc:"scale factor of the value (MetricVal := FlowVal / Scale)"`
 }
 
 func (i *PromMetricsItem) GetFilters() []PromMetricsFilter {
@@ -62,4 +63,16 @@ type PromMetricsItems []PromMetricsItem
 type PromMetricsFilter struct {
 	Key   string `yaml:"key" json:"key" doc:"the key to match and filter by"`
 	Value string `yaml:"value" json:"value" doc:"the value to match and filter by"`
+	Type  string `yaml:"type" json:"type" enum:"PromEncodeFilterTypeEnum" doc:"the type of filter match: exact (default), presence, absence or regex"`
+}
+
+type PromEncodeFilterTypeEnum struct {
+	Exact    string `yaml:"exact" json:"exact" doc:"match exactly the provided fitler value"`
+	Presence string `yaml:"presence" json:"presence" doc:"filter key must be present (filter value is ignored)"`
+	Absence  string `yaml:"absence" json:"absence" doc:"filter key must be absent (filter value is ignored)"`
+	Regex    string `yaml:"regex" json:"regex" doc:"match filter value as a regular expression"`
+}
+
+func PromEncodeFilterTypeName(t string) string {
+	return GetEnumName(PromEncodeFilterTypeEnum{}, t)
 }

@@ -23,6 +23,7 @@ const (
 	FileChunksType               = "file_chunks"
 	SyntheticType                = "synthetic"
 	CollectorType                = "collector"
+	StdinType                    = "stdin"
 	GRPCType                     = "grpc"
 	FakeType                     = "fake"
 	KafkaType                    = "kafka"
@@ -45,6 +46,10 @@ const (
 	AddServiceRuleType           = "add_service"
 	AddKubernetesRuleType        = "add_kubernetes"
 	ReinterpretDirectionRuleType = "reinterpret_direction"
+	PromFilterExact              = "exact"
+	PromFilterPresence           = "presence"
+	PromFilterAbsence            = "absence"
+	PromFilterRegex              = "regex"
 
 	TagYaml = "yaml"
 	TagDoc  = "doc"
@@ -60,6 +65,7 @@ type API struct {
 	IngestCollector    IngestCollector  `yaml:"collector" doc:"## Ingest collector API\nFollowing is the supported API format for the NetFlow / IPFIX collector:\n"`
 	IngestKafka        IngestKafka      `yaml:"kafka" doc:"## Ingest Kafka API\nFollowing is the supported API format for the kafka ingest:\n"`
 	IngestGRPCProto    IngestGRPCProto  `yaml:"grpc" doc:"## Ingest GRPC from Network Observability eBPF Agent\nFollowing is the supported API format for the Network Observability eBPF ingest:\n"`
+	IngestStdin        IngestStdin      `yaml:"stdin" doc:"## Ingest Standard Input\nFollowing is the supported API format for the standard input ingest:\n"`
 	TransformGeneric   TransformGeneric `yaml:"generic" doc:"## Transform Generic API\nFollowing is the supported API format for generic transformations:\n"`
 	TransformFilter    TransformFilter  `yaml:"filter" doc:"## Transform Filter API\nFollowing is the supported API format for filter transformations:\n"`
 	TransformNetwork   TransformNetwork `yaml:"network" doc:"## Transform Network API\nFollowing is the supported API format for network transformations:\n"`

@@ -27,9 +27,12 @@ type TransformFilterOperationEnum struct {
 	RemoveEntryIfDoesntExist string `yaml:"remove_entry_if_doesnt_exist" json:"remove_entry_if_doesnt_exist" doc:"removes the entry if the field does not exist"`
 	RemoveEntryIfEqual       string `yaml:"remove_entry_if_equal" json:"remove_entry_if_equal" doc:"removes the entry if the field value equals specified value"`
 	RemoveEntryIfNotEqual    string `yaml:"remove_entry_if_not_equal" json:"remove_entry_if_not_equal" doc:"removes the entry if the field value does not equal specified value"`
+	AddField                 string `yaml:"add_field" json:"add_field" doc:"adds (input) field to the entry; overrides previous value if present (key=input, value=value)"`
 	AddFieldIfDoesntExist    string `yaml:"add_field_if_doesnt_exist" json:"add_field_if_doesnt_exist" doc:"adds a field to the entry if the field does not exist"`
 	AddFieldIf               string `yaml:"add_field_if" json:"add_field_if" doc:"add output field set to assignee if input field satisfies criteria from parameters field"`
 	AddRegExIf               string `yaml:"add_regex_if" json:"add_regex_if" doc:"add output field if input field satisfies regex pattern from parameters field"`
+	AddLabel                 string `yaml:"add_label" json:"add_label" doc:"add (input) field to list of labels with value taken from Value field (key=input, value=value)"`
+	AddLabelIf               string `yaml:"add_label_if" json:"add_label_if" doc:"add output field to list of labels with value taken from assignee field if input field satisfies criteria from parameters field"`
 }
 
 func TransformFilterOperationName(operation string) string {
