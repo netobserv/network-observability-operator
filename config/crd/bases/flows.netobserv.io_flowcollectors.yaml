@@ -4813,28 +4813,16 @@ spec:
                         type: array
                       includeList:
                         description: '`includeList` is a list of metric names to specify
-                          which metrics to generate. The names correspond to the names
+                          which ones to generate. The names correspond to the names
                           in Prometheus without the prefix. For example, `namespace_egress_packets_total`
                           will show up as `netobserv_namespace_egress_packets_total`
                           in Prometheus. Note that the more metrics you add, the bigger
-                          is the impact on Prometheus workload resources.<br> Available
-                          names are: (names followed by `*` are enabled by default)<br>
-                          - `namespace_egress_bytes_total`<br> - `namespace_egress_packets_total`<br>
-                          - `namespace_ingress_bytes_total`<br> - `namespace_ingress_packets_total`<br>
-                          - `namespace_flows_total` *<br> - `node_egress_bytes_total`<br>
-                          - `node_egress_packets_total`<br> - `node_ingress_bytes_total`
-                          *<br> - `node_ingress_packets_total`<br> - `node_flows_total`<br>
-                          - `workload_egress_bytes_total`<br> - `workload_egress_packets_total`<br>
-                          - `workload_ingress_bytes_total` *<br> - `workload_ingress_packets_total`<br>
-                          - `workload_flows_total`<br> When the `PacketDrop` feature
-                          is enabled in `spec.agent.ebpf.features` (with privileged
-                          mode), additional metrics are available:<br> - `namespace_drop_bytes_total`<br>
-                          - `namespace_drop_packets_total` *<br> - `node_drop_bytes_total`<br>
-                          - `node_drop_packets_total`<br> - `workload_drop_bytes_total`<br>
-                          - `workload_drop_packets_total`<br> When the `FlowRTT` feature
-                          is enabled in `spec.agent.ebpf.features`, additional metrics
-                          are available:<br> - `namespace_rtt_seconds` *<br> - `node_rtt_seconds`<br>
-                          - `workload_rtt_seconds`<br>'
+                          is the impact on Prometheus workload resources. Metrics
+                          enabled by default are: `namespace_flows_total`, `node_ingress_bytes_total`,
+                          `workload_ingress_bytes_total`, `namespace_drop_packets_total`
+                          (when `PacketDrop` feature is enabled), `namespace_rtt_seconds`
+                          (when `FlowRTT` feature is enabled). More information, with
+                          full list of available metrics: https://github.com/netobserv/network-observability-operator/blob/main/docs/Metrics.md'
                         items:
                           type: string
                         type: array
@@ -7701,28 +7689,16 @@ spec:
                         type: array
                       includeList:
                         description: '`includeList` is a list of metric names to specify
-                          which metrics to generate. The names correspond to the names
+                          which ones to generate. The names correspond to the names
                           in Prometheus without the prefix. For example, `namespace_egress_packets_total`
                           will show up as `netobserv_namespace_egress_packets_total`
                           in Prometheus. Note that the more metrics you add, the bigger
-                          is the impact on Prometheus workload resources.<br> Available
-                          names are: (names followed by `*` are enabled by default)<br>
-                          - `namespace_egress_bytes_total`<br> - `namespace_egress_packets_total`<br>
-                          - `namespace_ingress_bytes_total`<br> - `namespace_ingress_packets_total`<br>
-                          - `namespace_flows_total` *<br> - `node_egress_bytes_total`<br>
-                          - `node_egress_packets_total`<br> - `node_ingress_bytes_total`
-                          *<br> - `node_ingress_packets_total`<br> - `node_flows_total`<br>
-                          - `workload_egress_bytes_total`<br> - `workload_egress_packets_total`<br>
-                          - `workload_ingress_bytes_total` *<br> - `workload_ingress_packets_total`<br>
-                          - `workload_flows_total`<br> When the `PacketDrop` feature
-                          is enabled in `spec.agent.ebpf.features` (with privileged
-                          mode), additional metrics are available:<br> - `namespace_drop_bytes_total`<br>
-                          - `namespace_drop_packets_total` *<br> - `node_drop_bytes_total`<br>
-                          - `node_drop_packets_total`<br> - `workload_drop_bytes_total`<br>
-                          - `workload_drop_packets_total`<br> When the `FlowRTT` feature
-                          is enabled in `spec.agent.ebpf.features`, additional metrics
-                          are available:<br> - `namespace_rtt_seconds` *<br> - `node_rtt_seconds`<br>
-                          - `workload_rtt_seconds`<br>'
+                          is the impact on Prometheus workload resources. Metrics
+                          enabled by default are: `namespace_flows_total`, `node_ingress_bytes_total`,
+                          `workload_ingress_bytes_total`, `namespace_drop_packets_total`
+                          (when `PacketDrop` feature is enabled), `namespace_rtt_seconds`
+                          (when `FlowRTT` feature is enabled). More information, with
+                          full list of available metrics: https://github.com/netobserv/network-observability-operator/blob/main/docs/Metrics.md'
                         items:
                           type: string
                         type: array
