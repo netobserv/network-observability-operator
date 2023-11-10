@@ -305,17 +305,17 @@ columns:
     width: 15
   - id: K8S_Object
     name: Kubernetes Objects
-    calculated: '[getConcatenatedValue(SrcAddr,SrcPort,SrcK8S_Type,SrcK8S_Namespace,SrcK8S_Name),getConcatenatedValue(DstAddr,DstPort,DstK8S_Type,DstK8S_Namespace,DstK8S_Name)]'
+    calculated: '[column.SrcK8S_Object,column.DstK8S_Object]'
     default: false
     width: 15
   - id: K8S_OwnerObject
     name: Owner Kubernetes Objects
-    calculated: '[getConcatenatedValue(SrcAddr,SrcPort,SrcK8S_OwnerType,SrcK8S_Namespace,SrcK8S_OwnerName),getConcatenatedValue(DstAddr,DstPort,DstK8S_OwnerType,DstK8S_Namespace,DstK8S_OwnerName)]'
+    calculated: '[column.SrcK8S_OwnerObject,column.DstK8S_OwnerObject]'
     default: false
     width: 15
   - id: AddrPort
     name: IPs & Ports
-    calculated: '[getConcatenatedValue(SrcAddr,SrcPort),getConcatenatedValue(DstAddr,DstPort)]'
+    calculated: '[column.SrcAddrPort,column.DstAddrPort]'
     default: false
     width: 15
   - id: Proto
@@ -340,15 +340,15 @@ columns:
     tooltip: The type of the ICMP message
     field: IcmpType
     filter: icmp_type
-    default: true
+    default: false
     width: 10
   - id: IcmpCode
     group: ICMP
     name: Code
     tooltip: The code of the ICMP message
     field: IcmpCode
-    quickFilter: icmp_code
-    default: true
+    filter: icmp_code
+    default: false
     width: 10
   - id: FlowDirection
     name: Direction
@@ -380,24 +380,20 @@ columns:
   - id: FlowDuration
     name: Duration
     tooltip: Time elapsed between Start Time and End Time.
+    calculated: substract(TimeFlowEndMs,TimeFlowStartMs)
     default: false
-    width: 5
-  - id: TimeFlowRttMs
-    name: Flow RTT
-    tooltip: TCP handshake Round Trip Time
-    field: TimeFlowRttNs
-    filter: time_flow_rtt
-    default: true
     width: 5
   - id: CollectionTime
     name: Collection Time
     tooltip: Reception time of the record by the collector.
+    calculated: multiply(TimeReceived,1000),
     field: TimeReceived
     default: false
     width: 15
   - id: CollectionLatency
     name: Collection Latency
     tooltip: Time elapsed between End Time and Collection Time.
+    calculated: substract(column.CollectionTime,TimeFlowEndMs)
     default: false
     width: 5
   - id: DNSId
@@ -412,6 +408,8 @@ columns:
     group: DNS
     name: DNS Latency
     tooltip: Time elapsed between DNS request and response.
+    field: DnsLatencyMs
+    filter: dns_latency
     default: true
     width: 5
   - id: DNSResponseCode
@@ -429,6 +427,13 @@ columns:
     field: DnsErrno
     filter: dns_errno
     default: false
+    width: 5
+  - id: TimeFlowRttMs
+    name: Flow RTT
+    tooltip: TCP handshake Round Trip Time
+    field: TimeFlowRttNs
+    filter: time_flow_rtt
+    default: true
     width: 5
 filters:
   - id: src_namespace
@@ -703,10 +708,6 @@ filters:
     component: text
     placeholder: 'E.g: br-ex, ovn-k8s-mp0'
     hint: Specify a network interface.
-  - id: dscp
-    name: DSCP value
-    component: number
-    hint: Specify a Differentiated Services Code Point value as integer number.
   - id: id
     name: Conversation Id
     component: text
