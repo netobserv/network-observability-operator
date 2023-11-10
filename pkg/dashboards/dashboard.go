@@ -7,330 +7,226 @@ import (
 	"k8s.io/utils/strings/slices"
 )
 
-type rowInfo struct {
-	metric    string
-	group     string
-	dir       string
-	valueType string
-}
-
-// Queries
 const (
-	layerApps            = "Applications"
-	layerInfra           = "Infrastructure"
-	appsFilters1         = `SrcK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
-	appsFilters2         = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
-	infraFilters1        = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
-	infraFilters2        = `SrcK8S_Namespace!~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
-	metricTagNamespaces  = "namespaces"
-	metricTagNodes       = "nodes"
-	metricTagWorkloads   = "workloads"
-	metricTagIngress     = "ingress"
-	metricTagEgress      = "egress"
-	metricTagBytes       = "bytes"
-	metricTagPackets     = "packets"
-	metricTagDropBytes   = "drop_bytes"
-	metricTagDropPackets = "drop_packets"
+	layerApps        = "Applications"
+	layerInfra       = "Infrastructure"
+	appsFilters1     = `SrcK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
+	appsFilters2     = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
+	infraFilters1    = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
+	infraFilters2    = `SrcK8S_Namespace!~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
+	metricTagIngress = "ingress"
+	metricTagEgress  = "egress"
+	metricTagBytes   = "bytes"
+	metricTagPackets = "packets"
 )
 
-var (
-	rowsInfo        []rowInfo
-	mapStrTemplates = map[string]string{
-		metricTagNodes: `label_replace(
-			label_replace(
-				topk(10,sum(
-					rate($NAME[1m])
-				) by (SrcK8S_HostName, DstK8S_HostName)),
-				"SrcK8S_HostName", "(external)", "SrcK8S_HostName", "()"
-			),
-			"DstK8S_HostName", "(external)", "DstK8S_HostName", "()"
-		)`,
-		metricTagNamespaces: `label_replace(
-			label_replace(
-				topk(10,sum(
-					rate($NAME{$FILTERS1}[1m]) or rate($NAME{$FILTERS2}[1m])
-				) by (SrcK8S_Namespace, DstK8S_Namespace)),
-				"SrcK8S_Namespace", "(not namespaced)", "SrcK8S_Namespace", "()"
-			),
-			"DstK8S_Namespace", "(not namespaced)", "DstK8S_Namespace", "()"
-		)`,
-		metricTagWorkloads: `label_replace(
-			label_replace(
-				topk(10,sum(
-					rate($NAME{$FILTERS1}[1m]) or rate($NAME{$FILTERS2}[1m])
-				) by (SrcK8S_Namespace, SrcK8S_OwnerName, DstK8S_Namespace, DstK8S_OwnerName)),
-				"SrcK8S_Namespace", "non pods", "SrcK8S_Namespace", "()"
-			),
-			"DstK8S_Namespace", "non pods", "DstK8S_Namespace", "()"
-		)`,
-	}
-	mapLegends = map[string]string{
-		metricTagNodes:      "{{SrcK8S_HostName}} -> {{DstK8S_HostName}}",
-		metricTagNamespaces: "{{SrcK8S_Namespace}} -> {{DstK8S_Namespace}}",
-		metricTagWorkloads:  "{{SrcK8S_OwnerName}} ({{SrcK8S_Namespace}}) -> {{DstK8S_OwnerName}} ({{DstK8S_Namespace}})",
-	}
-	formatCleaner = strings.NewReplacer(
-		"\"", "\\\"",
-		"\t", "",
-		"\n", "",
-	)
-	appFilterReplacer = strings.NewReplacer(
-		"$FILTERS1", appsFilters1,
-		"$FILTERS2", appsFilters2,
-	)
-	infraFilterReplacer = strings.NewReplacer(
-		"$FILTERS1", infraFilters1,
-		"$FILTERS2", infraFilters2,
-	)
-)
+var allRows []*Row
 
 func init() {
-	for _, group := range []string{metricTagNodes, metricTagNamespaces, metricTagWorkloads} {
-		groupTrimmed := strings.TrimSuffix(group, "s")
+	for _, scope := range []metricScope{srcDstNodeScope, srcDstNamespaceScope, srcDstWorkloadScope} {
 		// byte/pkt rates
-		for _, vt := range []string{metricTagBytes, metricTagPackets} {
+		for _, valueType := range []string{metricTagBytes, metricTagPackets} {
+			valueTypeText := valueTypeToText(valueType)
 			for _, dir := range []string{metricTagEgress, metricTagIngress} {
-				rowsInfo = append(rowsInfo, rowInfo{
-					metric:    fmt.Sprintf("netobserv_%s_%s_%s_total", groupTrimmed, dir, vt),
-					group:     group,
-					dir:       dir,
-					valueType: vt,
+				title := fmt.Sprintf(
+					"%s rate %s %s",
+					valueTypeText,
+					dirToVerb(dir),
+					scope.titlePart,
+				)
+				metric := fmt.Sprintf("%s_%s_%s_total", scope.metricPart, dir, valueType)
+				allRows = append(allRows, &Row{
+					Metric: metric,
+					Title:  title,
+					Panels: topRatePanels(&scope, metric, scope.joinLabels(), scope.legendPart),
 				})
 			}
-		}
-		// drops
-		for _, vt := range []string{metricTagDropBytes, metricTagDropPackets} {
-			rowsInfo = append(rowsInfo, rowInfo{
-				metric:    fmt.Sprintf("netobserv_%s_%s_total", groupTrimmed, vt),
-				group:     group,
-				valueType: vt,
+			// drops
+			title := fmt.Sprintf(
+				"%s drop rate %s",
+				valueTypeText,
+				scope.titlePart,
+			)
+			metric := fmt.Sprintf("%s_drop_%s_total", scope.metricPart, valueType)
+			allRows = append(allRows, &Row{
+				Metric: metric,
+				Title:  title,
+				Panels: topRatePanels(&scope, metric, scope.joinLabels(), scope.legendPart),
 			})
 		}
-		// TODO: RTT dashboard (after dashboard refactoring for exposed metrics; need to handle histogram queries)
+		// RTT
+		title := fmt.Sprintf("Round-trip time %s (seconds, p99 and p50)", scope.titlePart)
+		metric := fmt.Sprintf("%s_rtt_seconds", scope.metricPart)
+		allRows = append(allRows, &Row{
+			Metric: metric,
+			Title:  title,
+			Panels: histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart),
+		})
+		// DNS latency
+		title = fmt.Sprintf("DNS latency %s (seconds, p99 and p50)", scope.titlePart)
+		metric = fmt.Sprintf("%s_dns_latency_seconds", scope.metricPart)
+		allRows = append(allRows, &Row{
+			Metric: metric,
+			Title:  title,
+			Panels: histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart),
+		})
+		// DNS errors
+		title = fmt.Sprintf("DNS request rate per code and %s", scope.titlePart)
+		metric = fmt.Sprintf("%s_dns_latency_seconds", scope.metricPart)
+		labels := scope.joinLabels() + ",DnsFlagsResponseCode"
+		legend := scope.legendPart + ", {{DnsFlagsResponseCode}}"
+		allRows = append(allRows, &Row{
+			Metric: metric,
+			Title:  title,
+			Panels: topRatePanels(&scope, metric+"_count", labels, legend),
+		})
 	}
 }
 
-func buildQuery(netobsNs string, rowInfo rowInfo, isApp bool) string {
-	strTemplate := mapStrTemplates[rowInfo.group]
-	q := strings.ReplaceAll(strTemplate, "$NAME", rowInfo.metric)
-	if isApp {
-		q = appFilterReplacer.Replace(q)
-	} else {
-		q = infraFilterReplacer.Replace(q)
-	}
-	q = strings.ReplaceAll(q, "$NETOBSERV_NS", netobsNs)
-	// Return formatted / one line
-	return formatCleaner.Replace(q)
-}
-
-func flowMetricsPanel(netobsNs string, rowInfo rowInfo, layer string) string {
-	q := buildQuery(netobsNs, rowInfo, layer == layerApps)
-	legend := mapLegends[rowInfo.group]
-	return fmt.Sprintf(`
-	{
-		"aliasColors": {},
-		"bars": false,
-		"dashLength": 10,
-		"dashes": false,
-		"datasource": "prometheus",
-		"fill": 1,
-		"fillGradient": 0,
-		"gridPos": {
-			"h": 20,
-			"w": 25,
-			"x": 0,
-			"y": 0
-		},
-		"id": 2,
-		"legend": {
-			"alignAsTable": false,
-			"avg": false,
-			"current": false,
-			"max": false,
-			"min": false,
-			"rightSide": false,
-			"show": true,
-			"sideWidth": null,
-			"total": false,
-			"values": false
-		},
-		"lines": true,
-		"linewidth": 1,
-		"links": [],
-		"nullPointMode": "null",
-		"percentage": false,
-		"pointradius": 5,
-		"points": false,
-		"renderer": "flot",
-		"repeat": null,
-		"seriesOverrides": [],
-		"spaceLength": 10,
-		"span": 6,
-		"stack": false,
-		"steppedLine": false,
-		"targets": [
+func topRatePanels(scope *metricScope, metric, labels, legend string) []Panel {
+	if scope.splitAppInfra {
+		return []Panel{
+			// App
 			{
-				"expr": "%s",
-				"format": "time_series",
-				"intervalFactor": 2,
-				"legendFormat": "%s",
-				"refId": "A"
-			}
-		],
-		"thresholds": [],
-		"timeFrom": null,
-		"timeShift": null,
-		"title": "%s",
-		"tooltip": {
-			"shared": true,
-			"sort": 0,
-			"value_type": "individual"
-		},
-		"type": "graph",
-		"xaxis": {
-			"buckets": null,
-			"mode": "time",
-			"name": null,
-			"show": true,
-			"values": []
-		},
-		"yaxes": [
-			{
-				"format": "short",
-				"label": null,
-				"logBase": 1,
-				"max": null,
-				"min": null,
-				"show": true
+				Title: layerApps,
+				Targets: []Target{{
+					Expr: scope.labelReplace(
+						fmt.Sprintf(
+							"topk(10,sum(rate(netobserv_%s{%s}[2m]) or rate(netobserv_%s{%s}[2m])) by (%s))",
+							metric,
+							appsFilters1,
+							metric,
+							appsFilters2,
+							labels,
+						),
+					),
+					Legend: legend,
+				}},
 			},
+			// Infra
 			{
-				"format": "short",
-				"label": null,
-				"logBase": 1,
-				"max": null,
-				"min": null,
-				"show": true
-			}
-		]
+				Title: layerInfra,
+				Targets: []Target{{
+					Expr: scope.labelReplace(
+						fmt.Sprintf(
+							"topk(10,sum(rate(netobserv_%s{%s}[2m]) or rate(netobserv_%s{%s}[2m])) by (%s))",
+							metric,
+							infraFilters1,
+							metric,
+							infraFilters2,
+							labels,
+						),
+					),
+					Legend: legend,
+				}},
+			},
+		}
 	}
-	`, q, legend, layer)
+	// No split
+	return []Panel{{
+		Targets: []Target{{
+			Expr: scope.labelReplace(
+				fmt.Sprintf("topk(10,sum(rate(netobserv_%s[2m])) by (%s))", metric, labels),
+			),
+			Legend: legend,
+		}},
+	}}
 }
 
-func flowMetricsRow(netobsNs string, rowInfo rowInfo) string {
-	var verb, vt string
-	switch rowInfo.dir {
+func histogramPanels(scope *metricScope, metric, labels, legend string) []Panel {
+	if scope.splitAppInfra {
+		appRateExpr := fmt.Sprintf(
+			"rate(netobserv_%s_bucket{%s}[2m]) or rate(netobserv_%s_bucket{%s}[2m])",
+			metric,
+			appsFilters1,
+			metric,
+			appsFilters2,
+		)
+		infraRateExpr := fmt.Sprintf(
+			"rate(netobserv_%s_bucket{%s}[2m]) or rate(netobserv_%s_bucket{%s}[2m])",
+			metric,
+			infraFilters1,
+			metric,
+			infraFilters2,
+		)
+		return []Panel{
+			// App
+			{
+				Title: layerApps,
+				Targets: []Target{
+					histogramTarget(scope, "0.99", appRateExpr, labels, legend),
+					histogramTarget(scope, "0.50", appRateExpr, labels, legend),
+				},
+			},
+			// Infra
+			{
+				Title: layerInfra,
+				Targets: []Target{
+					histogramTarget(scope, "0.99", infraRateExpr, labels, legend),
+					histogramTarget(scope, "0.50", infraRateExpr, labels, legend),
+				},
+			},
+		}
+	}
+	// No split
+	rateExpr := fmt.Sprintf("rate(netobserv_%s[2m])", metric)
+	return []Panel{{
+		Targets: []Target{
+			histogramTarget(scope, "0.99", rateExpr, labels, legend),
+			histogramTarget(scope, "0.50", rateExpr, labels, legend),
+		},
+	}}
+}
+
+func histogramTarget(scope *metricScope, quantile, rateExpr, labels, legend string) Target {
+	return Target{
+		Expr: scope.labelReplace(
+			fmt.Sprintf(
+				"topk(10,histogram_quantile(%s, sum(%s) by (le,%s)) > 0)",
+				quantile,
+				rateExpr,
+				labels,
+			),
+		),
+		Legend: legend + ", q=" + quantile,
+	}
+}
+
+func dirToVerb(dir string) string {
+	switch dir {
 	case metricTagEgress:
-		verb = "sent"
+		return "sent"
 	case metricTagIngress:
-		verb = "received"
+		return "received"
 	}
-	switch rowInfo.valueType {
+	return ""
+}
+
+func valueTypeToText(t string) string {
+	switch t {
 	case metricTagBytes:
-		vt = "byte"
+		return "Byte"
 	case metricTagPackets:
-		vt = "packet"
-	case metricTagDropBytes:
-		vt = "drop bytes"
-	case metricTagDropPackets:
-		vt = "drop packets"
+		return "Packet"
 	}
-	title := fmt.Sprintf("Top %s rates %s per source and destination %s", vt, verb, rowInfo.group)
-	var panels string
-	if rowInfo.group == metricTagNodes {
-		panels = fmt.Sprintf("[%s]", flowMetricsPanel(netobsNs, rowInfo, ""))
-	} else {
-		panels = fmt.Sprintf("[%s, %s]", flowMetricsPanel(netobsNs, rowInfo, layerApps), flowMetricsPanel(netobsNs, rowInfo, layerInfra))
-	}
-	return fmt.Sprintf(`
-	{
-		"collapse": false,
-		"editable": true,
-		"height": "250px",
-		"panels": %s,
-		"showTitle": true,
-		"title": "%s"
-	}
-	`, panels, title)
+	return ""
 }
 
 func CreateFlowMetricsDashboard(netobsNs string, metrics []string) (string, error) {
-	var rows []string
-
-	for _, ri := range rowsInfo {
-		trimmed := strings.TrimPrefix(ri.metric, "netobserv_")
-		if slices.Contains(metrics, trimmed) {
-			rows = append(rows, flowMetricsRow(netobsNs, ri))
-		} else if strings.Contains(ri.metric, "_namespace_") {
+	var rows []*Row
+	for _, ri := range allRows {
+		if slices.Contains(metrics, ri.Metric) {
+			rows = append(rows, ri)
+		} else if strings.Contains(ri.Metric, "namespace_") {
 			// namespace-based panels can also be displayed using workload-based metrics
 			// Try again, replacing *_namespace_* with *_workload_*
-			ri.metric = strings.Replace(ri.metric, "_namespace_", "_workload_", 1)
-			trimmed = strings.TrimPrefix(ri.metric, "netobserv_")
-			if slices.Contains(metrics, trimmed) {
-				rows = append(rows, flowMetricsRow(netobsNs, ri))
+			equivalentMetric := strings.Replace(ri.Metric, "namespace_", "workload_", 1)
+			if slices.Contains(metrics, equivalentMetric) {
+				clone := ri.replaceMetric(equivalentMetric)
+				rows = append(rows, clone)
 			}
 		}
 	}
-
-	// return empty if dashboard doesn't contains rows
-	if len(rows) == 0 {
-		return "", nil
-	}
-	rowsStr := strings.Join(rows, ",")
-	return fmt.Sprintf(`
-	{
-		"__inputs": [],
-		"__requires": [],
-		"annotations": {
-			"list": []
-		},
-		"editable": false,
-		"gnetId": null,
-		"graphTooltip": 0,
-		"hideControls": false,
-		"id": null,
-		"links": [],
-		"rows": [%s],
-		"refresh": "",
-		"schemaVersion": 16,
-		"style": "dark",
-		"tags": [
-			"netobserv-mixin"
-		],
-		"templating": {
-			"list": []
-		},
-		"time": {
-			"from": "now",
-			"to": "now"
-		},
-		"timepicker": {
-			"refresh_intervals": [
-				"5s",
-				"10s",
-				"30s",
-				"1m",
-				"5m",
-				"15m",
-				"30m",
-				"1h",
-				"2h",
-				"1d"
-			],
-			"time_options": [
-				"5m",
-				"15m",
-				"1h",
-				"6h",
-				"12h",
-				"24h",
-				"2d",
-				"7d",
-				"30d"
-			]
-		},
-		"timezone": "browser",
-		"title": "NetObserv",
-		"version": 0
-	}
-	`, rowsStr), nil
+	d := Dashboard{Rows: rows}
+	return d.ToGrafanaJSON(netobsNs), nil
 }

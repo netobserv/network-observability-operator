@@ -40,6 +40,7 @@ var (
 		"namespace_flows_total",
 		"namespace_drop_packets_total",
 		"namespace_rtt_seconds",
+		"namespace_dns_latency_seconds",
 	}
 	// Pre-deprecation default IgnoreTags list (1.4) - used before switching to whitelist approach,
 	// to make sure there is no unintended new metrics being collected
@@ -124,6 +125,21 @@ func init() {
 				Labels: labels,
 			},
 			tags: []string{group, tagBytes, "drop"},
+		})
+		// DNS metrics
+		dnsLabels := append(labels, "DnsFlagsResponseCode")
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			PromMetricsItem: flpapi.PromMetricsItem{
+				Name:     fmt.Sprintf("%s_dns_latency_seconds", groupTrimmed),
+				Type:     "histogram",
+				ValueKey: "DnsLatencyMs",
+				Filters: []flpapi.PromMetricsFilter{
+					{Key: "DnsId", Type: flpapi.PromFilterPresence},
+				},
+				Labels:     dnsLabels,
+				ValueScale: 1000, // ms => s
+			},
+			tags: []string{group, "dns"},
 		})
 	}
 }

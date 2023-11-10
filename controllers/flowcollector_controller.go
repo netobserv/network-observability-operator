@@ -331,7 +331,7 @@ func (r *FlowCollectorReconciler) reconcileOperator(ctx context.Context, cmn *re
 	}
 
 	if r.availableAPIs.HasSvcMonitor() {
-		names := helper.GetIncludeList(&desired.Spec.Processor.Metrics)
+		names := helper.GetIncludeList(&desired.Spec)
 		desiredFlowDashboardCM, del, err := buildFlowMetricsDashboard(cmn.Namespace, names)
 		if err != nil {
 			return err

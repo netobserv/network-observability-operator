@@ -37,3 +37,8 @@ When the `FlowRTT` feature is enabled in `spec.agent.ebpf.features`, additional 
 - `namespace_rtt_seconds` `*`
 - `node_rtt_seconds`
 - `workload_rtt_seconds`
+
+When the `DNSTracking` feature is enabled in `spec.agent.ebpf.features`, additional metrics are available:
+- `namespace_dns_latency_seconds` `*`
+- `node_dns_latency_seconds`
+- `workload_dns_latency_seconds`

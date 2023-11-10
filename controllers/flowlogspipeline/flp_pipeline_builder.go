@@ -136,7 +136,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	}
 
 	// obtain encode_prometheus stage from metrics_definitions
-	names := helper.GetIncludeList(&b.desired.Processor.Metrics)
+	names := helper.GetIncludeList(b.desired)
 	promMetrics := metrics.GetDefinitions(names)
 
 	if len(promMetrics) > 0 {

@@ -137,9 +137,31 @@ func IsOwned(obj client.Object) bool {
 	return len(refs) > 0 && strings.HasPrefix(refs[0].APIVersion, flowslatest.GroupVersion.Group)
 }
 
-func GetIncludeList(spec *flowslatest.FLPMetrics) []string {
-	if spec.IncludeList == nil {
-		return metrics.DefaultIncludeList
+func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
+	var list []string
+	if spec.Processor.Metrics.IncludeList == nil {
+		list = metrics.DefaultIncludeList
+	} else {
+		list = *spec.Processor.Metrics.IncludeList
 	}
-	return *spec.IncludeList
+	if !UseEBPF(spec) || !IsPktDropEnabled(&spec.Agent.EBPF) {
+		list = removeMetricsByPattern(list, "_drop_")
+	}
+	if !UseEBPF(spec) || !IsFlowRTTEnabled(&spec.Agent.EBPF) {
+		list = removeMetricsByPattern(list, "_rtt_")
+	}
+	if !UseEBPF(spec) || !IsDNSTrackingEnabled(&spec.Agent.EBPF) {
+		list = removeMetricsByPattern(list, "_dns_")
+	}
+	return list
+}
+
+func removeMetricsByPattern(list []string, search string) []string {
+	var filtered []string
+	for _, m := range list {
+		if !strings.Contains(m, search) {
+			filtered = append(filtered, m)
+		}
+	}
+	return filtered
 }

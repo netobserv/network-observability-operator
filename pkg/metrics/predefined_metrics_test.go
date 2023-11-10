@@ -15,12 +15,15 @@ func TestIncludeExclude(t *testing.T) {
 		"node_ingress_bytes_total",
 		"node_rtt_seconds",
 		"node_drop_bytes_total",
+		"node_dns_latency_seconds",
 		"namespace_ingress_bytes_total",
 		"namespace_rtt_seconds",
 		"namespace_drop_bytes_total",
+		"namespace_dns_latency_seconds",
 		"workload_ingress_bytes_total",
 		"workload_rtt_seconds",
 		"workload_drop_bytes_total",
+		"workload_dns_latency_seconds",
 	}, res)
 
 	// IgnoreTags set, Include list set => keep include list
