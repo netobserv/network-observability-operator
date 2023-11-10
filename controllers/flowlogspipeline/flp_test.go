@@ -915,10 +915,13 @@ func TestMergeMetricsConfiguration_Default(t *testing.T) {
 	jsonStages, _ := json.Marshal(stages)
 	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
 	names := getSortedMetricsNames(parameters[5].Encode.Prom.Metrics)
-	assert.Len(names, 3)
-	assert.Equal("namespace_flows_total", names[0])
-	assert.Equal("node_ingress_bytes_total", names[1])
-	assert.Equal("workload_ingress_bytes_total", names[2])
+	assert.Equal([]string{
+		"namespace_drop_packets_total",
+		"namespace_flows_total",
+		"namespace_rtt_seconds",
+		"node_ingress_bytes_total",
+		"workload_ingress_bytes_total",
+	}, names)
 	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
 }
 

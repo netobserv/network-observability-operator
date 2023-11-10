@@ -118,14 +118,14 @@ func TestBeta1ConversionRoundtrip_Metrics(t *testing.T) {
 
 	assert.Equal([]v1beta2.FLPAlert{v1beta2.AlertLokiError}, converted.Spec.Processor.Metrics.DisableAlerts)
 	assert.NotNil(converted.Spec.Processor.Metrics.IncludeList)
-	assert.Equal([]string{"namespace_egress_packets_total", "namespace_flows_total"}, *converted.Spec.Processor.Metrics.IncludeList)
+	assert.Equal([]string{"namespace_egress_packets_total", "namespace_flows_total", "namespace_rtt_seconds", "namespace_drop_packets_total"}, *converted.Spec.Processor.Metrics.IncludeList)
 
 	// Other way
 	var back FlowCollector
 	err = back.ConvertFrom(&converted)
 	assert.NoError(err)
 	// Here, includeList is preserved; it takes precedence over ignoreTags
-	assert.Equal([]string{"namespace_egress_packets_total", "namespace_flows_total"}, *back.Spec.Processor.Metrics.IncludeList)
+	assert.Equal([]string{"namespace_egress_packets_total", "namespace_flows_total", "namespace_rtt_seconds", "namespace_drop_packets_total"}, *back.Spec.Processor.Metrics.IncludeList)
 	assert.Equal(initial.Spec.Processor.Metrics.DisableAlerts, back.Spec.Processor.Metrics.DisableAlerts)
 	assert.Equal(initial.Spec.Processor.Metrics.Server, back.Spec.Processor.Metrics.Server)
 }
