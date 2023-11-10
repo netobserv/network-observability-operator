@@ -1,35 +1,39 @@
 # Metrics in the NetObserv Operator
 
-Configuration of metrics to be collected are stored in the metrics_definitions folder.
-These are defined in yaml files according to the format handled by the flp confgenerator.
-The flp confgenerator was modified to produce output that can be easily consumed by the NetObserv Operator.
-The flp confgenerator was further modified so that it may be called as a module, and provides its output as a data structure returned from a function rather than a yaml file.
-All metrics that may be produced are included in the metrics_definitions library, and they are associated with tags.
-A parameter is added to the Operator CRD to specify tags of metrics to not produce.
+The NetObserv operator uses [flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline/) to generate metrics out of flow logs.
 
-On each iteration of the Operator, the Operator checks whether the CRD has been modified.
-If the CRD has changed, the Operator reconciles the state of the cluster to the specification in the CRD.
+They can be configured in the `FlowCollector` custom resource, via `spec.processor.metrics.includeList`. It is a list of metric names that tells which ones to generate.
 
-The implementation of the Operator specifies the flp Network Transform enrichment (in particular, kubernetes features).
-The actual metrics to produce are taken from the metrics_definitions, based on the enrichment defined in the Operator.
-The Operator allocates the extract_aggregate and encode_prom Stage structures for the flp pipeline,
-and extract_aggregate and encode_prom entries are filled in using the results from the confgenerator.
-The configuration is placed into a configMap.
-Flp is then deployed using this combined configuration.
-The configuration is not changed during runtime.
-In order to change the configuration (e.g. exclude a different set of metrics), flp must be redeployed.
+The names correspond to the names in Prometheus without their prefix. For example, `namespace_egress_packets_total` will show up as `netobserv_namespace_egress_packets_total` in Prometheus.
 
-Note that there are 2 data paths in flp. Data that is ingested is enriched and is then passed directly to Loki.
-In addition, after the enrichment, we derive metrics (from the metrics_definitions), aggregate them, and report to prometheus.
-The metrics_definitions does not impact the data that is sent to Loki.
+Note that the more metrics you add, the bigger is the impact on Prometheus workload resources. Some metrics in particular have a bigger cardinality, such as all metrics starting with `workload_`, which may result in stressing Prometheus if too many of them are enabled. It is recommended to monitor the impact on Prometheus when adding more metrics.
 
-In the metrics_definitions yaml files, there are tags associated with each metric.
-A user may specify to skip metrics that have a particular tag.
-This is specified by a field in the CRD.
-These tags are then specified to the confgenerator module to produce metrics that are not associated with the specified tag.
+Available names are: (names followed by `*` are enabled by default)
+- `namespace_egress_bytes_total`
+- `namespace_egress_packets_total`
+- `namespace_ingress_bytes_total`
+- `namespace_ingress_packets_total`
+- `namespace_flows_total` `*`
+- `node_egress_bytes_total`
+- `node_egress_packets_total`
+- `node_ingress_bytes_total` `*`
+- `node_ingress_packets_total`
+- `node_flows_total`
+- `workload_egress_bytes_total`
+- `workload_egress_packets_total`
+- `workload_ingress_bytes_total` `*`
+- `workload_ingress_packets_total`
+- `workload_flows_total`
 
-## Parameters added to CRD to support metrics
-Note: These parameters may be changed between interations, in which case the Operator redeploys flp.
-- ignoreMetrics (list of tags to specify which metrics to ignore)
+When the `PacketDrop` feature is enabled in `spec.agent.ebpf.features` (with privileged mode), additional metrics are available:
+- `namespace_drop_bytes_total`
+- `namespace_drop_packets_total` `*`
+- `node_drop_bytes_total`
+- `node_drop_packets_total`
+- `workload_drop_bytes_total`
+- `workload_drop_packets_total`
 
-
+When the `FlowRTT` feature is enabled in `spec.agent.ebpf.features`, additional metrics are available:
+- `namespace_rtt_seconds` `*`
+- `node_rtt_seconds`
+- `workload_rtt_seconds`

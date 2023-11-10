@@ -34,7 +34,13 @@ var (
 	}
 	predefinedMetrics []taggedMetricDefinition
 	// Note that we set default in-code rather than in CRD, in order to keep track of value being unset or set intentionnally in FlowCollector
-	DefaultIncludeList = []string{"node_ingress_bytes_total", "workload_ingress_bytes_total", "namespace_flows_total"}
+	DefaultIncludeList = []string{
+		"node_ingress_bytes_total",
+		"workload_ingress_bytes_total",
+		"namespace_flows_total",
+		"namespace_drop_packets_total",
+		"namespace_rtt_seconds",
+	}
 	// Pre-deprecation default IgnoreTags list (1.4) - used before switching to whitelist approach,
 	// to make sure there is no unintended new metrics being collected
 	// Don't add anything here: this is not meant to evolve
@@ -61,7 +67,7 @@ func init() {
 						ValueKey: valueField,
 						Filters: []flpapi.PromMetricsFilter{
 							{Key: "Duplicate", Value: "false"},
-							{Key: "FlowDirection", Value: mapDirection[dir], Type: "regex"},
+							{Key: "FlowDirection", Value: mapDirection[dir], Type: flpapi.PromFilterRegex},
 						},
 						Labels: labels,
 					},
@@ -77,6 +83,47 @@ func init() {
 				Labels: labels,
 			},
 			tags: []string{group, group + "-flows", "flows"},
+		})
+		// RTT metrics
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			PromMetricsItem: flpapi.PromMetricsItem{
+				Name:     fmt.Sprintf("%s_rtt_seconds", groupTrimmed),
+				Type:     "histogram",
+				ValueKey: "TimeFlowRttNs",
+				Filters: []flpapi.PromMetricsFilter{
+					{Key: "TimeFlowRttNs", Type: flpapi.PromFilterPresence},
+				},
+				Labels:     labels,
+				ValueScale: 1_000_000_000, // ns => s
+			},
+			tags: []string{group, "rtt"},
+		})
+		// Drops metrics
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			PromMetricsItem: flpapi.PromMetricsItem{
+				Name:     fmt.Sprintf("%s_drop_packets_total", groupTrimmed),
+				Type:     "counter",
+				ValueKey: "PktDropPackets",
+				Filters: []flpapi.PromMetricsFilter{
+					{Key: "Duplicate", Value: "false"},
+					{Key: "PktDropPackets", Type: flpapi.PromFilterPresence},
+				},
+				Labels: labels,
+			},
+			tags: []string{group, tagPackets, "drops"},
+		})
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			PromMetricsItem: flpapi.PromMetricsItem{
+				Name:     fmt.Sprintf("%s_drop_bytes_total", groupTrimmed),
+				Type:     "counter",
+				ValueKey: "PktDropBytes",
+				Filters: []flpapi.PromMetricsFilter{
+					{Key: "Duplicate", Value: "false"},
+					{Key: "PktDropBytes", Type: flpapi.PromFilterPresence},
+				},
+				Labels: labels,
+			},
+			tags: []string{group, tagBytes, "drop"},
 		})
 	}
 }
