@@ -20,6 +20,8 @@ var upperPascalExceptions = map[string]string{
 	"SCRAM-SHA512": "ScramSHA512",
 }
 
+var upperTokenizer = regexp.MustCompile(`[\-\_]+`)
+
 // MarshalData stores the source object as json data in the destination object annotations map.
 // It ignores the metadata of the source object.
 func MarshalData(src metav1.Object, dst metav1.Object) error {
@@ -69,7 +71,7 @@ func UpperToPascal(str string) string {
 
 	// Split on '-' or '_' rune, capitalize first letter of each part and join them
 	var sb strings.Builder
-	array := regexp.MustCompile(`[\-\_]+`).Split(strings.ToLower(str), -1)
+	array := upperTokenizer.Split(strings.ToLower(str), -1)
 	for _, s := range array {
 		runes := []rune(s)
 		runes[0] = unicode.ToUpper(runes[0])
