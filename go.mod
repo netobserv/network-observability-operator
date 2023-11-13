@@ -9,7 +9,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.13.1
 	github.com/onsi/gomega v1.30.0
 	github.com/openshift/api v0.0.0-20220112145620-704957ce4980
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.68.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.69.1
 	github.com/prometheus/common v0.44.0
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.26.0
