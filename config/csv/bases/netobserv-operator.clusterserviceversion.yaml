@@ -4,7 +4,7 @@ metadata:
   annotations:
     alm-examples: '[]'
     capabilities: Seamless Upgrades
-    categories: Monitoring
+    categories: Monitoring, Networking
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: ':container-image:'
     createdAt: ':created-at:'
