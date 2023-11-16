@@ -36,10 +36,12 @@ spec:
       server:
         port: 9102
       disableAlerts: []
-      includeList:
-        - node_ingress_bytes_total
-        - workload_ingress_bytes_total
-        - namespace_flows_total
+      # includeList:
+      #   - "node_ingress_bytes_total"
+      #   - "workload_ingress_bytes_total"
+      #   - "namespace_flows_total"
+      #   - "namespace_drop_packets_total"
+      #   - "namespace_rtt_seconds"
     dropUnusedFields: true
     resources:
       requests:
