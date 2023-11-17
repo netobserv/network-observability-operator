@@ -184,7 +184,6 @@ func Convert_v1beta2_ServerTLS_To_v1alpha1_ServerTLS(in *v1beta2.ServerTLS, out 
 // we have new defined fields in v1beta2 not in v1beta1
 // nolint:golint,stylecheck,revive
 func Convert_v1alpha1_FLPMetrics_To_v1beta2_FLPMetrics(in *FLPMetrics, out *v1beta2.FLPMetrics, s apiconversion.Scope) error {
-	includeList := metrics.GetEnabledNames(in.IgnoreTags, nil)
-	out.IncludeList = &includeList
+	out.IncludeList = metrics.GetAsIncludeList(in.IgnoreTags, nil)
 	return autoConvert_v1alpha1_FLPMetrics_To_v1beta2_FLPMetrics(in, out, s)
 }

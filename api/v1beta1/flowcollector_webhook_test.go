@@ -159,3 +159,30 @@ func TestBeta2ConversionRoundtrip_Metrics(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(initial.Spec.Processor.Metrics, back.Spec.Processor.Metrics)
 }
+
+func TestBeta2ConversionRoundtrip_Metrics_Default(t *testing.T) {
+	// Testing beta2 -> beta1 -> beta2
+	assert := assert.New(t)
+
+	initial := v1beta2.FlowCollector{
+		Spec: v1beta2.FlowCollectorSpec{
+			Processor: v1beta2.FlowCollectorFLP{
+				Metrics: v1beta2.FLPMetrics{
+					DisableAlerts: []v1beta2.FLPAlert{v1beta2.AlertLokiError},
+				},
+			},
+		},
+	}
+
+	var converted FlowCollector
+	err := converted.ConvertFrom(&initial)
+	assert.NoError(err)
+
+	assert.Empty(converted.Spec.Processor.Metrics.IgnoreTags)
+	assert.Nil(converted.Spec.Processor.Metrics.IncludeList)
+
+	var back v1beta2.FlowCollector
+	err = converted.ConvertTo(&back)
+	assert.NoError(err)
+	assert.Nil(back.Spec.Processor.Metrics.IncludeList)
+}

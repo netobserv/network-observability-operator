@@ -165,14 +165,15 @@ func convertIgnoreTagsToIncludeList(ignoreTags []string) []string {
 	return ret
 }
 
-func GetEnabledNames(ignoreTags []string, includeList *[]string) []string {
-	if includeList == nil {
+func GetAsIncludeList(ignoreTags []string, includeList *[]string) *[]string {
+	if includeList == nil && len(ignoreTags) > 0 {
 		if reflect.DeepEqual(ignoreTags, defaultIgnoreTags1_4) {
-			return DefaultIncludeList
+			return nil
 		}
-		return convertIgnoreTagsToIncludeList(ignoreTags)
+		converted := convertIgnoreTagsToIncludeList(ignoreTags)
+		return &converted
 	}
-	return *includeList
+	return includeList
 }
 
 func GetAllNames() []string {
