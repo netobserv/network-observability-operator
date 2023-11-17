@@ -6,8 +6,6 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/netobserv/flowlogs-pipeline/pkg/api"
-	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -18,7 +16,7 @@ type monolithBuilder struct {
 }
 
 func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) (monolithBuilder, error) {
-	gen, err := newBuilder(info, desired, ConfMonolith)
+	gen, err := NewBuilder(info, desired, ConfMonolith)
 	return monolithBuilder{
 		generic: gen,
 	}, err
@@ -42,34 +40,20 @@ func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.Daemo
 }
 
 func (b *monolithBuilder) configMap() (*corev1.ConfigMap, string, error) {
-	stages, params, err := b.buildPipelineConfig()
+	var pipeline PipelineBuilder
+	if helper.UseIPFIX(b.generic.desired) {
+		// IPFIX collector
+		pipeline = b.generic.NewIPFIXPipeline()
+	} else {
+		// GRPC collector (eBPF agent)
+		pipeline = b.generic.NewGRPCPipeline()
+	}
+
+	err := pipeline.AddProcessorStages()
 	if err != nil {
 		return nil, "", err
 	}
-	pipelineConfigMap, digest, err := b.generic.configMap(stages, params)
-	return pipelineConfigMap, digest, err
-}
-
-func (b *monolithBuilder) buildPipelineConfig() ([]config.Stage, []config.StageParam, error) {
-	var pipeline config.PipelineBuilderStage
-	if helper.UseIPFIX(b.generic.desired) {
-		// IPFIX collector
-		pipeline = config.NewCollectorPipeline("ipfix", api.IngestCollector{
-			Port:     int(b.generic.desired.Processor.Port),
-			HostName: "0.0.0.0",
-		})
-	} else {
-		// GRPC collector (eBPF agent)
-		pipeline = config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
-			Port: int(b.generic.desired.Processor.Port),
-		})
-	}
-
-	err := b.generic.addTransformStages(&pipeline)
-	if err != nil {
-		return nil, nil, err
-	}
-	return pipeline.GetStages(), pipeline.GetStageParams(), nil
+	return b.generic.ConfigMap()
 }
 
 func (b *monolithBuilder) promService() *corev1.Service {

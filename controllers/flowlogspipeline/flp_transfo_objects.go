@@ -7,11 +7,8 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/netobserv/flowlogs-pipeline/pkg/api"
-	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 type transfoBuilder struct {
@@ -19,7 +16,7 @@ type transfoBuilder struct {
 }
 
 func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) (transfoBuilder, error) {
-	gen, err := newBuilder(info, desired, ConfKafkaTransformer)
+	gen, err := NewBuilder(info, desired, ConfKafkaTransformer)
 	return transfoBuilder{
 		generic: gen,
 	}, err
@@ -44,38 +41,12 @@ func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deplo
 }
 
 func (b *transfoBuilder) configMap() (*corev1.ConfigMap, string, error) {
-	stages, params, err := b.buildPipelineConfig()
+	pipeline := b.generic.NewKafkaPipeline()
+	err := pipeline.AddProcessorStages()
 	if err != nil {
 		return nil, "", err
 	}
-	configMap, digest, err := b.generic.configMap(stages, params)
-	return configMap, digest, err
-}
-
-func (b *transfoBuilder) buildPipelineConfig() ([]config.Stage, []config.StageParam, error) {
-	// TODO in a later optimization patch: set ingester <-> transformer communication also via protobuf
-	// For now, we leave this communication via JSON and just setup protobuf ingestion when
-	// the transformer is communicating directly via eBPF agent
-	decoder := api.Decoder{Type: "protobuf"}
-	if helper.UseIPFIX(b.generic.desired) {
-		decoder = api.Decoder{Type: "json"}
-	}
-	pipeline := config.NewKafkaPipeline("kafka-read", api.IngestKafka{
-		Brokers:           []string{b.generic.desired.Kafka.Address},
-		Topic:             b.generic.desired.Kafka.Topic,
-		GroupId:           b.generic.name(), // Without groupid, each message is delivered to each consumers
-		Decoder:           decoder,
-		TLS:               b.generic.getKafkaTLS(&b.generic.desired.Kafka.TLS, "kafka-cert"),
-		SASL:              b.generic.getKafkaSASL(&b.generic.desired.Kafka.SASL, "kafka-ingest"),
-		PullQueueCapacity: b.generic.desired.Processor.KafkaConsumerQueueCapacity,
-		PullMaxBytes:      b.generic.desired.Processor.KafkaConsumerBatchSize,
-	})
-
-	err := b.generic.addTransformStages(&pipeline)
-	if err != nil {
-		return nil, nil, err
-	}
-	return pipeline.GetStages(), pipeline.GetStageParams(), nil
+	return b.generic.ConfigMap()
 }
 
 func (b *transfoBuilder) promService() *corev1.Service {
@@ -107,7 +78,7 @@ func (b *transfoBuilder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 //+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
 //+kubebuilder:rbac:groups=core,resources=pods;services;nodes,verbs=get;list;watch
 
-func buildClusterRoleTransformer() *rbacv1.ClusterRole {
+func BuildClusterRoleTransformer() *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name(ConfKafkaTransformer),
