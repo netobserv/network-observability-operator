@@ -808,23 +808,25 @@ func TestLabels(t *testing.T) {
 }
 
 // This function validate that each stage has its matching parameter
-func validatePipelineConfig(stages []config.Stage, parameters []config.StageParam) bool {
-	for _, stage := range stages {
-		if stage.Name == "" {
-			return false
-		}
+func validatePipelineConfig(t *testing.T, cm *corev1.ConfigMap) (*config.ConfigFileStruct, string) {
+	var cfs config.ConfigFileStruct
+	err := json.Unmarshal([]byte(cm.Data[configFile]), &cfs)
+	assert.NoError(t, err)
+
+	for _, stage := range cfs.Pipeline {
+		assert.NotEmpty(t, stage.Name)
 		exist := false
-		for _, parameter := range parameters {
+		for _, parameter := range cfs.Parameters {
 			if stage.Name == parameter.Name {
 				exist = true
 				break
 			}
 		}
-		if !exist {
-			return false
-		}
+		assert.True(t, exist, "stage params not found", stage.Name)
 	}
-	return true
+	b, err := json.Marshal(cfs.Pipeline)
+	assert.NoError(t, err)
+	return &cfs, string(b)
 }
 
 func TestPipelineConfig(t *testing.T) {
@@ -835,29 +837,35 @@ func TestPipelineConfig(t *testing.T) {
 	cfg := getConfig()
 	cfg.Processor.LogLevel = "info"
 	b := monoBuilder(ns, &cfg)
-	stages, parameters, err := b.buildPipelineConfig()
+	cm, _, err := b.configMap()
 	assert.NoError(err)
-	assert.True(validatePipelineConfig(stages, parameters))
-	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	_, pipeline := validatePipelineConfig(t, cm)
+	assert.Equal(
+		`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
+		pipeline,
+	)
 
 	// Kafka Ingester
 	cfg.DeploymentModel = flowslatest.DeploymentModelKafka
 	info := reconcilers.Common{Namespace: ns}
 	bi, _ := newIngestBuilder(info.NewInstance(image), &cfg)
-	stages, parameters, err = bi.buildPipelineConfig()
+	cm, _, err = bi.configMap()
 	assert.NoError(err)
-	assert.True(validatePipelineConfig(stages, parameters))
-	jsonStages, _ = json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"kafka-write","follows":"ipfix"}]`, string(jsonStages))
+	_, pipeline = validatePipelineConfig(t, cm)
+	assert.Equal(
+		`[{"name":"ipfix"},{"name":"kafka-write","follows":"ipfix"}]`,
+		pipeline,
+	)
 
 	// Kafka Transformer
 	bt := transfBuilder(ns, &cfg)
-	stages, parameters, err = bt.buildPipelineConfig()
+	cm, _, err = bt.configMap()
 	assert.NoError(err)
-	assert.True(validatePipelineConfig(stages, parameters))
-	jsonStages, _ = json.Marshal(stages)
-	assert.Equal(`[{"name":"kafka-read"},{"name":"extract_conntrack","follows":"kafka-read"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	_, pipeline = validatePipelineConfig(t, cm)
+	assert.Equal(
+		`[{"name":"kafka-read"},{"name":"extract_conntrack","follows":"kafka-read"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
+		pipeline,
+	)
 }
 
 func TestPipelineConfigDropUnused(t *testing.T) {
@@ -869,13 +877,15 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 	cfg.Processor.LogLevel = "info"
 	cfg.Processor.DropUnusedFields = ptr.To(true)
 	b := monoBuilder(ns, &cfg)
-	stages, parameters, err := b.buildPipelineConfig()
+	cm, _, err := b.configMap()
 	assert.NoError(err)
-	assert.True(validatePipelineConfig(stages, parameters))
-	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"filter","follows":"ipfix"},{"name":"extract_conntrack","follows":"filter"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	cfs, pipeline := validatePipelineConfig(t, cm)
+	assert.Equal(
+		`[{"name":"ipfix"},{"name":"filter","follows":"ipfix"},{"name":"extract_conntrack","follows":"filter"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
+		pipeline,
+	)
 
-	jsonParams, _ := json.Marshal(parameters[1].Transform.Filter)
+	jsonParams, _ := json.Marshal(cfs.Parameters[1].Transform.Filter)
 	assert.Contains(string(jsonParams), `{"input":"CustomBytes1","type":"remove_field"}`)
 	assert.Contains(string(jsonParams), `{"input":"CustomInteger5","type":"remove_field"}`)
 	assert.Contains(string(jsonParams), `{"input":"MPLS1Label","type":"remove_field"}`)
@@ -887,11 +897,13 @@ func TestPipelineTraceStage(t *testing.T) {
 	cfg := getConfig()
 
 	b := monoBuilder("namespace", &cfg)
-	stages, parameters, err := b.buildPipelineConfig()
+	cm, _, err := b.configMap()
 	assert.NoError(err)
-	assert.True(validatePipelineConfig(stages, parameters))
-	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	_, pipeline := validatePipelineConfig(t, cm)
+	assert.Equal(
+		`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
+		pipeline,
+	)
 }
 
 func getSortedMetricsNames(m []api.PromMetricsItem) []string {
@@ -909,12 +921,10 @@ func TestMergeMetricsConfiguration_Default(t *testing.T) {
 	cfg := getConfig()
 
 	b := monoBuilder("namespace", &cfg)
-	stages, parameters, err := b.buildPipelineConfig()
+	cm, _, err := b.configMap()
 	assert.NoError(err)
-	assert.True(validatePipelineConfig(stages, parameters))
-	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
-	names := getSortedMetricsNames(parameters[5].Encode.Prom.Metrics)
+	cfs, _ := validatePipelineConfig(t, cm)
+	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
 	assert.Equal([]string{
 		"namespace_drop_packets_total",
 		"namespace_flows_total",
@@ -922,7 +932,7 @@ func TestMergeMetricsConfiguration_Default(t *testing.T) {
 		"node_ingress_bytes_total",
 		"workload_ingress_bytes_total",
 	}, names)
-	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
+	assert.Equal("netobserv_", cfs.Parameters[5].Encode.Prom.Prefix)
 }
 
 func TestMergeMetricsConfiguration_WithList(t *testing.T) {
@@ -932,16 +942,14 @@ func TestMergeMetricsConfiguration_WithList(t *testing.T) {
 	cfg.Processor.Metrics.IncludeList = &[]string{"namespace_egress_bytes_total", "namespace_ingress_bytes_total"}
 
 	b := monoBuilder("namespace", &cfg)
-	stages, parameters, err := b.buildPipelineConfig()
+	cm, _, err := b.configMap()
 	assert.NoError(err)
-	assert.True(validatePipelineConfig(stages, parameters))
-	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
-	names := getSortedMetricsNames(parameters[5].Encode.Prom.Metrics)
+	cfs, _ := validatePipelineConfig(t, cm)
+	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
 	assert.Len(names, 2)
 	assert.Equal("namespace_egress_bytes_total", names[0])
 	assert.Equal("namespace_ingress_bytes_total", names[1])
-	assert.Equal("netobserv_", parameters[5].Encode.Prom.Prefix)
+	assert.Equal("netobserv_", cfs.Parameters[5].Encode.Prom.Prefix)
 }
 
 func TestMergeMetricsConfiguration_EmptyList(t *testing.T) {
@@ -951,12 +959,10 @@ func TestMergeMetricsConfiguration_EmptyList(t *testing.T) {
 	cfg.Processor.Metrics.IncludeList = &[]string{}
 
 	b := monoBuilder("namespace", &cfg)
-	stages, parameters, err := b.buildPipelineConfig()
+	cm, _, err := b.configMap()
 	assert.NoError(err)
-	assert.True(validatePipelineConfig(stages, parameters))
-	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"}]`, string(jsonStages))
-	assert.Len(parameters, 5)
+	cfs, _ := validatePipelineConfig(t, cm)
+	assert.Len(cfs.Parameters, 5)
 }
 
 func TestPipelineWithExporter(t *testing.T) {
@@ -978,18 +984,20 @@ func TestPipelineWithExporter(t *testing.T) {
 	})
 
 	b := monoBuilder("namespace", &cfg)
-	stages, parameters, err := b.buildPipelineConfig()
+	cm, _, err := b.configMap()
 	assert.NoError(err)
-	assert.True(validatePipelineConfig(stages, parameters))
-	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"kafka-export-0","follows":"enrich"},{"name":"IPFIX-export-1","follows":"enrich"}]`, string(jsonStages))
+	cfs, pipeline := validatePipelineConfig(t, cm)
+	assert.Equal(
+		`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"kafka-export-0","follows":"enrich"},{"name":"IPFIX-export-1","follows":"enrich"}]`,
+		pipeline,
+	)
 
-	assert.Equal("kafka-test", parameters[6].Encode.Kafka.Address)
-	assert.Equal("topic-test", parameters[6].Encode.Kafka.Topic)
+	assert.Equal("kafka-test", cfs.Parameters[6].Encode.Kafka.Address)
+	assert.Equal("topic-test", cfs.Parameters[6].Encode.Kafka.Topic)
 
-	assert.Equal("ipfix-receiver-test", parameters[7].Write.Ipfix.TargetHost)
-	assert.Equal(9999, parameters[7].Write.Ipfix.TargetPort)
-	assert.Equal("tcp", parameters[7].Write.Ipfix.Transport)
+	assert.Equal("ipfix-receiver-test", cfs.Parameters[7].Write.Ipfix.TargetHost)
+	assert.Equal(9999, cfs.Parameters[7].Write.Ipfix.TargetPort)
+	assert.Equal("tcp", cfs.Parameters[7].Write.Ipfix.Transport)
 }
 
 func TestPipelineWithoutLoki(t *testing.T) {
@@ -999,9 +1007,11 @@ func TestPipelineWithoutLoki(t *testing.T) {
 	cfg.Loki.Enable = ptr.To(false)
 
 	b := monoBuilder("namespace", &cfg)
-	stages, parameters, err := b.buildPipelineConfig()
+	cm, _, err := b.configMap()
 	assert.NoError(err)
-	assert.True(validatePipelineConfig(stages, parameters))
-	jsonStages, _ := json.Marshal(stages)
-	assert.Equal(`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`, string(jsonStages))
+	_, pipeline := validatePipelineConfig(t, cm)
+	assert.Equal(
+		`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
+		pipeline,
+	)
 }

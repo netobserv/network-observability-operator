@@ -6,8 +6,6 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/netobserv/flowlogs-pipeline/pkg/api"
-	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -18,7 +16,7 @@ type ingestBuilder struct {
 }
 
 func newIngestBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) (ingestBuilder, error) {
-	gen, err := newBuilder(info, desired, ConfKafkaIngester)
+	gen, err := NewBuilder(info, desired, ConfKafkaIngester)
 	return ingestBuilder{
 		generic: gen,
 	}, err
@@ -42,31 +40,17 @@ func (b *ingestBuilder) daemonSet(annotations map[string]string) *appsv1.DaemonS
 }
 
 func (b *ingestBuilder) configMap() (*corev1.ConfigMap, string, error) {
-	stages, params, err := b.buildPipelineConfig()
-	if err != nil {
-		return nil, "", err
-	}
-	return b.generic.configMap(stages, params)
-}
-
-func (b *ingestBuilder) buildPipelineConfig() ([]config.Stage, []config.StageParam, error) {
-	var pipeline config.PipelineBuilderStage
+	var pipeline PipelineBuilder
 	if helper.UseIPFIX(b.generic.desired) {
 		// IPFIX collector
-		pipeline = config.NewCollectorPipeline("ipfix", api.IngestCollector{
-			Port:     int(b.generic.desired.Processor.Port),
-			HostName: "0.0.0.0",
-		})
+		pipeline = b.generic.NewIPFIXPipeline()
 	} else {
 		// GRPC collector (eBPF agent)
-		pipeline = config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
-			Port: int(b.generic.desired.Processor.Port),
-		})
+		pipeline = b.generic.NewGRPCPipeline()
 	}
 
-	pipeline = b.generic.createKafkaWriteStage("kafka-write", &b.generic.desired.Kafka, &pipeline)
-
-	return pipeline.GetStages(), pipeline.GetStageParams(), nil
+	pipeline.AddKafkaWriteStage("kafka-write", &b.generic.desired.Kafka)
+	return b.generic.ConfigMap()
 }
 
 func (b *ingestBuilder) promService() *corev1.Service {

@@ -203,7 +203,7 @@ func (r *flpTransformerReconciler) reconcilePermissions(ctx context.Context, bui
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 
-	cr := buildClusterRoleTransformer()
+	cr := BuildClusterRoleTransformer()
 	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
 		return err
 	}

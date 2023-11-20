@@ -5,13 +5,10 @@ import (
 	"fmt"
 	"hash/fnv"
 	"strconv"
-	"time"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	promConfig "github.com/prometheus/common/config"
-	"github.com/prometheus/common/model"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,29 +16,22 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/globals"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
 
 const (
-	configVolume                = "config-volume"
-	configPath                  = "/etc/flowlogs-pipeline"
-	configFile                  = "config.json"
-	lokiToken                   = "loki-token"
-	healthServiceName           = "health"
-	prometheusServiceName       = "prometheus"
-	profilePortName             = "pprof"
-	healthTimeoutSeconds        = 5
-	livenessPeriodSeconds       = 10
-	startupFailureThreshold     = 5
-	startupPeriodSeconds        = 10
-	conntrackTerminatingTimeout = 5 * time.Second
-	conntrackEndTimeout         = 10 * time.Second
-	conntrackHeartbeatInterval  = 30 * time.Second
+	configVolume            = "config-volume"
+	configPath              = "/etc/flowlogs-pipeline"
+	configFile              = "config.json"
+	healthServiceName       = "health"
+	prometheusServiceName   = "prometheus"
+	profilePortName         = "pprof"
+	healthTimeoutSeconds    = 5
+	livenessPeriodSeconds   = 10
+	startupFailureThreshold = 5
+	startupPeriodSeconds    = 10
 )
 
 type ConfKind string
@@ -58,7 +48,7 @@ var FlpConfSuffix = map[ConfKind]string{
 	ConfKafkaTransformer: "-transformer",
 }
 
-type builder struct {
+type Builder struct {
 	info     *reconcilers.Instance
 	labels   map[string]string
 	selector map[string]string
@@ -67,9 +57,12 @@ type builder struct {
 	confKind ConfKind
 	volumes  volumes.Builder
 	loki     *helper.LokiConfig
+	pipeline *PipelineBuilder
 }
 
-func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, ck ConfKind) (builder, error) {
+type builder = Builder
+
+func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, ck ConfKind) (Builder, error) {
 	version := helper.ExtractVersion(info.Image)
 	name := name(ck)
 	var promTLS *flowslatest.CertificateReference
@@ -115,6 +108,43 @@ func (b *builder) promServiceName() string    { return promServiceName(b.confKin
 func (b *builder) configMapName() string      { return configMapName(b.confKind) }
 func (b *builder) serviceMonitorName() string { return serviceMonitorName(b.confKind) }
 func (b *builder) prometheusRuleName() string { return prometheusRuleName(b.confKind) }
+func (b *builder) Pipeline() *PipelineBuilder { return b.pipeline }
+
+func (b *builder) NewIPFIXPipeline() PipelineBuilder {
+	return b.initPipeline(config.NewCollectorPipeline("ipfix", api.IngestCollector{
+		Port:     int(b.desired.Processor.Port),
+		HostName: "0.0.0.0",
+	}))
+}
+
+func (b *builder) NewGRPCPipeline() PipelineBuilder {
+	return b.initPipeline(config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
+		Port: int(b.desired.Processor.Port),
+	}))
+}
+
+func (b *builder) NewKafkaPipeline() PipelineBuilder {
+	decoder := api.Decoder{Type: "protobuf"}
+	if helper.UseIPFIX(b.desired) {
+		decoder = api.Decoder{Type: "json"}
+	}
+	return b.initPipeline(config.NewKafkaPipeline("kafka-read", api.IngestKafka{
+		Brokers:           []string{b.desired.Kafka.Address},
+		Topic:             b.desired.Kafka.Topic,
+		GroupId:           b.name(), // Without groupid, each message is delivered to each consumers
+		Decoder:           decoder,
+		TLS:               getKafkaTLS(&b.desired.Kafka.TLS, "kafka-cert", &b.volumes),
+		SASL:              getKafkaSASL(&b.desired.Kafka.SASL, "kafka-ingest", &b.volumes),
+		PullQueueCapacity: b.desired.Processor.KafkaConsumerQueueCapacity,
+		PullMaxBytes:      b.desired.Processor.KafkaConsumerBatchSize,
+	}))
+}
+
+func (b *builder) initPipeline(ingest config.PipelineBuilderStage) PipelineBuilder {
+	pipeline := newPipelineBuilder(b.desired, b.info.Loki, &b.volumes, &ingest)
+	b.pipeline = &pipeline
+	return pipeline
+}
 
 func (b *builder) portProtocol() corev1.Protocol {
 	if helper.UseEBPF(b.desired) {
@@ -235,380 +265,31 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	}
 }
 
-func (b *builder) addTransformStages(stage *config.PipelineBuilderStage) error {
-	lastStage := *stage
-	indexFields := constants.LokiIndexFields
-
-	lastStage = b.addTransformFilter(lastStage)
-
-	indexFields, lastStage = b.addConnectionTracking(indexFields, lastStage)
-
-	// enrich stage (transform) configuration
-	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
-		Rules: api.NetworkTransformRules{{
-			Input:  "SrcAddr",
-			Output: "SrcK8S",
-			Type:   api.AddKubernetesRuleType,
-		}, {
-			Input:  "DstAddr",
-			Output: "DstK8S",
-			Type:   api.AddKubernetesRuleType,
-		}, {
-			Type: api.ReinterpretDirectionRuleType,
-		}},
-		DirectionInfo: api.NetworkTransformDirectionInfo{
-			ReporterIPField:    "AgentIP",
-			SrcHostField:       "SrcK8S_HostIP",
-			DstHostField:       "DstK8S_HostIP",
-			FlowDirectionField: "FlowDirection",
-			IfDirectionField:   "IfDirection",
-		},
-	})
-
-	// loki stage (write) configuration
-	if helper.UseLoki(b.desired) {
-		lokiWrite := api.WriteLoki{
-			Labels:         indexFields,
-			BatchSize:      int(b.loki.BatchSize),
-			BatchWait:      helper.UnstructuredDuration(b.loki.BatchWait),
-			MaxBackoff:     helper.UnstructuredDuration(b.loki.MaxBackoff),
-			MaxRetries:     int(helper.PtrInt32(b.loki.MaxRetries)),
-			MinBackoff:     helper.UnstructuredDuration(b.loki.MinBackoff),
-			StaticLabels:   model.LabelSet{},
-			Timeout:        helper.UnstructuredDuration(b.loki.Timeout),
-			URL:            b.loki.IngesterURL,
-			TimestampLabel: "TimeFlowEndMs",
-			TimestampScale: "1ms",
-			TenantID:       b.loki.TenantID,
-		}
-
-		for k, v := range b.desired.Loki.StaticLabels {
-			lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
-		}
-
-		var authorization *promConfig.Authorization
-		if b.loki.UseHostToken() || b.loki.UseForwardToken() {
-			b.volumes.AddToken(constants.FLPName)
-			authorization = &promConfig.Authorization{
-				Type:            "Bearer",
-				CredentialsFile: constants.TokensPath + constants.FLPName,
-			}
-		}
-
-		if b.loki.TLS.Enable {
-			if b.loki.TLS.InsecureSkipVerify {
-				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-					Authorization: authorization,
-					TLSConfig: promConfig.TLSConfig{
-						InsecureSkipVerify: true,
-					},
-				}
-			} else {
-				caPath := b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
-				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-					Authorization: authorization,
-					TLSConfig: promConfig.TLSConfig{
-						CAFile: caPath,
-					},
-				}
-			}
-		} else {
-			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-				Authorization: authorization,
-			}
-		}
-		enrichedStage.WriteLoki("loki", lokiWrite)
-	}
-
-	// write on Stdout if logging trace enabled
-	if b.desired.Processor.LogLevel == "trace" {
-		enrichedStage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
-	}
-
-	// obtain encode_prometheus stage from metrics_definitions
-	names := helper.GetIncludeList(&b.desired.Processor.Metrics)
-	promMetrics := metrics.GetDefinitions(names)
-
-	if len(promMetrics) > 0 {
-		// prometheus stage (encode) configuration
-		promEncode := api.PromEncode{
-			Prefix:  "netobserv_",
-			Metrics: promMetrics,
-		}
-		enrichedStage.EncodePrometheus("prometheus", promEncode)
-	}
-
-	b.addCustomExportStages(&enrichedStage)
-	return nil
-}
-
-func (b *builder) addConnectionTracking(indexFields []string, lastStage config.PipelineBuilderStage) ([]string, config.PipelineBuilderStage) {
-	outputFields := []api.OutputField{
-		{
-			Name:      "Bytes",
-			Operation: "sum",
-		},
-		{
-			Name:      "Bytes",
-			Operation: "sum",
-			SplitAB:   true,
-		},
-		{
-			Name:      "Packets",
-			Operation: "sum",
-		},
-		{
-			Name:      "Packets",
-			Operation: "sum",
-			SplitAB:   true,
-		},
-		{
-			Name:      "numFlowLogs",
-			Operation: "count",
-		},
-		{
-			Name:          "TimeFlowStartMs",
-			Operation:     "min",
-			ReportMissing: true,
-		},
-		{
-			Name:          "TimeFlowEndMs",
-			Operation:     "max",
-			ReportMissing: true,
-		},
-		{
-			Name:          "FlowDirection",
-			Operation:     "first",
-			ReportMissing: true,
-		},
-		{
-			Name:          "IfDirection",
-			Operation:     "first",
-			ReportMissing: true,
-		},
-		{
-			Name:          "AgentIP",
-			Operation:     "first",
-			ReportMissing: true,
-		},
-	}
-
-	if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
-		outputPktDropFields := []api.OutputField{
-			{
-				Name:      "PktDropBytes",
-				Operation: "sum",
-			},
-			{
-				Name:      "PktDropBytes",
-				Operation: "sum",
-				SplitAB:   true,
-			},
-			{
-				Name:      "PktDropPackets",
-				Operation: "sum",
-			},
-			{
-				Name:      "PktDropPackets",
-				Operation: "sum",
-				SplitAB:   true,
-			},
-			{
-				Name:      "PktDropLatestState",
-				Operation: "last",
-			},
-			{
-				Name:      "PktDropLatestDropCause",
-				Operation: "last",
-			},
-		}
-		outputFields = append(outputFields, outputPktDropFields...)
-	}
-
-	if helper.IsDNSTrackingEnabled(&b.desired.Agent.EBPF) {
-		outDNSTrackingFields := []api.OutputField{
-			{
-				Name:      "DnsFlagsResponseCode",
-				Operation: "last",
-			},
-			{
-				Name:      "DnsLatencyMs",
-				Operation: "max",
-			},
-		}
-		outputFields = append(outputFields, outDNSTrackingFields...)
-	}
-
-	if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
-		outputFields = append(outputFields, api.OutputField{
-			Name:      "MaxTimeFlowRttNs",
-			Operation: "max",
-			Input:     "TimeFlowRttNs",
-		})
-	}
-
-	// Connection tracking stage (only if LogTypes is not FLOWS)
-	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
-		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
-		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
-
-		terminatingTimeout := conntrackTerminatingTimeout
-		if b.desired.Processor.ConversationTerminatingTimeout != nil {
-			terminatingTimeout = b.desired.Processor.ConversationTerminatingTimeout.Duration
-		}
-
-		endTimeout := conntrackEndTimeout
-		if b.desired.Processor.ConversationEndTimeout != nil {
-			endTimeout = b.desired.Processor.ConversationEndTimeout.Duration
-		}
-
-		heartbeatInterval := conntrackHeartbeatInterval
-		if b.desired.Processor.ConversationHeartbeatInterval != nil {
-			heartbeatInterval = b.desired.Processor.ConversationHeartbeatInterval.Duration
-		}
-
-		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{
-			KeyDefinition: api.KeyDefinition{
-				FieldGroups: []api.FieldGroup{
-					{Name: "src", Fields: []string{"SrcAddr", "SrcPort"}},
-					{Name: "dst", Fields: []string{"DstAddr", "DstPort"}},
-					{Name: "common", Fields: []string{"Proto"}},
-				},
-				Hash: api.ConnTrackHash{
-					FieldGroupRefs: []string{
-						"common",
-					},
-					FieldGroupARef: "src",
-					FieldGroupBRef: "dst",
-				},
-			},
-			OutputRecordTypes: outputRecordTypes,
-			OutputFields:      outputFields,
-			Scheduling: []api.ConnTrackSchedulingGroup{
-				{
-					Selector:             nil, // Default group. Match all flowlogs
-					HeartbeatInterval:    api.Duration{Duration: heartbeatInterval},
-					EndConnectionTimeout: api.Duration{Duration: endTimeout},
-					TerminatingTimeout:   api.Duration{Duration: terminatingTimeout},
-				},
-			},
-			TCPFlags: api.ConnTrackTCPFlags{
-				FieldName:           "Flags",
-				DetectEndConnection: true,
-				SwapAB:              true,
-			},
-		})
-	}
-	return indexFields, lastStage
-}
-
-func (b *builder) addTransformFilter(lastStage config.PipelineBuilderStage) config.PipelineBuilderStage {
-	var clusterName string
-	transformFilterRules := []api.TransformFilterRule{}
-
-	if b.desired.Processor.ClusterName != "" {
-		clusterName = b.desired.Processor.ClusterName
-	} else {
-		//take clustername from openshift
-		clusterName = string(globals.DefaultClusterID)
-	}
-	if clusterName != "" {
-		transformFilterRules = []api.TransformFilterRule{
-			{
-				Input: "K8S_ClusterName",
-				Type:  "add_field_if_doesnt_exist",
-				Value: clusterName,
-			},
-		}
-	}
-
-	// Filter-out unused fields?
-	if helper.PtrBool(b.desired.Processor.DropUnusedFields) {
-		if helper.UseIPFIX(b.desired) {
-			rules := filters.GetOVSGoflowUnusedRules()
-			transformFilterRules = append(transformFilterRules, rules...)
-		}
-		// Else: nothing for eBPF at the moment
-	}
-	if len(transformFilterRules) > 0 {
-		lastStage = lastStage.TransformFilter("filter", api.TransformFilter{
-			Rules: transformFilterRules,
-		})
-	}
-	return lastStage
-}
-
-func (b *builder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage) {
-	for i, exporter := range b.desired.Exporters {
-		if exporter.Type == flowslatest.KafkaExporter {
-			b.createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), &exporter.Kafka, enrichedStage)
-		}
-		if exporter.Type == flowslatest.IpfixExporter {
-			createIPFIXWriteStage(fmt.Sprintf("IPFIX-export-%d", i), &exporter.IPFIX, enrichedStage)
-		}
-	}
-}
-
-func (b *builder) createKafkaWriteStage(name string, spec *flowslatest.FlowCollectorKafka, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
-	return fromStage.EncodeKafka(name, api.EncodeKafka{
-		Address: spec.Address,
-		Topic:   spec.Topic,
-		TLS:     b.getKafkaTLS(&spec.TLS, name),
-		SASL:    b.getKafkaSASL(&spec.SASL, name),
-	})
-}
-
-func createIPFIXWriteStage(name string, spec *flowslatest.FlowCollectorIPFIXReceiver, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
-	return fromStage.WriteIpfix(name, api.WriteIpfix{
-		TargetHost:   spec.TargetHost,
-		TargetPort:   spec.TargetPort,
-		Transport:    getIPFIXTransport(spec.Transport),
-		EnterpriseID: 2,
-	})
-}
-
-func (b *builder) getKafkaTLS(tls *flowslatest.ClientTLS, volumeName string) *api.ClientTLS {
-	if tls.Enable {
-		caPath, userCertPath, userKeyPath := b.volumes.AddMutualTLSCertificates(tls, volumeName)
-		return &api.ClientTLS{
-			InsecureSkipVerify: tls.InsecureSkipVerify,
-			CACertPath:         caPath,
-			UserCertPath:       userCertPath,
-			UserKeyPath:        userKeyPath,
-		}
-	}
-	return nil
-}
-
-func (b *builder) getKafkaSASL(sasl *flowslatest.SASLConfig, volumePrefix string) *api.SASLConfig {
-	if !helper.UseSASL(sasl) {
-		return nil
-	}
-	t := "plain"
-	if sasl.Type == flowslatest.SASLScramSHA512 {
-		t = "scramSHA512"
-	}
-	idPath := b.volumes.AddVolume(&sasl.ClientIDReference, volumePrefix+"-sasl-id")
-	secretPath := b.volumes.AddVolume(&sasl.ClientSecretReference, volumePrefix+"-sasl-secret")
-	return &api.SASLConfig{
-		Type:             t,
-		ClientIDPath:     idPath,
-		ClientSecretPath: secretPath,
-	}
-}
-
-func getIPFIXTransport(transport string) string {
-	switch transport {
-	case "UDP":
-		return "udp"
-	default:
-		return "tcp" //always fallback on tcp
-	}
-}
-
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
-func (b *builder) configMap(stages []config.Stage, parameters []config.StageParam) (*corev1.ConfigMap, string, error) {
+func (b *builder) ConfigMap() (*corev1.ConfigMap, string, error) {
+	configStr, err := b.GetJSONConfig()
+	if err != nil {
+		return nil, "", err
+	}
+
+	configMap := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      b.configMapName(),
+			Namespace: b.info.Namespace,
+			Labels:    b.labels,
+		},
+		Data: map[string]string{
+			configFile: configStr,
+		},
+	}
+	hasher := fnv.New64a()
+	_, _ = hasher.Write([]byte(configStr))
+	digest := strconv.FormatUint(hasher.Sum64(), 36)
+	return &configMap, digest, nil
+}
+
+func (b *builder) GetJSONConfig() (string, error) {
 	metricsSettings := config.MetricsSettings{
 		Port:    int(b.desired.Processor.Metrics.Server.Port),
 		Prefix:  "netobserv_",
@@ -628,8 +309,8 @@ func (b *builder) configMap(stages []config.Stage, parameters []config.StagePara
 		"health": map[string]interface{}{
 			"port": b.desired.Processor.HealthPort,
 		},
-		"pipeline":        stages,
-		"parameters":      parameters,
+		"pipeline":        b.pipeline.GetStages(),
+		"parameters":      b.pipeline.GetStageParams(),
 		"metricsSettings": metricsSettings,
 	}
 	if b.desired.Processor.ProfilePort > 0 {
@@ -640,24 +321,9 @@ func (b *builder) configMap(stages []config.Stage, parameters []config.StagePara
 
 	bs, err := json.Marshal(config)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
-	configStr := string(bs)
-
-	configMap := corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.configMapName(),
-			Namespace: b.info.Namespace,
-			Labels:    b.labels,
-		},
-		Data: map[string]string{
-			configFile: configStr,
-		},
-	}
-	hasher := fnv.New64a()
-	_, _ = hasher.Write([]byte(configStr))
-	digest := strconv.FormatUint(hasher.Sum64(), 36)
-	return &configMap, digest, nil
+	return string(bs), nil
 }
 
 func (b *builder) promService() *corev1.Service {
