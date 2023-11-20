@@ -249,20 +249,31 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 				},
 				Spec: corev1.PodSpec{
 					// Allows deploying an instance in the master node
-					Tolerations:        []corev1.Toleration{{Operator: corev1.TolerationOpExists}},
-					ServiceAccountName: constants.EBPFServiceAccount,
-					HostNetwork:        true,
-					DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
-					Volumes:            volumes,
-					Containers: []corev1.Container{{
-						Name:            constants.EBPFAgentName,
-						Image:           c.config.EBPFAgentImage,
-						ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.ImagePullPolicy),
-						Resources:       coll.Spec.Agent.EBPF.Resources,
-						SecurityContext: c.securityContext(coll),
-						Env:             env,
-						VolumeMounts:    volumeMounts,
-					}},
+					Tolerations:           []corev1.Toleration{{Operator: corev1.TolerationOpExists}},
+					ServiceAccountName:    constants.EBPFServiceAccount,
+					HostNetwork:           true,
+					ShareProcessNamespace: ptr.To(true),
+					DNSPolicy:             corev1.DNSClusterFirstWithHostNet,
+					Volumes:               volumes,
+					Containers: []corev1.Container{
+						{
+							Name:            constants.EBPFAgentName,
+							Image:           c.config.EBPFAgentImage,
+							ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.ImagePullPolicy),
+							Resources:       coll.Spec.Agent.EBPF.Resources,
+							SecurityContext: c.securityContext(coll),
+							Env:             env,
+							VolumeMounts:    volumeMounts,
+						},
+						{
+							Name:            "autoinstrumentation-go",
+							Image:           "otel/autoinstrumentation-go",
+							ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.ImagePullPolicy),
+							SecurityContext: c.securityContext(coll),
+							Env:             env,
+							VolumeMounts:    volumeMounts,
+						},
+					},
 				},
 			},
 		},
@@ -271,7 +282,9 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 
 func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowCollector, annots map[string]string) ([]corev1.EnvVar, error) {
 	config := c.setEnvConfig(coll)
-
+	annots["instrumentation.opentelemetry.io/inject-go"] = "true"
+	annots["sidecar.opentelemetry.io/inject"] = "true"
+	annots["instrumentation.opentelemetry.io/otel-go-auto-target-exe"] = "/netobserv-ebpf-agent"
 	if helper.UseKafka(&coll.Spec) {
 		config = append(config,
 			corev1.EnvVar{Name: envExport, Value: exportKafka},
@@ -338,6 +351,15 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 		}, corev1.EnvVar{
 			Name:  envFlowsTargetPort,
 			Value: strconv.Itoa(int(coll.Spec.Processor.Port)),
+		}, corev1.EnvVar{
+			Name:  "OTEL_GO_AUTO_TARGET_EXE",
+			Value: "/netobserv-ebpf-agent",
+		}, corev1.EnvVar{
+			Name:  "OTEL_EXPORTER_OTLP_ENDPOINT",
+			Value: "172.30.140.13:4317",
+		}, corev1.EnvVar{
+			Name:  "OTEL_SERVICE_NAME",
+			Value: "demo-collector",
 		})
 	}
 	return config, nil
