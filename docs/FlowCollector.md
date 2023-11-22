@@ -9161,6 +9161,13 @@ Agent configuration for flows extraction.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvanced">advanced</a></b></td>
+        <td>object</td>
+        <td>
+          `advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>cacheActiveTimeout</b></td>
         <td>string</td>
         <td>
@@ -9178,13 +9185,6 @@ Agent configuration for flows extraction.
             <i>Format</i>: int32<br/>
             <i>Default</i>: 100000<br/>
             <i>Minimum</i>: 1<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfdebug-1">debug</a></b></td>
-        <td>object</td>
-        <td>
-          `debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9270,12 +9270,12 @@ Agent configuration for flows extraction.
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.debug
+### FlowCollector.spec.agent.ebpf.advanced
 <sup><sup>[↩ Parent](#flowcollectorspecagentebpf-1)</sup></sup>
 
 
 
-`debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
 
 <table>
     <thead>
@@ -9534,6 +9534,13 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvanced">advanced</a></b></td>
+        <td>object</td>
+        <td>
+          `advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscaler-1">autoscaler</a></b></td>
         <td>object</td>
         <td>
@@ -9570,18 +9577,6 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>port</b></td>
-        <td>integer</td>
-        <td>
-          `port` is the plugin service port. Do not use 9002, which is reserved for metrics.<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 9001<br/>
-            <i>Minimum</i>: 1<br/>
-            <i>Maximum</i>: 65535<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginportnaming-1">portNaming</a></b></td>
         <td>object</td>
         <td>
@@ -9597,15 +9592,6 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
           `quickFilters` configures quick filter presets for the Console plugin<br/>
           <br/>
             <i>Default</i>: [map[default:true filter:map[dst_namespace!:openshift-,netobserv src_namespace!:openshift-,netobserv] name:Applications] map[filter:map[dst_namespace:openshift-,netobserv src_namespace:openshift-,netobserv] name:Infrastructure] map[default:true filter:map[dst_kind:Pod src_kind:Pod] name:Pods network] map[filter:map[dst_kind:Service] name:Services network]]<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>register</b></td>
-        <td>boolean</td>
-        <td>
-          `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator. When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command: `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`<br/>
-          <br/>
-            <i>Default</i>: true<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9626,6 +9612,61 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
           `resources`, in terms of compute resources, required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:100Mi] requests:map[cpu:100m memory:50Mi]]<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced
+<sup><sup>[↩ Parent](#flowcollectorspecconsoleplugin-1)</sup></sup>
+
+
+
+`advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>args</b></td>
+        <td>[]string</td>
+        <td>
+          `args` allows passing custom arguments to underlying components. Useful for overriding some parameters, such as an url or a configuration path, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>env</b></td>
+        <td>map[string]string</td>
+        <td>
+          `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>port</b></td>
+        <td>integer</td>
+        <td>
+          `port` is the plugin service port. Do not use 9002, which is reserved for metrics.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 9001<br/>
+            <i>Minimum</i>: 1<br/>
+            <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>register</b></td>
+        <td>boolean</td>
+        <td>
+          `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator. When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command: `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`<br/>
+          <br/>
+            <i>Default</i>: true<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11544,23 +11585,10 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>batchSize</b></td>
-        <td>integer</td>
+        <td><b><a href="#flowcollectorspeclokiadvanced">advanced</a></b></td>
+        <td>object</td>
         <td>
-          `batchSize` is the maximum batch size (in bytes) of logs to accumulate before sending.<br/>
-          <br/>
-            <i>Format</i>: int64<br/>
-            <i>Default</i>: 102400<br/>
-            <i>Minimum</i>: 1<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>batchWait</b></td>
-        <td>string</td>
-        <td>
-          `batchWait` is the maximum time to wait before sending a batch.<br/>
-          <br/>
-            <i>Default</i>: 1s<br/>
+          `advanced` allows setting some aspects of the internal configuration of the Loki clients. This section is aimed mostly for debugging and fine-grained performance optimizations.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11587,39 +11615,10 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>maxBackoff</b></td>
-        <td>string</td>
-        <td>
-          `maxBackoff` is the maximum backoff time for client connection between retries.<br/>
-          <br/>
-            <i>Default</i>: 5s<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>maxRetries</b></td>
-        <td>integer</td>
-        <td>
-          `maxRetries` is the maximum number of retries for client connections.<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 2<br/>
-            <i>Minimum</i>: 0<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b><a href="#flowcollectorspeclokimicroservices">microservices</a></b></td>
         <td>object</td>
         <td>
           Loki configuration for "Microservices" mode. Use this option when Loki is installed using the microservices deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode). It is ignored for other modes.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>minBackoff</b></td>
-        <td>string</td>
-        <td>
-          `minBackoff` is the initial backoff time for client connection between retries.<br/>
-          <br/>
-            <i>Default</i>: 1s<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11640,21 +11639,90 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>writeBatchSize</b></td>
+        <td>integer</td>
+        <td>
+          `writeBatchSize` is the maximum batch size (in bytes) of Loki logs to accumulate before sending.<br/>
+          <br/>
+            <i>Format</i>: int64<br/>
+            <i>Default</i>: 102400<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>writeBatchWait</b></td>
+        <td>string</td>
+        <td>
+          `writeBatchWait` is the maximum time to wait before sending a Loki batch.<br/>
+          <br/>
+            <i>Default</i>: 1s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>writeTimeout</b></td>
+        <td>string</td>
+        <td>
+          `writeTimeout` is the maximum Loki time connection / request limit. A timeout of zero means no timeout.<br/>
+          <br/>
+            <i>Default</i>: 10s<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.advanced
+<sup><sup>[↩ Parent](#flowcollectorspecloki-1)</sup></sup>
+
+
+
+`advanced` allows setting some aspects of the internal configuration of the Loki clients. This section is aimed mostly for debugging and fine-grained performance optimizations.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
         <td><b>staticLabels</b></td>
         <td>map[string]string</td>
         <td>
-          `staticLabels` is a map of common labels to set on each flow.<br/>
+          `staticLabels` is a map of common labels to set on each flow in Loki storage.<br/>
           <br/>
             <i>Default</i>: map[app:netobserv-flowcollector]<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>timeout</b></td>
+        <td><b>writeMaxBackoff</b></td>
         <td>string</td>
         <td>
-          `timeout` is the maximum time connection / request limit. A timeout of zero means no timeout.<br/>
+          `writeMaxBackoff` is the maximum backoff time for Loki client connection between retries.<br/>
           <br/>
-            <i>Default</i>: 10s<br/>
+            <i>Default</i>: 5s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>writeMaxRetries</b></td>
+        <td>integer</td>
+        <td>
+          `writeMaxRetries` is the maximum number of retries for Loki client connections.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 2<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>writeMinBackoff</b></td>
+        <td>string</td>
+        <td>
+          `writeMinBackoff` is the initial backoff time for Loki client connection between retries.<br/>
+          <br/>
+            <i>Default</i>: 1s<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12571,76 +12639,19 @@ TLS client configuration for Loki URL.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvanced">advanced</a></b></td>
+        <td>object</td>
+        <td>
+          `advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>clusterName</b></td>
         <td>string</td>
         <td>
           `clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.<br/>
           <br/>
             <i>Default</i>: <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>conversationEndTimeout</b></td>
-        <td>string</td>
-        <td>
-          `conversationEndTimeout` is the time to wait after a network flow is received, to consider the conversation ended. This delay is ignored when a FIN packet is collected for TCP flows (see `conversationTerminatingTimeout` instead).<br/>
-          <br/>
-            <i>Default</i>: 10s<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>conversationHeartbeatInterval</b></td>
-        <td>string</td>
-        <td>
-          `conversationHeartbeatInterval` is the time to wait between "tick" events of a conversation<br/>
-          <br/>
-            <i>Default</i>: 30s<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>conversationTerminatingTimeout</b></td>
-        <td>string</td>
-        <td>
-          `conversationTerminatingTimeout` is the time to wait from detected FIN flag to end a conversation. Only relevant for TCP flows.<br/>
-          <br/>
-            <i>Default</i>: 5s<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessordebug-1">debug</a></b></td>
-        <td>object</td>
-        <td>
-          `debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>dropUnusedFields</b></td>
-        <td>boolean</td>
-        <td>
-          `dropUnusedFields` allows, when set to `true`, to drop fields that are known to be unused by OVS, to save storage space.<br/>
-          <br/>
-            <i>Default</i>: true<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>enableKubeProbes</b></td>
-        <td>boolean</td>
-        <td>
-          `enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes<br/>
-          <br/>
-            <i>Default</i>: true<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>healthPort</b></td>
-        <td>integer</td>
-        <td>
-          `healthPort` is a collector HTTP port in the Pod that exposes the health check API<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 8080<br/>
-            <i>Minimum</i>: 1<br/>
-            <i>Maximum</i>: 65535<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12726,6 +12737,99 @@ TLS client configuration for Loki URL.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorresources-1">resources</a></b></td>
+        <td>object</td>
+        <td>
+          `resources` are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          <br/>
+            <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:100Mi]]<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor-1)</sup></sup>
+
+
+
+`advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>conversationEndTimeout</b></td>
+        <td>string</td>
+        <td>
+          `conversationEndTimeout` is the time to wait after a network flow is received, to consider the conversation ended. This delay is ignored when a FIN packet is collected for TCP flows (see `conversationTerminatingTimeout` instead).<br/>
+          <br/>
+            <i>Default</i>: 10s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>conversationHeartbeatInterval</b></td>
+        <td>string</td>
+        <td>
+          `conversationHeartbeatInterval` is the time to wait between "tick" events of a conversation<br/>
+          <br/>
+            <i>Default</i>: 30s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>conversationTerminatingTimeout</b></td>
+        <td>string</td>
+        <td>
+          `conversationTerminatingTimeout` is the time to wait from detected FIN flag to end a conversation. Only relevant for TCP flows.<br/>
+          <br/>
+            <i>Default</i>: 5s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>dropUnusedFields</b></td>
+        <td>boolean</td>
+        <td>
+          `dropUnusedFields` allows, when set to `true`, to drop fields that are known to be unused by OVS, to save storage space.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enableKubeProbes</b></td>
+        <td>boolean</td>
+        <td>
+          `enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>env</b></td>
+        <td>map[string]string</td>
+        <td>
+          `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>healthPort</b></td>
+        <td>integer</td>
+        <td>
+          `healthPort` is a collector HTTP port in the Pod that exposes the health check API<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 8080<br/>
+            <i>Minimum</i>: 1<br/>
+            <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>port</b></td>
         <td>integer</td>
         <td>
@@ -12744,44 +12848,9 @@ TLS client configuration for Loki URL.
           `profilePort` allows setting up a Go pprof profiler listening to this port<br/>
           <br/>
             <i>Format</i>: int32<br/>
+            <i>Default</i>: 6060<br/>
             <i>Minimum</i>: 0<br/>
             <i>Maximum</i>: 65535<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorresources-1">resources</a></b></td>
-        <td>object</td>
-        <td>
-          `resources` are the compute resources required by this container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
-          <br/>
-            <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:100Mi]]<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.debug
-<sup><sup>[↩ Parent](#flowcollectorspecprocessor-1)</sup></sup>
-
-
-
-`debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>env</b></td>
-        <td>map[string]string</td>
-        <td>
-          `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

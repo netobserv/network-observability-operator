@@ -78,16 +78,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*DebugConfig)(nil), (*v1beta2.DebugConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_DebugConfig_To_v1beta2_DebugConfig(a.(*DebugConfig), b.(*v1beta2.DebugConfig), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*v1beta2.DebugConfig)(nil), (*DebugConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_DebugConfig_To_v1alpha1_DebugConfig(a.(*v1beta2.DebugConfig), b.(*DebugConfig), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*FileReference)(nil), (*v1beta2.FileReference)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_FileReference_To_v1beta2_FileReference(a.(*FileReference), b.(*v1beta2.FileReference), scope)
 	}); err != nil {
@@ -105,21 +95,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*v1beta2.FlowCollector)(nil), (*FlowCollector)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_FlowCollector_To_v1alpha1_FlowCollector(a.(*v1beta2.FlowCollector), b.(*FlowCollector), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*FlowCollectorConsolePlugin)(nil), (*v1beta2.FlowCollectorConsolePlugin)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(a.(*FlowCollectorConsolePlugin), b.(*v1beta2.FlowCollectorConsolePlugin), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*FlowCollectorEBPF)(nil), (*v1beta2.FlowCollectorEBPF)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(a.(*FlowCollectorEBPF), b.(*v1beta2.FlowCollectorEBPF), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*FlowCollectorFLP)(nil), (*v1beta2.FlowCollectorFLP)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(a.(*FlowCollectorFLP), b.(*v1beta2.FlowCollectorFLP), scope)
 	}); err != nil {
 		return err
 	}
@@ -203,6 +178,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddConversionFunc((*DebugConfig)(nil), (*v1beta2.AdvancedAgentConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_DebugConfig_To_v1beta2_AdvancedAgentConfig(a.(*DebugConfig), b.(*v1beta2.AdvancedAgentConfig), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*DebugConfig)(nil), (*v1beta2.AdvancedProcessorConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_DebugConfig_To_v1beta2_AdvancedProcessorConfig(a.(*DebugConfig), b.(*v1beta2.AdvancedProcessorConfig), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddConversionFunc((*FLPMetrics)(nil), (*v1beta2.FLPMetrics)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_FLPMetrics_To_v1beta2_FLPMetrics(a.(*FLPMetrics), b.(*v1beta2.FLPMetrics), scope)
 	}); err != nil {
@@ -213,8 +198,23 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddConversionFunc((*FlowCollectorConsolePlugin)(nil), (*v1beta2.FlowCollectorConsolePlugin)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(a.(*FlowCollectorConsolePlugin), b.(*v1beta2.FlowCollectorConsolePlugin), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*FlowCollectorEBPF)(nil), (*v1beta2.FlowCollectorEBPF)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(a.(*FlowCollectorEBPF), b.(*v1beta2.FlowCollectorEBPF), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddConversionFunc((*FlowCollectorExporter)(nil), (*v1beta2.FlowCollectorExporter)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_FlowCollectorExporter_To_v1beta2_FlowCollectorExporter(a.(*FlowCollectorExporter), b.(*v1beta2.FlowCollectorExporter), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*FlowCollectorFLP)(nil), (*v1beta2.FlowCollectorFLP)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(a.(*FlowCollectorFLP), b.(*v1beta2.FlowCollectorFLP), scope)
 	}); err != nil {
 		return err
 	}
@@ -240,6 +240,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddConversionFunc((*ServerTLS)(nil), (*v1beta2.ServerTLS)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_ServerTLS_To_v1beta2_ServerTLS(a.(*ServerTLS), b.(*v1beta2.ServerTLS), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*v1beta2.AdvancedAgentConfig)(nil), (*DebugConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AdvancedAgentConfig_To_v1alpha1_DebugConfig(a.(*v1beta2.AdvancedAgentConfig), b.(*DebugConfig), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*v1beta2.AdvancedProcessorConfig)(nil), (*DebugConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AdvancedProcessorConfig_To_v1alpha1_DebugConfig(a.(*v1beta2.AdvancedProcessorConfig), b.(*DebugConfig), scope)
 	}); err != nil {
 		return err
 	}
@@ -409,26 +419,6 @@ func Convert_v1beta2_ConsolePluginPortConfig_To_v1alpha1_ConsolePluginPortConfig
 	return autoConvert_v1beta2_ConsolePluginPortConfig_To_v1alpha1_ConsolePluginPortConfig(in, out, s)
 }
 
-func autoConvert_v1alpha1_DebugConfig_To_v1beta2_DebugConfig(in *DebugConfig, out *v1beta2.DebugConfig, s conversion.Scope) error {
-	out.Env = *(*map[string]string)(unsafe.Pointer(&in.Env))
-	return nil
-}
-
-// Convert_v1alpha1_DebugConfig_To_v1beta2_DebugConfig is an autogenerated conversion function.
-func Convert_v1alpha1_DebugConfig_To_v1beta2_DebugConfig(in *DebugConfig, out *v1beta2.DebugConfig, s conversion.Scope) error {
-	return autoConvert_v1alpha1_DebugConfig_To_v1beta2_DebugConfig(in, out, s)
-}
-
-func autoConvert_v1beta2_DebugConfig_To_v1alpha1_DebugConfig(in *v1beta2.DebugConfig, out *DebugConfig, s conversion.Scope) error {
-	out.Env = *(*map[string]string)(unsafe.Pointer(&in.Env))
-	return nil
-}
-
-// Convert_v1beta2_DebugConfig_To_v1alpha1_DebugConfig is an autogenerated conversion function.
-func Convert_v1beta2_DebugConfig_To_v1alpha1_DebugConfig(in *v1beta2.DebugConfig, out *DebugConfig, s conversion.Scope) error {
-	return autoConvert_v1beta2_DebugConfig_To_v1alpha1_DebugConfig(in, out, s)
-}
-
 func autoConvert_v1alpha1_FLPMetrics_To_v1beta2_FLPMetrics(in *FLPMetrics, out *v1beta2.FLPMetrics, s conversion.Scope) error {
 	if err := Convert_v1alpha1_MetricsServerConfig_To_v1beta2_MetricsServerConfig(&in.Server, &out.Server, s); err != nil {
 		return err
@@ -527,13 +517,11 @@ func autoConvert_v1beta2_FlowCollectorAgent_To_v1alpha1_FlowCollectorAgent(in *v
 }
 
 func autoConvert_v1alpha1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(in *FlowCollectorConsolePlugin, out *v1beta2.FlowCollectorConsolePlugin, s conversion.Scope) error {
-	if err := v1.Convert_bool_To_Pointer_bool(&in.Register, &out.Register, s); err != nil {
-		return err
-	}
+	// WARNING: in.Register requires manual conversion: does not exist in peer-type
 	if err := v1.Convert_int32_To_Pointer_int32(&in.Replicas, &out.Replicas, s); err != nil {
 		return err
 	}
-	out.Port = in.Port
+	// WARNING: in.Port requires manual conversion: does not exist in peer-type
 	out.ImagePullPolicy = in.ImagePullPolicy
 	out.Resources = in.Resources
 	out.LogLevel = in.LogLevel
@@ -547,20 +535,11 @@ func autoConvert_v1alpha1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorCon
 	return nil
 }
 
-// Convert_v1alpha1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin is an autogenerated conversion function.
-func Convert_v1alpha1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(in *FlowCollectorConsolePlugin, out *v1beta2.FlowCollectorConsolePlugin, s conversion.Scope) error {
-	return autoConvert_v1alpha1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(in, out, s)
-}
-
 func autoConvert_v1beta2_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorConsolePlugin(in *v1beta2.FlowCollectorConsolePlugin, out *FlowCollectorConsolePlugin, s conversion.Scope) error {
 	// WARNING: in.Enable requires manual conversion: does not exist in peer-type
-	if err := v1.Convert_Pointer_bool_To_bool(&in.Register, &out.Register, s); err != nil {
-		return err
-	}
 	if err := v1.Convert_Pointer_int32_To_int32(&in.Replicas, &out.Replicas, s); err != nil {
 		return err
 	}
-	out.Port = in.Port
 	out.ImagePullPolicy = in.ImagePullPolicy
 	out.Resources = in.Resources
 	out.LogLevel = in.LogLevel
@@ -571,6 +550,7 @@ func autoConvert_v1beta2_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorCon
 		return err
 	}
 	out.QuickFilters = *(*[]QuickFilter)(unsafe.Pointer(&in.QuickFilters))
+	// WARNING: in.Advanced requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -585,15 +565,8 @@ func autoConvert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in *Flo
 	out.LogLevel = in.LogLevel
 	out.Privileged = in.Privileged
 	out.KafkaBatchSize = in.KafkaBatchSize
-	if err := Convert_v1alpha1_DebugConfig_To_v1beta2_DebugConfig(&in.Debug, &out.Debug, s); err != nil {
-		return err
-	}
+	// WARNING: in.Debug requires manual conversion: does not exist in peer-type
 	return nil
-}
-
-// Convert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF is an autogenerated conversion function.
-func Convert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in *FlowCollectorEBPF, out *v1beta2.FlowCollectorEBPF, s conversion.Scope) error {
-	return autoConvert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in, out, s)
 }
 
 func autoConvert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1beta2.FlowCollectorEBPF, out *FlowCollectorEBPF, s conversion.Scope) error {
@@ -607,9 +580,7 @@ func autoConvert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1b
 	out.LogLevel = in.LogLevel
 	out.Privileged = in.Privileged
 	out.KafkaBatchSize = in.KafkaBatchSize
-	if err := Convert_v1beta2_DebugConfig_To_v1alpha1_DebugConfig(&in.Debug, &out.Debug, s); err != nil {
-		return err
-	}
+	// WARNING: in.Advanced requires manual conversion: does not exist in peer-type
 	// WARNING: in.Features requires manual conversion: does not exist in peer-type
 	return nil
 }
@@ -637,21 +608,17 @@ func autoConvert_v1beta2_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter
 }
 
 func autoConvert_v1alpha1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowCollectorFLP, out *v1beta2.FlowCollectorFLP, s conversion.Scope) error {
-	out.Port = in.Port
-	out.HealthPort = in.HealthPort
-	out.ProfilePort = in.ProfilePort
+	// WARNING: in.Port requires manual conversion: does not exist in peer-type
+	// WARNING: in.HealthPort requires manual conversion: does not exist in peer-type
+	// WARNING: in.ProfilePort requires manual conversion: does not exist in peer-type
 	out.ImagePullPolicy = in.ImagePullPolicy
 	if err := Convert_v1alpha1_FLPMetrics_To_v1beta2_FLPMetrics(&in.Metrics, &out.Metrics, s); err != nil {
 		return err
 	}
 	out.LogLevel = in.LogLevel
 	out.Resources = in.Resources
-	if err := v1.Convert_bool_To_Pointer_bool(&in.EnableKubeProbes, &out.EnableKubeProbes, s); err != nil {
-		return err
-	}
-	if err := v1.Convert_bool_To_Pointer_bool(&in.DropUnusedFields, &out.DropUnusedFields, s); err != nil {
-		return err
-	}
+	// WARNING: in.EnableKubeProbes requires manual conversion: does not exist in peer-type
+	// WARNING: in.DropUnusedFields requires manual conversion: does not exist in peer-type
 	if err := v1.Convert_int32_To_Pointer_int32(&in.KafkaConsumerReplicas, &out.KafkaConsumerReplicas, s); err != nil {
 		return err
 	}
@@ -660,33 +627,17 @@ func autoConvert_v1alpha1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowC
 	}
 	out.KafkaConsumerQueueCapacity = in.KafkaConsumerQueueCapacity
 	out.KafkaConsumerBatchSize = in.KafkaConsumerBatchSize
-	if err := Convert_v1alpha1_DebugConfig_To_v1beta2_DebugConfig(&in.Debug, &out.Debug, s); err != nil {
-		return err
-	}
+	// WARNING: in.Debug requires manual conversion: does not exist in peer-type
 	return nil
 }
 
-// Convert_v1alpha1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP is an autogenerated conversion function.
-func Convert_v1alpha1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowCollectorFLP, out *v1beta2.FlowCollectorFLP, s conversion.Scope) error {
-	return autoConvert_v1alpha1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in, out, s)
-}
-
 func autoConvert_v1beta2_FlowCollectorFLP_To_v1alpha1_FlowCollectorFLP(in *v1beta2.FlowCollectorFLP, out *FlowCollectorFLP, s conversion.Scope) error {
-	out.Port = in.Port
-	out.HealthPort = in.HealthPort
-	out.ProfilePort = in.ProfilePort
 	out.ImagePullPolicy = in.ImagePullPolicy
 	if err := Convert_v1beta2_FLPMetrics_To_v1alpha1_FLPMetrics(&in.Metrics, &out.Metrics, s); err != nil {
 		return err
 	}
 	out.LogLevel = in.LogLevel
 	out.Resources = in.Resources
-	if err := v1.Convert_Pointer_bool_To_bool(&in.EnableKubeProbes, &out.EnableKubeProbes, s); err != nil {
-		return err
-	}
-	if err := v1.Convert_Pointer_bool_To_bool(&in.DropUnusedFields, &out.DropUnusedFields, s); err != nil {
-		return err
-	}
 	if err := v1.Convert_Pointer_int32_To_int32(&in.KafkaConsumerReplicas, &out.KafkaConsumerReplicas, s); err != nil {
 		return err
 	}
@@ -696,14 +647,9 @@ func autoConvert_v1beta2_FlowCollectorFLP_To_v1alpha1_FlowCollectorFLP(in *v1bet
 	out.KafkaConsumerQueueCapacity = in.KafkaConsumerQueueCapacity
 	out.KafkaConsumerBatchSize = in.KafkaConsumerBatchSize
 	// WARNING: in.LogTypes requires manual conversion: does not exist in peer-type
-	// WARNING: in.ConversationHeartbeatInterval requires manual conversion: does not exist in peer-type
-	// WARNING: in.ConversationEndTimeout requires manual conversion: does not exist in peer-type
-	// WARNING: in.ConversationTerminatingTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.ClusterName requires manual conversion: does not exist in peer-type
 	// WARNING: in.MultiClusterDeployment requires manual conversion: does not exist in peer-type
-	if err := Convert_v1beta2_DebugConfig_To_v1alpha1_DebugConfig(&in.Debug, &out.Debug, s); err != nil {
-		return err
-	}
+	// WARNING: in.Advanced requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -867,51 +813,28 @@ func autoConvert_v1alpha1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *Flo
 	// WARNING: in.StatusURL requires manual conversion: does not exist in peer-type
 	// WARNING: in.TenantID requires manual conversion: does not exist in peer-type
 	// WARNING: in.AuthToken requires manual conversion: does not exist in peer-type
-	if err := v1.Convert_v1_Duration_To_Pointer_v1_Duration(&in.BatchWait, &out.BatchWait, s); err != nil {
-		return err
-	}
-	out.BatchSize = in.BatchSize
-	if err := v1.Convert_v1_Duration_To_Pointer_v1_Duration(&in.Timeout, &out.Timeout, s); err != nil {
-		return err
-	}
-	if err := v1.Convert_v1_Duration_To_Pointer_v1_Duration(&in.MinBackoff, &out.MinBackoff, s); err != nil {
-		return err
-	}
-	if err := v1.Convert_v1_Duration_To_Pointer_v1_Duration(&in.MaxBackoff, &out.MaxBackoff, s); err != nil {
-		return err
-	}
-	if err := v1.Convert_int32_To_Pointer_int32(&in.MaxRetries, &out.MaxRetries, s); err != nil {
-		return err
-	}
-	out.StaticLabels = *(*map[string]string)(unsafe.Pointer(&in.StaticLabels))
+	// WARNING: in.BatchWait requires manual conversion: does not exist in peer-type
+	// WARNING: in.BatchSize requires manual conversion: does not exist in peer-type
+	// WARNING: in.Timeout requires manual conversion: does not exist in peer-type
+	// WARNING: in.MinBackoff requires manual conversion: does not exist in peer-type
+	// WARNING: in.MaxBackoff requires manual conversion: does not exist in peer-type
+	// WARNING: in.MaxRetries requires manual conversion: does not exist in peer-type
+	// WARNING: in.StaticLabels requires manual conversion: does not exist in peer-type
 	// WARNING: in.TLS requires manual conversion: does not exist in peer-type
 	return nil
 }
 
 func autoConvert_v1beta2_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1beta2.FlowCollectorLoki, out *FlowCollectorLoki, s conversion.Scope) error {
+	// WARNING: in.Enable requires manual conversion: does not exist in peer-type
 	// WARNING: in.Mode requires manual conversion: does not exist in peer-type
 	// WARNING: in.Manual requires manual conversion: does not exist in peer-type
 	// WARNING: in.Microservices requires manual conversion: does not exist in peer-type
 	// WARNING: in.Monolithic requires manual conversion: does not exist in peer-type
 	// WARNING: in.LokiStack requires manual conversion: does not exist in peer-type
-	// WARNING: in.Enable requires manual conversion: does not exist in peer-type
-	if err := v1.Convert_Pointer_v1_Duration_To_v1_Duration(&in.BatchWait, &out.BatchWait, s); err != nil {
-		return err
-	}
-	out.BatchSize = in.BatchSize
-	if err := v1.Convert_Pointer_v1_Duration_To_v1_Duration(&in.Timeout, &out.Timeout, s); err != nil {
-		return err
-	}
-	if err := v1.Convert_Pointer_v1_Duration_To_v1_Duration(&in.MinBackoff, &out.MinBackoff, s); err != nil {
-		return err
-	}
-	if err := v1.Convert_Pointer_v1_Duration_To_v1_Duration(&in.MaxBackoff, &out.MaxBackoff, s); err != nil {
-		return err
-	}
-	if err := v1.Convert_Pointer_int32_To_int32(&in.MaxRetries, &out.MaxRetries, s); err != nil {
-		return err
-	}
-	out.StaticLabels = *(*map[string]string)(unsafe.Pointer(&in.StaticLabels))
+	// WARNING: in.WriteTimeout requires manual conversion: does not exist in peer-type
+	// WARNING: in.WriteBatchWait requires manual conversion: does not exist in peer-type
+	// WARNING: in.WriteBatchSize requires manual conversion: does not exist in peer-type
+	// WARNING: in.Advanced requires manual conversion: does not exist in peer-type
 	return nil
 }
 

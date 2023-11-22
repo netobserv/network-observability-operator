@@ -285,9 +285,9 @@ metadata:
                 "minReplicas": 1,
                 "status": "Disabled"
               },
+              "enable": true,
               "imagePullPolicy": "IfNotPresent",
               "logLevel": "info",
-              "port": 9001,
               "portNaming": {
                 "enable": true,
                 "portNames": {
@@ -325,7 +325,16 @@ metadata:
                   "name": "Services network"
                 }
               ],
-              "register": true
+              "replicas": 1,
+              "resources": {
+                "limits": {
+                  "memory": "100Mi"
+                },
+                "requests": {
+                  "cpu": "100m",
+                  "memory": "50Mi"
+                }
+              }
             },
             "deploymentModel": "Direct",
             "exporters": [],
@@ -348,15 +357,10 @@ metadata:
               "topic": "network-flows"
             },
             "loki": {
-              "batchSize": 10485760,
-              "batchWait": "1s",
               "enable": true,
               "lokiStack": {
                 "name": "loki"
               },
-              "maxBackoff": "5s",
-              "maxRetries": 2,
-              "minBackoff": "1s",
               "mode": "Monolithic",
               "monolithic": {
                 "tenantID": "netobserv",
@@ -373,10 +377,6 @@ metadata:
             },
             "namespace": "netobserv",
             "processor": {
-              "conversationEndTimeout": "10s",
-              "conversationHeartbeatInterval": "30s",
-              "conversationTerminatingTimeout": "5s",
-              "dropUnusedFields": true,
               "imagePullPolicy": "IfNotPresent",
               "kafkaConsumerAutoscaler": null,
               "kafkaConsumerBatchSize": 10485760,
@@ -384,14 +384,15 @@ metadata:
               "kafkaConsumerReplicas": 3,
               "logLevel": "info",
               "logTypes": "Flows",
+              "lokiBatchSize": 10485760,
+              "lokiBatchWait": "1s",
+              "lokiTimeout": "10s",
               "metrics": {
                 "disableAlerts": [],
                 "server": {
                   "port": 9102
                 }
               },
-              "port": 2055,
-              "profilePort": 6060,
               "resources": {
                 "limits": {
                   "memory": "800Mi"

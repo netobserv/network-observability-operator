@@ -19,12 +19,14 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	_ "embed"
 	"flag"
 	"fmt"
 	_ "net/http/pprof"
 	"os"
 
 	"go.uber.org/zap/zapcore"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
@@ -34,9 +36,11 @@ import (
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -52,6 +56,7 @@ import (
 	metricsv1alpha1 "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
 	//+kubebuilder:scaffold:imports
 )
@@ -64,6 +69,9 @@ var (
 	scheme       = runtime.NewScheme()
 	setupLog     = ctrl.Log.WithName("setup")
 )
+
+//go:embed config/crd/bases/flows.netobserv.io_flowcollectors.yaml
+var crdBytes []byte
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -122,6 +130,11 @@ func main() {
 
 	if err := config.Validate(); err != nil {
 		setupLog.Error(err, "unable to start the manager")
+		os.Exit(1)
+	}
+
+	if err := helper.ParseCRD(crdBytes); err != nil {
+		setupLog.Error(err, "unable to parse CRD")
 		os.Exit(1)
 	}
 

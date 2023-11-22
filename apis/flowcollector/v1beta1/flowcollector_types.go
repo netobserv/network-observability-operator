@@ -203,7 +203,7 @@ type FlowCollectorEBPF struct {
 	// `excludeInterfaces` contains the interface names that are excluded from flow tracing.
 	// An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 	// Otherwise it is matched as a case-sensitive string.
-	//+kubebuilder:default=lo;
+	//+kubebuilder:default:=lo;
 	//+optional
 	ExcludeInterfaces []string `json:"excludeInterfaces"`
 
@@ -588,11 +588,11 @@ type FlowCollectorLoki struct {
 	// A timeout of zero means no timeout.
 	Timeout *metav1.Duration `json:"timeout,omitempty"` // Warning: keep as pointer, else default is ignored
 
-	//+kubebuilder:default="1s"
+	//+kubebuilder:default:="1s"
 	// `minBackoff` is the initial backoff time for client connection between retries.
 	MinBackoff *metav1.Duration `json:"minBackoff,omitempty"` // Warning: keep as pointer, else default is ignored
 
-	//+kubebuilder:default="5s"
+	//+kubebuilder:default:="5s"
 	// `maxBackoff` is the maximum backoff time for client connection between retries.
 	MaxBackoff *metav1.Duration `json:"maxBackoff,omitempty"` // Warning: keep as pointer, else default is ignored
 

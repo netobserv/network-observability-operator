@@ -2,6 +2,9 @@ package v1beta1
 
 import (
 	"testing"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +32,10 @@ func TestBeta1ConversionRoundtrip_Loki(t *testing.T) {
 					Enable:             true,
 					InsecureSkipVerify: true,
 				},
-				BatchSize: 1000,
+				Timeout:    ptr.To(metav1.Duration{Duration: 30 * time.Second}),
+				MinBackoff: ptr.To(metav1.Duration{Duration: 5 * time.Second}),
+				BatchSize:  1000,
+				BatchWait:  ptr.To(metav1.Duration{Duration: 10 * time.Second}),
 			},
 		},
 	}
@@ -70,7 +76,6 @@ func TestBeta2ConversionRoundtrip_Loki(t *testing.T) {
 					Name:      "lokiii",
 					Namespace: "lokins",
 				},
-				BatchSize: 1000,
 			},
 		},
 	}

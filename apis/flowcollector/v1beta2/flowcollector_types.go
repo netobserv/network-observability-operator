@@ -210,7 +210,7 @@ type FlowCollectorEBPF struct {
 	// `excludeInterfaces` contains the interface names that are excluded from flow tracing.
 	// An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 	// Otherwise it is matched as a case-sensitive string.
-	//+kubebuilder:default=lo;
+	//+kubebuilder:default:=lo;
 	//+optional
 	ExcludeInterfaces []string `json:"excludeInterfaces"`
 
@@ -232,11 +232,11 @@ type FlowCollectorEBPF struct {
 	// `kafkaBatchSize` limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 10MB.
 	KafkaBatchSize int `json:"kafkaBatchSize"`
 
-	// `debug` allows setting some aspects of the internal configuration of the eBPF agent.
-	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
+	// `advanced` allows setting some aspects of the internal configuration of the eBPF agent.
+	// This section is aimed mostly for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
 	// +optional
-	Debug DebugConfig `json:"debug,omitempty"`
+	Advanced *AdvancedAgentConfig `json:"advanced,omitempty"`
 
 	// List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
 	// - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
@@ -386,26 +386,6 @@ const (
 type FlowCollectorFLP struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	//+kubebuilder:validation:Minimum=1025
-	//+kubebuilder:validation:Maximum=65535
-	//+kubebuilder:default:=2055
-	// Port of the flow collector (host port).
-	// By convention, some values are forbidden. It must be greater than 1024 and different from
-	// 4500, 4789 and 6081.
-	Port int32 `json:"port,omitempty"`
-
-	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:validation:Maximum=65535
-	//+kubebuilder:default:=8080
-	// `healthPort` is a collector HTTP port in the Pod that exposes the health check API
-	HealthPort int32 `json:"healthPort,omitempty"`
-
-	//+kubebuilder:validation:Minimum=0
-	//+kubebuilder:validation:Maximum=65535
-	//+optional
-	// `profilePort` allows setting up a Go pprof profiler listening to this port
-	ProfilePort int32 `json:"profilePort,omitempty"`
-
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
 	// `imagePullPolicy` is the Kubernetes pull policy for the image defined above
@@ -424,14 +404,6 @@ type FlowCollectorFLP struct {
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
-
-	//+kubebuilder:default:=true
-	// `enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes
-	EnableKubeProbes *bool `json:"enableKubeProbes,omitempty"`
-
-	//+kubebuilder:default:=true
-	// `dropUnusedFields` allows, when set to `true`, to drop fields that are known to be unused by OVS, to save storage space.
-	DropUnusedFields *bool `json:"dropUnusedFields,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=3
@@ -464,22 +436,6 @@ type FlowCollectorFLP struct {
 	// +kubebuilder:default:=Flows
 	LogTypes *FLPLogTypes `json:"logTypes,omitempty"`
 
-	//+kubebuilder:default:="30s"
-	// +optional
-	// `conversationHeartbeatInterval` is the time to wait between "tick" events of a conversation
-	ConversationHeartbeatInterval *metav1.Duration `json:"conversationHeartbeatInterval,omitempty"`
-
-	//+kubebuilder:default:="10s"
-	// +optional
-	// `conversationEndTimeout` is the time to wait after a network flow is received, to consider the conversation ended.
-	// This delay is ignored when a FIN packet is collected for TCP flows (see `conversationTerminatingTimeout` instead).
-	ConversationEndTimeout *metav1.Duration `json:"conversationEndTimeout,omitempty"`
-
-	//+kubebuilder:default:="5s"
-	// +optional
-	// `conversationTerminatingTimeout` is the time to wait from detected FIN flag to end a conversation. Only relevant for TCP flows.
-	ConversationTerminatingTimeout *metav1.Duration `json:"conversationTerminatingTimeout,omitempty"`
-
 	//+kubebuilder:default:=""
 	// +optional
 	// `clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.
@@ -489,11 +445,11 @@ type FlowCollectorFLP struct {
 	// Set `multiClusterDeployment` to `true` to enable multi clusters feature. This will add clusterName label to flows data
 	MultiClusterDeployment *bool `json:"multiClusterDeployment,omitempty"`
 
-	// `debug` allows setting some aspects of the internal configuration of the flow processor.
-	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
+	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
+	// This section is aimed mostly for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
 	// +optional
-	Debug DebugConfig `json:"debug,omitempty"`
+	Advanced *AdvancedProcessorConfig `json:"advanced,omitempty"`
 }
 
 type HPAStatus string
@@ -640,6 +596,12 @@ const (
 
 // `FlowCollectorLoki` defines the desired state for FlowCollector's Loki client.
 type FlowCollectorLoki struct {
+	// Important: Run "make generate" to regenerate code after modifying this file
+
+	//+kubebuilder:default:=true
+	// Set `enable` to `true` to store flows in Loki. It is required for the OpenShift Console plugin installation.
+	Enable *bool `json:"enable,omitempty"`
+
 	// `mode` must be set according to the installation mode of Loki:<br>
 	// - Use "LokiStack" when Loki is managed using the Loki Operator<br>
 	// - Use "Monolithic" when Loki is installed as a monolithic workload<br>
@@ -673,41 +635,24 @@ type FlowCollectorLoki struct {
 	// +optional
 	LokiStack LokiStackRef `json:"lokiStack,omitempty"`
 
-	//+kubebuilder:default:=true
-	// Set `enable` to `true` to store flows in Loki. It is required for the OpenShift Console plugin installation.
-	Enable *bool `json:"enable,omitempty"`
+	//+kubebuilder:default:="10s"
+	// `writeTimeout` is the maximum Loki time connection / request limit.
+	// A timeout of zero means no timeout.
+	WriteTimeout *metav1.Duration `json:"writeTimeout,omitempty"` // Warning: keep as pointer, else default is ignored
 
 	//+kubebuilder:default:="1s"
-	// `batchWait` is the maximum time to wait before sending a batch.
-	BatchWait *metav1.Duration `json:"batchWait,omitempty"` // Warning: keep as pointer, else default is ignored
+	// `writeBatchWait` is the maximum time to wait before sending a Loki batch.
+	WriteBatchWait *metav1.Duration `json:"writeBatchWait,omitempty"` // Warning: keep as pointer, else default is ignored
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:default:=102400
-	// `batchSize` is the maximum batch size (in bytes) of logs to accumulate before sending.
-	BatchSize int64 `json:"batchSize,omitempty"`
+	// `writeBatchSize` is the maximum batch size (in bytes) of Loki logs to accumulate before sending.
+	WriteBatchSize int64 `json:"writeBatchSize,omitempty"`
 
-	//+kubebuilder:default:="10s"
-	// `timeout` is the maximum time connection / request limit.
-	// A timeout of zero means no timeout.
-	Timeout *metav1.Duration `json:"timeout,omitempty"` // Warning: keep as pointer, else default is ignored
-
-	//+kubebuilder:default="1s"
-	// `minBackoff` is the initial backoff time for client connection between retries.
-	MinBackoff *metav1.Duration `json:"minBackoff,omitempty"` // Warning: keep as pointer, else default is ignored
-
-	//+kubebuilder:default="5s"
-	// `maxBackoff` is the maximum backoff time for client connection between retries.
-	MaxBackoff *metav1.Duration `json:"maxBackoff,omitempty"` // Warning: keep as pointer, else default is ignored
-
-	//+kubebuilder:validation:Minimum=0
-	//+kubebuilder:default:=2
-	// `maxRetries` is the maximum number of retries for client connections.
-	MaxRetries *int32 `json:"maxRetries,omitempty"`
-
-	//+kubebuilder:default:={"app":"netobserv-flowcollector"}
+	// `advanced` allows setting some aspects of the internal configuration of the Loki clients.
+	// This section is aimed mostly for debugging and fine-grained performance optimizations.
 	// +optional
-	// `staticLabels` is a map of common labels to set on each flow.
-	StaticLabels map[string]string `json:"staticLabels"`
+	Advanced *AdvancedLokiConfig `json:"advanced,omitempty"`
 }
 
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector
@@ -719,22 +664,10 @@ type FlowCollectorConsolePlugin struct {
 	// `spec.Loki.enable` must also be `true`
 	Enable *bool `json:"enable,omitempty"`
 
-	//+kubebuilder:default:=true
-	// `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator.
-	// When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
-	// `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`
-	Register *bool `json:"register,omitempty"`
-
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=1
 	// `replicas` defines the number of replicas (pods) to start.
 	Replicas *int32 `json:"replicas,omitempty"`
-
-	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:validation:Maximum=65535
-	//+kubebuilder:default:=9001
-	// `port` is the plugin service port. Do not use 9002, which is reserved for metrics.
-	Port int32 `json:"port,omitempty"`
 
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
@@ -764,6 +697,12 @@ type FlowCollectorConsolePlugin struct {
 	// +optional
 	// `quickFilters` configures quick filter presets for the Console plugin
 	QuickFilters []QuickFilter `json:"quickFilters"`
+
+	// `advanced` allows setting some aspects of the internal configuration of the console plugin.
+	// This section is aimed mostly for debugging and fine-grained performance optimizations,
+	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+	// +optional
+	Advanced *AdvancedPluginConfig `json:"advanced,omitempty"`
 }
 
 // Configuration of the port to service name translation feature of the console plugin
@@ -906,9 +845,9 @@ type SASLConfig struct {
 	ClientSecretReference FileReference `json:"clientSecretReference,omitempty"`
 }
 
-// `DebugConfig` allows tweaking some aspects of the internal configuration of the agent and FLP.
-// They are aimed exclusively for debugging. Users setting these values do it at their own risk.
-type DebugConfig struct {
+// `AdvancedAgentConfig` allows tweaking some aspects of the internal configuration of the agent.
+// They are aimed mostly for debugging. Users setting these values do it at their own risk.
+type AdvancedAgentConfig struct {
 	// `env` allows passing custom environment variables to underlying components. Useful for passing
 	// some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be
 	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
@@ -917,6 +856,124 @@ type DebugConfig struct {
 	Env map[string]string `json:"env,omitempty"`
 }
 
+// `AdvancedProcessorConfig` allows tweaking some aspects of the internal configuration of the processor.
+// They are aimed mostly for debugging. Users setting these values do it at their own risk.
+type AdvancedProcessorConfig struct {
+	// `env` allows passing custom environment variables to underlying components. Useful for passing
+	// some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be
+	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
+	// in edge debug or support scenarios.
+	//+optional
+	Env map[string]string `json:"env,omitempty"`
+
+	//+kubebuilder:validation:Minimum=1025
+	//+kubebuilder:validation:Maximum=65535
+	//+kubebuilder:default:=2055
+	//+optional
+	// Port of the flow collector (host port).
+	// By convention, some values are forbidden. It must be greater than 1024 and different from
+	// 4500, 4789 and 6081.
+	Port *int32 `json:"port,omitempty"`
+
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=65535
+	//+kubebuilder:default:=8080
+	//+optional
+	// `healthPort` is a collector HTTP port in the Pod that exposes the health check API
+	HealthPort *int32 `json:"healthPort,omitempty"`
+
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:validation:Maximum=65535
+	//+kubebuilder:default:=6060
+	//+optional
+	// `profilePort` allows setting up a Go pprof profiler listening to this port
+	ProfilePort *int32 `json:"profilePort,omitempty"`
+
+	//+kubebuilder:default:=true
+	//+optional
+	// `enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes
+	EnableKubeProbes *bool `json:"enableKubeProbes,omitempty"`
+
+	//+kubebuilder:default:=true
+	//+optional
+	// `dropUnusedFields` allows, when set to `true`, to drop fields that are known to be unused by OVS, to save storage space.
+	DropUnusedFields *bool `json:"dropUnusedFields,omitempty"`
+
+	//+kubebuilder:default:="30s"
+	//+optional
+	// `conversationHeartbeatInterval` is the time to wait between "tick" events of a conversation
+	ConversationHeartbeatInterval *metav1.Duration `json:"conversationHeartbeatInterval,omitempty"`
+
+	//+kubebuilder:default:="10s"
+	//+optional
+	// `conversationEndTimeout` is the time to wait after a network flow is received, to consider the conversation ended.
+	// This delay is ignored when a FIN packet is collected for TCP flows (see `conversationTerminatingTimeout` instead).
+	ConversationEndTimeout *metav1.Duration `json:"conversationEndTimeout,omitempty"`
+
+	//+kubebuilder:default:="5s"
+	//+optional
+	// `conversationTerminatingTimeout` is the time to wait from detected FIN flag to end a conversation. Only relevant for TCP flows.
+	ConversationTerminatingTimeout *metav1.Duration `json:"conversationTerminatingTimeout,omitempty"`
+}
+
+// `AdvancedLokiConfig` allows tweaking some aspects of the Loki clients.
+// They are aimed mostly for debugging. Users setting these values do it at their own risk.
+type AdvancedLokiConfig struct {
+	//+kubebuilder:default:="1s"
+	//+optional
+	// `writeMinBackoff` is the initial backoff time for Loki client connection between retries.
+	WriteMinBackoff *metav1.Duration `json:"writeMinBackoff,omitempty"` // Warning: keep as pointer, else default is ignored
+
+	//+kubebuilder:default:="5s"
+	//+optional
+	// `writeMaxBackoff` is the maximum backoff time for Loki client connection between retries.
+	WriteMaxBackoff *metav1.Duration `json:"writeMaxBackoff,omitempty"` // Warning: keep as pointer, else default is ignored
+
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=2
+	//+optional
+	// `writeMaxRetries` is the maximum number of retries for Loki client connections.
+	WriteMaxRetries *int32 `json:"writeMaxRetries,omitempty"`
+
+	//+kubebuilder:default:={"app":"netobserv-flowcollector"}
+	//+optional
+	// `staticLabels` is a map of common labels to set on each flow in Loki storage.
+	StaticLabels *map[string]string `json:"staticLabels,omitempty"`
+}
+
+// `AdvancedPluginConfig` allows tweaking some aspects of the internal configuration of the console plugin.
+// They are aimed mostly for debugging. Users setting these values do it at their own risk.
+type AdvancedPluginConfig struct {
+	// `env` allows passing custom environment variables to underlying components. Useful for passing
+	// some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be
+	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
+	// in edge debug or support scenarios.
+	//+optional
+	Env map[string]string `json:"env,omitempty"`
+
+	// `args` allows passing custom arguments to underlying components. Useful for overriding
+	// some parameters, such as an url or a configuration path, that should not be
+	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
+	// in edge debug or support scenarios.
+	//+optional
+	Args []string `json:"args,omitempty"`
+
+	//+kubebuilder:default:=true
+	//+optional
+	// `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator.
+	// When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
+	// `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`
+	Register *bool `json:"register,omitempty"`
+
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=65535
+	//+kubebuilder:default:=9001
+	//+optional
+	// `port` is the plugin service port. Do not use 9002, which is reserved for metrics.
+	Port *int32 `json:"port,omitempty"`
+}
+
+// Add more exporter types below
 type ExporterType string
 
 const (

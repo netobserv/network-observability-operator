@@ -3,32 +3,15 @@ package helper
 import (
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 )
 
 type LokiConfig struct {
 	flowslatest.LokiManualParams
-	BatchWait    *metav1.Duration
-	BatchSize    int64
-	Timeout      *metav1.Duration
-	MinBackoff   *metav1.Duration
-	MaxBackoff   *metav1.Duration
-	MaxRetries   *int32
-	StaticLabels map[string]string
 }
 
 func NewLokiConfig(spec *flowslatest.FlowCollectorLoki, namespace string) LokiConfig {
-	loki := LokiConfig{
-		BatchWait:    spec.BatchWait,
-		BatchSize:    spec.BatchSize,
-		Timeout:      spec.Timeout,
-		MinBackoff:   spec.MinBackoff,
-		MaxBackoff:   spec.MaxBackoff,
-		MaxRetries:   spec.MaxRetries,
-		StaticLabels: spec.StaticLabels,
-	}
+	loki := LokiConfig{}
 	switch spec.Mode {
 	case flowslatest.LokiModeLokiStack:
 		ns := namespace

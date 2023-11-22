@@ -31,7 +31,6 @@ var testResources = corev1.ResourceRequirements{
 func getPluginConfig() flowslatest.FlowCollectorConsolePlugin {
 	return flowslatest.FlowCollectorConsolePlugin{
 		Enable:          ptr.To(true),
-		Port:            9001,
 		ImagePullPolicy: string(testPullPolicy),
 		Resources:       testResources,
 		Autoscaler: flowslatest.FlowCollectorHPA{

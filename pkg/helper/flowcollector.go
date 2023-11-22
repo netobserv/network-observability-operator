@@ -5,6 +5,7 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -137,4 +138,116 @@ func GetNamespace(spec *flowslatest.FlowCollectorSpec) string {
 		return spec.Namespace
 	}
 	return constants.DefaultOperatorNamespace
+}
+
+func GetAdvancedAgentConfig(specConfig *flowslatest.AdvancedAgentConfig) flowslatest.AdvancedAgentConfig {
+	debugConfig := flowslatest.AdvancedAgentConfig{
+		Env: map[string]string{},
+	}
+
+	if specConfig != nil {
+		if len(specConfig.Env) > 0 {
+			debugConfig.Env = specConfig.Env
+		}
+	}
+
+	return debugConfig
+}
+
+func GetAdvancedProcessorConfig(specConfig *flowslatest.AdvancedProcessorConfig) flowslatest.AdvancedProcessorConfig {
+	debugConfig := flowslatest.AdvancedProcessorConfig{
+		Env:                            map[string]string{},
+		Port:                           ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "port")),
+		HealthPort:                     ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "healthPort")),
+		ProfilePort:                    ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "profilePort")),
+		EnableKubeProbes:               ptr.To(GetFieldDefaultBool(ProcessorAdvancedPath, "enableKubeProbes")),
+		DropUnusedFields:               ptr.To(GetFieldDefaultBool(ProcessorAdvancedPath, "dropUnusedFields")),
+		ConversationHeartbeatInterval:  ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationHeartbeatInterval")),
+		ConversationEndTimeout:         ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationEndTimeout")),
+		ConversationTerminatingTimeout: ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationTerminatingTimeout")),
+	}
+
+	if specConfig != nil {
+		if len(specConfig.Env) > 0 {
+			debugConfig.Env = specConfig.Env
+		}
+		if specConfig.Port != nil && *specConfig.Port > 0 {
+			debugConfig.Port = specConfig.Port
+		}
+		if specConfig.HealthPort != nil && *specConfig.HealthPort > 0 {
+			debugConfig.HealthPort = specConfig.HealthPort
+		}
+		if specConfig.ProfilePort != nil && *specConfig.ProfilePort > 0 {
+			debugConfig.ProfilePort = specConfig.ProfilePort
+		}
+		if specConfig.EnableKubeProbes != nil {
+			debugConfig.EnableKubeProbes = specConfig.EnableKubeProbes
+		}
+		if specConfig.DropUnusedFields != nil {
+			debugConfig.DropUnusedFields = specConfig.DropUnusedFields
+		}
+		if specConfig.ConversationHeartbeatInterval != nil {
+			debugConfig.ConversationHeartbeatInterval = specConfig.ConversationHeartbeatInterval
+		}
+		if specConfig.ConversationEndTimeout != nil {
+			debugConfig.ConversationEndTimeout = specConfig.ConversationEndTimeout
+		}
+		if specConfig.ConversationTerminatingTimeout != nil {
+			debugConfig.ConversationTerminatingTimeout = specConfig.ConversationTerminatingTimeout
+		}
+	}
+
+	return debugConfig
+}
+
+func GetAdvancedLokiConfig(specConfig *flowslatest.AdvancedLokiConfig) flowslatest.AdvancedLokiConfig {
+	debugConfig := flowslatest.AdvancedLokiConfig{
+		WriteMinBackoff: ptr.To(GetFieldDefaultDuration(LokiAdvancedPath, "writeMinBackoff")),
+		WriteMaxBackoff: ptr.To(GetFieldDefaultDuration(LokiAdvancedPath, "writeMaxBackoff")),
+		WriteMaxRetries: ptr.To(GetFieldDefaultInt32(LokiAdvancedPath, "writeMaxRetries")),
+		StaticLabels:    ptr.To(GetFieldDefaultMapString(LokiAdvancedPath, "staticLabels")),
+	}
+
+	if specConfig != nil {
+		if specConfig.WriteMinBackoff != nil {
+			debugConfig.WriteMinBackoff = specConfig.WriteMinBackoff
+		}
+		if specConfig.WriteMaxBackoff != nil {
+			debugConfig.WriteMaxBackoff = specConfig.WriteMaxBackoff
+		}
+		if specConfig.WriteMaxRetries != nil {
+			debugConfig.WriteMaxRetries = specConfig.WriteMaxRetries
+		}
+		if specConfig.StaticLabels != nil {
+			debugConfig.StaticLabels = specConfig.StaticLabels
+		}
+	}
+
+	return debugConfig
+}
+
+func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flowslatest.AdvancedPluginConfig {
+	debugConfig := flowslatest.AdvancedPluginConfig{
+		Env:      map[string]string{},
+		Args:     []string{},
+		Register: ptr.To(GetFieldDefaultBool(PluginAdvancedPath, "register")),
+		Port:     ptr.To(GetFieldDefaultInt32(PluginAdvancedPath, "port")),
+	}
+
+	if specConfig != nil {
+		if len(specConfig.Env) > 0 {
+			debugConfig.Env = specConfig.Env
+		}
+		if len(specConfig.Args) > 0 {
+			debugConfig.Args = specConfig.Args
+		}
+		if specConfig.Register != nil {
+			debugConfig.Register = specConfig.Register
+		}
+		if specConfig.Port != nil && *specConfig.Port > 0 {
+			debugConfig.Port = specConfig.Port
+		}
+	}
+
+	return debugConfig
 }
