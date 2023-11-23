@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	flpapi "github.com/netobserv/flowlogs-pipeline/pkg/api"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 )
 
 const (
@@ -155,17 +156,17 @@ func isIgnored(def *taggedMetricDefinition, ignoreTags []string) bool {
 	return false
 }
 
-func convertIgnoreTagsToIncludeList(ignoreTags []string) []string {
-	ret := []string{}
+func convertIgnoreTagsToIncludeList(ignoreTags []string) []flowslatest.FLPMetric {
+	ret := []flowslatest.FLPMetric{}
 	for i := range predefinedMetrics {
 		if !isIgnored(&predefinedMetrics[i], ignoreTags) {
-			ret = append(ret, predefinedMetrics[i].Name)
+			ret = append(ret, flowslatest.FLPMetric(predefinedMetrics[i].Name))
 		}
 	}
 	return ret
 }
 
-func GetAsIncludeList(ignoreTags []string, includeList *[]string) *[]string {
+func GetAsIncludeList(ignoreTags []string, includeList *[]flowslatest.FLPMetric) *[]flowslatest.FLPMetric {
 	if includeList == nil && len(ignoreTags) > 0 {
 		if reflect.DeepEqual(ignoreTags, defaultIgnoreTags1_4) {
 			return nil

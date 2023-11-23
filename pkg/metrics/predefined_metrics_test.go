@@ -3,6 +3,7 @@ package metrics
 import (
 	"testing"
 
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,7 +12,7 @@ func TestIncludeExclude(t *testing.T) {
 
 	// IgnoreTags set, Include list unset => resolving ignore tags
 	res := GetAsIncludeList([]string{"egress", "packets", "flows"}, nil)
-	assert.Equal([]string{
+	assert.Equal([]flowslatest.FLPMetric{
 		"node_ingress_bytes_total",
 		"node_rtt_seconds",
 		"node_drop_bytes_total",
@@ -27,16 +28,16 @@ func TestIncludeExclude(t *testing.T) {
 	}, *res)
 
 	// IgnoreTags set, Include list set => keep include list
-	res = GetAsIncludeList([]string{"egress", "packets"}, &[]string{"namespace_flows_total"})
-	assert.Equal([]string{"namespace_flows_total"}, *res)
+	res = GetAsIncludeList([]string{"egress", "packets"}, &[]flowslatest.FLPMetric{"namespace_flows_total"})
+	assert.Equal([]flowslatest.FLPMetric{"namespace_flows_total"}, *res)
 
 	// IgnoreTags set as defaults, Include list unset => use default include list
 	res = GetAsIncludeList([]string{"egress", "packets", "nodes-flows", "namespaces-flows", "workloads-flows", "namespaces"}, nil)
 	assert.Nil(res)
 
 	// IgnoreTags set as defaults, Include list set => use include list
-	res = GetAsIncludeList([]string{"egress", "packets", "nodes-flows", "namespaces-flows", "workloads-flows", "namespaces"}, &[]string{"namespace_flows_total"})
-	assert.Equal([]string{"namespace_flows_total"}, *res)
+	res = GetAsIncludeList([]string{"egress", "packets", "nodes-flows", "namespaces-flows", "workloads-flows", "namespaces"}, &[]flowslatest.FLPMetric{"namespace_flows_total"})
+	assert.Equal([]flowslatest.FLPMetric{"namespace_flows_total"}, *res)
 }
 
 func TestGetDefinitions(t *testing.T) {

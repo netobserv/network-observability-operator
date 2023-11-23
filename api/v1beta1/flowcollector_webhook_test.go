@@ -116,7 +116,7 @@ func TestBeta1ConversionRoundtrip_Metrics(t *testing.T) {
 	err := initial.ConvertTo(&converted)
 	assert.NoError(err)
 
-	expectedDefaultMetrics := []string{"namespace_egress_packets_total", "namespace_flows_total", "namespace_rtt_seconds", "namespace_drop_packets_total", "namespace_dns_latency_seconds"}
+	expectedDefaultMetrics := []v1beta2.FLPMetric{"namespace_egress_packets_total", "namespace_flows_total", "namespace_rtt_seconds", "namespace_drop_packets_total", "namespace_dns_latency_seconds"}
 	assert.Equal([]v1beta2.FLPAlert{v1beta2.AlertLokiError}, converted.Spec.Processor.Metrics.DisableAlerts)
 	assert.NotNil(converted.Spec.Processor.Metrics.IncludeList)
 	assert.Equal(expectedDefaultMetrics, *converted.Spec.Processor.Metrics.IncludeList)
@@ -126,7 +126,11 @@ func TestBeta1ConversionRoundtrip_Metrics(t *testing.T) {
 	err = back.ConvertFrom(&converted)
 	assert.NoError(err)
 	// Here, includeList is preserved; it takes precedence over ignoreTags
-	assert.Equal(expectedDefaultMetrics, *back.Spec.Processor.Metrics.IncludeList)
+	var expectedBeta1 []FLPMetric
+	for _, m := range expectedDefaultMetrics {
+		expectedBeta1 = append(expectedBeta1, FLPMetric(m))
+	}
+	assert.Equal(expectedBeta1, *back.Spec.Processor.Metrics.IncludeList)
 	assert.Equal(initial.Spec.Processor.Metrics.DisableAlerts, back.Spec.Processor.Metrics.DisableAlerts)
 	assert.Equal(initial.Spec.Processor.Metrics.Server, back.Spec.Processor.Metrics.Server)
 }
@@ -140,7 +144,7 @@ func TestBeta2ConversionRoundtrip_Metrics(t *testing.T) {
 			Processor: v1beta2.FlowCollectorFLP{
 				Metrics: v1beta2.FLPMetrics{
 					DisableAlerts: []v1beta2.FLPAlert{v1beta2.AlertLokiError},
-					IncludeList:   &[]string{"namespace_egress_packets_total", "namespace_flows_total"},
+					IncludeList:   &[]v1beta2.FLPMetric{"namespace_egress_packets_total", "namespace_flows_total"},
 				},
 			},
 		},
@@ -152,7 +156,7 @@ func TestBeta2ConversionRoundtrip_Metrics(t *testing.T) {
 
 	assert.Equal([]FLPAlert{AlertLokiError}, converted.Spec.Processor.Metrics.DisableAlerts)
 	assert.NotNil(converted.Spec.Processor.Metrics.IncludeList)
-	assert.Equal([]string{"namespace_egress_packets_total", "namespace_flows_total"}, *converted.Spec.Processor.Metrics.IncludeList)
+	assert.Equal([]FLPMetric{"namespace_egress_packets_total", "namespace_flows_total"}, *converted.Spec.Processor.Metrics.IncludeList)
 
 	var back v1beta2.FlowCollector
 	err = converted.ConvertTo(&back)

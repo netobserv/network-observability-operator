@@ -139,6 +139,6 @@ func Convert_v1beta1_FLPMetrics_To_v1beta2_FLPMetrics(in *FLPMetrics, out *v1bet
 	if err != nil {
 		return err
 	}
-	out.IncludeList = metrics.GetAsIncludeList(in.IgnoreTags, in.IncludeList)
+	out.IncludeList = metrics.GetAsIncludeList(in.IgnoreTags, out.IncludeList)
 	return nil
 }

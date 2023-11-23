@@ -118,7 +118,7 @@ func flowCollectorControllerSpecs() {
 							Duration: conntrackTerminatingTimeout,
 						},
 						Metrics: flowslatest.FLPMetrics{
-							IncludeList: &[]string{"node_ingress_bytes_total", "namespace_ingress_bytes_total", "workload_ingress_bytes_total"},
+							IncludeList: &[]flowslatest.FLPMetric{"node_ingress_bytes_total", "namespace_ingress_bytes_total", "workload_ingress_bytes_total"},
 						},
 					},
 					Agent: flowslatest.FlowCollectorAgent{
@@ -278,7 +278,7 @@ func flowCollectorControllerSpecs() {
 						Duration: conntrackTerminatingTimeout,
 					},
 					Metrics: flowslatest.FLPMetrics{
-						IncludeList:   &[]string{"node_ingress_bytes_total"},
+						IncludeList:   &[]flowslatest.FLPMetric{"node_ingress_bytes_total"},
 						DisableAlerts: []flowslatest.FLPAlert{flowslatest.AlertLokiError},
 					},
 				}

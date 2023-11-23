@@ -142,7 +142,9 @@ func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
 	if spec.Processor.Metrics.IncludeList == nil {
 		list = metrics.DefaultIncludeList
 	} else {
-		list = *spec.Processor.Metrics.IncludeList
+		for _, m := range *spec.Processor.Metrics.IncludeList {
+			list = append(list, string(m))
+		}
 	}
 	if !UseEBPF(spec) || !IsPktDropEnabled(&spec.Agent.EBPF) {
 		list = removeMetricsByPattern(list, "_drop_")

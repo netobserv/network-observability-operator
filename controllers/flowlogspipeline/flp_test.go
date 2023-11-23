@@ -963,7 +963,7 @@ func TestMergeMetricsConfiguration_WithList(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Processor.Metrics.IncludeList = &[]string{"namespace_egress_bytes_total", "namespace_ingress_bytes_total"}
+	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{"namespace_egress_bytes_total", "namespace_ingress_bytes_total"}
 
 	b := monoBuilder("namespace", &cfg)
 	cm, _, err := b.configMap()
@@ -980,7 +980,7 @@ func TestMergeMetricsConfiguration_EmptyList(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Processor.Metrics.IncludeList = &[]string{}
+	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{}
 
 	b := monoBuilder("namespace", &cfg)
 	cm, _, err := b.configMap()

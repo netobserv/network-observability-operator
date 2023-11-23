@@ -75,7 +75,7 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.Loki.Enable = restored.Spec.Loki.Enable
 
 	if restored.Spec.Processor.Metrics.IncludeList != nil {
-		list := make([]string, len(*restored.Spec.Processor.Metrics.IncludeList))
+		list := make([]v1beta2.FLPMetric, len(*restored.Spec.Processor.Metrics.IncludeList))
 		copy(list, *restored.Spec.Processor.Metrics.IncludeList)
 		dst.Spec.Processor.Metrics.IncludeList = &list
 	}
