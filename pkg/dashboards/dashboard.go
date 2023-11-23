@@ -55,20 +55,20 @@ func init() {
 			})
 		}
 		// RTT
-		title := fmt.Sprintf("Round-trip time %s (seconds, p99 and p50)", scope.titlePart)
+		title := fmt.Sprintf("Round-trip time %s (milliseconds - p99 and p50)", scope.titlePart)
 		metric := fmt.Sprintf("%s_rtt_seconds", scope.metricPart)
 		allRows = append(allRows, &Row{
 			Metric: metric,
 			Title:  title,
-			Panels: histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart),
+			Panels: histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart, "*1000"),
 		})
 		// DNS latency
-		title = fmt.Sprintf("DNS latency %s (seconds, p99 and p50)", scope.titlePart)
+		title = fmt.Sprintf("DNS latency %s (milliseconds - p99 and p50)", scope.titlePart)
 		metric = fmt.Sprintf("%s_dns_latency_seconds", scope.metricPart)
 		allRows = append(allRows, &Row{
 			Metric: metric,
 			Title:  title,
-			Panels: histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart),
+			Panels: histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart, "*1000"),
 		})
 		// DNS errors
 		title = fmt.Sprintf("DNS request rate per code and %s", scope.titlePart)
@@ -133,7 +133,7 @@ func topRatePanels(scope *metricScope, metric, labels, legend string) []Panel {
 	}}
 }
 
-func histogramPanels(scope *metricScope, metric, labels, legend string) []Panel {
+func histogramPanels(scope *metricScope, metric, labels, legend, scaler string) []Panel {
 	if scope.splitAppInfra {
 		appRateExpr := fmt.Sprintf(
 			"rate(netobserv_%s_bucket{%s}[2m]) or rate(netobserv_%s_bucket{%s}[2m])",
@@ -154,16 +154,16 @@ func histogramPanels(scope *metricScope, metric, labels, legend string) []Panel 
 			{
 				Title: layerApps,
 				Targets: []Target{
-					histogramTarget(scope, "0.99", appRateExpr, labels, legend),
-					histogramTarget(scope, "0.50", appRateExpr, labels, legend),
+					histogramTarget(scope, "0.99", appRateExpr, labels, legend, scaler),
+					histogramTarget(scope, "0.50", appRateExpr, labels, legend, scaler),
 				},
 			},
 			// Infra
 			{
 				Title: layerInfra,
 				Targets: []Target{
-					histogramTarget(scope, "0.99", infraRateExpr, labels, legend),
-					histogramTarget(scope, "0.50", infraRateExpr, labels, legend),
+					histogramTarget(scope, "0.99", infraRateExpr, labels, legend, scaler),
+					histogramTarget(scope, "0.50", infraRateExpr, labels, legend, scaler),
 				},
 			},
 		}
@@ -172,20 +172,21 @@ func histogramPanels(scope *metricScope, metric, labels, legend string) []Panel 
 	rateExpr := fmt.Sprintf("rate(netobserv_%s[2m])", metric)
 	return []Panel{{
 		Targets: []Target{
-			histogramTarget(scope, "0.99", rateExpr, labels, legend),
-			histogramTarget(scope, "0.50", rateExpr, labels, legend),
+			histogramTarget(scope, "0.99", rateExpr, labels, legend, scaler),
+			histogramTarget(scope, "0.50", rateExpr, labels, legend, scaler),
 		},
 	}}
 }
 
-func histogramTarget(scope *metricScope, quantile, rateExpr, labels, legend string) Target {
+func histogramTarget(scope *metricScope, quantile, rateExpr, labels, legend, scaler string) Target {
 	return Target{
 		Expr: scope.labelReplace(
 			fmt.Sprintf(
-				"topk(10,histogram_quantile(%s, sum(%s) by (le,%s)) > 0)",
+				"topk(10,histogram_quantile(%s, sum(%s) by (le,%s))%s > 0)",
 				quantile,
 				rateExpr,
 				labels,
+				scaler,
 			),
 		),
 		Legend: legend + ", q=" + quantile,
