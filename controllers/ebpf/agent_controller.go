@@ -52,7 +52,9 @@ const (
 	envDedupe                     = "DEDUPER"
 	dedupeDefault                 = "firstCome"
 	envDedupeJustMark             = "DEDUPER_JUST_MARK"
+	envDedupeMerge                = "DEDUPER_MERGE"
 	dedupeJustMarkDefault         = "true"
+	dedupeMergeDefault            = "false"
 	envGoMemLimit                 = "GOMEMLIMIT"
 	envEnablePktDrop              = "ENABLE_PKT_DROPS"
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
@@ -461,6 +463,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 
 	dedup := dedupeDefault
 	dedupJustMark := dedupeJustMarkDefault
+	dedupMerge := dedupeMergeDefault
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
 	for _, pair := range helper.KeySorted(coll.Spec.Agent.EBPF.Debug.Env) {
@@ -469,6 +472,8 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 			dedup = v
 		} else if k == envDedupeJustMark {
 			dedupJustMark = v
+		} else if k == envDedupeMerge {
+			dedupMerge = v
 		} else {
 			config = append(config, corev1.EnvVar{Name: k, Value: v})
 		}
@@ -485,6 +490,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		},
 	},
 	)
+	config = append(config, corev1.EnvVar{Name: envDedupeMerge, Value: dedupMerge})
 
 	return config
 }
