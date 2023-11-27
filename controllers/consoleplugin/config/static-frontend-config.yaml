@@ -357,6 +357,12 @@ columns:
     filter: direction
     default: false
     width: 10
+  - id: FlowDirections
+    name: Directions
+    tooltip: All the direction of the Flow observed at the Node observation point.
+    field: FlowDirections
+    default: false
+    width: 15
   - id: Interface
     name: Interface
     tooltip: The network interface of the Flow.
@@ -364,6 +370,12 @@ columns:
     filter: interface
     default: false
     width: 10
+  - id: Interfaces
+    name: Interfaces
+    tooltip: The network interfaces of the Flow.
+    field: Interfaces
+    default: false
+    width: 15
   - id: Bytes
     name: Bytes
     tooltip: The total aggregated number of bytes.
