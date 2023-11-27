@@ -6,11 +6,13 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/flp"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 
 	osv1 "github.com/openshift/api/security/v1"
 	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,6 +46,9 @@ func (c *Reconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCol
 	}
 	if err := c.reconcileVendorPermissions(ctx, desired); err != nil {
 		return fmt.Errorf("reconciling vendor permissions: %w", err)
+	}
+	if err := c.reconcileRoles(ctx); err != nil {
+		return fmt.Errorf("reconciling roles: %w", err)
 	}
 	return nil
 }
@@ -221,4 +226,27 @@ func (c *Reconciler) cleanupPreviousNamespace(ctx context.Context) error {
 		rlog.Info("Not owning previous privileged namespace: delete related content only")
 	}
 	return nil
+}
+
+func (c *Reconciler) reconcileRoles(ctx context.Context) error {
+	cr := flp.BuildClusterRoleTransformer()
+	if err := c.ReconcileClusterRole(ctx, cr); err != nil {
+		return err
+	}
+	crb := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: cr.Name + "-agent",
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     cr.Name,
+		},
+		Subjects: []rbacv1.Subject{{
+			Kind:      "ServiceAccount",
+			Name:      constants.EBPFServiceAccount,
+			Namespace: c.PrivilegedNamespace(),
+		}},
+	}
+	return c.ReconcileClusterRoleBinding(ctx, crb)
 }

@@ -135,6 +135,10 @@ func (b *builder) NewKafkaPipeline() PipelineBuilder {
 	}))
 }
 
+func (b *builder) NewInProcessPipeline() PipelineBuilder {
+	return b.initPipeline(config.NewPresetIngesterPipeline())
+}
+
 func (b *builder) initPipeline(ingest config.PipelineBuilderStage) PipelineBuilder {
 	pipeline := newPipelineBuilder(b.desired, b.flowMetrics, b.info.Loki, b.info.ClusterID, &b.volumes, &ingest)
 	b.pipeline = &pipeline

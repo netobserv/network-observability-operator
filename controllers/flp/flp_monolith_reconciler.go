@@ -71,8 +71,8 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 		return err
 	}
 
-	if helper.UseKafka(&desired.Spec) {
-		r.Status.SetUnused("Monolith only used without Kafka")
+	if helper.UseKafka(&desired.Spec) || helper.UseMergedAgentFLP(&desired.Spec) {
+		r.Status.SetUnused("Monolith only used with IPFIX and without Kafka")
 		r.Managed.TryDeleteAll(ctx)
 		return nil
 	}
