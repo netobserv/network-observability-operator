@@ -40,7 +40,6 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -52,8 +51,8 @@ import (
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/operator"
-	"github.com/netobserv/network-observability-operator/pkg/narrowcache"
+	"github.com/netobserv/network-observability-operator/controllers/monitoring"
+	"github.com/netobserv/network-observability-operator/pkg/manager"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -90,7 +89,7 @@ func main() {
 	var enableHTTP2 bool
 	var versionFlag bool
 
-	config := operator.Config{}
+	config := manager.Config{}
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -133,9 +132,9 @@ func main() {
 	}
 
 	cfg := ctrl.GetConfigOrDie()
-	narrowCache := narrowcache.NewConfig(cfg, narrowcache.ConfigMaps, narrowcache.Secrets)
+	ctrls := []manager.Registerer{controllers.Start, monitoring.Start}
 
-	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+	mgr, err := manager.NewManager(context.Background(), cfg, &config, &ctrl.Options{
 		Scheme: scheme,
 		Metrics: server.Options{
 			BindAddress: metricsAddr,
@@ -149,25 +148,12 @@ func main() {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "7a7ecdcd.netobserv.io",
-		Client:                 client.Options{Cache: narrowCache.ControllerRuntimeClientCacheOptions()},
-	})
+	}, ctrls)
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
-	}
-	client, err := narrowCache.CreateClient(mgr.GetClient())
-	if err != nil {
-		setupLog.Error(err, "unable to create narrow cache client")
+		setupLog.Error(err, "unable to setup manager")
 		os.Exit(1)
 	}
 
-	ctrl.Log.Info("using eBPF Agent image", "image", config.EBPFAgentImage)
-
-	if err = controllers.NewFlowCollectorReconciler(client, mgr.GetScheme(), &config).
-		SetupWithManager(context.Background(), mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "FlowCollector")
-		os.Exit(1)
-	}
 	if err = (&flowsv1beta2.FlowCollector{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create v1beta2 webhook", "webhook", "FlowCollector")
 		os.Exit(1)

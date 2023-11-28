@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"net"
 	"path/filepath"
 	"testing"
 
@@ -28,11 +27,9 @@ import (
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/stretchr/testify/mock"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -40,12 +37,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/v1beta1"
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/v1beta2"
-	"github.com/netobserv/network-observability-operator/controllers/operator"
-	"github.com/netobserv/network-observability-operator/pkg/narrowcache"
+	"github.com/netobserv/network-observability-operator/pkg/manager"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -57,12 +52,10 @@ const testCnoNamespace = "openshift-network-operator"
 var namespacesToPrepare = []string{testCnoNamespace, "openshift-config-managed", "loki-namespace", "kafka-exporter-namespace", "main-namespace", "main-namespace-privileged"}
 
 var (
-	ctx        context.Context
-	k8sManager manager.Manager
-	k8sClient  client.Client
-	testEnv    *envtest.Environment
-	cancel     context.CancelFunc
-	ipResolver ipResolverMock
+	ctx       context.Context
+	k8sClient client.Client
+	testEnv   *envtest.Environment
+	cancel    context.CancelFunc
 )
 
 func TestAPIs(t *testing.T) {
@@ -150,20 +143,23 @@ var _ = BeforeSuite(func() {
 
 	Expect(prepareNamespaces()).NotTo(HaveOccurred())
 
-	narrowCache := narrowcache.NewConfig(cfg, narrowcache.ConfigMaps, narrowcache.Secrets)
-	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme.Scheme,
-		Client: client.Options{Cache: narrowCache.ControllerRuntimeClientCacheOptions()},
-	})
+	k8sManager, err := manager.NewManager(
+		context.Background(),
+		cfg,
+		&manager.Config{
+			EBPFAgentImage:        "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-ebpf-agent@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
+			FlowlogsPipelineImage: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-flowlogs-pipeline@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
+			ConsolePluginImage:    "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-console-plugin@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
+			DownstreamDeployment:  false,
+		},
+		&ctrl.Options{
+			Scheme: scheme.Scheme,
+		},
+		Registerers,
+	)
+
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sManager).NotTo(BeNil())
-
-	client, err := narrowCache.CreateClient(k8sManager.GetClient())
-	Expect(err).ToNot(HaveOccurred())
-
-	err = NewTestFlowCollectorReconciler(client, k8sManager.GetScheme()).
-		SetupWithManager(ctx, k8sManager)
-	Expect(err).ToNot(HaveOccurred())
 
 	go func() {
 		defer GinkgoRecover()
@@ -190,29 +186,4 @@ func prepareNamespaces() error {
 		}
 	}
 	return nil
-}
-
-// NewTestFlowCollectorReconciler allows mocking the IP resolutor of a
-// FlowCollectorReconciler
-func NewTestFlowCollectorReconciler(client client.Client, scheme *runtime.Scheme) *FlowCollectorReconciler {
-	return &FlowCollectorReconciler{
-		Client:   client,
-		Scheme:   scheme,
-		lookupIP: ipResolver.LookupIP,
-		config: &operator.Config{
-			EBPFAgentImage:        "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-ebpf-agent@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
-			FlowlogsPipelineImage: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-flowlogs-pipeline@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
-			ConsolePluginImage:    "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-console-plugin@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
-			DownstreamDeployment:  false,
-		},
-	}
-}
-
-type ipResolverMock struct {
-	mock.Mock
-}
-
-func (ipr *ipResolverMock) LookupIP(host string) ([]net.IP, error) {
-	m := ipr.Called(host)
-	return m.Get(0).([]net.IP), m.Error(1)
 }

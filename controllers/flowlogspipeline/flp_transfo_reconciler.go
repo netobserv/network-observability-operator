@@ -136,44 +136,41 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 		return err
 	}
 
-	return r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, annotations)
+	if err = r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, annotations); err != nil {
+		return err
+	}
+
+	return r.reconcileHPA(ctx, &desired.Spec.Processor, &builder)
 }
 
 func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder, annotations map[string]string) error {
 	report := helper.NewChangeReport("FLP Deployment")
 	defer report.LogIfNeeded(ctx)
 
-	newDep := builder.deployment(annotations)
+	return reconcilers.ReconcileDeployment(
+		ctx,
+		r.Instance,
+		r.owned.deployment,
+		builder.deployment(annotations),
+		constants.FLPName,
+		helper.PtrInt32(desiredFLP.KafkaConsumerReplicas),
+		&desiredFLP.KafkaConsumerAutoscaler,
+		&report,
+	)
+}
 
-	if !r.Managed.Exists(r.owned.deployment) {
-		if err := r.CreateOwned(ctx, newDep); err != nil {
-			return err
-		}
-	} else if helper.DeploymentChanged(r.owned.deployment, newDep, constants.FLPName, helper.HPADisabled(&desiredFLP.KafkaConsumerAutoscaler), helper.PtrInt32(desiredFLP.KafkaConsumerReplicas), &report) {
-		if err := r.UpdateIfOwned(ctx, r.owned.deployment, newDep); err != nil {
-			return err
-		}
-	} else {
-		// Deployment up to date, check if it's ready
-		r.CheckDeploymentInProgress(r.owned.deployment)
-	}
+func (r *flpTransformerReconciler) reconcileHPA(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder) error {
+	report := helper.NewChangeReport("FLP autoscaler")
+	defer report.LogIfNeeded(ctx)
 
-	// Delete or Create / Update Autoscaler according to HPA option
-	if helper.HPADisabled(&desiredFLP.KafkaConsumerAutoscaler) {
-		r.Managed.TryDelete(ctx, r.owned.hpa)
-	} else {
-		newASC := builder.autoScaler()
-		if !r.Managed.Exists(r.owned.hpa) {
-			if err := r.CreateOwned(ctx, newASC); err != nil {
-				return err
-			}
-		} else if helper.AutoScalerChanged(r.owned.hpa, desiredFLP.KafkaConsumerAutoscaler, &report) {
-			if err := r.UpdateIfOwned(ctx, r.owned.hpa, newASC); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+	return reconcilers.ReconcileHPA(
+		ctx,
+		r.Instance,
+		r.owned.hpa,
+		builder.autoScaler(),
+		&desiredFLP.KafkaConsumerAutoscaler,
+		&report,
+	)
 }
 
 func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Context, builder *transfoBuilder) error {

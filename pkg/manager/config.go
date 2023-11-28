@@ -1,6 +1,8 @@
-package operator
+package manager
 
-import "errors"
+import (
+	"errors"
+)
 
 // Config of the operator.
 type Config struct {

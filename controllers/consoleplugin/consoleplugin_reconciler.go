@@ -209,19 +209,16 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder *builder
 	report := helper.NewChangeReport("Console deployment")
 	defer report.LogIfNeeded(ctx)
 
-	newDepl := builder.deployment(cmDigest)
-	if !r.Managed.Exists(r.owned.deployment) {
-		if err := r.CreateOwned(ctx, newDepl); err != nil {
-			return err
-		}
-	} else if helper.DeploymentChanged(r.owned.deployment, newDepl, constants.PluginName, helper.HPADisabled(&desired.ConsolePlugin.Autoscaler), helper.PtrInt32(desired.ConsolePlugin.Replicas), &report) {
-		if err := r.UpdateIfOwned(ctx, r.owned.deployment, newDepl); err != nil {
-			return err
-		}
-	} else {
-		r.CheckDeploymentInProgress(r.owned.deployment)
-	}
-	return nil
+	return reconcilers.ReconcileDeployment(
+		ctx,
+		r.Instance,
+		r.owned.deployment,
+		builder.deployment(cmDigest),
+		constants.PluginName,
+		helper.PtrInt32(desired.ConsolePlugin.Replicas),
+		&desired.ConsolePlugin.Autoscaler,
+		&report,
+	)
 }
 
 func (r *CPReconciler) reconcileServices(ctx context.Context, builder *builder) error {
@@ -247,22 +244,14 @@ func (r *CPReconciler) reconcileHPA(ctx context.Context, builder *builder, desir
 	report := helper.NewChangeReport("Console autoscaler")
 	defer report.LogIfNeeded(ctx)
 
-	// Delete or Create / Update Autoscaler according to HPA option
-	if helper.HPADisabled(&desired.ConsolePlugin.Autoscaler) {
-		r.Managed.TryDelete(ctx, r.owned.hpa)
-	} else {
-		newASC := builder.autoScaler()
-		if !r.Managed.Exists(r.owned.hpa) {
-			if err := r.CreateOwned(ctx, newASC); err != nil {
-				return err
-			}
-		} else if helper.AutoScalerChanged(r.owned.hpa, desired.ConsolePlugin.Autoscaler, &report) {
-			if err := r.UpdateIfOwned(ctx, r.owned.hpa, newASC); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+	return reconcilers.ReconcileHPA(
+		ctx,
+		r.Instance,
+		r.owned.hpa,
+		builder.autoScaler(),
+		&desired.ConsolePlugin.Autoscaler,
+		&report,
+	)
 }
 
 func pluginNeedsUpdate(plg *osv1alpha1.ConsolePlugin, desired *pluginSpec) bool {

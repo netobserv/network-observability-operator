@@ -153,15 +153,14 @@ func (r *flpIngesterReconciler) reconcileDaemonSet(ctx context.Context, desiredD
 	report := helper.NewChangeReport("FLP DaemonSet")
 	defer report.LogIfNeeded(ctx)
 
-	if !r.Managed.Exists(r.owned.daemonSet) {
-		return r.CreateOwned(ctx, desiredDS)
-	} else if helper.PodChanged(&r.owned.daemonSet.Spec.Template, &desiredDS.Spec.Template, constants.FLPName, &report) {
-		return r.UpdateIfOwned(ctx, r.owned.daemonSet, desiredDS)
-	} else {
-		// DaemonSet up to date, check if it's ready
-		r.CheckDaemonSetInProgress(r.owned.daemonSet)
-	}
-	return nil
+	return reconcilers.ReconcileDaemonSet(
+		ctx,
+		r.Instance,
+		r.owned.daemonSet,
+		desiredDS,
+		constants.FLPName,
+		&report,
+	)
 }
 
 func (r *flpIngesterReconciler) reconcilePermissions(ctx context.Context, builder *ingestBuilder) error {

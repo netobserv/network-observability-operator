@@ -11,7 +11,6 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/globals"
 	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
@@ -27,14 +26,16 @@ const (
 
 type PipelineBuilder struct {
 	*config.PipelineBuilderStage
-	desired *flowslatest.FlowCollectorSpec
-	volumes *volumes.Builder
-	loki    *helper.LokiConfig
+	desired   *flowslatest.FlowCollectorSpec
+	volumes   *volumes.Builder
+	loki      *helper.LokiConfig
+	clusterID string
 }
 
 func newPipelineBuilder(
 	desired *flowslatest.FlowCollectorSpec,
 	loki *helper.LokiConfig,
+	clusterID string,
 	volumes *volumes.Builder,
 	pipeline *config.PipelineBuilderStage,
 ) PipelineBuilder {
@@ -42,6 +43,7 @@ func newPipelineBuilder(
 		PipelineBuilderStage: pipeline,
 		desired:              desired,
 		loki:                 loki,
+		clusterID:            clusterID,
 		volumes:              volumes,
 	}
 }
@@ -326,7 +328,7 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 			clusterName = b.desired.Processor.ClusterName
 		} else {
 			//take clustername from openshift
-			clusterName = string(globals.DefaultClusterID)
+			clusterName = string(b.clusterID)
 		}
 		if clusterName != "" {
 			transformFilterRules = []api.TransformFilterRule{

@@ -60,7 +60,6 @@ func (c *Client) Get(ctx context.Context, key client.ObjectKey, out client.Objec
 		return nil
 	}
 
-	rlog.WithValues("GVK", strGVK).Info("GVK not managed here: pass it to down layer")
 	return c.Client.Get(ctx, key, out, opts...)
 }
 

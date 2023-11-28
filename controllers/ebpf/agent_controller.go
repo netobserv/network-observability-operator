@@ -9,7 +9,6 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
-	"github.com/netobserv/network-observability-operator/controllers/operator"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
@@ -85,20 +84,19 @@ const (
 type AgentController struct {
 	reconcilers.Common
 	permissions permissions.Reconciler
-	config      *operator.Config
+	image       string
 	volumes     volumes.Builder
 }
 
-func NewAgentController(common *reconcilers.Common, config *operator.Config) *AgentController {
+func NewAgentController(common *reconcilers.Common, image string) *AgentController {
 	return &AgentController{
 		Common:      *common,
 		permissions: permissions.NewReconciler(common),
-		config:      config,
+		image:       image,
 	}
 }
 
-func (c *AgentController) Reconcile(
-	ctx context.Context, target *flowslatest.FlowCollector) error {
+func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.FlowCollector) error {
 	rlog := log.FromContext(ctx).WithName("ebpf")
 	ctx = log.IntoContext(ctx, rlog)
 	current, err := c.current(ctx)
@@ -136,13 +134,14 @@ func (c *AgentController) Reconcile(
 	switch requiredAction(current, desired) {
 	case actionCreate:
 		rlog.Info("action: create agent")
+		c.Status.SetCreatingDaemonSet(desired)
 		return c.CreateOwned(ctx, desired)
 	case actionUpdate:
 		rlog.Info("action: update agent")
 		return c.UpdateIfOwned(ctx, current, desired)
 	default:
 		rlog.Info("action: nothing to do")
-		c.CheckDaemonSetInProgress(current)
+		c.Status.CheckDaemonSetProgress(current)
 		return nil
 	}
 }
@@ -178,7 +177,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	if coll == nil || !helper.UseEBPF(&coll.Spec) {
 		return nil, nil
 	}
-	version := helper.ExtractVersion(c.config.EBPFAgentImage)
+	version := helper.ExtractVersion(c.image)
 	annotations := make(map[string]string)
 	env, err := c.envConfig(ctx, coll, annotations)
 	if err != nil {
@@ -256,7 +255,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 					Volumes:            volumes,
 					Containers: []corev1.Container{{
 						Name:            constants.EBPFAgentName,
-						Image:           c.config.EBPFAgentImage,
+						Image:           c.image,
 						ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.ImagePullPolicy),
 						Resources:       coll.Spec.Agent.EBPF.Resources,
 						SecurityContext: c.securityContext(coll),
