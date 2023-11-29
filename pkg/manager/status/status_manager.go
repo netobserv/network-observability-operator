@@ -27,84 +27,66 @@ const (
 var allNames = []ComponentName{FlowCollectorLegacy, Monitoring}
 
 type Manager struct {
-	sync.Mutex
-
-	statuses map[ComponentName]ComponentStatus
+	statuses sync.Map
 }
 
 func NewManager() *Manager {
-	s := Manager{
-		statuses: make(map[ComponentName]ComponentStatus, len(allNames)),
-	}
+	s := Manager{}
 	for _, cpnt := range allNames {
-		s.statuses[cpnt] = ComponentStatus{
+		s.statuses.Store(cpnt, ComponentStatus{
 			name:   cpnt,
 			status: StatusUnknown,
-		}
+		})
 	}
 	return &s
 }
 
 func (s *Manager) setInProgress(cpnt ComponentName, reason, message string) {
-	s.Lock()
-	defer s.Unlock()
-	s.statuses[cpnt] = ComponentStatus{
+	s.statuses.Store(cpnt, ComponentStatus{
 		name:    cpnt,
 		status:  StatusInProgress,
 		reason:  reason,
 		message: message,
-	}
+	})
 }
 
 func (s *Manager) setFailure(cpnt ComponentName, reason, message string) {
-	s.Lock()
-	defer s.Unlock()
-	s.statuses[cpnt] = ComponentStatus{
+	s.statuses.Store(cpnt, ComponentStatus{
 		name:    cpnt,
 		status:  StatusFailure,
 		reason:  reason,
 		message: message,
-	}
+	})
 }
 
 func (s *Manager) hasFailure(cpnt ComponentName) bool {
-	s.Lock()
-	defer s.Unlock()
-	v := s.statuses[cpnt]
-	return v.status == StatusFailure
+	v, _ := s.statuses.Load(cpnt)
+	return v != nil && v.(ComponentStatus).status == StatusFailure
 }
 
 func (s *Manager) setReady(cpnt ComponentName) {
-	s.Lock()
-	defer s.Unlock()
-	s.statuses[cpnt] = ComponentStatus{
+	s.statuses.Store(cpnt, ComponentStatus{
 		name:   cpnt,
 		status: StatusReady,
-	}
+	})
 }
 
 func (s *Manager) setUnknown(cpnt ComponentName) {
-	s.Lock()
-	defer s.Unlock()
-	s.statuses[cpnt] = ComponentStatus{
+	s.statuses.Store(cpnt, ComponentStatus{
 		name:   cpnt,
 		status: StatusUnknown,
-	}
+	})
 }
 
 func (s *Manager) setUnused(cpnt ComponentName) {
-	s.Lock()
-	defer s.Unlock()
-	s.statuses[cpnt] = ComponentStatus{
+	s.statuses.Store(cpnt, ComponentStatus{
 		name:   cpnt,
 		status: StatusUnknown,
 		reason: "ComponentUnused",
-	}
+	})
 }
 
 func (s *Manager) getConditions() []metav1.Condition {
-	s.Lock()
-	defer s.Unlock()
 	global := metav1.Condition{
 		Type:   "Ready",
 		Status: metav1.ConditionTrue,
@@ -112,10 +94,12 @@ func (s *Manager) getConditions() []metav1.Condition {
 	}
 	conds := []metav1.Condition{}
 	counters := make(map[Status]int, len(allNames))
-	for _, status := range s.statuses {
+	s.statuses.Range(func(_, v any) bool {
+		status := v.(ComponentStatus)
 		conds = append(conds, status.toCondition())
 		counters[status.status]++
-	}
+		return true
+	})
 	global.Message = fmt.Sprintf("%d ready components, %d with failure, %d pending", counters[StatusReady], counters[StatusFailure], counters[StatusInProgress])
 	if counters[StatusFailure] > 0 {
 		global.Status = metav1.ConditionFalse

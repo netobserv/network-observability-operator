@@ -40,8 +40,6 @@ type handlerOnQueue struct {
 }
 
 func (c *Client) Get(ctx context.Context, key client.ObjectKey, out client.Object, opts ...client.GetOption) error {
-	rlog := log.FromContext(ctx).WithName("narrowcache")
-	rlog.WithValues("key", key).Info("Getting object:")
 	gvk, err := c.GroupVersionKindFor(out)
 	if err != nil {
 		return err
