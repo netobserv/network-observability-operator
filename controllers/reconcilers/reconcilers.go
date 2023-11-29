@@ -11,10 +11,28 @@ import (
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+)
+
+var (
+	IgnoreStatusChange = builder.WithPredicates(predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Update only if spec / annotations / labels change, ie. ignore status changes
+			return (e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()) ||
+				!equality.Semantic.DeepEqual(e.ObjectNew.GetAnnotations(), e.ObjectOld.GetAnnotations()) ||
+				!equality.Semantic.DeepEqual(e.ObjectNew.GetLabels(), e.ObjectOld.GetLabels())
+		},
+		CreateFunc:  func(e event.CreateEvent) bool { return true },
+		DeleteFunc:  func(e event.DeleteEvent) bool { return true },
+		GenericFunc: func(e event.GenericEvent) bool { return false },
+	})
 )
 
 func ReconcileClusterRoleBinding(ctx context.Context, cl *helper.Client, desired *rbacv1.ClusterRoleBinding) error {

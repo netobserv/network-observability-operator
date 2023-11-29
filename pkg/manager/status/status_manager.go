@@ -9,6 +9,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
@@ -101,7 +102,7 @@ func (s *Manager) setUnused(cpnt ComponentName) {
 	}
 }
 
-func (s *Manager) getConditions() []*metav1.Condition {
+func (s *Manager) getConditions() []metav1.Condition {
 	s.Lock()
 	defer s.Unlock()
 	global := metav1.Condition{
@@ -109,36 +110,28 @@ func (s *Manager) getConditions() []*metav1.Condition {
 		Status: metav1.ConditionTrue,
 		Reason: "Ready",
 	}
-	conds := []*metav1.Condition{&global}
-	countErrs := 0
-	countInProgress := 0
+	conds := []metav1.Condition{}
+	counters := make(map[Status]int, len(allNames))
 	for _, status := range s.statuses {
-		conds = append(conds, status.toConditions()...)
-		switch status.status {
-		case StatusFailure:
-			countErrs++
-		case StatusInProgress:
-			countInProgress++
-		case StatusReady, StatusUnknown:
-			// do nothing
-		}
+		conds = append(conds, status.toCondition())
+		counters[status.status]++
 	}
-	global.Message = fmt.Sprintf("%d components in failure, %d pending", countErrs, countInProgress)
-	if countErrs > 0 {
+	global.Message = fmt.Sprintf("%d ready components, %d with failure, %d pending", counters[StatusReady], counters[StatusFailure], counters[StatusInProgress])
+	if counters[StatusFailure] > 0 {
 		global.Status = metav1.ConditionFalse
-		global.Reason = "SomeFailures"
-	} else if countInProgress > 0 {
+		global.Reason = "Failure"
+	} else if counters[StatusInProgress] > 0 {
 		global.Status = metav1.ConditionFalse
 		global.Reason = "Pending"
 	}
-	return conds
+	return append([]metav1.Condition{global}, conds...)
 }
 
 func (s *Manager) Sync(ctx context.Context, c client.Client) {
 	updateStatusWithRetries(ctx, c, s.getConditions()...)
 }
 
-func updateStatusWithRetries(ctx context.Context, c client.Client, conditions ...*metav1.Condition) {
+func updateStatusWithRetries(ctx context.Context, c client.Client, conditions ...metav1.Condition) {
 	log := log.FromContext(ctx)
 	log.Info("Updating FlowCollector status")
 
@@ -151,14 +144,17 @@ func updateStatusWithRetries(ctx context.Context, c client.Client, conditions ..
 	}
 }
 
-func updateStatus(ctx context.Context, c client.Client, conditions ...*metav1.Condition) error {
+func updateStatus(ctx context.Context, c client.Client, conditions ...metav1.Condition) error {
 	fc := flowslatest.FlowCollector{}
 	if err := c.Get(ctx, constants.FlowCollectorName, &fc); err != nil {
-		// should ignore if not found?
+		if errors.IsNotFound(err) {
+			// ignore: when it's being deleted, there's no point trying to update its status
+			return nil
+		}
 		return err
 	}
 	for _, c := range conditions {
-		meta.SetStatusCondition(&fc.Status.Conditions, *c)
+		meta.SetStatusCondition(&fc.Status.Conditions, c)
 	}
 	return c.Status().Update(ctx, &fc)
 }

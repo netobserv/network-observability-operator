@@ -52,7 +52,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr.Manager).
-		For(&flowslatest.FlowCollector{}).
+		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Owns(&appsv1.Deployment{}).
 		Owns(&appsv1.DaemonSet{}).
 		Owns(&ascv2.HorizontalPodAutoscaler{}).

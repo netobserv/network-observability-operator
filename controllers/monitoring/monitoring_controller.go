@@ -33,18 +33,10 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		status: mgr.Status.ForComponent(status.Monitoring),
 	}
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&flowslatest.FlowCollector{}).
+		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Owns(&corev1.Namespace{}).
 		Complete(&r)
 }
-
-//+kubebuilder:rbac:groups=core,resources=namespaces;configmaps,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=endpoints,verbs=get;list;watch
-//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings;clusterroles;rolebindings;roles,verbs=get;list;create;delete;update;watch
-//+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=flows.netobserv.io,resources=flowcollectors/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors;prometheusrules,verbs=get;create;delete;update;patch;list;watch
-//+kubebuilder:rbac:urls="/metrics",verbs=get
 
 func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
