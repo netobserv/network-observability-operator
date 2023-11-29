@@ -681,6 +681,7 @@ func autoConvert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowCo
 	out.ConversationEndTimeout = (*v1.Duration)(unsafe.Pointer(in.ConversationEndTimeout))
 	out.ConversationTerminatingTimeout = (*v1.Duration)(unsafe.Pointer(in.ConversationTerminatingTimeout))
 	out.ClusterName = in.ClusterName
+	out.MultiClusterDeployment = (*bool)(unsafe.Pointer(in.MultiClusterDeployment))
 	if err := Convert_v1beta1_DebugConfig_To_v1beta2_DebugConfig(&in.Debug, &out.Debug, s); err != nil {
 		return err
 	}
@@ -715,6 +716,7 @@ func autoConvert_v1beta2_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(in *v1beta
 	out.ConversationEndTimeout = (*v1.Duration)(unsafe.Pointer(in.ConversationEndTimeout))
 	out.ConversationTerminatingTimeout = (*v1.Duration)(unsafe.Pointer(in.ConversationTerminatingTimeout))
 	out.ClusterName = in.ClusterName
+	out.MultiClusterDeployment = (*bool)(unsafe.Pointer(in.MultiClusterDeployment))
 	if err := Convert_v1beta2_DebugConfig_To_v1beta1_DebugConfig(&in.Debug, &out.Debug, s); err != nil {
 		return err
 	}

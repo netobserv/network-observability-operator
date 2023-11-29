@@ -352,6 +352,11 @@ func (in *FlowCollectorFLP) DeepCopyInto(out *FlowCollectorFLP) {
 		*out = new(v1.Duration)
 		**out = **in
 	}
+	if in.MultiClusterDeployment != nil {
+		in, out := &in.MultiClusterDeployment, &out.MultiClusterDeployment
+		*out = new(bool)
+		**out = **in
+	}
 	in.Debug.DeepCopyInto(&out.Debug)
 }
 

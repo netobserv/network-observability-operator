@@ -65,6 +65,13 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	if restored.Spec.Processor.Metrics.DisableAlerts != nil {
 		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
 	}
+	if restored.Spec.Processor.ClusterName != "" {
+		dst.Spec.Processor.ClusterName = restored.Spec.Processor.ClusterName
+	}
+	if restored.Spec.Processor.MultiClusterDeployment != nil {
+		dst.Spec.Processor.MultiClusterDeployment = restored.Spec.Processor.MultiClusterDeployment
+	}
+
 	dst.Spec.Processor.Metrics.Server.TLS.InsecureSkipVerify = restored.Spec.Processor.Metrics.Server.TLS.InsecureSkipVerify
 	dst.Spec.Processor.Metrics.Server.TLS.ProvidedCaFile = restored.Spec.Processor.Metrics.Server.TLS.ProvidedCaFile
 

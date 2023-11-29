@@ -3414,6 +3414,10 @@ spec:
                               type: object
                           type: object
                       type: object
+                    multiClusterDeployment:
+                      default: false
+                      description: Set `multiClusterDeployment` to `true` to enable multi clusters feature. This will add clusterName label to flows data
+                      type: boolean
                     port:
                       default: 2055
                       description: Port of the flow collector (host port). By convention, some values are forbidden. It must be greater than 1024 and different from 4500, 4789 and 6081.
@@ -5395,6 +5399,10 @@ spec:
                               type: object
                           type: object
                       type: object
+                    multiClusterDeployment:
+                      default: false
+                      description: Set `multiClusterDeployment` to `true` to enable multi clusters feature. This will add clusterName label to flows data
+                      type: boolean
                     port:
                       default: 2055
                       description: Port of the flow collector (host port). By convention, some values are forbidden. It must be greater than 1024 and different from 4500, 4789 and 6081.

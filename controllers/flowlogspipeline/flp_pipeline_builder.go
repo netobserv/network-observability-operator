@@ -22,6 +22,7 @@ const (
 	conntrackTerminatingTimeout = 5 * time.Second
 	conntrackEndTimeout         = 10 * time.Second
 	conntrackHeartbeatInterval  = 30 * time.Second
+	clusterNameLabelName        = "K8S_ClusterName"
 )
 
 type PipelineBuilder struct {
@@ -52,6 +53,10 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	lastStage = b.addTransformFilter(lastStage)
 
 	indexFields, lastStage = b.addConnectionTracking(indexFields, lastStage)
+
+	if b.desired.Processor.MultiClusterDeployment != nil && *b.desired.Processor.MultiClusterDeployment {
+		indexFields = append(indexFields, clusterNameLabelName)
+	}
 
 	// enrich stage (transform) configuration
 	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
@@ -316,19 +321,21 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 	var clusterName string
 	transformFilterRules := []api.TransformFilterRule{}
 
-	if b.desired.Processor.ClusterName != "" {
-		clusterName = b.desired.Processor.ClusterName
-	} else {
-		//take clustername from openshift
-		clusterName = string(globals.DefaultClusterID)
-	}
-	if clusterName != "" {
-		transformFilterRules = []api.TransformFilterRule{
-			{
-				Input: "K8S_ClusterName",
-				Type:  "add_field_if_doesnt_exist",
-				Value: clusterName,
-			},
+	if b.desired.Processor.MultiClusterDeployment != nil && *b.desired.Processor.MultiClusterDeployment {
+		if b.desired.Processor.ClusterName != "" {
+			clusterName = b.desired.Processor.ClusterName
+		} else {
+			//take clustername from openshift
+			clusterName = string(globals.DefaultClusterID)
+		}
+		if clusterName != "" {
+			transformFilterRules = []api.TransformFilterRule{
+				{
+					Input: clusterNameLabelName,
+					Type:  "add_field_if_doesnt_exist",
+					Value: clusterName,
+				},
+			}
 		}
 	}
 

@@ -7538,6 +7538,15 @@ TLS client configuration for Loki URL.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>multiClusterDeployment</b></td>
+        <td>boolean</td>
+        <td>
+          Set `multiClusterDeployment` to `true` to enable multi clusters feature. This will add clusterName label to flows data<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>port</b></td>
         <td>integer</td>
         <td>
@@ -12705,6 +12714,15 @@ TLS client configuration for Loki URL.
         <td>object</td>
         <td>
           `Metrics` define the processor configuration regarding metrics<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>multiClusterDeployment</b></td>
+        <td>boolean</td>
+        <td>
+          Set `multiClusterDeployment` to `true` to enable multi clusters feature. This will add clusterName label to flows data<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>
