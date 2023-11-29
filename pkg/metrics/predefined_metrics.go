@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	flpapi "github.com/netobserv/flowlogs-pipeline/pkg/api"
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 )
 
 const (
@@ -40,6 +41,7 @@ var (
 		"namespace_flows_total",
 		"namespace_drop_packets_total",
 		"namespace_rtt_seconds",
+		"namespace_dns_latency_seconds",
 	}
 	// Pre-deprecation default IgnoreTags list (1.4) - used before switching to whitelist approach,
 	// to make sure there is no unintended new metrics being collected
@@ -125,6 +127,21 @@ func init() {
 			},
 			tags: []string{group, tagBytes, "drop"},
 		})
+		// DNS metrics
+		dnsLabels := append(labels, "DnsFlagsResponseCode")
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			PromMetricsItem: flpapi.PromMetricsItem{
+				Name:     fmt.Sprintf("%s_dns_latency_seconds", groupTrimmed),
+				Type:     "histogram",
+				ValueKey: "DnsLatencyMs",
+				Filters: []flpapi.PromMetricsFilter{
+					{Key: "DnsId", Type: flpapi.PromFilterPresence},
+				},
+				Labels:     dnsLabels,
+				ValueScale: 1000, // ms => s
+			},
+			tags: []string{group, "dns"},
+		})
 	}
 }
 
@@ -139,24 +156,25 @@ func isIgnored(def *taggedMetricDefinition, ignoreTags []string) bool {
 	return false
 }
 
-func convertIgnoreTagsToIncludeList(ignoreTags []string) []string {
-	ret := []string{}
+func convertIgnoreTagsToIncludeList(ignoreTags []string) []flowslatest.FLPMetric {
+	ret := []flowslatest.FLPMetric{}
 	for i := range predefinedMetrics {
 		if !isIgnored(&predefinedMetrics[i], ignoreTags) {
-			ret = append(ret, predefinedMetrics[i].Name)
+			ret = append(ret, flowslatest.FLPMetric(predefinedMetrics[i].Name))
 		}
 	}
 	return ret
 }
 
-func GetEnabledNames(ignoreTags []string, includeList *[]string) []string {
-	if includeList == nil {
+func GetAsIncludeList(ignoreTags []string, includeList *[]flowslatest.FLPMetric) *[]flowslatest.FLPMetric {
+	if includeList == nil && len(ignoreTags) > 0 {
 		if reflect.DeepEqual(ignoreTags, defaultIgnoreTags1_4) {
-			return DefaultIncludeList
+			return nil
 		}
-		return convertIgnoreTagsToIncludeList(ignoreTags)
+		converted := convertIgnoreTagsToIncludeList(ignoreTags)
+		return &converted
 	}
-	return *includeList
+	return includeList
 }
 
 func GetAllNames() []string {

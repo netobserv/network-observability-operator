@@ -430,7 +430,7 @@ func autoConvert_v1beta1_FLPMetrics_To_v1beta2_FLPMetrics(in *FLPMetrics, out *v
 		return err
 	}
 	// WARNING: in.IgnoreTags requires manual conversion: does not exist in peer-type
-	out.IncludeList = (*[]string)(unsafe.Pointer(in.IncludeList))
+	out.IncludeList = (*[]v1beta2.FLPMetric)(unsafe.Pointer(in.IncludeList))
 	out.DisableAlerts = *(*[]v1beta2.FLPAlert)(unsafe.Pointer(&in.DisableAlerts))
 	return nil
 }
@@ -439,7 +439,7 @@ func autoConvert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in *v1beta2.FLPMetrics
 	if err := Convert_v1beta2_MetricsServerConfig_To_v1beta1_MetricsServerConfig(&in.Server, &out.Server, s); err != nil {
 		return err
 	}
-	out.IncludeList = (*[]string)(unsafe.Pointer(in.IncludeList))
+	out.IncludeList = (*[]FLPMetric)(unsafe.Pointer(in.IncludeList))
 	out.DisableAlerts = *(*[]FLPAlert)(unsafe.Pointer(&in.DisableAlerts))
 	return nil
 }

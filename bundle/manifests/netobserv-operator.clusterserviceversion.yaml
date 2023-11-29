@@ -499,11 +499,6 @@ metadata:
               "logTypes": "FLOWS",
               "metrics": {
                 "disableAlerts": [],
-                "includeList": [
-                  "node_ingress_bytes_total",
-                  "workload_ingress_bytes_total",
-                  "namespace_flows_total"
-                ],
                 "server": {
                   "port": 9102
                 }

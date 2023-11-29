@@ -134,10 +134,10 @@ func (in *FLPMetrics) DeepCopyInto(out *FLPMetrics) {
 	}
 	if in.IncludeList != nil {
 		in, out := &in.IncludeList, &out.IncludeList
-		*out = new([]string)
+		*out = new([]FLPMetric)
 		if **in != nil {
 			in, out := *in, *out
-			*out = make([]string, len(*in))
+			*out = make([]FLPMetric, len(*in))
 			copy(*out, *in)
 		}
 	}

@@ -234,9 +234,7 @@ type FlowCollectorEBPF struct {
 	// - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
 	// If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br>
-	// - `DNSTracking`: enable the DNS tracking feature. This feature requires mounting
-	// the kernel debug filesystem hence the eBPF pod has to run as privileged.
-	// If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br>
+	// - `DNSTracking`: enable the DNS tracking feature.<br>
 	// - `FlowRTT` [unsupported (*)]: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
@@ -338,6 +336,10 @@ const (
 // +kubebuilder:validation:Enum:="NetObservNoFlows";"NetObservLokiError"
 type FLPAlert string
 
+// Metric name. More information in https://github.com/netobserv/network-observability-operator/blob/main/docs/Metrics.md.
+// +kubebuilder:validation:Enum:="namespace_egress_bytes_total";"namespace_egress_packets_total";"namespace_ingress_bytes_total";"namespace_ingress_packets_total";"namespace_flows_total";"node_egress_bytes_total";"node_egress_packets_total";"node_ingress_bytes_total";"node_ingress_packets_total";"node_flows_total";"workload_egress_bytes_total";"workload_egress_packets_total";"workload_ingress_bytes_total";"workload_ingress_packets_total";"workload_flows_total";"namespace_drop_bytes_total";"namespace_drop_packets_total";"node_drop_bytes_total";"node_drop_packets_total";"workload_drop_bytes_total";"workload_drop_packets_total";"namespace_rtt_seconds";"node_rtt_seconds";"workload_rtt_seconds";"namespace_dns_latency_seconds";"node_dns_latency_seconds";"workload_dns_latency_seconds"
+type FLPMetric string
+
 // `FLPMetrics` define the desired FLP configuration regarding metrics
 type FLPMetrics struct {
 	// Metrics server endpoint configuration for Prometheus scraper
@@ -357,10 +359,11 @@ type FLPMetrics struct {
 	// `namespace_egress_packets_total` will show up as `netobserv_namespace_egress_packets_total` in Prometheus.
 	// Note that the more metrics you add, the bigger is the impact on Prometheus workload resources.
 	// Metrics enabled by default are:
-	// `namespace_flows_total`, `node_ingress_bytes_total`, `workload_ingress_bytes_total`, `namespace_drop_packets_total` (when `PacketDrop` feature is enabled), `namespace_rtt_seconds` (when `FlowRTT` feature is enabled).
+	// `namespace_flows_total`, `node_ingress_bytes_total`, `workload_ingress_bytes_total`, `namespace_drop_packets_total` (when `PacketDrop` feature is enabled),
+	// `namespace_rtt_seconds` (when `FlowRTT` feature is enabled), `namespace_dns_latency_seconds` (when `DNSTracking` feature is enabled).
 	// More information, with full list of available metrics: https://github.com/netobserv/network-observability-operator/blob/main/docs/Metrics.md
 	// +optional
-	IncludeList *[]string `json:"includeList,omitempty"`
+	IncludeList *[]FLPMetric `json:"includeList,omitempty"`
 
 	// `disableAlerts` is a list of alerts that should be disabled.
 	// Possible values are:<br>

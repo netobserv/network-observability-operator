@@ -59,7 +59,7 @@ func getConfig(lokiMode ...string) flowslatest.FlowCollectorSpec {
 
 	return flowslatest.FlowCollectorSpec{
 		DeploymentModel: flowslatest.DeploymentModelDirect,
-		Agent:           flowslatest.FlowCollectorAgent{Type: flowslatest.AgentIPFIX},
+		Agent:           flowslatest.FlowCollectorAgent{Type: flowslatest.AgentEBPF},
 		Processor: flowslatest.FlowCollectorFLP{
 			Port:            2055,
 			ImagePullPolicy: string(pullPolicy),
@@ -637,6 +637,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 
 	ns := "namespace"
 	cfg := getConfig()
+	cfg.Agent.Type = flowslatest.AgentIPFIX
 	loki := cfg.Loki
 	b := monoBuilder(ns, &cfg)
 	cm, digest, err := b.configMap()
@@ -686,6 +687,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 
 	ns := "namespace"
 	cfg := getConfig(string(flowslatest.LokiModeLokiStack))
+	cfg.Agent.Type = flowslatest.AgentIPFIX
 	loki := cfg.Loki
 	b := monoBuilder(ns, &cfg)
 	cm, digest, err := b.configMap()
@@ -841,7 +843,7 @@ func TestPipelineConfig(t *testing.T) {
 	assert.NoError(err)
 	_, pipeline := validatePipelineConfig(t, cm)
 	assert.Equal(
-		`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
+		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
 		pipeline,
 	)
 
@@ -853,7 +855,7 @@ func TestPipelineConfig(t *testing.T) {
 	assert.NoError(err)
 	_, pipeline = validatePipelineConfig(t, cm)
 	assert.Equal(
-		`[{"name":"ipfix"},{"name":"kafka-write","follows":"ipfix"}]`,
+		`[{"name":"grpc"},{"name":"kafka-write","follows":"grpc"}]`,
 		pipeline,
 	)
 
@@ -874,6 +876,7 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 	// Single config
 	ns := "namespace"
 	cfg := getConfig()
+	cfg.Agent.Type = flowslatest.AgentIPFIX
 	cfg.Processor.LogLevel = "info"
 	cfg.Processor.DropUnusedFields = ptr.To(true)
 	b := monoBuilder(ns, &cfg)
@@ -901,7 +904,7 @@ func TestPipelineTraceStage(t *testing.T) {
 	assert.NoError(err)
 	_, pipeline := validatePipelineConfig(t, cm)
 	assert.Equal(
-		`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
+		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
 		pipeline,
 	)
 }
@@ -926,6 +929,27 @@ func TestMergeMetricsConfiguration_Default(t *testing.T) {
 	cfs, _ := validatePipelineConfig(t, cm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
 	assert.Equal([]string{
+		"namespace_flows_total",
+		"node_ingress_bytes_total",
+		"workload_ingress_bytes_total",
+	}, names)
+	assert.Equal("netobserv_", cfs.Parameters[5].Encode.Prom.Prefix)
+}
+
+func TestMergeMetricsConfiguration_DefaultWithFeatures(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := getConfig()
+	cfg.Agent.EBPF.Privileged = true
+	cfg.Agent.EBPF.Features = []flowslatest.AgentFeature{flowslatest.DNSTracking, flowslatest.FlowRTT, flowslatest.PacketDrop}
+
+	b := monoBuilder("namespace", &cfg)
+	cm, _, err := b.configMap()
+	assert.NoError(err)
+	cfs, _ := validatePipelineConfig(t, cm)
+	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
+	assert.Equal([]string{
+		"namespace_dns_latency_seconds",
 		"namespace_drop_packets_total",
 		"namespace_flows_total",
 		"namespace_rtt_seconds",
@@ -939,7 +963,7 @@ func TestMergeMetricsConfiguration_WithList(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Processor.Metrics.IncludeList = &[]string{"namespace_egress_bytes_total", "namespace_ingress_bytes_total"}
+	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{"namespace_egress_bytes_total", "namespace_ingress_bytes_total"}
 
 	b := monoBuilder("namespace", &cfg)
 	cm, _, err := b.configMap()
@@ -956,7 +980,7 @@ func TestMergeMetricsConfiguration_EmptyList(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	cfg.Processor.Metrics.IncludeList = &[]string{}
+	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{}
 
 	b := monoBuilder("namespace", &cfg)
 	cm, _, err := b.configMap()
@@ -988,7 +1012,7 @@ func TestPipelineWithExporter(t *testing.T) {
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, cm)
 	assert.Equal(
-		`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"kafka-export-0","follows":"enrich"},{"name":"IPFIX-export-1","follows":"enrich"}]`,
+		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"kafka-export-0","follows":"enrich"},{"name":"IPFIX-export-1","follows":"enrich"}]`,
 		pipeline,
 	)
 
@@ -1011,7 +1035,7 @@ func TestPipelineWithoutLoki(t *testing.T) {
 	assert.NoError(err)
 	_, pipeline := validatePipelineConfig(t, cm)
 	assert.Equal(
-		`[{"name":"ipfix"},{"name":"extract_conntrack","follows":"ipfix"},{"name":"enrich","follows":"extract_conntrack"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
+		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
 		pipeline,
 	)
 }
