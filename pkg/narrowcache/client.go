@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/workqueue"
@@ -229,4 +230,49 @@ func (c *Client) GetSource(ctx context.Context, obj client.Object) (source.Sourc
 			c.addHandler(key, handlerOnQueue{handler: h, queue: q})
 		},
 	}, nil
+}
+
+func (c *Client) clearEntry(ctx context.Context, obj client.Object) {
+	c.wmut.Lock()
+	defer c.wmut.Unlock()
+
+	key := types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}
+	gvk, _ := c.GroupVersionKindFor(obj)
+	strGVK := gvk.String()
+	if _, managed := c.watchedGVKs[strGVK]; managed {
+		log.FromContext(ctx).
+			WithName("narrowcache").
+			WithValues("name", obj.GetName(), "namespace", obj.GetNamespace()).
+			Info("Invalidating cache entry")
+		strGVK := gvk.String()
+		objKey := strGVK + "|" + key.String()
+		delete(c.watchedObjects, objKey)
+	}
+}
+
+func (c *Client) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+	if err := c.Client.Create(ctx, obj, opts...); err != nil {
+		// might be due to an outdated cache, clear the corresponding entry
+		c.clearEntry(ctx, obj)
+		return err
+	}
+	return nil
+}
+
+func (c *Client) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
+	if err := c.Client.Delete(ctx, obj, opts...); err != nil {
+		// might be due to an outdated cache, clear the corresponding entry
+		c.clearEntry(ctx, obj)
+		return err
+	}
+	return nil
+}
+
+func (c *Client) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+	if err := c.Client.Update(ctx, obj, opts...); err != nil {
+		// might be due to an outdated cache, clear the corresponding entry
+		c.clearEntry(ctx, obj)
+		return err
+	}
+	return nil
 }
