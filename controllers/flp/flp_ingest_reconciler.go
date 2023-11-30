@@ -14,15 +14,11 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 )
 
-// flpIngesterReconciler reconciles the current flowlogs-pipeline-ingester state with the desired configuration
-type flpIngesterReconciler struct {
+type ingesterReconciler struct {
 	*reconcilers.Instance
-	owned ingestOwnedObjects
-}
-
-type ingestOwnedObjects struct {
 	daemonSet      *appsv1.DaemonSet
 	promService    *corev1.Service
 	serviceAccount *corev1.ServiceAccount
@@ -32,57 +28,53 @@ type ingestOwnedObjects struct {
 	prometheusRule *monitoringv1.PrometheusRule
 }
 
-func newIngesterReconciler(cmn *reconcilers.Instance) *flpIngesterReconciler {
+func newIngesterReconciler(cmn *reconcilers.Instance) *ingesterReconciler {
 	name := name(ConfKafkaIngester)
-	owned := ingestOwnedObjects{
-		daemonSet:      &appsv1.DaemonSet{},
-		promService:    &corev1.Service{},
-		serviceAccount: &corev1.ServiceAccount{},
-		configMap:      &corev1.ConfigMap{},
-		roleBinding:    &rbacv1.ClusterRoleBinding{},
-		serviceMonitor: &monitoringv1.ServiceMonitor{},
-		prometheusRule: &monitoringv1.PrometheusRule{},
+	rec := ingesterReconciler{
+		Instance:       cmn,
+		daemonSet:      cmn.Managed.NewDaemonSet(name),
+		promService:    cmn.Managed.NewService(promServiceName(ConfKafkaIngester)),
+		serviceAccount: cmn.Managed.NewServiceAccount(name),
+		configMap:      cmn.Managed.NewConfigMap(configMapName(ConfKafkaIngester)),
+		roleBinding:    cmn.Managed.NewCRB(RoleBindingName(ConfKafkaIngester)),
 	}
-	cmn.Managed.AddManagedObject(name, owned.daemonSet)
-	cmn.Managed.AddManagedObject(name, owned.serviceAccount)
-	cmn.Managed.AddManagedObject(promServiceName(ConfKafkaIngester), owned.promService)
-	cmn.Managed.AddManagedObject(RoleBindingName(ConfKafkaIngester), owned.roleBinding)
-	cmn.Managed.AddManagedObject(configMapName(ConfKafkaIngester), owned.configMap)
 	if cmn.AvailableAPIs.HasSvcMonitor() {
-		cmn.Managed.AddManagedObject(serviceMonitorName(ConfKafkaIngester), owned.serviceMonitor)
+		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(serviceMonitorName(ConfKafkaIngester))
 	}
 	if cmn.AvailableAPIs.HasPromRule() {
-		cmn.Managed.AddManagedObject(prometheusRuleName(ConfKafkaIngester), owned.prometheusRule)
+		rec.prometheusRule = cmn.Managed.NewPrometheusRule(prometheusRuleName(ConfKafkaIngester))
 	}
-
-	return &flpIngesterReconciler{
-		Instance: cmn,
-		owned:    owned,
-	}
+	return &rec
 }
 
-func (r *flpIngesterReconciler) context(ctx context.Context) context.Context {
-	l := log.FromContext(ctx).WithValues(contextReconcilerName, "ingester")
+func (r *ingesterReconciler) context(ctx context.Context) context.Context {
+	l := log.FromContext(ctx).WithName("ingester")
 	return log.IntoContext(ctx, l)
 }
 
 // cleanupNamespace cleans up old namespace
-func (r *flpIngesterReconciler) cleanupNamespace(ctx context.Context) {
+func (r *ingesterReconciler) cleanupNamespace(ctx context.Context) {
 	r.Managed.CleanupPreviousNamespace(ctx)
 }
 
-func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
+func (r *ingesterReconciler) getStatus() *status.Instance {
+	return &r.Status
+}
+
+func (r *ingesterReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	// Retrieve current owned objects
 	err := r.Managed.FetchAll(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Ingester only used with Kafka and without eBPF
 	if !helper.UseKafka(&desired.Spec) || helper.UseEBPF(&desired.Spec) {
+		r.Status.SetUnused("Ingester only used with Kafka and without eBPF")
 		r.Managed.TryDeleteAll(ctx)
 		return nil
 	}
+
+	r.Status.SetReady() // will be overidden if necessary, as error or pending
 
 	builder, err := newIngestBuilder(r.Instance, &desired.Spec)
 	if err != nil {
@@ -95,12 +87,12 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowslat
 	annotations := map[string]string{
 		constants.PodConfigurationDigest: configDigest,
 	}
-	if !r.Managed.Exists(r.owned.configMap) {
+	if !r.Managed.Exists(r.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
 			return err
 		}
-	} else if !equality.Semantic.DeepDerivative(newCM.Data, r.owned.configMap.Data) {
-		if err := r.UpdateIfOwned(ctx, r.owned.configMap, newCM); err != nil {
+	} else if !equality.Semantic.DeepDerivative(newCM.Data, r.configMap.Data) {
+		if err := r.UpdateIfOwned(ctx, r.configMap, newCM); err != nil {
 			return err
 		}
 	}
@@ -127,44 +119,44 @@ func (r *flpIngesterReconciler) reconcile(ctx context.Context, desired *flowslat
 	return r.reconcileDaemonSet(ctx, builder.daemonSet(annotations))
 }
 
-func (r *flpIngesterReconciler) reconcilePrometheusService(ctx context.Context, builder *ingestBuilder) error {
+func (r *ingesterReconciler) reconcilePrometheusService(ctx context.Context, builder *ingestBuilder) error {
 	report := helper.NewChangeReport("FLP prometheus service")
 	defer report.LogIfNeeded(ctx)
 
-	if err := r.ReconcileService(ctx, r.owned.promService, builder.promService(), &report); err != nil {
+	if err := r.ReconcileService(ctx, r.promService, builder.promService(), &report); err != nil {
 		return err
 	}
 	if r.AvailableAPIs.HasSvcMonitor() {
 		serviceMonitor := builder.generic.serviceMonitor()
-		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}
 	if r.AvailableAPIs.HasPromRule() {
 		promRules := builder.generic.prometheusRule()
-		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (r *flpIngesterReconciler) reconcileDaemonSet(ctx context.Context, desiredDS *appsv1.DaemonSet) error {
+func (r *ingesterReconciler) reconcileDaemonSet(ctx context.Context, desiredDS *appsv1.DaemonSet) error {
 	report := helper.NewChangeReport("FLP DaemonSet")
 	defer report.LogIfNeeded(ctx)
 
 	return reconcilers.ReconcileDaemonSet(
 		ctx,
 		r.Instance,
-		r.owned.daemonSet,
+		r.daemonSet,
 		desiredDS,
 		constants.FLPName,
 		&report,
 	)
 }
 
-func (r *flpIngesterReconciler) reconcilePermissions(ctx context.Context, builder *ingestBuilder) error {
-	if !r.Managed.Exists(r.owned.serviceAccount) {
+func (r *ingesterReconciler) reconcilePermissions(ctx context.Context, builder *ingestBuilder) error {
+	if !r.Managed.Exists(r.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 

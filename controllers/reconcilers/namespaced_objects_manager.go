@@ -5,6 +5,11 @@ import (
 	"reflect"
 	"strings"
 
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	ascv2 "k8s.io/api/autoscaling/v2"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -43,6 +48,60 @@ func (m *NamespacedObjectManager) AddManagedObject(name string, placeholder clie
 		kind:        reflect.TypeOf(placeholder).String(),
 		placeholder: placeholder,
 	})
+}
+
+func (m *NamespacedObjectManager) NewConfigMap(name string) *corev1.ConfigMap {
+	cm := corev1.ConfigMap{}
+	m.AddManagedObject(name, &cm)
+	return &cm
+}
+
+func (m *NamespacedObjectManager) NewDeployment(name string) *appsv1.Deployment {
+	d := appsv1.Deployment{}
+	m.AddManagedObject(name, &d)
+	return &d
+}
+
+func (m *NamespacedObjectManager) NewDaemonSet(name string) *appsv1.DaemonSet {
+	ds := appsv1.DaemonSet{}
+	m.AddManagedObject(name, &ds)
+	return &ds
+}
+
+func (m *NamespacedObjectManager) NewService(name string) *corev1.Service {
+	s := corev1.Service{}
+	m.AddManagedObject(name, &s)
+	return &s
+}
+
+func (m *NamespacedObjectManager) NewServiceAccount(name string) *corev1.ServiceAccount {
+	sa := corev1.ServiceAccount{}
+	m.AddManagedObject(name, &sa)
+	return &sa
+}
+
+func (m *NamespacedObjectManager) NewHPA(name string) *ascv2.HorizontalPodAutoscaler {
+	hpa := ascv2.HorizontalPodAutoscaler{}
+	m.AddManagedObject(name, &hpa)
+	return &hpa
+}
+
+func (m *NamespacedObjectManager) NewServiceMonitor(name string) *monitoringv1.ServiceMonitor {
+	sm := monitoringv1.ServiceMonitor{}
+	m.AddManagedObject(name, &sm)
+	return &sm
+}
+
+func (m *NamespacedObjectManager) NewPrometheusRule(name string) *monitoringv1.PrometheusRule {
+	sm := monitoringv1.PrometheusRule{}
+	m.AddManagedObject(name, &sm)
+	return &sm
+}
+
+func (m *NamespacedObjectManager) NewCRB(name string) *rbacv1.ClusterRoleBinding {
+	crb := rbacv1.ClusterRoleBinding{}
+	m.AddManagedObject(name, &crb)
+	return &crb
 }
 
 // FetchAll fetches all managed objects (registered using AddManagedObject) in the current namespace.

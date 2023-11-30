@@ -82,17 +82,15 @@ const (
 // associated objects that are required to bind the proper permissions: namespace, service
 // accounts, SecurityContextConstraints...
 type AgentController struct {
-	reconcilers.Common
+	*reconcilers.Instance
 	permissions permissions.Reconciler
-	image       string
 	volumes     volumes.Builder
 }
 
-func NewAgentController(common *reconcilers.Common, image string) *AgentController {
+func NewAgentController(common *reconcilers.Instance) *AgentController {
 	return &AgentController{
-		Common:      *common,
+		Instance:    common,
 		permissions: permissions.NewReconciler(common),
-		image:       image,
 	}
 }
 
@@ -177,7 +175,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	if coll == nil || !helper.UseEBPF(&coll.Spec) {
 		return nil, nil
 	}
-	version := helper.ExtractVersion(c.image)
+	version := helper.ExtractVersion(c.Image)
 	annotations := make(map[string]string)
 	env, err := c.envConfig(ctx, coll, annotations)
 	if err != nil {
@@ -255,7 +253,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 					Volumes:            volumes,
 					Containers: []corev1.Container{{
 						Name:            constants.EBPFAgentName,
-						Image:           c.image,
+						Image:           c.Image,
 						ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.ImagePullPolicy),
 						Resources:       coll.Spec.Agent.EBPF.Resources,
 						SecurityContext: c.securityContext(coll),

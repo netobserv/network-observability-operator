@@ -936,6 +936,7 @@ type FlowCollectorStatus struct {
 	Conditions []metav1.Condition `json:"conditions"`
 
 	// Namespace where console plugin and flowlogs-pipeline have been deployed.
+	// Deprecated: annotations are used instead
 	Namespace string `json:"namespace,omitempty"`
 }
 

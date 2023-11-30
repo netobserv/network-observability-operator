@@ -51,7 +51,6 @@ import (
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/monitoring"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
 	//+kubebuilder:scaffold:imports
 )
@@ -132,7 +131,6 @@ func main() {
 	}
 
 	cfg := ctrl.GetConfigOrDie()
-	ctrls := []manager.Registerer{controllers.Start, monitoring.Start}
 
 	mgr, err := manager.NewManager(context.Background(), cfg, &config, &ctrl.Options{
 		Scheme: scheme,
@@ -148,7 +146,7 @@ func main() {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "7a7ecdcd.netobserv.io",
-	}, ctrls)
+	}, controllers.Registerers)
 	if err != nil {
 		setupLog.Error(err, "unable to setup manager")
 		os.Exit(1)

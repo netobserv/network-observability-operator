@@ -34,18 +34,21 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
+		Named("monitoring").
 		Owns(&corev1.Namespace{}).
 		Complete(&r)
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	l := log.Log.WithName("monitoring") // clear context (too noisy)
+	ctx = log.IntoContext(ctx, l)
+
 	r.status.SetUnknown()
 	defer r.status.Commit(ctx, r.Client)
 
 	err := r.reconcile(ctx)
 	if err != nil {
-		log.Error(err, "Monitoring reconcile failure")
+		l.Error(err, "Monitoring reconcile failure")
 		// Set status failure unless it was already set
 		if !r.status.HasFailure() {
 			r.status.SetFailure("MonitoringError", err.Error())

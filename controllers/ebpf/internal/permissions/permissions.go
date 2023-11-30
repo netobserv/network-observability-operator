@@ -26,11 +26,11 @@ var AllowedCapabilities = []v1.Capability{"BPF", "PERFMON", "NET_ADMIN", "SYS_RE
 // - Create netobserv-ebpf-agent service account in the privileged namespace
 // - For Openshift, apply the required SecurityContextConstraints for privileged Pod operation
 type Reconciler struct {
-	reconcilers.Common
+	*reconcilers.Instance
 }
 
-func NewReconciler(cmn *reconcilers.Common) Reconciler {
-	return Reconciler{Common: *cmn}
+func NewReconciler(cmn *reconcilers.Instance) Reconciler {
+	return Reconciler{Instance: cmn}
 }
 
 func (c *Reconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCollectorEBPF) error {

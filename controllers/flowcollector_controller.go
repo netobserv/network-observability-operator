@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	configv1 "github.com/openshift/api/config/v1"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -18,7 +17,6 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
-	"github.com/netobserv/network-observability-operator/controllers/flp"
 	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/cleanup"
@@ -36,10 +34,9 @@ const (
 // FlowCollectorReconciler reconciles a FlowCollector object
 type FlowCollectorReconciler struct {
 	client.Client
-	mgr       *manager.Manager
-	status    status.Instance
-	watcher   *watchers.Watcher
-	clusterID string
+	mgr     *manager.Manager
+	status  status.Instance
+	watcher *watchers.Watcher
 }
 
 func Start(ctx context.Context, mgr *manager.Manager) error {
@@ -52,6 +49,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr.Manager).
+		Named("legacy").
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Owns(&appsv1.Deployment{}).
 		Owns(&appsv1.DaemonSet{}).
@@ -91,7 +89,8 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	l := log.Log.WithName("legacy") // clear context (too noisy)
+	ctx = log.IntoContext(ctx, l)
 	// At the moment, status workflow is to start as ready then degrade if necessary
 	// Later (when legacy controller is broken down into individual controllers), status should start as unknown and only on success finishes as ready
 	r.status.SetReady()
@@ -99,7 +98,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 
 	err := r.reconcile(ctx)
 	if err != nil {
-		log.Error(err, "FlowCollector reconcile failure")
+		l.Error(err, "FlowCollector reconcile failure")
 		// Set status failure unless it was already set
 		if !r.status.HasFailure() {
 			r.status.SetFailure("FlowCollectorGenericError", err.Error())
@@ -119,7 +118,7 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context) error {
 	}
 
 	ns := helper.GetNamespace(&desired.Spec)
-	previousNamespace := desired.Status.Namespace
+	previousNamespace := r.status.GetDeployedNamespace(desired)
 	loki := helper.NewLokiConfig(&desired.Spec.Loki, ns)
 	reconcilersInfo := r.newCommonInfo(clh, ns, previousNamespace, &loki)
 
@@ -132,34 +131,25 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context) error {
 	}
 	r.watcher.Reset(ns)
 
-	// obtain default cluster ID - api is specific to openshift
-	if r.mgr.IsOpenShift() && r.clusterID == "" {
-		cversion := &configv1.ClusterVersion{}
-		key := client.ObjectKey{Name: "version"}
-		if err := r.Client.Get(ctx, key, cversion); err != nil {
-			log.FromContext(ctx).Error(err, "unable to obtain cluster ID")
-		} else {
-			r.clusterID = string(cversion.Spec.ClusterID)
-		}
-	}
-
 	// Create reconcilers
-	flpReconciler := flp.NewReconciler(&reconcilersInfo, r.mgr.Config.FlowlogsPipelineImage)
 	var cpReconciler consoleplugin.CPReconciler
 	if r.mgr.HasConsolePlugin() {
-		cpReconciler = consoleplugin.NewReconciler(&reconcilersInfo, r.mgr.Config.ConsolePluginImage)
+		cpReconciler = consoleplugin.NewReconciler(reconcilersInfo.NewInstance(r.mgr.Config.ConsolePluginImage, r.status))
 	}
 
 	// Check namespace changed
 	if ns != previousNamespace {
-		if err := r.handleNamespaceChanged(ctx, previousNamespace, ns, desired, &flpReconciler, &cpReconciler); err != nil {
-			return r.status.Error("CannotCreateNamespace", err)
+		if previousNamespace != "" && r.mgr.HasConsolePlugin() {
+			// Namespace updated, clean up previous namespace
+			log.FromContext(ctx).
+				Info("FlowCollector namespace change detected: cleaning up previous namespace", "old", previousNamespace, "new", ns)
+			cpReconciler.CleanupNamespace(ctx)
 		}
-	}
 
-	// Flowlogs-pipeline
-	if err := flpReconciler.Reconcile(ctx, desired); err != nil {
-		return r.status.Error("ReconcileFLPFailed", err)
+		// Update namespace in status
+		if err := r.status.SetDeployedNamespace(ctx, r.Client, ns); err != nil {
+			return r.status.Error("ChangeNamespaceError", err)
+		}
 	}
 
 	// OVS config map for CNO
@@ -176,7 +166,7 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context) error {
 	}
 
 	// eBPF agent
-	ebpfAgentController := ebpf.NewAgentController(&reconcilersInfo, r.mgr.Config.EBPFAgentImage)
+	ebpfAgentController := ebpf.NewAgentController(reconcilersInfo.NewInstance(r.mgr.Config.EBPFAgentImage, r.status))
 	if err := ebpfAgentController.Reconcile(ctx, desired); err != nil {
 		return r.status.Error("ReconcileAgentFailed", err)
 	}
@@ -190,29 +180,6 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (r *FlowCollectorReconciler) handleNamespaceChanged(
-	ctx context.Context,
-	oldNS, newNS string,
-	desired *flowslatest.FlowCollector,
-	flpReconciler *flp.Reconciler,
-	cpReconciler *consoleplugin.CPReconciler,
-) error {
-	log := log.FromContext(ctx)
-	if oldNS != "" {
-		// Namespace updated, clean up previous namespace
-		log.Info("FlowCollector namespace change detected: cleaning up previous namespace", "old namespace", oldNS, "new namepace", newNS)
-		flpReconciler.CleanupNamespace(ctx)
-		if r.mgr.HasConsolePlugin() {
-			cpReconciler.CleanupNamespace(ctx)
-		}
-	}
-
-	// Update namespace in status
-	log.Info("Updating status with new namespace " + newNS)
-	desired.Status.Namespace = newNS
-	return r.Status().Update(ctx, desired)
 }
 
 // checkFinalizer returns true (and/or error) if the calling function needs to return
@@ -255,13 +222,11 @@ func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowsla
 func (r *FlowCollectorReconciler) newCommonInfo(clh *helper.Client, ns, prevNs string, loki *helper.LokiConfig) reconcilers.Common {
 	return reconcilers.Common{
 		Client:            *clh,
-		Status:            r.status,
 		Namespace:         ns,
 		PreviousNamespace: prevNs,
 		UseOpenShiftSCC:   r.mgr.IsOpenShift(),
 		AvailableAPIs:     &r.mgr.AvailableAPIs,
 		Watcher:           r.watcher,
 		Loki:              loki,
-		ClusterID:         r.clusterID,
 	}
 }

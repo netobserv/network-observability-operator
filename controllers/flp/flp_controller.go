@@ -64,8 +64,6 @@ type subReconciler interface {
 	getStatus() *status.Instance
 }
 
-// Reconcile is the controller entry point for reconciling current state with desired state.
-// It manages the controller status at a high level. Business logic is delegated into `reconcile`.
 func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
 	l := log.Log.WithName("flp") // clear context (too noisy)
 	ctx = log.IntoContext(ctx, l)
@@ -116,8 +114,6 @@ func (r *Reconciler) reconcile(ctx context.Context) error {
 	}
 
 	// Create sub-reconcilers
-	// TODO: refactor to move these subReconciler allocations in `Start`. It will involve some decoupling work, as currently
-	// `reconcilers.Common` is dependent on the FlowCollector object, which isn't known at start time.
 	reconcilers := []subReconciler{
 		newMonolithReconciler(cmn.NewInstance(r.mgr.Config.FlowlogsPipelineImage, r.mgr.Status.ForComponent(status.FLPMonolith))),
 		newTransformerReconciler(cmn.NewInstance(r.mgr.Config.FlowlogsPipelineImage, r.mgr.Status.ForComponent(status.FLPTransformOnly))),

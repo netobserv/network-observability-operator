@@ -14,7 +14,6 @@ import (
 
 type Common struct {
 	helper.Client
-	Status            status.Instance
 	Watcher           *watchers.Watcher
 	Namespace         string
 	PreviousNamespace string
@@ -36,14 +35,16 @@ type Instance struct {
 	*Common
 	Managed *NamespacedObjectManager
 	Image   string
+	Status  status.Instance
 }
 
-func (c *Common) NewInstance(image string) *Instance {
+func (c *Common) NewInstance(image string, st status.Instance) *Instance {
 	managed := NewNamespacedObjectManager(c)
 	return &Instance{
 		Common:  c,
 		Managed: managed,
 		Image:   image,
+		Status:  st,
 	}
 }
 

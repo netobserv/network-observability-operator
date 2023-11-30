@@ -15,15 +15,11 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 )
 
-// flpTransformerReconciler reconciles the current flowlogs-pipeline-transformer state with the desired configuration
-type flpTransformerReconciler struct {
+type transformerReconciler struct {
 	*reconcilers.Instance
-	owned transfoOwnedObjects
-}
-
-type transfoOwnedObjects struct {
 	deployment     *appsv1.Deployment
 	promService    *corev1.Service
 	hpa            *ascv2.HorizontalPodAutoscaler
@@ -34,59 +30,54 @@ type transfoOwnedObjects struct {
 	prometheusRule *monitoringv1.PrometheusRule
 }
 
-func newTransformerReconciler(cmn *reconcilers.Instance) *flpTransformerReconciler {
+func newTransformerReconciler(cmn *reconcilers.Instance) *transformerReconciler {
 	name := name(ConfKafkaTransformer)
-	owned := transfoOwnedObjects{
-		deployment:     &appsv1.Deployment{},
-		promService:    &corev1.Service{},
-		hpa:            &ascv2.HorizontalPodAutoscaler{},
-		serviceAccount: &corev1.ServiceAccount{},
-		configMap:      &corev1.ConfigMap{},
-		roleBinding:    &rbacv1.ClusterRoleBinding{},
-		serviceMonitor: &monitoringv1.ServiceMonitor{},
-		prometheusRule: &monitoringv1.PrometheusRule{},
+	rec := transformerReconciler{
+		Instance:       cmn,
+		deployment:     cmn.Managed.NewDeployment(name),
+		promService:    cmn.Managed.NewService(promServiceName(ConfKafkaTransformer)),
+		hpa:            cmn.Managed.NewHPA(name),
+		serviceAccount: cmn.Managed.NewServiceAccount(name),
+		configMap:      cmn.Managed.NewConfigMap(configMapName(ConfKafkaTransformer)),
+		roleBinding:    cmn.Managed.NewCRB(RoleBindingName(ConfKafkaTransformer)),
 	}
-	cmn.Managed.AddManagedObject(name, owned.deployment)
-	cmn.Managed.AddManagedObject(name, owned.hpa)
-	cmn.Managed.AddManagedObject(name, owned.serviceAccount)
-	cmn.Managed.AddManagedObject(promServiceName(ConfKafkaTransformer), owned.promService)
-	cmn.Managed.AddManagedObject(RoleBindingName(ConfKafkaTransformer), owned.roleBinding)
-	cmn.Managed.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
 	if cmn.AvailableAPIs.HasSvcMonitor() {
-		cmn.Managed.AddManagedObject(serviceMonitorName(ConfKafkaTransformer), owned.serviceMonitor)
+		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(serviceMonitorName(ConfKafkaTransformer))
 	}
 	if cmn.AvailableAPIs.HasPromRule() {
-		cmn.Managed.AddManagedObject(prometheusRuleName(ConfKafkaTransformer), owned.prometheusRule)
+		rec.prometheusRule = cmn.Managed.NewPrometheusRule(prometheusRuleName(ConfKafkaTransformer))
 	}
-
-	return &flpTransformerReconciler{
-		Instance: cmn,
-		owned:    owned,
-	}
+	return &rec
 }
 
-func (r *flpTransformerReconciler) context(ctx context.Context) context.Context {
-	l := log.FromContext(ctx).WithValues(contextReconcilerName, "transformer")
+func (r *transformerReconciler) context(ctx context.Context) context.Context {
+	l := log.FromContext(ctx).WithName("transformer")
 	return log.IntoContext(ctx, l)
 }
 
 // cleanupNamespace cleans up old namespace
-func (r *flpTransformerReconciler) cleanupNamespace(ctx context.Context) {
+func (r *transformerReconciler) cleanupNamespace(ctx context.Context) {
 	r.Managed.CleanupPreviousNamespace(ctx)
 }
 
-func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
+func (r *transformerReconciler) getStatus() *status.Instance {
+	return &r.Status
+}
+
+func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	// Retrieve current owned objects
 	err := r.Managed.FetchAll(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Transformer only used with Kafka
 	if !helper.UseKafka(&desired.Spec) {
+		r.Status.SetUnused("Transformer only used with Kafka")
 		r.Managed.TryDeleteAll(ctx)
 		return nil
 	}
+
+	r.Status.SetReady() // will be overidden if necessary, as error or pending
 
 	builder, err := newTransfoBuilder(r.Instance, &desired.Spec)
 	if err != nil {
@@ -99,12 +90,12 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 	annotations := map[string]string{
 		constants.PodConfigurationDigest: configDigest,
 	}
-	if !r.Managed.Exists(r.owned.configMap) {
+	if !r.Managed.Exists(r.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
 			return err
 		}
-	} else if !equality.Semantic.DeepDerivative(newCM.Data, r.owned.configMap.Data) {
-		if err := r.UpdateIfOwned(ctx, r.owned.configMap, newCM); err != nil {
+	} else if !equality.Semantic.DeepDerivative(newCM.Data, r.configMap.Data) {
+		if err := r.UpdateIfOwned(ctx, r.configMap, newCM); err != nil {
 			return err
 		}
 	}
@@ -143,14 +134,14 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 	return r.reconcileHPA(ctx, &desired.Spec.Processor, &builder)
 }
 
-func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder, annotations map[string]string) error {
+func (r *transformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flowslatest.FlowCollectorFLP, builder *transfoBuilder, annotations map[string]string) error {
 	report := helper.NewChangeReport("FLP Deployment")
 	defer report.LogIfNeeded(ctx)
 
 	return reconcilers.ReconcileDeployment(
 		ctx,
 		r.Instance,
-		r.owned.deployment,
+		r.deployment,
 		builder.deployment(annotations),
 		constants.FLPName,
 		helper.PtrInt32(desiredFLP.KafkaConsumerReplicas),
@@ -159,44 +150,44 @@ func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desi
 	)
 }
 
-func (r *flpTransformerReconciler) reconcileHPA(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder) error {
+func (r *transformerReconciler) reconcileHPA(ctx context.Context, desiredFLP *flowslatest.FlowCollectorFLP, builder *transfoBuilder) error {
 	report := helper.NewChangeReport("FLP autoscaler")
 	defer report.LogIfNeeded(ctx)
 
 	return reconcilers.ReconcileHPA(
 		ctx,
 		r.Instance,
-		r.owned.hpa,
+		r.hpa,
 		builder.autoScaler(),
 		&desiredFLP.KafkaConsumerAutoscaler,
 		&report,
 	)
 }
 
-func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Context, builder *transfoBuilder) error {
+func (r *transformerReconciler) reconcilePrometheusService(ctx context.Context, builder *transfoBuilder) error {
 	report := helper.NewChangeReport("FLP prometheus service")
 	defer report.LogIfNeeded(ctx)
 
-	if err := r.ReconcileService(ctx, r.owned.promService, builder.promService(), &report); err != nil {
+	if err := r.ReconcileService(ctx, r.promService, builder.promService(), &report); err != nil {
 		return err
 	}
 	if r.AvailableAPIs.HasSvcMonitor() {
 		serviceMonitor := builder.generic.serviceMonitor()
-		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}
 	if r.AvailableAPIs.HasPromRule() {
 		promRules := builder.generic.prometheusRule()
-		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (r *flpTransformerReconciler) reconcilePermissions(ctx context.Context, builder *transfoBuilder) error {
-	if !r.Managed.Exists(r.owned.serviceAccount) {
+func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builder *transfoBuilder) error {
+	if !r.Managed.Exists(r.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 

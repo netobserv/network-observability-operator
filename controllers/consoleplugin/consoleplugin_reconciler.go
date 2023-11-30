@@ -26,10 +26,6 @@ type pluginSpec = flowslatest.FlowCollectorConsolePlugin
 // CPReconciler reconciles the current console plugin state with the desired configuration
 type CPReconciler struct {
 	*reconcilers.Instance
-	owned ownedObjects
-}
-
-type ownedObjects struct {
 	deployment     *appsv1.Deployment
 	service        *corev1.Service
 	metricsService *corev1.Service
@@ -39,28 +35,20 @@ type ownedObjects struct {
 	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
-func NewReconciler(common *reconcilers.Common, imageName string) CPReconciler {
-	owned := ownedObjects{
-		deployment:     &appsv1.Deployment{},
-		service:        &corev1.Service{},
-		metricsService: &corev1.Service{},
-		hpa:            &ascv2.HorizontalPodAutoscaler{},
-		serviceAccount: &corev1.ServiceAccount{},
-		configMap:      &corev1.ConfigMap{},
-		serviceMonitor: &monitoringv1.ServiceMonitor{},
+func NewReconciler(cmn *reconcilers.Instance) CPReconciler {
+	rec := CPReconciler{
+		Instance:       cmn,
+		deployment:     cmn.Managed.NewDeployment(constants.PluginName),
+		service:        cmn.Managed.NewService(constants.PluginName),
+		metricsService: cmn.Managed.NewService(metricsSvcName),
+		hpa:            cmn.Managed.NewHPA(constants.PluginName),
+		serviceAccount: cmn.Managed.NewServiceAccount(constants.PluginName),
+		configMap:      cmn.Managed.NewConfigMap(configMapName),
 	}
-	cmnInstance := common.NewInstance(imageName)
-	cmnInstance.Managed.AddManagedObject(constants.PluginName, owned.deployment)
-	cmnInstance.Managed.AddManagedObject(constants.PluginName, owned.service)
-	cmnInstance.Managed.AddManagedObject(metricsSvcName, owned.metricsService)
-	cmnInstance.Managed.AddManagedObject(constants.PluginName, owned.hpa)
-	cmnInstance.Managed.AddManagedObject(constants.PluginName, owned.serviceAccount)
-	cmnInstance.Managed.AddManagedObject(configMapName, owned.configMap)
-	if common.AvailableAPIs.HasSvcMonitor() {
-		cmnInstance.Managed.AddManagedObject(constants.PluginName, owned.serviceMonitor)
+	if cmn.AvailableAPIs.HasSvcMonitor() {
+		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(constants.PluginName)
 	}
-
-	return CPReconciler{Instance: cmnInstance, owned: owned}
+	return rec
 }
 
 // CleanupNamespace cleans up old namespace
@@ -70,6 +58,9 @@ func (r *CPReconciler) CleanupNamespace(ctx context.Context) {
 
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
 func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
+	l := log.FromContext(ctx).WithName("console-plugin")
+	ctx = log.IntoContext(ctx, l)
+
 	ns := r.Managed.Namespace
 	// Retrieve current owned objects
 	err := r.Managed.FetchAll(ctx)
@@ -148,7 +139,7 @@ func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.
 }
 
 func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builder) error {
-	if !r.Managed.Exists(r.owned.serviceAccount) {
+	if !r.Managed.Exists(r.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // update not needed for now
 
@@ -193,12 +184,12 @@ func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder *builder)
 	if err != nil {
 		return "", err
 	}
-	if !r.Managed.Exists(r.owned.configMap) {
+	if !r.Managed.Exists(r.configMap) {
 		if err := r.CreateOwned(ctx, newCM); err != nil {
 			return "", err
 		}
-	} else if !reflect.DeepEqual(newCM.Data, r.owned.configMap.Data) {
-		if err := r.UpdateIfOwned(ctx, r.owned.configMap, newCM); err != nil {
+	} else if !reflect.DeepEqual(newCM.Data, r.configMap.Data) {
+		if err := r.UpdateIfOwned(ctx, r.configMap, newCM); err != nil {
 			return "", err
 		}
 	}
@@ -212,7 +203,7 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder *builder
 	return reconcilers.ReconcileDeployment(
 		ctx,
 		r.Instance,
-		r.owned.deployment,
+		r.deployment,
 		builder.deployment(cmDigest),
 		constants.PluginName,
 		helper.PtrInt32(desired.ConsolePlugin.Replicas),
@@ -225,15 +216,15 @@ func (r *CPReconciler) reconcileServices(ctx context.Context, builder *builder) 
 	report := helper.NewChangeReport("Console services")
 	defer report.LogIfNeeded(ctx)
 
-	if err := r.ReconcileService(ctx, r.owned.service, builder.mainService(), &report); err != nil {
+	if err := r.ReconcileService(ctx, r.service, builder.mainService(), &report); err != nil {
 		return err
 	}
-	if err := r.ReconcileService(ctx, r.owned.metricsService, builder.metricsService(), &report); err != nil {
+	if err := r.ReconcileService(ctx, r.metricsService, builder.metricsService(), &report); err != nil {
 		return err
 	}
 	if r.AvailableAPIs.HasSvcMonitor() {
 		serviceMonitor := builder.serviceMonitor()
-		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.owned.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}
@@ -247,7 +238,7 @@ func (r *CPReconciler) reconcileHPA(ctx context.Context, builder *builder, desir
 	return reconcilers.ReconcileHPA(
 		ctx,
 		r.Instance,
-		r.owned.hpa,
+		r.hpa,
 		builder.autoScaler(),
 		&desired.ConsolePlugin.Autoscaler,
 		&report,

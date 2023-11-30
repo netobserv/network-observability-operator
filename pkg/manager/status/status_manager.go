@@ -21,6 +21,10 @@ type ComponentName string
 
 const (
 	FlowCollectorLegacy ComponentName = "FlowCollectorLegacy"
+	FLPParent           ComponentName = "FLPParent"
+	FLPMonolith         ComponentName = "FLPMonolith"
+	FLPIngestOnly       ComponentName = "FLPIngestOnly"
+	FLPTransformOnly    ComponentName = "FLPTransformOnly"
 	Monitoring          ComponentName = "Monitoring"
 )
 
@@ -78,11 +82,12 @@ func (s *Manager) setUnknown(cpnt ComponentName) {
 	})
 }
 
-func (s *Manager) setUnused(cpnt ComponentName) {
+func (s *Manager) setUnused(cpnt ComponentName, message string) {
 	s.statuses.Store(cpnt, ComponentStatus{
-		name:   cpnt,
-		status: StatusUnknown,
-		reason: "ComponentUnused",
+		name:    cpnt,
+		status:  StatusUnknown,
+		reason:  "ComponentUnused",
+		message: message,
 	})
 }
 
@@ -112,35 +117,31 @@ func (s *Manager) getConditions() []metav1.Condition {
 }
 
 func (s *Manager) Sync(ctx context.Context, c client.Client) {
-	updateStatusWithRetries(ctx, c, s.getConditions()...)
+	updateStatus(ctx, c, s.getConditions()...)
 }
 
-func updateStatusWithRetries(ctx context.Context, c client.Client, conditions ...metav1.Condition) {
+func updateStatus(ctx context.Context, c client.Client, conditions ...metav1.Condition) {
 	log := log.FromContext(ctx)
 	log.Info("Updating FlowCollector status")
 
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		return updateStatus(ctx, c, conditions...)
+		fc := flowslatest.FlowCollector{}
+		if err := c.Get(ctx, constants.FlowCollectorName, &fc); err != nil {
+			if errors.IsNotFound(err) {
+				// ignore: when it's being deleted, there's no point trying to update its status
+				return nil
+			}
+			return err
+		}
+		for _, c := range conditions {
+			meta.SetStatusCondition(&fc.Status.Conditions, c)
+		}
+		return c.Status().Update(ctx, &fc)
 	})
 
 	if err != nil {
 		log.Error(err, "failed to update FlowCollector status")
 	}
-}
-
-func updateStatus(ctx context.Context, c client.Client, conditions ...metav1.Condition) error {
-	fc := flowslatest.FlowCollector{}
-	if err := c.Get(ctx, constants.FlowCollectorName, &fc); err != nil {
-		if errors.IsNotFound(err) {
-			// ignore: when it's being deleted, there's no point trying to update its status
-			return nil
-		}
-		return err
-	}
-	for _, c := range conditions {
-		meta.SetStatusCondition(&fc.Status.Conditions, c)
-	}
-	return c.Status().Update(ctx, &fc)
 }
 
 func (s *Manager) ForComponent(cpnt ComponentName) Instance {
@@ -160,8 +161,8 @@ func (i *Instance) SetUnknown() {
 	i.s.setUnknown(i.cpnt)
 }
 
-func (i *Instance) SetUnused() {
-	i.s.setUnused(i.cpnt)
+func (i *Instance) SetUnused(message string) {
+	i.s.setUnused(i.cpnt, message)
 }
 
 func (i *Instance) CheckDeploymentProgress(d *appsv1.Deployment) {

@@ -41,7 +41,7 @@ func TestStatusWorkflow(t *testing.T) {
 		DesiredNumberScheduled: 3,
 		UpdatedNumberScheduled: 3,
 	}})
-	sm.SetUnused()
+	sm.SetUnused("message")
 
 	conds = s.getConditions()
 	assert.Len(t, conds, 3)
