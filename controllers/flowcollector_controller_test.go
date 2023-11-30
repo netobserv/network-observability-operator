@@ -21,7 +21,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
-	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
+	"github.com/netobserv/network-observability-operator/controllers/flp"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 )
 
@@ -55,11 +55,11 @@ func flowCollectorControllerSpecs() {
 		Namespace: otherNamespace,
 	}
 	flpKeyKafkaIngester := types.NamespacedName{
-		Name:      constants.FLPName + flowlogspipeline.FlpConfSuffix[flowlogspipeline.ConfKafkaIngester],
+		Name:      constants.FLPName + flp.FlpConfSuffix[flp.ConfKafkaIngester],
 		Namespace: operatorNamespace,
 	}
 	flpKeyKafkaTransformer := types.NamespacedName{
-		Name:      constants.FLPName + flowlogspipeline.FlpConfSuffix[flowlogspipeline.ConfKafkaTransformer],
+		Name:      constants.FLPName + flp.FlpConfSuffix[flp.ConfKafkaTransformer],
 		Namespace: operatorNamespace,
 	}
 	cpKey1 := types.NamespacedName{
@@ -70,10 +70,10 @@ func flowCollectorControllerSpecs() {
 		Name:      "netobserv-plugin",
 		Namespace: otherNamespace,
 	}
-	rbKeyIngest := types.NamespacedName{Name: flowlogspipeline.RoleBindingName(flowlogspipeline.ConfKafkaIngester)}
-	rbKeyTransform := types.NamespacedName{Name: flowlogspipeline.RoleBindingName(flowlogspipeline.ConfKafkaTransformer)}
-	rbKeyIngestMono := types.NamespacedName{Name: flowlogspipeline.RoleBindingMonoName(flowlogspipeline.ConfKafkaIngester)}
-	rbKeyTransformMono := types.NamespacedName{Name: flowlogspipeline.RoleBindingMonoName(flowlogspipeline.ConfKafkaTransformer)}
+	rbKeyIngest := types.NamespacedName{Name: flp.RoleBindingName(flp.ConfKafkaIngester)}
+	rbKeyTransform := types.NamespacedName{Name: flp.RoleBindingName(flp.ConfKafkaTransformer)}
+	rbKeyIngestMono := types.NamespacedName{Name: flp.RoleBindingMonoName(flp.ConfKafkaIngester)}
+	rbKeyTransformMono := types.NamespacedName{Name: flp.RoleBindingMonoName(flp.ConfKafkaTransformer)}
 	rbKeyPlugin := types.NamespacedName{Name: constants.PluginName}
 
 	// Created objects to cleanup

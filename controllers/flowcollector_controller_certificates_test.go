@@ -13,7 +13,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
-	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
+	"github.com/netobserv/network-observability-operator/controllers/flp"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
@@ -27,7 +27,7 @@ func flowCollectorCertificatesSpecs() {
 		Name: "cluster",
 	}
 	flpKey := types.NamespacedName{
-		Name:      constants.FLPName + flowlogspipeline.FlpConfSuffix[flowlogspipeline.ConfKafkaTransformer],
+		Name:      constants.FLPName + flp.FlpConfSuffix[flp.ConfKafkaTransformer],
 		Namespace: operatorNamespace,
 	}
 	pluginKey := types.NamespacedName{

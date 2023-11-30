@@ -1,4 +1,4 @@
-package flowlogspipeline
+package flp
 
 import (
 	"context"
@@ -14,8 +14,8 @@ import (
 // Type alias
 type flpSpec = flowslatest.FlowCollectorFLP
 
-// FLPReconciler reconciles the current flowlogs-pipeline state with the desired configuration
-type FLPReconciler struct {
+// Reconciler reconciles the current flowlogs-pipeline state with the desired configuration
+type Reconciler struct {
 	reconcilers []singleReconciler
 }
 
@@ -27,8 +27,8 @@ type singleReconciler interface {
 	reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error
 }
 
-func NewReconciler(cmn *reconcilers.Common, image string) FLPReconciler {
-	return FLPReconciler{
+func NewReconciler(cmn *reconcilers.Common, image string) Reconciler {
+	return Reconciler{
 		reconcilers: []singleReconciler{
 			newMonolithReconciler(cmn.NewInstance(image)),
 			newTransformerReconciler(cmn.NewInstance(image)),
@@ -38,7 +38,7 @@ func NewReconciler(cmn *reconcilers.Common, image string) FLPReconciler {
 }
 
 // CleanupNamespace cleans up old namespace
-func (r *FLPReconciler) CleanupNamespace(ctx context.Context) {
+func (r *Reconciler) CleanupNamespace(ctx context.Context) {
 	for _, sr := range r.reconcilers {
 		sr.cleanupNamespace(sr.context(ctx))
 	}
@@ -54,7 +54,7 @@ func validateDesired(desired *flpSpec) error {
 	return nil
 }
 
-func (r *FLPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
+func (r *Reconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	if err := validateDesired(&desired.Spec.Processor); err != nil {
 		return err
 	}

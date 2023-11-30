@@ -1,4 +1,4 @@
-package flowlogspipeline
+package flp
 
 import (
 	"encoding/json"

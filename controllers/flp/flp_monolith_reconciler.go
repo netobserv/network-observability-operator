@@ -1,11 +1,10 @@
-package flowlogspipeline
+package flp
 
 import (
 	"context"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
-	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -17,78 +16,78 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
-// flpTransformerReconciler reconciles the current flowlogs-pipeline-transformer state with the desired configuration
-type flpTransformerReconciler struct {
+// flpMonolithReconciler reconciles the current flowlogs-pipeline monolith state with the desired configuration
+type flpMonolithReconciler struct {
 	*reconcilers.Instance
-	owned transfoOwnedObjects
+	owned monolithOwnedObjects
 }
 
-type transfoOwnedObjects struct {
-	deployment     *appsv1.Deployment
+type monolithOwnedObjects struct {
+	daemonSet      *appsv1.DaemonSet
 	promService    *corev1.Service
-	hpa            *ascv2.HorizontalPodAutoscaler
 	serviceAccount *corev1.ServiceAccount
 	configMap      *corev1.ConfigMap
-	roleBinding    *rbacv1.ClusterRoleBinding
+	roleBindingIn  *rbacv1.ClusterRoleBinding
+	roleBindingTr  *rbacv1.ClusterRoleBinding
 	serviceMonitor *monitoringv1.ServiceMonitor
 	prometheusRule *monitoringv1.PrometheusRule
 }
 
-func newTransformerReconciler(cmn *reconcilers.Instance) *flpTransformerReconciler {
-	name := name(ConfKafkaTransformer)
-	owned := transfoOwnedObjects{
-		deployment:     &appsv1.Deployment{},
+func newMonolithReconciler(cmn *reconcilers.Instance) *flpMonolithReconciler {
+	name := name(ConfMonolith)
+	owned := monolithOwnedObjects{
+		daemonSet:      &appsv1.DaemonSet{},
 		promService:    &corev1.Service{},
-		hpa:            &ascv2.HorizontalPodAutoscaler{},
 		serviceAccount: &corev1.ServiceAccount{},
 		configMap:      &corev1.ConfigMap{},
-		roleBinding:    &rbacv1.ClusterRoleBinding{},
+		roleBindingIn:  &rbacv1.ClusterRoleBinding{},
+		roleBindingTr:  &rbacv1.ClusterRoleBinding{},
 		serviceMonitor: &monitoringv1.ServiceMonitor{},
 		prometheusRule: &monitoringv1.PrometheusRule{},
 	}
-	cmn.Managed.AddManagedObject(name, owned.deployment)
-	cmn.Managed.AddManagedObject(name, owned.hpa)
+	cmn.Managed.AddManagedObject(name, owned.daemonSet)
 	cmn.Managed.AddManagedObject(name, owned.serviceAccount)
-	cmn.Managed.AddManagedObject(promServiceName(ConfKafkaTransformer), owned.promService)
-	cmn.Managed.AddManagedObject(RoleBindingName(ConfKafkaTransformer), owned.roleBinding)
-	cmn.Managed.AddManagedObject(configMapName(ConfKafkaTransformer), owned.configMap)
+	cmn.Managed.AddManagedObject(promServiceName(ConfMonolith), owned.promService)
+	cmn.Managed.AddManagedObject(RoleBindingMonoName(ConfKafkaIngester), owned.roleBindingIn)
+	cmn.Managed.AddManagedObject(RoleBindingMonoName(ConfKafkaTransformer), owned.roleBindingTr)
+	cmn.Managed.AddManagedObject(configMapName(ConfMonolith), owned.configMap)
 	if cmn.AvailableAPIs.HasSvcMonitor() {
-		cmn.Managed.AddManagedObject(serviceMonitorName(ConfKafkaTransformer), owned.serviceMonitor)
+		cmn.Managed.AddManagedObject(serviceMonitorName(ConfMonolith), owned.serviceMonitor)
 	}
 	if cmn.AvailableAPIs.HasPromRule() {
-		cmn.Managed.AddManagedObject(prometheusRuleName(ConfKafkaTransformer), owned.prometheusRule)
+		cmn.Managed.AddManagedObject(prometheusRuleName(ConfMonolith), owned.prometheusRule)
 	}
 
-	return &flpTransformerReconciler{
+	return &flpMonolithReconciler{
 		Instance: cmn,
 		owned:    owned,
 	}
 }
 
-func (r *flpTransformerReconciler) context(ctx context.Context) context.Context {
-	l := log.FromContext(ctx).WithValues(contextReconcilerName, "transformer")
+func (r *flpMonolithReconciler) context(ctx context.Context) context.Context {
+	l := log.FromContext(ctx).WithValues(contextReconcilerName, "monolith")
 	return log.IntoContext(ctx, l)
 }
 
 // cleanupNamespace cleans up old namespace
-func (r *flpTransformerReconciler) cleanupNamespace(ctx context.Context) {
+func (r *flpMonolithReconciler) cleanupNamespace(ctx context.Context) {
 	r.Managed.CleanupPreviousNamespace(ctx)
 }
 
-func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
+func (r *flpMonolithReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	// Retrieve current owned objects
 	err := r.Managed.FetchAll(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Transformer only used with Kafka
-	if !helper.UseKafka(&desired.Spec) {
+	// Monolith only used without Kafka
+	if helper.UseKafka(&desired.Spec) {
 		r.Managed.TryDeleteAll(ctx)
 		return nil
 	}
 
-	builder, err := newTransfoBuilder(r.Instance, &desired.Spec)
+	builder, err := newMonolithBuilder(r.Instance, &desired.Spec)
 	if err != nil {
 		return err
 	}
@@ -108,6 +107,7 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 			return err
 		}
 	}
+
 	if err := r.reconcilePermissions(ctx, &builder); err != nil {
 		return err
 	}
@@ -123,57 +123,20 @@ func (r *flpTransformerReconciler) reconcile(ctx context.Context, desired *flows
 		return err
 	}
 
-	// Watch for Kafka certificate if necessary; need to restart pods in case of cert rotation
-	if err = annotateKafkaCerts(ctx, r.Common, &desired.Spec.Kafka, "kafka", annotations); err != nil {
-		return err
-	}
-	// Same for Kafka exporters
+	// Watch for Kafka exporter certificate if necessary; need to restart pods in case of cert rotation
 	if err = annotateKafkaExporterCerts(ctx, r.Common, desired.Spec.Exporters, annotations); err != nil {
 		return err
 	}
+
 	// Watch for monitoring caCert
 	if err = reconcileMonitoringCerts(ctx, r.Common, &desired.Spec.Processor.Metrics.Server.TLS, r.Namespace); err != nil {
 		return err
 	}
 
-	if err = r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, annotations); err != nil {
-		return err
-	}
-
-	return r.reconcileHPA(ctx, &desired.Spec.Processor, &builder)
+	return r.reconcileDaemonSet(ctx, builder.daemonSet(annotations))
 }
 
-func (r *flpTransformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder, annotations map[string]string) error {
-	report := helper.NewChangeReport("FLP Deployment")
-	defer report.LogIfNeeded(ctx)
-
-	return reconcilers.ReconcileDeployment(
-		ctx,
-		r.Instance,
-		r.owned.deployment,
-		builder.deployment(annotations),
-		constants.FLPName,
-		helper.PtrInt32(desiredFLP.KafkaConsumerReplicas),
-		&desiredFLP.KafkaConsumerAutoscaler,
-		&report,
-	)
-}
-
-func (r *flpTransformerReconciler) reconcileHPA(ctx context.Context, desiredFLP *flpSpec, builder *transfoBuilder) error {
-	report := helper.NewChangeReport("FLP autoscaler")
-	defer report.LogIfNeeded(ctx)
-
-	return reconcilers.ReconcileHPA(
-		ctx,
-		r.Instance,
-		r.owned.hpa,
-		builder.autoScaler(),
-		&desiredFLP.KafkaConsumerAutoscaler,
-		&report,
-	)
-}
-
-func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Context, builder *transfoBuilder) error {
+func (r *flpMonolithReconciler) reconcilePrometheusService(ctx context.Context, builder *monolithBuilder) error {
 	report := helper.NewChangeReport("FLP prometheus service")
 	defer report.LogIfNeeded(ctx)
 
@@ -195,19 +158,39 @@ func (r *flpTransformerReconciler) reconcilePrometheusService(ctx context.Contex
 	return nil
 }
 
-func (r *flpTransformerReconciler) reconcilePermissions(ctx context.Context, builder *transfoBuilder) error {
+func (r *flpMonolithReconciler) reconcileDaemonSet(ctx context.Context, desiredDS *appsv1.DaemonSet) error {
+	report := helper.NewChangeReport("FLP DaemonSet")
+	defer report.LogIfNeeded(ctx)
+
+	return reconcilers.ReconcileDaemonSet(
+		ctx,
+		r.Instance,
+		r.owned.daemonSet,
+		desiredDS,
+		constants.FLPName,
+		&report,
+	)
+}
+
+func (r *flpMonolithReconciler) reconcilePermissions(ctx context.Context, builder *monolithBuilder) error {
 	if !r.Managed.Exists(r.owned.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 
-	cr := BuildClusterRoleTransformer()
+	cr := buildClusterRoleIngester(r.UseOpenShiftSCC)
 	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
 		return err
 	}
-
-	desired := builder.clusterRoleBinding()
-	if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
+	cr = BuildClusterRoleTransformer()
+	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
 		return err
+	}
+	// Monolith uses ingester + transformer cluster roles
+	for _, kind := range []ConfKind{ConfKafkaIngester, ConfKafkaTransformer} {
+		desired := builder.clusterRoleBinding(kind)
+		if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
+			return err
+		}
 	}
 
 	return reconcileLokiRoles(ctx, r.Common, &builder.generic)

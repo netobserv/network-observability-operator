@@ -18,7 +18,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
-	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
+	"github.com/netobserv/network-observability-operator/controllers/flp"
 	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/cleanup"
@@ -144,7 +144,7 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context) error {
 	}
 
 	// Create reconcilers
-	flpReconciler := flowlogspipeline.NewReconciler(&reconcilersInfo, r.mgr.Config.FlowlogsPipelineImage)
+	flpReconciler := flp.NewReconciler(&reconcilersInfo, r.mgr.Config.FlowlogsPipelineImage)
 	var cpReconciler consoleplugin.CPReconciler
 	if r.mgr.HasConsolePlugin() {
 		cpReconciler = consoleplugin.NewReconciler(&reconcilersInfo, r.mgr.Config.ConsolePluginImage)
@@ -196,7 +196,7 @@ func (r *FlowCollectorReconciler) handleNamespaceChanged(
 	ctx context.Context,
 	oldNS, newNS string,
 	desired *flowslatest.FlowCollector,
-	flpReconciler *flowlogspipeline.FLPReconciler,
+	flpReconciler *flp.Reconciler,
 	cpReconciler *consoleplugin.CPReconciler,
 ) error {
 	log := log.FromContext(ctx)
