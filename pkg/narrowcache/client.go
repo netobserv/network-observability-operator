@@ -24,9 +24,9 @@ import (
 type Client struct {
 	client.Client
 	liveClient     kubernetes.Interface
-	watchedGVKs    map[string]GVKInfo
-	watchedObjects map[string]*watchedObject
-	wmut           sync.RWMutex
+	watchedGVKs    map[string]GVKInfo        // read only once init
+	watchedObjects map[string]*watchedObject // mutex'ed
+	wmut           sync.RWMutex              // for watchedObjects map
 }
 
 type watchedObject struct {
@@ -138,6 +138,8 @@ func (c *Client) updateCache(ctx context.Context, key string, watcher watch.Inte
 		}
 		c.callHandlers(ctx, key, watchEvent)
 	}
+	rlog.WithValues("key", key).Info("Watch terminated. Clearing cache entry.")
+	c.clearEntryByKey(key)
 }
 
 func (c *Client) setToCache(key string, obj runtime.Object) error {
@@ -146,29 +148,29 @@ func (c *Client) setToCache(key string, obj runtime.Object) error {
 		return fmt.Errorf("could not convert runtime.Object to client.Object")
 	}
 	c.wmut.Lock()
+	defer c.wmut.Unlock()
 	if ca := c.watchedObjects[key]; ca != nil {
 		ca.cached = cObj
 	} else {
 		c.watchedObjects[key] = &watchedObject{cached: cObj}
 	}
-	c.wmut.Unlock()
 	return nil
 }
 
 func (c *Client) removeFromCache(key string) {
 	c.wmut.Lock()
+	defer c.wmut.Unlock()
 	if ca := c.watchedObjects[key]; ca != nil {
 		ca.cached = nil
 	}
-	c.wmut.Unlock()
 }
 
 func (c *Client) addHandler(key string, hoq handlerOnQueue) {
 	c.wmut.Lock()
+	defer c.wmut.Unlock()
 	if ca := c.watchedObjects[key]; ca != nil {
 		ca.handlers = append(ca.handlers, hoq)
 	}
-	c.wmut.Unlock()
 }
 
 func (c *Client) callHandlers(ctx context.Context, key string, ev watch.Event) {
@@ -198,12 +200,13 @@ func (c *Client) callHandlers(ctx context.Context, key string, ev watch.Event) {
 		return
 	}
 	c.wmut.RLock()
+	defer c.wmut.RUnlock()
 	if ca := c.watchedObjects[key]; ca != nil {
 		for _, hoq := range ca.handlers {
-			fn(hoq)
+			h := hoq
+			go fn(h)
 		}
 	}
-	c.wmut.RUnlock()
 }
 
 func (c *Client) GetSource(ctx context.Context, obj client.Object) (source.Source, error) {
@@ -233,9 +236,6 @@ func (c *Client) GetSource(ctx context.Context, obj client.Object) (source.Sourc
 }
 
 func (c *Client) clearEntry(ctx context.Context, obj client.Object) {
-	c.wmut.Lock()
-	defer c.wmut.Unlock()
-
 	key := types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}
 	gvk, _ := c.GroupVersionKindFor(obj)
 	strGVK := gvk.String()
@@ -246,8 +246,16 @@ func (c *Client) clearEntry(ctx context.Context, obj client.Object) {
 			Info("Invalidating cache entry")
 		strGVK := gvk.String()
 		objKey := strGVK + "|" + key.String()
-		delete(c.watchedObjects, objKey)
+		c.clearEntryByKey(objKey)
 	}
+}
+
+func (c *Client) clearEntryByKey(key string) {
+	// Note that this doesn't remove the watch, which lives in a goroutine
+	// Watch would recreate cache object on received event, or it can be recreated on subsequent Get call
+	c.wmut.Lock()
+	defer c.wmut.Unlock()
+	delete(c.watchedObjects, key)
 }
 
 func (c *Client) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
