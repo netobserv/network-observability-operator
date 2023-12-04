@@ -131,9 +131,6 @@ func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.
 	if reg && !registered {
 		console.Spec.Plugins = append(console.Spec.Plugins, constants.PluginName)
 		return r.Client.Update(ctx, &console)
-	} else if !reg && registered {
-		console.Spec.Plugins = helper.RemoveAllStrings(console.Spec.Plugins, constants.PluginName)
-		return r.Client.Update(ctx, &console)
 	}
 	return nil
 }

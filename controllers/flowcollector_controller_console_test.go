@@ -77,7 +77,7 @@ func flowCollectorConsolePluginSpecs() {
 						Enable:          ptr.To(true),
 						Port:            9001,
 						ImagePullPolicy: "Never",
-						Register:        ptr.To(true),
+						Register:        ptr.To(false),
 						Autoscaler: flowslatest.FlowCollectorHPA{
 							Status:      flowslatest.HPAStatusEnabled,
 							MinReplicas: ptr.To(int32(1)),
@@ -224,20 +224,20 @@ func flowCollectorConsolePluginSpecs() {
 	})
 
 	Context("Registering to the Console CR", func() {
-		It("Should be registered by default", func() {
+		It("Should start unregistered", func() {
 			Eventually(func() interface{} {
 				cr := operatorsv1.Console{}
 				if err := k8sClient.Get(ctx, consoleCRKey, &cr); err != nil {
 					return err
 				}
 				return cr.Spec.Plugins
-			}, timeout, interval).Should(Equal([]string{"netobserv-plugin"}))
+			}, timeout, interval).Should(BeEmpty())
 		})
 
 		It("Should be unregistered", func() {
 			By("Update CR to unregister")
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.ConsolePlugin.Register = ptr.To(false)
+				fc.Spec.ConsolePlugin.Register = ptr.To(true)
 			})
 
 			By("Expecting the Console CR to not have plugin registered")
@@ -247,7 +247,7 @@ func flowCollectorConsolePluginSpecs() {
 					return err
 				}
 				return cr.Spec.Plugins
-			}, timeout, interval).Should(BeEmpty())
+			}, timeout, interval).Should(Equal([]string{"netobserv-plugin"}))
 		})
 	})
 
