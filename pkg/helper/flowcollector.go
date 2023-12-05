@@ -37,10 +37,6 @@ func HasKafkaExporter(spec *flowslatest.FlowCollectorSpec) bool {
 	return false
 }
 
-func HPADisabled(spec *flowslatest.FlowCollectorHPA) bool {
-	return spec == nil || spec.Status == flowslatest.HPAStatusDisabled
-}
-
 func HPAEnabled(spec *flowslatest.FlowCollectorHPA) bool {
 	return spec != nil && spec.Status == flowslatest.HPAStatusEnabled
 }

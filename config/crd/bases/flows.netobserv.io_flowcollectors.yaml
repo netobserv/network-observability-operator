@@ -8019,8 +8019,8 @@ spec:
                   type: object
                 type: array
               namespace:
-                description: Namespace where console plugin and flowlogs-pipeline
-                  have been deployed.
+                description: 'Namespace where console plugin and flowlogs-pipeline
+                  have been deployed. Deprecated: annotations are used instead'
                 type: string
             required:
             - conditions

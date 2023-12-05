@@ -39,6 +39,8 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		Complete(&r)
 }
 
+// Reconcile is the controller entry point for reconciling current state with desired state.
+// It manages the controller status at a high level. Business logic is delegated into `reconcile`.
 func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
 	l := log.Log.WithName("monitoring") // clear context (too noisy)
 	ctx = log.IntoContext(ctx, l)
