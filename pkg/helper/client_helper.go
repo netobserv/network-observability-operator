@@ -4,32 +4,44 @@ import (
 	"context"
 	"reflect"
 
-	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
 // Client includes a kube client with some additional helper functions
 type Client struct {
 	client.Client
 	SetControllerReference func(client.Object) error
-	SetChanged             func(bool)
-	SetInProgress          func(bool)
 }
 
 func UnmanagedClient(cl client.Client) Client {
 	return Client{
 		Client:                 cl,
 		SetControllerReference: func(o client.Object) error { return nil },
-		SetChanged:             func(b bool) {},
-		SetInProgress:          func(b bool) {},
 	}
+}
+
+func NewFlowCollectorClientHelper(ctx context.Context, c client.Client) (*Client, *flowslatest.FlowCollector, error) {
+	fc, err := getFlowCollector(ctx, c)
+	if err != nil || fc == nil {
+		return nil, fc, err
+	}
+	return &Client{
+		Client: c,
+		SetControllerReference: func(obj client.Object) error {
+			return controllerutil.SetControllerReference(fc, obj, c.Scheme())
+		},
+	}, fc, nil
 }
 
 // CreateOwned is an helper function that creates an object, sets owner reference and writes info & errors logs
 func (c *Client) CreateOwned(ctx context.Context, obj client.Object) error {
 	log := log.FromContext(ctx)
-	c.SetChanged(true)
 	err := c.SetControllerReference(obj)
 	if err != nil {
 		log.Error(err, "Failed to set controller reference")
@@ -68,9 +80,7 @@ func (c *Client) UpdateOwned(ctx context.Context, old, obj client.Object) error 
 		log.Error(err, "Failed to get updated resource "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 		return err
 	}
-	if obj.GetResourceVersion() != old.GetResourceVersion() {
-		c.SetChanged(true)
-	} else {
+	if obj.GetResourceVersion() == old.GetResourceVersion() {
 		log.Info(kind+" not updated", "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 	}
 	return nil
@@ -88,14 +98,19 @@ func (c *Client) UpdateIfOwned(ctx context.Context, old, obj client.Object) erro
 	return c.UpdateOwned(ctx, old, obj)
 }
 
-func (c *Client) CheckDeploymentInProgress(d *appsv1.Deployment) {
-	if d.Status.UpdatedReplicas < d.Status.Replicas {
-		c.SetInProgress(true)
+func getFlowCollector(ctx context.Context, c client.Client) (*flowslatest.FlowCollector, error) {
+	log := log.FromContext(ctx)
+	desired := &flowslatest.FlowCollector{}
+	if err := c.Get(ctx, constants.FlowCollectorName, desired); err != nil {
+		if errors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			log.Info("FlowCollector resource not found. Ignoring since object must be deleted")
+			return nil, nil
+		}
+		// Error reading the object - requeue the request.
+		return nil, err
 	}
-}
-
-func (c *Client) CheckDaemonSetInProgress(ds *appsv1.DaemonSet) {
-	if ds.Status.UpdatedNumberScheduled < ds.Status.DesiredNumberScheduled {
-		c.SetInProgress(true)
-	}
+	return desired, nil
 }

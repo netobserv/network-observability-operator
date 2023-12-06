@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package flowlogspipeline
+package flp
 
 import (
 	"encoding/json"
@@ -37,6 +37,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 )
 
 var resources = corev1.ResourceRequirements{
@@ -189,14 +190,14 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki}
-	b, _ := newMonolithBuilder(info.NewInstance(image), cfg)
+	b, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), cfg)
 	return b
 }
 
 func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) transfoBuilder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki}
-	b, _ := newTransfoBuilder(info.NewInstance(image), cfg)
+	b, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), cfg)
 	return b
 }
 
@@ -369,7 +370,7 @@ func TestDeploymentNoChange(t *testing.T) {
 	second := b.deployment(annotate(digest))
 
 	report := helper.NewChangeReport("")
-	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, helper.HPADisabled(&cfg.Processor.KafkaConsumerAutoscaler), *cfg.Processor.KafkaConsumerReplicas, &report))
+	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, !helper.HPAEnabled(&cfg.Processor.KafkaConsumerAutoscaler), *cfg.Processor.KafkaConsumerReplicas, &report))
 	assert.Contains(report.String(), "no change")
 }
 
@@ -393,7 +394,7 @@ func TestDeploymentChanged(t *testing.T) {
 
 	report := helper.NewChangeReport("")
 	checkChanged := func(old, new *appsv1.Deployment, spec flowslatest.FlowCollectorSpec) bool {
-		return helper.DeploymentChanged(old, new, constants.FLPName, helper.HPADisabled(&spec.Processor.KafkaConsumerAutoscaler), *spec.Processor.KafkaConsumerReplicas, &report)
+		return helper.DeploymentChanged(old, new, constants.FLPName, !helper.HPAEnabled(&spec.Processor.KafkaConsumerAutoscaler), *spec.Processor.KafkaConsumerReplicas, &report)
 	}
 
 	assert.True(checkChanged(first, second, cfg))
@@ -474,7 +475,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	second := b.deployment(annotate(digest))
 
 	report := helper.NewChangeReport("")
-	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, helper.HPADisabled(&cfg2.Processor.KafkaConsumerAutoscaler), *cfg2.Processor.KafkaConsumerReplicas, &report))
+	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, !helper.HPAEnabled(&cfg2.Processor.KafkaConsumerAutoscaler), *cfg2.Processor.KafkaConsumerReplicas, &report))
 	assert.Contains(report.String(), "Replicas changed")
 }
 
@@ -571,7 +572,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2"}
-	b, _ = newMonolithBuilder(info.NewInstance(image2), &cfg)
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg)
 	third := b.generic.serviceMonitor()
 
 	report = helper.NewChangeReport("")
@@ -579,7 +580,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 	assert.Contains(report.String(), "ServiceMonitor labels changed")
 
 	// Check scheme changed
-	b, _ = newMonolithBuilder(info.NewInstance(image2), &cfg)
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg)
 	fourth := b.generic.serviceMonitor()
 	fourth.Spec.Endpoints[0].Scheme = "https"
 
@@ -624,7 +625,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2"}
-	b, _ = newMonolithBuilder(info.NewInstance(image2), &cfg)
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg)
 	third := b.generic.prometheusRule()
 
 	report = helper.NewChangeReport("")
@@ -765,9 +766,9 @@ func TestLabels(t *testing.T) {
 
 	cfg := getConfig()
 	info := reconcilers.Common{Namespace: "ns"}
-	builder, _ := newMonolithBuilder(info.NewInstance(image), &cfg)
-	tBuilder, _ := newTransfoBuilder(info.NewInstance(image), &cfg)
-	iBuilder, _ := newIngestBuilder(info.NewInstance(image), &cfg)
+	builder, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg)
+	tBuilder, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), &cfg)
+	iBuilder, _ := newIngestBuilder(info.NewInstance(image, status.Instance{}), &cfg)
 
 	// Deployment
 	depl := tBuilder.deployment(annotate("digest"))
@@ -850,7 +851,7 @@ func TestPipelineConfig(t *testing.T) {
 	// Kafka Ingester
 	cfg.DeploymentModel = flowslatest.DeploymentModelKafka
 	info := reconcilers.Common{Namespace: ns}
-	bi, _ := newIngestBuilder(info.NewInstance(image), &cfg)
+	bi, _ := newIngestBuilder(info.NewInstance(image, status.Instance{}), &cfg)
 	cm, _, err = bi.configMap()
 	assert.NoError(err)
 	_, pipeline = validatePipelineConfig(t, cm)

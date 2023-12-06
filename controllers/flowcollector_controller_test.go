@@ -21,7 +21,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
-	"github.com/netobserv/network-observability-operator/controllers/flowlogspipeline"
+	"github.com/netobserv/network-observability-operator/controllers/flp"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 )
 
@@ -55,11 +55,11 @@ func flowCollectorControllerSpecs() {
 		Namespace: otherNamespace,
 	}
 	flpKeyKafkaIngester := types.NamespacedName{
-		Name:      constants.FLPName + flowlogspipeline.FlpConfSuffix[flowlogspipeline.ConfKafkaIngester],
+		Name:      constants.FLPName + flp.FlpConfSuffix[flp.ConfKafkaIngester],
 		Namespace: operatorNamespace,
 	}
 	flpKeyKafkaTransformer := types.NamespacedName{
-		Name:      constants.FLPName + flowlogspipeline.FlpConfSuffix[flowlogspipeline.ConfKafkaTransformer],
+		Name:      constants.FLPName + flp.FlpConfSuffix[flp.ConfKafkaTransformer],
 		Namespace: operatorNamespace,
 	}
 	cpKey1 := types.NamespacedName{
@@ -70,10 +70,10 @@ func flowCollectorControllerSpecs() {
 		Name:      "netobserv-plugin",
 		Namespace: otherNamespace,
 	}
-	rbKeyIngest := types.NamespacedName{Name: flowlogspipeline.RoleBindingName(flowlogspipeline.ConfKafkaIngester)}
-	rbKeyTransform := types.NamespacedName{Name: flowlogspipeline.RoleBindingName(flowlogspipeline.ConfKafkaTransformer)}
-	rbKeyIngestMono := types.NamespacedName{Name: flowlogspipeline.RoleBindingMonoName(flowlogspipeline.ConfKafkaIngester)}
-	rbKeyTransformMono := types.NamespacedName{Name: flowlogspipeline.RoleBindingMonoName(flowlogspipeline.ConfKafkaTransformer)}
+	rbKeyIngest := types.NamespacedName{Name: flp.RoleBindingName(flp.ConfKafkaIngester)}
+	rbKeyTransform := types.NamespacedName{Name: flp.RoleBindingName(flp.ConfKafkaTransformer)}
+	rbKeyIngestMono := types.NamespacedName{Name: flp.RoleBindingMonoName(flp.ConfKafkaIngester)}
+	rbKeyTransformMono := types.NamespacedName{Name: flp.RoleBindingMonoName(flp.ConfKafkaTransformer)}
 	rbKeyPlugin := types.NamespacedName{Name: constants.PluginName}
 
 	// Created objects to cleanup
@@ -143,15 +143,6 @@ func flowCollectorControllerSpecs() {
 
 			// Create
 			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
-
-			By("Expecting status to be updating")
-			Eventually(func() error {
-				updatedCr := flowslatest.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &updatedCr); err != nil {
-					return err
-				}
-				return conditionMatch(updatedCr.Status.Conditions, "Pending", "Updating")
-			}, timeout, interval).Should(Succeed())
 
 			By("Expecting to create the flowlogs-pipeline DaemonSet")
 			Eventually(func() error {
@@ -963,21 +954,6 @@ func flowCollectorControllerSpecs() {
 			}, timeout, interval).Should(Succeed())
 		})
 
-		It("Should condition be ready", func() {
-			// Do a dummy change that will trigger reconcile
-			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.ConsolePlugin.LogLevel = "debug"
-			})
-			By("Expecting status to be ready")
-			Eventually(func() error {
-				updatedCr := flowslatest.FlowCollector{}
-				if err := k8sClient.Get(ctx, crKey, &updatedCr); err != nil {
-					return err
-				}
-				return conditionMatch(updatedCr.Status.Conditions, "Ready", "Ready")
-			}, timeout, interval).Should(Succeed())
-		})
-
 		It("Should delete CR", func() {
 			Eventually(func() error {
 				return k8sClient.Delete(ctx, &flowCR)
@@ -1079,22 +1055,5 @@ func checkDigestUpdate(oldDigest *string, annots map[string]string) error {
 		return fmt.Errorf("expect digest to change, but is still %s", *oldDigest)
 	}
 	*oldDigest = newDigest
-	return nil
-}
-
-func conditionMatch(conditions []metav1.Condition, conditionType string, conditionReason string) error {
-	if len(conditions) < 1 {
-		return fmt.Errorf("Invalid status condition length %d\nconditions: %v", len(conditions), conditions)
-	}
-	// check only first condition since AddUniqueCondition function sort them
-	if conditions[0].Type != conditionType {
-		return fmt.Errorf("Invalid condition type %s != %s\nconditions: %v", conditions[0].Type, conditionType, conditions)
-	}
-	if conditions[0].Reason != conditionReason {
-		return fmt.Errorf("Invalid condition reason %s != %s\nconditions: %v", conditions[0].Reason, conditionReason, conditions)
-	}
-	if conditions[0].Status != metav1.ConditionTrue {
-		return fmt.Errorf("Invalid condition status %s != %s\nconditions: %v", conditions[0].Status, metav1.ConditionTrue, conditions)
-	}
 	return nil
 }

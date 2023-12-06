@@ -36,7 +36,7 @@ spec:
     - jsonPath: .spec.deploymentModel
       name: Deployment Model
       type: string
-    - jsonPath: .status.conditions[*].reason
+    - jsonPath: .status.conditions[?(@.type=="Ready")].reason
       name: Status
       type: string
     deprecated: true
@@ -2460,7 +2460,7 @@ spec:
     - jsonPath: .spec.deploymentModel
       name: Deployment Model
       type: string
-    - jsonPath: .status.conditions[*].reason
+    - jsonPath: .status.conditions[?(@.type=="Ready")].reason
       name: Status
       type: string
     name: v1beta1
@@ -5145,7 +5145,7 @@ spec:
     - jsonPath: .spec.deploymentModel
       name: Deployment Model
       type: string
-    - jsonPath: .status.conditions[*].reason
+    - jsonPath: .status.conditions[?(@.type=="Ready")].reason
       name: Status
       type: string
     name: v1beta2
@@ -8033,8 +8033,8 @@ spec:
                   type: object
                 type: array
               namespace:
-                description: Namespace where console plugin and flowlogs-pipeline
-                  have been deployed.
+                description: 'Namespace where console plugin and flowlogs-pipeline
+                  have been deployed. Deprecated: annotations are used instead'
                 type: string
             required:
             - conditions

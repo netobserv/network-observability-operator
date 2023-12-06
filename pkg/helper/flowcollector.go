@@ -37,12 +37,8 @@ func HasKafkaExporter(spec *flowslatest.FlowCollectorSpec) bool {
 	return false
 }
 
-func HPADisabled(spec *flowslatest.FlowCollectorHPA) bool {
-	return spec.Status == flowslatest.HPAStatusDisabled
-}
-
 func HPAEnabled(spec *flowslatest.FlowCollectorHPA) bool {
-	return spec.Status == flowslatest.HPAStatusEnabled
+	return spec != nil && spec.Status == flowslatest.HPAStatusEnabled
 }
 
 func GetRecordTypes(processor *flowslatest.FlowCollectorFLP) []string {
@@ -166,4 +162,11 @@ func removeMetricsByPattern(list []string, search string) []string {
 		}
 	}
 	return filtered
+}
+
+func GetNamespace(spec *flowslatest.FlowCollectorSpec) string {
+	if spec.Namespace != "" {
+		return spec.Namespace
+	}
+	return constants.DefaultOperatorNamespace
 }

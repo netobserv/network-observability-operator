@@ -40,8 +40,6 @@ type handlerOnQueue struct {
 }
 
 func (c *Client) Get(ctx context.Context, key client.ObjectKey, out client.Object, opts ...client.GetOption) error {
-	rlog := log.FromContext(ctx).WithName("narrowcache")
-	rlog.WithValues("key", key).Info("Getting object:")
 	gvk, err := c.GroupVersionKindFor(out)
 	if err != nil {
 		return err
@@ -60,16 +58,13 @@ func (c *Client) Get(ctx context.Context, key client.ObjectKey, out client.Objec
 		return nil
 	}
 
-	rlog.WithValues("GVK", strGVK).Info("GVK not managed here: pass it to down layer")
 	return c.Client.Get(ctx, key, out, opts...)
 }
 
 func (c *Client) getAndCreateWatchIfNeeded(ctx context.Context, info GVKInfo, gvk schema.GroupVersionKind, key client.ObjectKey) (client.Object, string, error) {
 	strGVK := gvk.String()
 	objKey := strGVK + "|" + key.String()
-	rlog := log.FromContext(ctx).WithName("narrowcache").WithValues("objKey", objKey)
 
-	rlog.Info("Managed kind: check cache")
 	c.wmut.RLock()
 	ca := c.watchedObjects[objKey]
 	c.wmut.RUnlock()
@@ -78,17 +73,16 @@ func (c *Client) getAndCreateWatchIfNeeded(ctx context.Context, info GVKInfo, gv
 			return nil, objKey, errors.NewNotFound(schema.GroupResource{Group: gvk.Group, Resource: gvk.Kind}, key.Name)
 		}
 		// Return from cache
-		rlog.Info("Object found in cache, returning")
 		return ca.cached, objKey, nil
 	}
 
 	// Live query
-	rlog.Info("Object not found in cache, doing live query")
+	rlog := log.FromContext(ctx).WithName("narrowcache").WithValues("objKey", objKey)
+	rlog.Info("Cache miss, doing live query")
 	fetched, err := info.Getter(ctx, c.liveClient, key)
 	if err != nil {
 		return nil, objKey, err
 	}
-	rlog.Info("Object fetched")
 
 	// Create watch for later calls
 	w, err := info.Watcher(ctx, c.liveClient, key)

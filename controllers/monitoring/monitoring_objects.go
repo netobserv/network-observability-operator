@@ -1,4 +1,4 @@
-package controllers
+package monitoring
 
 import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -41,7 +41,8 @@ func buildRoleMonitoringReader() *rbacv1.ClusterRole {
 			Name: constants.OperatorName + roleSuffix,
 		},
 		Rules: []rbacv1.PolicyRule{
-			{APIGroups: []string{""},
+			{
+				APIGroups: []string{""},
 				Verbs:     []string{"get", "list", "watch"},
 				Resources: []string{"pods", "services", "endpoints"},
 			},

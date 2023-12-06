@@ -14049,7 +14049,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where console plugin and flowlogs-pipeline have been deployed.<br/>
+          Namespace where console plugin and flowlogs-pipeline have been deployed. Deprecated: annotations are used instead<br/>
         </td>
         <td>false</td>
       </tr></tbody>

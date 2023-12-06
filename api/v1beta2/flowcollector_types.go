@@ -936,6 +936,7 @@ type FlowCollectorStatus struct {
 	Conditions []metav1.Condition `json:"conditions"`
 
 	// Namespace where console plugin and flowlogs-pipeline have been deployed.
+	// Deprecated: annotations are used instead
 	Namespace string `json:"namespace,omitempty"`
 }
 
@@ -945,7 +946,7 @@ type FlowCollectorStatus struct {
 // +kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.spec.agent.type`
 // +kubebuilder:printcolumn:name="Sampling (EBPF)",type="string",JSONPath=`.spec.agent.ebpf.sampling`
 // +kubebuilder:printcolumn:name="Deployment Model",type="string",JSONPath=`.spec.deploymentModel`
-// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[*].reason"
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=`.status.conditions[?(@.type=="Ready")].reason`
 // `FlowCollector` is the schema for the network flows collection API, which pilots and configures the underlying deployments.
 type FlowCollector struct {
 	metav1.TypeMeta   `json:",inline"`
