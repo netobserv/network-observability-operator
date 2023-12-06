@@ -138,6 +138,14 @@ rules:
   - patch
   - update
 - apiGroups:
+  - flows.netobserv.io
+  resources:
+  - flowmetrics
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - loki.grafana.com
   resourceNames:
   - logs

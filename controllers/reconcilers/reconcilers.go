@@ -182,8 +182,9 @@ func ReconcileHPA(ctx context.Context, ci *Instance, old, new *ascv2.HorizontalP
 		} else if helper.AutoScalerChanged(old, *desired, report) {
 			return ci.UpdateIfOwned(ctx, old, new)
 		}
+	} else {
+		ci.Managed.TryDelete(ctx, old)
 	}
-	ci.Managed.TryDelete(ctx, old)
 	return nil
 }
 

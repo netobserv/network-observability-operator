@@ -7,6 +7,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 )
@@ -15,8 +16,8 @@ type transfoBuilder struct {
 	generic builder
 }
 
-func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) (transfoBuilder, error) {
-	gen, err := NewBuilder(info, desired, ConfKafkaTransformer)
+func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *v1alpha1.FlowMetricList) (transfoBuilder, error) {
+	gen, err := NewBuilder(info, desired, flowMetrics, ConfKafkaTransformer)
 	return transfoBuilder{
 		generic: gen,
 	}, err

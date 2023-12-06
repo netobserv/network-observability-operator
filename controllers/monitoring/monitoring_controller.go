@@ -16,6 +16,7 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
+	"github.com/netobserv/network-observability-operator/pkg/metrics"
 )
 
 type Reconciler struct {
@@ -101,7 +102,7 @@ func (r *Reconciler) reconcile(ctx context.Context) error {
 	}
 
 	if r.mgr.HasSvcMonitor() {
-		names := helper.GetIncludeList(&desired.Spec)
+		names := metrics.GetIncludeList(&desired.Spec)
 		desiredFlowDashboardCM, del, err := buildFlowMetricsDashboard(ns, names)
 		if err != nil {
 			return err

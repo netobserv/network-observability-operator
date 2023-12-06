@@ -11,157 +11,44 @@ metadata:
             "name": "cluster"
           },
           "spec": {
-            "agent": {
-              "ebpf": {
-                "cacheActiveTimeout": "5s",
-                "cacheMaxFlows": 100000,
-                "excludeInterfaces": [
-                  "lo"
-                ],
-                "imagePullPolicy": "IfNotPresent",
-                "interfaces": [],
-                "kafkaBatchSize": 10485760,
-                "logLevel": "info",
-                "resources": {
-                  "limits": {
-                    "memory": "800Mi"
-                  },
-                  "requests": {
-                    "cpu": "100m",
-                    "memory": "50Mi"
-                  }
-                },
-                "sampling": 50
-              },
-              "type": "EBPF"
+            "deploymentModel": "DIRECT"
+          }
+        },
+        {
+          "apiVersion": "flows.netobserv.io/v1alpha1",
+          "kind": "FlowMetric",
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/created-by": "netobserv-operator",
+              "app.kubernetes.io/instance": "flowmetric-sample",
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "flowmetric",
+              "app.kubernetes.io/part-of": "netobserv-operator"
             },
-            "consolePlugin": {
-              "autoscaler": {
-                "maxReplicas": 3,
-                "metrics": [
-                  {
-                    "resource": {
-                      "name": "cpu",
-                      "target": {
-                        "averageUtilization": 50,
-                        "type": "Utilization"
-                      }
-                    },
-                    "type": "Resource"
-                  }
-                ],
-                "minReplicas": 1,
-                "status": "DISABLED"
+            "name": "flowmetric-sample"
+          },
+          "spec": {
+            "filters": [
+              {
+                "field": "DstPort",
+                "matchType": "Regex",
+                "value": "^\\d\\d?\\d?\\d?$"
               },
-              "imagePullPolicy": "IfNotPresent",
-              "logLevel": "info",
-              "port": 9001,
-              "portNaming": {
-                "enable": true,
-                "portNames": {
-                  "3100": "loki"
-                }
+              {
+                "field": "Duplicate",
+                "value": "false"
               },
-              "quickFilters": [
-                {
-                  "default": true,
-                  "filter": {
-                    "dst_namespace!": "openshift-,netobserv",
-                    "src_namespace!": "openshift-,netobserv"
-                  },
-                  "name": "Applications"
-                },
-                {
-                  "filter": {
-                    "dst_namespace": "openshift-,netobserv",
-                    "src_namespace": "openshift-,netobserv"
-                  },
-                  "name": "Infrastructure"
-                },
-                {
-                  "default": true,
-                  "filter": {
-                    "dst_kind": "Pod",
-                    "src_kind": "Pod"
-                  },
-                  "name": "Pods network"
-                },
-                {
-                  "filter": {
-                    "dst_kind": "Service"
-                  },
-                  "name": "Services network"
-                }
-              ],
-              "register": true
-            },
-            "deploymentModel": "DIRECT",
-            "exporters": [],
-            "kafka": {
-              "address": "kafka-cluster-kafka-bootstrap.netobserv",
-              "tls": {
-                "caCert": {
-                  "certFile": "ca.crt",
-                  "name": "kafka-cluster-cluster-ca-cert",
-                  "type": "secret"
-                },
-                "enable": false,
-                "userCert": {
-                  "certFile": "user.crt",
-                  "certKey": "user.key",
-                  "name": "flp-kafka",
-                  "type": "secret"
-                }
-              },
-              "topic": "network-flows"
-            },
-            "loki": {
-              "batchSize": 10485760,
-              "batchWait": "1s",
-              "maxBackoff": "5s",
-              "maxRetries": 2,
-              "minBackoff": "1s",
-              "tls": {
-                "caCert": {
-                  "certFile": "service-ca.crt",
-                  "name": "loki-gateway-ca-bundle",
-                  "type": "configmap"
-                },
-                "enable": false,
-                "insecureSkipVerify": false
-              },
-              "url": "http://loki.netobserv.svc:3100/"
-            },
-            "namespace": "netobserv",
-            "processor": {
-              "dropUnusedFields": true,
-              "imagePullPolicy": "IfNotPresent",
-              "kafkaConsumerAutoscaler": null,
-              "kafkaConsumerBatchSize": 10485760,
-              "kafkaConsumerQueueCapacity": 1000,
-              "kafkaConsumerReplicas": 3,
-              "logLevel": "info",
-              "metrics": {
-                "ignoreTags": [
-                  "egress",
-                  "packets"
-                ],
-                "server": {
-                  "port": 9102
-                }
-              },
-              "port": 2055,
-              "profilePort": 6060,
-              "resources": {
-                "limits": {
-                  "memory": "800Mi"
-                },
-                "requests": {
-                  "cpu": "100m",
-                  "memory": "100Mi"
-                }
+              {
+                "field": "FlowDirection",
+                "matchType": "Regex",
+                "value": "1|2"
               }
-            }
+            ],
+            "labels": [
+              "DstPort"
+            ],
+            "metricName": "service_ports_total",
+            "type": "Counter"
           }
         },
         {
@@ -558,6 +445,12 @@ spec:
       kind: FlowCollector
       name: flowcollectors.flows.netobserv.io
       version: v1beta2
+    - description: '`FlowMetric` is the schema for the custom metrics API, which allows
+        generating more metrics out of flow logs.'
+      displayName: Flow Metric
+      kind: FlowMetric
+      name: flowmetrics.flows.netobserv.io
+      version: v1alpha1
   description: |-
     NetObserv Operator is an OpenShift / Kubernetes operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by the NetObserv eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
 
@@ -766,6 +659,14 @@ spec:
           - get
           - patch
           - update
+        - apiGroups:
+          - flows.netobserv.io
+          resources:
+          - flowmetrics
+          verbs:
+          - get
+          - list
+          - watch
         - apiGroups:
           - loki.grafana.com
           resourceNames:

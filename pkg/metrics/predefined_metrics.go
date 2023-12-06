@@ -7,6 +7,7 @@ import (
 
 	flpapi "github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 const (
@@ -195,4 +196,35 @@ func GetDefinitions(names []string) []flpapi.PromMetricsItem {
 		}
 	}
 	return ret
+}
+
+func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
+	var list []string
+	if spec.Processor.Metrics.IncludeList == nil {
+		list = DefaultIncludeList
+	} else {
+		for _, m := range *spec.Processor.Metrics.IncludeList {
+			list = append(list, string(m))
+		}
+	}
+	if !helper.UseEBPF(spec) || !helper.IsPktDropEnabled(&spec.Agent.EBPF) {
+		list = removeMetricsByPattern(list, "_drop_")
+	}
+	if !helper.UseEBPF(spec) || !helper.IsFlowRTTEnabled(&spec.Agent.EBPF) {
+		list = removeMetricsByPattern(list, "_rtt_")
+	}
+	if !helper.UseEBPF(spec) || !helper.IsDNSTrackingEnabled(&spec.Agent.EBPF) {
+		list = removeMetricsByPattern(list, "_dns_")
+	}
+	return list
+}
+
+func removeMetricsByPattern(list []string, search string) []string {
+	var filtered []string
+	for _, m := range list {
+		if !strings.Contains(m, search) {
+			filtered = append(filtered, m)
+		}
+	}
+	return filtered
 }

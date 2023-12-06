@@ -41,6 +41,12 @@ spec:
       kind: FlowCollector
       name: flowcollectors.flows.netobserv.io
       version: v1beta2
+    - description: '`FlowMetric` is the schema for the custom metrics
+        API, which allows generating more metrics out of flow logs.'
+      displayName: Flow Metric
+      kind: FlowMetric
+      name: flowmetrics.flows.netobserv.io
+      version: v1alpha1
   description: ':full-description:'
   displayName: NetObserv Operator
   icon:

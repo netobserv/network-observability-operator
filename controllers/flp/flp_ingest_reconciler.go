@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/netobserv/network-observability-operator/api/v1alpha1"
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
@@ -61,7 +62,7 @@ func (r *ingesterReconciler) getStatus() *status.Instance {
 	return &r.Status
 }
 
-func (r *ingesterReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
+func (r *ingesterReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector, flowMetrics *v1alpha1.FlowMetricList) error {
 	// Retrieve current owned objects
 	err := r.Managed.FetchAll(ctx)
 	if err != nil {
@@ -76,7 +77,7 @@ func (r *ingesterReconciler) reconcile(ctx context.Context, desired *flowslatest
 
 	r.Status.SetReady() // will be overidden if necessary, as error or pending
 
-	builder, err := newIngestBuilder(r.Instance, &desired.Spec)
+	builder, err := newIngestBuilder(r.Instance, &desired.Spec, flowMetrics)
 	if err != nil {
 		return err
 	}
