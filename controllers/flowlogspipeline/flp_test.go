@@ -187,14 +187,14 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 }
 
 func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
-	loki := helper.NewLokiConfig(&cfg.Loki)
+	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki}
 	b, _ := newMonolithBuilder(info.NewInstance(image), cfg)
 	return b
 }
 
 func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) transfoBuilder {
-	loki := helper.NewLokiConfig(&cfg.Loki)
+	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki}
 	b, _ := newTransfoBuilder(info.NewInstance(image), cfg)
 	return b

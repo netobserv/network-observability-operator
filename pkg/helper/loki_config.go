@@ -19,7 +19,7 @@ type LokiConfig struct {
 	StaticLabels map[string]string
 }
 
-func NewLokiConfig(spec *flowslatest.FlowCollectorLoki) LokiConfig {
+func NewLokiConfig(spec *flowslatest.FlowCollectorLoki, namespace string) LokiConfig {
 	loki := LokiConfig{
 		BatchWait:    spec.BatchWait,
 		BatchSize:    spec.BatchSize,
@@ -31,15 +31,15 @@ func NewLokiConfig(spec *flowslatest.FlowCollectorLoki) LokiConfig {
 	}
 	switch spec.Mode {
 	case flowslatest.LokiModeLokiStack:
-		dotNamespace := ""
+		ns := namespace
 		if len(spec.LokiStack.Namespace) > 0 {
-			dotNamespace = "." + spec.LokiStack.Namespace
+			ns = spec.LokiStack.Namespace
 		}
-		gatewayURL := fmt.Sprintf("https://%s-gateway-http%s.svc:8080/api/logs/v1/network/", spec.LokiStack.Name, dotNamespace)
+		gatewayURL := fmt.Sprintf("https://%s-gateway-http.%s.svc:8080/api/logs/v1/network/", spec.LokiStack.Name, ns)
 		loki.LokiManualParams = flowslatest.LokiManualParams{
 			QuerierURL:  gatewayURL,
 			IngesterURL: gatewayURL,
-			StatusURL:   fmt.Sprintf("https://%s-query-frontend-http%s.svc:3100/", spec.LokiStack.Name, dotNamespace),
+			StatusURL:   fmt.Sprintf("https://%s-query-frontend-http.%s.svc:3100/", spec.LokiStack.Name, ns),
 			TenantID:    "network",
 			AuthToken:   flowslatest.LokiAuthForwardUserToken,
 			TLS: flowslatest.ClientTLS{

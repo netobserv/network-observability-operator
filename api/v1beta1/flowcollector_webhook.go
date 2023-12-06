@@ -84,7 +84,8 @@ func Convert_v1beta2_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(in *v1beta2.Fl
 // we have new defined fields in v1beta2 not in v1beta1
 // nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorLoki_To_v1beta1_FlowCollectorLoki(in *v1beta2.FlowCollectorLoki, out *FlowCollectorLoki, s apiconversion.Scope) error {
-	manual := helper.NewLokiConfig(in)
+	// Note that, despite we loose namespace info here, this isn't an issue because it's going to be restored from annotations
+	manual := helper.NewLokiConfig(in, "")
 	out.URL = manual.IngesterURL
 	out.QuerierURL = manual.QuerierURL
 	out.StatusURL = manual.StatusURL

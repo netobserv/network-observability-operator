@@ -132,7 +132,8 @@ func Convert_v1beta2_FLPMetrics_To_v1alpha1_FLPMetrics(in *v1beta2.FLPMetrics, o
 // we have new defined fields in v1beta2 not in v1alpha1
 // nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1beta2.FlowCollectorLoki, out *FlowCollectorLoki, s apiconversion.Scope) error {
-	manual := helper.NewLokiConfig(in)
+	// Note that, despite we loose namespace info here, this isn't an issue because it's going to be restored from annotations
+	manual := helper.NewLokiConfig(in, "")
 	out.URL = manual.IngesterURL
 	out.QuerierURL = manual.QuerierURL
 	out.StatusURL = manual.StatusURL
