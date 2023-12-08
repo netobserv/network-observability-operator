@@ -159,3 +159,19 @@ func UpdateCR(ctx context.Context, k8sClient client.Client, key types.Namespaced
 		return k8sClient.Update(ctx, cr)
 	}, Timeout, Interval).Should(Succeed())
 }
+
+func VolumeNames(vols []corev1.Volume) []string {
+	var volNames []string
+	for iv := range vols {
+		volNames = append(volNames, vols[iv].Name)
+	}
+	return volNames
+}
+
+func Annotations(annots map[string]string) []string {
+	var kv []string
+	for k, v := range annots {
+		kv = append(kv, k+"="+v)
+	}
+	return kv
+}

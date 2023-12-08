@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"time"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
@@ -14,11 +16,16 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/controllers/flp"
+	"github.com/netobserv/network-observability-operator/pkg/test"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
 
-var cmw watchers.ConfigWatchable
-var sw watchers.SecretWatchable
+var (
+	cmw                  watchers.ConfigWatchable
+	sw                   watchers.SecretWatchable
+	consistentlyTimeout  = 2 * time.Second
+	consistentlyInterval = 500 * time.Millisecond
+)
 
 // nolint:cyclop
 func flowCollectorCertificatesSpecs() {
@@ -48,7 +55,7 @@ func flowCollectorCertificatesSpecs() {
 			"other":          "any",
 		},
 	}
-	expectedLokiHash, _ := cmw.GetDigest(&lokiCert, []string{"service-ca.crt"})
+	expectedLokiHash, _ := cmw.GetDigest(&lokiCert, []string{"service-ca.crt"}) // C80Sbg==
 	kafkaCert := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kafka-ca",
@@ -59,7 +66,7 @@ func flowCollectorCertificatesSpecs() {
 			"other":    "any",
 		},
 	}
-	expectedKafkaHash, _ := cmw.GetDigest(&kafkaCert, []string{"cert.crt"})
+	expectedKafkaHash, _ := cmw.GetDigest(&kafkaCert, []string{"cert.crt"}) // tDuVsw==
 	kafkaUserCert := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kafka-user",
@@ -71,7 +78,7 @@ func flowCollectorCertificatesSpecs() {
 			"other":    []byte("any"),
 		},
 	}
-	expectedKafkaUserHash, _ := sw.GetDigest(&kafkaUserCert, []string{"user.crt", "user.key"})
+	expectedKafkaUserHash, _ := sw.GetDigest(&kafkaUserCert, []string{"user.crt", "user.key"}) // QztU6w==
 	kafka2Cert := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kafka-exporter-ca",
@@ -82,7 +89,7 @@ func flowCollectorCertificatesSpecs() {
 			"other":    "any",
 		},
 	}
-	expectedKafka2Hash, _ := cmw.GetDigest(&kafka2Cert, []string{"cert.crt"})
+	expectedKafka2Hash, _ := cmw.GetDigest(&kafka2Cert, []string{"cert.crt"}) // RO7D5Q==
 	kafka2Sasl := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kafka-exporter-sasl",
@@ -93,8 +100,8 @@ func flowCollectorCertificatesSpecs() {
 			"password": []byte("azerty"),
 		},
 	}
-	expectedKafkaSaslHash1, _ := sw.GetDigest(&kafka2Sasl, []string{"username"})
-	expectedKafkaSaslHash2, _ := sw.GetDigest(&kafka2Sasl, []string{"password"})
+	expectedKafkaSaslHash1, _ := sw.GetDigest(&kafka2Sasl, []string{"username"}) // hlEvyw==
+	expectedKafkaSaslHash2, _ := sw.GetDigest(&kafka2Sasl, []string{"password"}) // FOs6Rg==
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
@@ -107,9 +114,6 @@ func flowCollectorCertificatesSpecs() {
 	agent := appsv1.DaemonSet{}
 	flp := appsv1.Deployment{}
 	plugin := appsv1.Deployment{}
-	var lastAgentAnnots map[string]string
-	var lastFLPAnnots map[string]string
-	var lastPluginAnnots map[string]string
 
 	Context("Verify expectations are sane", func() {
 		It("Expected hashes should all be different", func() {
@@ -252,63 +256,80 @@ func flowCollectorCertificatesSpecs() {
 				if err := k8sClient.Get(ctx, agentKey, &agent); err != nil {
 					return err
 				}
-				return agent.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(2))
-			Expect(agent.Spec.Template.Annotations).To(HaveLen(2))
-			Expect(agent.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-ca"]).To(Equal(expectedKafkaHash))
-			Expect(agent.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-user"]).To(Equal(expectedKafkaUserHash))
-			Expect(agent.Spec.Template.Spec.Volumes[0].Name).To(Equal("kafka-certs-ca"))
-			Expect(agent.Spec.Template.Spec.Volumes[1].Name).To(Equal("kafka-certs-user"))
-			lastAgentAnnots = agent.Spec.Template.Annotations
+				return test.VolumeNames(agent.Spec.Template.Spec.Volumes)
+			}, timeout, interval).Should(ContainElements(
+				"kafka-certs-ca",
+				"kafka-certs-user",
+			))
+			Eventually(func() interface{} {
+				if err := k8sClient.Get(ctx, agentKey, &agent); err != nil {
+					return err
+				}
+				return test.Annotations(agent.Spec.Template.Annotations)
+			}, timeout, interval).Should(ContainElements(
+				"flows.netobserv.io/watched-kafka-ca="+expectedKafkaHash,
+				"flows.netobserv.io/watched-kafka-user="+expectedKafkaUserHash,
+			))
 
 			By("Expecting Loki certificate for Plugin mounted")
 			Eventually(func() interface{} {
 				if err := k8sClient.Get(ctx, pluginKey, &plugin); err != nil {
 					return err
 				}
-				return plugin.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(5))
+				return test.VolumeNames(plugin.Spec.Template.Spec.Volumes)
+			}, timeout, interval).Should(ContainElements(
+				"console-serving-cert",
+				"config-volume",
+				"loki-certs-ca",
+				"loki-status-certs-ca",
+				"loki-status-certs-user",
+			))
 			Expect(plugin.Spec.Template.Annotations).To(HaveLen(1))
-			Expect(plugin.Spec.Template.Spec.Volumes[0].Name).To(Equal("console-serving-cert"))
-			Expect(plugin.Spec.Template.Spec.Volumes[1].Name).To(Equal("config-volume"))
-			Expect(plugin.Spec.Template.Spec.Volumes[2].Name).To(Equal("loki-certs-ca"))
-			Expect(plugin.Spec.Template.Spec.Volumes[3].Name).To(Equal("loki-status-certs-ca"))
-			Expect(plugin.Spec.Template.Spec.Volumes[4].Name).To(Equal("loki-status-certs-user"))
-			lastPluginAnnots = plugin.Spec.Template.Annotations
 
 			By("Expecting Loki and Kafka certificates for FLP mounted")
 			Eventually(func() interface{} {
 				if err := k8sClient.Get(ctx, flpKey, &flp); err != nil {
 					return err
 				}
-				return flp.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(8))
-			Expect(flp.Spec.Template.Annotations).To(HaveLen(8))
-			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-ca"]).To(Equal(expectedKafkaHash))
-			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-user"]).To(Equal(expectedKafkaUserHash))
-			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-export-0-ca"]).To(Equal(expectedKafka2Hash))
-			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-export-0-sd1"]).To(Equal(expectedKafkaSaslHash1))
-			Expect(flp.Spec.Template.Annotations["flows.netobserv.io/watched-kafka-export-0-sd2"]).To(Equal(expectedKafkaSaslHash2))
-			Expect(flp.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flp.Spec.Template.Spec.Volumes[1].Name).To(Equal("kafka-cert-ca"))
-			Expect(flp.Spec.Template.Spec.Volumes[2].Name).To(Equal("kafka-cert-user"))
-			Expect(flp.Spec.Template.Spec.Volumes[3].Name).To(Equal("flowlogs-pipeline")) // token
-			Expect(flp.Spec.Template.Spec.Volumes[4].Name).To(Equal("loki-certs-ca"))
-			Expect(flp.Spec.Template.Spec.Volumes[5].Name).To(Equal("kafka-export-0-ca"))
-			Expect(flp.Spec.Template.Spec.Volumes[6].Name).To(Equal("kafka-export-0-sasl-id"))
-			Expect(flp.Spec.Template.Spec.Volumes[7].Name).To(Equal("kafka-export-0-sasl-secret"))
-			lastFLPAnnots = flp.Spec.Template.Annotations
+				return test.VolumeNames(flp.Spec.Template.Spec.Volumes)
+			}, timeout, interval).Should(ContainElements(
+				"config-volume",
+				"kafka-cert-ca",
+				"kafka-cert-user",
+				"flowlogs-pipeline",
+				"loki-certs-ca",
+				"kafka-export-0-ca",
+				"kafka-export-0-sasl-id",
+				"kafka-export-0-sasl-secret",
+			))
+			Eventually(func() interface{} {
+				if err := k8sClient.Get(ctx, flpKey, &flp); err != nil {
+					return err
+				}
+				return test.Annotations(flp.Spec.Template.Annotations)
+			}, timeout, interval).Should(ContainElements(
+				"flows.netobserv.io/watched-kafka-ca="+expectedKafkaHash,
+				"flows.netobserv.io/watched-kafka-user="+expectedKafkaUserHash,
+				"flows.netobserv.io/watched-kafka-export-0-ca="+expectedKafka2Hash,
+				"flows.netobserv.io/watched-kafka-export-0-sd1="+expectedKafkaSaslHash1,
+				"flows.netobserv.io/watched-kafka-export-0-sd2="+expectedKafkaSaslHash2,
+			))
 		})
 	})
 
 	Context("Updating Kafka certificates", func() {
+		var modifiedKafkaHash, modifiedKafkaUserHash string
 		It("Should update Kafka certificate", func() {
 			By("Updating Kafka CA certificate")
 			kafkaCert.Data["cert.crt"] = "--- KAFKA CA CERT MODIFIED ---"
 			Eventually(func() interface{} { return k8sClient.Update(ctx, &kafkaCert) }, timeout, interval).Should(Succeed())
+			modifiedKafkaHash, _ = cmw.GetDigest(&kafkaCert, []string{"cert.crt"})
+			Expect(modifiedKafkaHash).ToNot(Equal(expectedKafkaHash))
 			By("Updating Kafka User certificate")
 			kafkaUserCert.Data["user.crt"] = []byte("--- KAFKA USER CERT MODIFIED ---")
 			Eventually(func() interface{} { return k8sClient.Update(ctx, &kafkaUserCert) }, timeout, interval).Should(Succeed())
+			modifiedKafkaUserHash, _ = sw.GetDigest(&kafkaUserCert, []string{"user.crt", "user.key"})
+			Expect(modifiedKafkaUserHash).ToNot(Equal(expectedKafkaUserHash))
 		})
 
 		It("Should copy certificates when necessary", func() {
@@ -337,24 +358,31 @@ func flowCollectorCertificatesSpecs() {
 			}))
 		})
 
-		It("Should redeploy eBPF Agent", func() {
+		It("Should change eBPF Agent annotations", func() {
 			Eventually(func() interface{} {
 				if err := k8sClient.Get(ctx, agentKey, &agent); err != nil {
 					return err
 				}
-				return agent.Spec.Template.Annotations
-			}, timeout, interval).Should(Not(Equal(lastAgentAnnots)))
-			lastAgentAnnots = agent.Spec.Template.Annotations
+				return test.Annotations(agent.Spec.Template.Annotations)
+			}, timeout, interval).Should(ContainElements(
+				"flows.netobserv.io/watched-kafka-ca="+modifiedKafkaHash,
+				"flows.netobserv.io/watched-kafka-user="+modifiedKafkaUserHash,
+			))
 		})
 
-		It("Should redeploy FLP", func() {
+		It("Should change FLP annotations", func() {
 			Eventually(func() interface{} {
 				if err := k8sClient.Get(ctx, flpKey, &flp); err != nil {
 					return err
 				}
-				return flp.Spec.Template.Annotations
-			}, timeout, interval).Should(Not(Equal(lastFLPAnnots)))
-			lastFLPAnnots = flp.Spec.Template.Annotations
+				return test.Annotations(flp.Spec.Template.Annotations)
+			}, timeout, interval).Should(ContainElements(
+				"flows.netobserv.io/watched-kafka-ca="+modifiedKafkaHash,
+				"flows.netobserv.io/watched-kafka-user="+modifiedKafkaUserHash,
+				"flows.netobserv.io/watched-kafka-export-0-ca="+expectedKafka2Hash,
+				"flows.netobserv.io/watched-kafka-export-0-sd1="+expectedKafkaSaslHash1,
+				"flows.netobserv.io/watched-kafka-export-0-sd2="+expectedKafkaSaslHash2,
+			))
 		})
 	})
 
@@ -380,25 +408,25 @@ func flowCollectorCertificatesSpecs() {
 		})
 
 		// Console plugin is not restarted, as Loki certificate is always read from file
-		It("Should not redeploy Console plugin", func() {
-			Eventually(func() interface{} {
+		It("Should not trigger Console plugin redeploy", func() {
+			lastPluginAnnots := plugin.Spec.Template.Annotations
+			Consistently(func() interface{} {
 				if err := k8sClient.Get(ctx, pluginKey, &plugin); err != nil {
 					return err
 				}
 				return plugin.Spec.Template.Annotations
-			}, timeout, interval).Should(Equal(lastPluginAnnots))
-			lastPluginAnnots = plugin.Spec.Template.Annotations
+			}, consistentlyTimeout, consistentlyInterval).Should(Equal(lastPluginAnnots))
 		})
 
 		// FLP is not restarted, as Loki certificate is always read from file
-		It("Should not redeploy FLP", func() {
-			Eventually(func() interface{} {
+		It("Should not trigger FLP redeploy", func() {
+			lastFLPAnnots := flp.Spec.Template.Annotations
+			Consistently(func() interface{} {
 				if err := k8sClient.Get(ctx, flpKey, &flp); err != nil {
 					return err
 				}
 				return flp.Spec.Template.Annotations
-			}, timeout, interval).Should(Equal(lastFLPAnnots))
-			lastFLPAnnots = flp.Spec.Template.Annotations
+			}, consistentlyTimeout, consistentlyInterval).Should(Equal(lastFLPAnnots))
 		})
 	})
 
@@ -415,23 +443,23 @@ func flowCollectorCertificatesSpecs() {
 		})
 
 		It("Should not redeploy Agent", func() {
-			Eventually(func() interface{} {
+			lastAgentAnnots := agent.Spec.Template.Annotations
+			Consistently(func() interface{} {
 				if err := k8sClient.Get(ctx, agentKey, &agent); err != nil {
 					return err
 				}
 				return agent.Spec.Template.Annotations
-			}, timeout, interval).Should(Equal(lastAgentAnnots))
-			lastAgentAnnots = agent.Spec.Template.Annotations
+			}, consistentlyTimeout, consistentlyInterval).Should(Equal(lastAgentAnnots))
 		})
 
 		It("Should not redeploy FLP", func() {
-			Eventually(func() interface{} {
+			lastFLPAnnots := flp.Spec.Template.Annotations
+			Consistently(func() interface{} {
 				if err := k8sClient.Get(ctx, flpKey, &flp); err != nil {
 					return err
 				}
 				return flp.Spec.Template.Annotations
-			}, timeout, interval).Should(Equal(lastFLPAnnots))
-			lastFLPAnnots = flp.Spec.Template.Annotations
+			}, consistentlyTimeout, consistentlyInterval).Should(Equal(lastFLPAnnots))
 		})
 	})
 
