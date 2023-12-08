@@ -147,7 +147,7 @@ func flowCollectorEBPFSpecs() {
 		})
 
 		It("Should update fields that have changed", func() {
-			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				Expect(*fc.Spec.Agent.EBPF.Sampling).To(Equal(int32(123)))
 				*fc.Spec.Agent.EBPF.Sampling = 4
 				fc.Spec.Agent.EBPF.Privileged = true
@@ -176,7 +176,7 @@ func flowCollectorEBPFSpecs() {
 		})
 
 		It("Should redeploy all when changing namespace", func() {
-			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Namespace = operatorNamespace2
 			})
 

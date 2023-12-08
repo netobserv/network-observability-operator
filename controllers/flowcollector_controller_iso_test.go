@@ -12,6 +12,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	"github.com/netobserv/network-observability-operator/pkg/test"
 )
 
 // nolint:cyclop
@@ -203,7 +204,7 @@ func flowCollectorIsoSpecs() {
 		})
 
 		It("Should not have modified input CR values", func() {
-			cr := GetCR(crKey)
+			cr := test.GetCR(ctx, k8sClient, crKey)
 
 			// For easier debugging, we check CR parts one by one
 			Expect(cr.Spec.Processor).Should(Equal(specInput.Processor))

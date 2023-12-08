@@ -188,7 +188,7 @@ func flowCollectorConsolePluginSpecs() {
 			}, timeout, interval).Should(Succeed())
 
 			// Do a dummy change that will trigger reconcile, and make sure SM is created again
-			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor.LogLevel = "trace"
 			})
 			By("Expecting ServiceMonitor to exist")
@@ -207,14 +207,14 @@ func flowCollectorConsolePluginSpecs() {
 				timeout, interval).Should(ContainSubstring("url: http://loki:3100/"))
 		})
 		It("Should update the Loki URL in the Console Plugin if it changes in the Spec", func() {
-			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Monolithic.URL = "http://loki.namespace:8888"
 			})
 			Eventually(getConfigMapData(configKey),
 				timeout, interval).Should(ContainSubstring("url: http://loki.namespace:8888"))
 		})
 		It("Should use the Loki Querier URL instead of the Loki URL, when switching to manual mode", func() {
-			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Mode = flowslatest.LokiModeManual
 				fc.Spec.Loki.Manual.QuerierURL = "http://loki-querier:6789"
 			})
@@ -236,7 +236,7 @@ func flowCollectorConsolePluginSpecs() {
 
 		It("Should be unregistered", func() {
 			By("Update CR to unregister")
-			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.ConsolePlugin.Register = ptr.To(false)
 			})
 
@@ -263,7 +263,7 @@ func flowCollectorConsolePluginSpecs() {
 		})
 
 		It("Should cleanup console plugin if disabled", func() {
-			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.ConsolePlugin.Enable = ptr.To(false)
 			})
 			Eventually(func() error {
@@ -284,7 +284,7 @@ func flowCollectorConsolePluginSpecs() {
 		})
 
 		It("Should recreate console plugin if enabled back", func() {
-			UpdateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.ConsolePlugin.Enable = ptr.To(true)
 			})
 			Eventually(func() error {
