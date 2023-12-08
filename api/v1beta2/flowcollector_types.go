@@ -23,11 +23,11 @@ import (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type FlowCollectorDeploymentModel string
+
 const (
-	AgentIPFIX            = "IPFIX"
-	AgentEBPF             = "EBPF"
-	DeploymentModelDirect = "DIRECT"
-	DeploymentModelKafka  = "KAFKA"
+	DeploymentModelDirect FlowCollectorDeploymentModel = "Direct"
+	DeploymentModelKafka  FlowCollectorDeploymentModel = "Kafka"
 )
 
 // Please notice that the FlowCollectorSpec's properties MUST redefine one of the default
@@ -64,37 +64,45 @@ type FlowCollectorSpec struct {
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
 	// `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br>
-	// - `DIRECT` (default) to make the flow processor listening directly from the agents.<br>
-	// - `KAFKA` to make flows sent to a Kafka pipeline before consumption by the processor.<br>
+	// - `Direct` (default) to make the flow processor listening directly from the agents.<br>
+	// - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br>
 	// Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="DIRECT";"KAFKA"
-	// +kubebuilder:default:=DIRECT
-	DeploymentModel string `json:"deploymentModel,omitempty"`
+	// +kubebuilder:validation:Enum:="Direct";"Kafka"
+	// +kubebuilder:default:=Direct
+	DeploymentModel FlowCollectorDeploymentModel `json:"deploymentModel,omitempty"`
 
-	// Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `KAFKA`.
+	// Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `Kafka`.
 	// +optional
 	Kafka FlowCollectorKafka `json:"kafka,omitempty"`
 
 	// `exporters` define additional optional exporters for custom consumption or storage.
 	// +optional
+	// +k8s:conversion-gen=false
 	Exporters []*FlowCollectorExporter `json:"exporters"`
 }
+
+type FlowCollectorAgentType string
+
+const (
+	AgentIPFIX FlowCollectorAgentType = "IPFIX"
+	AgentEBPF  FlowCollectorAgentType = "eBPF"
+)
 
 // `FlowCollectorAgent` is a discriminated union that allows to select either ipfix or ebpf, but does not
 // allow defining both fields.
 // +union
 type FlowCollectorAgent struct {
 	// `type` selects the flows tracing agent. Possible values are:<br>
-	// - `EBPF` (default) to use NetObserv eBPF agent.<br>
+	// - `eBPF` (default) to use NetObserv eBPF agent.<br>
 	// - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br>
-	// `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster.
+	// `eBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster.
 	// `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX,
 	// but they would require manual configuration).
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="EBPF";"IPFIX"
-	// +kubebuilder:default:=EBPF
-	Type string `json:"type,omitempty"`
+	// +kubebuilder:validation:Enum:="eBPF";"IPFIX"
+	// +kubebuilder:default:=eBPF
+	Type FlowCollectorAgentType `json:"type,omitempty"`
 
 	// `ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type`
 	// is set to `IPFIX`.
@@ -102,7 +110,7 @@ type FlowCollectorAgent struct {
 	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
 
 	// `ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type`
-	// is set to `EBPF`.
+	// is set to `eBPF`.
 	// +optional
 	EBPF FlowCollectorEBPF `json:"ebpf,omitempty"`
 }
@@ -233,7 +241,7 @@ type FlowCollectorEBPF struct {
 	// List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
 	// - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
-	// If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br>
+	// If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 	// - `DNSTracking`: enable the DNS tracking feature.<br>
 	// - `FlowRTT`: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br>
 	// +optional
@@ -276,27 +284,27 @@ type FlowCollectorIPFIXReceiver struct {
 	Transport string `json:"transport,omitempty"`
 }
 
-const (
-	ServerTLSDisabled = "DISABLED"
-	ServerTLSProvided = "PROVIDED"
-	ServerTLSAuto     = "AUTO"
-)
-
 type ServerTLSConfigType string
+
+const (
+	ServerTLSDisabled ServerTLSConfigType = "Disabled"
+	ServerTLSProvided ServerTLSConfigType = "Provided"
+	ServerTLSAuto     ServerTLSConfigType = "Auto"
+)
 
 // `ServerTLS` define the TLS configuration, server side
 type ServerTLS struct {
 	// Select the type of TLS configuration:<br>
-	// - `DISABLED` (default) to not configure TLS for the endpoint.
-	// - `PROVIDED` to manually provide cert file and a key file.
-	// - `AUTO` to use OpenShift auto generated certificate using annotations.
+	// - `Disabled` (default) to not configure TLS for the endpoint.
+	// - `Provided` to manually provide cert file and a key file.
+	// - `Auto` to use OpenShift auto generated certificate using annotations.
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="DISABLED";"PROVIDED";"AUTO"
+	// +kubebuilder:validation:Enum:="Disabled";"Provided";"Auto"
 	// +kubebuilder:validation:Required
-	//+kubebuilder:default:="DISABLED"
+	//+kubebuilder:default:="Disabled"
 	Type ServerTLSConfigType `json:"type,omitempty"`
 
-	// TLS configuration when `type` is set to `PROVIDED`.
+	// TLS configuration when `type` is set to `Provided`.
 	// +optional
 	Provided *CertificateReference `json:"provided"`
 
@@ -305,7 +313,7 @@ type ServerTLS struct {
 	// If set to `true`, the `providedCaFile` field is ignored.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
-	// Reference to the CA file when `type` is set to `PROVIDED`.
+	// Reference to the CA file when `type` is set to `Provided`.
 	// +optional
 	ProvidedCaFile *FileReference `json:"providedCaFile,omitempty"`
 }
@@ -324,17 +332,17 @@ type MetricsServerConfig struct {
 	TLS ServerTLS `json:"tls"`
 }
 
-const (
-	AlertNoFlows   = "NetObservNoFlows"
-	AlertLokiError = "NetObservLokiError"
-)
-
 // Name of a processor alert.
 // Possible values are:<br>
 // - `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
 // - `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br>
 // +kubebuilder:validation:Enum:="NetObservNoFlows";"NetObservLokiError"
 type FLPAlert string
+
+const (
+	AlertNoFlows   FLPAlert = "NetObservNoFlows"
+	AlertLokiError FLPAlert = "NetObservLokiError"
+)
 
 // Metric name. More information in https://github.com/netobserv/network-observability-operator/blob/main/docs/Metrics.md.
 // +kubebuilder:validation:Enum:="namespace_egress_bytes_total";"namespace_egress_packets_total";"namespace_ingress_bytes_total";"namespace_ingress_packets_total";"namespace_flows_total";"node_egress_bytes_total";"node_egress_packets_total";"node_ingress_bytes_total";"node_ingress_packets_total";"node_flows_total";"workload_egress_bytes_total";"workload_egress_packets_total";"workload_ingress_bytes_total";"workload_ingress_packets_total";"workload_flows_total";"namespace_drop_bytes_total";"namespace_drop_packets_total";"node_drop_bytes_total";"node_drop_packets_total";"workload_drop_bytes_total";"workload_drop_packets_total";"namespace_rtt_seconds";"node_rtt_seconds";"workload_rtt_seconds";"namespace_dns_latency_seconds";"node_dns_latency_seconds";"workload_dns_latency_seconds"
@@ -365,11 +373,13 @@ type FLPMetrics struct {
 	DisableAlerts []FLPAlert `json:"disableAlerts"`
 }
 
+type FLPLogTypes string
+
 const (
-	LogTypeFlows              = "FLOWS"
-	LogTypeConversations      = "CONVERSATIONS"
-	LogTypeEndedConversations = "ENDED_CONVERSATIONS"
-	LogTypeAll                = "ALL"
+	LogTypeFlows              FLPLogTypes = "Flows"
+	LogTypeConversations      FLPLogTypes = "Conversations"
+	LogTypeEndedConversations FLPLogTypes = "EndedConversations"
+	LogTypeAll                FLPLogTypes = "All"
 )
 
 // `FlowCollectorFLP` defines the desired flowlogs-pipeline state of FlowCollector
@@ -445,14 +455,14 @@ type FlowCollectorFLP struct {
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
 
 	// `logTypes` defines the desired record types to generate. Possible values are:<br>
-	// - `FLOWS` (default) to export regular network flows<br>
-	// - `CONVERSATIONS` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br>
-	// - `ENDED_CONVERSATIONS` to generate only ended conversations events<br>
-	// - `ALL` to generate both network flows and all conversations events<br>
+	// - `Flows` (default) to export regular network flows<br>
+	// - `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br>
+	// - `EndedConversations` to generate only ended conversations events<br>
+	// - `All` to generate both network flows and all conversations events<br>
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Enum:="FLOWS";"CONVERSATIONS";"ENDED_CONVERSATIONS";"ALL"
-	// +kubebuilder:default:=FLOWS
-	LogTypes *string `json:"logTypes,omitempty"`
+	// +kubebuilder:validation:Enum:="Flows";"Conversations";"EndedConversations";"All"
+	// +kubebuilder:default:=Flows
+	LogTypes *FLPLogTypes `json:"logTypes,omitempty"`
 
 	//+kubebuilder:default:="30s"
 	// +optional
@@ -486,18 +496,20 @@ type FlowCollectorFLP struct {
 	Debug DebugConfig `json:"debug,omitempty"`
 }
 
+type HPAStatus string
+
 const (
-	HPAStatusDisabled = "DISABLED"
-	HPAStatusEnabled  = "ENABLED"
+	HPAStatusDisabled HPAStatus = "Disabled"
+	HPAStatusEnabled  HPAStatus = "Enabled"
 )
 
 type FlowCollectorHPA struct {
-	// +kubebuilder:validation:Enum:=DISABLED;ENABLED
-	// +kubebuilder:default:=DISABLED
+	// +kubebuilder:validation:Enum:=Disabled;Enabled
+	// +kubebuilder:default:=Disabled
 	// `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br>
-	// - `DISABLED` does not deploy an horizontal pod autoscaler.<br>
-	// - `ENABLED` deploys an horizontal pod autoscaler.<br>
-	Status string `json:"status,omitempty"`
+	// - `Disabled` does not deploy an horizontal pod autoscaler.<br>
+	// - `Enabled` deploys an horizontal pod autoscaler.<br>
+	Status HPAStatus `json:"status,omitempty"`
 
 	// `minReplicas` is the lower limit for the number of replicas to which the autoscaler
 	// can scale down. It defaults to 1 pod. minReplicas is allowed to be 0 if the
@@ -517,10 +529,12 @@ type FlowCollectorHPA struct {
 	Metrics []ascv2.MetricSpec `json:"metrics"`
 }
 
+type LokiAuthToken string
+
 const (
-	LokiAuthDisabled         = "DISABLED"
-	LokiAuthUseHostToken     = "HOST"
-	LokiAuthForwardUserToken = "FORWARD"
+	LokiAuthDisabled         LokiAuthToken = "Disabled"
+	LokiAuthUseHostToken     LokiAuthToken = "Host"
+	LokiAuthForwardUserToken LokiAuthToken = "Forward"
 )
 
 // `LokiManualParams` defines the full connection parameters to Loki.
@@ -551,14 +565,14 @@ type LokiManualParams struct {
 	// When using the Loki Operator, set it to `network`, which corresponds to a special tenant mode.
 	TenantID string `json:"tenantID,omitempty"`
 
-	//+kubebuilder:validation:Enum:="DISABLED";"HOST";"FORWARD"
-	//+kubebuilder:default:="DISABLED"
+	//+kubebuilder:validation:Enum:="Disabled";"Host";"Forward"
+	//+kubebuilder:default:="Disabled"
 	// `authToken` describes the way to get a token to authenticate to Loki.<br>
-	// - `DISABLED` does not send any token with the request.<br>
-	// - `FORWARD` forwards the user token for authorization.<br>
-	// - `HOST` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br>
-	// When using the Loki Operator, this must be set to `FORWARD`.
-	AuthToken string `json:"authToken,omitempty"`
+	// - `Disabled` does not send any token with the request.<br>
+	// - `Forward` forwards the user token for authorization.<br>
+	// - `Host` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br>
+	// When using the Loki Operator, this must be set to `Forward`.
+	AuthToken LokiAuthToken `json:"authToken,omitempty"`
 
 	// TLS client configuration for Loki URL.
 	// +optional
@@ -873,16 +887,16 @@ type ClientTLS struct {
 type SASLType string
 
 const (
-	SASLDisabled    SASLType = "DISABLED"
-	SASLPlain       SASLType = "PLAIN"
-	SASLScramSHA512 SASLType = "SCRAM-SHA512"
+	SASLDisabled    SASLType = "Disabled"
+	SASLPlain       SASLType = "Plain"
+	SASLScramSHA512 SASLType = "ScramSHA512"
 )
 
 // `SASLConfig` defines SASL configuration
 type SASLConfig struct {
-	//+kubebuilder:validation:Enum=DISABLED;PLAIN;SCRAM-SHA512
-	//+kubebuilder:default:=DISABLED
-	// Type of SASL authentication to use, or `DISABLED` if SASL is not used
+	//+kubebuilder:validation:Enum=Disabled;Plain;ScramSHA512
+	//+kubebuilder:default:=Disabled
+	// Type of SASL authentication to use, or `Disabled` if SASL is not used
 	Type SASLType `json:"type,omitempty"`
 
 	// Reference to the secret or config map containing the client ID
@@ -903,19 +917,18 @@ type DebugConfig struct {
 	Env map[string]string `json:"env,omitempty"`
 }
 
-// Add more exporter types below
 type ExporterType string
 
 const (
-	KafkaExporter ExporterType = "KAFKA"
+	KafkaExporter ExporterType = "Kafka"
 	IpfixExporter ExporterType = "IPFIX"
 )
 
 // `FlowCollectorExporter` defines an additional exporter to send enriched flows to.
 type FlowCollectorExporter struct {
-	// `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`.
+	// `type` selects the type of exporters. The available options are `Kafka` and `IPFIX`.
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="KAFKA";"IPFIX"
+	// +kubebuilder:validation:Enum:="Kafka";"IPFIX"
 	// +kubebuilder:validation:Required
 	Type ExporterType `json:"type"`
 

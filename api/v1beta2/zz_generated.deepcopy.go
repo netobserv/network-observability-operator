@@ -329,7 +329,7 @@ func (in *FlowCollectorFLP) DeepCopyInto(out *FlowCollectorFLP) {
 	in.KafkaConsumerAutoscaler.DeepCopyInto(&out.KafkaConsumerAutoscaler)
 	if in.LogTypes != nil {
 		in, out := &in.LogTypes, &out.LogTypes
-		*out = new(string)
+		*out = new(FLPLogTypes)
 		**out = **in
 	}
 	if in.ConversationHeartbeatInterval != nil {

@@ -4556,7 +4556,7 @@ Agent configuration for flows extraction.
         <td><b>features</b></td>
         <td>[]enum</td>
         <td>
-          List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br> - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br> - `DNSTracking`: enable the DNS tracking feature.<br> - `FlowRTT` [unsupported (*)]: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br><br/>
+          List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br> - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br> - `DNSTracking`: enable the DNS tracking feature.<br> - `FlowRTT` [unsupported (*)]: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9053,10 +9053,10 @@ Defines the desired state of the FlowCollector resource. <br><br> *: the mention
         <td><b>deploymentModel</b></td>
         <td>enum</td>
         <td>
-          `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br> - `DIRECT` (default) to make the flow processor listening directly from the agents.<br> - `KAFKA` to make flows sent to a Kafka pipeline before consumption by the processor.<br> Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
+          `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br> - `Direct` (default) to make the flow processor listening directly from the agents.<br> - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br> Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
           <br/>
-            <i>Enum</i>: DIRECT, KAFKA<br/>
-            <i>Default</i>: DIRECT<br/>
+            <i>Enum</i>: Direct, Kafka<br/>
+            <i>Default</i>: Direct<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9070,7 +9070,7 @@ Defines the desired state of the FlowCollector resource. <br><br> *: the mention
         <td><b><a href="#flowcollectorspeckafka-1">kafka</a></b></td>
         <td>object</td>
         <td>
-          Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `KAFKA`.<br/>
+          Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `Kafka`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9120,7 +9120,7 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentebpf-1">ebpf</a></b></td>
         <td>object</td>
         <td>
-          `ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `EBPF`.<br/>
+          `ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `eBPF`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9134,10 +9134,10 @@ Agent configuration for flows extraction.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the flows tracing agent. Possible values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br> `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
+          `type` selects the flows tracing agent. Possible values are:<br> - `eBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br> `eBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
           <br/>
-            <i>Enum</i>: EBPF, IPFIX<br/>
-            <i>Default</i>: EBPF<br/>
+            <i>Enum</i>: eBPF, IPFIX<br/>
+            <i>Default</i>: eBPF<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9149,7 +9149,7 @@ Agent configuration for flows extraction.
 
 
 
-`ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `EBPF`.
+`ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `eBPF`.
 
 <table>
     <thead>
@@ -9200,7 +9200,7 @@ Agent configuration for flows extraction.
         <td><b>features</b></td>
         <td>[]enum</td>
         <td>
-          List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br> - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br> - `DNSTracking`: enable the DNS tracking feature.<br> - `FlowRTT`: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br><br/>
+          List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br> - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br> - `DNSTracking`: enable the DNS tracking feature.<br> - `FlowRTT`: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9678,10 +9678,10 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>status</b></td>
         <td>enum</td>
         <td>
-          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `DISABLED` does not deploy an horizontal pod autoscaler.<br> - `ENABLED` deploys an horizontal pod autoscaler.<br><br/>
+          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `Disabled` does not deploy an horizontal pod autoscaler.<br> - `Enabled` deploys an horizontal pod autoscaler.<br><br/>
           <br/>
-            <i>Enum</i>: DISABLED, ENABLED<br/>
-            <i>Default</i>: DISABLED<br/>
+            <i>Enum</i>: Disabled, Enabled<br/>
+            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -10719,9 +10719,9 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the type of exporters. The available options are `KAFKA` and `IPFIX`.<br/>
+          `type` selects the type of exporters. The available options are `Kafka` and `IPFIX`.<br/>
           <br/>
-            <i>Enum</i>: KAFKA, IPFIX<br/>
+            <i>Enum</i>: Kafka, IPFIX<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -10873,10 +10873,10 @@ SASL authentication configuration. [Unsupported (*)].
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type of SASL authentication to use, or `DISABLED` if SASL is not used<br/>
+          Type of SASL authentication to use, or `Disabled` if SASL is not used<br/>
           <br/>
-            <i>Enum</i>: DISABLED, PLAIN, SCRAM-SHA512<br/>
-            <i>Default</i>: DISABLED<br/>
+            <i>Enum</i>: Disabled, Plain, ScramSHA512<br/>
+            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11162,7 +11162,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
 
 
 
-Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `KAFKA`.
+Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `Kafka`.
 
 <table>
     <thead>
@@ -11243,10 +11243,10 @@ SASL authentication configuration. [Unsupported (*)].
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type of SASL authentication to use, or `DISABLED` if SASL is not used<br/>
+          Type of SASL authentication to use, or `Disabled` if SASL is not used<br/>
           <br/>
-            <i>Enum</i>: DISABLED, PLAIN, SCRAM-SHA512<br/>
-            <i>Default</i>: DISABLED<br/>
+            <i>Enum</i>: Disabled, Plain, ScramSHA512<br/>
+            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11717,10 +11717,10 @@ Loki configuration for "Manual" mode. This is the most flexible configuration. I
         <td><b>authToken</b></td>
         <td>enum</td>
         <td>
-          `authToken` describes the way to get a token to authenticate to Loki.<br> - `DISABLED` does not send any token with the request.<br> - `FORWARD` forwards the user token for authorization.<br> - `HOST` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `FORWARD`.<br/>
+          `authToken` describes the way to get a token to authenticate to Loki.<br> - `Disabled` does not send any token with the request.<br> - `Forward` forwards the user token for authorization.<br> - `Host` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br> When using the Loki Operator, this must be set to `Forward`.<br/>
           <br/>
-            <i>Enum</i>: DISABLED, HOST, FORWARD<br/>
-            <i>Default</i>: DISABLED<br/>
+            <i>Enum</i>: Disabled, Host, Forward<br/>
+            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12703,10 +12703,10 @@ TLS client configuration for Loki URL.
         <td><b>logTypes</b></td>
         <td>enum</td>
         <td>
-          `logTypes` defines the desired record types to generate. Possible values are:<br> - `FLOWS` (default) to export regular network flows<br> - `CONVERSATIONS` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br> - `ENDED_CONVERSATIONS` to generate only ended conversations events<br> - `ALL` to generate both network flows and all conversations events<br><br/>
+          `logTypes` defines the desired record types to generate. Possible values are:<br> - `Flows` (default) to export regular network flows<br> - `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br> - `EndedConversations` to generate only ended conversations events<br> - `All` to generate both network flows and all conversations events<br><br/>
           <br/>
-            <i>Enum</i>: FLOWS, CONVERSATIONS, ENDED_CONVERSATIONS, ALL<br/>
-            <i>Default</i>: FLOWS<br/>
+            <i>Enum</i>: Flows, Conversations, EndedConversations, All<br/>
+            <i>Default</i>: Flows<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12834,10 +12834,10 @@ TLS client configuration for Loki URL.
         <td><b>status</b></td>
         <td>enum</td>
         <td>
-          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `DISABLED` does not deploy an horizontal pod autoscaler.<br> - `ENABLED` deploys an horizontal pod autoscaler.<br><br/>
+          `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br> - `Disabled` does not deploy an horizontal pod autoscaler.<br> - `Enabled` deploys an horizontal pod autoscaler.<br><br/>
           <br/>
-            <i>Enum</i>: DISABLED, ENABLED<br/>
-            <i>Default</i>: DISABLED<br/>
+            <i>Enum</i>: Disabled, Enabled<br/>
+            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13817,24 +13817,24 @@ TLS configuration.
         <td><b><a href="#flowcollectorspecprocessormetricsservertlsprovided-1">provided</a></b></td>
         <td>object</td>
         <td>
-          TLS configuration when `type` is set to `PROVIDED`.<br/>
+          TLS configuration when `type` is set to `Provided`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessormetricsservertlsprovidedcafile-1">providedCaFile</a></b></td>
         <td>object</td>
         <td>
-          Reference to the CA file when `type` is set to `PROVIDED`.<br/>
+          Reference to the CA file when `type` is set to `Provided`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Select the type of TLS configuration:<br> - `DISABLED` (default) to not configure TLS for the endpoint. - `PROVIDED` to manually provide cert file and a key file. - `AUTO` to use OpenShift auto generated certificate using annotations.<br/>
+          Select the type of TLS configuration:<br> - `Disabled` (default) to not configure TLS for the endpoint. - `Provided` to manually provide cert file and a key file. - `Auto` to use OpenShift auto generated certificate using annotations.<br/>
           <br/>
-            <i>Enum</i>: DISABLED, PROVIDED, AUTO<br/>
-            <i>Default</i>: DISABLED<br/>
+            <i>Enum</i>: Disabled, Provided, Auto<br/>
+            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13846,7 +13846,7 @@ TLS configuration.
 
 
 
-TLS configuration when `type` is set to `PROVIDED`.
+TLS configuration when `type` is set to `Provided`.
 
 <table>
     <thead>
@@ -13905,7 +13905,7 @@ TLS configuration when `type` is set to `PROVIDED`.
 
 
 
-Reference to the CA file when `type` is set to `PROVIDED`.
+Reference to the CA file when `type` is set to `Provided`.
 
 <table>
     <thead>

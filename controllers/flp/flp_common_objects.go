@@ -79,6 +79,8 @@ func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 			CertFile: "tls.crt",
 			CertKey:  "tls.key",
 		}
+	case flowslatest.ServerTLSDisabled:
+		// nothing to do there
 	}
 	return builder{
 		info: info,
@@ -463,7 +465,7 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 	// Not receiving flows
 	if shouldAddAlert(flowslatest.AlertNoFlows, b.desired.Processor.Metrics.DisableAlerts) {
 		rules = append(rules, monitoringv1.Rule{
-			Alert: flowslatest.AlertNoFlows,
+			Alert: string(flowslatest.AlertNoFlows),
 			Annotations: map[string]string{
 				"description": "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
 				"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
@@ -480,7 +482,7 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 	// Flows getting dropped by loki library
 	if shouldAddAlert(flowslatest.AlertLokiError, b.desired.Processor.Metrics.DisableAlerts) {
 		rules = append(rules, monitoringv1.Rule{
-			Alert: flowslatest.AlertLokiError,
+			Alert: string(flowslatest.AlertLokiError),
 			Annotations: map[string]string{
 				"description": "NetObserv flowlogs-pipeline is dropping flows because of loki errors, loki may be down or having issues ingesting every flows. Please check loki and flowlogs-pipeline logs.",
 				"summary":     "NetObserv flowlogs-pipeline is dropping flows because of loki errors",

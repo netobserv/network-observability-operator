@@ -2538,7 +2538,7 @@ spec:
                           might have performance impacts. Possible values are:<br>
                           - `PacketDrop`: enable the packets drop flows logging feature.
                           This feature requires mounting the kernel debug filesystem,
-                          so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged`
+                          so the eBPF pod has to run as privileged. If the `spec.agent.ebpf.privileged`
                           parameter is not set, an error is reported.<br> - `DNSTracking`:
                           enable the DNS tracking feature.<br> - `FlowRTT` [unsupported
                           (*)]: enable flow latency (RTT) calculations in the eBPF
@@ -5166,7 +5166,7 @@ spec:
                 properties:
                   ebpf:
                     description: '`ebpf` describes the settings related to the eBPF-based
-                      flow reporter when `spec.agent.type` is set to `EBPF`.'
+                      flow reporter when `spec.agent.type` is set to `eBPF`.'
                     properties:
                       cacheActiveTimeout:
                         default: 5s
@@ -5223,7 +5223,7 @@ spec:
                           might have performance impacts. Possible values are:<br>
                           - `PacketDrop`: enable the packets drop flows logging feature.
                           This feature requires mounting the kernel debug filesystem,
-                          so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged`
+                          so the eBPF pod has to run as privileged. If the `spec.agent.ebpf.privileged`
                           parameter is not set, an error is reported.<br> - `DNSTracking`:
                           enable the DNS tracking feature.<br> - `FlowRTT`: enable
                           flow latency (RTT) calculations in the eBPF agent during
@@ -5425,16 +5425,16 @@ spec:
                         type: integer
                     type: object
                   type:
-                    default: EBPF
+                    default: eBPF
                     description: '`type` selects the flows tracing agent. Possible
-                      values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br>
+                      values are:<br> - `eBPF` (default) to use NetObserv eBPF agent.<br>
                       - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br>
-                      `EBPF` is recommended as it offers better performances and should
+                      `eBPF` is recommended as it offers better performances and should
                       work regardless of the CNI installed on the cluster. `IPFIX`
                       works with OVN-Kubernetes CNI (other CNIs could work if they
                       support exporting IPFIX, but they would require manual configuration).'
                     enum:
-                    - EBPF
+                    - eBPF
                     - IPFIX
                     type: string
                 type: object
@@ -5961,14 +5961,14 @@ spec:
                         format: int32
                         type: integer
                       status:
-                        default: DISABLED
+                        default: Disabled
                         description: '`status` describes the desired status regarding
-                          deploying an horizontal pod autoscaler.<br> - `DISABLED`
-                          does not deploy an horizontal pod autoscaler.<br> - `ENABLED`
+                          deploying an horizontal pod autoscaler.<br> - `Disabled`
+                          does not deploy an horizontal pod autoscaler.<br> - `Enabled`
                           deploys an horizontal pod autoscaler.<br>'
                         enum:
-                        - DISABLED
-                        - ENABLED
+                        - Disabled
+                        - Enabled
                         type: string
                     type: object
                   enable:
@@ -6143,16 +6143,16 @@ spec:
                     type: object
                 type: object
               deploymentModel:
-                default: DIRECT
+                default: Direct
                 description: '`deploymentModel` defines the desired type of deployment
-                  for flow processing. Possible values are:<br> - `DIRECT` (default)
+                  for flow processing. Possible values are:<br> - `Direct` (default)
                   to make the flow processor listening directly from the agents.<br>
-                  - `KAFKA` to make flows sent to a Kafka pipeline before consumption
+                  - `Kafka` to make flows sent to a Kafka pipeline before consumption
                   by the processor.<br> Kafka can provide better scalability, resiliency,
                   and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).'
                 enum:
-                - DIRECT
-                - KAFKA
+                - Direct
+                - Kafka
                 type: string
               exporters:
                 description: '`exporters` define additional optional exporters for
@@ -6254,13 +6254,13 @@ spec:
                                   type: string
                               type: object
                             type:
-                              default: DISABLED
+                              default: Disabled
                               description: Type of SASL authentication to use, or
-                                `DISABLED` if SASL is not used
+                                `Disabled` if SASL is not used
                               enum:
-                              - DISABLED
-                              - PLAIN
-                              - SCRAM-SHA512
+                              - Disabled
+                              - Plain
+                              - ScramSHA512
                               type: string
                           type: object
                         tls:
@@ -6361,9 +6361,9 @@ spec:
                       type: object
                     type:
                       description: '`type` selects the type of exporters. The available
-                        options are `KAFKA` and `IPFIX`.'
+                        options are `Kafka` and `IPFIX`.'
                       enum:
-                      - KAFKA
+                      - Kafka
                       - IPFIX
                       type: string
                   required:
@@ -6373,7 +6373,7 @@ spec:
               kafka:
                 description: Kafka configuration, allowing to use Kafka as a broker
                   as part of the flow collection pipeline. Available when the `spec.deploymentModel`
-                  is `KAFKA`.
+                  is `Kafka`.
                 properties:
                   address:
                     default: ""
@@ -6437,13 +6437,13 @@ spec:
                             type: string
                         type: object
                       type:
-                        default: DISABLED
-                        description: Type of SASL authentication to use, or `DISABLED`
+                        default: Disabled
+                        description: Type of SASL authentication to use, or `Disabled`
                           if SASL is not used
                         enum:
-                        - DISABLED
-                        - PLAIN
-                        - SCRAM-SHA512
+                        - Disabled
+                        - Plain
+                        - ScramSHA512
                         type: string
                     type: object
                   tls:
@@ -6577,18 +6577,18 @@ spec:
                       most flexible configuration. It is ignored for other modes.
                     properties:
                       authToken:
-                        default: DISABLED
+                        default: Disabled
                         description: '`authToken` describes the way to get a token
-                          to authenticate to Loki.<br> - `DISABLED` does not send
-                          any token with the request.<br> - `FORWARD` forwards the
-                          user token for authorization.<br> - `HOST` [deprecated (*)]
+                          to authenticate to Loki.<br> - `Disabled` does not send
+                          any token with the request.<br> - `Forward` forwards the
+                          user token for authorization.<br> - `Host` [deprecated (*)]
                           - uses the local pod service account to authenticate to
                           Loki.<br> When using the Loki Operator, this must be set
-                          to `FORWARD`.'
+                          to `Forward`.'
                         enum:
-                        - DISABLED
-                        - HOST
-                        - FORWARD
+                        - Disabled
+                        - Host
+                        - Forward
                         type: string
                       ingesterUrl:
                         default: http://loki:3100/
@@ -7639,14 +7639,14 @@ spec:
                         format: int32
                         type: integer
                       status:
-                        default: DISABLED
+                        default: Disabled
                         description: '`status` describes the desired status regarding
-                          deploying an horizontal pod autoscaler.<br> - `DISABLED`
-                          does not deploy an horizontal pod autoscaler.<br> - `ENABLED`
+                          deploying an horizontal pod autoscaler.<br> - `Disabled`
+                          does not deploy an horizontal pod autoscaler.<br> - `Enabled`
                           deploys an horizontal pod autoscaler.<br>'
                         enum:
-                        - DISABLED
-                        - ENABLED
+                        - Disabled
+                        - Enabled
                         type: string
                     type: object
                   kafkaConsumerBatchSize:
@@ -7682,19 +7682,19 @@ spec:
                     - panic
                     type: string
                   logTypes:
-                    default: FLOWS
+                    default: Flows
                     description: '`logTypes` defines the desired record types to generate.
-                      Possible values are:<br> - `FLOWS` (default) to export regular
-                      network flows<br> - `CONVERSATIONS` to generate events for started
+                      Possible values are:<br> - `Flows` (default) to export regular
+                      network flows<br> - `Conversations` to generate events for started
                       conversations, ended conversations as well as periodic "tick"
-                      updates<br> - `ENDED_CONVERSATIONS` to generate only ended conversations
-                      events<br> - `ALL` to generate both network flows and all conversations
+                      updates<br> - `EndedConversations` to generate only ended conversations
+                      events<br> - `All` to generate both network flows and all conversations
                       events<br>'
                     enum:
-                    - FLOWS
-                    - CONVERSATIONS
-                    - ENDED_CONVERSATIONS
-                    - ALL
+                    - Flows
+                    - Conversations
+                    - EndedConversations
+                    - All
                     type: string
                   metrics:
                     description: '`Metrics` define the processor configuration regarding
@@ -7785,7 +7785,7 @@ spec:
                                 type: boolean
                               provided:
                                 description: TLS configuration when `type` is set
-                                  to `PROVIDED`.
+                                  to `Provided`.
                                 properties:
                                   certFile:
                                     description: '`certFile` defines the path to the
@@ -7821,7 +7821,7 @@ spec:
                                 type: object
                               providedCaFile:
                                 description: Reference to the CA file when `type`
-                                  is set to `PROVIDED`.
+                                  is set to `Provided`.
                                 properties:
                                   file:
                                     description: File name within the config map or
@@ -7849,16 +7849,16 @@ spec:
                                     type: string
                                 type: object
                               type:
-                                default: DISABLED
+                                default: Disabled
                                 description: Select the type of TLS configuration:<br>
-                                  - `DISABLED` (default) to not configure TLS for
-                                  the endpoint. - `PROVIDED` to manually provide cert
-                                  file and a key file. - `AUTO` to use OpenShift auto
+                                  - `Disabled` (default) to not configure TLS for
+                                  the endpoint. - `Provided` to manually provide cert
+                                  file and a key file. - `Auto` to use OpenShift auto
                                   generated certificate using annotations.
                                 enum:
-                                - DISABLED
-                                - PROVIDED
-                                - AUTO
+                                - Disabled
+                                - Provided
+                                - Auto
                                 type: string
                             type: object
                         type: object
