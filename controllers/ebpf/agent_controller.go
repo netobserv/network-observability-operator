@@ -30,6 +30,7 @@ const (
 	envCacheMaxFlows              = "CACHE_MAX_FLOWS"
 	envExcludeInterfaces          = "EXCLUDE_INTERFACES"
 	envInterfaces                 = "INTERFACES"
+	envAgentIP                    = "AGENT_IP"
 	envFlowsTargetHost            = "FLOWS_TARGET_HOST"
 	envFlowsTargetPort            = "FLOWS_TARGET_PORT"
 	envSampling                   = "SAMPLING"
@@ -474,6 +475,16 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	}
 	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
 	config = append(config, corev1.EnvVar{Name: envDedupeJustMark, Value: dedupJustMark})
+	config = append(config, corev1.EnvVar{
+		Name: envAgentIP,
+		ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
+				APIVersion: "v1",
+				FieldPath:  "status.hostIP",
+			},
+		},
+	},
+	)
 
 	return config
 }
