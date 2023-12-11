@@ -367,13 +367,17 @@ columns:
   - id: Bytes
     name: Bytes
     tooltip: The total aggregated number of bytes.
-    field: Bytes
+    fields: 
+      - Bytes
+      - PktDropBytes
     default: true
     width: 5
   - id: Packets
     name: Packets
     tooltip: The total aggregated number of packets.
-    field: Packets
+    fields: 
+      - Packets
+      - PktDropPackets
     filter: pkt_drop_cause
     default: true
     width: 5
