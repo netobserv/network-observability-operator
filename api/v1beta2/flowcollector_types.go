@@ -147,7 +147,7 @@ type FlowCollectorIPFIX struct {
 // Agent feature, can be one of:<br>
 // - `PacketDrop`, to track packet drops.<br>
 // - `DNSTracking`, to track specific information on DNS traffic.<br>
-// - `FlowRTT`, to track TCP latency. [Unsupported (*)].<br>
+// - `FlowRTT`, to track TCP latency.<br>
 // +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT"
 type AgentFeature string
 
@@ -235,7 +235,7 @@ type FlowCollectorEBPF struct {
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
 	// If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br>
 	// - `DNSTracking`: enable the DNS tracking feature.<br>
-	// - `FlowRTT` [unsupported (*)]: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br>
+	// - `FlowRTT`: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 }

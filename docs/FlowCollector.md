@@ -9200,7 +9200,7 @@ Agent configuration for flows extraction.
         <td><b>features</b></td>
         <td>[]enum</td>
         <td>
-          List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br> - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br> - `DNSTracking`: enable the DNS tracking feature.<br> - `FlowRTT` [unsupported (*)]: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br><br/>
+          List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br> - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting the kernel debug filesystem, so the eBPF pod has to run as privileged. If the `spec.agent.eBPF.privileged` parameter is not set, an error is reported.<br> - `DNSTracking`: enable the DNS tracking feature.<br> - `FlowRTT`: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
