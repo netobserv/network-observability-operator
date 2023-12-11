@@ -1,12 +1,14 @@
 package dashboards
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
 
 type Dashboard struct {
-	Rows []*Row
+	Rows  []*Row
+	Title string
 }
 
 type Row struct {
@@ -30,6 +32,29 @@ var formatCleaner = strings.NewReplacer(
 	"\t", "",
 	"\n", "",
 )
+
+func FromBytes(b []byte) (*Dashboard, error) {
+	var d Dashboard
+	err := json.Unmarshal(b, &d)
+	return &d, err
+}
+
+func (d *Dashboard) Titles() []string {
+	var titles []string
+	for _, r := range d.Rows {
+		titles = append(titles, r.Title)
+	}
+	return titles
+}
+
+func (d *Dashboard) FindRow(titleSubstr string) *Row {
+	for _, r := range d.Rows {
+		if strings.Contains(r.Title, titleSubstr) {
+			return r
+		}
+	}
+	return nil
+}
 
 func (d *Dashboard) ToGrafanaJSON(netobsNs string) string {
 	// return empty if dashboard doesn't contains rows
