@@ -38,14 +38,15 @@ type ColumnConfig struct {
 	ID   string `yaml:"id" json:"id"`
 	Name string `yaml:"name" json:"name"`
 
-	Group      string `yaml:"group,omitempty" json:"group,omitempty"`
-	Field      string `yaml:"field,omitempty" json:"field,omitempty"`
-	Calculated string `yaml:"calculated,omitempty" json:"calculated,omitempty"`
-	Tooltip    string `yaml:"tooltip,omitempty" json:"tooltip,omitempty"`
-	DocURL     string `yaml:"docURL,omitempty" json:"docURL,omitempty"`
-	Filter     string `yaml:"filter,omitempty" json:"filter,omitempty"`
-	Default    bool   `yaml:"default,omitempty" json:"default,omitempty"`
-	Width      int    `yaml:"width,omitempty" json:"width,omitempty"`
+	Group      string   `yaml:"group,omitempty" json:"group,omitempty"`
+	Field      string   `yaml:"field,omitempty" json:"field,omitempty"`
+	Fields     []string `yaml:"fields,omitempty" json:"fields,omitempty"`
+	Calculated string   `yaml:"calculated,omitempty" json:"calculated,omitempty"`
+	Tooltip    string   `yaml:"tooltip,omitempty" json:"tooltip,omitempty"`
+	DocURL     string   `yaml:"docURL,omitempty" json:"docURL,omitempty"`
+	Filter     string   `yaml:"filter,omitempty" json:"filter,omitempty"`
+	Default    bool     `yaml:"default,omitempty" json:"default,omitempty"`
+	Width      int      `yaml:"width,omitempty" json:"width,omitempty"`
 }
 
 type FilterConfig struct {
