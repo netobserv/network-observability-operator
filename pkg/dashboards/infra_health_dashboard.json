@@ -1103,10 +1103,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "(sum(rate(controller_runtime_reconcile_total{controller=\"flowcollector\"}[1m])) by (result))",
+              "expr": "sum(rate(controller_runtime_reconcile_total{job=\"netobserv-metrics-service\"}[1m])) by (controller,result)",
               "format": "time_series",
               "intervalFactor": 2,
-              "legendFormat": "{{result}}",
+              "legendFormat": "{{controller}}: {{result}}",
               "refId": "A"
             }
           ],
