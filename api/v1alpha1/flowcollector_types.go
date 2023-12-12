@@ -76,6 +76,7 @@ type FlowCollectorSpec struct {
 
 	// exporters defines additional optional exporters for custom consumption or storage. This is an experimental feature. Currently, only KAFKA exporter is available.
 	// +optional
+	// +k8s:conversion-gen=false
 	Exporters []*FlowCollectorExporter `json:"exporters"`
 }
 

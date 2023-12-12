@@ -378,7 +378,7 @@ metadata:
                 },
                 "sampling": 50
               },
-              "type": "EBPF"
+              "type": "Ebpf"
             },
             "consolePlugin": {
               "autoscaler": {
@@ -396,7 +396,7 @@ metadata:
                   }
                 ],
                 "minReplicas": 1,
-                "status": "DISABLED"
+                "status": "Disabled"
               },
               "imagePullPolicy": "IfNotPresent",
               "logLevel": "info",
@@ -440,7 +440,7 @@ metadata:
               ],
               "register": true
             },
-            "deploymentModel": "DIRECT",
+            "deploymentModel": "Direct",
             "exporters": [],
             "kafka": {
               "address": "kafka-cluster-kafka-bootstrap.netobserv",
@@ -496,7 +496,7 @@ metadata:
               "kafkaConsumerQueueCapacity": 1000,
               "kafkaConsumerReplicas": 3,
               "logLevel": "info",
-              "logTypes": "FLOWS",
+              "logTypes": "Flows",
               "metrics": {
                 "disableAlerts": [],
                 "server": {

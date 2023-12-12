@@ -99,7 +99,7 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 	ctx = log.IntoContext(ctx, rlog)
 	current, err := c.current(ctx)
 	if err != nil {
-		return fmt.Errorf("fetching current EBPF Agent: %w", err)
+		return fmt.Errorf("fetching current eBPF agent: %w", err)
 	}
 	if !helper.UseEBPF(&target.Spec) || c.PreviousPrivilegedNamespace() != c.PrivilegedNamespace() {
 		if current == nil {

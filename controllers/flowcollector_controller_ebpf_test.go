@@ -61,7 +61,7 @@ func flowCollectorEBPFSpecs() {
 						LogLevel:        "error",
 					},
 					Agent: flowslatest.FlowCollectorAgent{
-						Type: "EBPF",
+						Type: "eBPF",
 						EBPF: flowslatest.FlowCollectorEBPF{
 							Sampling:           ptr.To(int32(123)),
 							CacheActiveTimeout: "15s",
@@ -281,7 +281,7 @@ func flowCollectorEBPFKafkaSpecs() {
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 				Spec: flowslatest.FlowCollectorSpec{
 					Namespace:       operatorNamespace,
-					Agent:           flowslatest.FlowCollectorAgent{Type: "EBPF"},
+					Agent:           flowslatest.FlowCollectorAgent{Type: "eBPF"},
 					DeploymentModel: flowslatest.DeploymentModelKafka,
 					Kafka: flowslatest.FlowCollectorKafka{
 						Address: "kafka-cluster-kafka-bootstrap",
