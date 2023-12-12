@@ -2,7 +2,7 @@
 # other fields such as recordTypes, quickFilters, alertNamespaces, sampling, features
 # are taken from the CR
 # see consoleplugin_objects.go -> configMap func
-columns: 
+columns:
   - id: StartTime
     name: Start Time
     tooltip: Time of the first packet observed. Unlike End Time, it is not used in queries
@@ -311,6 +311,12 @@ columns:
   - id: K8S_OwnerObject
     name: Owner Kubernetes Objects
     calculated: '[column.SrcK8S_OwnerObject,column.DstK8S_OwnerObject]'
+    default: false
+    width: 15
+  - id: K8S_FlowType
+    name: FLow type
+    field: K8S_FlowType
+    filter: flow_type
     default: false
     width: 15
   - id: AddrPort
@@ -713,6 +719,11 @@ filters:
     component: autocomplete
     placeholder: 'E.g: Ingress, Egress, Inner'
     hint: Specify the direction of the Flow observed at the Node observation point.
+  - id: flow_type
+    name: Flow type
+    component: text
+    placeholder: 'Either infra or app'
+    hint: Specify the type of Flow.
   - id: interface
     name: Network interface
     component: text

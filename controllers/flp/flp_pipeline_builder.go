@@ -74,6 +74,16 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			Type:   api.AddKubernetesRuleType,
 		}, {
 			Type: api.ReinterpretDirectionRuleType,
+		}, {
+			Type: api.OpAddKubernetesInfra,
+			KubernetesInfra: &api.K8sInfraRule{
+				Inputs: []string{
+					"SrcAddr",
+					"DstAddr",
+				},
+				Output:      "K8S_FlowType",
+				InfraPrefix: b.desired.Namespace,
+			},
 		}},
 		DirectionInfo: api.NetworkTransformDirectionInfo{
 			ReporterIPField:    "AgentIP",
@@ -171,24 +181,24 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	return nil
 }
 
-func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.PromMetricsItem, error) {
-	m := &api.PromMetricsItem{
+func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem, error) {
+	m := &api.MetricsItem{
 		Name:     flowMetric.MetricName,
 		Type:     strings.ToLower(string(flowMetric.Type)),
-		Filters:  []api.PromMetricsFilter{},
+		Filters:  []api.MetricsFilter{},
 		Labels:   flowMetric.Labels,
 		ValueKey: flowMetric.ValueField,
 	}
 	for _, f := range flowMetric.Filters {
-		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: f.Field, Value: f.Value, Type: strings.ToLower(string(f.MatchType))})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: f.Field, Value: f.Value, Type: strings.ToLower(string(f.MatchType))})
 	}
 	if !flowMetric.IncludeDuplicates {
-		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: "Duplicate", Value: "false", Type: "exact"})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "Duplicate", Value: "false", Type: "exact"})
 	}
 	if flowMetric.Direction == metricslatest.Egress {
-		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: "FlowDirection", Value: "1|2", Type: "regex"})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "1|2", Type: "regex"})
 	} else if flowMetric.Direction == metricslatest.Ingress {
-		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: "FlowDirection", Value: "0|2", Type: "regex"})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "0|2", Type: "regex"})
 	}
 	for _, b := range flowMetric.Buckets {
 		f, err := strconv.ParseFloat(b, 64)

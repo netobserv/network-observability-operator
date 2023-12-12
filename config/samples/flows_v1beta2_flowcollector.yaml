@@ -119,13 +119,11 @@ spec:
     quickFilters:
     - name: Applications
       filter:
-        src_namespace!: 'openshift-,netobserv'
-        dst_namespace!: 'openshift-,netobserv'
+        flow_type: 'app'
       default: true
     - name: Infrastructure
       filter:
-        src_namespace: 'openshift-,netobserv'
-        dst_namespace: 'openshift-,netobserv'
+        flow_type: 'infra'
     - name: Pods network
       filter:
         src_kind: 'Pod'

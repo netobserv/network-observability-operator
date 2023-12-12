@@ -115,15 +115,13 @@ metadata:
                 {
                   "default": true,
                   "filter": {
-                    "dst_namespace!": "openshift-,netobserv",
-                    "src_namespace!": "openshift-,netobserv"
+                    "flow_type": "app"
                   },
                   "name": "Applications"
                 },
                 {
                   "filter": {
-                    "dst_namespace": "openshift-,netobserv",
-                    "src_namespace": "openshift-,netobserv"
+                    "flow_type": "infra"
                   },
                   "name": "Infrastructure"
                 },
@@ -298,15 +296,13 @@ metadata:
                 {
                   "default": true,
                   "filter": {
-                    "dst_namespace!": "openshift-,netobserv",
-                    "src_namespace!": "openshift-,netobserv"
+                    "flow_type": "app"
                   },
                   "name": "Applications"
                 },
                 {
                   "filter": {
-                    "dst_namespace": "openshift-,netobserv",
-                    "src_namespace": "openshift-,netobserv"
+                    "flow_type": "infra"
                   },
                   "name": "Infrastructure"
                 },
