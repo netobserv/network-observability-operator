@@ -65,7 +65,7 @@ func flowCollectorIsoSpecs() {
 				LogLevel:                       "trace",
 				Resources:                      v1.ResourceRequirements{Limits: nil, Requests: nil},
 				KafkaConsumerReplicas:          &zero,
-				KafkaConsumerAutoscaler:        flowslatest.FlowCollectorHPA{Status: "DISABLED", MinReplicas: &zero, MaxReplicas: zero, Metrics: []ascv2.MetricSpec{}},
+				KafkaConsumerAutoscaler:        flowslatest.FlowCollectorHPA{Status: "Disabled", MinReplicas: &zero, MaxReplicas: zero, Metrics: []ascv2.MetricSpec{}},
 				KafkaConsumerQueueCapacity:     int(zero),
 				KafkaConsumerBatchSize:         int(zero),
 				ConversationHeartbeatInterval:  &metav1.Duration{Duration: time.Second},
@@ -79,7 +79,7 @@ func flowCollectorIsoSpecs() {
 					Server: flowslatest.MetricsServerConfig{
 						Port: 12347,
 						TLS: flowslatest.ServerTLS{
-							Type:     "DISABLED",
+							Type:     "Disabled",
 							Provided: nil,
 						},
 					},
@@ -89,7 +89,7 @@ func flowCollectorIsoSpecs() {
 				DropUnusedFields: ptr.To(false),
 			},
 			Agent: flowslatest.FlowCollectorAgent{
-				Type: "EBPF",
+				Type: "eBPF",
 				IPFIX: flowslatest.FlowCollectorIPFIX{
 					Sampling:           2, // 0 is forbidden here
 					CacheActiveTimeout: "5s",
@@ -127,7 +127,7 @@ func flowCollectorIsoSpecs() {
 				ImagePullPolicy: "Always",
 				Resources:       v1.ResourceRequirements{Limits: nil, Requests: nil},
 				LogLevel:        "trace",
-				Autoscaler:      flowslatest.FlowCollectorHPA{Status: "DISABLED", MinReplicas: &zero, MaxReplicas: zero, Metrics: []ascv2.MetricSpec{}},
+				Autoscaler:      flowslatest.FlowCollectorHPA{Status: "Disabled", MinReplicas: &zero, MaxReplicas: zero, Metrics: []ascv2.MetricSpec{}},
 				PortNaming: flowslatest.ConsolePluginPortConfig{
 					Enable:    ptr.To(false),
 					PortNames: map[string]string{},
@@ -142,7 +142,7 @@ func flowCollectorIsoSpecs() {
 					QuerierURL:  "http://loki",
 					StatusURL:   "",
 					TenantID:    "test",
-					AuthToken:   "DISABLED",
+					AuthToken:   "Disabled",
 					TLS:         defaultTLS,
 					StatusTLS:   defaultTLS,
 				},
@@ -174,7 +174,7 @@ func flowCollectorIsoSpecs() {
 				Topic:   "topic",
 				TLS:     defaultTLS,
 				SASL: flowslatest.SASLConfig{
-					Type: "DISABLED",
+					Type: "Disabled",
 					ClientIDReference: flowslatest.FileReference{
 						Type:      "configmap",
 						Name:      "",
