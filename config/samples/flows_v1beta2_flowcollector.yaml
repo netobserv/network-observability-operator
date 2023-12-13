@@ -6,7 +6,7 @@ spec:
   namespace: netobserv
   deploymentModel: Direct
   agent:
-    type: Ebpf
+    type: eBPF
     ebpf:
       imagePullPolicy: IfNotPresent
       sampling: 50
@@ -139,7 +139,7 @@ spec:
     #     address: "kafka-cluster-kafka-bootstrap.netobserv"
     #     topic: netobserv-flows-export
     # or
-    # - type: Ipfix
+    # - type: IPFIX
     #   ipfix:
     #     targetHost: "ipfix-collector.ipfix.svc.cluster.local"
     #     targetPort: 4739
