@@ -378,7 +378,7 @@ metadata:
                 },
                 "sampling": 50
               },
-              "type": "Ebpf"
+              "type": "eBPF"
             },
             "consolePlugin": {
               "autoscaler": {
