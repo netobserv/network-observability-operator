@@ -12,6 +12,7 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
+	"github.com/netobserv/network-observability-operator/pkg/dashboards"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 )
 
@@ -76,7 +77,7 @@ func ControllerSpecs() {
 				}, &cm); err != nil {
 					return err
 				}
-				d, err := test.DashboardFromBytes([]byte(cm.Data["netobserv-health-metrics.json"]))
+				d, err := dashboards.FromBytes([]byte(cm.Data["netobserv-health-metrics.json"]))
 				if err != nil {
 					return err
 				}
@@ -118,7 +119,7 @@ func ControllerSpecs() {
 				}, &cm); err != nil {
 					return err
 				}
-				d, err := test.DashboardFromBytes([]byte(cm.Data["netobserv-health-metrics.json"]))
+				d, err := dashboards.FromBytes([]byte(cm.Data["netobserv-health-metrics.json"]))
 				if err != nil {
 					return err
 				}

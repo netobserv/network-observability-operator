@@ -169,7 +169,7 @@ func histogramPanels(scope *metricScope, metric, labels, legend, scaler string) 
 		}
 	}
 	// No split
-	rateExpr := fmt.Sprintf("rate(netobserv_%s[2m])", metric)
+	rateExpr := fmt.Sprintf("rate(netobserv_%s_bucket[2m])", metric)
 	return []Panel{{
 		Targets: []Target{
 			histogramTarget(scope, "0.99", rateExpr, labels, legend, scaler),
