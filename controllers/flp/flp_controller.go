@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -53,7 +53,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ServiceAccount{}).
 		Watches(
-			&v1alpha1.FlowMetric{},
+			&metricslatest.FlowMetric{},
 			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
 				if o.GetNamespace() == r.currentNamespace {
 					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
@@ -74,7 +74,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 type subReconciler interface {
 	context(context.Context) context.Context
 	cleanupNamespace(context.Context)
-	reconcile(context.Context, *flowslatest.FlowCollector, *v1alpha1.FlowMetricList) error
+	reconcile(context.Context, *flowslatest.FlowCollector, *metricslatest.FlowMetricList) error
 	getStatus() *status.Instance
 }
 
@@ -131,7 +131,7 @@ func (r *Reconciler) reconcile(ctx context.Context) error {
 	}
 
 	// List custom metrics
-	fm := v1alpha1.FlowMetricList{}
+	fm := metricslatest.FlowMetricList{}
 	if err := r.Client.List(ctx, &fm, &client.ListOptions{Namespace: ns}); err != nil {
 		return r.status.Error("CantListFlowMetrics", err)
 	}

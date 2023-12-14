@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/narrowcache"
 	"github.com/netobserv/network-observability-operator/pkg/test"

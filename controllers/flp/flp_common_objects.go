@@ -14,8 +14,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -54,7 +54,7 @@ type Builder struct {
 	labels      map[string]string
 	selector    map[string]string
 	desired     *flowslatest.FlowCollectorSpec
-	flowMetrics *v1alpha1.FlowMetricList
+	flowMetrics *metricslatest.FlowMetricList
 	promTLS     *flowslatest.CertificateReference
 	confKind    ConfKind
 	volumes     volumes.Builder
@@ -64,7 +64,7 @@ type Builder struct {
 
 type builder = Builder
 
-func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *v1alpha1.FlowMetricList, ck ConfKind) (Builder, error) {
+func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, ck ConfKind) (Builder, error) {
 	version := helper.ExtractVersion(info.Image)
 	name := name(ck)
 	var promTLS *flowslatest.CertificateReference

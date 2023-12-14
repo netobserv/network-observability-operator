@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"

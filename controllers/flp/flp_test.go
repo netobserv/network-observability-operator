@@ -33,8 +33,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -190,14 +190,14 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki}
-	b, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), cfg, &v1alpha1.FlowMetricList{})
+	b, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{})
 	return b
 }
 
 func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) transfoBuilder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki}
-	b, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), cfg, &v1alpha1.FlowMetricList{})
+	b, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{})
 	return b
 }
 
@@ -766,9 +766,9 @@ func TestLabels(t *testing.T) {
 
 	cfg := getConfig()
 	info := reconcilers.Common{Namespace: "ns"}
-	builder, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &v1alpha1.FlowMetricList{})
-	tBuilder, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), &cfg, &v1alpha1.FlowMetricList{})
-	iBuilder, _ := newIngestBuilder(info.NewInstance(image, status.Instance{}), &cfg, &v1alpha1.FlowMetricList{})
+	builder, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
+	tBuilder, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
+	iBuilder, _ := newIngestBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
 
 	// Deployment
 	depl := tBuilder.deployment(annotate("digest"))
@@ -851,7 +851,7 @@ func TestPipelineConfig(t *testing.T) {
 	// Kafka Ingester
 	cfg.DeploymentModel = flowslatest.DeploymentModelKafka
 	info := reconcilers.Common{Namespace: ns}
-	bi, _ := newIngestBuilder(info.NewInstance(image, status.Instance{}), &cfg, &v1alpha1.FlowMetricList{})
+	bi, _ := newIngestBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
 	cm, _, err = bi.configMap()
 	assert.NoError(err)
 	_, pipeline = validatePipelineConfig(t, cm)

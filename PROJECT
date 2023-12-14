@@ -12,7 +12,7 @@ resources:
   domain: netobserv.io
   group: flows
   kind: FlowCollector
-  path: github.com/netobserv/network-observability-operator/api/v1beta2
+  path: github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2
   version: v1beta2
   webhooks:
     conversion: true
@@ -28,6 +28,6 @@ resources:
   domain: netobserv.io
   group: flows
   kind: FlowMetric
-  path: github.com/netobserv/network-observability-operator/api/v1alpha1
+  path: github.com/netobserv/network-observability-operator/apis/flowcollector/v1alpha1
   version: v1alpha1
 version: "3"

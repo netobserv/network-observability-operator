@@ -11,8 +11,8 @@ import (
 	"k8s.io/utils/strings/slices"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
@@ -31,34 +31,34 @@ func ControllerFlowMetricsSpecs() {
 		Name:      "flowlogs-pipeline-config",
 		Namespace: operatorNamespace,
 	}
-	metric1 := v1alpha1.FlowMetric{
+	metric1 := metricslatest.FlowMetric{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "metric-1",
 			Namespace: operatorNamespace,
 		},
-		Spec: v1alpha1.FlowMetricSpec{
+		Spec: metricslatest.FlowMetricSpec{
 			MetricName: "m_1",
-			Type:       v1alpha1.CounterMetric,
+			Type:       metricslatest.CounterMetric,
 		},
 	}
-	metric2 := v1alpha1.FlowMetric{
+	metric2 := metricslatest.FlowMetric{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "metric-2",
 			Namespace: operatorNamespace,
 		},
-		Spec: v1alpha1.FlowMetricSpec{
+		Spec: metricslatest.FlowMetricSpec{
 			MetricName: "m_2",
-			Type:       v1alpha1.CounterMetric,
+			Type:       metricslatest.CounterMetric,
 		},
 	}
-	metricUnwatched := v1alpha1.FlowMetric{
+	metricUnwatched := metricslatest.FlowMetric{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "metric-unwatched",
 			Namespace: otherNamespace,
 		},
-		Spec: v1alpha1.FlowMetricSpec{
+		Spec: metricslatest.FlowMetricSpec{
 			MetricName: "m_3",
-			Type:       v1alpha1.CounterMetric,
+			Type:       metricslatest.CounterMetric,
 		},
 	}
 

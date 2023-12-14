@@ -45,9 +45,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/api/v1alpha1"
-	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/v1beta1"
-	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/v1beta2"
+	// nolint:staticcheck
+	flowsv1alpha1 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1alpha1"
+	flowsv1beta1 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta1"
+	flowsv1beta2 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricsv1alpha1 "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
@@ -68,6 +70,7 @@ func init() {
 	utilruntime.Must(flowsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(flowsv1beta1.AddToScheme(scheme))
 	utilruntime.Must(flowsv1beta2.AddToScheme(scheme))
+	utilruntime.Must(metricsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(ascv2.AddToScheme(scheme))
 	utilruntime.Must(osv1alpha1.AddToScheme(scheme))

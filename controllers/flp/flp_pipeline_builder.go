@@ -11,8 +11,8 @@ import (
 	promConfig "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -30,7 +30,7 @@ const (
 type PipelineBuilder struct {
 	*config.PipelineBuilderStage
 	desired     *flowslatest.FlowCollectorSpec
-	flowMetrics v1alpha1.FlowMetricList
+	flowMetrics metricslatest.FlowMetricList
 	volumes     *volumes.Builder
 	loki        *helper.LokiConfig
 	clusterID   string
@@ -38,7 +38,7 @@ type PipelineBuilder struct {
 
 func newPipelineBuilder(
 	desired *flowslatest.FlowCollectorSpec,
-	flowMetrics *v1alpha1.FlowMetricList,
+	flowMetrics *metricslatest.FlowMetricList,
 	loki *helper.LokiConfig,
 	clusterID string,
 	volumes *volumes.Builder,
@@ -174,7 +174,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	return nil
 }
 
-func flowMetricToFLP(flowMetric *v1alpha1.FlowMetricSpec) (*api.PromMetricsItem, error) {
+func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.PromMetricsItem, error) {
 	m := &api.PromMetricsItem{
 		Name:     flowMetric.MetricName,
 		Type:     strings.ToLower(string(flowMetric.Type)),
@@ -188,9 +188,9 @@ func flowMetricToFLP(flowMetric *v1alpha1.FlowMetricSpec) (*api.PromMetricsItem,
 	if !flowMetric.IncludeDuplicates {
 		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: "Duplicate", Value: "false", Type: "exact"})
 	}
-	if flowMetric.Direction == v1alpha1.Egress {
+	if flowMetric.Direction == metricslatest.Egress {
 		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: "FlowDirection", Value: "1|2", Type: "regex"})
-	} else if flowMetric.Direction == v1alpha1.Ingress {
+	} else if flowMetric.Direction == metricslatest.Ingress {
 		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: "FlowDirection", Value: "0|2", Type: "regex"})
 	}
 	for _, b := range flowMetric.Buckets {

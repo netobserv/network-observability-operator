@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 
-	"github.com/netobserv/network-observability-operator/api/v1alpha1"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
@@ -30,7 +30,7 @@ func getConfiguredMetrics(cm *corev1.ConfigMap) (api.PromMetricsItems, error) {
 	return nil, errors.New("prom encode stage not found")
 }
 
-func defaultBuilderWithMetrics(metrics *v1alpha1.FlowMetricList) (monolithBuilder, error) {
+func defaultBuilderWithMetrics(metrics *metricslatest.FlowMetricList) (monolithBuilder, error) {
 	cfg := getConfig()
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: "namespace", Loki: &loki}
@@ -49,24 +49,24 @@ func metric(metrics api.PromMetricsItems, name string) *api.PromMetricsItem {
 func TestFlowMetricToFLP(t *testing.T) {
 	assert := assert.New(t)
 
-	b, err := defaultBuilderWithMetrics(&v1alpha1.FlowMetricList{
-		Items: []v1alpha1.FlowMetric{
-			{Spec: v1alpha1.FlowMetricSpec{
+	b, err := defaultBuilderWithMetrics(&metricslatest.FlowMetricList{
+		Items: []metricslatest.FlowMetric{
+			{Spec: metricslatest.FlowMetricSpec{
 				MetricName: "m_1",
-				Type:       v1alpha1.CounterMetric,
+				Type:       metricslatest.CounterMetric,
 				ValueField: "val",
 				Labels:     []string{"by_field"},
-				Filters:    []v1alpha1.MetricFilter{{Field: "f", Value: "v", MatchType: v1alpha1.MatchExact}},
+				Filters:    []metricslatest.MetricFilter{{Field: "f", Value: "v", MatchType: metricslatest.MatchExact}},
 			}},
-			{Spec: v1alpha1.FlowMetricSpec{
+			{Spec: metricslatest.FlowMetricSpec{
 				MetricName:        "m_2",
-				Type:              v1alpha1.HistogramMetric,
+				Type:              metricslatest.HistogramMetric,
 				Labels:            []string{"by_field"},
 				IncludeDuplicates: true,
-				Direction:         v1alpha1.Egress,
-				Filters: []v1alpha1.MetricFilter{
-					{Field: "f", Value: "v", MatchType: v1alpha1.MatchRegex},
-					{Field: "f2", MatchType: v1alpha1.MatchAbsence},
+				Direction:         metricslatest.Egress,
+				Filters: []metricslatest.MetricFilter{
+					{Field: "f", Value: "v", MatchType: metricslatest.MatchRegex},
+					{Field: "f2", MatchType: metricslatest.MatchAbsence},
 				},
 				Buckets: []string{"1", "5", "10", "50", "100"},
 			}},
