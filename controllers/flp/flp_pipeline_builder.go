@@ -2,6 +2,8 @@ package flp
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
@@ -9,7 +11,8 @@ import (
 	promConfig "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -26,14 +29,16 @@ const (
 
 type PipelineBuilder struct {
 	*config.PipelineBuilderStage
-	desired   *flowslatest.FlowCollectorSpec
-	volumes   *volumes.Builder
-	loki      *helper.LokiConfig
-	clusterID string
+	desired     *flowslatest.FlowCollectorSpec
+	flowMetrics metricslatest.FlowMetricList
+	volumes     *volumes.Builder
+	loki        *helper.LokiConfig
+	clusterID   string
 }
 
 func newPipelineBuilder(
 	desired *flowslatest.FlowCollectorSpec,
+	flowMetrics *metricslatest.FlowMetricList,
 	loki *helper.LokiConfig,
 	clusterID string,
 	volumes *volumes.Builder,
@@ -42,6 +47,7 @@ func newPipelineBuilder(
 	return PipelineBuilder{
 		PipelineBuilderStage: pipeline,
 		desired:              desired,
+		flowMetrics:          *flowMetrics,
 		loki:                 loki,
 		clusterID:            clusterID,
 		volumes:              volumes,
@@ -143,8 +149,17 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	}
 
 	// obtain encode_prometheus stage from metrics_definitions
-	names := helper.GetIncludeList(b.desired)
+	names := metrics.GetIncludeList(b.desired)
 	promMetrics := metrics.GetDefinitions(names)
+
+	for i := range b.flowMetrics.Items {
+		fm := &b.flowMetrics.Items[i]
+		m, err := flowMetricToFLP(&fm.Spec)
+		if err != nil {
+			return fmt.Errorf("error reading FlowMetric definition '%s': %w", fm.Name, err)
+		}
+		promMetrics = append(promMetrics, *m)
+	}
 
 	if len(promMetrics) > 0 {
 		// prometheus stage (encode) configuration
@@ -157,6 +172,35 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 
 	b.addCustomExportStages(&enrichedStage)
 	return nil
+}
+
+func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.PromMetricsItem, error) {
+	m := &api.PromMetricsItem{
+		Name:     flowMetric.MetricName,
+		Type:     strings.ToLower(string(flowMetric.Type)),
+		Filters:  []api.PromMetricsFilter{},
+		Labels:   flowMetric.Labels,
+		ValueKey: flowMetric.ValueField,
+	}
+	for _, f := range flowMetric.Filters {
+		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: f.Field, Value: f.Value, Type: strings.ToLower(string(f.MatchType))})
+	}
+	if !flowMetric.IncludeDuplicates {
+		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: "Duplicate", Value: "false", Type: "exact"})
+	}
+	if flowMetric.Direction == metricslatest.Egress {
+		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: "FlowDirection", Value: "1|2", Type: "regex"})
+	} else if flowMetric.Direction == metricslatest.Ingress {
+		m.Filters = append(m.Filters, api.PromMetricsFilter{Key: "FlowDirection", Value: "0|2", Type: "regex"})
+	}
+	for _, b := range flowMetric.Buckets {
+		f, err := strconv.ParseFloat(b, 64)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse metric buckets as floats: '%s'; error was: %w", b, err)
+		}
+		m.Buckets = append(m.Buckets, f)
+	}
+	return m, nil
 }
 
 func (b *PipelineBuilder) addConnectionTracking(indexFields []string, lastStage config.PipelineBuilderStage) ([]string, config.PipelineBuilderStage) {

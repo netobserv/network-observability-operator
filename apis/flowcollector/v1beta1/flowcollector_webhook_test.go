@@ -3,7 +3,7 @@ package v1beta1
 import (
 	"testing"
 
-	"github.com/netobserv/network-observability-operator/api/v1beta2"
+	"github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/utils/ptr"
 )

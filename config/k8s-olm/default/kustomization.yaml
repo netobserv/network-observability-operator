@@ -23,6 +23,8 @@ patchesStrategicMerge:
 - manager_webhook_patch.yaml
 - webhookcainjection_patch.yaml
 - cainjection_in_flowcollectors.yaml
+# Uncomment when more versions of FlowMetrics are managed with webhook conversion
+# - cainjection_in_flowmetrics.yaml
 
 # the following config is for teaching kustomize how to do var substitution
 vars:

@@ -24,7 +24,7 @@ package v1alpha1
 import (
 	unsafe "unsafe"
 
-	v1beta2 "github.com/netobserv/network-observability-operator/api/v1beta2"
+	v1beta2 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	v2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"

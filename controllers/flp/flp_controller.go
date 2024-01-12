@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/loki"
@@ -17,16 +19,19 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // Reconciler reconciles the current flowlogs-pipeline state with the desired configuration
 type Reconciler struct {
 	client.Client
-	mgr       *manager.Manager
-	watcher   *watchers.Watcher
-	status    status.Instance
-	clusterID string
+	mgr              *manager.Manager
+	watcher          *watchers.Watcher
+	status           status.Instance
+	clusterID        string
+	currentNamespace string
 }
 
 func Start(ctx context.Context, mgr *manager.Manager) error {
@@ -46,7 +51,16 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		Owns(&ascv2.HorizontalPodAutoscaler{}).
 		Owns(&corev1.Namespace{}).
 		Owns(&corev1.Service{}).
-		Owns(&corev1.ServiceAccount{})
+		Owns(&corev1.ServiceAccount{}).
+		Watches(
+			&metricslatest.FlowMetric{},
+			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+				if o.GetNamespace() == r.currentNamespace {
+					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
+				}
+				return []reconcile.Request{}
+			}),
+		)
 
 	ctrl, err := builder.Build(&r)
 	if err != nil {
@@ -58,9 +72,9 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 }
 
 type subReconciler interface {
-	context(ctx context.Context) context.Context
-	cleanupNamespace(ctx context.Context)
-	reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error
+	context(context.Context) context.Context
+	cleanupNamespace(context.Context)
+	reconcile(context.Context, *flowslatest.FlowCollector, *metricslatest.FlowMetricList) error
 	getStatus() *status.Instance
 }
 
@@ -98,6 +112,7 @@ func (r *Reconciler) reconcile(ctx context.Context) error {
 	}
 
 	ns := helper.GetNamespace(&fc.Spec)
+	r.currentNamespace = ns
 	previousNamespace := r.status.GetDeployedNamespace(fc)
 	loki := helper.NewLokiConfig(&fc.Spec.Loki, ns)
 	cmn := r.newCommonInfo(clh, ns, previousNamespace, &loki)
@@ -113,6 +128,12 @@ func (r *Reconciler) reconcile(ctx context.Context) error {
 		} else {
 			r.clusterID = string(cversion.Spec.ClusterID)
 		}
+	}
+
+	// List custom metrics
+	fm := metricslatest.FlowMetricList{}
+	if err := r.Client.List(ctx, &fm, &client.ListOptions{Namespace: ns}); err != nil {
+		return r.status.Error("CantListFlowMetrics", err)
 	}
 
 	// Create sub-reconcilers
@@ -139,7 +160,7 @@ func (r *Reconciler) reconcile(ctx context.Context) error {
 	}
 
 	for _, sr := range reconcilers {
-		if err := sr.reconcile(sr.context(ctx), fc); err != nil {
+		if err := sr.reconcile(sr.context(ctx), fc, &fm); err != nil {
 			return sr.getStatus().Error("FLPReconcileError", err)
 		}
 	}

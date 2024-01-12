@@ -1,0 +1,27 @@
+# permissions for end users to view flowmetrics.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: flowmetric-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: netobserv-operator
+    app.kubernetes.io/part-of: netobserv-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: flowmetric-viewer-role
+rules:
+- apiGroups:
+  - flows.netobserv.io
+  resources:
+  - flowmetrics
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - flows.netobserv.io
+  resources:
+  - flowmetrics/status
+  verbs:
+  - get

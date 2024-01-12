@@ -19,7 +19,7 @@ package v1beta1
 import (
 	"fmt"
 
-	"github.com/netobserv/network-observability-operator/api/v1beta2"
+	"github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	utilconversion "github.com/netobserv/network-observability-operator/pkg/conversion"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"

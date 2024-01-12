@@ -3,9 +3,8 @@ package helper
 import (
 	"strings"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -131,37 +130,6 @@ func PtrInt32(i *int32) int32 {
 func IsOwned(obj client.Object) bool {
 	refs := obj.GetOwnerReferences()
 	return len(refs) > 0 && strings.HasPrefix(refs[0].APIVersion, flowslatest.GroupVersion.Group)
-}
-
-func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
-	var list []string
-	if spec.Processor.Metrics.IncludeList == nil {
-		list = metrics.DefaultIncludeList
-	} else {
-		for _, m := range *spec.Processor.Metrics.IncludeList {
-			list = append(list, string(m))
-		}
-	}
-	if !UseEBPF(spec) || !IsPktDropEnabled(&spec.Agent.EBPF) {
-		list = removeMetricsByPattern(list, "_drop_")
-	}
-	if !UseEBPF(spec) || !IsFlowRTTEnabled(&spec.Agent.EBPF) {
-		list = removeMetricsByPattern(list, "_rtt_")
-	}
-	if !UseEBPF(spec) || !IsDNSTrackingEnabled(&spec.Agent.EBPF) {
-		list = removeMetricsByPattern(list, "_dns_")
-	}
-	return list
-}
-
-func removeMetricsByPattern(list []string, search string) []string {
-	var filtered []string
-	for _, m := range list {
-		if !strings.Contains(m, search) {
-			filtered = append(filtered, m)
-		}
-	}
-	return filtered
 }
 
 func GetNamespace(spec *flowslatest.FlowCollectorSpec) string {

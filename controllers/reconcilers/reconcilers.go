@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -182,8 +182,9 @@ func ReconcileHPA(ctx context.Context, ci *Instance, old, new *ascv2.HorizontalP
 		} else if helper.AutoScalerChanged(old, *desired, report) {
 			return ci.UpdateIfOwned(ctx, old, new)
 		}
+	} else {
+		ci.Managed.TryDelete(ctx, old)
 	}
-	ci.Managed.TryDelete(ctx, old)
 	return nil
 }
 

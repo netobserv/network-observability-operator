@@ -11,11 +11,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
+	"github.com/netobserv/network-observability-operator/pkg/metrics"
 )
 
 type Reconciler struct {
@@ -101,7 +102,7 @@ func (r *Reconciler) reconcile(ctx context.Context) error {
 	}
 
 	if r.mgr.HasSvcMonitor() {
-		names := helper.GetIncludeList(&desired.Spec)
+		names := metrics.GetIncludeList(&desired.Spec)
 		desiredFlowDashboardCM, del, err := buildFlowMetricsDashboard(ns, names)
 		if err != nil {
 			return err

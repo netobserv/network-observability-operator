@@ -6,7 +6,8 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
@@ -15,8 +16,8 @@ type ingestBuilder struct {
 	generic builder
 }
 
-func newIngestBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) (ingestBuilder, error) {
-	gen, err := NewBuilder(info, desired, ConfKafkaIngester)
+func newIngestBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList) (ingestBuilder, error) {
+	gen, err := NewBuilder(info, desired, flowMetrics, ConfKafkaIngester)
 	return ingestBuilder{
 		generic: gen,
 	}, err
