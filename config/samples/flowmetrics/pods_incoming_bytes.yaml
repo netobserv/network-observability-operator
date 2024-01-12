@@ -1,0 +1,13 @@
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: flowmetric-pod-incoming
+spec:
+  metricName: pod_incoming_bytes_total
+  type: Counter
+  valueField: Bytes
+  direction: Ingress
+  labels: [DstK8S_Name,DstK8S_Namespace,DstK8S_OwnerName,DstK8S_OwnerType,DstK8S_HostName]
+  filters:
+  - field: DstK8S_Type
+    value: Pod
