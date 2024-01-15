@@ -3,7 +3,7 @@ module github.com/netobserv/network-observability-operator
 go 1.20
 
 require (
-	github.com/go-logr/logr v1.3.0
+	github.com/go-logr/logr v1.4.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/netobserv/flowlogs-pipeline v0.1.11-0.20231108130854-fac8a619b238
 	github.com/onsi/ginkgo/v2 v2.13.2
