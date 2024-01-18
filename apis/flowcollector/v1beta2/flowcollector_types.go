@@ -938,7 +938,7 @@ type AdvancedLokiConfig struct {
 	//+kubebuilder:default:={"app":"netobserv-flowcollector"}
 	//+optional
 	// `staticLabels` is a map of common labels to set on each flow in Loki storage.
-	StaticLabels *map[string]string `json:"staticLabels,omitempty"`
+	StaticLabels map[string]string `json:"staticLabels,omitempty"`
 }
 
 // `AdvancedPluginConfig` allows tweaking some aspects of the internal configuration of the console plugin.

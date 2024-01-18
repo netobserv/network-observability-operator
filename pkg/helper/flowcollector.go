@@ -205,7 +205,7 @@ func GetAdvancedLokiConfig(specConfig *flowslatest.AdvancedLokiConfig) flowslate
 		WriteMinBackoff: ptr.To(GetFieldDefaultDuration(LokiAdvancedPath, "writeMinBackoff")),
 		WriteMaxBackoff: ptr.To(GetFieldDefaultDuration(LokiAdvancedPath, "writeMaxBackoff")),
 		WriteMaxRetries: ptr.To(GetFieldDefaultInt32(LokiAdvancedPath, "writeMaxRetries")),
-		StaticLabels:    ptr.To(GetFieldDefaultMapString(LokiAdvancedPath, "staticLabels")),
+		StaticLabels:    GetFieldDefaultMapString(LokiAdvancedPath, "staticLabels"),
 	}
 
 	if specConfig != nil {

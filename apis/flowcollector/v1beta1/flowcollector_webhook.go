@@ -45,7 +45,9 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	if ok, err := utilconversion.UnmarshalData(r, restored); err != nil || !ok {
 		return err
 	}
+	lokiAdv := dst.Spec.Loki.Advanced
 	dst.Spec.Loki = restored.Spec.Loki
+	dst.Spec.Loki.Advanced = lokiAdv
 
 	return nil
 }
@@ -133,7 +135,7 @@ func Convert_v1beta2_FlowCollectorLoki_To_v1beta1_FlowCollectorLoki(in *v1beta2.
 		out.MaxBackoff = in.Advanced.WriteMaxBackoff
 		out.MaxRetries = in.Advanced.WriteMaxRetries
 		if in.Advanced.StaticLabels != nil {
-			out.StaticLabels = *in.Advanced.StaticLabels
+			out.StaticLabels = in.Advanced.StaticLabels
 		}
 	}
 	return autoConvert_v1beta2_FlowCollectorLoki_To_v1beta1_FlowCollectorLoki(in, out, s)
@@ -170,7 +172,7 @@ func Convert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *FlowColl
 		WriteMinBackoff: helper.GetAdvancedDurationValue(debugPath, "writeMinBackoff", in.MinBackoff),
 		WriteMaxBackoff: helper.GetAdvancedDurationValue(debugPath, "writeMaxBackoff", in.MaxBackoff),
 		WriteMaxRetries: helper.GetAdvancedInt32Value(debugPath, "writeMaxRetries", in.MaxRetries),
-		StaticLabels:    helper.GetAdvancedMapValue(debugPath, "lokiStaticLabels", &in.StaticLabels),
+		StaticLabels:    helper.GetAdvancedMapValue(debugPath, "staticLabels", in.StaticLabels),
 	}
 	return autoConvert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in, out, s)
 }

@@ -146,9 +146,7 @@ func flowCollectorConsolePluginSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.ConsolePlugin.Advanced = &flowslatest.AdvancedPluginConfig{
-					Port: ptr.To(int32(9099)),
-				}
+				fc.Spec.ConsolePlugin.Advanced.Port = ptr.To(int32(9099))
 				fc.Spec.ConsolePlugin.Replicas = ptr.To(int32(2))
 				fc.Spec.ConsolePlugin.Autoscaler.Status = flowslatest.HPAStatusDisabled
 				return k8sClient.Update(ctx, &fc)
@@ -237,8 +235,8 @@ func flowCollectorConsolePluginSpecs() {
 			}, timeout, interval).Should(BeEmpty())
 		})
 
-		It("Should be unregistered", func() {
-			By("Update CR to unregister")
+		It("Should be registered", func() {
+			By("Update CR to registered")
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.ConsolePlugin.Advanced.Register = ptr.To(true)
 			})

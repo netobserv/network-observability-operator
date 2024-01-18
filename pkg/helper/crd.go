@@ -3,6 +3,8 @@ package helper
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 
@@ -44,6 +46,22 @@ func ParseCRD(bytes []byte) error {
 	return nil
 }
 
+func SetCRDForTests(rootPath string) error {
+	crdPath, err := filepath.Abs(rootPath + "/config/crd/bases/flows.netobserv.io_flowcollectors.yaml")
+	if err != nil {
+		return fmt.Errorf("can't read CRD path %w", err)
+	}
+	crdBytes, err := os.ReadFile(crdPath)
+	if err != nil {
+		return fmt.Errorf("can't read CRD file %w", err)
+	}
+	err = ParseCRD(crdBytes)
+	if err != nil {
+		return fmt.Errorf("can't parse CRD %w", err)
+	}
+	return nil
+}
+
 func SetCRD(v *apiextensionsv1.CustomResourceDefinition) {
 	crd = v
 }
@@ -69,7 +87,7 @@ func GetAdvancedInt32Value(path []string, field string, value *int32) *int32 {
 	return nil
 }
 
-func GetAdvancedMapValue(path []string, field string, value *map[string]string) *map[string]string {
+func GetAdvancedMapValue(path []string, field string, value map[string]string) map[string]string {
 	bytes, _ := json.Marshal(value)
 	if !IsDefaultValue(path, field, string(bytes)) {
 		return value
@@ -143,9 +161,9 @@ func GetValueOrDefaultInt32(path []string, field string, value *int32) int32 {
 	return GetFieldDefaultInt32(path, field)
 }
 
-func GetValueOrDefaultMapString(path []string, field string, value *map[string]string) map[string]string {
+func GetValueOrDefaultMapString(path []string, field string, value map[string]string) map[string]string {
 	if value != nil {
-		return *value
+		return value
 	}
 	return GetFieldDefaultMapString(path, field)
 }

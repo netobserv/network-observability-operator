@@ -30,6 +30,7 @@ import (
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta1"
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	metricsv1alpha1 "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
 )
 
@@ -136,6 +137,9 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sManager).NotTo(BeNil())
+
+	err = helper.SetCRDForTests(filepath.Join(basePath, ".."))
+	Expect(err).NotTo(HaveOccurred())
 
 	go func() {
 		defer gv2.GinkgoRecover()

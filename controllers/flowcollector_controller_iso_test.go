@@ -125,8 +125,8 @@ func flowCollectorIsoSpecs() {
 				Replicas:        &zero,
 				ImagePullPolicy: "Always",
 				Advanced: &flowslatest.AdvancedPluginConfig{
-					Register: ptr.To(false),
-					Port:     ptr.To(int32(12345)),
+					Register: ptr.To(true),
+					Port:     ptr.To(int32(9001)),
 				},
 				Resources:  v1.ResourceRequirements{Limits: nil, Requests: nil},
 				LogLevel:   "trace",
@@ -169,9 +169,9 @@ func flowCollectorIsoSpecs() {
 				WriteBatchSize: 100,
 				Advanced: &flowslatest.AdvancedLokiConfig{
 					WriteMinBackoff: &metav1.Duration{Duration: time.Second},
-					WriteMaxBackoff: &metav1.Duration{Duration: time.Second},
-					WriteMaxRetries: &zero,
-					StaticLabels:    &map[string]string{},
+					WriteMaxBackoff: &metav1.Duration{Duration: 5 * time.Second},
+					WriteMaxRetries: ptr.To(int32(2)),
+					StaticLabels:    map[string]string{"app": "netobserv-flowcollector"},
 				},
 			},
 			Kafka: flowslatest.FlowCollectorKafka{

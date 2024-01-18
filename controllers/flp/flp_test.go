@@ -121,7 +121,7 @@ func getLoki() flowslatest.FlowCollectorLoki {
 				Duration: 300,
 			},
 			WriteMaxRetries: ptr.To(int32(10)),
-			StaticLabels:    &map[string]string{"app": "netobserv-flowcollector"},
+			StaticLabels:    map[string]string{"app": "netobserv-flowcollector"},
 		},
 	}
 }

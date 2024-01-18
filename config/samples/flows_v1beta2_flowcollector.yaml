@@ -65,10 +65,6 @@ spec:
     kafkaConsumerAutoscaler: null
     kafkaConsumerQueueCapacity: 1000
     kafkaConsumerBatchSize: 10485760
-    # Loki write stage configuration
-    lokiTimeout: 10s
-    lokiBatchWait: 1s
-    lokiBatchSize: 10485760
     # Custom optionnal resources configuration
     resources:
       requests:
@@ -93,6 +89,10 @@ spec:
       name: loki
       # Change loki operator instance namespace
       # namespace: loki-operator
+    # Write stage configuration
+    writeTimeout: 10s
+    writeBatchWait: 1s
+    writeBatchSize: 10485760
   consolePlugin:
     enable: true
     imagePullPolicy: IfNotPresent

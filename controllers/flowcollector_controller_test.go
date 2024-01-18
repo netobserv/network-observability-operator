@@ -1,9 +1,6 @@
 package controllers
 
 import (
-	"log"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -22,7 +19,6 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 )
 
@@ -42,19 +38,6 @@ var updateCR = func(key types.NamespacedName, updater func(*flowslatest.FlowColl
 
 // nolint:cyclop
 func flowCollectorControllerSpecs() {
-	crdPath, err := filepath.Abs("../config/crd/bases/flows.netobserv.io_flowcollectors.yaml")
-	if err != nil {
-		log.Fatalf("can't read CRD path %v", err)
-	}
-	crdBytes, err := os.ReadFile(crdPath)
-	if err != nil {
-		log.Fatalf("can't read CRD file %v", err)
-	}
-	err = helper.ParseCRD(crdBytes)
-	if err != nil {
-		log.Fatalf("can't parse CRD %v", err)
-	}
-
 	const operatorNamespace = "main-namespace"
 	const otherNamespace = "other-namespace"
 	crKey := types.NamespacedName{

@@ -102,7 +102,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			TenantID:       b.loki.TenantID,
 		}
 
-		for k, v := range *debugConfig.StaticLabels {
+		for k, v := range debugConfig.StaticLabels {
 			lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
 		}
 

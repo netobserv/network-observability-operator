@@ -373,7 +373,10 @@ metadata:
                   "enable": false
                 },
                 "url": "http://loki.netobserv.svc:3100/"
-              }
+              },
+              "writeBatchSize": 10485760,
+              "writeBatchWait": "1s",
+              "writeTimeout": "10s"
             },
             "namespace": "netobserv",
             "processor": {
@@ -384,9 +387,6 @@ metadata:
               "kafkaConsumerReplicas": 3,
               "logLevel": "info",
               "logTypes": "Flows",
-              "lokiBatchSize": 10485760,
-              "lokiBatchWait": "1s",
-              "lokiTimeout": "10s",
               "metrics": {
                 "disableAlerts": [],
                 "server": {
