@@ -297,6 +297,7 @@ func TestBeta1ConversionRoundtrip_Advanced(t *testing.T) {
 				Port:     1000,
 			},
 			Loki: FlowCollectorLoki{
+				BatchWait:  &metav1.Duration{Duration: time.Minute},
 				MinBackoff: &metav1.Duration{Duration: time.Minute},
 				MaxBackoff: &metav1.Duration{Duration: time.Hour},
 				MaxRetries: ptr.To(int32(10)),
@@ -315,6 +316,7 @@ func TestBeta1ConversionRoundtrip_Advanced(t *testing.T) {
 	assert.Equal(time.Second, converted.Spec.Processor.Advanced.ConversationEndTimeout.Duration)
 	assert.Equal(time.Minute, converted.Spec.Processor.Advanced.ConversationHeartbeatInterval.Duration)
 	assert.Equal(time.Hour, converted.Spec.Processor.Advanced.ConversationTerminatingTimeout.Duration)
+	assert.Equal(time.Minute, converted.Spec.Loki.WriteBatchWait.Duration)
 	assert.Equal(time.Minute, converted.Spec.Loki.Advanced.WriteMinBackoff.Duration)
 	assert.Equal(time.Hour, converted.Spec.Loki.Advanced.WriteMaxBackoff.Duration)
 	assert.Equal(int32(10), *converted.Spec.Loki.Advanced.WriteMaxRetries)
@@ -331,6 +333,7 @@ func TestBeta1ConversionRoundtrip_Advanced(t *testing.T) {
 	assert.Equal(time.Second, back.Spec.Processor.ConversationEndTimeout.Duration)
 	assert.Equal(time.Minute, back.Spec.Processor.ConversationHeartbeatInterval.Duration)
 	assert.Equal(time.Hour, back.Spec.Processor.ConversationTerminatingTimeout.Duration)
+	assert.Equal(time.Minute, back.Spec.Loki.BatchWait.Duration)
 	assert.Equal(time.Minute, back.Spec.Loki.MinBackoff.Duration)
 	assert.Equal(time.Hour, back.Spec.Loki.MaxBackoff.Duration)
 	assert.Equal(int32(10), *back.Spec.Loki.MaxRetries)
@@ -360,6 +363,7 @@ func TestBeta2ConversionRoundtrip_Advanced(t *testing.T) {
 				},
 			},
 			Loki: v1beta2.FlowCollectorLoki{
+				WriteBatchWait: &metav1.Duration{Duration: time.Minute},
 				Advanced: &v1beta2.AdvancedLokiConfig{
 					WriteMinBackoff: &metav1.Duration{Duration: time.Minute},
 					WriteMaxBackoff: &metav1.Duration{Duration: time.Hour},
@@ -380,6 +384,7 @@ func TestBeta2ConversionRoundtrip_Advanced(t *testing.T) {
 	assert.Equal(time.Second, converted.Spec.Processor.ConversationEndTimeout.Duration)
 	assert.Equal(time.Minute, converted.Spec.Processor.ConversationHeartbeatInterval.Duration)
 	assert.Equal(time.Hour, converted.Spec.Processor.ConversationTerminatingTimeout.Duration)
+	assert.Equal(time.Minute, converted.Spec.Loki.BatchWait.Duration)
 	assert.Equal(time.Minute, converted.Spec.Loki.MinBackoff.Duration)
 	assert.Equal(time.Hour, converted.Spec.Loki.MaxBackoff.Duration)
 	assert.Equal(int32(10), *converted.Spec.Loki.MaxRetries)
@@ -395,6 +400,7 @@ func TestBeta2ConversionRoundtrip_Advanced(t *testing.T) {
 	assert.Equal(time.Second, back.Spec.Processor.Advanced.ConversationEndTimeout.Duration)
 	assert.Equal(time.Minute, back.Spec.Processor.Advanced.ConversationHeartbeatInterval.Duration)
 	assert.Equal(time.Hour, back.Spec.Processor.Advanced.ConversationTerminatingTimeout.Duration)
+	assert.Equal(time.Minute, back.Spec.Loki.WriteBatchWait.Duration)
 	assert.Equal(time.Minute, back.Spec.Loki.Advanced.WriteMinBackoff.Duration)
 	assert.Equal(time.Hour, back.Spec.Loki.Advanced.WriteMaxBackoff.Duration)
 	assert.Equal(int32(10), *back.Spec.Loki.Advanced.WriteMaxRetries)

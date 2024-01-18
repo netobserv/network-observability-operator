@@ -42,6 +42,7 @@ type builder struct {
 	labels    map[string]string
 	selector  map[string]string
 	desired   *flowslatest.FlowCollectorSpec
+	advanced  *flowslatest.AdvancedPluginConfig
 	imageName string
 	volumes   volumes.Builder
 	loki      *helper.LokiConfig
@@ -49,6 +50,7 @@ type builder struct {
 
 func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec, loki *helper.LokiConfig) builder {
 	version := helper.ExtractVersion(imageName)
+	advanced := helper.GetAdvancedPluginConfig(desired.ConsolePlugin.Advanced)
 	return builder{
 		namespace: ns,
 		labels: map[string]string{
@@ -59,13 +61,13 @@ func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec, lo
 			"app": constants.PluginName,
 		},
 		desired:   desired,
+		advanced:  &advanced,
 		imageName: imageName,
 		loki:      loki,
 	}
 }
 
 func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
-	debugConfig := helper.GetAdvancedPluginConfig(b.desired.ConsolePlugin.Advanced)
 	return &osv1alpha1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: constants.PluginName,
@@ -75,7 +77,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 			Service: osv1alpha1.ConsolePluginService{
 				Name:      constants.PluginName,
 				Namespace: b.namespace,
-				Port:      *debugConfig.Port,
+				Port:      *b.advanced.Port,
 				BasePath:  "/",
 			},
 			Proxy: []osv1alpha1.ConsolePluginProxy{{
@@ -85,7 +87,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 				Service: osv1alpha1.ConsolePluginProxyServiceConfig{
 					Name:      constants.PluginName,
 					Namespace: b.namespace,
-					Port:      *debugConfig.Port,
+					Port:      *b.advanced.Port,
 				},
 			}},
 		},
@@ -257,7 +259,6 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 }
 
 func (b *builder) mainService() *corev1.Service {
-	debugConfig := helper.GetAdvancedPluginConfig(b.desired.ConsolePlugin.Advanced)
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.PluginName,
@@ -270,12 +271,12 @@ func (b *builder) mainService() *corev1.Service {
 		Spec: corev1.ServiceSpec{
 			Selector: b.selector,
 			Ports: []corev1.ServicePort{{
-				Port:     *debugConfig.Port,
+				Port:     *b.advanced.Port,
 				Protocol: corev1.ProtocolTCP,
 				// Some Kubernetes versions might automatically set TargetPort to Port. We need to
 				// explicitly set it here so the reconcile loop verifies that the owned service
 				// is equal as the desired service
-				TargetPort: intstr.FromInt(int(*debugConfig.Port)),
+				TargetPort: intstr.FromInt(int(*b.advanced.Port)),
 			}},
 		},
 	}
@@ -395,6 +396,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
 	// configure server
 	config.Server.CertPath = "/var/serving-cert/tls.crt"
 	config.Server.KeyPath = "/var/serving-cert/tls.key"
+	config.Server.Port = int(*b.advanced.Port)
 
 	// configure loki
 	b.setLokiConfig(&config.Loki)

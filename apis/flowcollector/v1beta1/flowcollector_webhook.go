@@ -45,9 +45,12 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	if ok, err := utilconversion.UnmarshalData(r, restored); err != nil || !ok {
 		return err
 	}
-	lokiAdv := dst.Spec.Loki.Advanced
-	dst.Spec.Loki = restored.Spec.Loki
-	dst.Spec.Loki.Advanced = lokiAdv
+	// Restore elements that can't be guessed from v1beta1
+	dst.Spec.Loki.Mode = restored.Spec.Loki.Mode
+	dst.Spec.Loki.LokiStack = restored.Spec.Loki.LokiStack
+	dst.Spec.Loki.Monolithic = restored.Spec.Loki.Monolithic
+	dst.Spec.Loki.Microservices = restored.Spec.Loki.Microservices
+	dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
 
 	return nil
 }
