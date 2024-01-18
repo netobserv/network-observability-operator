@@ -62,11 +62,17 @@ type FilterConfig struct {
 	Placeholder            string `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
 }
 
+type Deduper struct {
+	Mark  bool `yaml:"mark" json:"mark"`
+	Merge bool `yaml:"merge" json:"merge"`
+}
+
 type FrontendConfig struct {
 	RecordTypes []string       `yaml:"recordTypes" json:"recordTypes"`
 	Columns     []ColumnConfig `yaml:"columns" json:"columns"`
 	Sampling    int            `yaml:"sampling" json:"sampling"`
 	Features    []string       `yaml:"features" json:"features"`
+	Deduper     Deduper        `yaml:"deduper" json:"deduper"`
 
 	PortNaming      flowslatest.ConsolePluginPortConfig `yaml:"portNaming,omitempty" json:"portNaming,omitempty"`
 	Filters         []FilterConfig                      `yaml:"filters,omitempty" json:"filters,omitempty"`

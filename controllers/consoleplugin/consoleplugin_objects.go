@@ -20,6 +20,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	config "github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
@@ -344,6 +345,7 @@ func (b *builder) setLokiConfig(lconf *config.LokiConfig) {
 }
 
 func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) {
+	var dedupJustMark, dedupMerge bool
 	if helper.UseEBPF(b.desired) {
 		if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
 			fconf.Features = append(fconf.Features, "pktDrop")
@@ -356,12 +358,29 @@ func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) {
 		if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
 			fconf.Features = append(fconf.Features, "flowRTT")
 		}
+
+		if v, ok := b.desired.Agent.EBPF.Debug.Env[ebpf.EnvDedupeJustMark]; ok {
+			dedupJustMark, _ = strconv.ParseBool(v)
+		} else {
+			dedupJustMark, _ = strconv.ParseBool(ebpf.DedupeJustMarkDefault)
+		}
+
+		if v, ok := b.desired.Agent.EBPF.Debug.Env[ebpf.EnvDedupeMerge]; ok {
+			dedupMerge, _ = strconv.ParseBool(v)
+		} else {
+			dedupMerge, _ = strconv.ParseBool(ebpf.DedupeMergeDefault)
+
+		}
 	}
 	fconf.RecordTypes = helper.GetRecordTypes(&b.desired.Processor)
 	fconf.PortNaming = b.desired.ConsolePlugin.PortNaming
 	fconf.QuickFilters = b.desired.ConsolePlugin.QuickFilters
 	fconf.AlertNamespaces = []string{b.namespace}
 	fconf.Sampling = helper.GetSampling(b.desired)
+	fconf.Deduper = config.Deduper{
+		Mark:  dedupJustMark,
+		Merge: dedupMerge,
+	}
 }
 
 //go:embed config/static-frontend-config.yaml

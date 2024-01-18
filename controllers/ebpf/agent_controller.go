@@ -51,10 +51,6 @@ const (
 	envLogLevel                   = "LOG_LEVEL"
 	envDedupe                     = "DEDUPER"
 	dedupeDefault                 = "firstCome"
-	envDedupeJustMark             = "DEDUPER_JUST_MARK"
-	envDedupeMerge                = "DEDUPER_MERGE"
-	dedupeJustMarkDefault         = "true"
-	dedupeMergeDefault            = "false"
 	envGoMemLimit                 = "GOMEMLIMIT"
 	envEnablePktDrop              = "ENABLE_PKT_DROPS"
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
@@ -71,6 +67,13 @@ const (
 	bpfTraceMountPath  = "/sys/kernel/debug"
 	bpfNetNSMountName  = "var-run-netns"
 	bpfNetNSMountPath  = "/var/run/netns"
+)
+
+const (
+	EnvDedupeJustMark     = "DEDUPER_JUST_MARK"
+	EnvDedupeMerge        = "DEDUPER_MERGE"
+	DedupeJustMarkDefault = "true"
+	DedupeMergeDefault    = "false"
 )
 
 type reconcileAction int
@@ -462,24 +465,24 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	}
 
 	dedup := dedupeDefault
-	dedupJustMark := dedupeJustMarkDefault
-	dedupMerge := dedupeMergeDefault
+	dedupJustMark := DedupeJustMarkDefault
+	dedupMerge := DedupeMergeDefault
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
 	for _, pair := range helper.KeySorted(coll.Spec.Agent.EBPF.Debug.Env) {
 		k, v := pair[0], pair[1]
 		if k == envDedupe {
 			dedup = v
-		} else if k == envDedupeJustMark {
+		} else if k == EnvDedupeJustMark {
 			dedupJustMark = v
-		} else if k == envDedupeMerge {
+		} else if k == EnvDedupeMerge {
 			dedupMerge = v
 		} else {
 			config = append(config, corev1.EnvVar{Name: k, Value: v})
 		}
 	}
 	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
-	config = append(config, corev1.EnvVar{Name: envDedupeJustMark, Value: dedupJustMark})
+	config = append(config, corev1.EnvVar{Name: EnvDedupeJustMark, Value: dedupJustMark})
 	config = append(config, corev1.EnvVar{
 		Name: envAgentIP,
 		ValueFrom: &corev1.EnvVarSource{
@@ -490,7 +493,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		},
 	},
 	)
-	config = append(config, corev1.EnvVar{Name: envDedupeMerge, Value: dedupMerge})
+	config = append(config, corev1.EnvVar{Name: EnvDedupeMerge, Value: dedupMerge})
 
 	return config
 }
