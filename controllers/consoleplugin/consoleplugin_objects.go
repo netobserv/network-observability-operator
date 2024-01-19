@@ -362,17 +362,18 @@ func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) {
 			fconf.Features = append(fconf.Features, "flowRTT")
 		}
 
-		if v, ok := b.desired.Agent.EBPF.Debug.Env[ebpf.EnvDedupeJustMark]; ok {
-			dedupJustMark, _ = strconv.ParseBool(v)
-		} else {
-			dedupJustMark, _ = strconv.ParseBool(ebpf.DedupeJustMarkDefault)
-		}
+		if b.desired.Agent.EBPF.Advanced != nil {
+			if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeJustMark]; ok {
+				dedupJustMark, _ = strconv.ParseBool(v)
+			} else {
+				dedupJustMark, _ = strconv.ParseBool(ebpf.DedupeJustMarkDefault)
+			}
 
-		if v, ok := b.desired.Agent.EBPF.Debug.Env[ebpf.EnvDedupeMerge]; ok {
-			dedupMerge, _ = strconv.ParseBool(v)
-		} else {
-			dedupMerge, _ = strconv.ParseBool(ebpf.DedupeMergeDefault)
-
+			if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeMerge]; ok {
+				dedupMerge, _ = strconv.ParseBool(v)
+			} else {
+				dedupMerge, _ = strconv.ParseBool(ebpf.DedupeMergeDefault)
+			}
 		}
 	}
 	fconf.RecordTypes = helper.GetRecordTypes(&b.desired.Processor)
