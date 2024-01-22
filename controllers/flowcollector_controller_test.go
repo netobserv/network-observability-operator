@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+
 	rbacv1 "k8s.io/api/rbac/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +38,6 @@ var updateCR = func(key types.NamespacedName, updater func(*flowslatest.FlowColl
 
 // nolint:cyclop
 func flowCollectorControllerSpecs() {
-
 	const operatorNamespace = "main-namespace"
 	const otherNamespace = "other-namespace"
 	crKey := types.NamespacedName{
@@ -77,18 +77,38 @@ func flowCollectorControllerSpecs() {
 				Spec: flowslatest.FlowCollectorSpec{
 					Namespace:       operatorNamespace,
 					DeploymentModel: flowslatest.DeploymentModelDirect,
+					Processor: flowslatest.FlowCollectorFLP{
+						ImagePullPolicy: "Never",
+						LogLevel:        "error",
+						Advanced: &flowslatest.AdvancedProcessorConfig{
+							Env: map[string]string{
+								"GOGC": "200",
+							},
+							Port: ptr.To(int32(9999)),
+							ConversationHeartbeatInterval: &metav1.Duration{
+								Duration: conntrackHeartbeatInterval,
+							},
+							ConversationEndTimeout: &metav1.Duration{
+								Duration: conntrackEndTimeout,
+							},
+							ConversationTerminatingTimeout: &metav1.Duration{
+								Duration: conntrackTerminatingTimeout,
+							},
+						},
+						LogTypes: &outputRecordTypes,
+
+						Metrics: flowslatest.FLPMetrics{
+							IncludeList: &[]flowslatest.FLPMetric{"node_ingress_bytes_total", "namespace_ingress_bytes_total", "workload_ingress_bytes_total"},
+						},
+					},
 					Agent: flowslatest.FlowCollectorAgent{
 						Type: "IPFIX",
 						IPFIX: flowslatest.FlowCollectorIPFIX{
 							Sampling: 200,
 						},
 					},
-					Processor: flowslatest.FlowCollectorFLP{
-						Port: 9999,
-					},
 					ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
 						Enable:          ptr.To(true),
-						Port:            9001,
 						ImagePullPolicy: "Never",
 						PortNaming: flowslatest.ConsolePluginPortConfig{
 							Enable: ptr.To(true),
@@ -130,7 +150,31 @@ func flowCollectorControllerSpecs() {
 		It("Should update successfully", func() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor = flowslatest.FlowCollectorFLP{
-					Port: 7891,
+					ImagePullPolicy: "Never",
+					LogLevel:        "error",
+					Advanced: &flowslatest.AdvancedProcessorConfig{
+						Env: map[string]string{
+							// we'll test that env vars are sorted, to keep idempotency
+							"GOMAXPROCS": "33",
+							"GOGC":       "400",
+						},
+						Port: ptr.To(int32(7891)),
+						ConversationHeartbeatInterval: &metav1.Duration{
+							Duration: conntrackHeartbeatInterval,
+						},
+						ConversationEndTimeout: &metav1.Duration{
+							Duration: conntrackEndTimeout,
+						},
+						ConversationTerminatingTimeout: &metav1.Duration{
+							Duration: conntrackTerminatingTimeout,
+						},
+					},
+					LogTypes: &outputRecordTypes,
+
+					Metrics: flowslatest.FLPMetrics{
+						IncludeList:   &[]flowslatest.FLPMetric{"node_ingress_bytes_total"},
+						DisableAlerts: []flowslatest.FLPAlert{flowslatest.AlertLokiError},
+					},
 				}
 				fc.Spec.Loki = flowslatest.FlowCollectorLoki{}
 				fc.Spec.Agent.IPFIX = flowslatest.FlowCollectorIPFIX{
@@ -192,6 +236,7 @@ func flowCollectorControllerSpecs() {
 	Context("Changing namespace", func() {
 		It("Should update namespace successfully", func() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Processor.Advanced.Port = ptr.To(int32(9999))
 				fc.Spec.Namespace = otherNamespace
 			})
 		})

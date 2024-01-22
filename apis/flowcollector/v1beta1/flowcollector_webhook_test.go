@@ -2,8 +2,12 @@ package v1beta1
 
 import (
 	"testing"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/utils/ptr"
 )
@@ -29,7 +33,10 @@ func TestBeta1ConversionRoundtrip_Loki(t *testing.T) {
 					Enable:             true,
 					InsecureSkipVerify: true,
 				},
-				BatchSize: 1000,
+				Timeout:    ptr.To(metav1.Duration{Duration: 30 * time.Second}),
+				MinBackoff: ptr.To(metav1.Duration{Duration: 5 * time.Second}),
+				BatchSize:  1000,
+				BatchWait:  ptr.To(metav1.Duration{Duration: 10 * time.Second}),
 			},
 		},
 	}
@@ -70,7 +77,6 @@ func TestBeta2ConversionRoundtrip_Loki(t *testing.T) {
 					Name:      "lokiii",
 					Namespace: "lokins",
 				},
-				BatchSize: 1000,
 			},
 		},
 	}
@@ -189,4 +195,213 @@ func TestBeta2ConversionRoundtrip_Metrics_Default(t *testing.T) {
 	err = converted.ConvertTo(&back)
 	assert.NoError(err)
 	assert.Nil(back.Spec.Processor.Metrics.IncludeList)
+}
+
+func TestBeta1ConversionRoundtrip_DefaultAdvanced(t *testing.T) {
+	// Testing beta1 -> beta2 -> beta1
+	assert := assert.New(t)
+	err := helper.SetCRDForTests("../../..")
+	assert.NoError(err)
+
+	initial := FlowCollector{
+		Spec: FlowCollectorSpec{
+			Processor: FlowCollectorFLP{},
+			ConsolePlugin: FlowCollectorConsolePlugin{
+				Register: ptr.To(true),
+			},
+			Loki: FlowCollectorLoki{
+				MaxRetries: ptr.To(int32(2)),
+			},
+		},
+	}
+
+	var converted v1beta2.FlowCollector
+	err = initial.ConvertTo(&converted)
+	assert.NoError(err)
+
+	assert.Nil(converted.Spec.ConsolePlugin.Advanced)
+	assert.Nil(converted.Spec.Processor.Advanced)
+	assert.Nil(converted.Spec.Agent.EBPF.Advanced)
+	assert.Nil(converted.Spec.Loki.Advanced)
+
+	pluginAdvanced := helper.GetAdvancedPluginConfig(converted.Spec.ConsolePlugin.Advanced)
+	lokiAdvanced := helper.GetAdvancedLokiConfig(converted.Spec.Loki.Advanced)
+	assert.True(*pluginAdvanced.Register)
+	assert.Equal(int32(9001), *pluginAdvanced.Port)
+	assert.Equal(int32(2), *lokiAdvanced.WriteMaxRetries)
+
+	// Other way
+	var back FlowCollector
+	err = back.ConvertFrom(&converted)
+	assert.NoError(err)
+
+	assert.Nil(back.Spec.ConsolePlugin.Register)
+	assert.Nil(back.Spec.Loki.MaxRetries)
+}
+
+func TestBeta2ConversionRoundtrip_DefaultAdvanced(t *testing.T) {
+	// Testing beta2 -> beta1 -> beta2
+	assert := assert.New(t)
+	err := helper.SetCRDForTests("../../..")
+	assert.NoError(err)
+
+	initial := v1beta2.FlowCollector{
+		Spec: v1beta2.FlowCollectorSpec{
+			ConsolePlugin: v1beta2.FlowCollectorConsolePlugin{
+				Advanced: &v1beta2.AdvancedPluginConfig{
+					Register: ptr.To(true),
+				},
+			},
+			Loki: v1beta2.FlowCollectorLoki{
+				Advanced: &v1beta2.AdvancedLokiConfig{
+					WriteMaxRetries: ptr.To(int32(2)),
+				},
+			},
+		},
+	}
+
+	var converted FlowCollector
+	err = converted.ConvertFrom(&initial)
+	assert.NoError(err)
+
+	assert.True(*converted.Spec.ConsolePlugin.Register)
+	assert.Equal(int32(2), *converted.Spec.Loki.MaxRetries)
+
+	var back v1beta2.FlowCollector
+	err = converted.ConvertTo(&back)
+	assert.NoError(err)
+
+	assert.Nil(back.Spec.ConsolePlugin.Advanced)
+	assert.Nil(back.Spec.Processor.Advanced)
+	assert.Nil(back.Spec.Agent.EBPF.Advanced)
+	assert.Nil(back.Spec.Loki.Advanced)
+}
+
+func TestBeta1ConversionRoundtrip_Advanced(t *testing.T) {
+	// Testing beta1 -> beta2 -> beta1
+	assert := assert.New(t)
+	err := helper.SetCRDForTests("../../..")
+	assert.NoError(err)
+
+	initial := FlowCollector{
+		Spec: FlowCollectorSpec{
+			Processor: FlowCollectorFLP{
+				HealthPort:                     999,
+				ProfilePort:                    998,
+				ConversationEndTimeout:         &metav1.Duration{Duration: time.Second},
+				ConversationHeartbeatInterval:  &metav1.Duration{Duration: time.Minute},
+				ConversationTerminatingTimeout: &metav1.Duration{Duration: time.Hour},
+			},
+			ConsolePlugin: FlowCollectorConsolePlugin{
+				Register: ptr.To(false),
+				Port:     1000,
+			},
+			Loki: FlowCollectorLoki{
+				BatchWait:  &metav1.Duration{Duration: time.Minute},
+				MinBackoff: &metav1.Duration{Duration: time.Minute},
+				MaxBackoff: &metav1.Duration{Duration: time.Hour},
+				MaxRetries: ptr.To(int32(10)),
+			},
+		},
+	}
+
+	var converted v1beta2.FlowCollector
+	err = initial.ConvertTo(&converted)
+	assert.NoError(err)
+
+	assert.False(*converted.Spec.ConsolePlugin.Advanced.Register)
+	assert.Equal(int32(1000), *converted.Spec.ConsolePlugin.Advanced.Port)
+	assert.Equal(int32(999), *converted.Spec.Processor.Advanced.HealthPort)
+	assert.Equal(int32(998), *converted.Spec.Processor.Advanced.ProfilePort)
+	assert.Equal(time.Second, converted.Spec.Processor.Advanced.ConversationEndTimeout.Duration)
+	assert.Equal(time.Minute, converted.Spec.Processor.Advanced.ConversationHeartbeatInterval.Duration)
+	assert.Equal(time.Hour, converted.Spec.Processor.Advanced.ConversationTerminatingTimeout.Duration)
+	assert.Equal(time.Minute, converted.Spec.Loki.WriteBatchWait.Duration)
+	assert.Equal(time.Minute, converted.Spec.Loki.Advanced.WriteMinBackoff.Duration)
+	assert.Equal(time.Hour, converted.Spec.Loki.Advanced.WriteMaxBackoff.Duration)
+	assert.Equal(int32(10), *converted.Spec.Loki.Advanced.WriteMaxRetries)
+
+	// Other way
+	var back FlowCollector
+	err = back.ConvertFrom(&converted)
+	assert.NoError(err)
+
+	assert.False(*back.Spec.ConsolePlugin.Register)
+	assert.Equal(int32(1000), back.Spec.ConsolePlugin.Port)
+	assert.Equal(int32(999), back.Spec.Processor.HealthPort)
+	assert.Equal(int32(998), back.Spec.Processor.ProfilePort)
+	assert.Equal(time.Second, back.Spec.Processor.ConversationEndTimeout.Duration)
+	assert.Equal(time.Minute, back.Spec.Processor.ConversationHeartbeatInterval.Duration)
+	assert.Equal(time.Hour, back.Spec.Processor.ConversationTerminatingTimeout.Duration)
+	assert.Equal(time.Minute, back.Spec.Loki.BatchWait.Duration)
+	assert.Equal(time.Minute, back.Spec.Loki.MinBackoff.Duration)
+	assert.Equal(time.Hour, back.Spec.Loki.MaxBackoff.Duration)
+	assert.Equal(int32(10), *back.Spec.Loki.MaxRetries)
+}
+
+func TestBeta2ConversionRoundtrip_Advanced(t *testing.T) {
+	// Testing beta2 -> beta1 -> beta2
+	assert := assert.New(t)
+	err := helper.SetCRDForTests("../../..")
+	assert.NoError(err)
+
+	initial := v1beta2.FlowCollector{
+		Spec: v1beta2.FlowCollectorSpec{
+			Processor: v1beta2.FlowCollectorFLP{
+				Advanced: &v1beta2.AdvancedProcessorConfig{
+					HealthPort:                     ptr.To(int32(999)),
+					ProfilePort:                    ptr.To(int32(998)),
+					ConversationEndTimeout:         &metav1.Duration{Duration: time.Second},
+					ConversationHeartbeatInterval:  &metav1.Duration{Duration: time.Minute},
+					ConversationTerminatingTimeout: &metav1.Duration{Duration: time.Hour},
+				},
+			},
+			ConsolePlugin: v1beta2.FlowCollectorConsolePlugin{
+				Advanced: &v1beta2.AdvancedPluginConfig{
+					Register: ptr.To(false),
+					Port:     ptr.To(int32(1000)),
+				},
+			},
+			Loki: v1beta2.FlowCollectorLoki{
+				WriteBatchWait: &metav1.Duration{Duration: time.Minute},
+				Advanced: &v1beta2.AdvancedLokiConfig{
+					WriteMinBackoff: &metav1.Duration{Duration: time.Minute},
+					WriteMaxBackoff: &metav1.Duration{Duration: time.Hour},
+					WriteMaxRetries: ptr.To(int32(10)),
+				},
+			},
+		},
+	}
+
+	var converted FlowCollector
+	err = converted.ConvertFrom(&initial)
+	assert.NoError(err)
+
+	assert.False(*converted.Spec.ConsolePlugin.Register)
+	assert.Equal(int32(1000), converted.Spec.ConsolePlugin.Port)
+	assert.Equal(int32(999), converted.Spec.Processor.HealthPort)
+	assert.Equal(int32(998), converted.Spec.Processor.ProfilePort)
+	assert.Equal(time.Second, converted.Spec.Processor.ConversationEndTimeout.Duration)
+	assert.Equal(time.Minute, converted.Spec.Processor.ConversationHeartbeatInterval.Duration)
+	assert.Equal(time.Hour, converted.Spec.Processor.ConversationTerminatingTimeout.Duration)
+	assert.Equal(time.Minute, converted.Spec.Loki.BatchWait.Duration)
+	assert.Equal(time.Minute, converted.Spec.Loki.MinBackoff.Duration)
+	assert.Equal(time.Hour, converted.Spec.Loki.MaxBackoff.Duration)
+	assert.Equal(int32(10), *converted.Spec.Loki.MaxRetries)
+
+	var back v1beta2.FlowCollector
+	err = converted.ConvertTo(&back)
+	assert.NoError(err)
+
+	assert.False(*back.Spec.ConsolePlugin.Advanced.Register)
+	assert.Equal(int32(1000), *back.Spec.ConsolePlugin.Advanced.Port)
+	assert.Equal(int32(999), *back.Spec.Processor.Advanced.HealthPort)
+	assert.Equal(int32(998), *back.Spec.Processor.Advanced.ProfilePort)
+	assert.Equal(time.Second, back.Spec.Processor.Advanced.ConversationEndTimeout.Duration)
+	assert.Equal(time.Minute, back.Spec.Processor.Advanced.ConversationHeartbeatInterval.Duration)
+	assert.Equal(time.Hour, back.Spec.Processor.Advanced.ConversationTerminatingTimeout.Duration)
+	assert.Equal(time.Minute, back.Spec.Loki.WriteBatchWait.Duration)
+	assert.Equal(time.Minute, back.Spec.Loki.Advanced.WriteMinBackoff.Duration)
+	assert.Equal(time.Hour, back.Spec.Loki.Advanced.WriteMaxBackoff.Duration)
+	assert.Equal(int32(10), *back.Spec.Loki.Advanced.WriteMaxRetries)
 }

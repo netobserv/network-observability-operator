@@ -98,7 +98,7 @@ func (c *FlowsConfigOVNKController) desiredEnv(ctx context.Context, coll *flowsl
 		return envs, nil
 	}
 
-	envs["OVN_IPFIX_TARGETS"] = fmt.Sprintf(":%d", coll.Spec.Processor.Port)
+	envs["OVN_IPFIX_TARGETS"] = fmt.Sprintf(":%d", *helper.GetAdvancedProcessorConfig(coll.Spec.Processor.Advanced).Port)
 	return envs, nil
 }
 

@@ -188,7 +188,7 @@ type FlowCollectorEBPF struct {
 	// excludeInterfaces contains the interface names that will be excluded from flow tracing.
 	// If an entry is enclosed by slashes (such as `/br-/`), it will match as regular expression,
 	// otherwise it will be matched as a case-sensitive string.
-	//+kubebuilder:default=lo;
+	//+kubebuilder:default:=lo;
 	ExcludeInterfaces []string `json:"excludeInterfaces,omitempty"`
 
 	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic

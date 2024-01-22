@@ -42,6 +42,7 @@ type builder struct {
 	labels    map[string]string
 	selector  map[string]string
 	desired   *flowslatest.FlowCollectorSpec
+	advanced  *flowslatest.AdvancedPluginConfig
 	imageName string
 	volumes   volumes.Builder
 	loki      *helper.LokiConfig
@@ -49,6 +50,7 @@ type builder struct {
 
 func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec, loki *helper.LokiConfig) builder {
 	version := helper.ExtractVersion(imageName)
+	advanced := helper.GetAdvancedPluginConfig(desired.ConsolePlugin.Advanced)
 	return builder{
 		namespace: ns,
 		labels: map[string]string{
@@ -59,6 +61,7 @@ func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec, lo
 			"app": constants.PluginName,
 		},
 		desired:   desired,
+		advanced:  &advanced,
 		imageName: imageName,
 		loki:      loki,
 	}
@@ -74,7 +77,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 			Service: osv1alpha1.ConsolePluginService{
 				Name:      constants.PluginName,
 				Namespace: b.namespace,
-				Port:      b.desired.ConsolePlugin.Port,
+				Port:      *b.advanced.Port,
 				BasePath:  "/",
 			},
 			Proxy: []osv1alpha1.ConsolePluginProxy{{
@@ -84,7 +87,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 				Service: osv1alpha1.ConsolePluginProxyServiceConfig{
 					Name:      constants.PluginName,
 					Namespace: b.namespace,
-					Port:      b.desired.ConsolePlugin.Port,
+					Port:      *b.advanced.Port,
 				},
 			}},
 		},
@@ -268,12 +271,12 @@ func (b *builder) mainService() *corev1.Service {
 		Spec: corev1.ServiceSpec{
 			Selector: b.selector,
 			Ports: []corev1.ServicePort{{
-				Port:     b.desired.ConsolePlugin.Port,
+				Port:     *b.advanced.Port,
 				Protocol: corev1.ProtocolTCP,
 				// Some Kubernetes versions might automatically set TargetPort to Port. We need to
 				// explicitly set it here so the reconcile loop verifies that the owned service
 				// is equal as the desired service
-				TargetPort: intstr.FromInt(int(b.desired.ConsolePlugin.Port)),
+				TargetPort: intstr.FromInt(int(*b.advanced.Port)),
 			}},
 		},
 	}
@@ -359,17 +362,18 @@ func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) {
 			fconf.Features = append(fconf.Features, "flowRTT")
 		}
 
-		if v, ok := b.desired.Agent.EBPF.Debug.Env[ebpf.EnvDedupeJustMark]; ok {
-			dedupJustMark, _ = strconv.ParseBool(v)
-		} else {
-			dedupJustMark, _ = strconv.ParseBool(ebpf.DedupeJustMarkDefault)
-		}
+		if b.desired.Agent.EBPF.Advanced != nil {
+			if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeJustMark]; ok {
+				dedupJustMark, _ = strconv.ParseBool(v)
+			} else {
+				dedupJustMark, _ = strconv.ParseBool(ebpf.DedupeJustMarkDefault)
+			}
 
-		if v, ok := b.desired.Agent.EBPF.Debug.Env[ebpf.EnvDedupeMerge]; ok {
-			dedupMerge, _ = strconv.ParseBool(v)
-		} else {
-			dedupMerge, _ = strconv.ParseBool(ebpf.DedupeMergeDefault)
-
+			if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeMerge]; ok {
+				dedupMerge, _ = strconv.ParseBool(v)
+			} else {
+				dedupMerge, _ = strconv.ParseBool(ebpf.DedupeMergeDefault)
+			}
 		}
 	}
 	fconf.RecordTypes = helper.GetRecordTypes(&b.desired.Processor)
@@ -393,6 +397,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
 	// configure server
 	config.Server.CertPath = "/var/serving-cert/tls.crt"
 	config.Server.KeyPath = "/var/serving-cert/tls.key"
+	config.Server.Port = int(*b.advanced.Port)
 
 	// configure loki
 	b.setLokiConfig(&config.Loki)
