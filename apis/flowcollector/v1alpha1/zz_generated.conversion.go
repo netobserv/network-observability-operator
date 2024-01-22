@@ -831,6 +831,7 @@ func autoConvert_v1beta2_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1b
 	// WARNING: in.Microservices requires manual conversion: does not exist in peer-type
 	// WARNING: in.Monolithic requires manual conversion: does not exist in peer-type
 	// WARNING: in.LokiStack requires manual conversion: does not exist in peer-type
+	// WARNING: in.ReadTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.WriteTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.WriteBatchWait requires manual conversion: does not exist in peer-type
 	// WARNING: in.WriteBatchSize requires manual conversion: does not exist in peer-type

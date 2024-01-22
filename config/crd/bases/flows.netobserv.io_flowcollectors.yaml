@@ -3910,6 +3910,11 @@ spec:
                       and querier are in the same server). When using the Loki Operator,
                       do not set it, since ingestion and queries use the Loki gateway.'
                     type: string
+                  readTimeout:
+                    default: 30s
+                    description: '`readTimeout` is the maximum loki query total time
+                      limit. A timeout of zero means no timeout.'
+                    type: string
                   staticLabels:
                     additionalProperties:
                       type: string
@@ -4016,8 +4021,8 @@ spec:
                     type: string
                   timeout:
                     default: 10s
-                    description: '`timeout` is the maximum time connection / request
-                      limit. A timeout of zero means no timeout.'
+                    description: '`timeout` is the maximum processor time connection
+                      / request limit. A timeout of zero means no timeout.'
                     type: string
                   tls:
                     description: TLS client configuration for Loki URL.
@@ -7054,6 +7059,11 @@ spec:
                           service that points to both the ingester and the querier.'
                         type: string
                     type: object
+                  readTimeout:
+                    default: 30s
+                    description: '`readTimeout` is the maximum console plugin loki
+                      query total time limit. A timeout of zero means no timeout.'
+                    type: string
                   writeBatchSize:
                     default: 102400
                     description: '`writeBatchSize` is the maximum batch size (in bytes)
