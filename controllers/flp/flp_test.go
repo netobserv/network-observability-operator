@@ -891,7 +891,7 @@ func TestPipelineTraceStage(t *testing.T) {
 	)
 }
 
-func getSortedMetricsNames(m []api.PromMetricsItem) []string {
+func getSortedMetricsNames(m []api.MetricsItem) []string {
 	ret := []string{}
 	for i := range m {
 		ret = append(ret, m[i].Name)

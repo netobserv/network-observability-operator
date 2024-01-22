@@ -120,7 +120,7 @@ func ControllerFlowMetricsSpecs() {
 					return err
 				}
 				return metrics
-			}, timeout, interval).Should(Satisfy(func(metrics api.PromMetricsItems) bool {
+			}, timeout, interval).Should(Satisfy(func(metrics api.MetricsItems) bool {
 				names := getSortedMetricsNames(metrics)
 				return slices.Contains(names, metric1.Spec.MetricName) &&
 					slices.Contains(names, metric2.Spec.MetricName) &&
@@ -147,7 +147,7 @@ func ControllerFlowMetricsSpecs() {
 					return err
 				}
 				return metrics
-			}, timeout, interval).Should(Satisfy(func(metrics api.PromMetricsItems) bool {
+			}, timeout, interval).Should(Satisfy(func(metrics api.MetricsItems) bool {
 				names := getSortedMetricsNames(metrics)
 				return slices.Contains(names, "m_1_bis") &&
 					slices.Contains(names, metric2.Spec.MetricName) &&
