@@ -43,6 +43,7 @@ const (
 	OpAddLocation          = "add_location"
 	OpAddService           = "add_service"
 	OpAddKubernetes        = "add_kubernetes"
+	OpAddKubernetesInfra   = "add_kubernetes_infra"
 	OpReinterpretDirection = "reinterpret_direction"
 	OpAddIPCategory        = "add_ip_category"
 )
@@ -52,6 +53,7 @@ type TransformNetworkOperationEnum struct {
 	AddLocation          string `yaml:"add_location" json:"add_location" doc:"add output location fields from input"`
 	AddService           string `yaml:"add_service" json:"add_service" doc:"add output network service field from input port and parameters protocol field"`
 	AddKubernetes        string `yaml:"add_kubernetes" json:"add_kubernetes" doc:"add output kubernetes fields from input"`
+	AddKubernetesInfra   string `yaml:"add_kubernetes_infra" json:"add_kubernetes_infra" doc:"add output kubernetes isInfra field from input"`
 	ReinterpretDirection string `yaml:"reinterpret_direction" json:"reinterpret_direction" doc:"reinterpret flow direction at the node level (instead of net interface), to ease the deduplication process"`
 	AddIPCategory        string `yaml:"add_ip_category" json:"add_ip_category" doc:"categorize IPs based on known subnets configuration"`
 }
@@ -61,11 +63,18 @@ func TransformNetworkOperationName(operation string) string {
 }
 
 type NetworkTransformRule struct {
-	Input      string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
-	Output     string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
-	Type       string `yaml:"type,omitempty" json:"type,omitempty" enum:"TransformNetworkOperationEnum" doc:"one of the following:"`
-	Parameters string `yaml:"parameters,omitempty" json:"parameters,omitempty" doc:"parameters specific to type"`
-	Assignee   string `yaml:"assignee,omitempty" json:"assignee,omitempty" doc:"value needs to assign to output field"`
+	Input           string        `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
+	Output          string        `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
+	Type            string        `yaml:"type,omitempty" json:"type,omitempty" enum:"TransformNetworkOperationEnum" doc:"one of the following:"`
+	Parameters      string        `yaml:"parameters,omitempty" json:"parameters,omitempty" doc:"parameters specific to type"`
+	Assignee        string        `yaml:"assignee,omitempty" json:"assignee,omitempty" doc:"value needs to assign to output field"`
+	KubernetesInfra *K8sInfraRule `yaml:"kubernetes_infra,omitempty" json:"kubernetes_infra,omitempty" doc:"Kubernetes infra rule specific configuration"`
+}
+
+type K8sInfraRule struct {
+	Inputs      []string `yaml:"inputs,omitempty" json:"inputs,omitempty" doc:"entry inputs fields"`
+	Output      string   `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
+	InfraPrefix string   `yaml:"infra_prefixes,omitempty" json:"infra_prefixes,omitempty" doc:"Namespace prefixes that will be tagged as infra"`
 }
 
 type NetworkTransformDirectionInfo struct {

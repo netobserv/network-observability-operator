@@ -48,6 +48,8 @@ type PipelineBuilderStage struct {
 	pipeline  *pipeline
 }
 
+const PresetIngesterStage = "preset-ingester"
+
 // NewPipeline creates a new pipeline from an existing ingest
 func NewPipeline(name string, ingest *Ingest) (PipelineBuilderStage, error) {
 	if ingest.Collector != nil {
@@ -87,6 +89,15 @@ func NewKafkaPipeline(name string, ingest api.IngestKafka) PipelineBuilderStage 
 		config: []StageParam{NewKafkaParams(name, ingest)},
 	}
 	return PipelineBuilderStage{pipeline: &p, lastStage: name}
+}
+
+// NewPresetIngesterPipeline creates a new partial pipeline without ingest stage
+func NewPresetIngesterPipeline() PipelineBuilderStage {
+	p := pipeline{
+		stages: []Stage{},
+		config: []StageParam{},
+	}
+	return PipelineBuilderStage{pipeline: &p, lastStage: PresetIngesterStage}
 }
 
 func (b *PipelineBuilderStage) next(name string, param StageParam) PipelineBuilderStage {
@@ -163,4 +174,16 @@ func (b *PipelineBuilderStage) GetStages() []Stage {
 // GetStageParams returns the current pipeline stage params. It can be called from any of the stages, they share the same pipeline reference.
 func (b *PipelineBuilderStage) GetStageParams() []StageParam {
 	return b.pipeline.config
+}
+
+// IntoConfigFileStruct injects the current pipeline and params in the provided ConfigFileStruct object.
+func (b *PipelineBuilderStage) IntoConfigFileStruct(cfs *ConfigFileStruct) *ConfigFileStruct {
+	cfs.Pipeline = b.GetStages()
+	cfs.Parameters = b.GetStageParams()
+	return cfs
+}
+
+// ToConfigFileStruct returns the current pipeline and params as a new ConfigFileStruct object.
+func (b *PipelineBuilderStage) ToConfigFileStruct() *ConfigFileStruct {
+	return b.IntoConfigFileStruct(&ConfigFileStruct{})
 }
