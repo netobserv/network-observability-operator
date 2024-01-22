@@ -655,8 +655,6 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 		"DstK8S_Namespace",
 		"DstK8S_OwnerName",
 		"DstK8S_Type",
-		"FlowDirection",
-		"Duplicate",
 		"_RecordType",
 	}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
@@ -670,7 +668,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	useLokiStack(&cfg)
-	cfg.Agent.Type = flowslatest.AgentIPFIX
+	cfg.Agent.Type = flowslatest.AgentEBPF
 	b := monoBuilder(ns, &cfg)
 	cm, digest, err := b.configMap()
 	assert.NoError(err)
@@ -689,7 +687,6 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 
 	params := decoded.Parameters
 	assert.Len(params, 6)
-	assert.Equal(*cfg.Processor.Advanced.Port, int32(params[0].Ingest.Collector.Port))
 
 	lokiCfg := params[3].Write.Loki
 	assert.Equal("https://lokistack-gateway-http.ls-namespace.svc:8080/api/logs/v1/network/", lokiCfg.URL)
@@ -705,7 +702,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	assert.Equal(cfg.Loki.Advanced.WriteMinBackoff.Duration.String(), lokiCfg.MinBackoff)
 	assert.Equal(cfg.Loki.Advanced.WriteMaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
 	assert.EqualValues(*cfg.Loki.Advanced.WriteMaxRetries, lokiCfg.MaxRetries)
-	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type", "FlowDirection", "Duplicate", "_RecordType"}, lokiCfg.Labels)
+	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type", "_RecordType", "FlowDirection", "Duplicate"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
 	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))

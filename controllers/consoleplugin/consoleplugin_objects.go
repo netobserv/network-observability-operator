@@ -22,6 +22,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/loki"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
 
@@ -310,12 +311,7 @@ func (b *builder) setLokiConfig(lconf *config.LokiConfig) {
 	if lconf.URL != statusURL {
 		lconf.StatusURL = statusURL
 	}
-	// check for connection traking to list indexes
-	indexFields := constants.LokiIndexFields
-	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
-		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
-	}
-	lconf.Labels = indexFields
+	lconf.Labels = loki.GetLokiLabels(b.desired)
 	lconf.TenantID = b.loki.TenantID
 	lconf.ForwardUserToken = b.loki.UseForwardToken()
 	if b.loki.TLS.Enable {
