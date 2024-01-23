@@ -43,10 +43,7 @@ spec:
       version: v1beta2
       specDescriptors:
         # ROOT
-        - displayName: Namespace
-          path: namespace
         - description: defines the desired type of deployment for flow processing.
-          displayName: Deployment model
           path: deploymentModel
         # AGENT
         - description: for flows extraction.
@@ -62,45 +59,32 @@ spec:
           displayName: eBPF Agent configuration
           path: agent.ebpf
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:agent.type:eBPF"
-        - displayName: Sampling
-          path: agent.ebpf.sampling
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:agent.type:eBPF
         - displayName: Privileged mode
           path: agent.ebpf.privileged
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
-        - displayName: Features
-          path: agent.ebpf.features
-        - displayName: Cache timeout
-          path: agent.ebpf.cacheActiveTimeout
+            - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - path: agent.ebpf.cacheActiveTimeout
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:advanced
-        - displayName: Cache max flows
-          path: agent.ebpf.cacheMaxFlows
+        - path: agent.ebpf.cacheMaxFlows
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:advanced
-        - displayName: Kafka maximum request size
-          path: agent.ebpf.kafkaBatchSize
+        - path: agent.ebpf.kafkaBatchSize
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka"
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
             - urn:alm:descriptor:com.tectonic.ui:advanced
-        - displayName: Interfaces
-          path: agent.ebpf.interfaces
-        - displayName: Exclude interfaces
-          path: agent.ebpf.excludeInterfaces
-        - displayName: Log level
-          path: agent.ebpf.logLevel
+        - path: agent.ebpf.logLevel
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:advanced
-        - displayName: Image pull policy
-          path: agent.ebpf.imagePullPolicy
+        - path: agent.ebpf.imagePullPolicy
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"
+            - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
             - urn:alm:descriptor:com.tectonic.ui:advanced
         - displayName: Resource Requirements
           path: agent.ebpf.resources
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:resourceRequirements"
+            - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         - path: agent.ebpf.advanced
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:hidden
@@ -109,38 +93,28 @@ spec:
           displayName: Kafka configuration
           path: kafka
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka"
-        - displayName: Address
-          path: kafka.address
-        - displayName: Topic
-          path: kafka.topic
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
         - displayName: TLS configuration
           path: kafka.tls
-        - displayName: Enable
-          path: kafka.tls.enable
+        - path: kafka.tls.enable
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+            - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
         - displayName: Insecure
           path: kafka.tls.insecureSkipVerify
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:kafka.tls.enable:true"
-        - displayName: User cert
+            - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:kafka.tls.enable:true
+        - displayName: User certificate when using mTLS
           path: kafka.tls.userCert
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:kafka.tls.enable:true"
-        - displayName: CA cert
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:kafka.tls.enable:true
+        - displayName: CA certificate
           path: kafka.tls.caCert
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:kafka.tls.enable:true"
-        - displayName: SASL configuration
-          path: kafka.sasl
-        - displayName: Type
-          path: kafka.sasl.type
-        - displayName: Client ID
-          path: kafka.sasl.clientIDReference
-        - displayName: Client secret
-          path: kafka.sasl.clientSecretReference
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:kafka.tls.enable:true
+        - path: kafka.sasl
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:hidden
         # PROCESSOR / FLP
         - description: of the component that receives the flows from the agent, enriches them, generates metrics, and forwards them to the Loki persistence layer and/or any available exporter.
           displayName: Processor configuration
@@ -150,13 +124,10 @@ spec:
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:advanced
             - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
-        - displayName: Cluster name
-          path: processor.clusterName
+        - path: processor.clusterName
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:advanced
             - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.multiClusterDeployment:true
-        - displayName: Log types
-          path: processor.logTypes
         - path: processor.advanced
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:hidden
@@ -164,209 +135,128 @@ spec:
           path: processor.metrics
         - displayName: Server configuration
           path: processor.metrics.server
-        - displayName: Port
-          path: processor.metrics.server.port
         - displayName: TLS configuration
           path: processor.metrics.server.tls
-        - displayName: Type
-          path: processor.metrics.server.tls.type
         - displayName: Insecure
           path: processor.metrics.server.tls.insecureSkipVerify
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.metrics.server.tls.type:Provided"
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.metrics.server.tls.type:Provided
         - displayName: Cert
           path: processor.metrics.server.tls.provided
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.metrics.server.tls.type:Provided"
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.metrics.server.tls.type:Provided
         - displayName: CA
           path: processor.metrics.server.tls.providedCaFile
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.metrics.server.tls.type:Provided"
-        - displayName: Include list
-          path: processor.metrics.includeList
-        - displayName: Disable alerts
-          path: processor.metrics.disableAlerts
-        - displayName: Kafka consumer replicas
-          path: processor.kafkaConsumerReplicas
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.metrics.server.tls.type:Provided
+        - path: processor.kafkaConsumerReplicas
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka"
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
             - urn:alm:descriptor:com.tectonic.ui:advanced
         - displayName: kafka consumer autoscaler
           path: processor.kafkaConsumerAutoscaler
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka"
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
             - urn:alm:descriptor:com.tectonic.ui:advanced
-        - displayName: Kafka consumer queue capacity
-          path: processor.kafkaConsumerQueueCapacity
+        - path: processor.kafkaConsumerQueueCapacity
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka"
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
             - urn:alm:descriptor:com.tectonic.ui:advanced
-        - displayName: Kafka consumer batch size
-          path: processor.kafkaConsumerBatchSize
+        - path: processor.kafkaConsumerBatchSize
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka"
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
             - urn:alm:descriptor:com.tectonic.ui:advanced
-        - displayName: Log level
-          path: processor.logLevel
+        - path: processor.logLevel
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:advanced
-        - displayName: Image pull policy
-          path: processor.imagePullPolicy
+        - path: processor.imagePullPolicy
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"
+            - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
             - urn:alm:descriptor:com.tectonic.ui:advanced
         - displayName: Resource Requirements
           path: processor.resources
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:resourceRequirements"
+            - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         # LOKI
         - description: for the flow store.
           displayName: Loki client settings
           path: loki
-        - displayName: Enable
-          path: loki.enable
+        - path: loki.enable
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
-        - displayName: Mode
-          path: loki.mode
+            - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - path: loki.mode
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
-        - displayName: Loki Stack
-          path: loki.lokiStack
+        - path: loki.lokiStack
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:LokiStack
-        - displayName: Monolithic
-          path: loki.monolithic
+        - path: loki.monolithic
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:Monolithic
-        - displayName: Microservices
-          path: loki.microservices
+        - path: loki.microservices
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:Microservices
-        - displayName: Manual
-          path: loki.manual
+        - path: loki.manual
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:Manual
-        - displayName: Write batch timeout
-          path: loki.writeBatchWait
+        - path: loki.writeBatchWait
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
             - urn:alm:descriptor:com.tectonic.ui:advanced
-        - displayName: Write batch size
-          path: loki.writeBatchSize
+        - path: loki.writeBatchSize
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
             - urn:alm:descriptor:com.tectonic.ui:advanced
-        - displayName: Write timeout
-          path: loki.writeTimeout
+        - path: loki.writeTimeout
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
             - urn:alm:descriptor:com.tectonic.ui:advanced
         - path: loki.advanced
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:hidden
-        # - displayName: TLS configuration
-        #   path: loki.tls
-        #   x-descriptors:
-        #     - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true"
-        # - displayName: Enable
-        #   path: loki.tls.enable
-        #   x-descriptors:
-        #     - "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
-        #     - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true"
-        # - displayName: Insecure
-        #   path: loki.tls.insecureSkipVerify
-        #   x-descriptors:
-        #     - "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
-        #     - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.tls.enable:true"
-        # - displayName: User cert
-        #   path: loki.tls.userCert
-        #   x-descriptors:
-        #     - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.tls.enable:true"
-        # - displayName: CA cert
-        #   path: loki.tls.caCert
-        #   x-descriptors:
-        #     - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.tls.enable:true"
-        # - displayName: Status TLS configuration
-        #   path: loki.statusTls
-        #   x-descriptors:
-        #     - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true"
-        # - displayName: Enable
-        #   path: loki.statusTls.enable
-        #   x-descriptors:
-        #     - "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
-        #     - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true"
-        # - displayName: Insecure
-        #   path: loki.statusTls.insecureSkipVerify
-        #   x-descriptors:
-        #     - "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
-        #     - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.statusTls.enable:true"
-        # - displayName: User cert
-        #   path: loki.statusTls.userCert
-        #   x-descriptors:
-        #     - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.statusTls.enable:true"
-        # - displayName: CA cert
-        #   path: loki.statusTls.caCert
-        #   x-descriptors:
-        #     - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.statusTls.enable:true"
-        # - displayName: Tenant ID
-        #   path: loki.tenantID
-        #   x-descriptors:
-        #     - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true"
-        # - displayName: Authentication Token
-        #   path: loki.authToken
-        #   x-descriptors:
-        #     - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true"
         # CONSOLE PLUGIN
         - description: related to the OpenShift Console integration.
           displayName: Console plugin configuration
           path: consolePlugin
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true"
-        - displayName: Enable
-          path: consolePlugin.enable
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
+        - path: consolePlugin.enable
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
-        - displayName: Port naming
-          path: consolePlugin.portNaming
+            - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - path: consolePlugin.portNaming
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true"
-        - displayName: Quick filters
-          path: consolePlugin.quickFilters
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
+        - path: consolePlugin.quickFilters
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true"
-        - displayName: Replicas
-          path: consolePlugin.replicas
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
+        - path: consolePlugin.replicas
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true"
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
             - urn:alm:descriptor:com.tectonic.ui:advanced
         - displayName: Horizontal pod autoscaler
           path: consolePlugin.autoscaler
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true"
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
             - urn:alm:descriptor:com.tectonic.ui:advanced
-        - displayName: Log level
-          path: consolePlugin.logLevel
+        - path: consolePlugin.logLevel
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true"
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
             - urn:alm:descriptor:com.tectonic.ui:advanced
-        - displayName: Image pull policy
-          path: consolePlugin.imagePullPolicy
+        - path: consolePlugin.imagePullPolicy
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true"
+            - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
             - urn:alm:descriptor:com.tectonic.ui:advanced
         - displayName: Resource Requirements
           path: consolePlugin.resources
           x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:resourceRequirements"
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true"
+            - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
         - path: consolePlugin.advanced
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:hidden
         # EXPORTERS
         - description: additional optional exporters for custom consumption or storage.
-          displayName: Exporters
           path: exporters
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:advanced

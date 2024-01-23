@@ -409,7 +409,7 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Monitoring, Networking
     console.openshift.io/plugins: '["netobserv-plugin"]'
-    containerImage: quay.io/netobserv/network-observability-operator:main
+    containerImage: quay.io/netobserv/network-observability-operator:1.0.4
     createdAt: ':created-at:'
     description: Network flows collector and monitoring solution
     operatorframework.io/suggested-namespace: openshift-netobserv-operator
@@ -446,8 +446,6 @@ spec:
       kind: FlowCollector
       name: flowcollectors.flows.netobserv.io
       specDescriptors:
-      - displayName: Namespace
-        path: namespace
       - description: defines the desired type of deployment for flow processing.
         displayName: Deployment model
         path: deploymentModel
@@ -465,15 +463,11 @@ spec:
         path: agent.ebpf
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:agent.type:eBPF
-      - displayName: Sampling
-        path: agent.ebpf.sampling
       - displayName: Privileged mode
         path: agent.ebpf.privileged
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
-      - displayName: Features
-        path: agent.ebpf.features
-      - displayName: Cache timeout
+      - displayName: Cache active timeout
         path: agent.ebpf.cacheActiveTimeout
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
@@ -481,15 +475,11 @@ spec:
         path: agent.ebpf.cacheMaxFlows
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Kafka maximum request size
+      - displayName: Kafka batch size
         path: agent.ebpf.kafkaBatchSize
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Interfaces
-        path: agent.ebpf.interfaces
-      - displayName: Exclude interfaces
-        path: agent.ebpf.excludeInterfaces
       - displayName: Log level
         path: agent.ebpf.logLevel
         x-descriptors:
@@ -511,14 +501,9 @@ spec:
         path: kafka
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
-      - displayName: Address
-        path: kafka.address
-      - displayName: Topic
-        path: kafka.topic
       - displayName: TLS configuration
         path: kafka.tls
-      - displayName: Enable
-        path: kafka.tls.enable
+      - path: kafka.tls.enable
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
       - displayName: Insecure
@@ -526,22 +511,17 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:kafka.tls.enable:true
-      - displayName: User cert
+      - displayName: User certificate when using mTLS
         path: kafka.tls.userCert
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:kafka.tls.enable:true
-      - displayName: CA cert
+      - displayName: CA certificate
         path: kafka.tls.caCert
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:kafka.tls.enable:true
-      - displayName: SASL configuration
-        path: kafka.sasl
-      - displayName: Type
-        path: kafka.sasl.type
-      - displayName: Client ID
-        path: kafka.sasl.clientIDReference
-      - displayName: Client secret
-        path: kafka.sasl.clientSecretReference
+      - path: kafka.sasl
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: of the component that receives the flows from the agent, enriches
           them, generates metrics, and forwards them to the Loki persistence layer
           and/or any available exporter.
@@ -557,8 +537,6 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.multiClusterDeployment:true
-      - displayName: Log types
-        path: processor.logTypes
       - path: processor.advanced
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
@@ -566,12 +544,8 @@ spec:
         path: processor.metrics
       - displayName: Server configuration
         path: processor.metrics.server
-      - displayName: Port
-        path: processor.metrics.server.port
       - displayName: TLS configuration
         path: processor.metrics.server.tls
-      - displayName: Type
-        path: processor.metrics.server.tls.type
       - displayName: Insecure
         path: processor.metrics.server.tls.insecureSkipVerify
         x-descriptors:
@@ -584,10 +558,6 @@ spec:
         path: processor.metrics.server.tls.providedCaFile
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.metrics.server.tls.type:Provided
-      - displayName: Include list
-        path: processor.metrics.includeList
-      - displayName: Disable alerts
-        path: processor.metrics.disableAlerts
       - displayName: Kafka consumer replicas
         path: processor.kafkaConsumerReplicas
         x-descriptors:
@@ -632,7 +602,7 @@ spec:
         path: loki.mode
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
-      - displayName: Loki Stack
+      - displayName: Loki stack
         path: loki.lokiStack
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:LokiStack
@@ -648,7 +618,7 @@ spec:
         path: loki.manual
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:Manual
-      - displayName: Write batch timeout
+      - displayName: Write batch wait
         path: loki.writeBatchWait
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
@@ -701,7 +671,7 @@ spec:
       - displayName: Image pull policy
         path: consolePlugin.imagePullPolicy
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Resource Requirements
@@ -727,6 +697,56 @@ spec:
         path: exporters[0].kafka
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:exporters.type:Kafka
+      - displayName: Exclude interfaces
+        path: agent.ebpf.excludeInterfaces
+      - displayName: Features
+        path: agent.ebpf.features
+      - displayName: Interfaces
+        path: agent.ebpf.interfaces
+      - displayName: Sampling
+        path: agent.ebpf.sampling
+      - displayName: Enable
+        path: consolePlugin.portNaming.enable
+      - displayName: Port names
+        path: consolePlugin.portNaming.portNames
+      - displayName: Address
+        path: kafka.address
+      - displayName: Topic
+        path: kafka.topic
+      - displayName: Name
+        path: loki.lokiStack.name
+      - displayName: Namespace
+        path: loki.lokiStack.namespace
+      - displayName: Auth token
+        path: loki.manual.authToken
+      - displayName: Ingester url
+        path: loki.manual.ingesterUrl
+      - displayName: Querier url
+        path: loki.manual.querierUrl
+      - displayName: Status url
+        path: loki.manual.statusUrl
+      - displayName: TenantID
+        path: loki.manual.tenantID
+      - displayName: Ingester url
+        path: loki.microservices.ingesterUrl
+      - displayName: Querier url
+        path: loki.microservices.querierUrl
+      - displayName: TenantID
+        path: loki.microservices.tenantID
+      - displayName: TenantID
+        path: loki.monolithic.tenantID
+      - displayName: Url
+        path: loki.monolithic.url
+      - displayName: Namespace
+        path: namespace
+      - displayName: Log types
+        path: processor.logTypes
+      - displayName: Disable alerts
+        path: processor.metrics.disableAlerts
+      - displayName: Include list
+        path: processor.metrics.includeList
+      - displayName: Port
+        path: processor.metrics.server.port
       statusDescriptors:
       - description: Namespace where console plugin and flowlogs-pipeline have been
           deployed.
@@ -783,7 +803,7 @@ spec:
 
     ## Configuration
 
-    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/main/config/samples/flows_v1beta1_flowcollector.yaml).
+    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/1.0.4/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/1.0.4/config/samples/flows_v1beta1_flowcollector.yaml).
 
     To edit configuration in cluster, run:
 
@@ -801,7 +821,7 @@ spec:
 
     - Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned above, but you may have to configure differently if you used another installation method.
 
-    - Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/main/docs/QuickFilters.md).
+    - Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/1.0.4/docs/QuickFilters.md).
 
     - Kafka (`spec.deploymentModel: KAFKA` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created.
 
@@ -1079,7 +1099,7 @@ spec:
                 - name: DOWNSTREAM_DEPLOYMENT
                   value: "false"
                 - name: PROFILING_BIND_ADDRESS
-                image: quay.io/netobserv/network-observability-operator:main
+                image: quay.io/netobserv/network-observability-operator:1.0.4
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
