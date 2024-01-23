@@ -412,6 +412,8 @@ metadata:
     containerImage: quay.io/netobserv/network-observability-operator:1.0.4
     createdAt: ':created-at:'
     description: Network flows collector and monitoring solution
+    operatorframework.io/initialization-resource: '{"apiVersion":"flowcollectors.flows.netobserv.io/v1beta2",
+      "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
     operatorframework.io/suggested-namespace: openshift-netobserv-operator
     operators.operatorframework.io/builder: operator-sdk-v1.25.3
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
