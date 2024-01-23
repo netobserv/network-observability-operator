@@ -212,11 +212,11 @@ type FlowCollectorEBPF struct {
 	// `logLevel` defines the log level for the NetObserv eBPF Agent
 	LogLevel string `json:"logLevel,omitempty"`
 
-	// Privileged mode for the eBPF Agent container. In general this setting can be ignored or set to `false`:
-	// in that case, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE)
-	// to the container, to enable its correct operation.
+	// Privileged mode for the eBPF Agent container. When ignored or set to `false`, the operator sets
+	// granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container.
 	// If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF
 	// is in use, then you can turn on this mode for more global privileges.
+	// Some agent features require the privileged mode, such as packet drops tracking (see `features`).
 	// +optional
 	Privileged bool `json:"privileged,omitempty"`
 
