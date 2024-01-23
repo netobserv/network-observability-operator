@@ -10,7 +10,7 @@ metadata:
     createdAt: ':created-at:'
     description: Network flows collector and monitoring solution
     operatorframework.io/suggested-namespace: openshift-netobserv-operator
-    operatorframework.io/initialization-resource: '{"apiVersion":"flowcollectors.flows.netobserv.io/v1beta2",
+    operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
     repository: https://github.com/netobserv/network-observability-operator
   labels:
