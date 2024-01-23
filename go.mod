@@ -1,13 +1,11 @@
 module github.com/netobserv/network-observability-operator
 
-go 1.21
-
-toolchain go1.21.5
+go 1.20
 
 require (
 	github.com/go-logr/logr v1.4.1
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/netobserv/flowlogs-pipeline v0.1.11-0.20240119153637-dc77a3d00a4d
+	github.com/netobserv/flowlogs-pipeline v0.1.11-0.20240123101451-40b694850494
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.30.0
 	github.com/openshift/api v0.0.0-20220112145620-704957ce4980
@@ -85,4 +83,4 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )
 
-replace github.com/prometheus/common v0.44.0 => github.com/netobserv/prometheus-common v0.44.0-netobserv
+replace github.com/prometheus/common v0.46.0 => github.com/netobserv/prometheus-common v0.46.0-netobserv
