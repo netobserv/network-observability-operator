@@ -178,7 +178,8 @@ else
 endif
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
-	kubectl wait -n $(releaseRATOR_NS) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
+	kubectl wait -n $(OPERATOR_NS) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
+	@echo -e "\n==> Wait a moment before plugin pod is fully redeployed"
 
 .PHONY: set-release-kind-downstream
 set-release-kind-downstream:
