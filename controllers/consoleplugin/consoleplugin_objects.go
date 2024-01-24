@@ -344,7 +344,8 @@ func (b *builder) setLokiConfig(lconf *config.LokiConfig) {
 }
 
 func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) {
-	var dedupJustMark, dedupMerge bool
+	dedupJustMark, _ := strconv.ParseBool(ebpf.DedupeJustMarkDefault)
+	dedupMerge, _ := strconv.ParseBool(ebpf.DedupeMergeDefault)
 	if helper.UseEBPF(b.desired) {
 		if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
 			fconf.Features = append(fconf.Features, "pktDrop")
@@ -361,14 +362,10 @@ func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) {
 		if b.desired.Agent.EBPF.Advanced != nil {
 			if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeJustMark]; ok {
 				dedupJustMark, _ = strconv.ParseBool(v)
-			} else {
-				dedupJustMark, _ = strconv.ParseBool(ebpf.DedupeJustMarkDefault)
 			}
 
 			if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeMerge]; ok {
 				dedupMerge, _ = strconv.ParseBool(v)
-			} else {
-				dedupMerge, _ = strconv.ParseBool(ebpf.DedupeMergeDefault)
 			}
 		}
 	}
