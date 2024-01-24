@@ -3356,10 +3356,10 @@ spec:
                     default:
                     - default: true
                       filter:
-                        flow_type: app
+                        flow_layer: app
                       name: Applications
                     - filter:
-                        flow_type: infra
+                        flow_layer: infra
                       name: Infrastructure
                     - default: true
                       filter:
@@ -6076,10 +6076,10 @@ spec:
                     default:
                     - default: true
                       filter:
-                        flow_type: app
+                        flow_layer: app
                       name: Applications
                     - filter:
-                        flow_type: infra
+                        flow_layer: infra
                       name: Infrastructure
                     - default: true
                       filter:

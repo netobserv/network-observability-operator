@@ -4952,7 +4952,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td>
           `quickFilters` configures quick filter presets for the Console plugin<br/>
           <br/>
-            <i>Default</i>: [map[default:true filter:map[flow_type:app] name:Applications] map[filter:map[flow_type:infra] name:Infrastructure] map[default:true filter:map[dst_kind:Pod src_kind:Pod] name:Pods network] map[filter:map[dst_kind:Service] name:Services network]]<br/>
+            <i>Default</i>: [map[default:true filter:map[flow_layer:app] name:Applications] map[filter:map[flow_layer:infra] name:Infrastructure] map[default:true filter:map[dst_kind:Pod src_kind:Pod] name:Pods network] map[filter:map[dst_kind:Service] name:Services network]]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9591,7 +9591,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td>
           `quickFilters` configures quick filter presets for the Console plugin<br/>
           <br/>
-            <i>Default</i>: [map[default:true filter:map[flow_type:app] name:Applications] map[filter:map[flow_type:infra] name:Infrastructure] map[default:true filter:map[dst_kind:Pod src_kind:Pod] name:Pods network] map[filter:map[dst_kind:Service] name:Services network]]<br/>
+            <i>Default</i>: [map[default:true filter:map[flow_layer:app] name:Applications] map[filter:map[flow_layer:infra] name:Infrastructure] map[default:true filter:map[dst_kind:Pod src_kind:Pod] name:Pods network] map[filter:map[dst_kind:Service] name:Services network]]<br/>
         </td>
         <td>false</td>
       </tr><tr>

@@ -13,7 +13,7 @@ spec:
       cacheActiveTimeout: 5s
       cacheMaxFlows: 100000
       privileged: false
-      # features: 
+      # features:
       # - "PacketDrop"
       # - "DNSTracking"
       # - "FlowRTT"
@@ -127,11 +127,11 @@ spec:
     quickFilters:
     - name: Applications
       filter:
-        flow_type: 'app'
+        flow_layer: 'app'
       default: true
     - name: Infrastructure
       filter:
-        flow_type: 'infra'
+        flow_layer: 'infra'
     - name: Pods network
       filter:
         src_kind: 'Pod'

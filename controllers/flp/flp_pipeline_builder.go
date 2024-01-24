@@ -81,7 +81,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 					"SrcAddr",
 					"DstAddr",
 				},
-				Output:      "K8S_FlowType",
+				Output:      "K8S_FlowLayer",
 				InfraPrefix: b.desired.Namespace,
 			},
 		}},
