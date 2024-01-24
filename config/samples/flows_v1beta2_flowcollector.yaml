@@ -90,7 +90,7 @@ spec:
       # Change loki operator instance namespace
       # namespace: loki-operator
     # Console plugin read timeout
-    readTimeout: 10s
+    readTimeout: 30s
     # Write stage configuration
     writeTimeout: 10s
     writeBatchWait: 1s
