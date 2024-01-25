@@ -9,7 +9,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.30.0
 	github.com/openshift/api v0.0.0-20220112145620-704957ce4980
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.71.2
 	github.com/prometheus/common v0.46.0
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.26.0
@@ -21,7 +21,7 @@ require (
 	k8s.io/kube-aggregator v0.28.4
 	k8s.io/utils v0.0.0-20231127182322-b307cd553661
 	sigs.k8s.io/controller-runtime v0.16.3
-	sigs.k8s.io/yaml v1.3.0
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
