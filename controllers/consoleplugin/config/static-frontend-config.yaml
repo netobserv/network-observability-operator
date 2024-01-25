@@ -2,7 +2,7 @@
 # other fields such as recordTypes, quickFilters, alertNamespaces, sampling, features
 # are taken from the CR
 # see consoleplugin_objects.go -> configMap func
-columns: 
+columns:
   - id: StartTime
     name: Start Time
     tooltip: Time of the first packet observed. Unlike End Time, it is not used in queries
@@ -313,6 +313,12 @@ columns:
     calculated: '[column.SrcK8S_OwnerObject,column.DstK8S_OwnerObject]'
     default: false
     width: 15
+  - id: K8S_FlowLayer
+    name: FLow layer
+    field: K8S_FlowLayer
+    filter: flow_layer
+    default: false
+    width: 15
   - id: AddrPort
     name: IPs & Ports
     calculated: '[column.SrcAddrPort,column.DstAddrPort]'
@@ -373,7 +379,7 @@ columns:
   - id: Bytes
     name: Bytes
     tooltip: The total aggregated number of bytes.
-    fields: 
+    fields:
       - Bytes
       - PktDropBytes
     default: true
@@ -381,7 +387,7 @@ columns:
   - id: Packets
     name: Packets
     tooltip: The total aggregated number of packets.
-    fields: 
+    fields:
       - Packets
       - PktDropPackets
     filter: pkt_drop_cause
@@ -713,6 +719,11 @@ filters:
     component: autocomplete
     placeholder: 'E.g: Ingress, Egress, Inner'
     hint: Specify the direction of the Flow observed at the Node observation point.
+  - id: flow_layer
+    name: Flow layer
+    component: text
+    placeholder: 'Either infra or app'
+    hint: Specify the layer of Flow.
   - id: interface
     name: Network interface
     component: text

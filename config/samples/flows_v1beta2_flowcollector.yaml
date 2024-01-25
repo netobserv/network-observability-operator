@@ -15,7 +15,7 @@ spec:
       cacheMaxFlows: 100000
       # Change privileged to "true" on old kernel version not knowing CAP_BPF or when using "PacketDrop" feature
       privileged: false
-      # features: 
+      # features:
       # - "PacketDrop"
       # - "DNSTracking"
       # - "FlowRTT"
@@ -78,7 +78,7 @@ spec:
     mode: Monolithic
     monolithic:
       url: 'http://loki.netobserv.svc:3100/'
-      tenantID: netobserv 
+      tenantID: netobserv
       tls:
         enable: false
         caCert:
@@ -121,13 +121,11 @@ spec:
     quickFilters:
     - name: Applications
       filter:
-        src_namespace!: 'openshift-,netobserv'
-        dst_namespace!: 'openshift-,netobserv'
+        flow_layer: 'app'
       default: true
     - name: Infrastructure
       filter:
-        src_namespace: 'openshift-,netobserv'
-        dst_namespace: 'openshift-,netobserv'
+        flow_layer: 'infra'
     - name: Pods network
       filter:
         src_kind: 'Pod'

@@ -51,7 +51,7 @@ var (
 )
 
 type taggedMetricDefinition struct {
-	flpapi.PromMetricsItem
+	flpapi.MetricsItem
 	tags []string
 }
 
@@ -64,11 +64,11 @@ func init() {
 			valueField := mapValueFields[vt]
 			for _, dir := range []string{tagEgress, tagIngress} {
 				predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-					PromMetricsItem: flpapi.PromMetricsItem{
+					MetricsItem: flpapi.MetricsItem{
 						Name:     fmt.Sprintf("%s_%s_%s_total", groupTrimmed, dir, vt),
 						Type:     "counter",
 						ValueKey: valueField,
-						Filters: []flpapi.PromMetricsFilter{
+						Filters: []flpapi.MetricsFilter{
 							{Key: "Duplicate", Value: "false"},
 							{Key: "FlowDirection", Value: mapDirection[dir], Type: flpapi.PromFilterRegex},
 						},
@@ -80,7 +80,7 @@ func init() {
 		}
 		// Flows metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-			PromMetricsItem: flpapi.PromMetricsItem{
+			MetricsItem: flpapi.MetricsItem{
 				Name:   fmt.Sprintf("%s_flows_total", groupTrimmed),
 				Type:   "counter",
 				Labels: labels,
@@ -89,11 +89,11 @@ func init() {
 		})
 		// RTT metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-			PromMetricsItem: flpapi.PromMetricsItem{
+			MetricsItem: flpapi.MetricsItem{
 				Name:     fmt.Sprintf("%s_rtt_seconds", groupTrimmed),
 				Type:     "histogram",
 				ValueKey: "TimeFlowRttNs",
-				Filters: []flpapi.PromMetricsFilter{
+				Filters: []flpapi.MetricsFilter{
 					{Key: "TimeFlowRttNs", Type: flpapi.PromFilterPresence},
 				},
 				Labels:     labels,
@@ -103,11 +103,11 @@ func init() {
 		})
 		// Drops metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-			PromMetricsItem: flpapi.PromMetricsItem{
+			MetricsItem: flpapi.MetricsItem{
 				Name:     fmt.Sprintf("%s_drop_packets_total", groupTrimmed),
 				Type:     "counter",
 				ValueKey: "PktDropPackets",
-				Filters: []flpapi.PromMetricsFilter{
+				Filters: []flpapi.MetricsFilter{
 					{Key: "Duplicate", Value: "false"},
 					{Key: "PktDropPackets", Type: flpapi.PromFilterPresence},
 				},
@@ -116,11 +116,11 @@ func init() {
 			tags: []string{group, tagPackets, "drops"},
 		})
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-			PromMetricsItem: flpapi.PromMetricsItem{
+			MetricsItem: flpapi.MetricsItem{
 				Name:     fmt.Sprintf("%s_drop_bytes_total", groupTrimmed),
 				Type:     "counter",
 				ValueKey: "PktDropBytes",
-				Filters: []flpapi.PromMetricsFilter{
+				Filters: []flpapi.MetricsFilter{
 					{Key: "Duplicate", Value: "false"},
 					{Key: "PktDropBytes", Type: flpapi.PromFilterPresence},
 				},
@@ -131,11 +131,11 @@ func init() {
 		// DNS metrics
 		dnsLabels := append(labels, "DnsFlagsResponseCode")
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-			PromMetricsItem: flpapi.PromMetricsItem{
+			MetricsItem: flpapi.MetricsItem{
 				Name:     fmt.Sprintf("%s_dns_latency_seconds", groupTrimmed),
 				Type:     "histogram",
 				ValueKey: "DnsLatencyMs",
-				Filters: []flpapi.PromMetricsFilter{
+				Filters: []flpapi.MetricsFilter{
 					{Key: "DnsId", Type: flpapi.PromFilterPresence},
 				},
 				Labels:     dnsLabels,
@@ -186,12 +186,12 @@ func GetAllNames() []string {
 	return names
 }
 
-func GetDefinitions(names []string) []flpapi.PromMetricsItem {
-	ret := []flpapi.PromMetricsItem{}
+func GetDefinitions(names []string) []flpapi.MetricsItem {
+	ret := []flpapi.MetricsItem{}
 	for i := range predefinedMetrics {
 		for _, name := range names {
 			if predefinedMetrics[i].Name == name {
-				ret = append(ret, predefinedMetrics[i].PromMetricsItem)
+				ret = append(ret, predefinedMetrics[i].MetricsItem)
 			}
 		}
 	}

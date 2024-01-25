@@ -2316,12 +2316,10 @@ spec:
                       default:
                         - default: true
                           filter:
-                            dst_namespace!: openshift-,netobserv
-                            src_namespace!: openshift-,netobserv
+                            flow_layer: app
                           name: Applications
                         - filter:
-                            dst_namespace: openshift-,netobserv
-                            src_namespace: openshift-,netobserv
+                            flow_layer: infra
                           name: Infrastructure
                         - default: true
                           filter:
@@ -4195,12 +4193,10 @@ spec:
                       default:
                         - default: true
                           filter:
-                            dst_namespace!: openshift-,netobserv
-                            src_namespace!: openshift-,netobserv
+                            flow_layer: app
                           name: Applications
                         - filter:
-                            dst_namespace: openshift-,netobserv
-                            src_namespace: openshift-,netobserv
+                            flow_layer: infra
                           name: Infrastructure
                         - default: true
                           filter:

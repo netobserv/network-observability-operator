@@ -16,7 +16,7 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 )
 
-func getConfiguredMetrics(cm *corev1.ConfigMap) (api.PromMetricsItems, error) {
+func getConfiguredMetrics(cm *corev1.ConfigMap) (api.MetricsItems, error) {
 	var cfs config.ConfigFileStruct
 	err := json.Unmarshal([]byte(cm.Data[configFile]), &cfs)
 	if err != nil {
@@ -37,7 +37,7 @@ func defaultBuilderWithMetrics(metrics *metricslatest.FlowMetricList) (monolithB
 	return newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, metrics)
 }
 
-func metric(metrics api.PromMetricsItems, name string) *api.PromMetricsItem {
+func metric(metrics api.MetricsItems, name string) *api.MetricsItem {
 	for i := range metrics {
 		if metrics[i].Name == name {
 			return &metrics[i]
@@ -87,11 +87,11 @@ func TestFlowMetricToFLP(t *testing.T) {
 	}, names)
 
 	m1 := metric(items, "m_1")
-	assert.Equal(api.PromMetricsItem{
+	assert.Equal(api.MetricsItem{
 		Name:   "m_1",
 		Type:   "counter",
-		Filter: api.PromMetricsFilter{Key: "", Value: "", Type: ""},
-		Filters: []api.PromMetricsFilter{
+		Filter: api.MetricsFilter{Key: "", Value: "", Type: ""},
+		Filters: []api.MetricsFilter{
 			{Key: "f", Value: "v", Type: api.PromFilterExact},
 			{Key: "Duplicate", Value: "false", Type: api.PromFilterExact},
 		},
@@ -99,11 +99,11 @@ func TestFlowMetricToFLP(t *testing.T) {
 		Labels:   []string{"by_field"},
 	}, *m1)
 	m2 := metric(items, "m_2")
-	assert.Equal(api.PromMetricsItem{
+	assert.Equal(api.MetricsItem{
 		Name:   "m_2",
 		Type:   "histogram",
-		Filter: api.PromMetricsFilter{Key: "", Value: "", Type: ""},
-		Filters: []api.PromMetricsFilter{
+		Filter: api.MetricsFilter{Key: "", Value: "", Type: ""},
+		Filters: []api.MetricsFilter{
 			{Key: "f", Value: "v", Type: api.PromFilterRegex},
 			{Key: "f2", Type: api.PromFilterAbsence},
 			{Key: "FlowDirection", Value: "1|2", Type: api.PromFilterRegex},

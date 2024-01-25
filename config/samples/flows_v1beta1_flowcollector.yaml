@@ -13,7 +13,7 @@ spec:
       cacheActiveTimeout: 5s
       cacheMaxFlows: 100000
       privileged: false
-      # features: 
+      # features:
       # - "PacketDrop"
       # - "DNSTracking"
       # - "FlowRTT"
@@ -127,13 +127,11 @@ spec:
     quickFilters:
     - name: Applications
       filter:
-        src_namespace!: 'openshift-,netobserv'
-        dst_namespace!: 'openshift-,netobserv'
+        flow_layer: 'app'
       default: true
     - name: Infrastructure
       filter:
-        src_namespace: 'openshift-,netobserv'
-        dst_namespace: 'openshift-,netobserv'
+        flow_layer: 'infra'
     - name: Pods network
       filter:
         src_kind: 'Pod'

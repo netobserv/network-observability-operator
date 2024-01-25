@@ -23,8 +23,8 @@ import (
 )
 
 type enums struct {
-	PromEncodeOperationEnum       PromEncodeOperationEnum
-	PromEncodeFilterTypeEnum      PromEncodeFilterTypeEnum
+	MetricEncodeOperationEnum     MetricEncodeOperationEnum
+	MetricEncodeFilterTypeEnum    MetricEncodeFilterTypeEnum
 	TransformNetworkOperationEnum TransformNetworkOperationEnum
 	TransformFilterOperationEnum  TransformFilterOperationEnum
 	TransformGenericOperationEnum TransformGenericOperationEnum
