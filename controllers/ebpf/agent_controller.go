@@ -374,17 +374,17 @@ func requiredAction(current, desired *v1.DaemonSet) reconcileAction {
 }
 
 func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *corev1.SecurityContext {
-	sc := corev1.SecurityContext{
-		RunAsUser: ptr.To(int64(0)),
-	}
-
 	if coll.Spec.Agent.EBPF.Privileged {
-		sc.Privileged = &coll.Spec.Agent.EBPF.Privileged
-	} else {
-		sc.Capabilities = &corev1.Capabilities{Add: permissions.AllowedCapabilities}
+		return &corev1.SecurityContext{
+			RunAsUser:  ptr.To(int64(0)),
+			Privileged: &coll.Spec.Agent.EBPF.Privileged,
+		}
 	}
 
-	return &sc
+	sc := helper.ContainerDefaultSecurityContext()
+	sc.RunAsUser = ptr.To(int64(0))
+	sc.Capabilities.Add = permissions.AllowedCapabilities
+	return sc
 }
 
 func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1.EnvVar {
