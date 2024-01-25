@@ -604,6 +604,11 @@ func (in *FlowCollectorLoki) DeepCopyInto(out *FlowCollectorLoki) {
 	out.Microservices = in.Microservices
 	out.Monolithic = in.Monolithic
 	out.LokiStack = in.LokiStack
+	if in.ReadTimeout != nil {
+		in, out := &in.ReadTimeout, &out.ReadTimeout
+		*out = new(v1.Duration)
+		**out = **in
+	}
 	if in.WriteTimeout != nil {
 		in, out := &in.WriteTimeout, &out.WriteTimeout
 		*out = new(v1.Duration)

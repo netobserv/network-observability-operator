@@ -583,8 +583,13 @@ type FlowCollectorLoki struct {
 	// `batchSize` is the maximum batch size (in bytes) of logs to accumulate before sending.
 	BatchSize int64 `json:"batchSize,omitempty"`
 
+	//+kubebuilder:default:="30s"
+	// `readTimeout` is the maximum loki query total time limit.
+	// A timeout of zero means no timeout.
+	ReadTimeout *metav1.Duration `json:"readTimeout,omitempty"` // Warning: keep as pointer, else default is ignored
+
 	//+kubebuilder:default:="10s"
-	// `timeout` is the maximum time connection / request limit.
+	// `timeout` is the maximum processor time connection / request limit.
 	// A timeout of zero means no timeout.
 	Timeout *metav1.Duration `json:"timeout,omitempty"` // Warning: keep as pointer, else default is ignored
 

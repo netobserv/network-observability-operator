@@ -164,6 +164,7 @@ func flowCollectorIsoSpecs() {
 					Name:      "loki",
 					Namespace: "",
 				},
+				ReadTimeout:    &metav1.Duration{Duration: time.Second},
 				WriteTimeout:   &metav1.Duration{Duration: time.Second},
 				WriteBatchWait: &metav1.Duration{Duration: time.Second},
 				WriteBatchSize: 100,

@@ -374,6 +374,7 @@ metadata:
                 },
                 "url": "http://loki.netobserv.svc:3100/"
               },
+              "readTimeout": "30s",
               "writeBatchSize": 10485760,
               "writeBatchWait": "1s",
               "writeTimeout": "10s"

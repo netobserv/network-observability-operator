@@ -491,6 +491,11 @@ func (in *FlowCollectorLoki) DeepCopyInto(out *FlowCollectorLoki) {
 		*out = new(v1.Duration)
 		**out = **in
 	}
+	if in.ReadTimeout != nil {
+		in, out := &in.ReadTimeout, &out.ReadTimeout
+		*out = new(v1.Duration)
+		**out = **in
+	}
 	if in.Timeout != nil {
 		in, out := &in.Timeout, &out.Timeout
 		*out = new(v1.Duration)

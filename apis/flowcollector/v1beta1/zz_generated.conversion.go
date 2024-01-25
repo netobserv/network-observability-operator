@@ -804,6 +804,7 @@ func autoConvert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *Flow
 	// WARNING: in.AuthToken requires manual conversion: does not exist in peer-type
 	// WARNING: in.BatchWait requires manual conversion: does not exist in peer-type
 	// WARNING: in.BatchSize requires manual conversion: does not exist in peer-type
+	out.ReadTimeout = (*v1.Duration)(unsafe.Pointer(in.ReadTimeout))
 	// WARNING: in.Timeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.MinBackoff requires manual conversion: does not exist in peer-type
 	// WARNING: in.MaxBackoff requires manual conversion: does not exist in peer-type
@@ -821,6 +822,7 @@ func autoConvert_v1beta2_FlowCollectorLoki_To_v1beta1_FlowCollectorLoki(in *v1be
 	// WARNING: in.Microservices requires manual conversion: does not exist in peer-type
 	// WARNING: in.Monolithic requires manual conversion: does not exist in peer-type
 	// WARNING: in.LokiStack requires manual conversion: does not exist in peer-type
+	out.ReadTimeout = (*v1.Duration)(unsafe.Pointer(in.ReadTimeout))
 	// WARNING: in.WriteTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.WriteBatchWait requires manual conversion: does not exist in peer-type
 	// WARNING: in.WriteBatchSize requires manual conversion: does not exist in peer-type

@@ -635,6 +635,11 @@ type FlowCollectorLoki struct {
 	// +optional
 	LokiStack LokiStackRef `json:"lokiStack,omitempty"`
 
+	//+kubebuilder:default:="30s"
+	// `readTimeout` is the maximum console plugin loki query total time limit.
+	// A timeout of zero means no timeout.
+	ReadTimeout *metav1.Duration `json:"readTimeout,omitempty"` // Warning: keep as pointer, else default is ignored
+
 	//+kubebuilder:default:="10s"
 	// `writeTimeout` is the maximum Loki time connection / request limit.
 	// A timeout of zero means no timeout.

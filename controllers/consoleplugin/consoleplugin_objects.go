@@ -312,6 +312,11 @@ func (b *builder) setLokiConfig(lconf *config.LokiConfig) {
 		lconf.StatusURL = statusURL
 	}
 	lconf.Labels = loki.GetLokiLabels(b.desired)
+	if b.desired.Loki.ReadTimeout != nil {
+		lconf.Timeout = helper.UnstructuredDuration(b.desired.Loki.ReadTimeout)
+	} else {
+		lconf.Timeout = "30s"
+	}
 	lconf.TenantID = b.loki.TenantID
 	lconf.ForwardUserToken = b.loki.UseForwardToken()
 	if b.loki.TLS.Enable {

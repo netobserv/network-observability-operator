@@ -6975,6 +6975,15 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>readTimeout</b></td>
+        <td>string</td>
+        <td>
+          `readTimeout` is the maximum loki query total time limit. A timeout of zero means no timeout.<br/>
+          <br/>
+            <i>Default</i>: 30s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>staticLabels</b></td>
         <td>map[string]string</td>
         <td>
@@ -7010,7 +7019,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b>timeout</b></td>
         <td>string</td>
         <td>
-          `timeout` is the maximum time connection / request limit. A timeout of zero means no timeout.<br/>
+          `timeout` is the maximum processor time connection / request limit. A timeout of zero means no timeout.<br/>
           <br/>
             <i>Default</i>: 10s<br/>
         </td>
@@ -11636,6 +11645,15 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td>object</td>
         <td>
           Loki configuration for "Monolithic" mode. Use this option when Loki is installed using the monolithic deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode). It is ignored for other modes.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>readTimeout</b></td>
+        <td>string</td>
+        <td>
+          `readTimeout` is the maximum console plugin loki query total time limit. A timeout of zero means no timeout.<br/>
+          <br/>
+            <i>Default</i>: 30s<br/>
         </td>
         <td>false</td>
       </tr><tr>
