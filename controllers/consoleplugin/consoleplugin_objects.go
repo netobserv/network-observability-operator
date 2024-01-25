@@ -343,9 +343,16 @@ func (b *builder) setLokiConfig(lconf *config.LokiConfig) {
 	}
 }
 
-func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) {
-	dedupJustMark, _ := strconv.ParseBool(ebpf.DedupeJustMarkDefault)
-	dedupMerge, _ := strconv.ParseBool(ebpf.DedupeMergeDefault)
+func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) error {
+	var err error
+	dedupJustMark, err := strconv.ParseBool(ebpf.DedupeJustMarkDefault)
+	if err != nil {
+		return err
+	}
+	dedupMerge, err := strconv.ParseBool(ebpf.DedupeMergeDefault)
+	if err != nil {
+		return err
+	}
 	if helper.UseEBPF(b.desired) {
 		if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
 			fconf.Features = append(fconf.Features, "pktDrop")
@@ -361,11 +368,17 @@ func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) {
 
 		if b.desired.Agent.EBPF.Advanced != nil {
 			if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeJustMark]; ok {
-				dedupJustMark, _ = strconv.ParseBool(v)
+				dedupJustMark, err = strconv.ParseBool(v)
+				if err != nil {
+					return err
+				}
 			}
 
 			if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeMerge]; ok {
-				dedupMerge, _ = strconv.ParseBool(v)
+				dedupMerge, err = strconv.ParseBool(v)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -378,6 +391,7 @@ func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) {
 		Mark:  dedupJustMark,
 		Merge: dedupMerge,
 	}
+	return nil
 }
 
 //go:embed config/static-frontend-config.yaml
@@ -400,7 +414,10 @@ func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	b.setFrontendConfig(&config.Frontend)
+	err = b.setFrontendConfig(&config.Frontend)
+	if err != nil {
+		return nil, "", err
+	}
 
 	var configStr string
 	bs, err := yaml.Marshal(config)
