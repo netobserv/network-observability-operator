@@ -36,6 +36,8 @@ const (
 	HeartbeatType     = "heartbeat"
 	EndConnectionType = "endConnection"
 
+	ClusterNameLabelName = "K8S_ClusterName"
+
 	MonitoringNamespace      = "openshift-monitoring"
 	MonitoringServiceAccount = "prometheus-k8s"
 
@@ -45,8 +47,9 @@ const (
 	LokiCRReader  = "netobserv-reader"
 )
 
-var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type", "FlowDirection", "Duplicate"}
+var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type"}
 var LokiConnectionIndexFields = []string{"_RecordType"}
+var LokiDeduperMarkIndexFields = []string{"FlowDirection", "Duplicate"}
 var FlowCollectorName = types.NamespacedName{Name: "cluster"}
 var EnvNoHTTP2 = corev1.EnvVar{
 	Name:  "GODEBUG",

@@ -15,12 +15,9 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/loki"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
-)
-
-const (
-	clusterNameLabelName = "K8S_ClusterName"
 )
 
 type PipelineBuilder struct {
@@ -52,15 +49,8 @@ func newPipelineBuilder(
 
 func (b *PipelineBuilder) AddProcessorStages() error {
 	lastStage := *b.PipelineBuilderStage
-	indexFields := constants.LokiIndexFields
-
 	lastStage = b.addTransformFilter(lastStage)
-
-	indexFields, lastStage = b.addConnectionTracking(indexFields, lastStage)
-
-	if b.desired.Processor.MultiClusterDeployment != nil && *b.desired.Processor.MultiClusterDeployment {
-		indexFields = append(indexFields, clusterNameLabelName)
-	}
+	lastStage = b.addConnectionTracking(lastStage)
 
 	// enrich stage (transform) configuration
 	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
@@ -88,7 +78,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	debugConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
 	if helper.UseLoki(b.desired) {
 		lokiWrite := api.WriteLoki{
-			Labels:         indexFields,
+			Labels:         loki.GetLokiLabels(b.desired),
 			BatchSize:      int(b.desired.Loki.WriteBatchSize),
 			BatchWait:      helper.UnstructuredDuration(b.desired.Loki.WriteBatchWait),
 			MaxBackoff:     helper.UnstructuredDuration(debugConfig.WriteMaxBackoff),
@@ -200,7 +190,7 @@ func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.PromMetrics
 	return m, nil
 }
 
-func (b *PipelineBuilder) addConnectionTracking(indexFields []string, lastStage config.PipelineBuilderStage) ([]string, config.PipelineBuilderStage) {
+func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilderStage) config.PipelineBuilderStage {
 	outputFields := []api.OutputField{
 		{
 			Name:      "Bytes",
@@ -307,7 +297,6 @@ func (b *PipelineBuilder) addConnectionTracking(indexFields []string, lastStage 
 
 	// Connection tracking stage (only if LogTypes is not FLOWS)
 	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
-		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
 		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
 		debugConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{
@@ -342,7 +331,7 @@ func (b *PipelineBuilder) addConnectionTracking(indexFields []string, lastStage 
 			},
 		})
 	}
-	return indexFields, lastStage
+	return lastStage
 }
 
 func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderStage) config.PipelineBuilderStage {
@@ -359,7 +348,7 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 		if clusterName != "" {
 			transformFilterRules = []api.TransformFilterRule{
 				{
-					Input: clusterNameLabelName,
+					Input: constants.ClusterNameLabelName,
 					Type:  "add_field_if_doesnt_exist",
 					Value: clusterName,
 				},

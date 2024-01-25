@@ -11,8 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/yaml"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	config "github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
@@ -283,6 +285,100 @@ func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 	builder = newBuilder(testNamespace, testImage, &spec, &loki)
 	nEw, _, _ = builder.configMap()
 	assert.NotEqual(old.Data, nEw.Data)
+}
+
+func TestConfigMapContent(t *testing.T) {
+	assert := assert.New(t)
+
+	agentSpec := flowslatest.FlowCollectorAgent{
+		Type: "eBPF",
+		EBPF: flowslatest.FlowCollectorEBPF{
+			Sampling: ptr.To(int32(1)),
+		},
+	}
+	lokiSpec := flowslatest.FlowCollectorLoki{
+		Mode:      flowslatest.LokiModeLokiStack,
+		LokiStack: flowslatest.LokiStackRef{Name: "lokistack", Namespace: "ls-namespace"},
+	}
+	loki := helper.NewLokiConfig(&lokiSpec, "any")
+	spec := flowslatest.FlowCollectorSpec{
+		Agent:         agentSpec,
+		ConsolePlugin: getPluginConfig(),
+		Loki:          lokiSpec,
+	}
+	builder := newBuilder(testNamespace, testImage, &spec, &loki)
+	cm, _, err := builder.configMap()
+	assert.NotNil(cm)
+	assert.Nil(err)
+
+	// parse output config and check expected values
+	var config config.PluginConfig
+	err = yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &config)
+	assert.Nil(err)
+
+	// loki config
+	assert.Equal(config.Loki.URL, "https://lokistack-gateway-http.ls-namespace.svc:8080/api/logs/v1/network/")
+	assert.Equal(config.Loki.StatusURL, "https://lokistack-query-frontend-http.ls-namespace.svc:3100/")
+
+	// frontend params
+	assert.Equal(config.Frontend.RecordTypes, []string{"flowLog"})
+	assert.Empty(config.Frontend.Features)
+	assert.NotEmpty(config.Frontend.Columns)
+	assert.NotEmpty(config.Frontend.Filters)
+	assert.Equal(config.Frontend.Sampling, 1)
+	assert.Equal(config.Frontend.Deduper.Mark, true)
+	assert.Equal(config.Frontend.Deduper.Merge, false)
+}
+
+func TestConfigMapError(t *testing.T) {
+	assert := assert.New(t)
+
+	agentSpec := flowslatest.FlowCollectorAgent{
+		Type: "eBPF",
+		EBPF: flowslatest.FlowCollectorEBPF{
+			Sampling: ptr.To(int32(1)),
+			Advanced: &flowslatest.AdvancedAgentConfig{
+				Env: map[string]string{
+					"DEDUPER_JUST_MARK": "invalid",
+				},
+			},
+		},
+	}
+	lokiSpec := flowslatest.FlowCollectorLoki{}
+	loki := helper.NewLokiConfig(&lokiSpec, "any")
+
+	// spec with invalid flag
+	spec := flowslatest.FlowCollectorSpec{
+		Agent:         agentSpec,
+		ConsolePlugin: getPluginConfig(),
+		Loki:          lokiSpec,
+	}
+	builder := newBuilder(testNamespace, testImage, &spec, &loki)
+	cm, _, err := builder.configMap()
+	assert.Nil(cm)
+	assert.NotNil(err)
+
+	// update to valid flags
+	agentSpec.EBPF.Advanced.Env = map[string]string{
+		"DEDUPER_JUST_MARK": "false",
+		"DEDUPER_MERGE":     "true",
+	}
+	spec = flowslatest.FlowCollectorSpec{
+		Agent:         agentSpec,
+		ConsolePlugin: getPluginConfig(),
+		Loki:          lokiSpec,
+	}
+	builder = newBuilder(testNamespace, testImage, &spec, &loki)
+	cm, _, err = builder.configMap()
+	assert.NotNil(cm)
+	assert.Nil(err)
+
+	// parse output config and check expected values
+	var config config.PluginConfig
+	err = yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &config)
+	assert.Nil(err)
+	assert.Equal(config.Frontend.Deduper.Mark, false)
+	assert.Equal(config.Frontend.Deduper.Merge, true)
 }
 
 func TestServiceUpdateCheck(t *testing.T) {
