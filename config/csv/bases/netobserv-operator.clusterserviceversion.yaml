@@ -10,6 +10,8 @@ metadata:
     createdAt: ':created-at:'
     description: Network flows collector and monitoring solution
     operatorframework.io/suggested-namespace: openshift-netobserv-operator
+    operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
+      "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
     repository: https://github.com/netobserv/network-observability-operator
   labels:
     operatorframework.io/arch.amd64: supported
@@ -41,6 +43,246 @@ spec:
       kind: FlowCollector
       name: flowcollectors.flows.netobserv.io
       version: v1beta2
+      specDescriptors:
+        # ROOT
+        - description: defines the desired type of deployment for flow processing.
+          path: deploymentModel
+        # AGENT
+        - description: for flows extraction.
+          displayName: Agent configuration
+          path: agent
+        - path: agent.type
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:hidden
+        - path: agent.ipfix
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:hidden
+        - description: Settings related to the eBPF-based flow reporter.
+          displayName: eBPF Agent configuration
+          path: agent.ebpf
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:agent.type:eBPF
+        - displayName: Privileged mode
+          path: agent.ebpf.privileged
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - path: agent.ebpf.cacheActiveTimeout
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: agent.ebpf.cacheMaxFlows
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: agent.ebpf.kafkaBatchSize
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: agent.ebpf.logLevel
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: agent.ebpf.imagePullPolicy
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - displayName: Resource Requirements
+          path: agent.ebpf.resources
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - path: agent.ebpf.advanced
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:hidden
+        # KAFKA
+        - description: to use Kafka as a broker as part of the flow collection pipeline.
+          displayName: Kafka configuration
+          path: kafka
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
+        - displayName: TLS configuration
+          path: kafka.tls
+        - path: kafka.tls.enable
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - displayName: Insecure
+          path: kafka.tls.insecureSkipVerify
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:kafka.tls.enable:true
+        - displayName: User certificate when using mTLS
+          path: kafka.tls.userCert
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:kafka.tls.enable:true
+        - displayName: CA certificate
+          path: kafka.tls.caCert
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:kafka.tls.enable:true
+        - path: kafka.sasl
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:hidden
+        # PROCESSOR / FLP
+        - description: of the component that receives the flows from the agent, enriches them, generates metrics, and forwards them to the Loki persistence layer and/or any available exporter.
+          displayName: Processor configuration
+          path: processor
+        - displayName: Multi-cluster deployment
+          path: processor.multiClusterDeployment
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+            - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - path: processor.clusterName
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.multiClusterDeployment:true
+        - path: processor.advanced
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:hidden
+        - displayName: Metrics configuration
+          path: processor.metrics
+        - displayName: Server configuration
+          path: processor.metrics.server
+        - displayName: TLS configuration
+          path: processor.metrics.server.tls
+        - displayName: Insecure
+          path: processor.metrics.server.tls.insecureSkipVerify
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.metrics.server.tls.type:Provided
+        - displayName: Cert
+          path: processor.metrics.server.tls.provided
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.metrics.server.tls.type:Provided
+        - displayName: CA
+          path: processor.metrics.server.tls.providedCaFile
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.metrics.server.tls.type:Provided
+        - path: processor.kafkaConsumerReplicas
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - displayName: kafka consumer autoscaler
+          path: processor.kafkaConsumerAutoscaler
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: processor.kafkaConsumerQueueCapacity
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: processor.kafkaConsumerBatchSize
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: processor.logLevel
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: processor.imagePullPolicy
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - displayName: Resource Requirements
+          path: processor.resources
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        # LOKI
+        - description: for the flow store.
+          displayName: Loki client settings
+          path: loki
+        - path: loki.enable
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - path: loki.mode
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
+        - path: loki.lokiStack
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:LokiStack
+        - path: loki.monolithic
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:Monolithic
+        - path: loki.microservices
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:Microservices
+        - path: loki.manual
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:Manual
+        - path: loki.writeBatchWait
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: loki.writeBatchSize
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: loki.writeTimeout
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: loki.advanced
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:hidden
+        # CONSOLE PLUGIN
+        - description: related to the OpenShift Console integration.
+          displayName: Console plugin configuration
+          path: consolePlugin
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
+        - path: consolePlugin.enable
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - path: consolePlugin.portNaming
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
+        - path: consolePlugin.quickFilters
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
+        - path: consolePlugin.replicas
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - displayName: Horizontal pod autoscaler
+          path: consolePlugin.autoscaler
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: consolePlugin.logLevel
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: consolePlugin.imagePullPolicy
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - displayName: Resource Requirements
+          path: consolePlugin.resources
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
+        - path: consolePlugin.advanced
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:hidden
+        # EXPORTERS
+        - description: additional optional exporters for custom consumption or storage.
+          path: exporters
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:advanced
+        - displayName: Type
+          path: exporters[0].type
+        - displayName: IPFIX configuration
+          path: exporters[0].ipfix
+          x-descriptors:
+            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:exporters.type:IPFIX"
+        - displayName: Kafka configuration
+          path: exporters[0].kafka
+          x-descriptors:
+            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:exporters.type:Kafka"
+      statusDescriptors:
+        - displayName: Namespace
+          description: Namespace where console plugin and flowlogs-pipeline have been deployed.
+          path: namespace
+          x-descriptors:
+            - urn:alm:descriptor:text
+        - description: Conditions of the FlowCollector instance health.
+          displayName: Conditions
+          path: conditions
+          x-descriptors:
+            - urn:alm:descriptor:io.kubernetes.conditions
     - description: '`FlowMetric` is the schema for the custom metrics API,
         which allows to generate more metrics out of flow logs.
         It is at an early stage of development (dev preview)

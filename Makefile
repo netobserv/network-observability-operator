@@ -387,12 +387,15 @@ bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metada
 bundle: bundle-prepare ## Generate final bundle files.
 	rm -r bundle/manifests
 	rm -r bundle/metadata
+	cp ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml tmp-csv
+	hack/crd2csvSpecDesc.sh v1beta2
 	$(SED) -e 's/^/    /' config/descriptions/upstream.md > tmp-desc
 	$(KUSTOMIZE) build $(BUNDLE_CONFIG) \
 		| $(SED) -e 's~:container-image:~$(IMAGE)~' \
 		| $(SED) -e "/':full-description:'/r tmp-desc" \
 		| $(SED) -e "s/':full-description:'/|\-/" \
 		| $(OPSDK) generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
+	mv tmp-csv ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
 	rm tmp-desc
 	sh -c '\
 	VALIDATION_OUTPUT=$$($(OPSDK) bundle validate ./bundle --select-optional suite=operatorframework); \
