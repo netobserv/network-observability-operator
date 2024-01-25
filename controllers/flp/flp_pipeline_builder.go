@@ -58,10 +58,16 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			Input:  "SrcAddr",
 			Output: "SrcK8S",
 			Type:   api.AddKubernetesRuleType,
+			Kubernetes: &api.K8sRule{
+				AddZone: *b.desired.Processor.AddZone,
+			},
 		}, {
 			Input:  "DstAddr",
 			Output: "DstK8S",
 			Type:   api.AddKubernetesRuleType,
+			Kubernetes: &api.K8sRule{
+				AddZone: *b.desired.Processor.AddZone,
+			},
 		}, {
 			Type: api.ReinterpretDirectionRuleType,
 		}, {

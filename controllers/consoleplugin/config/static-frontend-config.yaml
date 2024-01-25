@@ -141,6 +141,13 @@ columns:
     calculated: getConcatenatedValue(SrcAddr,SrcPort)
     default: false
     width: 15
+  - id: SrcZone
+    group: Source
+    name: Zone
+    field: SrcK8S_Zone
+    filter: src_zone
+    default: false
+    width: 15
   - id: DstK8S_Name
     group: Destination
     name: Name
@@ -251,6 +258,13 @@ columns:
     group: Destination
     name: IP & Port
     calculated: getConcatenatedValue(DstAddr,DstPort)
+    default: false
+    width: 15
+  - id: DstZone
+    group: Destination
+    name: Zone
+    field: DstK8S_Zone
+    filter: dst_zone
     default: false
     width: 15
   - id: K8S_Name
@@ -556,6 +570,16 @@ filters:
           - Starting text like cluster, "cluster-*"
           - Ending text like "*-registry"
           - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
+  - id: src_zone
+    name: Zone Name
+    component: text
+    category: source
+    hint: Specify a single zone.
+  - id: dst_zone
+    name: Zone Name
+    component: text
+    category: destination
+    hint: Specify a single zone.
   - id: src_resource
     name: Resource
     component: autocomplete
