@@ -67,6 +67,7 @@ func flowCollectorIsoSpecs() {
 				KafkaConsumerBatchSize:     int(zero),
 				MultiClusterDeployment:     ptr.To(true),
 				ClusterName:                "testCluster",
+				AddZone:                    ptr.To(false),
 				Advanced: &flowslatest.AdvancedProcessorConfig{
 					Port:                           ptr.To(int32(12345)),
 					HealthPort:                     ptr.To(int32(12346)),
