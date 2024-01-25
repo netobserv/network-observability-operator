@@ -232,6 +232,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 					"-loglevel", b.desired.ConsolePlugin.LogLevel,
 					"-config", filepath.Join(configPath, configFile),
 				},
+				SecurityContext: helper.ContainerDefaultSecurityContext(),
 			}},
 			Volumes:            b.volumes.AppendVolumes(volumes),
 			ServiceAccountName: constants.PluginName,

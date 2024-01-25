@@ -225,6 +225,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 		VolumeMounts:    volumeMounts,
 		Ports:           ports,
 		Env:             envs,
+		SecurityContext: helper.ContainerDefaultSecurityContext(),
 	}
 	if *debugConfig.EnableKubeProbes {
 		container.LivenessProbe = &corev1.Probe{
