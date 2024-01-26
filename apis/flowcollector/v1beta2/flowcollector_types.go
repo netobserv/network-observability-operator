@@ -373,6 +373,17 @@ type FLPMetrics struct {
 	DisableAlerts []FLPAlert `json:"disableAlerts"`
 }
 
+// Processor feature, can be one of:<br>
+// - `MultiCluster`, for multi-cluster awareness.<br>
+// - `Zone`, for availability zones awareness.<br>
+// +kubebuilder:validation:Enum:="MultiCluster";"Zone"
+type ProcessorFeature string
+
+const (
+	FeatureMultiCluster ProcessorFeature = "MultiCluster"
+	FeatureZone         ProcessorFeature = "Zone"
+)
+
 type FLPLogTypes string
 
 const (
@@ -436,19 +447,17 @@ type FlowCollectorFLP struct {
 	// +kubebuilder:default:=Flows
 	LogTypes *FLPLogTypes `json:"logTypes,omitempty"`
 
+	// List of additional features to enable. Possible values are:<br>
+	// - `MultiCluster`: allows multi-cluster awareness by labelling flows in this cluster with the cluster name.<br>
+	// - `Zone`: allows availability zone awareness by labelling flows with their source and destination zones.
+	// This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.<br>
+	// +optional
+	Features []ProcessorFeature `json:"features,omitempty"`
+
 	//+kubebuilder:default:=""
 	// +optional
 	// `clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.
 	ClusterName string `json:"clusterName,omitempty"`
-
-	//+kubebuilder:default:=false
-	// Set `multiClusterDeployment` to `true` to enable multi clusters feature. This will add clusterName label to flows data
-	MultiClusterDeployment *bool `json:"multiClusterDeployment,omitempty"`
-
-	//+kubebuilder:default:=false
-	//+optional
-	// `addZone` when set to `true`, the source and destination of flow will their zone added to the flow
-	AddZone *bool `json:"addZone,omitempty"`
 
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,

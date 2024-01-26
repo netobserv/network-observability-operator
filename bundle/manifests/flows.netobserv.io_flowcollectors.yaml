@@ -4135,6 +4135,12 @@ spec:
                   and forwards them to the Loki persistence layer and/or any available
                   exporter.'
                 properties:
+                  addZone:
+                    description: '`addZone` allows availability zone awareness by
+                      labelling flows with their source and destination zones. This
+                      feature requires the "topology.kubernetes.io/zone" label to
+                      be set on nodes.'
+                    type: boolean
                   clusterName:
                     default: ""
                     description: '`clusterName` is the name of the cluster to appear
@@ -7102,11 +7108,6 @@ spec:
                   and forwards them to the Loki persistence layer and/or any available
                   exporter.'
                 properties:
-                  addZone:
-                    default: false
-                    description: '`addZone` when set to `true`, the source and destination
-                      of flow will their zone added to the flow'
-                    type: boolean
                   advanced:
                     description: '`advanced` allows setting some aspects of the internal
                       configuration of the flow processor. This section is aimed mostly
@@ -7185,6 +7186,22 @@ spec:
                       in the flows data. This is useful in a multi-cluster context.
                       When using OpenShift, leave empty to make it automatically determined.'
                     type: string
+                  features:
+                    description: 'List of additional features to enable. Possible
+                      values are:<br> - `MultiCluster`: allows multi-cluster awareness
+                      by labelling flows in this cluster with the cluster name.<br>
+                      - `Zone`: allows availability zone awareness by labelling flows
+                      with their source and destination zones. This feature requires
+                      the "topology.kubernetes.io/zone" label to be set on nodes.<br>'
+                    items:
+                      description: Processor feature, can be one of:<br> - `MultiCluster`,
+                        for multi-cluster awareness.<br> - `Zone`, for availability
+                        zones awareness.<br>
+                      enum:
+                      - MultiCluster
+                      - Zone
+                      type: string
+                    type: array
                   imagePullPolicy:
                     default: IfNotPresent
                     description: '`imagePullPolicy` is the Kubernetes pull policy
@@ -7939,12 +7956,6 @@ spec:
                             type: object
                         type: object
                     type: object
-                  multiClusterDeployment:
-                    default: false
-                    description: Set `multiClusterDeployment` to `true` to enable
-                      multi clusters feature. This will add clusterName label to flows
-                      data
-                    type: boolean
                   resources:
                     default:
                       limits:

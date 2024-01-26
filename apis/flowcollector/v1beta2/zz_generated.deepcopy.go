@@ -462,15 +462,10 @@ func (in *FlowCollectorFLP) DeepCopyInto(out *FlowCollectorFLP) {
 		*out = new(FLPLogTypes)
 		**out = **in
 	}
-	if in.MultiClusterDeployment != nil {
-		in, out := &in.MultiClusterDeployment, &out.MultiClusterDeployment
-		*out = new(bool)
-		**out = **in
-	}
-	if in.AddZone != nil {
-		in, out := &in.AddZone, &out.AddZone
-		*out = new(bool)
-		**out = **in
+	if in.Features != nil {
+		in, out := &in.Features, &out.Features
+		*out = make([]ProcessorFeature, len(*in))
+		copy(*out, *in)
 	}
 	if in.Advanced != nil {
 		in, out := &in.Advanced, &out.Advanced

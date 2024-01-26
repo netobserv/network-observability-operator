@@ -86,7 +86,7 @@ func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
 		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
 }
 
-func IsFeatureEnabled(spec *flowslatest.FlowCollectorEBPF, feature flowslatest.AgentFeature) bool {
+func IsAgentFeatureEnabled(spec *flowslatest.FlowCollectorEBPF, feature flowslatest.AgentFeature) bool {
 	for _, f := range spec.Features {
 		if f == feature {
 			return true
@@ -100,18 +100,35 @@ func IsPrivileged(spec *flowslatest.FlowCollectorEBPF) bool {
 }
 
 func IsPktDropEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	if IsPrivileged(spec) && IsFeatureEnabled(spec, flowslatest.PacketDrop) {
+	if IsPrivileged(spec) && IsAgentFeatureEnabled(spec, flowslatest.PacketDrop) {
 		return true
 	}
 	return false
 }
 
 func IsDNSTrackingEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return IsFeatureEnabled(spec, flowslatest.DNSTracking)
+	return IsAgentFeatureEnabled(spec, flowslatest.DNSTracking)
 }
 
 func IsFlowRTTEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return IsFeatureEnabled(spec, flowslatest.FlowRTT)
+	return IsAgentFeatureEnabled(spec, flowslatest.FlowRTT)
+}
+
+func IsFLPFeatureEnabled(spec *flowslatest.FlowCollectorFLP, feature flowslatest.ProcessorFeature) bool {
+	for _, f := range spec.Features {
+		if f == feature {
+			return true
+		}
+	}
+	return false
+}
+
+func IsMultiClusterEnabled(spec *flowslatest.FlowCollectorFLP) bool {
+	return IsFLPFeatureEnabled(spec, flowslatest.FeatureMultiCluster)
+}
+
+func IsZoneEnabled(spec *flowslatest.FlowCollectorFLP) bool {
+	return IsFLPFeatureEnabled(spec, flowslatest.FeatureZone)
 }
 
 func PtrBool(b *bool) bool {

@@ -68,9 +68,9 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	if restored.Spec.Processor.ClusterName != "" {
 		dst.Spec.Processor.ClusterName = restored.Spec.Processor.ClusterName
 	}
-	dst.Spec.Processor.AddZone = restored.Spec.Processor.AddZone
-	if restored.Spec.Processor.MultiClusterDeployment != nil {
-		dst.Spec.Processor.MultiClusterDeployment = restored.Spec.Processor.MultiClusterDeployment
+	if restored.Spec.Processor.Features != nil {
+		dst.Spec.Processor.Features = make([]v1beta2.ProcessorFeature, len(restored.Spec.Processor.Features))
+		copy(dst.Spec.Processor.Features, restored.Spec.Processor.Features)
 	}
 
 	dst.Spec.Processor.Metrics.Server.TLS.InsecureSkipVerify = restored.Spec.Processor.Metrics.Server.TLS.InsecureSkipVerify

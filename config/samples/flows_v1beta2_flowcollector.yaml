@@ -48,9 +48,11 @@ spec:
     logLevel: info
     # Change logTypes to "CONVERSATIONS" or "ALL" to enable conversation tracking
     logTypes: Flows
+    # features:
+    # - "MultiCluster"
+    # - "Zone"
     # Append a unique cluster name to each record
     # clusterName: <CLUSTER NAME>
-    # addZone: true
     metrics:
       server:
         port: 9102

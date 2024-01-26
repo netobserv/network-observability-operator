@@ -647,9 +647,8 @@ func autoConvert_v1beta2_FlowCollectorFLP_To_v1alpha1_FlowCollectorFLP(in *v1bet
 	out.KafkaConsumerQueueCapacity = in.KafkaConsumerQueueCapacity
 	out.KafkaConsumerBatchSize = in.KafkaConsumerBatchSize
 	// WARNING: in.LogTypes requires manual conversion: does not exist in peer-type
+	// WARNING: in.Features requires manual conversion: does not exist in peer-type
 	// WARNING: in.ClusterName requires manual conversion: does not exist in peer-type
-	// WARNING: in.MultiClusterDeployment requires manual conversion: does not exist in peer-type
-	// WARNING: in.AddZone requires manual conversion: does not exist in peer-type
 	// WARNING: in.Advanced requires manual conversion: does not exist in peer-type
 	return nil
 }

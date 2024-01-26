@@ -121,15 +121,9 @@ spec:
         - description: of the component that receives the flows from the agent, enriches them, generates metrics, and forwards them to the Loki persistence layer and/or any available exporter.
           displayName: Processor configuration
           path: processor
-        - displayName: Multi-cluster deployment
-          path: processor.multiClusterDeployment
-          x-descriptors:
-            - urn:alm:descriptor:com.tectonic.ui:advanced
-            - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
         - path: processor.clusterName
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:advanced
-            - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.multiClusterDeployment:true
         - path: processor.advanced
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:hidden

@@ -526,16 +526,10 @@ spec:
           and/or any available exporter.
         displayName: Processor configuration
         path: processor
-      - displayName: Multi-cluster deployment
-        path: processor.multiClusterDeployment
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:advanced
-        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
       - displayName: Cluster name
         path: processor.clusterName
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.multiClusterDeployment:true
       - path: processor.advanced
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
@@ -740,8 +734,8 @@ spec:
         path: loki.readTimeout
       - displayName: Namespace
         path: namespace
-      - displayName: Add zone
-        path: processor.addZone
+      - displayName: Features
+        path: processor.features
       - displayName: Log types
         path: processor.logTypes
       - displayName: Disable alerts

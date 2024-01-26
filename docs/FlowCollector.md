@@ -7401,6 +7401,13 @@ TLS client configuration for Loki URL.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>addZone</b></td>
+        <td>boolean</td>
+        <td>
+          `addZone` allows availability zone awareness by labelling flows with their source and destination zones. This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>clusterName</b></td>
         <td>string</td>
         <td>
@@ -12657,15 +12664,6 @@ TLS client configuration for Loki URL.
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>addZone</b></td>
-        <td>boolean</td>
-        <td>
-          `addZone` when set to `true`, the source and destination of flow will their zone added to the flow<br/>
-          <br/>
-            <i>Default</i>: false<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvanced">advanced</a></b></td>
         <td>object</td>
         <td>
@@ -12679,6 +12677,13 @@ TLS client configuration for Loki URL.
           `clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.<br/>
           <br/>
             <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>features</b></td>
+        <td>[]enum</td>
+        <td>
+          List of additional features to enable. Possible values are:<br> - `MultiCluster`: allows multi-cluster awareness by labelling flows in this cluster with the cluster name.<br> - `Zone`: allows availability zone awareness by labelling flows with their source and destination zones. This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12752,15 +12757,6 @@ TLS client configuration for Loki URL.
         <td>object</td>
         <td>
           `Metrics` define the processor configuration regarding metrics<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>multiClusterDeployment</b></td>
-        <td>boolean</td>
-        <td>
-          Set `multiClusterDeployment` to `true` to enable multi clusters feature. This will add clusterName label to flows data<br/>
-          <br/>
-            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>

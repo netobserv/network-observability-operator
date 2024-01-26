@@ -65,9 +65,8 @@ func flowCollectorIsoSpecs() {
 				KafkaConsumerAutoscaler:    flowslatest.FlowCollectorHPA{Status: "Disabled", MinReplicas: &zero, MaxReplicas: zero, Metrics: []ascv2.MetricSpec{}},
 				KafkaConsumerQueueCapacity: int(zero),
 				KafkaConsumerBatchSize:     int(zero),
-				MultiClusterDeployment:     ptr.To(true),
+				Features:                   nil,
 				ClusterName:                "testCluster",
-				AddZone:                    ptr.To(false),
 				Advanced: &flowslatest.AdvancedProcessorConfig{
 					Port:                           ptr.To(int32(12345)),
 					HealthPort:                     ptr.To(int32(12346)),

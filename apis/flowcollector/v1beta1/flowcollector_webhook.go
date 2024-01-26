@@ -26,6 +26,7 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
@@ -51,7 +52,6 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.Loki.Monolithic = restored.Spec.Loki.Monolithic
 	dst.Spec.Loki.Microservices = restored.Spec.Loki.Microservices
 	dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
-	dst.Spec.Processor.AddZone = restored.Spec.Processor.AddZone
 
 	return nil
 }
@@ -286,6 +286,12 @@ func Convert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowCollec
 		logTypes := v1beta2.FLPLogTypes(utilconversion.UpperToPascal(*in.LogTypes))
 		out.LogTypes = &logTypes
 	}
+	if in.MultiClusterDeployment != nil && *in.MultiClusterDeployment {
+		out.Features = append(out.Features, v1beta2.FeatureMultiCluster)
+	}
+	if in.AddZone != nil && *in.AddZone {
+		out.Features = append(out.Features, v1beta2.FeatureZone)
+	}
 	debugPath := helper.ProcessorAdvancedPath
 	out.Advanced = &v1beta2.AdvancedProcessorConfig{
 		Env:                            map[string]string{},
@@ -330,6 +336,14 @@ func Convert_v1beta2_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(in *v1beta2.Fl
 	if in.LogTypes != nil {
 		str := utilconversion.PascalToUpper(string(*in.LogTypes), '_')
 		out.LogTypes = &str
+	}
+	for _, feat := range in.Features {
+		switch feat {
+		case v1beta2.FeatureMultiCluster:
+			out.MultiClusterDeployment = ptr.To(true)
+		case v1beta2.FeatureZone:
+			out.AddZone = ptr.To(true)
+		}
 	}
 	if in.Advanced != nil {
 		debugPath := helper.ProcessorAdvancedPath

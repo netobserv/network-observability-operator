@@ -616,7 +616,8 @@ func autoConvert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowCo
 	// WARNING: in.ConversationEndTimeout requires manual conversion: does not exist in peer-type
 	// WARNING: in.ConversationTerminatingTimeout requires manual conversion: does not exist in peer-type
 	out.ClusterName = in.ClusterName
-	out.MultiClusterDeployment = (*bool)(unsafe.Pointer(in.MultiClusterDeployment))
+	// WARNING: in.MultiClusterDeployment requires manual conversion: does not exist in peer-type
+	// WARNING: in.AddZone requires manual conversion: does not exist in peer-type
 	// WARNING: in.Debug requires manual conversion: does not exist in peer-type
 	return nil
 }
@@ -635,9 +636,8 @@ func autoConvert_v1beta2_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(in *v1beta
 	out.KafkaConsumerQueueCapacity = in.KafkaConsumerQueueCapacity
 	out.KafkaConsumerBatchSize = in.KafkaConsumerBatchSize
 	out.LogTypes = (*string)(unsafe.Pointer(in.LogTypes))
+	// WARNING: in.Features requires manual conversion: does not exist in peer-type
 	out.ClusterName = in.ClusterName
-	out.MultiClusterDeployment = (*bool)(unsafe.Pointer(in.MultiClusterDeployment))
-	// WARNING: in.AddZone requires manual conversion: does not exist in peer-type
 	// WARNING: in.Advanced requires manual conversion: does not exist in peer-type
 	return nil
 }

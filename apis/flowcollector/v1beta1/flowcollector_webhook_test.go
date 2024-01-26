@@ -405,3 +405,58 @@ func TestBeta2ConversionRoundtrip_Advanced(t *testing.T) {
 	assert.Equal(time.Hour, back.Spec.Loki.Advanced.WriteMaxBackoff.Duration)
 	assert.Equal(int32(10), *back.Spec.Loki.Advanced.WriteMaxRetries)
 }
+
+func TestBeta1ConversionRoundtrip_FLPFeatures(t *testing.T) {
+	// Testing beta1 -> beta2 -> beta1
+	assert := assert.New(t)
+
+	initial := FlowCollector{
+		Spec: FlowCollectorSpec{
+			Processor: FlowCollectorFLP{
+				AddZone: ptr.To(true),
+			},
+		},
+	}
+
+	var converted v1beta2.FlowCollector
+	err := initial.ConvertTo(&converted)
+	assert.NoError(err)
+
+	assert.Equal(converted.Spec.Processor.Features, []v1beta2.ProcessorFeature{v1beta2.FeatureZone})
+
+	// Other way
+	var back FlowCollector
+	err = back.ConvertFrom(&converted)
+	assert.NoError(err)
+
+	assert.NotNil(back.Spec.Processor.AddZone)
+	assert.True(*back.Spec.Processor.AddZone)
+	assert.Nil(back.Spec.Processor.MultiClusterDeployment)
+}
+
+func TestBeta2ConversionRoundtrip_FLPFeatures(t *testing.T) {
+	// Testing beta2 -> beta1 -> beta2
+	assert := assert.New(t)
+
+	initial := v1beta2.FlowCollector{
+		Spec: v1beta2.FlowCollectorSpec{
+			Processor: v1beta2.FlowCollectorFLP{
+				Features: []v1beta2.ProcessorFeature{v1beta2.FeatureMultiCluster},
+			},
+		},
+	}
+
+	var converted FlowCollector
+	err := converted.ConvertFrom(&initial)
+	assert.NoError(err)
+
+	assert.NotNil(converted.Spec.Processor.MultiClusterDeployment)
+	assert.True(*converted.Spec.Processor.MultiClusterDeployment)
+	assert.Nil(converted.Spec.Processor.AddZone)
+
+	var back v1beta2.FlowCollector
+	err = converted.ConvertTo(&back)
+	assert.NoError(err)
+
+	assert.Equal(back.Spec.Processor.Features, []v1beta2.ProcessorFeature{v1beta2.FeatureMultiCluster})
+}
