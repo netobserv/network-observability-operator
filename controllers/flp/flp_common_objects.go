@@ -300,7 +300,7 @@ func (b *builder) ConfigMap() (*corev1.ConfigMap, string, error) {
 func (b *builder) GetJSONConfig() (string, error) {
 	metricsSettings := config.MetricsSettings{
 		PromConnectionInfo: api.PromConnectionInfo{
-			Port:    int(b.desired.Processor.Metrics.Server.Port),
+			Port: int(b.desired.Processor.Metrics.Server.Port),
 		},
 		Prefix:  "netobserv_",
 		NoPanic: true,
