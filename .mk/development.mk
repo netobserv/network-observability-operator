@@ -189,8 +189,8 @@ else
 	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) "" DOWNSTREAM_DEPLOYMENT true
 endif
 	@echo -e "\n==> Redeploying..."
-	kubectl rollout status -n $(NAMESPACE) --timeout=60s deployment netobserv-controller-manager
-	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
+	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
+	kubectl wait -n $(OPERATOR_NS) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
 
 .PHONY: pprof
 pprof:
