@@ -52,16 +52,27 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	lastStage = b.addTransformFilter(lastStage)
 	lastStage = b.addConnectionTracking(lastStage)
 
+	addZone := false
+	if b.desired.Processor.AddZone != nil {
+		addZone = *b.desired.Processor.AddZone
+	}
+
 	// enrich stage (transform) configuration
 	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
 		Rules: api.NetworkTransformRules{{
 			Input:  "SrcAddr",
 			Output: "SrcK8S",
 			Type:   api.AddKubernetesRuleType,
+			Kubernetes: &api.K8sRule{
+				AddZone: addZone,
+			},
 		}, {
 			Input:  "DstAddr",
 			Output: "DstK8S",
 			Type:   api.AddKubernetesRuleType,
+			Kubernetes: &api.K8sRule{
+				AddZone: addZone,
+			},
 		}, {
 			Type: api.ReinterpretDirectionRuleType,
 		}, {

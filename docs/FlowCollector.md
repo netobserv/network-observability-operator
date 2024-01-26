@@ -12657,6 +12657,15 @@ TLS client configuration for Loki URL.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>addZone</b></td>
+        <td>boolean</td>
+        <td>
+          `addZone` when set to `true`, the source and destination of flow will their zone added to the flow<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvanced">advanced</a></b></td>
         <td>object</td>
         <td>

@@ -50,6 +50,7 @@ spec:
     logTypes: Flows
     # Append a unique cluster name to each record
     # clusterName: <CLUSTER NAME>
+    # addZone: true
     metrics:
       server:
         port: 9102

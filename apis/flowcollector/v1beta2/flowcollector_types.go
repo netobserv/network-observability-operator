@@ -445,6 +445,11 @@ type FlowCollectorFLP struct {
 	// Set `multiClusterDeployment` to `true` to enable multi clusters feature. This will add clusterName label to flows data
 	MultiClusterDeployment *bool `json:"multiClusterDeployment,omitempty"`
 
+	//+kubebuilder:default:=false
+	//+optional
+	// `addZone` when set to `true`, the source and destination of flow will their zone added to the flow
+	AddZone *bool `json:"addZone,omitempty"`
+
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.

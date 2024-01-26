@@ -7088,6 +7088,11 @@ spec:
                   and forwards them to the Loki persistence layer and/or any available
                   exporter.'
                 properties:
+                  addZone:
+                    default: false
+                    description: '`addZone` when set to `true`, the source and destination
+                      of flow will their zone added to the flow'
+                    type: boolean
                   advanced:
                     description: '`advanced` allows setting some aspects of the internal
                       configuration of the flow processor. This section is aimed mostly

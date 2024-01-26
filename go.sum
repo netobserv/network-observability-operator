@@ -156,6 +156,8 @@ github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRW
 github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f/go.mod h1:ZdcZmHo+o7JKHSa8/e818NopupXU1YMK5fe1lsApnBw=
 github.com/netobserv/flowlogs-pipeline v0.1.11-0.20240123101451-40b694850494 h1:r0yWwNs/r0J6kRO4nnbGxUwITVdHAkWSXFr1+6gzIqs=
 github.com/netobserv/flowlogs-pipeline v0.1.11-0.20240123101451-40b694850494/go.mod h1:Hfcqa5PFrELNp1B4M9e2+rG3226uOiKMi8KEOYBY0ow=
+github.com/netobserv/flowlogs-pipeline v0.1.11-0.20240125165124-4289f5a17934 h1:vMJ6tEETHl81Lbzmvs7z7I7PgvyC6WEzlJym2zSWMpQ=
+github.com/netobserv/flowlogs-pipeline v0.1.11-0.20240125165124-4289f5a17934/go.mod h1:Hfcqa5PFrELNp1B4M9e2+rG3226uOiKMi8KEOYBY0ow=
 github.com/netobserv/prometheus-common v0.46.0-netobserv h1:gpnbXZtSWBauwlSm0aC//mAwAUIvblW6xqNV4mnY2mE=
 github.com/netobserv/prometheus-common v0.46.0-netobserv/go.mod h1:Tp0qkxpb9Jsg54QMe+EAmqXkSV7Evdy1BTn+g2pa/hQ=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=

@@ -68,6 +68,7 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	if restored.Spec.Processor.ClusterName != "" {
 		dst.Spec.Processor.ClusterName = restored.Spec.Processor.ClusterName
 	}
+	dst.Spec.Processor.AddZone = restored.Spec.Processor.AddZone
 	if restored.Spec.Processor.MultiClusterDeployment != nil {
 		dst.Spec.Processor.MultiClusterDeployment = restored.Spec.Processor.MultiClusterDeployment
 	}

@@ -736,8 +736,12 @@ spec:
         path: loki.monolithic.tenantID
       - displayName: Url
         path: loki.monolithic.url
+      - displayName: Read timeout
+        path: loki.readTimeout
       - displayName: Namespace
         path: namespace
+      - displayName: Add zone
+        path: processor.addZone
       - displayName: Log types
         path: processor.logTypes
       - displayName: Disable alerts

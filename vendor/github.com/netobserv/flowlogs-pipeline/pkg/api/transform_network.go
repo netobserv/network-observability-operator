@@ -69,12 +69,17 @@ type NetworkTransformRule struct {
 	Parameters      string        `yaml:"parameters,omitempty" json:"parameters,omitempty" doc:"parameters specific to type"`
 	Assignee        string        `yaml:"assignee,omitempty" json:"assignee,omitempty" doc:"value needs to assign to output field"`
 	KubernetesInfra *K8sInfraRule `yaml:"kubernetes_infra,omitempty" json:"kubernetes_infra,omitempty" doc:"Kubernetes infra rule specific configuration"`
+	Kubernetes      *K8sRule      `yaml:"kubernetes,omitempty" json:"kubernetes,omitempty" doc:"Kubernetes rule specific configuration"`
 }
 
 type K8sInfraRule struct {
 	Inputs      []string `yaml:"inputs,omitempty" json:"inputs,omitempty" doc:"entry inputs fields"`
 	Output      string   `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
 	InfraPrefix string   `yaml:"infra_prefixes,omitempty" json:"infra_prefixes,omitempty" doc:"Namespace prefixes that will be tagged as infra"`
+}
+
+type K8sRule struct {
+	AddZone bool `yaml:"add_zone,omitempty" json:"add_zone,omitempty" doc:"If true the rule will add the zone"`
 }
 
 type NetworkTransformDirectionInfo struct {
