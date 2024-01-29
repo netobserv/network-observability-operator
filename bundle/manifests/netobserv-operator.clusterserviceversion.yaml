@@ -536,6 +536,10 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.multiClusterDeployment:true
+      - displayName: Availability zones
+        path: processor.addZone
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
       - path: processor.advanced
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
@@ -740,8 +744,6 @@ spec:
         path: loki.readTimeout
       - displayName: Namespace
         path: namespace
-      - displayName: Add zone
-        path: processor.addZone
       - displayName: Log types
         path: processor.logTypes
       - displayName: Disable alerts

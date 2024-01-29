@@ -617,6 +617,7 @@ func autoConvert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowCo
 	// WARNING: in.ConversationTerminatingTimeout requires manual conversion: does not exist in peer-type
 	out.ClusterName = in.ClusterName
 	out.MultiClusterDeployment = (*bool)(unsafe.Pointer(in.MultiClusterDeployment))
+	out.AddZone = (*bool)(unsafe.Pointer(in.AddZone))
 	// WARNING: in.Debug requires manual conversion: does not exist in peer-type
 	return nil
 }
@@ -637,7 +638,7 @@ func autoConvert_v1beta2_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(in *v1beta
 	out.LogTypes = (*string)(unsafe.Pointer(in.LogTypes))
 	out.ClusterName = in.ClusterName
 	out.MultiClusterDeployment = (*bool)(unsafe.Pointer(in.MultiClusterDeployment))
-	// WARNING: in.AddZone requires manual conversion: does not exist in peer-type
+	out.AddZone = (*bool)(unsafe.Pointer(in.AddZone))
 	// WARNING: in.Advanced requires manual conversion: does not exist in peer-type
 	return nil
 }

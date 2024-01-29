@@ -52,10 +52,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	lastStage = b.addTransformFilter(lastStage)
 	lastStage = b.addConnectionTracking(lastStage)
 
-	addZone := false
-	if b.desired.Processor.AddZone != nil {
-		addZone = *b.desired.Processor.AddZone
-	}
+	addZone := helper.IsZoneEnabled(&b.desired.Processor)
 
 	// enrich stage (transform) configuration
 	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
@@ -359,7 +356,7 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 	var clusterName string
 	transformFilterRules := []api.TransformFilterRule{}
 
-	if b.desired.Processor.MultiClusterDeployment != nil && *b.desired.Processor.MultiClusterDeployment {
+	if helper.IsMultiClusterEnabled(&b.desired.Processor) {
 		if b.desired.Processor.ClusterName != "" {
 			clusterName = b.desired.Processor.ClusterName
 		} else {
