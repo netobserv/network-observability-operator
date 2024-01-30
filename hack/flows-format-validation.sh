@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Make sure all fields used in static frontend config are also defined in fields.yaml
 
@@ -7,12 +7,12 @@ CONFIG=controllers/consoleplugin/config/static-frontend-config.yaml
 
 nbcols=$(yq '.columns | length' $CONFIG)
 
-missing=()
+missing=""
 
 check_field() {
   local name=$1
   if [[ $(yq ".fields[] | select(.name==\"$name\")" $FIELDS) == "" ]]; then
-    missing+=($name)
+    missing="$missing, $name"
   fi
 }
 
@@ -32,8 +32,8 @@ for i in $(seq 0 $(( $nbcols-1 )) ); do
   fi
 done
 
-if (( ${#missing[@]} != 0 )); then
-  missing=$(printf ", %s" "${missing[@]}")
+if [[ $missing != "" ]]; then
   echo "Missing fields: ${missing:2}"
+  echo "They should be added to $FIELDS"
   exit -1
 fi
