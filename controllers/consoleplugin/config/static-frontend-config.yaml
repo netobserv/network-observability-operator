@@ -328,7 +328,7 @@ columns:
     default: false
     width: 15
   - id: K8S_FlowLayer
-    name: FLow layer
+    name: Flow layer
     field: K8S_FlowLayer
     filter: flow_layer
     default: false
