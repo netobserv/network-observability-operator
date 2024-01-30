@@ -4121,6 +4121,12 @@ spec:
                   and forwards them to the Loki persistence layer and/or any available
                   exporter.'
                 properties:
+                  addZone:
+                    description: '`addZone` allows availability zone awareness by
+                      labelling flows with their source and destination zones. This
+                      feature requires the "topology.kubernetes.io/zone" label to
+                      be set on nodes.'
+                    type: boolean
                   clusterName:
                     default: ""
                     description: '`clusterName` is the name of the cluster to appear
@@ -4960,7 +4966,7 @@ spec:
                   multiClusterDeployment:
                     default: false
                     description: Set `multiClusterDeployment` to `true` to enable
-                      multi clusters feature. This will add clusterName label to flows
+                      multi clusters feature. This adds clusterName label to flows
                       data
                     type: boolean
                   port:
@@ -7089,9 +7095,10 @@ spec:
                   exporter.'
                 properties:
                   addZone:
-                    default: false
-                    description: '`addZone` when set to `true`, the source and destination
-                      of flow will their zone added to the flow'
+                    description: '`addZone` allows availability zone awareness by
+                      labelling flows with their source and destination zones. This
+                      feature requires the "topology.kubernetes.io/zone" label to
+                      be set on nodes.'
                     type: boolean
                   advanced:
                     description: '`advanced` allows setting some aspects of the internal
@@ -7783,8 +7790,8 @@ spec:
                         description: '`includeList` is a list of metric names to specify
                           which ones to generate. The names correspond to the names
                           in Prometheus without the prefix. For example, `namespace_egress_packets_total`
-                          will show up as `netobserv_namespace_egress_packets_total`
-                          in Prometheus. Note that the more metrics you add, the bigger
+                          shows up as `netobserv_namespace_egress_packets_total` in
+                          Prometheus. Note that the more metrics you add, the bigger
                           is the impact on Prometheus workload resources. Metrics
                           enabled by default are: `namespace_flows_total`, `node_ingress_bytes_total`,
                           `workload_ingress_bytes_total`, `namespace_drop_packets_total`
@@ -7928,7 +7935,7 @@ spec:
                   multiClusterDeployment:
                     default: false
                     description: Set `multiClusterDeployment` to `true` to enable
-                      multi clusters feature. This will add clusterName label to flows
+                      multi clusters feature. This adds `clusterName` label to flows
                       data
                     type: boolean
                   resources:
