@@ -2,8 +2,8 @@
 [id="network-observability-flows-format_{context}"]
 = Network Flows format reference
 
-This is the specification of the network flows format, used both internally and when exporting flows to Kafka.
+This is the specification of the network flows format. That format is used when a Kafka exporter is configured, for Prometheus metrics labels as well as internally for the Loki store.
 
-The document is organized in two main categories: _Labels_ and regular _Fields_. This distinction only matters when querying Loki. This is because _Labels_, unlike _Fields_, must be used in link:https://grafana.com/docs/loki/latest/logql/log_queries/#log-stream-selector[stream selectors].
+The "Filter ID" column shows which related name to use when defining Quick Filters (see `spec.consolePlugin.quickFilters` in the `FlowCollector` specification).
 
-If you are reading this specification as a reference for the Kafka export feature, you must treat all _Labels_ and _Fields_ as regular fields and ignore any distinctions between them that are specific to Loki.
+The "Loki label" column is useful when querying Loki directly: label fields need to be selected using link:https://grafana.com/docs/loki/latest/logql/log_queries/#log-stream-selector[stream selectors].

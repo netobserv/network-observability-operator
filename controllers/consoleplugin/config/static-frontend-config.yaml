@@ -372,7 +372,7 @@ columns:
     width: 10
   - id: FlowDirection
     name: Direction
-    tooltip: The direction of the Flow observed at the Node observation point.
+    tooltip: The direction of the flow observed at the Node observation point.
     field: FlowDirection
     filter: direction
     default: false
@@ -460,7 +460,7 @@ columns:
     width: 5
   - id: TimeFlowRttMs
     name: Flow RTT
-    tooltip: TCP handshake Round Trip Time
+    tooltip: TCP Smoothed Round Trip Time (SRTT)
     field: TimeFlowRttNs
     filter: time_flow_rtt
     default: true

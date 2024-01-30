@@ -1,0 +1,129 @@
+# Fields definition, used to generate documentation
+fields:
+  - name: TimeFlowStartMs
+    description: Start timestamp of this flow, in milliseconds
+  - name: TimeFlowEndMs
+    description: End timestamp of this flow, in milliseconds
+  - name: TimeReceived
+    description: Timestamp when this flow was received and processed by the flow collector, in seconds
+  - name: SrcK8S_Name
+    description: Name of the source Kubernetes object, such as Pod name, Service name or Node name.
+  - name: SrcK8S_Type
+    description: Kind of the source Kubernetes object, such as Pod, Service or Node.
+    lokiLabel: true
+  - name: SrcK8S_OwnerName
+    description: Name of the source owner, such as Deployment name, StatefulSet name, etc.
+    lokiLabel: true
+  - name: SrcK8S_OwnerType
+    description: Kind of the source owner, such as Deployment, StatefulSet, etc.
+  - name: SrcK8S_Namespace
+    description: Source namespace
+    lokiLabel: true
+  - name: SrcAddr
+    description: Source IP address (ipv4 or ipv6)
+  - name: SrcPort
+    description: Source port
+  - name: SrcMac
+    description: Source MAC address
+  - name: SrcK8S_HostIP
+    description: Source node IP
+  - name: SrcK8S_HostName
+    description: Source node name
+  - name: SrcK8S_Zone
+    description: Source availability zone
+    lokiLabel: true
+  - name: DstK8S_Name
+    description: Name of the destination Kubernetes object, such as Pod name, Service name or Node name.
+  - name: DstK8S_Type
+    description: Kind of the destination Kubernetes object, such as Pod, Service or Node.
+    lokiLabel: true
+  - name: DstK8S_OwnerName
+    description: Name of the destination owner, such as Deployment name, StatefulSet name, etc.
+    lokiLabel: true
+  - name: DstK8S_OwnerType
+    description: Kind of the destination owner, such as Deployment, StatefulSet, etc.
+  - name: DstK8S_Namespace
+    description: Destination namespace
+    lokiLabel: true
+  - name: DstAddr
+    description: Destination IP address (ipv4 or ipv6)
+  - name: DstPort
+    description: Destination port
+  - name: DstMac
+    description: Destination MAC address
+  - name: DstK8S_HostIP
+    description: Destination node IP
+  - name: DstK8S_HostName
+    description: Destination node name
+  - name: DstK8S_Zone
+    description: Destination availability zone
+    lokiLabel: true
+  - name: K8S_FlowLayer
+    description: "Flow layer: 'app' or 'infra'"
+  - name: Proto
+    description: L4 protocol
+  - name: Dscp
+    description: Differentiated Services Code Point (DSCP) value
+  - name: IcmpType
+    description: ICMP type
+  - name: IcmpCode
+    description: ICMP code
+  - name: Duplicate
+    description: Indicates if this flow was also captured from another interface on the same host
+    lokiLabel: true
+  - name: FlowDirection
+    description: |
+      Flow direction from the node observation point. Can be one of: +
+      - 0: Ingress (incoming traffic, from the node observation point) +
+      - 1: Egress (outgoing traffic, from the node observation point) +
+      - 2: Inner (with the same source and destination node)
+    lokiLabel: true
+  - name: IfDirection
+    description: |
+      Flow direction from the network interface observation point. Can be one of: +
+      - 0: Ingress (interface incoming traffic) +
+      - 1: Egress (interface outgoing traffic)
+  - name: Interface
+    description: Network interface
+  - name: Flags
+    description: |
+      Logical OR combination of unique TCP flags comprised in the flow, as per RFC-9293, with additional custom flags to represent the following per-packet combinations: +
+      - SYN+ACK (0x100) +
+      - FIN+ACK (0x200) +
+      - RST+ACK (0x400)
+  - name: Bytes
+    description: Number of bytes
+  - name: Packets
+    description: Number of packets
+  - name: PktDropBytes
+    description: Number of bytes dropped by the kernel
+  - name: PktDropPackets
+    description: Number of packets dropped by the kernel
+  - name: PktDropLatestState
+    description: TCP state on last dropped packet
+    filter: pkt_drop_state # couldn't guess from config
+  - name: PktDropLatestDropCause
+    description: Latest drop cause
+    filter: pkt_drop_cause # couldn't guess from config
+  - name: PktDropLatestFlags
+    description: TCP flags on last dropped packet
+  - name: DnsId
+    description: DNS record id
+  - name: DnsLatencyMs
+    description: Time between a DNS request and response, in milliseconds
+  - name: DnsFlags
+    description: DNS flags for DNS record
+  - name: DnsFlagsResponseCode
+    description: Parsed DNS header RCODEs name
+  - name: DnsErrno
+    description: Error number returned from DNS tracker ebpf hook function
+  - name: TimeFlowRttNs
+    description: TCP Smoothed Round Trip Time (SRTT), in nanoseconds
+  - name: K8S_ClusterName
+    description: Cluster name or identifier
+    lokiLabel: true
+  - name: _RecordType
+    description: "Type of record: 'flowLog' for regular flow logs, or 'allConnections', 'newConnection', 'heartbeat', 'endConnection' for conversation tracking"
+    lokiLabel: true
+  - name: _HashId
+    description: In conversation tracking, the conversation identifier
