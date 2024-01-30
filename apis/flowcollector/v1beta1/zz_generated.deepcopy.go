@@ -357,6 +357,11 @@ func (in *FlowCollectorFLP) DeepCopyInto(out *FlowCollectorFLP) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.AddZone != nil {
+		in, out := &in.AddZone, &out.AddZone
+		*out = new(bool)
+		**out = **in
+	}
 	in.Debug.DeepCopyInto(&out.Debug)
 }
 

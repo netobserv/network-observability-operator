@@ -485,8 +485,13 @@ type FlowCollectorFLP struct {
 	ClusterName string `json:"clusterName,omitempty"`
 
 	//+kubebuilder:default:=false
-	// Set `multiClusterDeployment` to `true` to enable multi clusters feature. This will add clusterName label to flows data
+	// Set `multiClusterDeployment` to `true` to enable multi clusters feature. This adds clusterName label to flows data
 	MultiClusterDeployment *bool `json:"multiClusterDeployment,omitempty"`
+
+	//+optional
+	// `addZone` allows availability zone awareness by labelling flows with their source and destination zones.
+	// This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.
+	AddZone *bool `json:"addZone,omitempty"`
 
 	// `debug` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,

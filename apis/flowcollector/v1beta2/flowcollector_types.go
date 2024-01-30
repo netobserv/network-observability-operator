@@ -356,7 +356,7 @@ type FLPMetrics struct {
 
 	// `includeList` is a list of metric names to specify which ones to generate.
 	// The names correspond to the names in Prometheus without the prefix. For example,
-	// `namespace_egress_packets_total` will show up as `netobserv_namespace_egress_packets_total` in Prometheus.
+	// `namespace_egress_packets_total` shows up as `netobserv_namespace_egress_packets_total` in Prometheus.
 	// Note that the more metrics you add, the bigger is the impact on Prometheus workload resources.
 	// Metrics enabled by default are:
 	// `namespace_flows_total`, `node_ingress_bytes_total`, `workload_ingress_bytes_total`, `namespace_drop_packets_total` (when `PacketDrop` feature is enabled),
@@ -442,12 +442,12 @@ type FlowCollectorFLP struct {
 	ClusterName string `json:"clusterName,omitempty"`
 
 	//+kubebuilder:default:=false
-	// Set `multiClusterDeployment` to `true` to enable multi clusters feature. This will add clusterName label to flows data
+	// Set `multiClusterDeployment` to `true` to enable multi clusters feature. This adds `clusterName` label to flows data
 	MultiClusterDeployment *bool `json:"multiClusterDeployment,omitempty"`
 
-	//+kubebuilder:default:=false
 	//+optional
-	// `addZone` when set to `true`, the source and destination of flow will their zone added to the flow
+	// `addZone` allows availability zone awareness by labelling flows with their source and destination zones.
+	// This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.
 	AddZone *bool `json:"addZone,omitempty"`
 
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.

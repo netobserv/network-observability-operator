@@ -51,7 +51,6 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.Loki.Monolithic = restored.Spec.Loki.Monolithic
 	dst.Spec.Loki.Microservices = restored.Spec.Loki.Microservices
 	dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
-	dst.Spec.Processor.AddZone = restored.Spec.Processor.AddZone
 
 	return nil
 }

@@ -7401,6 +7401,13 @@ TLS client configuration for Loki URL.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>addZone</b></td>
+        <td>boolean</td>
+        <td>
+          `addZone` allows availability zone awareness by labelling flows with their source and destination zones. This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>clusterName</b></td>
         <td>string</td>
         <td>
@@ -7550,7 +7557,7 @@ TLS client configuration for Loki URL.
         <td><b>multiClusterDeployment</b></td>
         <td>boolean</td>
         <td>
-          Set `multiClusterDeployment` to `true` to enable multi clusters feature. This will add clusterName label to flows data<br/>
+          Set `multiClusterDeployment` to `true` to enable multi clusters feature. This adds clusterName label to flows data<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -12660,9 +12667,7 @@ TLS client configuration for Loki URL.
         <td><b>addZone</b></td>
         <td>boolean</td>
         <td>
-          `addZone` when set to `true`, the source and destination of flow will their zone added to the flow<br/>
-          <br/>
-            <i>Default</i>: false<br/>
+          `addZone` allows availability zone awareness by labelling flows with their source and destination zones. This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12758,7 +12763,7 @@ TLS client configuration for Loki URL.
         <td><b>multiClusterDeployment</b></td>
         <td>boolean</td>
         <td>
-          Set `multiClusterDeployment` to `true` to enable multi clusters feature. This will add clusterName label to flows data<br/>
+          Set `multiClusterDeployment` to `true` to enable multi clusters feature. This adds `clusterName` label to flows data<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -13831,7 +13836,7 @@ target specifies the target value for the given metric
         <td><b>includeList</b></td>
         <td>[]enum</td>
         <td>
-          `includeList` is a list of metric names to specify which ones to generate. The names correspond to the names in Prometheus without the prefix. For example, `namespace_egress_packets_total` will show up as `netobserv_namespace_egress_packets_total` in Prometheus. Note that the more metrics you add, the bigger is the impact on Prometheus workload resources. Metrics enabled by default are: `namespace_flows_total`, `node_ingress_bytes_total`, `workload_ingress_bytes_total`, `namespace_drop_packets_total` (when `PacketDrop` feature is enabled), `namespace_rtt_seconds` (when `FlowRTT` feature is enabled), `namespace_dns_latency_seconds` (when `DNSTracking` feature is enabled). More information, with full list of available metrics: https://github.com/netobserv/network-observability-operator/blob/main/docs/Metrics.md<br/>
+          `includeList` is a list of metric names to specify which ones to generate. The names correspond to the names in Prometheus without the prefix. For example, `namespace_egress_packets_total` shows up as `netobserv_namespace_egress_packets_total` in Prometheus. Note that the more metrics you add, the bigger is the impact on Prometheus workload resources. Metrics enabled by default are: `namespace_flows_total`, `node_ingress_bytes_total`, `workload_ingress_bytes_total`, `namespace_drop_packets_total` (when `PacketDrop` feature is enabled), `namespace_rtt_seconds` (when `FlowRTT` feature is enabled), `namespace_dns_latency_seconds` (when `DNSTracking` feature is enabled). More information, with full list of available metrics: https://github.com/netobserv/network-observability-operator/blob/main/docs/Metrics.md<br/>
         </td>
         <td>false</td>
       </tr><tr>

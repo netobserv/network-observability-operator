@@ -16,7 +16,7 @@ func GetLokiLabels(desired *flowslatest.FlowCollectorSpec) []string {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
 	}
 
-	if desired.Processor.MultiClusterDeployment != nil && *desired.Processor.MultiClusterDeployment {
+	if helper.IsMultiClusterEnabled(&desired.Processor) {
 		indexFields = append(indexFields, constants.ClusterNameLabelName)
 	}
 
