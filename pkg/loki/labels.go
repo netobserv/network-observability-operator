@@ -20,6 +20,10 @@ func GetLokiLabels(desired *flowslatest.FlowCollectorSpec) []string {
 		indexFields = append(indexFields, constants.ClusterNameLabelName)
 	}
 
+	if helper.IsZoneEnabled(&desired.Processor) {
+		indexFields = append(indexFields, constants.LokiZoneIndexFields...)
+	}
+
 	if helper.UseEBPF(desired) {
 		dedupJustMark, _ := strconv.ParseBool(ebpf.DedupeJustMarkDefault)
 		if desired.Agent.EBPF.Advanced != nil {

@@ -50,6 +50,7 @@ const (
 var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type"}
 var LokiConnectionIndexFields = []string{"_RecordType"}
 var LokiDeduperMarkIndexFields = []string{"FlowDirection", "Duplicate"}
+var LokiZoneIndexFields = []string{"SrcK8S_Zone", "DstK8S_Zone"}
 var FlowCollectorName = types.NamespacedName{Name: "cluster"}
 var EnvNoHTTP2 = corev1.EnvVar{
 	Name:  "GODEBUG",
