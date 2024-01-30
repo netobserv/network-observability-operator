@@ -10,86 +10,106 @@ The "Filter ID" column shows which related name to use when defining Quick Filte
 The "Loki label" column is useful when querying Loki directly: label fields need to be selected using link:https://grafana.com/docs/loki/latest/logql/log_queries/#log-stream-selector[stream selectors].
 
 
-[cols="1,3,1,1",options="header"]
+[cols="1,1,3,1,1",options="header"]
 |===
-| Name | Description | Filter ID | Loki label
+| Name | Type | Description | Filter ID | Loki label
 | `Bytes`
+| number
 | Number of bytes
 | n/a
 | no
 | `DnsErrno`
+| number
 | Error number returned from DNS tracker ebpf hook function
-| dns_errno
+| `dns_errno`
 | no
 | `DnsFlags`
+| number
 | DNS flags for DNS record
 | n/a
 | no
 | `DnsFlagsResponseCode`
+| string
 | Parsed DNS header RCODEs name
-| dns_flag_response_code
+| `dns_flag_response_code`
 | no
 | `DnsId`
+| number
 | DNS record id
-| dns_id
+| `dns_id`
 | no
 | `DnsLatencyMs`
+| number
 | Time between a DNS request and response, in milliseconds
-| dns_latency
+| `dns_latency`
 | no
 | `Dscp`
+| number
 | Differentiated Services Code Point (DSCP) value
-| dscp
+| `dscp`
 | no
 | `DstAddr`
+| string
 | Destination IP address (ipv4 or ipv6)
-| dst_address
+| `dst_address`
 | no
 | `DstK8S_HostIP`
+| string
 | Destination node IP
-| dst_host_address
+| `dst_host_address`
 | no
 | `DstK8S_HostName`
+| string
 | Destination node name
-| dst_host_name
+| `dst_host_name`
 | no
 | `DstK8S_Name`
+| string
 | Name of the destination Kubernetes object, such as Pod name, Service name or Node name.
-| dst_name
+| `dst_name`
 | no
 | `DstK8S_Namespace`
+| string
 | Destination namespace
-| dst_namespace
+| `dst_namespace`
 | yes
 | `DstK8S_OwnerName`
+| string
 | Name of the destination owner, such as Deployment name, StatefulSet name, etc.
-| dst_owner_name
+| `dst_owner_name`
 | yes
 | `DstK8S_OwnerType`
+| string
 | Kind of the destination owner, such as Deployment, StatefulSet, etc.
-| dst_kind
+| `dst_kind`
 | no
 | `DstK8S_Type`
+| string
 | Kind of the destination Kubernetes object, such as Pod, Service or Node.
-| dst_kind
+| `dst_kind`
 | yes
 | `DstK8S_Zone`
+| string
 | Destination availability zone
-| dst_zone
+| `dst_zone`
 | yes
 | `DstMac`
+| string
 | Destination MAC address
-| dst_mac
+| `dst_mac`
 | no
 | `DstPort`
+| number
 | Destination port
-| dst_port
+| `dst_port`
 | no
 | `Duplicate`
+| boolean
 | Indicates if this flow was also captured from another interface on the same host
 | n/a
 | yes
 | `Flags`
+| number
 | Logical OR combination of unique TCP flags comprised in the flow, as per RFC-9293, with additional custom flags to represent the following per-packet combinations: +
 - SYN+ACK (0x100) +
 - FIN+ACK (0x200) +
@@ -97,132 +117,163 @@ The "Loki label" column is useful when querying Loki directly: label fields need
 | n/a
 | no
 | `FlowDirection`
+| number
 | Flow direction from the node observation point. Can be one of: +
 - 0: Ingress (incoming traffic, from the node observation point) +
 - 1: Egress (outgoing traffic, from the node observation point) +
 - 2: Inner (with the same source and destination node)
-| direction
+| `direction`
 | yes
 | `IcmpCode`
+| number
 | ICMP code
-| icmp_code
+| `icmp_code`
 | no
 | `IcmpType`
+| number
 | ICMP type
-| icmp_type
+| `icmp_type`
 | no
 | `IfDirection`
+| number
 | Flow direction from the network interface observation point. Can be one of: +
 - 0: Ingress (interface incoming traffic) +
 - 1: Egress (interface outgoing traffic)
 | n/a
 | no
 | `Interface`
+| string
 | Network interface
-| interface
+| `interface`
 | no
 | `K8S_ClusterName`
+| string
 | Cluster name or identifier
 | n/a
 | yes
 | `K8S_FlowLayer`
+| string
 | Flow layer: 'app' or 'infra'
-| flow_layer
+| `flow_layer`
 | no
 | `Packets`
+| number
 | Number of packets
 | n/a
 | no
 | `PktDropBytes`
+| number
 | Number of bytes dropped by the kernel
 | n/a
 | no
 | `PktDropLatestDropCause`
+| string
 | Latest drop cause
 | pkt_drop_cause
 | no
 | `PktDropLatestFlags`
+| number
 | TCP flags on last dropped packet
 | n/a
 | no
 | `PktDropLatestState`
+| string
 | TCP state on last dropped packet
 | pkt_drop_state
 | no
 | `PktDropPackets`
+| number
 | Number of packets dropped by the kernel
 | n/a
 | no
 | `Proto`
+| number
 | L4 protocol
-| protocol
+| `protocol`
 | no
 | `SrcAddr`
+| string
 | Source IP address (ipv4 or ipv6)
-| src_address
+| `src_address`
 | no
 | `SrcK8S_HostIP`
+| string
 | Source node IP
-| src_host_address
+| `src_host_address`
 | no
 | `SrcK8S_HostName`
+| string
 | Source node name
-| src_host_name
+| `src_host_name`
 | no
 | `SrcK8S_Name`
+| string
 | Name of the source Kubernetes object, such as Pod name, Service name or Node name.
-| src_name
+| `src_name`
 | no
 | `SrcK8S_Namespace`
+| string
 | Source namespace
-| src_namespace
+| `src_namespace`
 | yes
 | `SrcK8S_OwnerName`
+| string
 | Name of the source owner, such as Deployment name, StatefulSet name, etc.
-| src_owner_name
+| `src_owner_name`
 | yes
 | `SrcK8S_OwnerType`
+| string
 | Kind of the source owner, such as Deployment, StatefulSet, etc.
-| src_kind
+| `src_kind`
 | no
 | `SrcK8S_Type`
+| string
 | Kind of the source Kubernetes object, such as Pod, Service or Node.
-| src_kind
+| `src_kind`
 | yes
 | `SrcK8S_Zone`
+| string
 | Source availability zone
-| src_zone
+| `src_zone`
 | yes
 | `SrcMac`
+| string
 | Source MAC address
-| src_mac
+| `src_mac`
 | no
 | `SrcPort`
+| number
 | Source port
-| src_port
+| `src_port`
 | no
 | `TimeFlowEndMs`
+| number
 | End timestamp of this flow, in milliseconds
 | n/a
 | no
 | `TimeFlowRttNs`
+| number
 | TCP Smoothed Round Trip Time (SRTT), in nanoseconds
-| time_flow_rtt
+| `time_flow_rtt`
 | no
 | `TimeFlowStartMs`
+| number
 | Start timestamp of this flow, in milliseconds
 | n/a
 | no
 | `TimeReceived`
+| number
 | Timestamp when this flow was received and processed by the flow collector, in seconds
 | n/a
 | no
 | `_HashId`
+| string
 | In conversation tracking, the conversation identifier
-| id
+| `id`
 | no
 | `_RecordType`
+| string
 | Type of record: 'flowLog' for regular flow logs, or 'allConnections', 'newConnection', 'heartbeat', 'endConnection' for conversation tracking
-| type
+| `type`
 | yes
 |===
