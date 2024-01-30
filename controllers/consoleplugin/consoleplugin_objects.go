@@ -397,6 +397,12 @@ func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) error {
 		Mark:  dedupJustMark,
 		Merge: dedupMerge,
 	}
+	if helper.IsMultiClusterEnabled(&b.desired.Processor) {
+		fconf.Features = append(fconf.Features, "multiCluster")
+	}
+	if helper.IsZoneEnabled(&b.desired.Processor) {
+		fconf.Features = append(fconf.Features, "zones")
+	}
 	return nil
 }
 
