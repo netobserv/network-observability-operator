@@ -91,12 +91,22 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
 	l := log.Log.WithName("legacy") // clear context (too noisy)
 	ctx = log.IntoContext(ctx, l)
+
+	// Get flowcollector & create dedicated client
+	clh, desired, err := helper.NewFlowCollectorClientHelper(ctx, r.Client)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to get FlowCollector: %w", err)
+	} else if desired == nil {
+		// Delete case
+		return ctrl.Result{}, nil
+	}
+
 	// At the moment, status workflow is to start as ready then degrade if necessary
 	// Later (when legacy controller is broken down into individual controllers), status should start as unknown and only on success finishes as ready
 	r.status.SetReady()
 	defer r.status.Commit(ctx, r.Client)
 
-	err := r.reconcile(ctx)
+	err = r.reconcile(ctx, clh, desired)
 	if err != nil {
 		l.Error(err, "FlowCollector reconcile failure")
 		// Set status failure unless it was already set
@@ -109,14 +119,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 	return ctrl.Result{}, nil
 }
 
-func (r *FlowCollectorReconciler) reconcile(ctx context.Context) error {
-	clh, desired, err := helper.NewFlowCollectorClientHelper(ctx, r.Client)
-	if err != nil {
-		return fmt.Errorf("failed to get FlowCollector: %w", err)
-	} else if desired == nil {
-		return nil
-	}
-
+func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Client, desired *flowslatest.FlowCollector) error {
 	ns := helper.GetNamespace(&desired.Spec)
 	previousNamespace := r.status.GetDeployedNamespace(desired)
 	loki := helper.NewLokiConfig(&desired.Spec.Loki, ns)

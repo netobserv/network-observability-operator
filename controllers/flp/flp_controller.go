@@ -84,10 +84,19 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 	l := log.Log.WithName("flp") // clear context (too noisy)
 	ctx = log.IntoContext(ctx, l)
 
+	// Get flowcollector & create dedicated client
+	clh, fc, err := helper.NewFlowCollectorClientHelper(ctx, r.Client)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to get FlowCollector: %w", err)
+	} else if fc == nil {
+		// Delete case
+		return ctrl.Result{}, nil
+	}
+
 	r.status.SetUnknown()
 	defer r.status.Commit(ctx, r.Client)
 
-	err := r.reconcile(ctx)
+	err = r.reconcile(ctx, clh, fc)
 	if err != nil {
 		l.Error(err, "FLP reconcile failure")
 		// Set status failure unless it was already set
@@ -101,15 +110,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) reconcile(ctx context.Context) error {
+func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flowslatest.FlowCollector) error {
 	log := log.FromContext(ctx)
-
-	clh, fc, err := helper.NewFlowCollectorClientHelper(ctx, r.Client)
-	if err != nil {
-		return fmt.Errorf("failed to get FlowCollector: %w", err)
-	} else if fc == nil {
-		return nil
-	}
 
 	ns := helper.GetNamespace(&fc.Spec)
 	r.currentNamespace = ns
