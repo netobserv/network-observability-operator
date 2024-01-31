@@ -1,0 +1,21 @@
+---
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+spec:
+  tags:
+  - name: network-observability-operator
+    from:
+      kind: DockerImage
+      name: quay.io/netobserv/network-observability-operator:main
+  - name: flowlogs-pipeline
+    from:
+      kind: DockerImage
+      name: quay.io/netobserv/flowlogs-pipeline:main
+  - name: netobserv-ebpf-agent
+    from:
+      kind: DockerImage
+      name: quay.io/netobserv/netobserv-ebpf-agent:main
+  - name: network-observability-console-plugin
+    from:
+      kind: DockerImage
+      name: quay.io/netobserv/network-observability-console-plugin:main
