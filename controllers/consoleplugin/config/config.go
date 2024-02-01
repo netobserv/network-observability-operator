@@ -47,6 +47,7 @@ type ColumnConfig struct {
 	Filter     string   `yaml:"filter,omitempty" json:"filter,omitempty"`
 	Default    bool     `yaml:"default,omitempty" json:"default,omitempty"`
 	Width      int      `yaml:"width,omitempty" json:"width,omitempty"`
+	Feature    string   `yaml:"feature" json:"feature"`
 }
 
 type FilterConfig struct {
