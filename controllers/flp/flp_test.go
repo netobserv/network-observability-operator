@@ -655,6 +655,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 		"DstK8S_Namespace",
 		"DstK8S_OwnerName",
 		"DstK8S_Type",
+		"K8S_FlowLayer",
 		"_RecordType",
 	}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
@@ -702,7 +703,17 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	assert.Equal(cfg.Loki.Advanced.WriteMinBackoff.Duration.String(), lokiCfg.MinBackoff)
 	assert.Equal(cfg.Loki.Advanced.WriteMaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
 	assert.EqualValues(*cfg.Loki.Advanced.WriteMaxRetries, lokiCfg.MaxRetries)
-	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type", "_RecordType", "FlowDirection", "Duplicate"}, lokiCfg.Labels)
+	assert.EqualValues([]string{
+		"SrcK8S_Namespace",
+		"SrcK8S_OwnerName",
+		"SrcK8S_Type",
+		"DstK8S_Namespace",
+		"DstK8S_OwnerName",
+		"DstK8S_Type",
+		"K8S_FlowLayer",
+		"_RecordType",
+		"FlowDirection",
+	}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
 	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))
