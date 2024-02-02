@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
@@ -470,46 +469,38 @@ func flowCollectorCertificatesSpecs() {
 		})
 	})
 
-	Context("Cleanup", func() {
-		// Retrieve CR to get its UID
-		flowCR := flowslatest.FlowCollector{}
-		It("Should delete CR", func() {
-			Eventually(func() error {
-				if err := k8sClient.Get(ctx, crKey, &flowCR); err != nil {
-					return err
-				}
-				return k8sClient.Delete(ctx, &flowCR)
-			}, timeout, interval).Should(Succeed())
-		})
-
+	Context("Checking CR ownership", func() {
 		It("Should be garbage collected", func() {
+			// Retrieve CR to get its UID
+			By("Getting the CR")
+			flowCR := getCR(crKey)
+
 			By("Expecting flowlogs-pipeline deployment to be garbage collected")
 			Eventually(func() interface{} {
 				d := appsv1.Deployment{}
 				_ = k8sClient.Get(ctx, flpKey, &d)
 				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
+			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
 
 			By("Expecting agent daemonset to be garbage collected")
 			Eventually(func() interface{} {
 				d := appsv1.DaemonSet{}
 				_ = k8sClient.Get(ctx, agentKey, &d)
 				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
+			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
 
 			By("Expecting console plugin deployment to be garbage collected")
 			Eventually(func() interface{} {
 				d := appsv1.Deployment{}
 				_ = k8sClient.Get(ctx, pluginKey, &d)
 				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
+			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
 		})
+	})
 
-		It("Should not get CR", func() {
-			Eventually(func() bool {
-				err := k8sClient.Get(ctx, crKey, &flowCR)
-				return errors.IsNotFound(err)
-			}, timeout, interval).Should(BeTrue())
+	Context("Cleanup", func() {
+		It("Should delete CR", func() {
+			cleanupCR(crKey)
 		})
 	})
 }

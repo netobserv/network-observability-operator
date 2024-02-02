@@ -168,12 +168,16 @@ func (i *Instance) SetUnused(message string) {
 func (i *Instance) CheckDeploymentProgress(d *appsv1.Deployment) {
 	// TODO (when legacy controller is broken down into individual controllers)
 	// this should set the status as Ready when replicas match
-	for _, c := range d.Status.Conditions {
-		if c.Type == appsv1.DeploymentAvailable {
-			if c.Status != v1.ConditionTrue {
-				i.s.setInProgress(i.cpnt, "DeploymentNotReady", fmt.Sprintf("Deployment %s not ready: %d/%d (%s)", d.Name, d.Status.UpdatedReplicas, d.Status.Replicas, c.Message))
+	if d == nil {
+		i.s.setInProgress(i.cpnt, "DeploymentNotCreated", "Deployment not created")
+	} else {
+		for _, c := range d.Status.Conditions {
+			if c.Type == appsv1.DeploymentAvailable {
+				if c.Status != v1.ConditionTrue {
+					i.s.setInProgress(i.cpnt, "DeploymentNotReady", fmt.Sprintf("Deployment %s not ready: %d/%d (%s)", d.Name, d.Status.UpdatedReplicas, d.Status.Replicas, c.Message))
+				}
+				return
 			}
-			return
 		}
 	}
 }
@@ -181,7 +185,9 @@ func (i *Instance) CheckDeploymentProgress(d *appsv1.Deployment) {
 func (i *Instance) CheckDaemonSetProgress(ds *appsv1.DaemonSet) {
 	// TODO (when legacy controller is broken down into individual controllers)
 	// this should set the status as Ready when replicas match
-	if ds.Status.UpdatedNumberScheduled < ds.Status.DesiredNumberScheduled {
+	if ds == nil {
+		i.s.setInProgress(i.cpnt, "DaemonSetNotCreated", "DaemonSet not created")
+	} else if ds.Status.UpdatedNumberScheduled < ds.Status.DesiredNumberScheduled {
 		i.s.setInProgress(i.cpnt, "DaemonSetNotReady", fmt.Sprintf("DaemonSet %s not ready: %d/%d", ds.Name, ds.Status.UpdatedNumberScheduled, ds.Status.DesiredNumberScheduled))
 	}
 }

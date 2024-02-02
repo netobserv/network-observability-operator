@@ -11,7 +11,6 @@ import (
 	ascv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
@@ -35,6 +34,12 @@ var (
 	outputRecordTypes = flowslatest.LogTypeAll
 	updateCR          = func(key types.NamespacedName, updater func(*flowslatest.FlowCollector)) {
 		test.UpdateCR(ctx, k8sClient, key, updater)
+	}
+	getCR = func(key types.NamespacedName) *flowslatest.FlowCollector {
+		return test.GetCR(ctx, k8sClient, key)
+	}
+	cleanupCR = func(key types.NamespacedName) {
+		test.CleanupCR(ctx, k8sClient, key)
 	}
 )
 
@@ -763,35 +768,25 @@ func ControllerSpecs() {
 		})
 	})
 
-	Context("Cleanup", func() {
-		// Retrieve CR to get its UID
-		flowCR := flowslatest.FlowCollector{}
-		It("Should get CR", func() {
-			Eventually(func() error {
-				return k8sClient.Get(ctx, crKey, &flowCR)
-			}, timeout, interval).Should(Succeed())
-		})
-
-		It("Should delete CR", func() {
-			Eventually(func() error {
-				return k8sClient.Delete(ctx, &flowCR)
-			}, timeout, interval).Should(Succeed())
-		})
-
+	Context("Checking CR ownership", func() {
 		It("Should be garbage collected", func() {
+			// Retrieve CR to get its UID
+			By("Getting the CR")
+			flowCR := getCR(crKey)
+
 			By("Expecting flowlogs-pipeline daemonset to be garbage collected")
 			Eventually(func() interface{} {
 				d := appsv1.DaemonSet{}
 				_ = k8sClient.Get(ctx, flpKey2, &d)
 				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
+			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
 
 			By("Expecting flowlogs-pipeline service account to be garbage collected")
 			Eventually(func() interface{} {
 				svcAcc := v1.ServiceAccount{}
 				_ = k8sClient.Get(ctx, flpKey2, &svcAcc)
 				return &svcAcc
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
+			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
 
 			By("Expecting flowlogs-pipeline configmap to be garbage collected")
 			Eventually(func() interface{} {
@@ -801,14 +796,13 @@ func ControllerSpecs() {
 					Namespace: otherNamespace,
 				}, &cm)
 				return &cm
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
+			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
 		})
+	})
 
-		It("Should not get CR", func() {
-			Eventually(func() bool {
-				err := k8sClient.Get(ctx, crKey, &flowCR)
-				return kerr.IsNotFound(err)
-			}, timeout, interval).Should(BeTrue())
+	Context("Cleanup", func() {
+		It("Should delete CR", func() {
+			cleanupCR(crKey)
 		})
 
 		It("Should cleanup other data", func() {
