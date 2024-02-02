@@ -27,6 +27,8 @@ for i in $(seq 0 $(( $nbfields-1 )) ); do
     else
       filter="\`$filter\`"
     fi
+  else 
+    filter="\`$filter\`"
   fi
   isLabel=$(printf "$entry" | yq ".lokiLabel")
   if [[ $isLabel == "true" ]]; then
