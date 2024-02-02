@@ -979,7 +979,7 @@ fields:
     lokiLabel: true
   - name: _RecordType
     type: string
-    description: "Type of record: 'flowLog' for regular flow logs, or 'allConnections', 'newConnection', 'heartbeat', 'endConnection' for conversation tracking"
+    description: "Type of record: 'flowLog' for regular flow logs, or 'newConnection', 'heartbeat', 'endConnection' for conversation tracking"
     lokiLabel: true
   - name: _HashId
     type: string
