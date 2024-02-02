@@ -5,7 +5,6 @@ import (
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/strings/slices"
@@ -157,25 +156,8 @@ func ControllerFlowMetricsSpecs() {
 	})
 
 	Context("Cleanup", func() {
-		// Retrieve CR to get its UID
-		flowCR := flowslatest.FlowCollector{}
-		It("Should get CR", func() {
-			Eventually(func() error {
-				return k8sClient.Get(ctx, crKey, &flowCR)
-			}, timeout, interval).Should(Succeed())
-		})
-
 		It("Should delete CR", func() {
-			Eventually(func() error {
-				return k8sClient.Delete(ctx, &flowCR)
-			}, timeout, interval).Should(Succeed())
-		})
-
-		It("Should not get CR", func() {
-			Eventually(func() bool {
-				err := k8sClient.Get(ctx, crKey, &flowCR)
-				return kerr.IsNotFound(err)
-			}, timeout, interval).Should(BeTrue())
+			cleanupCR(crKey)
 		})
 	})
 }
