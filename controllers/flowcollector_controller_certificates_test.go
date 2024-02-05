@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
@@ -472,29 +473,14 @@ func flowCollectorCertificatesSpecs() {
 	Context("Cleanup", func() {
 		// Retrieve CR to get its UID
 		flowCR := flowslatest.FlowCollector{}
-		It("Should get CR", func() {
-			Eventually(func() error {
-				return k8sClient.Get(ctx, crKey, &flowCR)
-			}, timeout, interval).Should(Succeed())
-		})
-
 		It("Should delete CR", func() {
 			Eventually(func() error {
+				if err := k8sClient.Get(ctx, crKey, &flowCR); err != nil {
+					return err
+				}
 				return k8sClient.Delete(ctx, &flowCR)
 			}, timeout, interval).Should(Succeed())
 		})
-
-		// Flaky assertion here, quite annoying, some weirdness with `envtest` maybe?
-		// Anyway it doesn't bring much value. Disabling it for the time being
-		// It("Should not get CR", func() {
-		// 	Eventually(func() error {
-		// 		err := k8sClient.Get(ctx, crKey, &flowCR)
-		// 		if err == nil {
-		// 			err = fmt.Errorf("CR is still present. Status: %s", status.ConditionsToString(flowCR.Status.Conditions))
-		// 		}
-		// 		return err
-		// 	}, timeout, interval).Should(MatchError(`flowcollectors.flows.netobserv.io "cluster" not found`))
-		// })
 
 		It("Should be garbage collected", func() {
 			By("Expecting flowlogs-pipeline deployment to be garbage collected")
@@ -517,6 +503,13 @@ func flowCollectorCertificatesSpecs() {
 				_ = k8sClient.Get(ctx, pluginKey, &d)
 				return &d
 			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
+		})
+
+		It("Should not get CR", func() {
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, crKey, &flowCR)
+				return errors.IsNotFound(err)
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 }
