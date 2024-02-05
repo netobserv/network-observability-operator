@@ -372,7 +372,7 @@ columns:
     width: 10
   - id: FlowDirection
     name: Direction
-    tooltip: The direction of the Flow observed at the Node observation point.
+    tooltip: The direction of the flow observed at the Node observation point.
     field: FlowDirection
     filter: direction
     default: false
@@ -460,7 +460,7 @@ columns:
     width: 5
   - id: TimeFlowRttMs
     name: Flow RTT
-    tooltip: TCP handshake Round Trip Time
+    tooltip: TCP Smoothed Round Trip Time (SRTT)
     field: TimeFlowRttNs
     filter: time_flow_rtt
     default: true
@@ -803,3 +803,184 @@ filters:
     name: Flow RTT
     component: number
     hint: Specify a TCP handshake Round Trip Time in nanoseconds.
+
+# Fields definition, used to generate documentation
+fields:
+  - name: TimeFlowStartMs
+    type: number
+    description: Start timestamp of this flow, in milliseconds
+  - name: TimeFlowEndMs
+    type: number
+    description: End timestamp of this flow, in milliseconds
+  - name: TimeReceived
+    type: number
+    description: Timestamp when this flow was received and processed by the flow collector, in seconds
+  - name: SrcK8S_Name
+    type: string
+    description: Name of the source Kubernetes object, such as Pod name, Service name or Node name.
+  - name: SrcK8S_Type
+    type: string
+    description: Kind of the source Kubernetes object, such as Pod, Service or Node.
+    lokiLabel: true
+  - name: SrcK8S_OwnerName
+    type: string
+    description: Name of the source owner, such as Deployment name, StatefulSet name, etc.
+    lokiLabel: true
+  - name: SrcK8S_OwnerType
+    type: string
+    description: Kind of the source owner, such as Deployment, StatefulSet, etc.
+  - name: SrcK8S_Namespace
+    type: string
+    description: Source namespace
+    lokiLabel: true
+  - name: SrcAddr
+    type: string
+    description: Source IP address (ipv4 or ipv6)
+  - name: SrcPort
+    type: number
+    description: Source port
+  - name: SrcMac
+    type: string
+    description: Source MAC address
+  - name: SrcK8S_HostIP
+    type: string
+    description: Source node IP
+  - name: SrcK8S_HostName
+    type: string
+    description: Source node name
+  - name: SrcK8S_Zone
+    type: string
+    description: Source availability zone
+    lokiLabel: true
+  - name: DstK8S_Name
+    type: string
+    description: Name of the destination Kubernetes object, such as Pod name, Service name or Node name.
+  - name: DstK8S_Type
+    type: string
+    description: Kind of the destination Kubernetes object, such as Pod, Service or Node.
+    lokiLabel: true
+  - name: DstK8S_OwnerName
+    type: string
+    description: Name of the destination owner, such as Deployment name, StatefulSet name, etc.
+    lokiLabel: true
+  - name: DstK8S_OwnerType
+    type: string
+    description: Kind of the destination owner, such as Deployment, StatefulSet, etc.
+  - name: DstK8S_Namespace
+    type: string
+    description: Destination namespace
+    lokiLabel: true
+  - name: DstAddr
+    type: string
+    description: Destination IP address (ipv4 or ipv6)
+  - name: DstPort
+    type: number
+    description: Destination port
+  - name: DstMac
+    type: string
+    description: Destination MAC address
+  - name: DstK8S_HostIP
+    type: string
+    description: Destination node IP
+  - name: DstK8S_HostName
+    type: string
+    description: Destination node name
+  - name: DstK8S_Zone
+    type: string
+    description: Destination availability zone
+    lokiLabel: true
+  - name: K8S_FlowLayer
+    type: string
+    description: "Flow layer: 'app' or 'infra'"
+  - name: Proto
+    type: number
+    description: L4 protocol
+  - name: Dscp
+    type: number
+    description: Differentiated Services Code Point (DSCP) value
+  - name: IcmpType
+    type: number
+    description: ICMP type
+  - name: IcmpCode
+    type: number
+    description: ICMP code
+  - name: Duplicate
+    type: boolean
+    description: Indicates if this flow was also captured from another interface on the same host
+    lokiLabel: true
+  - name: FlowDirection
+    type: number
+    description: |
+      Flow direction from the node observation point. Can be one of: +
+      - 0: Ingress (incoming traffic, from the node observation point) +
+      - 1: Egress (outgoing traffic, from the node observation point) +
+      - 2: Inner (with the same source and destination node)
+    lokiLabel: true
+  - name: IfDirection
+    type: number
+    description: |
+      Flow direction from the network interface observation point. Can be one of: +
+      - 0: Ingress (interface incoming traffic) +
+      - 1: Egress (interface outgoing traffic)
+  - name: Interface
+    type: string
+    description: Network interface
+  - name: Flags
+    type: number
+    description: |
+      Logical OR combination of unique TCP flags comprised in the flow, as per RFC-9293, with additional custom flags to represent the following per-packet combinations: +
+      - SYN+ACK (0x100) +
+      - FIN+ACK (0x200) +
+      - RST+ACK (0x400)
+  - name: Bytes
+    type: number
+    description: Number of bytes
+  - name: Packets
+    type: number
+    description: Number of packets
+  - name: PktDropBytes
+    type: number
+    description: Number of bytes dropped by the kernel
+  - name: PktDropPackets
+    type: number
+    description: Number of packets dropped by the kernel
+  - name: PktDropLatestState
+    type: string
+    description: TCP state on last dropped packet
+    filter: pkt_drop_state # couldn't guess from config
+  - name: PktDropLatestDropCause
+    type: string
+    description: Latest drop cause
+    filter: pkt_drop_cause # couldn't guess from config
+  - name: PktDropLatestFlags
+    type: number
+    description: TCP flags on last dropped packet
+  - name: DnsId
+    type: number
+    description: DNS record id
+  - name: DnsLatencyMs
+    type: number
+    description: Time between a DNS request and response, in milliseconds
+  - name: DnsFlags
+    type: number
+    description: DNS flags for DNS record
+  - name: DnsFlagsResponseCode
+    type: string
+    description: Parsed DNS header RCODEs name
+  - name: DnsErrno
+    type: number
+    description: Error number returned from DNS tracker ebpf hook function
+  - name: TimeFlowRttNs
+    type: number
+    description: TCP Smoothed Round Trip Time (SRTT), in nanoseconds
+  - name: K8S_ClusterName
+    type: string
+    description: Cluster name or identifier
+    lokiLabel: true
+  - name: _RecordType
+    type: string
+    description: "Type of record: 'flowLog' for regular flow logs, or 'newConnection', 'heartbeat', 'endConnection' for conversation tracking"
+    lokiLabel: true
+  - name: _HashId
+    type: string
+    description: In conversation tracking, the conversation identifier
