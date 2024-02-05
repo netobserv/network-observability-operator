@@ -169,7 +169,7 @@ The "Loki label" column is useful when querying Loki directly: label fields need
 | `PktDropLatestDropCause`
 | string
 | Latest drop cause
-| pkt_drop_cause
+| `pkt_drop_cause`
 | no
 | `PktDropLatestFlags`
 | number
@@ -179,7 +179,7 @@ The "Loki label" column is useful when querying Loki directly: label fields need
 | `PktDropLatestState`
 | string
 | TCP state on last dropped packet
-| pkt_drop_state
+| `pkt_drop_state`
 | no
 | `PktDropPackets`
 | number
@@ -273,7 +273,7 @@ The "Loki label" column is useful when querying Loki directly: label fields need
 | no
 | `_RecordType`
 | string
-| Type of record: 'flowLog' for regular flow logs, or 'allConnections', 'newConnection', 'heartbeat', 'endConnection' for conversation tracking
+| Type of record: 'flowLog' for regular flow logs, or 'newConnection', 'heartbeat', 'endConnection' for conversation tracking
 | `type`
 | yes
 |===
