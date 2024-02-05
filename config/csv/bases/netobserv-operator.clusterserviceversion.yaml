@@ -291,7 +291,7 @@ spec:
         which allows to generate more metrics out of flow logs.
         It is at an early stage of development (dev preview)
         and thus is currently not supported.
-        Creating metrics with high labels cardinality may impact the cluster stability.'
+        Creating metrics with high labels cardinality might impact the cluster stability.'
       displayName: Flow Metric
       kind: FlowMetric
       name: flowmetrics.flows.netobserv.io

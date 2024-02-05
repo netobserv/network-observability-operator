@@ -63,6 +63,14 @@ type FilterConfig struct {
 	Placeholder            string `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
 }
 
+type FieldConfig struct {
+	Name        string `yaml:"name" json:"name"`
+	Type        string `yaml:"type" json:"type"`
+	Description string `yaml:"description" json:"description"`
+	LokiLabel   bool   `yaml:"lokiLabel,omitempty" json:"lokiLabel,omitempty"`
+	Filter      string `yaml:"filter,omitempty" json:"filter,omitempty"`
+}
+
 type Deduper struct {
 	Mark  bool `yaml:"mark" json:"mark"`
 	Merge bool `yaml:"merge" json:"merge"`
@@ -74,6 +82,7 @@ type FrontendConfig struct {
 	Sampling    int            `yaml:"sampling" json:"sampling"`
 	Features    []string       `yaml:"features" json:"features"`
 	Deduper     Deduper        `yaml:"deduper" json:"deduper"`
+	Fields      []FieldConfig  `yaml:"fields" json:"fields"`
 
 	PortNaming      flowslatest.ConsolePluginPortConfig `yaml:"portNaming,omitempty" json:"portNaming,omitempty"`
 	Filters         []FilterConfig                      `yaml:"filters,omitempty" json:"filters,omitempty"`
