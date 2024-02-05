@@ -171,14 +171,14 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki}
-	b, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{})
+	b, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{}, nil)
 	return b
 }
 
 func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) transfoBuilder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki}
-	b, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{})
+	b, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{}, nil)
 	return b
 }
 
@@ -553,7 +553,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2"}
-	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics)
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics, nil)
 	third := b.generic.serviceMonitor()
 
 	report = helper.NewChangeReport("")
@@ -561,7 +561,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 	assert.Contains(report.String(), "ServiceMonitor labels changed")
 
 	// Check scheme changed
-	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics)
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics, nil)
 	fourth := b.generic.serviceMonitor()
 	fourth.Spec.Endpoints[0].Scheme = "https"
 
@@ -606,7 +606,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2"}
-	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics)
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics, nil)
 	third := b.generic.prometheusRule()
 
 	report = helper.NewChangeReport("")

@@ -751,6 +751,12 @@ spec:
         path: processor.metrics.includeList
       - displayName: Port
         path: processor.metrics.server.port
+      - displayName: Subnet labels
+        path: processor.subnetLabels
+      - displayName: Custom labels
+        path: processor.subnetLabels.customLabels
+      - displayName: Open shift auto detect
+        path: processor.subnetLabels.openShiftAutoDetect
       statusDescriptors:
       - description: Namespace where console plugin and flowlogs-pipeline have been
           deployed.
@@ -1017,6 +1023,14 @@ spec:
           - get
           - list
           - update
+          - watch
+        - apiGroups:
+          - operator.openshift.io
+          resources:
+          - networks
+          verbs:
+          - get
+          - list
           - watch
         - apiGroups:
           - rbac.authorization.k8s.io

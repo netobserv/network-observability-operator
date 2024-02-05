@@ -14,9 +14,12 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 	configv1 "github.com/openshift/api/config/v1"
+	operatorv1 "github.com/openshift/api/operator/v1"
+	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -74,7 +77,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 type subReconciler interface {
 	context(context.Context) context.Context
 	cleanupNamespace(context.Context)
-	reconcile(context.Context, *flowslatest.FlowCollector, *metricslatest.FlowMetricList) error
+	reconcile(context.Context, *flowslatest.FlowCollector, *metricslatest.FlowMetricList, []flowslatest.SubnetLabel) error
 	getStatus() *status.Instance
 }
 
@@ -132,6 +135,16 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 		}
 	}
 
+	// Auto-detect subnets
+	var subnetLabels []flowslatest.SubnetLabel
+	if r.mgr.IsOpenShift() && helper.AutoDetectOpenShiftNetworks(&fc.Spec.Processor) {
+		var err error
+		subnetLabels, err = r.getOpenShiftSubnets(ctx)
+		if err != nil {
+			log.Error(err, "error while reading subnet definitions")
+		}
+	}
+
 	// List custom metrics
 	fm := metricslatest.FlowMetricList{}
 	if err := r.Client.List(ctx, &fm, &client.ListOptions{Namespace: ns}); err != nil {
@@ -161,7 +174,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	}
 
 	for _, sr := range reconcilers {
-		if err := sr.reconcile(sr.context(ctx), fc, &fm); err != nil {
+		if err := sr.reconcile(sr.context(ctx), fc, &fm, subnetLabels); err != nil {
 			return sr.getStatus().Error("FLPReconcileError", err)
 		}
 	}
@@ -251,4 +264,67 @@ func reconcileLokiRoles(ctx context.Context, r *reconcilers.Common, b *builder) 
 		}
 	}
 	return nil
+}
+
+func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.SubnetLabel, error) {
+	var subnets []flowslatest.SubnetLabel
+
+	// Pods and Services subnets are found in CNO config
+	if r.mgr.HasCNO() {
+		network := &operatorv1.Network{}
+		err := r.Get(ctx, types.NamespacedName{Name: "cluster"}, network)
+		if err != nil {
+			return nil, fmt.Errorf("can't get Network information: %w", err)
+		}
+		var podCIDRs []string
+		for _, podsNet := range network.Spec.ClusterNetwork {
+			podCIDRs = append(podCIDRs, podsNet.CIDR)
+		}
+		if len(podCIDRs) > 0 {
+			subnets = append(subnets, flowslatest.SubnetLabel{
+				Name:  "Pods",
+				CIDRs: podCIDRs,
+			})
+		}
+		svcCIDRs := network.Spec.ServiceNetwork
+		if len(svcCIDRs) > 0 {
+			subnets = append(subnets, flowslatest.SubnetLabel{
+				Name:  "Services",
+				CIDRs: svcCIDRs,
+			})
+		}
+	}
+
+	// Nodes subnet found in CM cluster-config-v1 (kube-system)
+	cm := &corev1.ConfigMap{}
+	if err := r.Get(ctx, types.NamespacedName{Name: "cluster-config-v1", Namespace: "kube-system"}, cm); err != nil {
+		return nil, fmt.Errorf(`can't read "cluster-config-v1" ConfigMap: %w`, err)
+	}
+
+	type clusterConfig struct {
+		Networking struct {
+			MachineNetwork struct {
+				CIDR []string
+			}
+		}
+	}
+
+	var rawConfig string
+	var ok bool
+	if rawConfig, ok = cm.Data["install-config"]; !ok {
+		return nil, fmt.Errorf(`can't find key "install-config" in "cluster-config-v1" ConfigMap`)
+	}
+	var config clusterConfig
+	if err := yaml.Unmarshal([]byte(rawConfig), config); err != nil {
+		return nil, fmt.Errorf(`can't deserialize content of "cluster-config-v1" ConfigMap: %w`, err)
+	}
+
+	if len(config.Networking.MachineNetwork.CIDR) > 0 {
+		subnets = append(subnets, flowslatest.SubnetLabel{
+			Name:  "Machines",
+			CIDRs: config.Networking.MachineNetwork.CIDR,
+		})
+	}
+
+	return subnets, nil
 }

@@ -55,6 +55,8 @@ spec:
     # Append a unique cluster name to each record
     # clusterName: <CLUSTER NAME>
     # addZone: true
+    # subnetLabelling:
+    #   openShiftAutoDetect: true
     metrics:
       server:
         port: 9102

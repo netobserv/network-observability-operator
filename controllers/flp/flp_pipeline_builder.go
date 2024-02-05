@@ -22,16 +22,18 @@ import (
 
 type PipelineBuilder struct {
 	*config.PipelineBuilderStage
-	desired     *flowslatest.FlowCollectorSpec
-	flowMetrics metricslatest.FlowMetricList
-	volumes     *volumes.Builder
-	loki        *helper.LokiConfig
-	clusterID   string
+	desired         *flowslatest.FlowCollectorSpec
+	flowMetrics     metricslatest.FlowMetricList
+	detectedSubnets []flowslatest.SubnetLabel
+	volumes         *volumes.Builder
+	loki            *helper.LokiConfig
+	clusterID       string
 }
 
 func newPipelineBuilder(
 	desired *flowslatest.FlowCollectorSpec,
 	flowMetrics *metricslatest.FlowMetricList,
+	detectedSubnets []flowslatest.SubnetLabel,
 	loki *helper.LokiConfig,
 	clusterID string,
 	volumes *volumes.Builder,
@@ -41,6 +43,7 @@ func newPipelineBuilder(
 		PipelineBuilderStage: pipeline,
 		desired:              desired,
 		flowMetrics:          *flowMetrics,
+		detectedSubnets:      detectedSubnets,
 		loki:                 loki,
 		clusterID:            clusterID,
 		volumes:              volumes,
@@ -55,6 +58,10 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	lastStage = b.addConnectionTracking(lastStage)
 
 	addZone := helper.IsZoneEnabled(&b.desired.Processor)
+
+	// Get all subnet labels
+	allLabels := append(b.detectedSubnets, b.desired.Processor.SubnetLabels.CustomLabels...)
+	flpLabels := subnetLabelsToFLP(allLabels)
 
 	// enrich stage (transform) configuration
 	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
@@ -101,6 +108,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			DstHostField:       "DstK8S_HostIP",
 			FlowDirectionField: "FlowDirection",
 		},
+		IPCategories: flpLabels,
 	})
 
 	// loki stage (write) configuration
@@ -465,4 +473,15 @@ func getKafkaSASL(sasl *flowslatest.SASLConfig, volumePrefix string, volumes *vo
 		ClientIDPath:     idPath,
 		ClientSecretPath: secretPath,
 	}
+}
+
+func subnetLabelsToFLP(labels []flowslatest.SubnetLabel) []api.NetworkTransformIPCategory {
+	var cats []api.NetworkTransformIPCategory
+	for _, subnetLabel := range labels {
+		cats = append(cats, api.NetworkTransformIPCategory{
+			Name:  subnetLabel.Name,
+			CIDRs: subnetLabel.CIDRs,
+		})
+	}
+	return cats
 }
