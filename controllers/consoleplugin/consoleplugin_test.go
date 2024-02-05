@@ -500,3 +500,35 @@ func TestHTTPClientConfig(t *testing.T) {
 	assert.True(t, config2.TLSConfig.InsecureSkipVerify)
 	assert.Nil(t, config2.ProxyURL.URL)
 }
+
+func TestNoMissingFields(t *testing.T) {
+	var cfg config.FrontendConfig
+	err := yaml.Unmarshal(staticFrontendConfig, &cfg)
+	assert.NoError(t, err)
+
+	hasField := func(name string) bool {
+		for _, f := range cfg.Fields {
+			if f.Name == name {
+				return true
+			}
+		}
+		return false
+	}
+
+	var missing []string
+	for _, col := range cfg.Columns {
+		if col.Field != "" {
+			if !hasField(col.Field) {
+				missing = append(missing, col.Field)
+			}
+		}
+		if len(col.Fields) > 0 {
+			for _, f := range col.Fields {
+				if !hasField(f) {
+					missing = append(missing, f)
+				}
+			}
+		}
+	}
+	assert.Empty(t, missing, "Missing fields should be added in static config file, under 'fields'")
+}
