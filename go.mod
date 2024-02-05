@@ -6,7 +6,7 @@ toolchain go1.21.7
 
 require (
 	github.com/go-logr/logr v1.4.1
-	github.com/netobserv/flowlogs-pipeline v0.1.12-0.20240322124726-d2b2352bfe0f
+	github.com/netobserv/flowlogs-pipeline v0.1.12-0.20240325101510-5feb3c603334
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.31.1
 	github.com/openshift/api v0.0.0-20220112145620-704957ce4980

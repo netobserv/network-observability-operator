@@ -462,6 +462,10 @@ type FlowCollectorFLP struct {
 	// This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.
 	AddZone *bool `json:"addZone,omitempty"`
 
+	//+optional
+	// `SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+	SubnetLabels SubnetLabels `json:"subnetLabels,omitempty"`
+
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
@@ -1053,6 +1057,29 @@ type AdvancedPluginConfig struct {
 	// default.
 	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`
+}
+
+// `SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+type SubnetLabels struct {
+	// `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
+	// OpenShift install configuration and the Cluster Network Operator configuration.
+	//+optional
+	OpenShiftAutoDetect *bool `json:"openShiftAutoDetect,omitempty"`
+
+	// `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
+	// If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.
+	//+optional
+	CustomLabels []SubnetLabel `json:"customLabels,omitempty"`
+}
+
+// SubnetLabel allows to label subnets and IPs, such as to identify cluster-external workloads or web services.
+type SubnetLabel struct {
+	// List of CIDRs, such as `["1.2.3.4/32"]`.
+	//+required
+	CIDRs []string `json:"cidrs,omitempty"` // Note, starting with k8s 1.31 / ocp 4.16 there's a new way to validate CIDR such as `+kubebuilder:validation:XValidation:rule="isCIDR(self)",message="field should be in CIDR notation format"`. But older versions would reject the CRD so we cannot implement it now to maintain compatibility.
+	// Label name, used to flag matching flows.
+	//+required
+	Name string `json:"name,omitempty"`
 }
 
 // Add more exporter types below

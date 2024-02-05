@@ -22,16 +22,18 @@ import (
 
 type PipelineBuilder struct {
 	*config.PipelineBuilderStage
-	desired     *flowslatest.FlowCollectorSpec
-	flowMetrics metricslatest.FlowMetricList
-	volumes     *volumes.Builder
-	loki        *helper.LokiConfig
-	clusterID   string
+	desired         *flowslatest.FlowCollectorSpec
+	flowMetrics     metricslatest.FlowMetricList
+	detectedSubnets []flowslatest.SubnetLabel
+	volumes         *volumes.Builder
+	loki            *helper.LokiConfig
+	clusterID       string
 }
 
 func newPipelineBuilder(
 	desired *flowslatest.FlowCollectorSpec,
 	flowMetrics *metricslatest.FlowMetricList,
+	detectedSubnets []flowslatest.SubnetLabel,
 	loki *helper.LokiConfig,
 	clusterID string,
 	volumes *volumes.Builder,
@@ -41,6 +43,7 @@ func newPipelineBuilder(
 		PipelineBuilderStage: pipeline,
 		desired:              desired,
 		flowMetrics:          *flowMetrics,
+		detectedSubnets:      detectedSubnets,
 		loki:                 loki,
 		clusterID:            clusterID,
 		volumes:              volumes,
@@ -56,25 +59,31 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 
 	addZone := helper.IsZoneEnabled(&b.desired.Processor)
 
-	// enrich stage (transform) configuration
-	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
-		Rules: api.NetworkTransformRules{{
+	// Get all subnet labels
+	allLabels := append(b.detectedSubnets, b.desired.Processor.SubnetLabels.CustomLabels...)
+	flpLabels := subnetLabelsToFLP(allLabels)
+
+	rules := api.NetworkTransformRules{
+		{
 			Type: api.NetworkAddKubernetes,
 			Kubernetes: &api.K8sRule{
 				Input:   "SrcAddr",
 				Output:  "SrcK8S",
 				AddZone: addZone,
 			},
-		}, {
+		},
+		{
 			Type: api.NetworkAddKubernetes,
 			Kubernetes: &api.K8sRule{
 				Input:   "DstAddr",
 				Output:  "DstK8S",
 				AddZone: addZone,
 			},
-		}, {
+		},
+		{
 			Type: api.NetworkReinterpretDirection,
-		}, {
+		},
+		{
 			Type: api.NetworkAddKubernetesInfra,
 			KubernetesInfra: &api.K8sInfraRule{
 				Inputs: []string{
@@ -94,13 +103,38 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 					},
 				},
 			},
-		}},
+		},
+	}
+
+	if len(flpLabels) > 0 {
+		rules = append(rules, []api.NetworkTransformRule{
+			{
+				Type: api.NetworkAddSubnetLabel,
+				AddSubnetLabel: &api.NetworkAddSubnetLabelRule{
+					Input:  "SrcAddr",
+					Output: "SrcSubnetLabel",
+				},
+			},
+			{
+				Type: api.NetworkAddSubnetLabel,
+				AddSubnetLabel: &api.NetworkAddSubnetLabelRule{
+					Input:  "DstAddr",
+					Output: "DstSubnetLabel",
+				},
+			},
+		}...)
+	}
+
+	// enrich stage (transform) configuration
+	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
+		Rules: rules,
 		DirectionInfo: api.NetworkTransformDirectionInfo{
 			ReporterIPField:    "AgentIP",
 			SrcHostField:       "SrcK8S_HostIP",
 			DstHostField:       "DstK8S_HostIP",
 			FlowDirectionField: "FlowDirection",
 		},
+		SubnetLabels: flpLabels,
 	})
 
 	// loki stage (write) configuration
@@ -465,4 +499,15 @@ func getKafkaSASL(sasl *flowslatest.SASLConfig, volumePrefix string, volumes *vo
 		ClientIDPath:     idPath,
 		ClientSecretPath: secretPath,
 	}
+}
+
+func subnetLabelsToFLP(labels []flowslatest.SubnetLabel) []api.NetworkTransformSubnetLabel {
+	var cats []api.NetworkTransformSubnetLabel
+	for _, subnetLabel := range labels {
+		cats = append(cats, api.NetworkTransformSubnetLabel{
+			Name:  subnetLabel.Name,
+			CIDRs: subnetLabel.CIDRs,
+		})
+	}
+	return cats
 }

@@ -50,22 +50,23 @@ var FlpConfSuffix = map[ConfKind]string{
 }
 
 type Builder struct {
-	info         *reconcilers.Instance
-	labels       map[string]string
-	selector     map[string]string
-	desired      *flowslatest.FlowCollectorSpec
-	flowMetrics  *metricslatest.FlowMetricList
-	promTLS      *flowslatest.CertificateReference
-	confKind     ConfKind
-	volumes      volumes.Builder
-	loki         *helper.LokiConfig
-	pipeline     *PipelineBuilder
-	isDownstream bool
+	info            *reconcilers.Instance
+	labels          map[string]string
+	selector        map[string]string
+	desired         *flowslatest.FlowCollectorSpec
+	flowMetrics     *metricslatest.FlowMetricList
+	detectedSubnets []flowslatest.SubnetLabel
+	promTLS         *flowslatest.CertificateReference
+	confKind        ConfKind
+	volumes         volumes.Builder
+	loki            *helper.LokiConfig
+	pipeline        *PipelineBuilder
+	isDownstream    bool
 }
 
 type builder = Builder
 
-func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, ck ConfKind) (Builder, error) {
+func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel, ck ConfKind) (Builder, error) {
 	version := helper.ExtractVersion(info.Image)
 	name := name(ck)
 	var promTLS *flowslatest.CertificateReference
@@ -94,12 +95,13 @@ func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 		selector: map[string]string{
 			"app": name,
 		},
-		desired:      desired,
-		flowMetrics:  flowMetrics,
-		confKind:     ck,
-		promTLS:      promTLS,
-		loki:         info.Loki,
-		isDownstream: info.IsDownstream,
+		desired:         desired,
+		flowMetrics:     flowMetrics,
+		detectedSubnets: detectedSubnets,
+		confKind:        ck,
+		promTLS:         promTLS,
+		loki:            info.Loki,
+		isDownstream:    info.IsDownstream,
 	}, nil
 }
 
@@ -138,7 +140,7 @@ func (b *builder) NewKafkaPipeline() PipelineBuilder {
 }
 
 func (b *builder) initPipeline(ingest config.PipelineBuilderStage) PipelineBuilder {
-	pipeline := newPipelineBuilder(b.desired, b.flowMetrics, b.info.Loki, b.info.ClusterID, &b.volumes, &ingest)
+	pipeline := newPipelineBuilder(b.desired, b.flowMetrics, b.detectedSubnets, b.info.Loki, b.info.ClusterID, &b.volumes, &ingest)
 	b.pipeline = &pipeline
 	return pipeline
 }

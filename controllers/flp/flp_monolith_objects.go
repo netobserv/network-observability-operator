@@ -15,8 +15,8 @@ type monolithBuilder struct {
 	generic builder
 }
 
-func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList) (monolithBuilder, error) {
-	gen, err := NewBuilder(info, desired, flowMetrics, ConfMonolith)
+func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel) (monolithBuilder, error) {
+	gen, err := NewBuilder(info, desired, flowMetrics, detectedSubnets, ConfMonolith)
 	return monolithBuilder{
 		generic: gen,
 	}, err

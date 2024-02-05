@@ -16,8 +16,8 @@ type transfoBuilder struct {
 	generic builder
 }
 
-func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList) (transfoBuilder, error) {
-	gen, err := NewBuilder(info, desired, flowMetrics, ConfKafkaTransformer)
+func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel) (transfoBuilder, error) {
+	gen, err := NewBuilder(info, desired, flowMetrics, detectedSubnets, ConfKafkaTransformer)
 	return transfoBuilder{
 		generic: gen,
 	}, err

@@ -404,6 +404,9 @@ func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) error {
 	if helper.IsZoneEnabled(&b.desired.Processor) {
 		fconf.Features = append(fconf.Features, "zones")
 	}
+	if helper.IsSubnetLabelsEnabled(&b.desired.Processor) {
+		fconf.Features = append(fconf.Features, "subnetLabels")
+	}
 	return nil
 }
 
