@@ -29,6 +29,14 @@ columns:
     filter: id
     default: true
     width: 15
+  - id: ClusterName
+    name: Cluster
+    tooltip: The cluster ID or Name.
+    field: K8S_ClusterName
+    filter: cluster_name
+    default: false
+    width: 15
+    feature: multiCluster
   - id: SrcK8S_Name
     group: Source
     name: Name
@@ -148,6 +156,7 @@ columns:
     filter: src_zone
     default: false
     width: 15
+    feature: zones
   - id: DstK8S_Name
     group: Destination
     name: Name
@@ -267,6 +276,7 @@ columns:
     filter: dst_zone
     default: false
     width: 15
+    feature: zones
   - id: K8S_Name
     name: Names
     calculated: getSrcOrDstValue(SrcK8S_Name,DstK8S_Name)
@@ -434,6 +444,7 @@ columns:
     filter: dns_id
     default: false
     width: 5
+    feature: dnsTracking
   - id: DNSLatency
     group: DNS
     name: DNS Latency
@@ -442,6 +453,7 @@ columns:
     filter: dns_latency
     default: true
     width: 5
+    feature: dnsTracking
   - id: DNSResponseCode
     group: DNS
     name: DNS Response Code
@@ -450,6 +462,7 @@ columns:
     filter: dns_flag_response_code
     default: true
     width: 5
+    feature: dnsTracking
   - id: DNSErrNo
     group: DNS
     name: DNS Error
@@ -458,6 +471,7 @@ columns:
     filter: dns_errno
     default: false
     width: 5
+    feature: dnsTracking
   - id: TimeFlowRttMs
     name: Flow RTT
     tooltip: TCP Smoothed Round Trip Time (SRTT)
@@ -465,7 +479,12 @@ columns:
     filter: time_flow_rtt
     default: true
     width: 5
+    feature: flowRTT
 filters:
+  - id: cluster_name
+    name: Cluster
+    component: autocomplete
+    hint: Specify a cluster ID or name.
   - id: src_namespace
     name: Namespace
     component: autocomplete
@@ -571,13 +590,13 @@ filters:
           - Ending text like "*-registry"
           - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
   - id: src_zone
-    name: Zone Name
-    component: text
+    name: Zone
+    component: autocomplete
     category: source
     hint: Specify a single zone.
   - id: dst_zone
-    name: Zone Name
-    component: text
+    name: Zone
+    component: autocomplete
     category: destination
     hint: Specify a single zone.
   - id: src_resource
