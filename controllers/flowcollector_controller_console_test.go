@@ -306,19 +306,38 @@ func flowCollectorConsolePluginSpecs() {
 		})
 	})
 
-	Context("Cleanup", func() {
-		// Retrieve CR to get its UID
-		flowCR := flowslatest.FlowCollector{}
-		It("Should get CR", func() {
-			Eventually(func() error {
-				return k8sClient.Get(ctx, crKey, &flowCR)
-			}, timeout, interval).Should(Succeed())
-		})
+	Context("Checking CR ownership", func() {
+		It("Should be garbage collected", func() {
+			// Retrieve CR to get its UID
+			By("Getting the CR")
+			flowCR := getCR(crKey)
 
+			By("Expecting console plugin deployment to be garbage collected")
+			Eventually(func() interface{} {
+				d := appsv1.Deployment{}
+				_ = k8sClient.Get(ctx, cpKey, &d)
+				return &d
+			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
+
+			By("Expecting console plugin service to be garbage collected")
+			Eventually(func() interface{} {
+				svc := v1.Service{}
+				_ = k8sClient.Get(ctx, cpKey, &svc)
+				return &svc
+			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
+
+			By("Expecting console plugin service account to be garbage collected")
+			Eventually(func() interface{} {
+				svcAcc := v1.ServiceAccount{}
+				_ = k8sClient.Get(ctx, cpKey, &svcAcc)
+				return &svcAcc
+			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
+		})
+	})
+
+	Context("Cleanup", func() {
 		It("Should delete CR", func() {
-			Eventually(func() error {
-				return k8sClient.Delete(ctx, &flowCR)
-			}, timeout, interval).Should(Succeed())
+			cleanupCR(crKey)
 		})
 
 		It("Should delete Console CR", func() {
@@ -329,29 +348,6 @@ func flowCollectorConsolePluginSpecs() {
 					},
 				})
 			}, timeout, interval).Should(Succeed())
-		})
-
-		It("Should be garbage collected", func() {
-			By("Expecting console plugin deployment to be garbage collected")
-			Eventually(func() interface{} {
-				d := appsv1.Deployment{}
-				_ = k8sClient.Get(ctx, cpKey, &d)
-				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
-
-			By("Expecting console plugin service to be garbage collected")
-			Eventually(func() interface{} {
-				svc := v1.Service{}
-				_ = k8sClient.Get(ctx, cpKey, &svc)
-				return &svc
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
-
-			By("Expecting console plugin service account to be garbage collected")
-			Eventually(func() interface{} {
-				svcAcc := v1.ServiceAccount{}
-				_ = k8sClient.Get(ctx, cpKey, &svcAcc)
-				return &svcAcc
-			}, timeout, interval).Should(BeGarbageCollectedBy(&flowCR))
 		})
 	})
 }

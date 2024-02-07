@@ -2,10 +2,12 @@ package test
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"time"
 
-	gv2 "github.com/onsi/ginkgo/v2"
+	//nolint:revive,stylecheck
+	. "github.com/onsi/ginkgo/v2"
 	//nolint:revive,stylecheck
 	. "github.com/onsi/gomega"
 	configv1 "github.com/openshift/api/config/v1"
@@ -32,6 +34,7 @@ import (
 	metricsv1alpha1 "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
+	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 )
 
 const (
@@ -40,10 +43,10 @@ const (
 )
 
 func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, basePath string) (context.Context, client.Client, *envtest.Environment, context.CancelFunc) {
-	logf.SetLogger(zap.New(zap.WriteTo(gv2.GinkgoWriter), zap.UseDevMode(true)))
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 	ctx, cancel := context.WithCancel(context.TODO())
 
-	gv2.By("bootstrapping test environment")
+	By("bootstrapping test environment")
 	testEnv := &envtest.Environment{
 		Scheme: scheme.Scheme,
 		CRDInstallOptions: envtest.CRDInstallOptions{
@@ -142,7 +145,7 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	Expect(err).NotTo(HaveOccurred())
 
 	go func() {
-		defer gv2.GinkgoRecover()
+		defer GinkgoRecover()
 		err = k8sManager.Start(ctx)
 		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
@@ -152,7 +155,7 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 
 func TeardownEnvTest(testEnv *envtest.Environment, cancel context.CancelFunc) {
 	cancel()
-	gv2.By("tearing down the test environment")
+	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 }
@@ -171,6 +174,25 @@ func UpdateCR(ctx context.Context, k8sClient client.Client, key types.Namespaced
 		updater(cr)
 		return k8sClient.Update(ctx, cr)
 	}, Timeout, Interval).Should(Succeed())
+}
+
+func CleanupCR(ctx context.Context, k8sClient client.Client, key types.NamespacedName) {
+	By("Getting the CR")
+	flowCR := GetCR(ctx, k8sClient, key)
+
+	By("Deleting CR")
+	Eventually(func() error {
+		return k8sClient.Delete(ctx, flowCR)
+	}, Timeout, Interval).Should(Succeed())
+
+	By("Getting (no) CR")
+	Eventually(func() error {
+		err := k8sClient.Get(ctx, key, flowCR)
+		if err == nil && flowCR.GetDeletionTimestamp() == nil {
+			err = fmt.Errorf("CR is still present and not marked for deletion. Status: %s", status.ConditionsToString(flowCR.Status.Conditions))
+		}
+		return err
+	}, Timeout, Interval).Should(Or(BeNil(), MatchError(`flowcollectors.flows.netobserv.io "cluster" not found`)))
 }
 
 func VolumeNames(vols []corev1.Volume) []string {
