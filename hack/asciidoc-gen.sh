@@ -24,7 +24,7 @@ ADOC=docs/flowcollector-flows-netobserv-io-v1beta2.adoc
 
 mv _tmp/flows_netobserv_io/flowcollector-flows-netobserv-io-v1beta2.adoc $ADOC
 
-sed -i -r 's/^:_content-type: ASSEMBLY$/:_content-type: REFERENCE/' $ADOC
+sed -i -r 's/^:_content-type: ASSEMBLY$/:_mod-docs-content-type: REFERENCE/' $ADOC
 sed -i -r 's/^\[id="flowcollector-flows-netobserv-io-v.+"\]$/[id="network-observability-flowcollector-api-specifications_{context}"]/' $ADOC
 sed -i -r 's/= FlowCollector \[flows.netobserv.io.*/= FlowCollector API specifications/' $ADOC
 sed -i -r '/^:toc: macro$/d ' $ADOC
@@ -38,5 +38,6 @@ sed -i -r 's/\<NetObserv\>/Network Observability/g' $ADOC
 sed -i -r 's/<br>/ +\n/g' $ADOC
 sed -i -r 's/<i>/_/g' $ADOC
 sed -i -r 's/<\/i>/_/g' $ADOC
+sed -i -r 's/ may / might /g' $ADOC
 # Our asciidoc gen doesn't handle arrays very well, producing duplicate fields... so remove one of them
 sed -i -r '/^\| `.+\[\]`$/,+3d' $ADOC
