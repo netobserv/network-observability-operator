@@ -166,7 +166,7 @@ On the Loki server side, configuration differs depending on how Loki was install
 
 More performance fine-tuning is possible when using Kafka, ie. with `spec.deploymentModel` set to `KAFKA`:
 
-- You can set the size of the batches (in bytes) sent by the eBPF agent to Kafka, with `spec.agent.ebpf.kafkaBatchSize`. It has a similar impact than `cacheMaxFlows` mentioned above, with higher values generating less traffic and less CPU usage, but more memory consumption and more latency. It is recommended to keep these two settings somewhat aligned (ie. do not set a super low `cacheMaxFlows` with high `kafkaBatchSize`, or the other way around). We expect the default values to be a good fit for most environments.
+- You can set the size of the batches (in bytes) sent by the eBPF agent to Kafka, with `spec.agent.ebpf.kafkaBatchSize`. It has a similar impact than `cacheMaxFlows` mentioned above, with higher values generating less traffic and less CPU usage, but more memory consumption and more latency. We expect the default values to be a good fit for most environments.
 
 - If you find that the Kafka consumer might be a bottleneck, you can increase the number of replicas with `spec.processor.kafkaConsumerReplicas`, or set up an horizontal autoscaler with `spec.processor.kafkaConsumerAutoscaler`.
 

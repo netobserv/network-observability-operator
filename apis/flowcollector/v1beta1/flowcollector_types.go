@@ -220,9 +220,9 @@ type FlowCollectorEBPF struct {
 	// +optional
 	Privileged bool `json:"privileged,omitempty"`
 
-	//+kubebuilder:default:=10485760
+	//+kubebuilder:default:=1048576
 	// +optional
-	// `kafkaBatchSize` limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 10MB.
+	// `kafkaBatchSize` limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 1MB.
 	KafkaBatchSize int `json:"kafkaBatchSize"`
 
 	// `debug` allows setting some aspects of the internal configuration of the eBPF agent.
