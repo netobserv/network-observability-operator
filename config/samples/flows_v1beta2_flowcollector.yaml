@@ -21,7 +21,7 @@ spec:
       # - "FlowRTT"
       interfaces: []
       excludeInterfaces: ["lo"]
-      kafkaBatchSize: 10485760
+      kafkaBatchSize: 1048576
       # Custom optionnal resources configuration
       resources:
         requests:

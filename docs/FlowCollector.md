@@ -268,9 +268,9 @@ ebpf describes the settings related to the eBPF-based flow reporter when the "ag
         <td><b>kafkaBatchSize</b></td>
         <td>integer</td>
         <td>
-          kafkaBatchSize limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 10MB.<br/>
+          kafkaBatchSize limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 1MB.<br/>
           <br/>
-            <i>Default</i>: 10485760<br/>
+            <i>Default</i>: 1048576<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4580,9 +4580,9 @@ Agent configuration for flows extraction.
         <td><b>kafkaBatchSize</b></td>
         <td>integer</td>
         <td>
-          `kafkaBatchSize` limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 10MB.<br/>
+          `kafkaBatchSize` limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 1MB.<br/>
           <br/>
-            <i>Default</i>: 10485760<br/>
+            <i>Default</i>: 1048576<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9240,9 +9240,9 @@ Agent configuration for flows extraction.
         <td><b>kafkaBatchSize</b></td>
         <td>integer</td>
         <td>
-          `kafkaBatchSize` limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 10MB.<br/>
+          `kafkaBatchSize` limits the maximum size of a request in bytes before being sent to a partition. Ignored when not using Kafka. Default: 1MB.<br/>
           <br/>
-            <i>Default</i>: 10485760<br/>
+            <i>Default</i>: 1048576<br/>
         </td>
         <td>false</td>
       </tr><tr>
