@@ -131,10 +131,10 @@ spec:
                           type: string
                         type: array
                       kafkaBatchSize:
-                        default: 10485760
+                        default: 1048576
                         description: 'kafkaBatchSize limits the maximum size of a
                           request in bytes before being sent to a partition. Ignored
-                          when not using Kafka. Default: 10MB.'
+                          when not using Kafka. Default: 1MB.'
                         type: integer
                       logLevel:
                         default: info
@@ -2575,10 +2575,10 @@ spec:
                           type: string
                         type: array
                       kafkaBatchSize:
-                        default: 10485760
+                        default: 1048576
                         description: '`kafkaBatchSize` limits the maximum size of
                           a request in bytes before being sent to a partition. Ignored
-                          when not using Kafka. Default: 10MB.'
+                          when not using Kafka. Default: 1MB.'
                         type: integer
                       logLevel:
                         default: info
@@ -5269,10 +5269,10 @@ spec:
                           type: string
                         type: array
                       kafkaBatchSize:
-                        default: 10485760
+                        default: 1048576
                         description: '`kafkaBatchSize` limits the maximum size of
                           a request in bytes before being sent to a partition. Ignored
-                          when not using Kafka. Default: 10MB.'
+                          when not using Kafka. Default: 1MB.'
                         type: integer
                       logLevel:
                         default: info
