@@ -4540,7 +4540,7 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentebpfdebug-1">debug</a></b></td>
         <td>object</td>
         <td>
-          `debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+          `debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4631,7 +4631,7 @@ Agent configuration for flows extraction.
 
 
 
-`debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 <table>
     <thead>
@@ -7447,7 +7447,7 @@ TLS client configuration for Loki URL.
         <td><b><a href="#flowcollectorspecprocessordebug-1">debug</a></b></td>
         <td>object</td>
         <td>
-          `debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+          `debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7603,7 +7603,7 @@ TLS client configuration for Loki URL.
 
 
 
-`debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 <table>
     <thead>
@@ -9180,7 +9180,7 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentebpfadvanced">advanced</a></b></td>
         <td>object</td>
         <td>
-          `advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+          `advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9291,7 +9291,7 @@ Agent configuration for flows extraction.
 
 
 
-`advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 <table>
     <thead>
@@ -9553,7 +9553,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b><a href="#flowcollectorspecconsolepluginadvanced">advanced</a></b></td>
         <td>object</td>
         <td>
-          `advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+          `advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9639,7 +9639,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-`advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 <table>
     <thead>
@@ -12674,7 +12674,7 @@ TLS client configuration for Loki URL.
         <td><b><a href="#flowcollectorspecprocessoradvanced">advanced</a></b></td>
         <td>object</td>
         <td>
-          `advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+          `advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12786,7 +12786,7 @@ TLS client configuration for Loki URL.
 
 
 
-`advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 <table>
     <thead>

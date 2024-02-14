@@ -1753,7 +1753,7 @@ spec:
                           minimum: 1
                           type: integer
                         debug:
-                          description: '`debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.'
+                          description: '`debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.'
                           properties:
                             env:
                               additionalProperties:
@@ -2907,7 +2907,7 @@ spec:
                       description: '`conversationTerminatingTimeout` is the time to wait from detected FIN flag to end a conversation. Only relevant for TCP flows.'
                       type: string
                     debug:
-                      description: '`debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.'
+                      description: '`debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.'
                       properties:
                         env:
                           additionalProperties:
@@ -3604,7 +3604,7 @@ spec:
                       description: '`ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `eBPF`.'
                       properties:
                         advanced:
-                          description: '`advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.'
+                          description: '`advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.'
                           properties:
                             env:
                               additionalProperties:
@@ -3783,7 +3783,7 @@ spec:
                   description: '`consolePlugin` defines the settings related to the OpenShift Console plugin, when available.'
                   properties:
                     advanced:
-                      description: '`advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.'
+                      description: '`advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.'
                       properties:
                         args:
                           description: '`args` allows passing custom arguments to underlying components. Useful for overriding some parameters, such as an url or a configuration path, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.'
@@ -4940,7 +4940,7 @@ spec:
                       description: '`addZone` allows availability zone awareness by labelling flows with their source and destination zones. This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.'
                       type: boolean
                     advanced:
-                      description: '`advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.'
+                      description: '`advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.'
                       properties:
                         conversationEndTimeout:
                           default: 10s

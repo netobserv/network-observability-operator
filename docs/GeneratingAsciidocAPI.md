@@ -1,16 +1,22 @@
 # Generating AsciiDoc API reference
 
-## Setup docsgen repo
+## One-time setup docsgen repo
 
 1. Clone https://github.com/jboxman-rh/openshift-apidocs-gen
 2. run `npm install -g`
 
 ## Run it
 
-The doc generator needs to talk with a running cluster, with the desired CRDs installed. It doesn't require anything fancy, you can run KIND (`kind create cluster`).
+```bash
+# If you haven't already, start any k8s cluster
+kind create cluster
 
-1. Deploy netobserv CRD on your cluster (e.g. `make generate install`).
-2. run `hack/asciidoc-gen.sh`
+# Make sure the CRD has all the desired doc within
+make generate
+
+make install
+hack/asciidoc-gen.sh
+```
 
 # Generate AsciiDoc for flows JSON format reference
 

@@ -234,7 +234,7 @@ type FlowCollectorEBPF struct {
 
 	// `advanced` allows setting some aspects of the internal configuration of the eBPF agent.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
-	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 	// +optional
 	Advanced *AdvancedAgentConfig `json:"advanced,omitempty"`
 
@@ -452,7 +452,7 @@ type FlowCollectorFLP struct {
 
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
-	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 	// +optional
 	Advanced *AdvancedProcessorConfig `json:"advanced,omitempty"`
 }
@@ -710,7 +710,7 @@ type FlowCollectorConsolePlugin struct {
 
 	// `advanced` allows setting some aspects of the internal configuration of the console plugin.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
-	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 	// +optional
 	Advanced *AdvancedPluginConfig `json:"advanced,omitempty"`
 }
@@ -856,7 +856,7 @@ type SASLConfig struct {
 }
 
 // `AdvancedAgentConfig` allows tweaking some aspects of the internal configuration of the agent.
-// They are aimed mostly for debugging. Users setting these values do it at their own risk.
+// They are aimed mostly for debugging. Set these values at your own risk.
 type AdvancedAgentConfig struct {
 	// `env` allows passing custom environment variables to underlying components. Useful for passing
 	// some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be
@@ -867,7 +867,7 @@ type AdvancedAgentConfig struct {
 }
 
 // `AdvancedProcessorConfig` allows tweaking some aspects of the internal configuration of the processor.
-// They are aimed mostly for debugging. Users setting these values do it at their own risk.
+// They are aimed mostly for debugging. Set these values at your own risk.
 type AdvancedProcessorConfig struct {
 	// `env` allows passing custom environment variables to underlying components. Useful for passing
 	// some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be
@@ -927,7 +927,7 @@ type AdvancedProcessorConfig struct {
 }
 
 // `AdvancedLokiConfig` allows tweaking some aspects of the Loki clients.
-// They are aimed mostly for debugging. Users setting these values do it at their own risk.
+// They are aimed mostly for debugging. Set these values at your own risk.
 type AdvancedLokiConfig struct {
 	//+kubebuilder:default:="1s"
 	//+optional
@@ -952,7 +952,7 @@ type AdvancedLokiConfig struct {
 }
 
 // `AdvancedPluginConfig` allows tweaking some aspects of the internal configuration of the console plugin.
-// They are aimed mostly for debugging. Users setting these values do it at their own risk.
+// They are aimed mostly for debugging. Set these values at your own risk.
 type AdvancedPluginConfig struct {
 	// `env` allows passing custom environment variables to underlying components. Useful for passing
 	// some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be

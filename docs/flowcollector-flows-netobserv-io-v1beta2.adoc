@@ -160,7 +160,7 @@ Type::
 
 | `advanced`
 | `object`
-| `advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+| `advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 | `cacheActiveTimeout`
 | `string`
@@ -215,7 +215,7 @@ Type::
 Description::
 +
 --
-`advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 --
 
 Type::
@@ -372,7 +372,7 @@ Type::
 
 | `advanced`
 | `object`
-| `advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+| `advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 | `autoscaler`
 | `object`
@@ -411,7 +411,7 @@ Type::
 Description::
 +
 --
-`advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 --
 
 Type::
@@ -1824,7 +1824,7 @@ Type::
 
 | `advanced`
 | `object`
-| `advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+| `advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 | `clusterName`
 | `string`
@@ -1880,7 +1880,7 @@ Type::
 Description::
 +
 --
-`advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 --
 
 Type::

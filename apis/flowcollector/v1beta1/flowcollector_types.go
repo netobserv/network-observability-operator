@@ -227,7 +227,7 @@ type FlowCollectorEBPF struct {
 
 	// `debug` allows setting some aspects of the internal configuration of the eBPF agent.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
-	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
 
@@ -495,7 +495,7 @@ type FlowCollectorFLP struct {
 
 	// `debug` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
-	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
 }
