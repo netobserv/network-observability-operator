@@ -160,7 +160,7 @@ Type::
 
 | `advanced`
 | `object`
-| `advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+| `advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 | `cacheActiveTimeout`
 | `string`
@@ -200,7 +200,7 @@ Type::
 
 | `privileged`
 | `boolean`
-| Privileged mode for the eBPF Agent container. When ignored or set to `false`, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container. If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF is in use, then you can turn on this mode for more global privileges. Some agent features require the privileged mode, such as packet drops tracking (see `features`).
+| Privileged mode for the eBPF Agent container. When ignored or set to `false`, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container. If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF is in use, then you can turn on this mode for more global privileges. Some agent features require the privileged mode, such as packet drops tracking (see `features`) and SR-IOV support.
 
 | `resources`
 | `object`
@@ -215,7 +215,7 @@ Type::
 Description::
 +
 --
-`advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 --
 
 Type::
@@ -372,7 +372,7 @@ Type::
 
 | `advanced`
 | `object`
-| `advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+| `advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 | `autoscaler`
 | `object`
@@ -380,7 +380,7 @@ Type::
 
 | `enable`
 | `boolean`
-| Enables the console plugin deployment. `spec.Loki.enable` must also be `true`
+| Enables the console plugin deployment. `spec.loki.enable` must also be `true`
 
 | `imagePullPolicy`
 | `string`
@@ -411,7 +411,7 @@ Type::
 Description::
 +
 --
-`advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 --
 
 Type::
@@ -1147,28 +1147,28 @@ Type::
 
 | `lokiStack`
 | `object`
-| Loki configuration for "LokiStack" mode. This is useful for an easy loki-operator configuration. It is ignored for other modes.
+| Loki configuration for `LokiStack` mode. This is useful for an easy loki-operator configuration. It is ignored for other modes.
 
 | `manual`
 | `object`
-| Loki configuration for "Manual" mode. This is the most flexible configuration. It is ignored for other modes.
+| Loki configuration for `Manual` mode. This is the most flexible configuration. It is ignored for other modes.
 
 | `microservices`
 | `object`
-| Loki configuration for "Microservices" mode. Use this option when Loki is installed using the microservices deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode). It is ignored for other modes.
+| Loki configuration for `Microservices` mode. Use this option when Loki is installed using the microservices deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode). It is ignored for other modes.
 
 | `mode`
 | `string`
 | `mode` must be set according to the installation mode of Loki: +
- - Use "LokiStack" when Loki is managed using the Loki Operator +
- - Use "Monolithic" when Loki is installed as a monolithic workload +
- - Use "Microservices" when Loki is installed as microservices, but without Loki Operator +
- - Use "Manual" if none of the options above match your setup +
+ - Use `LokiStack` when Loki is managed using the Loki Operator +
+ - Use `Monolithic` when Loki is installed as a monolithic workload +
+ - Use `Microservices` when Loki is installed as microservices, but without Loki Operator +
+ - Use `Manual` if none of the options above match your setup +
 
 
 | `monolithic`
 | `object`
-| Loki configuration for "Monolithic" mode. Use this option when Loki is installed using the monolithic deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode). It is ignored for other modes.
+| Loki configuration for `Monolithic` mode. Use this option when Loki is installed using the monolithic deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode). It is ignored for other modes.
 
 | `readTimeout`
 | `string`
@@ -1225,7 +1225,7 @@ Type::
 Description::
 +
 --
-Loki configuration for "LokiStack" mode. This is useful for an easy loki-operator configuration. It is ignored for other modes.
+Loki configuration for `LokiStack` mode. This is useful for an easy loki-operator configuration. It is ignored for other modes.
 --
 
 Type::
@@ -1251,7 +1251,7 @@ Type::
 Description::
 +
 --
-Loki configuration for "Manual" mode. This is the most flexible configuration. It is ignored for other modes.
+Loki configuration for `Manual` mode. This is the most flexible configuration. It is ignored for other modes.
 --
 
 Type::
@@ -1521,7 +1521,7 @@ Type::
 Description::
 +
 --
-Loki configuration for "Microservices" mode. Use this option when Loki is installed using the microservices deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode). It is ignored for other modes.
+Loki configuration for `Microservices` mode. Use this option when Loki is installed using the microservices deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode). It is ignored for other modes.
 --
 
 Type::
@@ -1665,7 +1665,7 @@ Type::
 Description::
 +
 --
-Loki configuration for "Monolithic" mode. Use this option when Loki is installed using the monolithic deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode). It is ignored for other modes.
+Loki configuration for `Monolithic` mode. Use this option when Loki is installed using the monolithic deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode). It is ignored for other modes.
 --
 
 Type::
@@ -1824,7 +1824,7 @@ Type::
 
 | `advanced`
 | `object`
-| `advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+| `advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 | `clusterName`
 | `string`
@@ -1880,7 +1880,7 @@ Type::
 Description::
 +
 --
-`advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 --
 
 Type::

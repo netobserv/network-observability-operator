@@ -2522,8 +2522,8 @@ spec:
                         description: '`debug` allows setting some aspects of the internal
                           configuration of the eBPF agent. This section is aimed exclusively
                           for debugging and fine-grained performance optimizations,
-                          such as `GOGC` and `GOMAXPROCS` env vars. Users setting
-                          its values do it at their own risk.'
+                          such as `GOGC` and `GOMAXPROCS` env vars. Set these values
+                          at your own risk.'
                         properties:
                           env:
                             additionalProperties:
@@ -2615,7 +2615,8 @@ spec:
                           be set, such as if an old kernel version not knowing CAP_BPF
                           is in use, then you can turn on this mode for more global
                           privileges. Some agent features require the privileged mode,
-                          such as packet drops tracking (see `features`).
+                          such as packet drops tracking (see `features`) and SR-IOV
+                          support.
                         type: boolean
                       resources:
                         default:
@@ -3302,7 +3303,7 @@ spec:
                     type: object
                   enable:
                     default: true
-                    description: Enables the console plugin deployment. `spec.Loki.enable`
+                    description: Enables the console plugin deployment. `spec.loki.enable`
                       must also be `true`
                     type: boolean
                   imagePullPolicy:
@@ -4169,8 +4170,8 @@ spec:
                     description: '`debug` allows setting some aspects of the internal
                       configuration of the flow processor. This section is aimed exclusively
                       for debugging and fine-grained performance optimizations, such
-                      as `GOGC` and `GOMAXPROCS` env vars. Users setting its values
-                      do it at their own risk.'
+                      as `GOGC` and `GOMAXPROCS` env vars. Set these values at your
+                      own risk.'
                     properties:
                       env:
                         additionalProperties:
@@ -5196,7 +5197,7 @@ spec:
                           internal configuration of the eBPF agent. This section is
                           aimed mostly for debugging and fine-grained performance
                           optimizations, such as `GOGC` and `GOMAXPROCS` env vars.
-                          Users setting its values do it at their own risk.'
+                          Set these values at your own risk.'
                         properties:
                           env:
                             additionalProperties:
@@ -5309,7 +5310,8 @@ spec:
                           be set, such as if an old kernel version not knowing CAP_BPF
                           is in use, then you can turn on this mode for more global
                           privileges. Some agent features require the privileged mode,
-                          such as packet drops tracking (see `features`).
+                          such as packet drops tracking (see `features`) and SR-IOV
+                          support.
                         type: boolean
                       resources:
                         default:
@@ -5469,8 +5471,8 @@ spec:
                     description: '`advanced` allows setting some aspects of the internal
                       configuration of the console plugin. This section is aimed mostly
                       for debugging and fine-grained performance optimizations, such
-                      as `GOGC` and `GOMAXPROCS` env vars. Users setting its values
-                      do it at their own risk.'
+                      as `GOGC` and `GOMAXPROCS` env vars. Set these values at your
+                      own risk.'
                     properties:
                       args:
                         description: '`args` allows passing custom arguments to underlying
@@ -6041,7 +6043,7 @@ spec:
                     type: object
                   enable:
                     default: true
-                    description: Enables the console plugin deployment. `spec.Loki.enable`
+                    description: Enables the console plugin deployment. `spec.loki.enable`
                       must also be `true`
                     type: boolean
                   imagePullPolicy:
@@ -6627,7 +6629,7 @@ spec:
                       is required for the OpenShift Console plugin installation.
                     type: boolean
                   lokiStack:
-                    description: Loki configuration for "LokiStack" mode. This is
+                    description: Loki configuration for `LokiStack` mode. This is
                       useful for an easy loki-operator configuration. It is ignored
                       for other modes.
                     properties:
@@ -6641,7 +6643,7 @@ spec:
                         type: string
                     type: object
                   manual:
-                    description: Loki configuration for "Manual" mode. This is the
+                    description: Loki configuration for `Manual` mode. This is the
                       most flexible configuration. It is ignored for other modes.
                     properties:
                       authToken:
@@ -6857,7 +6859,7 @@ spec:
                         type: object
                     type: object
                   microservices:
-                    description: Loki configuration for "Microservices" mode. Use
+                    description: Loki configuration for `Microservices` mode. Use
                       this option when Loki is installed using the microservices deployment
                       mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode).
                       It is ignored for other modes.
@@ -6964,11 +6966,11 @@ spec:
                   mode:
                     default: Monolithic
                     description: '`mode` must be set according to the installation
-                      mode of Loki:<br> - Use "LokiStack" when Loki is managed using
-                      the Loki Operator<br> - Use "Monolithic" when Loki is installed
-                      as a monolithic workload<br> - Use "Microservices" when Loki
+                      mode of Loki:<br> - Use `LokiStack` when Loki is managed using
+                      the Loki Operator<br> - Use `Monolithic` when Loki is installed
+                      as a monolithic workload<br> - Use `Microservices` when Loki
                       is installed as microservices, but without Loki Operator<br>
-                      - Use "Manual" if none of the options above match your setup<br>'
+                      - Use `Manual` if none of the options above match your setup<br>'
                     enum:
                     - Manual
                     - LokiStack
@@ -6976,7 +6978,7 @@ spec:
                     - Microservices
                     type: string
                   monolithic:
-                    description: Loki configuration for "Monolithic" mode. Use this
+                    description: Loki configuration for `Monolithic` mode. Use this
                       option when Loki is installed using the monolithic deployment
                       mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode).
                       It is ignored for other modes.
@@ -7118,8 +7120,8 @@ spec:
                     description: '`advanced` allows setting some aspects of the internal
                       configuration of the flow processor. This section is aimed mostly
                       for debugging and fine-grained performance optimizations, such
-                      as `GOGC` and `GOMAXPROCS` env vars. Users setting its values
-                      do it at their own risk.'
+                      as `GOGC` and `GOMAXPROCS` env vars. Set these values at your
+                      own risk.'
                     properties:
                       conversationEndTimeout:
                         default: 10s

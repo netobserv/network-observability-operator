@@ -4540,7 +4540,7 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentebpfdebug-1">debug</a></b></td>
         <td>object</td>
         <td>
-          `debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+          `debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4599,7 +4599,7 @@ Agent configuration for flows extraction.
         <td><b>privileged</b></td>
         <td>boolean</td>
         <td>
-          Privileged mode for the eBPF Agent container. When ignored or set to `false`, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container. If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF is in use, then you can turn on this mode for more global privileges. Some agent features require the privileged mode, such as packet drops tracking (see `features`).<br/>
+          Privileged mode for the eBPF Agent container. When ignored or set to `false`, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container. If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF is in use, then you can turn on this mode for more global privileges. Some agent features require the privileged mode, such as packet drops tracking (see `features`) and SR-IOV support.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4631,7 +4631,7 @@ Agent configuration for flows extraction.
 
 
 
-`debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`debug` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 <table>
     <thead>
@@ -4900,7 +4900,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Enables the console plugin deployment. `spec.Loki.enable` must also be `true`<br/>
+          Enables the console plugin deployment. `spec.loki.enable` must also be `true`<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -7447,7 +7447,7 @@ TLS client configuration for Loki URL.
         <td><b><a href="#flowcollectorspecprocessordebug-1">debug</a></b></td>
         <td>object</td>
         <td>
-          `debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+          `debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7603,7 +7603,7 @@ TLS client configuration for Loki URL.
 
 
 
-`debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`debug` allows setting some aspects of the internal configuration of the flow processor. This section is aimed exclusively for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 <table>
     <thead>
@@ -9180,7 +9180,7 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentebpfadvanced">advanced</a></b></td>
         <td>object</td>
         <td>
-          `advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+          `advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9259,7 +9259,7 @@ Agent configuration for flows extraction.
         <td><b>privileged</b></td>
         <td>boolean</td>
         <td>
-          Privileged mode for the eBPF Agent container. When ignored or set to `false`, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container. If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF is in use, then you can turn on this mode for more global privileges. Some agent features require the privileged mode, such as packet drops tracking (see `features`).<br/>
+          Privileged mode for the eBPF Agent container. When ignored or set to `false`, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container. If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF is in use, then you can turn on this mode for more global privileges. Some agent features require the privileged mode, such as packet drops tracking (see `features`) and SR-IOV support.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9291,7 +9291,7 @@ Agent configuration for flows extraction.
 
 
 
-`advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the eBPF agent. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 <table>
     <thead>
@@ -9553,7 +9553,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b><a href="#flowcollectorspecconsolepluginadvanced">advanced</a></b></td>
         <td>object</td>
         <td>
-          `advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+          `advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9567,7 +9567,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Enables the console plugin deployment. `spec.Loki.enable` must also be `true`<br/>
+          Enables the console plugin deployment. `spec.loki.enable` must also be `true`<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -9639,7 +9639,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-`advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the console plugin. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 <table>
     <thead>
@@ -11620,28 +11620,28 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b><a href="#flowcollectorspeclokilokistack">lokiStack</a></b></td>
         <td>object</td>
         <td>
-          Loki configuration for "LokiStack" mode. This is useful for an easy loki-operator configuration. It is ignored for other modes.<br/>
+          Loki configuration for `LokiStack` mode. This is useful for an easy loki-operator configuration. It is ignored for other modes.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspeclokimanual">manual</a></b></td>
         <td>object</td>
         <td>
-          Loki configuration for "Manual" mode. This is the most flexible configuration. It is ignored for other modes.<br/>
+          Loki configuration for `Manual` mode. This is the most flexible configuration. It is ignored for other modes.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspeclokimicroservices">microservices</a></b></td>
         <td>object</td>
         <td>
-          Loki configuration for "Microservices" mode. Use this option when Loki is installed using the microservices deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode). It is ignored for other modes.<br/>
+          Loki configuration for `Microservices` mode. Use this option when Loki is installed using the microservices deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode). It is ignored for other modes.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mode</b></td>
         <td>enum</td>
         <td>
-          `mode` must be set according to the installation mode of Loki:<br> - Use "LokiStack" when Loki is managed using the Loki Operator<br> - Use "Monolithic" when Loki is installed as a monolithic workload<br> - Use "Microservices" when Loki is installed as microservices, but without Loki Operator<br> - Use "Manual" if none of the options above match your setup<br><br/>
+          `mode` must be set according to the installation mode of Loki:<br> - Use `LokiStack` when Loki is managed using the Loki Operator<br> - Use `Monolithic` when Loki is installed as a monolithic workload<br> - Use `Microservices` when Loki is installed as microservices, but without Loki Operator<br> - Use `Manual` if none of the options above match your setup<br><br/>
           <br/>
             <i>Enum</i>: Manual, LokiStack, Monolithic, Microservices<br/>
             <i>Default</i>: Monolithic<br/>
@@ -11651,7 +11651,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b><a href="#flowcollectorspeclokimonolithic">monolithic</a></b></td>
         <td>object</td>
         <td>
-          Loki configuration for "Monolithic" mode. Use this option when Loki is installed using the monolithic deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode). It is ignored for other modes.<br/>
+          Loki configuration for `Monolithic` mode. Use this option when Loki is installed using the monolithic deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode). It is ignored for other modes.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11759,7 +11759,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
 
 
 
-Loki configuration for "LokiStack" mode. This is useful for an easy loki-operator configuration. It is ignored for other modes.
+Loki configuration for `LokiStack` mode. This is useful for an easy loki-operator configuration. It is ignored for other modes.
 
 <table>
     <thead>
@@ -11795,7 +11795,7 @@ Loki configuration for "LokiStack" mode. This is useful for an easy loki-operato
 
 
 
-Loki configuration for "Manual" mode. This is the most flexible configuration. It is ignored for other modes.
+Loki configuration for `Manual` mode. This is the most flexible configuration. It is ignored for other modes.
 
 <table>
     <thead>
@@ -12213,7 +12213,7 @@ TLS client configuration for Loki URL.
 
 
 
-Loki configuration for "Microservices" mode. Use this option when Loki is installed using the microservices deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode). It is ignored for other modes.
+Loki configuration for `Microservices` mode. Use this option when Loki is installed using the microservices deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode). It is ignored for other modes.
 
 <table>
     <thead>
@@ -12437,7 +12437,7 @@ TLS client configuration for Loki URL.
 
 
 
-Loki configuration for "Monolithic" mode. Use this option when Loki is installed using the monolithic deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode). It is ignored for other modes.
+Loki configuration for `Monolithic` mode. Use this option when Loki is installed using the monolithic deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode). It is ignored for other modes.
 
 <table>
     <thead>
@@ -12674,7 +12674,7 @@ TLS client configuration for Loki URL.
         <td><b><a href="#flowcollectorspecprocessoradvanced">advanced</a></b></td>
         <td>object</td>
         <td>
-          `advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.<br/>
+          `advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12786,7 +12786,7 @@ TLS client configuration for Loki URL.
 
 
 
-`advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
+`advanced` allows setting some aspects of the internal configuration of the flow processor. This section is aimed mostly for debugging and fine-grained performance optimizations, such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 <table>
     <thead>
