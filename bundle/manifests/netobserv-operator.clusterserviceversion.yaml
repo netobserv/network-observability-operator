@@ -67,7 +67,7 @@ metadata:
                 ],
                 "imagePullPolicy": "IfNotPresent",
                 "interfaces": [],
-                "kafkaBatchSize": 10485760,
+                "kafkaBatchSize": 1048576,
                 "logLevel": "info",
                 "privileged": false,
                 "resources": {
@@ -249,7 +249,7 @@ metadata:
                 ],
                 "imagePullPolicy": "IfNotPresent",
                 "interfaces": [],
-                "kafkaBatchSize": 10485760,
+                "kafkaBatchSize": 1048576,
                 "logLevel": "info",
                 "privileged": false,
                 "resources": {
