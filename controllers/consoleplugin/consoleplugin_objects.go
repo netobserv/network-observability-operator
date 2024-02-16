@@ -236,6 +236,9 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 			}},
 			Volumes:            b.volumes.AppendVolumes(volumes),
 			ServiceAccountName: constants.PluginName,
+			NodeSelector:       b.advanced.NodeSelector,
+			Affinity:           b.advanced.Affinity,
+			PriorityClassName:  b.advanced.PriorityClassName,
 		},
 	}
 }

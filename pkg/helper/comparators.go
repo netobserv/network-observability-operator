@@ -14,13 +14,48 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
+type ReconcileAction int
+
+const (
+	ActionNone = iota
+	ActionCreate
+	ActionUpdate
+)
+
+func DaemonSetChanged(current, desired *appsv1.DaemonSet) ReconcileAction {
+	if desired == nil {
+		return ActionNone
+	}
+	if current == nil {
+		return ActionCreate
+	}
+	cSpec, dSpec := current.Spec, desired.Spec
+	eq := equality.Semantic.DeepDerivative
+	if !IsSubSet(current.ObjectMeta.Labels, desired.ObjectMeta.Labels) ||
+		!eq(dSpec.Selector, cSpec.Selector) ||
+		!eq(dSpec.Template, cSpec.Template) ||
+		assignationChanged(&cSpec.Template, &dSpec.Template, nil) {
+
+		return ActionUpdate
+	}
+
+	// Env vars aren't covered by DeepDerivative when they are removed: deep-compare them
+	dConts := dSpec.Template.Spec.Containers
+	cConts := cSpec.Template.Spec.Containers
+	if len(dConts) > 0 && len(cConts) > 0 && !equality.Semantic.DeepEqual(dConts[0].Env, cConts[0].Env) {
+		return ActionUpdate
+	}
+
+	return ActionNone
+}
+
 func DeploymentChanged(old, new *appsv1.Deployment, contName string, checkReplicas bool, desiredReplicas int32, report *ChangeReport) bool {
 	return report.Check("Pod changed", PodChanged(&old.Spec.Template, &new.Spec.Template, contName, report)) ||
 		report.Check("Replicas changed", (checkReplicas && *old.Spec.Replicas != desiredReplicas))
 }
 
 func PodChanged(old, new *corev1.PodTemplateSpec, containerName string, report *ChangeReport) bool {
-	if annotationsChanged(old, new, report) || volumesChanged(old, new, report) {
+	if annotationsChanged(old, new, report) || volumesChanged(old, new, report) || assignationChanged(old, new, report) {
 		return true
 	}
 	// Find containers
@@ -53,6 +88,28 @@ func annotationsChanged(old, new *corev1.PodTemplateSpec, report *ChangeReport) 
 				return true
 			}
 		}
+	}
+	return false
+}
+
+func assignationChanged(old, new *corev1.PodTemplateSpec, report *ChangeReport) bool {
+	if !equality.Semantic.DeepDerivative(old.Spec.NodeSelector, new.Spec.NodeSelector) {
+		if report != nil {
+			report.Add("NodeSelector changed")
+		}
+		return true
+	}
+	if !equality.Semantic.DeepDerivative(old.Spec.Affinity, new.Spec.Affinity) {
+		if report != nil {
+			report.Add("Affinity changed")
+		}
+		return true
+	}
+	if !equality.Semantic.DeepDerivative(old.Spec.PriorityClassName, new.Spec.PriorityClassName) {
+		if report != nil {
+			report.Add("PriorityClassName changed")
+		}
+		return true
 	}
 	return false
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
@@ -345,8 +346,35 @@ func TestBeta2ConversionRoundtrip_Advanced(t *testing.T) {
 	err := helper.SetCRDForTests("../../..")
 	assert.NoError(err)
 
+	affinityExample := v1.Affinity{
+		NodeAffinity: &v1.NodeAffinity{
+			RequiredDuringSchedulingIgnoredDuringExecution: &v1.NodeSelector{
+				NodeSelectorTerms: []v1.NodeSelectorTerm{
+					{
+						MatchExpressions: []v1.NodeSelectorRequirement{
+							{
+								Key:      "test",
+								Operator: v1.NodeSelectorOpIn,
+								Values: []string{
+									"ok",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	initial := v1beta2.FlowCollector{
 		Spec: v1beta2.FlowCollectorSpec{
+			Agent: v1beta2.FlowCollectorAgent{
+				EBPF: v1beta2.FlowCollectorEBPF{
+					Advanced: &v1beta2.AdvancedAgentConfig{
+						PriorityClassName: "pcn",
+					},
+				},
+			},
 			Processor: v1beta2.FlowCollectorFLP{
 				Advanced: &v1beta2.AdvancedProcessorConfig{
 					HealthPort:                     ptr.To(int32(999)),
@@ -354,12 +382,14 @@ func TestBeta2ConversionRoundtrip_Advanced(t *testing.T) {
 					ConversationEndTimeout:         &metav1.Duration{Duration: time.Second},
 					ConversationHeartbeatInterval:  &metav1.Duration{Duration: time.Minute},
 					ConversationTerminatingTimeout: &metav1.Duration{Duration: time.Hour},
+					NodeSelector:                   map[string]string{"test": "ok"},
 				},
 			},
 			ConsolePlugin: v1beta2.FlowCollectorConsolePlugin{
 				Advanced: &v1beta2.AdvancedPluginConfig{
 					Register: ptr.To(false),
 					Port:     ptr.To(int32(1000)),
+					Affinity: &affinityExample,
 				},
 			},
 			Loki: v1beta2.FlowCollectorLoki{
@@ -393,13 +423,16 @@ func TestBeta2ConversionRoundtrip_Advanced(t *testing.T) {
 	err = converted.ConvertTo(&back)
 	assert.NoError(err)
 
+	assert.Equal("pcn", back.Spec.Agent.EBPF.Advanced.PriorityClassName)
 	assert.False(*back.Spec.ConsolePlugin.Advanced.Register)
 	assert.Equal(int32(1000), *back.Spec.ConsolePlugin.Advanced.Port)
+	assert.Equal(&affinityExample, back.Spec.ConsolePlugin.Advanced.Affinity)
 	assert.Equal(int32(999), *back.Spec.Processor.Advanced.HealthPort)
 	assert.Equal(int32(998), *back.Spec.Processor.Advanced.ProfilePort)
 	assert.Equal(time.Second, back.Spec.Processor.Advanced.ConversationEndTimeout.Duration)
 	assert.Equal(time.Minute, back.Spec.Processor.Advanced.ConversationHeartbeatInterval.Duration)
 	assert.Equal(time.Hour, back.Spec.Processor.Advanced.ConversationTerminatingTimeout.Duration)
+	assert.Equal(map[string]string{"test": "ok"}, back.Spec.Processor.Advanced.NodeSelector)
 	assert.Equal(time.Minute, back.Spec.Loki.WriteBatchWait.Duration)
 	assert.Equal(time.Minute, back.Spec.Loki.Advanced.WriteMinBackoff.Duration)
 	assert.Equal(time.Hour, back.Spec.Loki.Advanced.WriteMaxBackoff.Duration)

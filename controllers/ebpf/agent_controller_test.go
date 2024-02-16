@@ -3,6 +3,7 @@ package ebpf
 import (
 	"testing"
 
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -38,11 +39,11 @@ func sampleDS() appsv1.DaemonSet {
 	}
 }
 
-func TestRequiredAction(t *testing.T) {
+func DaemonSetChanged(t *testing.T) {
 	assert := assert.New(t)
 
-	action := requiredAction(nil, nil)
-	assert.Equal(actionNone, int(action))
+	action := helper.DaemonSetChanged(nil, nil)
+	assert.Equal(helper.ActionNone, int(action))
 
 	current := sampleDS()
 	current.Labels["injected"] = "injected"
@@ -50,32 +51,32 @@ func TestRequiredAction(t *testing.T) {
 	current.Spec.Template.Labels["injected"] = "injected"
 	current.Spec.Template.Annotations["injected"] = "injected"
 
-	action = requiredAction(&current, nil)
-	assert.Equal(actionNone, int(action))
+	action = helper.DaemonSetChanged(&current, nil)
+	assert.Equal(helper.ActionNone, int(action))
 
-	action = requiredAction(nil, &current)
-	assert.Equal(actionCreate, int(action))
+	action = helper.DaemonSetChanged(nil, &current)
+	assert.Equal(helper.ActionCreate, int(action))
 
 	desired := sampleDS()
 
 	// Check derivatives
-	action = requiredAction(&current, &desired)
-	assert.Equal(actionNone, int(action))
+	action = helper.DaemonSetChanged(&current, &desired)
+	assert.Equal(helper.ActionNone, int(action))
 
 	desired.Labels = map[string]string{
 		"app": "bar",
 	}
-	action = requiredAction(&current, &desired)
-	assert.Equal(actionUpdate, int(action))
+	action = helper.DaemonSetChanged(&current, &desired)
+	assert.Equal(helper.ActionUpdate, int(action))
 
 	desired = sampleDS()
 	desired.Spec.Template.Spec.Containers[0].Env[0].Value = "B"
-	action = requiredAction(&current, &desired)
-	assert.Equal(actionUpdate, int(action))
+	action = helper.DaemonSetChanged(&current, &desired)
+	assert.Equal(helper.ActionUpdate, int(action))
 
 	// Make sure we don't use derivative for Env, which would ignore empty fields in "desired"
 	desired = sampleDS()
 	desired.Spec.Template.Spec.Containers[0].Env[0] = corev1.EnvVar{}
-	action = requiredAction(&current, &desired)
-	assert.Equal(actionUpdate, int(action))
+	action = helper.DaemonSetChanged(&current, &desired)
+	assert.Equal(helper.ActionUpdate, int(action))
 }
