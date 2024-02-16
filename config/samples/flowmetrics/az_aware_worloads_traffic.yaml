@@ -1,0 +1,18 @@
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: az-aware-workloads-traffic
+spec:
+  metricName: az_aware_workloads_traffic_bytes_total
+  type: Counter
+  valueField: Bytes
+  direction: Ingress
+  labels: 
+  - DstK8S_Namespace
+  - DstK8S_OwnerName
+  - DstK8S_OwnerType
+  - DstK8S_Zone
+  - SrcK8S_Namespace
+  - SrcK8S_OwnerName
+  - SrcK8S_OwnerType
+  - SrcK8S_Zone
