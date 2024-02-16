@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
 	"github.com/netobserv/network-observability-operator/controllers/flp"
@@ -25,7 +24,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -144,7 +142,17 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 	if err := c.permissions.Reconcile(ctx, &target.Spec.Agent.EBPF); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
-	desired, err := c.desired(ctx, target, rlog)
+
+	var inprocFLPInfo *flp.InProcessInfo
+	if helper.UseMergedAgentFLP(&target.Spec) {
+		// Direct-FLP mode
+		inprocFLPInfo, err = flp.ReconcileInProcess(ctx, c.Instance, target)
+		if err != nil {
+			return fmt.Errorf("reconciling in-process FLP: %w", err)
+		}
+	}
+
+	desired, err := c.desired(ctx, target, inprocFLPInfo, rlog)
 	if err != nil {
 		return err
 	}
@@ -195,27 +203,29 @@ func newMountPropagationMode(m corev1.MountPropagationMode) *corev1.MountPropaga
 	return mode
 }
 
-func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector, rlog logr.Logger) (*v1.DaemonSet, error) {
+func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector, inprocFLPInfo *flp.InProcessInfo, rlog logr.Logger) (*v1.DaemonSet, error) {
 	if coll == nil {
 		return nil, nil
 	}
 	version := helper.ExtractVersion(c.Image)
 	annotations := make(map[string]string)
 
-	fm := metricslatest.FlowMetricList{}
-	if !helper.UseKafka(&coll.Spec) {
-		// Direct-FLP mode => list custom metrics
-		if err := c.List(ctx, &fm, &client.ListOptions{Namespace: coll.Spec.Namespace}); err != nil {
-			return nil, c.Status.Error("CantListFlowMetrics", err)
-		}
-	}
-
-	env, err := c.envConfig(ctx, coll, annotations, &fm)
+	env, err := c.envConfig(ctx, coll, annotations, inprocFLPInfo)
 	if err != nil {
 		return nil, err
 	}
 	volumeMounts := c.volumes.GetMounts()
 	volumes := c.volumes.GetVolumes()
+
+	if inprocFLPInfo != nil {
+		// Merge annotations
+		for k, v := range inprocFLPInfo.Annotations {
+			annotations[k] = v
+		}
+		// Add volumes
+		volumes = inprocFLPInfo.Volumes.AppendVolumes(volumes)
+		volumeMounts = inprocFLPInfo.Volumes.AppendMounts(volumeMounts)
+	}
 
 	if helper.IsPrivileged(&coll.Spec.Agent.EBPF) {
 		volume := corev1.Volume{
@@ -299,7 +309,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	}, nil
 }
 
-func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowCollector, annots map[string]string, metrics *metricslatest.FlowMetricList) ([]corev1.EnvVar, error) {
+func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowCollector, annots map[string]string, inprocFLPInfo *flp.InProcessInfo) ([]corev1.EnvVar, error) {
 	config := c.setEnvConfig(coll)
 
 	if helper.UseKafka(&coll.Spec) {
@@ -354,10 +364,6 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			)
 		}
 	} else {
-		flpConfig, err := c.buildFLPConfig(&coll.Spec, metrics)
-		if err != nil {
-			return nil, err
-		}
 		debugConfig := helper.GetAdvancedProcessorConfig(coll.Spec.Processor.Advanced)
 		config = append(config,
 			corev1.EnvVar{
@@ -366,7 +372,7 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			},
 			corev1.EnvVar{
 				Name:  envFLPConfig,
-				Value: flpConfig,
+				Value: inprocFLPInfo.JSONConfig,
 			},
 			corev1.EnvVar{
 				Name: envFlowsTargetHost,
@@ -384,19 +390,6 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 		)
 	}
 	return config, nil
-}
-
-func (c *AgentController) buildFLPConfig(desired *flowslatest.FlowCollectorSpec, metrics *metricslatest.FlowMetricList) (string, error) {
-	flpBuilder, err := flp.NewBuilder(c.NewInstance(c.Image, c.Status), desired, metrics, flp.ConfMonolith)
-	if err != nil {
-		return "", err
-	}
-	pipeline := flpBuilder.NewInProcessPipeline()
-	err = pipeline.AddProcessorStages()
-	if err != nil {
-		return "", err
-	}
-	return flpBuilder.GetJSONConfig()
 }
 
 func requiredAction(current, desired *v1.DaemonSet) reconcileAction {

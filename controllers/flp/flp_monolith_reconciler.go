@@ -109,23 +109,26 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 		return err
 	}
 
-	// Watch for Loki certificate if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
-	// because certificate is always reloaded from file
-	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &r.Loki.TLS, r.Namespace); err != nil {
-		return err
-	}
-
-	// Watch for Kafka exporter certificate if necessary; need to restart pods in case of cert rotation
-	if err = annotateKafkaExporterCerts(ctx, r.Common, desired.Spec.Exporters, annotations); err != nil {
-		return err
-	}
-
-	// Watch for monitoring caCert
-	if err = reconcileMonitoringCerts(ctx, r.Common, &desired.Spec.Processor.Metrics.Server.TLS, r.Namespace); err != nil {
+	err = r.reconcileCertificates(ctx, desired, annotations)
+	if err != nil {
 		return err
 	}
 
 	return r.reconcileDaemonSet(ctx, builder.daemonSet(annotations))
+}
+
+func (r *monolithReconciler) reconcileCertificates(ctx context.Context, desired *flowslatest.FlowCollector, annotations map[string]string) error {
+	// Watch for Loki certificate if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
+	// because certificate is always reloaded from file
+	if _, err := r.Watcher.ProcessCACert(ctx, r.Client, &r.Loki.TLS, r.Namespace); err != nil {
+		return err
+	}
+	// Watch for Kafka exporter certificate if necessary; need to restart pods in case of cert rotation
+	if err := annotateKafkaExporterCerts(ctx, r.Common, desired.Spec.Exporters, annotations); err != nil {
+		return err
+	}
+	// Watch for monitoring caCert
+	return reconcileMonitoringCerts(ctx, r.Common, &desired.Spec.Processor.Metrics.Server.TLS, r.Namespace)
 }
 
 func (r *monolithReconciler) reconcilePrometheusService(ctx context.Context, builder *monolithBuilder) error {
@@ -185,5 +188,12 @@ func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *
 		}
 	}
 
-	return reconcileLokiRoles(ctx, r.Common, &builder.generic)
+	return ReconcileLokiRoles(
+		ctx,
+		r.Common,
+		builder.generic.desired,
+		builder.generic.name(),
+		builder.generic.name(),
+		r.Common.Namespace,
+	)
 }

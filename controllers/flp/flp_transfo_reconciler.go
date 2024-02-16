@@ -202,5 +202,12 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 		return err
 	}
 
-	return reconcileLokiRoles(ctx, r.Common, &builder.generic)
+	return ReconcileLokiRoles(
+		ctx,
+		r.Common,
+		builder.generic.desired,
+		builder.generic.name(),
+		builder.generic.name(),
+		r.Common.Namespace,
+	)
 }

@@ -236,8 +236,8 @@ func reconcileMonitoringCerts(ctx context.Context, info *reconcilers.Common, tls
 	return nil
 }
 
-func reconcileLokiRoles(ctx context.Context, r *reconcilers.Common, b *builder) error {
-	roles := loki.ClusterRoles(b.desired.Loki.Mode)
+func ReconcileLokiRoles(ctx context.Context, r *reconcilers.Common, spec *flowslatest.FlowCollectorSpec, appName, saName, saNamespace string) error {
+	roles := loki.ClusterRoles(spec.Loki.Mode)
 	if len(roles) > 0 {
 		for i := range roles {
 			if err := r.ReconcileClusterRole(ctx, &roles[i]); err != nil {
@@ -245,7 +245,7 @@ func reconcileLokiRoles(ctx context.Context, r *reconcilers.Common, b *builder) 
 			}
 		}
 		// Binding
-		crb := loki.ClusterRoleBinding(b.name(), b.name(), b.info.Namespace)
+		crb := loki.ClusterRoleBinding(appName, saName, saNamespace)
 		if err := r.ReconcileClusterRoleBinding(ctx, crb); err != nil {
 			return err
 		}

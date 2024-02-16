@@ -33,6 +33,7 @@ const (
 	livenessPeriodSeconds   = 10
 	startupFailureThreshold = 5
 	startupPeriodSeconds    = 10
+	appLabel                = "app"
 )
 
 type ConfKind string
@@ -87,11 +88,11 @@ func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 	return builder{
 		info: info,
 		labels: map[string]string{
-			"app":     name,
+			appLabel:  name,
 			"version": helper.MaxLabelLength(version),
 		},
 		selector: map[string]string{
-			"app": name,
+			appLabel: name,
 		},
 		desired:     desired,
 		flowMetrics: flowMetrics,
@@ -143,6 +144,11 @@ func (b *builder) initPipeline(ingest config.PipelineBuilderStage) PipelineBuild
 	pipeline := newPipelineBuilder(b.desired, b.flowMetrics, b.info.Loki, b.info.ClusterID, &b.volumes, &ingest)
 	b.pipeline = &pipeline
 	return pipeline
+}
+
+func (b *builder) overrideApp(app string) {
+	b.labels[appLabel] = app
+	b.selector[appLabel] = app
 }
 
 func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[string]string) corev1.PodTemplateSpec {
@@ -358,7 +364,7 @@ func (b *builder) serviceAccount() *corev1.ServiceAccount {
 			Name:      b.name(),
 			Namespace: b.info.Namespace,
 			Labels: map[string]string{
-				"app": b.name(),
+				appLabel: b.name(),
 			},
 		},
 	}
@@ -375,7 +381,7 @@ func (b *builder) clusterRoleBinding(ck ConfKind, mono bool) *rbacv1.ClusterRole
 		ObjectMeta: metav1.ObjectMeta{
 			Name: rbName,
 			Labels: map[string]string{
-				"app": b.name(),
+				appLabel: b.name(),
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
@@ -470,7 +476,7 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 			For:  &d,
 			Labels: map[string]string{
 				"severity": "warning",
-				"app":      "netobserv",
+				appLabel:   "netobserv",
 			},
 		})
 	}
@@ -487,7 +493,7 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 			For:  &d,
 			Labels: map[string]string{
 				"severity": "warning",
-				"app":      "netobserv",
+				appLabel:   "netobserv",
 			},
 		})
 	}
