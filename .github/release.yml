@@ -6,3 +6,9 @@ changelog:
     - title: Non-breaking changes
       labels:
         - "*"
+      exclude:
+        labels:
+          - dependencies
+    - title: Dependencies
+      labels:
+        - dependencies
