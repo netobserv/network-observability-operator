@@ -108,7 +108,7 @@ SHELL = /usr/bin/env bash -o pipefail
 NAMESPACE ?= netobserv
 
 # Local paths from preparing upstream release to OperatorHub
-ifeq ($(BUNDLE_CONFIG), "config/openshift-olm")
+ifeq ("$(BUNDLE_CONFIG)", "config/openshift-olm")
 	OPERATORHUB_PATH ?= "../community-operators-prod"
 else
 	OPERATORHUB_PATH ?= "../community-operators"
