@@ -84,12 +84,11 @@ Click on "Publish release".
 Before publishing, we should check that upgrading the operator from a previous version isn't broken. We can use `operator-sdk` for that:
 
 ```bash
-previous=v1.0.1
+previous=v1.0.4
 bin/operator-sdk run bundle quay.io/netobserv/network-observability-operator-bundle:$previous --timeout 5m
+PORT_FWD=false make deploy-loki deploy-sample-cr
 bin/operator-sdk run bundle-upgrade quay.io/netobserv/network-observability-operator-bundle:$vv --timeout 5m
 ```
-
-Note: currently, [seamless upgrade](https://sdk.operatorframework.io/docs/overview/operator-capabilities/#level-2---seamless-upgrades) is not fully supported because an existing custom resource needs first to be deleted before the operator is upgraded. See also: https://issues.redhat.com/browse/NETOBSERV-521.
 
 If you need to repeat the operation several times, make sure to cleanup between attempts:
 
