@@ -1,6 +1,0 @@
-apiVersion: flows.netobserv.io/v1alpha1
-kind: FlowCollector
-metadata:
-  name: cluster
-spec:
-  deploymentModel: DIRECT

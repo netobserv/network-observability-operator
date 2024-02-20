@@ -1,6 +1,5 @@
 ## Append samples you want in your CSV to this file as resources ##
 resources:
-- flows_v1alpha1_flowcollector.yaml
 - flows_v1beta1_flowcollector.yaml
 - flows_v1beta2_flowcollector.yaml
 - flows_v1alpha1_flowmetric.yaml

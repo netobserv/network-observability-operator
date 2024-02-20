@@ -28,7 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	// nolint:staticcheck
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1alpha1"
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta1"
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	metricsv1alpha1 "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
@@ -74,9 +73,6 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	cfg, err := testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
-
-	err = flowsv1alpha1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
 
 	err = flowsv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())

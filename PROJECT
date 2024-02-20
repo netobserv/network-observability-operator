@@ -28,6 +28,6 @@ resources:
   domain: netobserv.io
   group: flows
   kind: FlowMetric
-  path: github.com/netobserv/network-observability-operator/apis/flowcollector/v1alpha1
+  path: github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1
   version: v1alpha1
 version: "3"
