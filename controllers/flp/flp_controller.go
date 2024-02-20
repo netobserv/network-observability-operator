@@ -300,13 +300,27 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 	if err := r.Get(ctx, types.NamespacedName{Name: "cluster-config-v1", Namespace: "kube-system"}, cm); err != nil {
 		return nil, fmt.Errorf(`can't read "cluster-config-v1" ConfigMap: %w`, err)
 	}
+	machines, err := readMachineNetworks(cm)
+	if err != nil {
+		return nil, err
+	}
 
-	type clusterConfig struct {
+	if len(machines) > 0 {
+		subnets = append(subnets, machines...)
+	}
+
+	return subnets, nil
+}
+
+func readMachineNetworks(cm *corev1.ConfigMap) ([]flowslatest.SubnetLabel, error) {
+	var subnets []flowslatest.SubnetLabel
+
+	type ClusterConfig struct {
 		Networking struct {
-			MachineNetwork struct {
-				CIDR []string
-			}
-		}
+			MachineNetwork []struct {
+				CIDR string `yaml:"cidr"`
+			} `yaml:"machineNetwork"`
+		} `yaml:"networking"`
 	}
 
 	var rawConfig string
@@ -314,15 +328,19 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 	if rawConfig, ok = cm.Data["install-config"]; !ok {
 		return nil, fmt.Errorf(`can't find key "install-config" in "cluster-config-v1" ConfigMap`)
 	}
-	var config clusterConfig
-	if err := yaml.Unmarshal([]byte(rawConfig), config); err != nil {
+	var config ClusterConfig
+	if err := yaml.Unmarshal([]byte(rawConfig), &config); err != nil {
 		return nil, fmt.Errorf(`can't deserialize content of "cluster-config-v1" ConfigMap: %w`, err)
 	}
 
-	if len(config.Networking.MachineNetwork.CIDR) > 0 {
+	var cidrs []string
+	for _, cidr := range config.Networking.MachineNetwork {
+		cidrs = append(cidrs, cidr.CIDR)
+	}
+	if len(cidrs) > 0 {
 		subnets = append(subnets, flowslatest.SubnetLabel{
 			Name:  "Machines",
-			CIDRs: config.Networking.MachineNetwork.CIDR,
+			CIDRs: cidrs,
 		})
 	}
 

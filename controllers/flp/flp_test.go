@@ -983,3 +983,53 @@ func TestPipelineWithoutLoki(t *testing.T) {
 		pipeline,
 	)
 }
+
+func TestReadMachineNetworks(t *testing.T) {
+	cm := corev1.ConfigMap{
+		Data: map[string]string{
+			"install-config": `
+additionalTrustBundlePolicy: Proxyonly
+apiVersion: v1
+baseDomain: my.openshift.com
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform: {}
+  replicas: 3
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 3
+metadata:
+  creationTimestamp: null
+  name: my-cluster
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 10.0.0.0/16
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  aws:
+    region: eu-west-3
+publish: External`,
+		},
+	}
+
+	machines, err := readMachineNetworks(&cm)
+	assert.NoError(t, err)
+
+	assert.Equal(t,
+		[]flowslatest.SubnetLabel{
+			{
+				Name:  "Machines",
+				CIDRs: []string{"10.0.0.0/16"},
+			},
+		}, machines)
+}
