@@ -50,10 +50,9 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 		Scheme: scheme.Scheme,
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			Paths: []string{
-				// FIXME: till v1beta2 becomes the new storage version we will point to hack folder
-				// where v1beta2 is marked as the storage version
-				// filepath.Join("..", "config", "crd", "bases"),
-				filepath.Join(basePath, "..", "hack"),
+				// Hack to reintroduce when the API stored version != latest version: comment-out config/crd/bases and use hack instead; see also Makefile "hack-crd-for-test"
+				filepath.Join(basePath, "..", "config", "crd", "bases"),
+				// filepath.Join(basePath, "..", "hack"),
 				// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
 				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "console", "v1alpha1"),
 				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "config", "v1"),
