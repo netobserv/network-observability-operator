@@ -28,7 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	// nolint:staticcheck
-	flowsv1alpha1 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1alpha1"
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta1"
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	metricsv1alpha1 "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
@@ -51,10 +50,9 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 		Scheme: scheme.Scheme,
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			Paths: []string{
-				// FIXME: till v1beta2 becomes the new storage version we will point to hack folder
-				// where v1beta2 is marked as the storage version
-				// filepath.Join("..", "config", "crd", "bases"),
-				filepath.Join(basePath, "..", "hack"),
+				// Hack to reintroduce when the API stored version != latest version: comment-out config/crd/bases and use hack instead; see also Makefile "hack-crd-for-test"
+				filepath.Join(basePath, "..", "config", "crd", "bases"),
+				// filepath.Join(basePath, "..", "hack"),
 				// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
 				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "console", "v1alpha1"),
 				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "config", "v1"),
@@ -74,9 +72,6 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	cfg, err := testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
-
-	err = flowsv1alpha1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
 
 	err = flowsv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())

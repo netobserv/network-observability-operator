@@ -110,6 +110,9 @@ export IMAGE=quay.io/$USER/network-observability-operator:test
 export BUNDLE_IMAGE=quay.io/$USER/network-observability-operator-bundle:v0.0.0-test
 make images
 make bundle bundle-build bundle-push
+
+# or, alternatively:
+BUNDLE_VERSION=0.0.0-test VERSION=test make images bundle bundle-build bundle-push
 ```
 
 Optionally, you might validate the bundle:

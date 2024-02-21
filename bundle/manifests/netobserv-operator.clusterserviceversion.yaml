@@ -6,16 +6,6 @@ metadata:
       [
         {
           "apiVersion": "flows.netobserv.io/v1alpha1",
-          "kind": "FlowCollector",
-          "metadata": {
-            "name": "cluster"
-          },
-          "spec": {
-            "deploymentModel": "DIRECT"
-          }
-        },
-        {
-          "apiVersion": "flows.netobserv.io/v1alpha1",
           "kind": "FlowMetric",
           "metadata": {
             "labels": {
@@ -427,12 +417,6 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - description: FlowCollector is the Schema for the flowcollectors API, which pilots
-        and configures netflow collection.
-      displayName: Flow Collector
-      kind: FlowCollector
-      name: flowcollectors.flows.netobserv.io
-      version: v1alpha1
     - description: '`FlowCollector` is the schema for the network flows collection
         API, which pilots and configures the underlying deployments.'
       displayName: Flow Collector
@@ -1274,7 +1258,6 @@ spec:
   version: 1.0.5
   webhookdefinitions:
   - admissionReviewVersions:
-    - v1alpha1
     - v1beta1
     - v1beta2
     containerPort: 443

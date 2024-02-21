@@ -13,4 +13,6 @@ limitations under the License.
 
 // Package v1beta1 contains the v1beta1 API implementation.
 // +k8s:conversion-gen=github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2
+//
+// Deprecated: This package will be removed in one of the next releases.
 package v1beta1
