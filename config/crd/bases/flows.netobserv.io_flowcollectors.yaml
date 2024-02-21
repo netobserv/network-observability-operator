@@ -432,13 +432,13 @@ spec:
                     type: object
                   type:
                     default: EBPF
-                    description: '`type` selects the flows tracing agent. Possible
-                      values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br>
-                      - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br>
-                      `EBPF` is recommended as it offers better performances and should
-                      work regardless of the CNI installed on the cluster. `IPFIX`
-                      works with OVN-Kubernetes CNI (other CNIs could work if they
-                      support exporting IPFIX, but they would require manual configuration).'
+                    description: '`type` [deprecated (*)] selects the flows tracing
+                      agent. The only possible value is `EBPF` (default), to use NetObserv
+                      eBPF agent.<br> Previously, using an IPFIX collector was allowed,
+                      but was deprecated and it is now removed.<br> Setting `IPFIX`
+                      is ignored and still use the eBPF Agent. Since there is only
+                      a single option here, this field will be remove in a future
+                      API version.'
                     enum:
                     - EBPF
                     - IPFIX
@@ -1862,9 +1862,8 @@ spec:
                     type: object
                   dropUnusedFields:
                     default: true
-                    description: '`dropUnusedFields` allows, when set to `true`, to
-                      drop fields that are known to be unused by OVS, to save storage
-                      space.'
+                    description: '`dropUnusedFields` [deprecated (*)] this setting
+                      is not used anymore.'
                     type: boolean
                   enableKubeProbes:
                     default: true
@@ -3236,13 +3235,13 @@ spec:
                     type: object
                   type:
                     default: eBPF
-                    description: '`type` selects the flows tracing agent. Possible
-                      values are:<br> - `eBPF` (default) to use NetObserv eBPF agent.<br>
-                      - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br>
-                      `eBPF` is recommended as it offers better performances and should
-                      work regardless of the CNI installed on the cluster. `IPFIX`
-                      works with OVN-Kubernetes CNI (other CNIs could work if they
-                      support exporting IPFIX, but they would require manual configuration).'
+                    description: '`type` [deprecated (*)] selects the flows tracing
+                      agent. The only possible value is `eBPF` (default), to use NetObserv
+                      eBPF agent.<br> Previously, using an IPFIX collector was allowed,
+                      but was deprecated and it is now removed.<br> Setting `IPFIX`
+                      is ignored and still use the eBPF Agent. Since there is only
+                      a single option here, this field will be remove in a future
+                      API version.'
                     enum:
                     - eBPF
                     - IPFIX
@@ -4928,9 +4927,8 @@ spec:
                         type: string
                       dropUnusedFields:
                         default: true
-                        description: '`dropUnusedFields` allows, when set to `true`,
-                          to drop fields that are known to be unused by OVS, to save
-                          storage space.'
+                        description: '`dropUnusedFields` [deprecated (*)] this setting
+                          is not used anymore.'
                         type: boolean
                       enableKubeProbes:
                         default: true

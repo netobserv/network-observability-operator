@@ -619,7 +619,6 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 
 	ns := "namespace"
 	cfg := getConfig()
-	cfg.Agent.Type = flowslatest.AgentIPFIX
 	loki := cfg.Loki
 	b := monoBuilder(ns, &cfg)
 	cm, digest, err := b.configMap()
@@ -639,7 +638,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 
 	params := decoded.Parameters
 	assert.Len(params, 6)
-	assert.Equal(*cfg.Processor.Advanced.Port, int32(params[0].Ingest.Collector.Port))
+	assert.Equal(*cfg.Processor.Advanced.Port, int32(params[0].Ingest.GRPC.Port))
 
 	lokiCfg := params[3].Write.Loki
 	assert.Equal(loki.Manual.IngesterURL, lokiCfg.URL)
@@ -657,6 +656,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 		"DstK8S_Type",
 		"K8S_FlowLayer",
 		"_RecordType",
+		"FlowDirection",
 	}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
@@ -757,7 +757,6 @@ func TestLabels(t *testing.T) {
 	info := reconcilers.Common{Namespace: "ns"}
 	builder, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
 	tBuilder, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
-	iBuilder, _ := newIngestBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
 
 	// Deployment
 	depl := tBuilder.deployment(annotate("digest"))
@@ -773,13 +772,6 @@ func TestLabels(t *testing.T) {
 	assert.Equal("dev", ds.Labels["version"])
 	assert.Equal("dev", ds.Spec.Template.Labels["version"])
 
-	// DaemonSet (ingester)
-	ds2 := iBuilder.daemonSet(annotate("digest"))
-	assert.Equal("flowlogs-pipeline-ingester", ds2.Labels["app"])
-	assert.Equal("flowlogs-pipeline-ingester", ds2.Spec.Template.Labels["app"])
-	assert.Equal("dev", ds2.Labels["version"])
-	assert.Equal("dev", ds2.Spec.Template.Labels["version"])
-
 	// Service
 	svc := builder.promService()
 	assert.Equal("flowlogs-pipeline", svc.Labels["app"])
@@ -794,9 +786,6 @@ func TestLabels(t *testing.T) {
 	smTrans := tBuilder.generic.serviceMonitor()
 	assert.Equal("flowlogs-pipeline-transformer-monitor", smTrans.Name)
 	assert.Equal("flowlogs-pipeline-transformer", smTrans.Spec.Selector.MatchLabels["app"])
-	smIng := iBuilder.generic.serviceMonitor()
-	assert.Equal("flowlogs-pipeline-ingester-monitor", smIng.Name)
-	assert.Equal("flowlogs-pipeline-ingester", smIng.Spec.Selector.MatchLabels["app"])
 }
 
 // This function validate that each stage has its matching parameter
@@ -837,19 +826,8 @@ func TestPipelineConfig(t *testing.T) {
 		pipeline,
 	)
 
-	// Kafka Ingester
-	cfg.DeploymentModel = flowslatest.DeploymentModelKafka
-	info := reconcilers.Common{Namespace: ns}
-	bi, _ := newIngestBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
-	cm, _, err = bi.configMap()
-	assert.NoError(err)
-	_, pipeline = validatePipelineConfig(t, cm)
-	assert.Equal(
-		`[{"name":"grpc"},{"name":"kafka-write","follows":"grpc"}]`,
-		pipeline,
-	)
-
 	// Kafka Transformer
+	cfg.DeploymentModel = flowslatest.DeploymentModelKafka
 	bt := transfBuilder(ns, &cfg)
 	cm, _, err = bt.configMap()
 	assert.NoError(err)
@@ -858,30 +836,6 @@ func TestPipelineConfig(t *testing.T) {
 		`[{"name":"kafka-read"},{"name":"extract_conntrack","follows":"kafka-read"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
 		pipeline,
 	)
-}
-
-func TestPipelineConfigDropUnused(t *testing.T) {
-	assert := assert.New(t)
-
-	// Single config
-	ns := "namespace"
-	cfg := getConfig()
-	cfg.Agent.Type = flowslatest.AgentIPFIX
-	cfg.Processor.LogLevel = "info"
-	cfg.Processor.Advanced.DropUnusedFields = ptr.To(true)
-	b := monoBuilder(ns, &cfg)
-	cm, _, err := b.configMap()
-	assert.NoError(err)
-	cfs, pipeline := validatePipelineConfig(t, cm)
-	assert.Equal(
-		`[{"name":"ipfix"},{"name":"filter","follows":"ipfix"},{"name":"extract_conntrack","follows":"filter"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
-		pipeline,
-	)
-
-	jsonParams, _ := json.Marshal(cfs.Parameters[1].Transform.Filter)
-	assert.Contains(string(jsonParams), `{"input":"CustomBytes1","type":"remove_field"}`)
-	assert.Contains(string(jsonParams), `{"input":"CustomInteger5","type":"remove_field"}`)
-	assert.Contains(string(jsonParams), `{"input":"MPLS1Label","type":"remove_field"}`)
 }
 
 func TestPipelineTraceStage(t *testing.T) {

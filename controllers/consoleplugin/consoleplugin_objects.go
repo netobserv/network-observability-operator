@@ -359,32 +359,30 @@ func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) error {
 	if err != nil {
 		return err
 	}
-	if helper.UseEBPF(b.desired) {
-		if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
-			fconf.Features = append(fconf.Features, "pktDrop")
-		}
+	if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
+		fconf.Features = append(fconf.Features, "pktDrop")
+	}
 
-		if helper.IsDNSTrackingEnabled(&b.desired.Agent.EBPF) {
-			fconf.Features = append(fconf.Features, "dnsTracking")
-		}
+	if helper.IsDNSTrackingEnabled(&b.desired.Agent.EBPF) {
+		fconf.Features = append(fconf.Features, "dnsTracking")
+	}
 
-		if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
-			fconf.Features = append(fconf.Features, "flowRTT")
-		}
+	if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
+		fconf.Features = append(fconf.Features, "flowRTT")
+	}
 
-		if b.desired.Agent.EBPF.Advanced != nil {
-			if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeJustMark]; ok {
-				dedupJustMark, err = strconv.ParseBool(v)
-				if err != nil {
-					return err
-				}
+	if b.desired.Agent.EBPF.Advanced != nil {
+		if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeJustMark]; ok {
+			dedupJustMark, err = strconv.ParseBool(v)
+			if err != nil {
+				return err
 			}
+		}
 
-			if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeMerge]; ok {
-				dedupMerge, err = strconv.ParseBool(v)
-				if err != nil {
-					return err
-				}
+		if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeMerge]; ok {
+			dedupMerge, err = strconv.ParseBool(v)
+			if err != nil {
+				return err
 			}
 		}
 	}

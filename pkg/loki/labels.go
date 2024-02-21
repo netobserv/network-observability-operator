@@ -24,16 +24,14 @@ func GetLokiLabels(desired *flowslatest.FlowCollectorSpec) []string {
 		indexFields = append(indexFields, constants.LokiZoneIndexFields...)
 	}
 
-	if helper.UseEBPF(desired) {
-		dedupJustMark, _ := strconv.ParseBool(ebpf.DedupeJustMarkDefault)
-		if desired.Agent.EBPF.Advanced != nil {
-			if v, ok := desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeJustMark]; ok {
-				dedupJustMark, _ = strconv.ParseBool(v)
-			}
+	dedupJustMark, _ := strconv.ParseBool(ebpf.DedupeJustMarkDefault)
+	if desired.Agent.EBPF.Advanced != nil {
+		if v, ok := desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeJustMark]; ok {
+			dedupJustMark, _ = strconv.ParseBool(v)
 		}
-		if dedupJustMark {
-			indexFields = append(indexFields, constants.LokiDeduperMarkIndexFields...)
-		}
+	}
+	if dedupJustMark {
+		indexFields = append(indexFields, constants.LokiDeduperMarkIndexFields...)
 	}
 
 	return indexFields

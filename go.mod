@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/go-logr/logr v1.4.1
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/netobserv/flowlogs-pipeline v0.1.12-0.20240305083238-24bf8cec8807
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.31.1

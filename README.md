@@ -3,9 +3,10 @@
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/netobserv/network-observability-operator)
 [![Go Report Card](https://goreportcard.com/badge/github.com/netobserv/network-observability-operator)](https://goreportcard.com/report/github.com/netobserv/network-observability-operator)
 
-NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a monitoring pipeline to collect and enrich network flows. These flows can be produced by the NetObserv eBPF agent, or by any device or CNI able to export flows in IPFIX format, such as OVN-Kubernetes.
-
-The operator provides dashboards, metrics, and keeps flows accessible in a queryable log store, Grafana Loki. When used in OpenShift, new views are available in the Console.
+NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a monitoring pipeline that consists in:
+- the NetObserv eBPF agent, that generates network flows from captured packets
+- Flowlogs-pipeline, a component that collects, enriches and exports these flows.
+- When used in OpenShift, a Console plugin for flows visualization with powerful filtering options, a topology representation and more.
 
 ## Getting Started
 
@@ -122,11 +123,9 @@ As it operates cluster-wide, only a single `FlowCollector` is allowed, and it ha
 
 A couple of settings deserve special attention:
 
-- Agent (`spec.agent.type`) can be `eBPF` (default) or `IPFIX`. eBPF is recommended, as it should work in more situations and offers better performances. If you can't, or don't want to use eBPF, note that the IPFIX option is fully functional only when using [OVN-Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) CNI. Other CNIs are not officially supported, but you may still be able to configure them manually if they allow IPFIX exports.
-
 - Agent features (`spec.agent.ebpf.features`) can enable more features such as tracking packet drops, TCP latency (RTT) and DNS requests and responses.
 
-- Sampling (`spec.agent.ebpf.sampling` and `spec.agent.ipfix.sampling`): a value of `100` means: one flow every 100 is sampled. `1` means all flows are sampled. The lower it is, the more flows you get, and the more accurate are derived metrics, but the higher amount of resources are consumed. By default, sampling is set to 50 (ie. 1:50) for eBPF and 400 (1:400) for IPFIX. Note that more sampled flows also means more storage needed. We recommend to start with default values and refine empirically, to figure out which setting your cluster can manage.
+- Sampling `spec.agent.ebpf.sampling`: a value of `100` means: one flow every 100 is sampled. `1` means all flows are sampled. The lower it is, the more flows you get, and the more accurate are derived metrics, but the higher amount of resources are consumed. By default, sampling is set to 50 (ie. 1:50). Note that more sampled flows also means more storage needed. We recommend to start with default values and refine empirically, to figure out which setting your cluster can manage.
 
 - Loki (`spec.loki`): configure here how to reach Loki. The default URL values match the Loki quick install paths mentioned in the _Getting Started_ section, but you may have to configure differently if you used another installation method. You will find more information in our guides for deploying Loki: [with Loki Operator](https://github.com/netobserv/documents/blob/main/loki_operator.md), or an alternative ["distributed Loki" guide](https://github.com/netobserv/documents/blob/main/loki_distributed.md). You should set `spec.loki.mode` according to the chosen installation method, for instance use `LokiStack` if you use the Loki Operator.
 

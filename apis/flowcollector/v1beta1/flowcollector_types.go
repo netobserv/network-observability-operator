@@ -86,12 +86,10 @@ type FlowCollectorSpec struct {
 // allow defining both fields.
 // +union
 type FlowCollectorAgent struct {
-	// `type` selects the flows tracing agent. Possible values are:<br>
-	// - `EBPF` (default) to use NetObserv eBPF agent.<br>
-	// - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br>
-	// `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster.
-	// `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX,
-	// but they would require manual configuration).
+	// `type` [deprecated (*)] selects the flows tracing agent. The only possible value is `EBPF` (default), to use NetObserv eBPF agent.<br>
+	// Previously, using an IPFIX collector was allowed, but was deprecated and it is now removed.<br>
+	// Setting `IPFIX` is ignored and still use the eBPF Agent.
+	// Since there is only a single option here, this field will be remove in a future API version.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="EBPF";"IPFIX"
 	// +kubebuilder:default:=EBPF
@@ -443,7 +441,7 @@ type FlowCollectorFLP struct {
 	EnableKubeProbes *bool `json:"enableKubeProbes,omitempty"`
 
 	//+kubebuilder:default:=true
-	// `dropUnusedFields` allows, when set to `true`, to drop fields that are known to be unused by OVS, to save storage space.
+	// `dropUnusedFields` [deprecated (*)] this setting is not used anymore.
 	DropUnusedFields *bool `json:"dropUnusedFields,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0

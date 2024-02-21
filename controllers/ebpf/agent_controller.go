@@ -126,16 +126,14 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 		return err
 	}
 
-	if !helper.UseEBPF(&target.Spec) || c.PreviousPrivilegedNamespace() != c.PrivilegedNamespace() {
+	if c.PreviousPrivilegedNamespace() != c.PrivilegedNamespace() {
 		c.Managed.TryDeleteAll(ctx)
 
 		if current == nil {
-			rlog.Info("nothing to do, as the requested agent is not eBPF", "currentAgent", target.Spec.Agent)
+			rlog.Info("nothing to do, namespace already cleaned up", "currentAgent", target.Spec.Agent)
 			return nil
 		}
-		// If the user has changed the agent type or changed the target namespace, we need to manually
-		// undeploy the agent
-		rlog.Info("user changed the agent type, or the target namespace. Deleting eBPF agent", "currentAgent", target.Spec.Agent)
+		rlog.Info("namespace cleanup: deleting eBPF agent", "currentAgent", target.Spec.Agent)
 		if err := c.Delete(ctx, current); err != nil {
 			if errors.IsNotFound(err) {
 				return nil
@@ -201,7 +199,7 @@ func newMountPropagationMode(m corev1.MountPropagationMode) *corev1.MountPropaga
 }
 
 func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector, rlog logr.Logger) (*v1.DaemonSet, error) {
-	if coll == nil || !helper.UseEBPF(&coll.Spec) {
+	if coll == nil {
 		return nil, nil
 	}
 	version := helper.ExtractVersion(c.Image)

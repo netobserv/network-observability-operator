@@ -78,7 +78,7 @@ func flowCollectorIsoSpecs() {
 					EnableKubeProbes:               ptr.To(false),
 					DropUnusedFields:               ptr.To(false),
 				},
-				LogTypes: &outputRecordTypes,
+				LogTypes: ptr.To(flowslatest.LogTypeAll),
 				Metrics: flowslatest.FLPMetrics{
 					Server: flowslatest.MetricsServerConfig{
 						Port: 12347,
