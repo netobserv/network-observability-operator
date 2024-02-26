@@ -88,9 +88,8 @@ func TestFlowMetricToFLP(t *testing.T) {
 
 	m1 := metric(items, "m_1")
 	assert.Equal(api.MetricsItem{
-		Name:   "m_1",
-		Type:   "counter",
-		Filter: api.MetricsFilter{Key: "", Value: "", Type: ""},
+		Name: "m_1",
+		Type: "counter",
 		Filters: []api.MetricsFilter{
 			{Key: "f", Value: "v", Type: api.PromFilterEqual},
 			{Key: "Duplicate", Value: "true", Type: api.PromFilterNotEqual},
@@ -100,9 +99,8 @@ func TestFlowMetricToFLP(t *testing.T) {
 	}, *m1)
 	m2 := metric(items, "m_2")
 	assert.Equal(api.MetricsItem{
-		Name:   "m_2",
-		Type:   "histogram",
-		Filter: api.MetricsFilter{Key: "", Value: "", Type: ""},
+		Name: "m_2",
+		Type: "histogram",
 		Filters: []api.MetricsFilter{
 			{Key: "f", Value: "v", Type: api.PromFilterRegex},
 			{Key: "f2", Type: api.PromFilterAbsence},

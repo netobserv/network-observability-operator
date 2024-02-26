@@ -50,19 +50,11 @@ type PromConnectionInfo struct {
 type MetricsItem struct {
 	Name       string          `yaml:"name" json:"name" doc:"the metric name"`
 	Type       string          `yaml:"type" json:"type" enum:"MetricEncodeOperationEnum" doc:"one of the following:"`
-	Filter     MetricsFilter   `yaml:"filter,omitempty" json:"filter,omitempty" doc:"an optional criterion to filter entries by. Deprecated: use filters instead."`
 	Filters    []MetricsFilter `yaml:"filters" json:"filters" doc:"a list of criteria to filter entries by"`
 	ValueKey   string          `yaml:"valueKey" json:"valueKey" doc:"entry key from which to resolve metric value"`
 	Labels     []string        `yaml:"labels" json:"labels" doc:"labels to be associated with the metric"`
 	Buckets    []float64       `yaml:"buckets" json:"buckets" doc:"histogram buckets"`
 	ValueScale float64         `yaml:"valueScale" json:"valueScale" doc:"scale factor of the value (MetricVal := FlowVal / Scale)"`
-}
-
-func (i *MetricsItem) GetFilters() []MetricsFilter {
-	if len(i.Filters) == 0 && i.Filter.Key != "" {
-		return []MetricsFilter{i.Filter}
-	}
-	return i.Filters
 }
 
 type MetricsItems []MetricsItem
