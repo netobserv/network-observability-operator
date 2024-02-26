@@ -15,6 +15,7 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 
 	"github.com/go-logr/logr"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -55,6 +56,9 @@ const (
 	envEnablePktDrop              = "ENABLE_PKT_DROPS"
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
 	envEnableFlowRTT              = "ENABLE_RTT"
+	envEnableMetrics              = "METRICS_ENABLE"
+	envMetricsPort                = "METRICS_SERVER_PORT"
+	envMetricPrefix               = "METRICS_PREFIX"
 	envListSeparator              = ","
 )
 
@@ -89,15 +93,22 @@ const (
 // accounts, SecurityContextConstraints...
 type AgentController struct {
 	*reconcilers.Instance
-	permissions permissions.Reconciler
-	volumes     volumes.Builder
+	permissions    permissions.Reconciler
+	volumes        volumes.Builder
+	promSvc        *corev1.Service
+	serviceMonitor *monitoringv1.ServiceMonitor
 }
 
 func NewAgentController(common *reconcilers.Instance) *AgentController {
-	return &AgentController{
+	agent := AgentController{
 		Instance:    common,
 		permissions: permissions.NewReconciler(common),
+		promSvc:     common.Managed.NewService(constants.EBPFAgentMetricsSvcName),
 	}
+	if common.AvailableAPIs.HasSvcMonitor() {
+		agent.serviceMonitor = common.Managed.NewServiceMonitor(constants.EBPFAgentMetricsSvcMonitoringName)
+	}
+	return &agent
 }
 
 func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.FlowCollector) error {
@@ -135,6 +146,12 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 		return err
 	}
 
+	if helper.IsEBPFMetricsEnabled(&target.Spec.Agent.EBPF) {
+		err = c.reconcilePrometheusService(ctx, &target.Spec.Agent.EBPF)
+		if err != nil {
+			return fmt.Errorf("reconciling prometheus service: %w", err)
+		}
+	}
 	switch requiredAction(current, desired) {
 	case actionCreate:
 		rlog.Info("action: create agent")
@@ -465,6 +482,21 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		})
 	}
 
+	if helper.IsEBPFMetricsEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableMetrics,
+			Value: "true",
+		})
+		config = append(config, corev1.EnvVar{
+			Name:  envMetricsPort,
+			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.Metrics.Server.Port)),
+		})
+		config = append(config, corev1.EnvVar{
+			Name:  envMetricPrefix,
+			Value: "netobserv_agent_",
+		})
+	}
+
 	dedup := dedupeDefault
 	dedupJustMark := DedupeJustMarkDefault
 	dedupMerge := DedupeMergeDefault
@@ -499,4 +531,8 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	config = append(config, corev1.EnvVar{Name: EnvDedupeMerge, Value: dedupMerge})
 
 	return config
+}
+
+func (c *AgentController) reconcilePrometheusService(ctx context.Context, target *flowslatest.FlowCollectorEBPF) error {
+	return c.ReconcileMetricsService(ctx, target)
 }

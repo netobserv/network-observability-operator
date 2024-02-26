@@ -22,6 +22,10 @@ spec:
       interfaces: []
       excludeInterfaces: ["lo"]
       kafkaBatchSize: 1048576
+      metrics:
+        enable: false
+        server:
+          port: 9090
       # Custom optionnal resources configuration
       resources:
         requests:

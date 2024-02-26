@@ -353,7 +353,7 @@ func (b *builder) promService() *corev1.Service {
 				// Some Kubernetes versions might automatically set TargetPort to Port. We need to
 				// explicitly set it here so the reconcile loop verifies that the owned service
 				// is equal as the desired service
-				TargetPort: intstr.FromInt(int(b.desired.Processor.Metrics.Server.Port)),
+				TargetPort: intstr.FromInt32(b.desired.Processor.Metrics.Server.Port),
 			}},
 		},
 	}
