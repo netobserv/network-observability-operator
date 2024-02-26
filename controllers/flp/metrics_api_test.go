@@ -56,7 +56,7 @@ func TestFlowMetricToFLP(t *testing.T) {
 				Type:       metricslatest.CounterMetric,
 				ValueField: "val",
 				Labels:     []string{"by_field"},
-				Filters:    []metricslatest.MetricFilter{{Field: "f", Value: "v", MatchType: metricslatest.MatchExact}},
+				Filters:    []metricslatest.MetricFilter{{Field: "f", Value: "v", MatchType: metricslatest.MatchEqual}},
 			}},
 			{Spec: metricslatest.FlowMetricSpec{
 				MetricName:        "m_2",
@@ -92,8 +92,8 @@ func TestFlowMetricToFLP(t *testing.T) {
 		Type:   "counter",
 		Filter: api.MetricsFilter{Key: "", Value: "", Type: ""},
 		Filters: []api.MetricsFilter{
-			{Key: "f", Value: "v", Type: api.PromFilterExact},
-			{Key: "Duplicate", Value: "false", Type: api.PromFilterExact},
+			{Key: "f", Value: "v", Type: api.PromFilterEqual},
+			{Key: "Duplicate", Value: "true", Type: api.PromFilterNotEqual},
 		},
 		ValueKey: "val",
 		Labels:   []string{"by_field"},

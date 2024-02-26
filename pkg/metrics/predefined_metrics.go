@@ -69,7 +69,7 @@ func init() {
 						Type:     "counter",
 						ValueKey: valueField,
 						Filters: []flpapi.MetricsFilter{
-							{Key: "Duplicate", Value: "false"},
+							{Key: "Duplicate", Value: "true", Type: flpapi.PromFilterNotEqual},
 							{Key: "FlowDirection", Value: mapDirection[dir], Type: flpapi.PromFilterRegex},
 						},
 						Labels: labels,
@@ -108,7 +108,7 @@ func init() {
 				Type:     "counter",
 				ValueKey: "PktDropPackets",
 				Filters: []flpapi.MetricsFilter{
-					{Key: "Duplicate", Value: "false"},
+					{Key: "Duplicate", Value: "true", Type: flpapi.PromFilterNotEqual},
 					{Key: "PktDropPackets", Type: flpapi.PromFilterPresence},
 				},
 				Labels: labels,
@@ -121,7 +121,7 @@ func init() {
 				Type:     "counter",
 				ValueKey: "PktDropBytes",
 				Filters: []flpapi.MetricsFilter{
-					{Key: "Duplicate", Value: "false"},
+					{Key: "Duplicate", Value: "true", Type: flpapi.PromFilterNotEqual},
 					{Key: "PktDropBytes", Type: flpapi.PromFilterPresence},
 				},
 				Labels: labels,
