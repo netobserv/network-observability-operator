@@ -192,12 +192,12 @@ func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem
 		m.Filters = append(m.Filters, api.MetricsFilter{Key: f.Field, Value: f.Value, Type: conversion.PascalToLower(string(f.MatchType), '_')})
 	}
 	if !flowMetric.IncludeDuplicates {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "Duplicate", Value: "true", Type: "not_equal"})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "Duplicate", Value: "true", Type: api.PromFilterNotEqual})
 	}
 	if flowMetric.Direction == metricslatest.Egress {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "1|2", Type: "match_regex"})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "1|2", Type: api.PromFilterRegex})
 	} else if flowMetric.Direction == metricslatest.Ingress {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "0|2", Type: "match_regex"})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "0|2", Type: api.PromFilterRegex})
 	}
 	for _, b := range flowMetric.Buckets {
 		f, err := strconv.ParseFloat(b, 64)
