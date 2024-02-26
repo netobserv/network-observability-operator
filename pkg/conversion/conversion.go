@@ -103,3 +103,27 @@ func PascalToUpper(str string, splitter rune) string {
 	}
 	return sb.String()
 }
+
+func PascalToLower(str string, splitter rune) string {
+	if len(str) == 0 {
+		return str
+	}
+
+	// check for any exception in map
+	for k, v := range upperPascalExceptions {
+		if v == str {
+			return k
+		}
+	}
+
+	// Split on capital letters, upper each part and join with splitter
+	var sb strings.Builder
+	runes := []rune(str)
+	for i, r := range runes {
+		if i > 0 && unicode.IsUpper(r) {
+			sb.WriteRune(splitter)
+		}
+		sb.WriteRune(unicode.ToLower(r))
+	}
+	return sb.String()
+}

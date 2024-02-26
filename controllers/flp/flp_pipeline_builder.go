@@ -13,6 +13,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/conversion"
 	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/loki"
@@ -188,15 +189,15 @@ func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem
 		ValueKey: flowMetric.ValueField,
 	}
 	for _, f := range flowMetric.Filters {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: f.Field, Value: f.Value, Type: strings.ToLower(string(f.MatchType))})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: f.Field, Value: f.Value, Type: conversion.PascalToLower(string(f.MatchType), '_')})
 	}
 	if !flowMetric.IncludeDuplicates {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "Duplicate", Value: "false", Type: "exact"})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "Duplicate", Value: "true", Type: api.PromFilterNotEqual})
 	}
 	if flowMetric.Direction == metricslatest.Egress {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "1|2", Type: "regex"})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "1|2", Type: api.PromFilterRegex})
 	} else if flowMetric.Direction == metricslatest.Ingress {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "0|2", Type: "regex"})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "0|2", Type: api.PromFilterRegex})
 	}
 	for _, b := range flowMetric.Buckets {
 		f, err := strconv.ParseFloat(b, 64)

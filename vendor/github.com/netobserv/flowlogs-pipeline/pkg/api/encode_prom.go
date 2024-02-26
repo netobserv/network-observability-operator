@@ -23,11 +23,11 @@ type PromTLSConf struct {
 }
 
 type PromEncode struct {
-	*PromConnectionInfo
-	Metrics    MetricsItems `yaml:"metrics,omitempty" json:"metrics,omitempty" doc:"list of prometheus metric definitions, each includes:"`
-	Prefix     string       `yaml:"prefix,omitempty" json:"prefix,omitempty" doc:"prefix added to each metric name"`
-	ExpiryTime Duration     `yaml:"expiryTime,omitempty" json:"expiryTime,omitempty" doc:"time duration of no-flow to wait before deleting prometheus data item"`
-	MaxMetrics int          `yaml:"maxMetrics,omitempty" json:"maxMetrics,omitempty" doc:"maximum number of metrics to report (default: unlimited)"`
+	*PromConnectionInfo `json:",inline,omitempty" doc:"Prometheus connection info (optional); includes:"`
+	Metrics             MetricsItems `yaml:"metrics,omitempty" json:"metrics,omitempty" doc:"list of prometheus metric definitions, each includes:"`
+	Prefix              string       `yaml:"prefix,omitempty" json:"prefix,omitempty" doc:"prefix added to each metric name"`
+	ExpiryTime          Duration     `yaml:"expiryTime,omitempty" json:"expiryTime,omitempty" doc:"time duration of no-flow to wait before deleting prometheus data item"`
+	MaxMetrics          int          `yaml:"maxMetrics,omitempty" json:"maxMetrics,omitempty" doc:"maximum number of metrics to report (default: unlimited)"`
 }
 
 type MetricEncodeOperationEnum struct {
@@ -70,14 +70,16 @@ type MetricsItems []MetricsItem
 type MetricsFilter struct {
 	Key   string `yaml:"key" json:"key" doc:"the key to match and filter by"`
 	Value string `yaml:"value" json:"value" doc:"the value to match and filter by"`
-	Type  string `yaml:"type" json:"type" enum:"MetricEncodeFilterTypeEnum" doc:"the type of filter match: exact (default), presence, absence or regex"`
+	Type  string `yaml:"type" json:"type" enum:"MetricEncodeFilterTypeEnum" doc:"the type of filter match: equal (default), not_equal, presence, absence, match_regex or not_match_regex"`
 }
 
 type MetricEncodeFilterTypeEnum struct {
-	Exact    string `yaml:"exact" json:"exact" doc:"match exactly the provided fitler value"`
-	Presence string `yaml:"presence" json:"presence" doc:"filter key must be present (filter value is ignored)"`
-	Absence  string `yaml:"absence" json:"absence" doc:"filter key must be absent (filter value is ignored)"`
-	Regex    string `yaml:"regex" json:"regex" doc:"match filter value as a regular expression"`
+	Equal         string `yaml:"equal" json:"equal" doc:"match exactly the provided filter value"`
+	NotEqual      string `yaml:"not_equal" json:"not_equal" doc:"the value must be different from the provided filter"`
+	Presence      string `yaml:"presence" json:"presence" doc:"filter key must be present (filter value is ignored)"`
+	Absence       string `yaml:"absence" json:"absence" doc:"filter key must be absent (filter value is ignored)"`
+	MatchRegex    string `yaml:"match_regex" json:"match_regex" doc:"match filter value as a regular expression"`
+	NotMatchRegex string `yaml:"not_match_regex" json:"not_match_regex" doc:"the filter value must not match the provided regular expression"`
 }
 
 func MetricEncodeFilterTypeName(t string) string {
