@@ -150,45 +150,12 @@ func TestCreateHealthDashboard_Default(t *testing.T) {
 	assert.NoError(err)
 
 	assert.Equal("NetObserv / Health", d.Title)
-	assert.Equal([]string{
-		"Flows",
-		"Flows Overhead",
-		"Top flow rates per source and destination namespaces",
-		"Agents",
-		"Processor",
-		"Operator",
-	}, d.Titles())
+	assert.Equal([]string{"", "Flowlogs-pipeline statistics", "eBPF agent statistics", "Operator statistics", "Resource usage"}, d.Titles())
 
 	// First row
 	row := 0
-	assert.Len(d.Rows[row].Panels, 1)
-	assert.Equal("Rates", d.Rows[row].Panels[0].Title)
-	assert.Len(d.Rows[row].Panels[0].Targets, 3)
-	assert.Contains(d.Rows[row].Panels[0].Targets[0].Expr, "netobserv_ingest_flows_processed")
-
-	// 3rd row
-	row = 2
-	assert.Len(d.Rows[row].Panels, 2)
-	assert.Equal("Applications", d.Rows[row].Panels[0].Title)
-	assert.Equal("Infrastructure", d.Rows[row].Panels[1].Title)
+	assert.Len(d.Rows[row].Panels, 4)
+	assert.Equal("Flows per second", d.Rows[row].Panels[0].Title)
 	assert.Len(d.Rows[row].Panels[0].Targets, 1)
-	assert.Contains(d.Rows[row].Panels[0].Targets[0].Expr, "netobserv_namespace_flows_total")
-}
-
-func TestCreateHealthDashboard_NoFlowMetric(t *testing.T) {
-	assert := assert.New(t)
-
-	js, err := CreateHealthDashboard("netobserv", []string{})
-	assert.NoError(err)
-
-	d, err := FromBytes([]byte(js))
-	assert.NoError(err)
-
-	assert.Equal("NetObserv / Health", d.Title)
-	assert.Equal([]string{
-		"Flows",
-		"Agents",
-		"Processor",
-		"Operator",
-	}, d.Titles())
+	assert.Contains(d.Rows[row].Panels[0].Targets[0].Expr, "netobserv_agent_evicted_flows_total")
 }

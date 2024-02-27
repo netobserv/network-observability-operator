@@ -14,15 +14,15 @@ type Dashboard struct {
 type Row struct {
 	Title    string
 	Collapse bool
-	Height   int
+	Height   string
 	Metric   string // TODO: remove
 	Panels   []Panel
 }
 
-func NewRow(title string, collaspe bool, height int, panels []Panel) *Row {
+func NewRow(title string, collapse bool, height string, panels []Panel) *Row {
 	return &Row{
 		Title:    title,
-		Collapse: collaspe,
+		Collapse: collapse,
 		Height:   height,
 		Panels:   panels,
 	}
@@ -194,7 +194,7 @@ func (r *Row) ToGrafanaJSON(netobsNs string) string {
 	{
 		"collapse": %t,
 		"editable": true,
-		"height": "%dpx",
+		"height": "%s",
 		"panels": [%s],
 		"showTitle": %t,
 		"title": "%s"

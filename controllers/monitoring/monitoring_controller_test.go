@@ -89,14 +89,7 @@ func ControllerSpecs() {
 					return err
 				}
 				return d.Titles()
-			}, timeout, interval).Should(Equal([]string{
-				"Flows",
-				"Flows Overhead",
-				"Top flow rates per source and destination namespaces",
-				"Agents",
-				"Processor",
-				"Operator",
-			}))
+			}, timeout, interval).Should(Equal([]string{"", "Flowlogs-pipeline statistics", "eBPF agent statistics", "Operator statistics", "Resource usage"}))
 		})
 
 		It("Should update successfully", func() {
@@ -117,7 +110,7 @@ func ControllerSpecs() {
 				}, &v1.ConfigMap{})
 			}, timeout, interval).Should(MatchError(`configmaps "grafana-dashboard-netobserv-flow-metrics" not found`))
 
-			By("Expecting the health dashboards rows to be filtered")
+			By("Expecting the health dashboard to remain")
 			Eventually(func() interface{} {
 				cm := v1.ConfigMap{}
 				if err := k8sClient.Get(ctx, types.NamespacedName{
@@ -131,12 +124,7 @@ func ControllerSpecs() {
 					return err
 				}
 				return d.Titles()
-			}, timeout, interval).Should(Equal([]string{
-				"Flows",
-				"Agents",
-				"Processor",
-				"Operator",
-			}))
+			}, timeout, interval).Should(Equal([]string{"", "Flowlogs-pipeline statistics", "eBPF agent statistics", "Operator statistics", "Resource usage"}))
 		})
 	})
 

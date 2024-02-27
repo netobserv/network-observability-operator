@@ -8,10 +8,8 @@ func CreateHealthDashboard(netobsNs string, _ []string) (string, error) {
 	d := Dashboard{Title: "NetObserv / Health"}
 
 	// Global stats
-	d.Rows = append(d.Rows, NewRow("", false, 100, []Panel{
+	d.Rows = append(d.Rows, NewRow("", false, "100px", []Panel{
 		NewSingleStatPanel("Flows per second", PanelUnitShort, 3, NewTarget(
-			"sum(rate(netobserv_agent_evicted_flows_total[1m]))", "")),
-		NewSingleStatPanel("Total traffic captured", PanelUnitShort, 3, NewTarget(
 			"sum(rate(netobserv_agent_evicted_flows_total[1m]))", "")),
 		NewSingleStatPanel("Sampling", PanelUnitShort, 3, NewTarget(
 			"avg(netobserv_agent_sampling_rate)", "")),
@@ -24,7 +22,7 @@ func CreateHealthDashboard(netobsNs string, _ []string) (string, error) {
 
 	// FLP stats
 	// TODO: FLP error
-	flpStats := NewRow("Flowlogs-pipeline statistics", false, 250, []Panel{
+	flpStats := NewRow("Flowlogs-pipeline statistics", false, "250px", []Panel{
 		NewGraphPanel("Flows per second", PanelUnitShort, 6, false, []Target{
 			NewTarget("sum(rate(netobserv_ingest_flows_processed[1m]))", "Flows ingested"),
 			NewTarget("sum(rate(netobserv_loki_sent_entries_total[1m]))", "Flows sent to Loki"),
@@ -54,7 +52,7 @@ func CreateHealthDashboard(netobsNs string, _ []string) (string, error) {
 	d.Rows = append(d.Rows, flpStats)
 
 	// Agent stats
-	d.Rows = append(d.Rows, NewRow("eBPF agent statistics", false, 250, []Panel{
+	d.Rows = append(d.Rows, NewRow("eBPF agent statistics", false, "250px", []Panel{
 		NewGraphPanel("Eviction rate", PanelUnitShort, 6, true, []Target{
 			NewTarget("sum(rate(netobserv_agent_evictions_total[1m])) by (source, reason)", "{{source}} {{reason}}"),
 		}),
@@ -70,7 +68,7 @@ func CreateHealthDashboard(netobsNs string, _ []string) (string, error) {
 	}))
 
 	// Operator stats
-	d.Rows = append(d.Rows, NewRow("Operator statistics", true, 250, []Panel{
+	d.Rows = append(d.Rows, NewRow("Operator statistics", true, "250px", []Panel{
 		NewGraphPanel("Reconcile events per minute", PanelUnitShort, 6, true, []Target{
 			NewTarget(`sum(increase(controller_runtime_reconcile_total{job="netobserv-metrics-service"}[1m])) by (controller,result)`, "{{controller}}: {{result}}"),
 		}),
@@ -81,7 +79,7 @@ func CreateHealthDashboard(netobsNs string, _ []string) (string, error) {
 	}))
 
 	// CPU and memory
-	d.Rows = append(d.Rows, NewRow("Resource usage", true, 250, []Panel{
+	d.Rows = append(d.Rows, NewRow("Resource usage", true, "250px", []Panel{
 		NewGraphPanel("Overall CPU", PanelUnitShort, 6, true, []Target{
 			NewTarget(`sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{container="netobserv-ebpf-agent"})`, "eBPF agent"),
 			NewTarget(`sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{container="flowlogs-pipeline"})`, "flowlogs-pipeline"),
@@ -89,8 +87,8 @@ func CreateHealthDashboard(netobsNs string, _ []string) (string, error) {
 		}),
 		NewGraphPanel("Overall memory", PanelUnitShort, 6, true, []Target{
 			NewTarget(`sum(container_memory_rss{container="netobserv-ebpf-agent"})`, "eBPF agent"),
-			NewTarget(`sum(container_memory_rss{container="flowlogs-pipeline"})`, "Flowlogs-pipeline"),
-			NewTarget(`sum(container_memory_rss{container!="",pod=~"netobserv-controller-manager.*"})`, "Operator"),
+			NewTarget(`sum(container_memory_rss{container="flowlogs-pipeline"})`, "flowlogs-pipeline"),
+			NewTarget(`sum(container_memory_rss{container!="",pod=~"netobserv-controller-manager.*"})`, "operator"),
 		}),
 		NewGraphPanel("eBPF agent CPU - top 10 pods", PanelUnitShort, 6, true, []Target{
 			NewTarget(`topk(10, node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{container="netobserv-ebpf-agent"})`, "{{pod}}"),

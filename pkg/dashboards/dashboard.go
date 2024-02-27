@@ -35,11 +35,11 @@ func init() {
 					scope.titlePart,
 				)
 				metric := fmt.Sprintf("%s_%s_%s_total", scope.metricPart, dir, valueType)
-				allRows = append(allRows, &Row{
-					Metric: metric,
-					Title:  title,
-					Panels: topRatePanels(&scope, metric, scope.joinLabels(), scope.legendPart),
-				})
+				allRows = append(allRows, row(
+					metric,
+					title,
+					topRatePanels(&scope, metric, scope.joinLabels(), scope.legendPart),
+				))
 			}
 			// drops
 			title := fmt.Sprintf(
@@ -48,39 +48,45 @@ func init() {
 				scope.titlePart,
 			)
 			metric := fmt.Sprintf("%s_drop_%s_total", scope.metricPart, valueType)
-			allRows = append(allRows, &Row{
-				Metric: metric,
-				Title:  title,
-				Panels: topRatePanels(&scope, metric, scope.joinLabels(), scope.legendPart),
-			})
+			allRows = append(allRows, row(
+				metric,
+				title,
+				topRatePanels(&scope, metric, scope.joinLabels(), scope.legendPart),
+			))
 		}
 		// RTT
 		title := fmt.Sprintf("Round-trip time %s (milliseconds - p99 and p50)", scope.titlePart)
 		metric := fmt.Sprintf("%s_rtt_seconds", scope.metricPart)
-		allRows = append(allRows, &Row{
-			Metric: metric,
-			Title:  title,
-			Panels: histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart, "*1000"),
-		})
+		allRows = append(allRows, row(
+			metric,
+			title,
+			histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart, "*1000"),
+		))
 		// DNS latency
 		title = fmt.Sprintf("DNS latency %s (milliseconds - p99 and p50)", scope.titlePart)
 		metric = fmt.Sprintf("%s_dns_latency_seconds", scope.metricPart)
-		allRows = append(allRows, &Row{
-			Metric: metric,
-			Title:  title,
-			Panels: histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart, "*1000"),
-		})
+		allRows = append(allRows, row(
+			metric,
+			title,
+			histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart, "*1000"),
+		))
 		// DNS errors
 		title = fmt.Sprintf("DNS request rate per code and %s", scope.titlePart)
 		metric = fmt.Sprintf("%s_dns_latency_seconds", scope.metricPart)
 		labels := scope.joinLabels() + ",DnsFlagsResponseCode"
 		legend := scope.legendPart + ", {{DnsFlagsResponseCode}}"
-		allRows = append(allRows, &Row{
-			Metric: metric,
-			Title:  title,
-			Panels: topRatePanels(&scope, metric+"_count", labels, legend),
-		})
+		allRows = append(allRows, row(
+			metric,
+			title,
+			topRatePanels(&scope, metric+"_count", labels, legend),
+		))
 	}
+}
+
+func row(metrics string, title string, panels []Panel) *Row {
+	r := NewRow(title, false, "250px", panels)
+	r.Metric = metrics
+	return r
 }
 
 func topRatePanels(scope *metricScope, metric, labels, legend string) []Panel {
