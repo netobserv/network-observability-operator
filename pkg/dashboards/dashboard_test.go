@@ -143,7 +143,7 @@ func TestCreateFlowMetricsDashboard_DefaultList(t *testing.T) {
 func TestCreateHealthDashboard_Default(t *testing.T) {
 	assert := assert.New(t)
 
-	js, err := CreateHealthDashboard("netobserv", metrics.DefaultIncludeList)
+	js, err := CreateHealthDashboard("netobserv")
 	assert.NoError(err)
 
 	d, err := FromBytes([]byte(js))
@@ -157,5 +157,5 @@ func TestCreateHealthDashboard_Default(t *testing.T) {
 	assert.Len(d.Rows[row].Panels, 4)
 	assert.Equal("Flows per second", d.Rows[row].Panels[0].Title)
 	assert.Len(d.Rows[row].Panels[0].Targets, 1)
-	assert.Contains(d.Rows[row].Panels[0].Targets[0].Expr, "netobserv_agent_evicted_flows_total")
+	assert.Contains(d.Rows[row].Panels[0].Targets[0].Expr, "netobserv_ingest_flows_processed")
 }

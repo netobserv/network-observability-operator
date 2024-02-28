@@ -112,7 +112,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 			return err
 		}
 
-		desiredHealthDashboardCM, del, err := buildHealthDashboard(ns, names)
+		desiredHealthDashboardCM, del, err := buildHealthDashboard(ns)
 		if err != nil {
 			return err
 		} else if err = reconcilers.ReconcileConfigMap(ctx, clh, desiredHealthDashboardCM, del); err != nil {
