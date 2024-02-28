@@ -10,22 +10,29 @@ import (
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func (c *AgentController) ReconcileMetricsService(ctx context.Context, target *flowslatest.FlowCollectorEBPF) error {
+func (c *AgentController) reconcileMetricsService(ctx context.Context, target *flowslatest.FlowCollectorEBPF) error {
 	report := helper.NewChangeReport("EBPF Agent prometheus service")
 	defer report.LogIfNeeded(ctx)
 
-	if err := c.ReconcileService(ctx, c.promSvc, c.promService(target), &report); err != nil && !errors.IsAlreadyExists(err) {
+	if !helper.IsEBPFMetricsEnabled(target) {
+		c.Managed.TryDelete(ctx, c.promSvc)
+		if c.AvailableAPIs.HasSvcMonitor() {
+			c.Managed.TryDelete(ctx, c.serviceMonitor)
+		}
+		return nil
+	}
+
+	if err := c.ReconcileService(ctx, c.promSvc, c.promService(target), &report); err != nil {
 		return err
 	}
 	if c.AvailableAPIs.HasSvcMonitor() {
 		serviceMonitor := c.promServiceMonitoring()
 		if err := reconcilers.GenericReconcile(ctx, c.Managed, &c.Client, c.serviceMonitor,
-			serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil && !errors.IsAlreadyExists(err) {
+			serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}

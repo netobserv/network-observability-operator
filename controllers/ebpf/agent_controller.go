@@ -100,6 +100,7 @@ type AgentController struct {
 }
 
 func NewAgentController(common *reconcilers.Instance) *AgentController {
+	common.Managed.Namespace = common.PrivilegedNamespace()
 	agent := AgentController{
 		Instance:    common,
 		permissions: permissions.NewReconciler(common),
@@ -118,16 +119,23 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 	if err != nil {
 		return fmt.Errorf("fetching current eBPF agent: %w", err)
 	}
+
+	// Retrieve other owned objects
+	err = c.Managed.FetchAll(ctx)
+	if err != nil {
+		return err
+	}
+
 	if !helper.UseEBPF(&target.Spec) || c.PreviousPrivilegedNamespace() != c.PrivilegedNamespace() {
+		c.Managed.TryDeleteAll(ctx)
+
 		if current == nil {
-			rlog.Info("nothing to do, as the requested agent is not eBPF",
-				"currentAgent", target.Spec.Agent)
+			rlog.Info("nothing to do, as the requested agent is not eBPF", "currentAgent", target.Spec.Agent)
 			return nil
 		}
 		// If the user has changed the agent type or changed the target namespace, we need to manually
 		// undeploy the agent
-		rlog.Info("user changed the agent type, or the target namespace. Deleting eBPF agent",
-			"currentAgent", target.Spec.Agent)
+		rlog.Info("user changed the agent type, or the target namespace. Deleting eBPF agent", "currentAgent", target.Spec.Agent)
 		if err := c.Delete(ctx, current); err != nil {
 			if errors.IsNotFound(err) {
 				return nil
@@ -146,12 +154,11 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 		return err
 	}
 
-	if helper.IsEBPFMetricsEnabled(&target.Spec.Agent.EBPF) {
-		err = c.reconcilePrometheusService(ctx, &target.Spec.Agent.EBPF)
-		if err != nil {
-			return fmt.Errorf("reconciling prometheus service: %w", err)
-		}
+	err = c.reconcileMetricsService(ctx, &target.Spec.Agent.EBPF)
+	if err != nil {
+		return fmt.Errorf("reconciling prometheus service: %w", err)
 	}
+
 	switch requiredAction(current, desired) {
 	case actionCreate:
 		rlog.Info("action: create agent")
@@ -176,8 +183,7 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 		if errors.IsNotFound(err) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("can't read DaemonSet %s/%s: %w",
-			c.PreviousPrivilegedNamespace(), constants.EBPFAgentName, err)
+		return nil, fmt.Errorf("can't read DaemonSet %s/%s: %w", c.PreviousPrivilegedNamespace(), constants.EBPFAgentName, err)
 	}
 	return &agentDS, nil
 }
@@ -531,8 +537,4 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	config = append(config, corev1.EnvVar{Name: EnvDedupeMerge, Value: dedupMerge})
 
 	return config
-}
-
-func (c *AgentController) reconcilePrometheusService(ctx context.Context, target *flowslatest.FlowCollectorEBPF) error {
-	return c.ReconcileMetricsService(ctx, target)
 }
