@@ -188,12 +188,11 @@ spec:
                         - panic
                         type: string
                       metrics:
-                        description: '`Metrics` define the EBPF agent configuration
+                        description: '`metrics` defines the eBPF agent configuration
                           regarding metrics'
                         properties:
                           enable:
-                            default: false
-                            description: Set `enable` to `true` to enable EBPF agent
+                            description: Set `enable` to `true` to enable eBPF agent
                               metrics collection.
                             type: boolean
                           server:
@@ -2993,12 +2992,11 @@ spec:
                         - panic
                         type: string
                       metrics:
-                        description: '`Metrics` define the EBPF agent configuration
+                        description: '`metrics` defines the eBPF agent configuration
                           regarding metrics'
                         properties:
                           enable:
-                            default: false
-                            description: Set `enable` to `true` to enable EBPF agent
+                            description: Set `enable` to `true` to enable eBPF agent
                               metrics collection.
                             type: boolean
                           server:

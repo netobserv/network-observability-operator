@@ -165,13 +165,13 @@ const (
 	FlowRTT     AgentFeature = "FlowRTT"
 )
 
-// `EBPFMetrics` define the desired EBPF agent configuration regarding metrics
+// `EBPFMetrics` defines the desired eBPF agent configuration regarding metrics
 type EBPFMetrics struct {
 	// Metrics server endpoint configuration for Prometheus scraper
 	// +optional
 	Server MetricsServerConfig `json:"server,omitempty"`
-	//+kubebuilder:default:=false
-	// Set `enable` to `true` to enable EBPF agent metrics collection.
+
+	// Set `enable` to `true` to enable eBPF agent metrics collection.
 	Enable *bool `json:"enable,omitempty"`
 }
 
@@ -256,7 +256,8 @@ type FlowCollectorEBPF struct {
 	// - `FlowRTT`: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
-	// `Metrics` define the EBPF agent configuration regarding metrics
+
+	// `metrics` defines the eBPF agent configuration regarding metrics
 	// +optional
 	Metrics EBPFMetrics `json:"metrics,omitempty"`
 }

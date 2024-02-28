@@ -292,7 +292,7 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentebpfmetrics">metrics</a></b></td>
         <td>object</td>
         <td>
-          `Metrics` define the EBPF agent configuration regarding metrics<br/>
+          `metrics` defines the eBPF agent configuration regarding metrics<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -358,7 +358,7 @@ Agent configuration for flows extraction.
 
 
 
-`Metrics` define the EBPF agent configuration regarding metrics
+`metrics` defines the eBPF agent configuration regarding metrics
 
 <table>
     <thead>
@@ -373,9 +373,7 @@ Agent configuration for flows extraction.
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `true` to enable EBPF agent metrics collection.<br/>
-          <br/>
-            <i>Default</i>: false<br/>
+          Set `enable` to `true` to enable eBPF agent metrics collection.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5198,7 +5196,7 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentebpfmetrics-1">metrics</a></b></td>
         <td>object</td>
         <td>
-          `Metrics` define the EBPF agent configuration regarding metrics<br/>
+          `metrics` defines the eBPF agent configuration regarding metrics<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5264,7 +5262,7 @@ Agent configuration for flows extraction.
 
 
 
-`Metrics` define the EBPF agent configuration regarding metrics
+`metrics` defines the eBPF agent configuration regarding metrics
 
 <table>
     <thead>
@@ -5279,9 +5277,7 @@ Agent configuration for flows extraction.
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `true` to enable EBPF agent metrics collection.<br/>
-          <br/>
-            <i>Default</i>: false<br/>
+          Set `enable` to `true` to enable eBPF agent metrics collection.<br/>
         </td>
         <td>false</td>
       </tr><tr>
