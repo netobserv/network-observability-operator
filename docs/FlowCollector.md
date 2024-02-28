@@ -289,6 +289,13 @@ Agent configuration for flows extraction.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfmetrics">metrics</a></b></td>
+        <td>object</td>
+        <td>
+          `metrics` defines the eBPF agent configuration regarding metrics<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>privileged</b></td>
         <td>boolean</td>
         <td>
@@ -340,6 +347,243 @@ Agent configuration for flows extraction.
         <td>map[string]string</td>
         <td>
           `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.metrics
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpf)</sup></sup>
+
+
+
+`metrics` defines the eBPF agent configuration regarding metrics
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Set `enable` to `true` to enable eBPF agent metrics collection.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfmetricsserver">server</a></b></td>
+        <td>object</td>
+        <td>
+          Metrics server endpoint configuration for Prometheus scraper<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.metrics.server
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfmetrics)</sup></sup>
+
+
+
+Metrics server endpoint configuration for Prometheus scraper
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>port</b></td>
+        <td>integer</td>
+        <td>
+          The prometheus HTTP port<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 9102<br/>
+            <i>Minimum</i>: 1<br/>
+            <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfmetricsservertls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.metrics.server.tls
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfmetricsserver)</sup></sup>
+
+
+
+TLS configuration.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          `insecureSkipVerify` allows skipping client-side verification of the provided certificate. If set to `true`, the `providedCaFile` field is ignored.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfmetricsservertlsprovided">provided</a></b></td>
+        <td>object</td>
+        <td>
+          TLS configuration when `type` is set to `PROVIDED`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfmetricsservertlsprovidedcafile">providedCaFile</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the CA file when `type` is set to `PROVIDED`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Select the type of TLS configuration:<br> - `DISABLED` (default) to not configure TLS for the endpoint. - `PROVIDED` to manually provide cert file and a key file. - `AUTO` to use OpenShift auto generated certificate using annotations.<br/>
+          <br/>
+            <i>Enum</i>: DISABLED, PROVIDED, AUTO<br/>
+            <i>Default</i>: DISABLED<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.metrics.server.tls.provided
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfmetricsservertls)</sup></sup>
+
+
+
+TLS configuration when `type` is set to `PROVIDED`.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.metrics.server.tls.providedCaFile
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfmetricsservertls)</sup></sup>
+
+
+
+Reference to the CA file when `type` is set to `PROVIDED`.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing the file<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the file reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4949,6 +5193,13 @@ Agent configuration for flows extraction.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfmetrics-1">metrics</a></b></td>
+        <td>object</td>
+        <td>
+          `metrics` defines the eBPF agent configuration regarding metrics<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>privileged</b></td>
         <td>boolean</td>
         <td>
@@ -5000,6 +5251,243 @@ Agent configuration for flows extraction.
         <td>map[string]string</td>
         <td>
           `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.metrics
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpf-1)</sup></sup>
+
+
+
+`metrics` defines the eBPF agent configuration regarding metrics
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Set `enable` to `true` to enable eBPF agent metrics collection.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfmetricsserver-1">server</a></b></td>
+        <td>object</td>
+        <td>
+          Metrics server endpoint configuration for Prometheus scraper<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.metrics.server
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfmetrics-1)</sup></sup>
+
+
+
+Metrics server endpoint configuration for Prometheus scraper
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>port</b></td>
+        <td>integer</td>
+        <td>
+          The prometheus HTTP port<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 9102<br/>
+            <i>Minimum</i>: 1<br/>
+            <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfmetricsservertls-1">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.metrics.server.tls
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfmetricsserver-1)</sup></sup>
+
+
+
+TLS configuration.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          `insecureSkipVerify` allows skipping client-side verification of the provided certificate. If set to `true`, the `providedCaFile` field is ignored.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfmetricsservertlsprovided-1">provided</a></b></td>
+        <td>object</td>
+        <td>
+          TLS configuration when `type` is set to `Provided`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfmetricsservertlsprovidedcafile-1">providedCaFile</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the CA file when `type` is set to `Provided`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Select the type of TLS configuration:<br> - `Disabled` (default) to not configure TLS for the endpoint. - `Provided` to manually provide cert file and a key file. - `Auto` to use OpenShift auto generated certificate using annotations.<br/>
+          <br/>
+            <i>Enum</i>: Disabled, Provided, Auto<br/>
+            <i>Default</i>: Disabled<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.metrics.server.tls.provided
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfmetricsservertls-1)</sup></sup>
+
+
+
+TLS configuration when `type` is set to `Provided`.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.metrics.server.tls.providedCaFile
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfmetricsservertls-1)</sup></sup>
+
+
+
+Reference to the CA file when `type` is set to `Provided`.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing the file<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed. If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the file reference: "configmap" or "secret"<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>

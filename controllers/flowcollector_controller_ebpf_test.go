@@ -45,6 +45,10 @@ func flowCollectorEBPFSpecs() {
 		Name:      constants.EBPFServiceAccount,
 		Namespace: agentKey2.Namespace,
 	}
+	promSvcKey := types.NamespacedName{
+		Name:      constants.EBPFAgentMetricsSvcName,
+		Namespace: operatorNamespace + "-privileged",
+	}
 	nsKey := types.NamespacedName{Name: agentKey.Namespace}
 	nsKey2 := types.NamespacedName{Name: agentKey2.Namespace}
 
@@ -73,6 +77,9 @@ func flowCollectorEBPFSpecs() {
 							LogLevel:           "trace",
 							Advanced: &flowslatest.AdvancedAgentConfig{
 								Env: map[string]string{"GOGC": "400", "BUFFERS_LENGTH": "100"},
+							},
+							Metrics: flowslatest.EBPFMetrics{
+								Enable: ptr.To(true),
 							},
 						},
 					},
@@ -142,6 +149,11 @@ func flowCollectorEBPFSpecs() {
 
 			By("expecting to create the netobserv-ebpf-agent service account")
 			Expect(k8sClient.Get(ctx, saKey, &v1.ServiceAccount{})).To(Succeed())
+
+			By("Expecting to create the netobserv-ebpf-agent prometheus service")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, promSvcKey, &v1.Service{})
+			}).WithTimeout(timeout).WithPolling(interval).Should(Succeed())
 		})
 
 		It("Should update fields that have changed", func() {
@@ -149,6 +161,7 @@ func flowCollectorEBPFSpecs() {
 				Expect(*fc.Spec.Agent.EBPF.Sampling).To(Equal(int32(123)))
 				*fc.Spec.Agent.EBPF.Sampling = 4
 				fc.Spec.Agent.EBPF.Privileged = true
+				fc.Spec.Agent.EBPF.Metrics.Enable = ptr.To(false)
 			})
 
 			ds := appsv1.DaemonSet{}
@@ -171,6 +184,11 @@ func flowCollectorEBPFSpecs() {
 			Expect(container.SecurityContext.Privileged).To(Not(BeNil()))
 			Expect(*container.SecurityContext.Privileged).To(BeTrue())
 			Expect(container.SecurityContext.Capabilities).To(BeNil())
+
+			By("Expecting to delete the netobserv-ebpf-agent prometheus service")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, promSvcKey, &v1.Service{})
+			}).WithTimeout(timeout).WithPolling(interval).Should(MatchError(`services "ebpf-agent-svc-prom" not found`))
 		})
 
 		It("Should redeploy all when changing namespace", func() {

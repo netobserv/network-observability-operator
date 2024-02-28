@@ -242,6 +242,12 @@ metadata:
                 "interfaces": [],
                 "kafkaBatchSize": 1048576,
                 "logLevel": "info",
+                "metrics": {
+                  "enable": false,
+                  "server": {
+                    "port": 9090
+                  }
+                },
                 "privileged": false,
                 "resources": {
                   "limits": {
@@ -691,6 +697,14 @@ spec:
         path: agent.ebpf.features
       - displayName: Interfaces
         path: agent.ebpf.interfaces
+      - displayName: Metrics
+        path: agent.ebpf.metrics
+      - displayName: Enable
+        path: agent.ebpf.metrics.enable
+      - displayName: Server
+        path: agent.ebpf.metrics.server
+      - displayName: Port
+        path: agent.ebpf.metrics.server.port
       - displayName: Sampling
         path: agent.ebpf.sampling
       - displayName: Enable

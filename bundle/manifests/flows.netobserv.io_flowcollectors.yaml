@@ -187,6 +187,115 @@ spec:
                         - fatal
                         - panic
                         type: string
+                      metrics:
+                        description: '`metrics` defines the eBPF agent configuration
+                          regarding metrics'
+                        properties:
+                          enable:
+                            description: Set `enable` to `true` to enable eBPF agent
+                              metrics collection.
+                            type: boolean
+                          server:
+                            description: Metrics server endpoint configuration for
+                              Prometheus scraper
+                            properties:
+                              port:
+                                default: 9102
+                                description: The prometheus HTTP port
+                                format: int32
+                                maximum: 65535
+                                minimum: 1
+                                type: integer
+                              tls:
+                                description: TLS configuration.
+                                properties:
+                                  insecureSkipVerify:
+                                    default: false
+                                    description: '`insecureSkipVerify` allows skipping
+                                      client-side verification of the provided certificate.
+                                      If set to `true`, the `providedCaFile` field
+                                      is ignored.'
+                                    type: boolean
+                                  provided:
+                                    description: TLS configuration when `type` is
+                                      set to `PROVIDED`.
+                                    properties:
+                                      certFile:
+                                        description: '`certFile` defines the path
+                                          to the certificate file name within the
+                                          config map or secret'
+                                        type: string
+                                      certKey:
+                                        description: '`certKey` defines the path to
+                                          the certificate private key file name within
+                                          the config map or secret. Omit when the
+                                          key is not necessary.'
+                                        type: string
+                                      name:
+                                        description: Name of the config map or secret
+                                          containing certificates
+                                        type: string
+                                      namespace:
+                                        default: ""
+                                        description: Namespace of the config map or
+                                          secret containing certificates. If omitted,
+                                          the default is to use the same namespace
+                                          as where NetObserv is deployed. If the namespace
+                                          is different, the config map or the secret
+                                          is copied so that it can be mounted as required.
+                                        type: string
+                                      type:
+                                        description: 'Type for the certificate reference:
+                                          `configmap` or `secret`'
+                                        enum:
+                                        - configmap
+                                        - secret
+                                        type: string
+                                    type: object
+                                  providedCaFile:
+                                    description: Reference to the CA file when `type`
+                                      is set to `PROVIDED`.
+                                    properties:
+                                      file:
+                                        description: File name within the config map
+                                          or secret
+                                        type: string
+                                      name:
+                                        description: Name of the config map or secret
+                                          containing the file
+                                        type: string
+                                      namespace:
+                                        default: ""
+                                        description: Namespace of the config map or
+                                          secret containing the file. If omitted,
+                                          the default is to use the same namespace
+                                          as where NetObserv is deployed. If the namespace
+                                          is different, the config map or the secret
+                                          is copied so that it can be mounted as required.
+                                        type: string
+                                      type:
+                                        description: 'Type for the file reference:
+                                          "configmap" or "secret"'
+                                        enum:
+                                        - configmap
+                                        - secret
+                                        type: string
+                                    type: object
+                                  type:
+                                    default: DISABLED
+                                    description: Select the type of TLS configuration:<br>
+                                      - `DISABLED` (default) to not configure TLS
+                                      for the endpoint. - `PROVIDED` to manually provide
+                                      cert file and a key file. - `AUTO` to use OpenShift
+                                      auto generated certificate using annotations.
+                                    enum:
+                                    - DISABLED
+                                    - PROVIDED
+                                    - AUTO
+                                    type: string
+                                type: object
+                            type: object
+                        type: object
                       privileged:
                         description: Privileged mode for the eBPF Agent container.
                           When ignored or set to `false`, the operator sets granular
@@ -2882,6 +2991,115 @@ spec:
                         - fatal
                         - panic
                         type: string
+                      metrics:
+                        description: '`metrics` defines the eBPF agent configuration
+                          regarding metrics'
+                        properties:
+                          enable:
+                            description: Set `enable` to `true` to enable eBPF agent
+                              metrics collection.
+                            type: boolean
+                          server:
+                            description: Metrics server endpoint configuration for
+                              Prometheus scraper
+                            properties:
+                              port:
+                                default: 9102
+                                description: The prometheus HTTP port
+                                format: int32
+                                maximum: 65535
+                                minimum: 1
+                                type: integer
+                              tls:
+                                description: TLS configuration.
+                                properties:
+                                  insecureSkipVerify:
+                                    default: false
+                                    description: '`insecureSkipVerify` allows skipping
+                                      client-side verification of the provided certificate.
+                                      If set to `true`, the `providedCaFile` field
+                                      is ignored.'
+                                    type: boolean
+                                  provided:
+                                    description: TLS configuration when `type` is
+                                      set to `Provided`.
+                                    properties:
+                                      certFile:
+                                        description: '`certFile` defines the path
+                                          to the certificate file name within the
+                                          config map or secret'
+                                        type: string
+                                      certKey:
+                                        description: '`certKey` defines the path to
+                                          the certificate private key file name within
+                                          the config map or secret. Omit when the
+                                          key is not necessary.'
+                                        type: string
+                                      name:
+                                        description: Name of the config map or secret
+                                          containing certificates
+                                        type: string
+                                      namespace:
+                                        default: ""
+                                        description: Namespace of the config map or
+                                          secret containing certificates. If omitted,
+                                          the default is to use the same namespace
+                                          as where NetObserv is deployed. If the namespace
+                                          is different, the config map or the secret
+                                          is copied so that it can be mounted as required.
+                                        type: string
+                                      type:
+                                        description: 'Type for the certificate reference:
+                                          `configmap` or `secret`'
+                                        enum:
+                                        - configmap
+                                        - secret
+                                        type: string
+                                    type: object
+                                  providedCaFile:
+                                    description: Reference to the CA file when `type`
+                                      is set to `Provided`.
+                                    properties:
+                                      file:
+                                        description: File name within the config map
+                                          or secret
+                                        type: string
+                                      name:
+                                        description: Name of the config map or secret
+                                          containing the file
+                                        type: string
+                                      namespace:
+                                        default: ""
+                                        description: Namespace of the config map or
+                                          secret containing the file. If omitted,
+                                          the default is to use the same namespace
+                                          as where NetObserv is deployed. If the namespace
+                                          is different, the config map or the secret
+                                          is copied so that it can be mounted as required.
+                                        type: string
+                                      type:
+                                        description: 'Type for the file reference:
+                                          "configmap" or "secret"'
+                                        enum:
+                                        - configmap
+                                        - secret
+                                        type: string
+                                    type: object
+                                  type:
+                                    default: Disabled
+                                    description: Select the type of TLS configuration:<br>
+                                      - `Disabled` (default) to not configure TLS
+                                      for the endpoint. - `Provided` to manually provide
+                                      cert file and a key file. - `Auto` to use OpenShift
+                                      auto generated certificate using annotations.
+                                    enum:
+                                    - Disabled
+                                    - Provided
+                                    - Auto
+                                    type: string
+                                type: object
+                            type: object
+                        type: object
                       privileged:
                         description: Privileged mode for the eBPF Agent container.
                           When ignored or set to `false`, the operator sets granular

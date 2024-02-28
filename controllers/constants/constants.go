@@ -14,10 +14,12 @@ const (
 	PluginName               = "netobserv-plugin"
 
 	// EBPFAgentName and other constants for it
-	EBPFAgentName          = "netobserv-ebpf-agent"
-	EBPFPrivilegedNSSuffix = "-privileged"
-	EBPFServiceAccount     = EBPFAgentName
-	EBPFSecurityContext    = EBPFAgentName
+	EBPFAgentName                     = "netobserv-ebpf-agent"
+	EBPFAgentMetricsSvcName           = "ebpf-agent-svc-prom"
+	EBPFAgentMetricsSvcMonitoringName = "ebpf-agent-svc-monitor"
+	EBPFPrivilegedNSSuffix            = "-privileged"
+	EBPFServiceAccount                = EBPFAgentName
+	EBPFSecurityContext               = EBPFAgentName
 
 	OpenShiftCertificateAnnotation = "service.beta.openshift.io/serving-cert-secret-name"
 

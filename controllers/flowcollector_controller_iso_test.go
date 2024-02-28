@@ -119,6 +119,16 @@ func flowCollectorIsoSpecs() {
 					Privileged:         false,
 					KafkaBatchSize:     0,
 					Features:           nil,
+					Metrics: flowslatest.EBPFMetrics{
+						Enable: ptr.To(false),
+						Server: flowslatest.MetricsServerConfig{
+							Port: 12347,
+							TLS: flowslatest.ServerTLS{
+								Type:     "Disabled",
+								Provided: nil,
+							},
+						},
+					},
 				},
 			},
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{

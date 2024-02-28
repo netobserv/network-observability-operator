@@ -122,6 +122,10 @@ func IsZoneEnabled(spec *flowslatest.FlowCollectorFLP) bool {
 	return spec.AddZone != nil && *spec.AddZone
 }
 
+func IsEBPFMetricsEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+	return spec.Metrics.Enable != nil && *spec.Metrics.Enable
+}
+
 func PtrBool(b *bool) bool {
 	if b == nil {
 		return false
