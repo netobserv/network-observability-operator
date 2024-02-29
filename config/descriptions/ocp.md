@@ -8,14 +8,13 @@ The operator provides dashboards, metrics, and keeps flows accessible in a query
 
 [Loki](https://grafana.com/oss/loki/), from GrafanaLabs, is the backend that is used to store all collected flows. The NetObserv Operator does not install Loki directly, however we provide some guidance to help you there.
 
-- For a production or production-like environment usage, refer to [the operator documentation](https://docs.openshift.com/container-platform/latest/networking/network_observability/installing-operators.html).
+- For a production or production-like environment usage, refer to [the operator documentation](https://docs.openshift.com/container-platform/latest/network_observability/installing-operators.html).
 
 - For a quick try that is not suitable for production and not scalable (it deploys a single pod, configures a 10GB storage PVC, with 24 hours of retention), you can simply run the following commands:
-
 ```
 oc create namespace netobserv
-oc apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/252bb624cf0425a1b66f59ce68fb939f246ef77b/examples/zero-click-loki/1-storage.yaml) -n netobserv
-oc apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/252bb624cf0425a1b66f59ce68fb939f246ef77b/examples/zero-click-loki/2-loki.yaml) -n netobserv
+oc apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/5410e65b8e05aaabd1244a9524cfedd8ac8c56b5/examples/zero-click-loki/1-storage.yaml) -n netobserv
+oc apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/5410e65b8e05aaabd1244a9524cfedd8ac8c56b5/examples/zero-click-loki/2-loki.yaml) -n netobserv
 ```
 
 ### Kafka
