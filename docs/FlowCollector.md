@@ -4832,7 +4832,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b><a href="#flowcollectorspecprocessorsubnetlabelscustomlabelsindex">customLabels</a></b></td>
         <td>[]object</td>
         <td>
-          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.<br/>
+          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services. If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14543,7 +14543,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b><a href="#flowcollectorspecprocessorsubnetlabelscustomlabelsindex-1">customLabels</a></b></td>
         <td>[]object</td>
         <td>
-          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.<br/>
+          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services. If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
         </td>
         <td>false</td>
       </tr><tr>

@@ -2278,7 +2278,8 @@ spec:
                       customLabels:
                         description: '`customLabels` allows to customize subnets and
                           IPs labelling, such as to identify cluster-external workloads
-                          or web services.'
+                          or web services. If you enable `openShiftAutoDetect`, `customLabels`
+                          can override the detected subnets in case they overlap.'
                         items:
                           description: SubnetLabel allows to label subnets and IPs,
                             such as to identify cluster-external workloads or web
@@ -6139,7 +6140,8 @@ spec:
                       customLabels:
                         description: '`customLabels` allows to customize subnets and
                           IPs labelling, such as to identify cluster-external workloads
-                          or web services.'
+                          or web services. If you enable `openShiftAutoDetect`, `customLabels`
+                          can override the detected subnets in case they overlap.'
                         items:
                           description: SubnetLabel allows to label subnets and IPs,
                             such as to identify cluster-external workloads or web
