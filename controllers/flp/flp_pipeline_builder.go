@@ -48,6 +48,8 @@ func newPipelineBuilder(
 	}
 }
 
+const openshiftNamespacesPrefixes = "openshift"
+
 func (b *PipelineBuilder) AddProcessorStages() error {
 	lastStage := *b.PipelineBuilderStage
 	lastStage = b.addTransformFilter(lastStage)
@@ -58,17 +60,17 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	// enrich stage (transform) configuration
 	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
 		Rules: api.NetworkTransformRules{{
-			Input:  "SrcAddr",
-			Output: "SrcK8S",
-			Type:   api.AddKubernetesRuleType,
+			Type: api.AddKubernetesRuleType,
 			Kubernetes: &api.K8sRule{
+				Input:   "SrcAddr",
+				Output:  "SrcK8S",
 				AddZone: addZone,
 			},
 		}, {
-			Input:  "DstAddr",
-			Output: "DstK8S",
-			Type:   api.AddKubernetesRuleType,
+			Type: api.AddKubernetesRuleType,
 			Kubernetes: &api.K8sRule{
+				Input:   "DstAddr",
+				Output:  "DstK8S",
 				AddZone: addZone,
 			},
 		}, {
@@ -80,8 +82,18 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 					"SrcAddr",
 					"DstAddr",
 				},
-				Output:      "K8S_FlowLayer",
-				InfraPrefix: b.desired.Namespace,
+				Output:        "K8S_FlowLayer",
+				InfraPrefixes: []string{b.desired.Namespace, openshiftNamespacesPrefixes},
+				InfraRefs: []api.K8sReference{
+					{
+						Name:      "kubernetes",
+						Namespace: "default",
+					},
+					{
+						Name:      "openshift",
+						Namespace: "default",
+					},
+				},
 			},
 		}},
 		DirectionInfo: api.NetworkTransformDirectionInfo{
