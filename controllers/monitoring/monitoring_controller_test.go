@@ -30,13 +30,13 @@ var (
 	cleanupCR = func(key types.NamespacedName) {
 		test.CleanupCR(ctx, k8sClient, key)
 	}
-	expectCreation = func(namespace string, objs ...test.ResourceRef) []client.Object {
+	expectPresence = func(namespace string, objs ...test.ResourceRef) []client.Object {
 		GinkgoHelper()
-		return test.ExpectCreation(ctx, k8sClient, namespace, objs...)
+		return test.ExpectPresence(ctx, k8sClient, namespace, objs...)
 	}
-	expectDeletion = func(namespace string, objs ...test.ResourceRef) {
+	expectAbsence = func(namespace string, objs ...test.ResourceRef) {
 		GinkgoHelper()
-		test.ExpectDeletion(ctx, k8sClient, namespace, objs...)
+		test.ExpectAbsence(ctx, k8sClient, namespace, objs...)
 	}
 	expectOwnership = func(namespace string, objs ...test.ResourceRef) {
 		GinkgoHelper()
@@ -73,7 +73,7 @@ func ControllerSpecs() {
 			// Create
 			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
 
-			objs := expectCreation("openshift-config-managed",
+			objs := expectPresence("openshift-config-managed",
 				test.ConfigMap("grafana-dashboard-netobserv-flow-metrics"),
 				test.ConfigMap("grafana-dashboard-netobserv-health"),
 			)
@@ -101,7 +101,7 @@ func ControllerSpecs() {
 				}
 			})
 
-			expectDeletion("openshift-config-managed",
+			expectAbsence("openshift-config-managed",
 				test.ConfigMap("grafana-dashboard-netobserv-flow-metrics"),
 			)
 

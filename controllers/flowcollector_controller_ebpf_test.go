@@ -33,15 +33,6 @@ func flowCollectorEBPFSpecs() {
 	operatorNamespace2 := "namespace-ebpf-specs2"
 	operatorPrivilegedNamespace2 := operatorNamespace2 + "-privileged"
 
-	dsRef := test.DaemonSet(constants.EBPFAgentName)
-	saRef := test.ServiceAccount(constants.EBPFServiceAccount)
-	svcMetricsRef := test.Service(constants.EBPFAgentMetricsSvcName)
-	svcFLPMetricsRef := test.Service("netobserv-ebpf-agent-prom")
-	smRef := test.ServiceMonitor(constants.EBPFAgentMetricsSvcMonitoringName)
-	smFLPRef := test.ServiceMonitor(constants.EBPFAgentName + "-monitor")
-	ruleFLPRef := test.PrometheusRule(constants.EBPFAgentName + "-alert")
-	nsRef := test.Namespace(operatorPrivilegedNamespace)
-
 	crKey := types.NamespacedName{Name: "cluster"}
 
 	Context("Netobserv eBPF Agent Reconciler", func() {
@@ -78,16 +69,8 @@ func flowCollectorEBPFSpecs() {
 				return k8sClient.Create(ctx, desired)
 			}).WithTimeout(timeout).WithPolling(interval).Should(Succeed())
 
-			objs := expectCreation(operatorPrivilegedNamespace,
-				dsRef,
-				saRef,
-				svcMetricsRef,
-				svcFLPMetricsRef,
-				smRef,
-				smFLPRef,
-				ruleFLPRef,
-				nsRef,
-			)
+			agentResourcesWithNS := append(test.AgentResources, test.AgentNS)
+			objs := expectPresence(operatorPrivilegedNamespace, agentResourcesWithNS...)
 			Expect(objs).To(HaveLen(8))
 
 			spec := objs[0].(*appsv1.DaemonSet).Spec.Template.Spec
@@ -171,14 +154,6 @@ func flowCollectorEBPFSpecs() {
 			Expect(container.SecurityContext.Privileged).To(Not(BeNil()))
 			Expect(*container.SecurityContext.Privileged).To(BeTrue())
 			Expect(container.SecurityContext.Capabilities).To(BeNil())
-
-			expectDeletion(operatorNamespace+"-privileged",
-				svcMetricsRef,
-				smRef,
-				svcFLPMetricsRef,
-				smFLPRef,
-				ruleFLPRef,
-			)
 		})
 
 		It("Should redeploy all when changing namespace", func() {
@@ -186,21 +161,21 @@ func flowCollectorEBPFSpecs() {
 				fc.Spec.Namespace = operatorNamespace2
 			})
 
-			expectDeletion(operatorPrivilegedNamespace,
-				dsRef,
-				saRef,
+			expectAbsence(operatorPrivilegedNamespace,
+				test.AgentDS,
+				test.AgentSA,
 			)
-			expectCreation(operatorPrivilegedNamespace2,
-				dsRef,
-				saRef,
+			expectPresence(operatorPrivilegedNamespace2,
+				test.AgentDS,
+				test.AgentSA,
 			)
 		})
 
 		It("Should be garbage collected", func() {
 			expectOwnership(operatorPrivilegedNamespace2,
-				dsRef,
+				test.AgentDS,
+				test.AgentSA,
 				test.Namespace(operatorPrivilegedNamespace2),
-				saRef,
 			)
 		})
 
@@ -253,7 +228,7 @@ func flowCollectorEBPFKafkaSpecs() {
 			}
 			Expect(k8sClient.Create(ctx, descriptor)).Should(Succeed())
 
-			objs := expectCreation(operatorPrivilegedNamespace,
+			objs := expectPresence(operatorPrivilegedNamespace,
 				dsRef,
 				saRef,
 			)
@@ -270,7 +245,7 @@ func flowCollectorEBPFKafkaSpecs() {
 		})
 
 		It("Should properly deploy flowlogs-pipeline", func() {
-			objs := expectCreation(operatorNamespace,
+			objs := expectPresence(operatorNamespace,
 				flpRef,
 				flpSvcRef,
 				flpSMRef,

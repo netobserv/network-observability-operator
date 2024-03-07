@@ -525,7 +525,7 @@ func rbacInfo(appName, saName, saNamespace string) (*corev1.ServiceAccount, *rba
 	}
 	crb := rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: constants.FLPName,
+			Name: appName,
 			Labels: map[string]string{
 				appLabel: appName,
 			},

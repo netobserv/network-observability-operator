@@ -37,17 +37,17 @@ var (
 	cleanupCR = func(key types.NamespacedName) {
 		test.CleanupCR(ctx, k8sClient, key)
 	}
-	expectCreation = func(namespace string, objs ...test.ResourceRef) []client.Object {
+	expectPresence = func(namespace string, objs ...test.ResourceRef) []client.Object {
 		GinkgoHelper()
-		return test.ExpectCreation(ctx, k8sClient, namespace, objs...)
+		return test.ExpectPresence(ctx, k8sClient, namespace, objs...)
 	}
-	expectDeletion = func(namespace string, objs ...test.ResourceRef) {
+	expectAbsence = func(namespace string, objs ...test.ResourceRef) {
 		GinkgoHelper()
-		test.ExpectDeletion(ctx, k8sClient, namespace, objs...)
+		test.ExpectAbsence(ctx, k8sClient, namespace, objs...)
 	}
-	expectNoCreation = func(namespace string, objs ...test.ResourceRef) {
+	expectContinuedAbsence = func(namespace string, objs ...test.ResourceRef) {
 		GinkgoHelper()
-		test.ExpectNoCreation(ctx, k8sClient, namespace, objs...)
+		test.ExpectContinuedAbsence(ctx, k8sClient, namespace, objs...)
 	}
 	expectOwnership = func(namespace string, objs ...test.ResourceRef) {
 		GinkgoHelper()
@@ -59,13 +59,11 @@ var (
 func ControllerSpecs() {
 	const operatorNamespace = "main-namespace"
 	const otherNamespace = "other-namespace"
-	crKey := types.NamespacedName{
-		Name: "cluster",
+	crKey := types.NamespacedName{Name: "cluster"}
+	flpResources := []test.ResourceRef{
+		test.FLPDepl, test.FLPCM, test.FLPSA, test.FLPMetricsSvc, test.FLPSM, test.FLPRule,
 	}
-	deplRef := test.Deployment(constants.FLPName)
-	cmRef := test.ConfigMap(constants.FLPName + "-config")
-	saRef := test.ServiceAccount(constants.FLPName)
-	crbRef := test.ClusterRoleBinding(constants.FLPName)
+	flpResourcesWithCRB := append(flpResources, test.FLPCRB)
 
 	// Created objects to cleanup
 	cleanupList := []client.Object{}
@@ -115,11 +113,7 @@ func ControllerSpecs() {
 		})
 
 		It("Should not create flowlogs-pipeline when using agent direct-flp", func() {
-			expectNoCreation(operatorNamespace,
-				deplRef,
-				cmRef,
-				test.DaemonSet(constants.FLPName),
-			)
+			expectContinuedAbsence(operatorNamespace, test.FLPDepl, test.FLPCM, test.FLPDS)
 		})
 	})
 
@@ -145,18 +139,13 @@ func ControllerSpecs() {
 		var digest string
 
 		It("Should deploy kafka transformer", func() {
-			objs := expectCreation(operatorNamespace,
-				deplRef,
-				cmRef,
-				saRef,
-				crbRef,
-			)
-			Expect(objs).To(HaveLen(4))
+			objs := expectPresence(operatorNamespace, flpResourcesWithCRB...)
+			Expect(objs).To(HaveLen(7))
 			depl = objs[0].(*appsv1.Deployment)
 			digest = depl.Spec.Template.Annotations[constants.PodConfigurationDigest]
 			Expect(digest).NotTo(BeEmpty())
 
-			rb := objs[3].(*rbacv1.ClusterRoleBinding)
+			rb := objs[6].(*rbacv1.ClusterRoleBinding)
 			Expect(rb.Subjects).Should(HaveLen(1))
 			Expect(rb.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
 			Expect(rb.RoleRef.Name).Should(Equal("flowlogs-pipeline"))
@@ -195,7 +184,7 @@ func ControllerSpecs() {
 
 			By("CR updated", func() {
 				Eventually(func() error {
-					err := k8sClient.Get(ctx, deplRef.GetKey(operatorNamespace), depl)
+					err := k8sClient.Get(ctx, test.FLPDepl.GetKey(operatorNamespace), depl)
 					if err != nil {
 						return err
 					}
@@ -213,7 +202,7 @@ func ControllerSpecs() {
 
 			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
 			Eventually(func() error {
-				if err := k8sClient.Get(ctx, deplRef.GetKey(operatorNamespace), depl); err != nil {
+				if err := k8sClient.Get(ctx, test.FLPDepl.GetKey(operatorNamespace), depl); err != nil {
 					return err
 				}
 				return checkDigestUpdate(&digest, depl.Spec.Template.Annotations)
@@ -246,7 +235,7 @@ func ControllerSpecs() {
 		It("Should have HPA installed", func() {
 			By("Expecting HPA to be created")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, deplRef.GetKey(operatorNamespace), &hpa)
+				return k8sClient.Get(ctx, test.FLPDepl.GetKey(operatorNamespace), &hpa)
 			}, timeout, interval).Should(Succeed())
 			Expect(*hpa.Spec.MinReplicas).To(Equal(int32(1)))
 			Expect(hpa.Spec.MaxReplicas).To(Equal(int32(1)))
@@ -261,7 +250,7 @@ func ControllerSpecs() {
 
 			By("Changing the Horizontal Pod Autoscaler instance")
 			Eventually(func() error {
-				if err := k8sClient.Get(ctx, deplRef.GetKey(operatorNamespace), &hpa); err != nil {
+				if err := k8sClient.Get(ctx, test.FLPDepl.GetKey(operatorNamespace), &hpa); err != nil {
 					return err
 				}
 				if *hpa.Spec.MinReplicas != int32(2) || hpa.Spec.MaxReplicas != int32(2) ||
@@ -277,10 +266,10 @@ func ControllerSpecs() {
 
 	Context("Checking monitoring resources", func() {
 		It("Should create desired objects when they're not found (e.g. case of an operator upgrade)", func() {
-			objs := expectCreation(operatorNamespace,
-				test.Service("flowlogs-pipeline-prom"),
-				test.ServiceMonitor("flowlogs-pipeline-monitor"),
-				test.PrometheusRule("flowlogs-pipeline-alert"),
+			objs := expectPresence(operatorNamespace,
+				test.FLPMetricsSvc,
+				test.FLPSM,
+				test.FLPRule,
 			)
 			Expect(objs).To(HaveLen(3))
 			sm := objs[1].(*monitoringv1.ServiceMonitor)
@@ -298,7 +287,7 @@ func ControllerSpecs() {
 			})
 
 			By("Expecting ServiceMonitor to exist")
-			expectCreation(operatorNamespace, test.ServiceMonitor("flowlogs-pipeline-monitor"))
+			expectPresence(operatorNamespace, test.ServiceMonitor("flowlogs-pipeline-monitor"))
 
 			// Manually delete Rule
 			By("Deleting prom rule")
@@ -309,12 +298,12 @@ func ControllerSpecs() {
 				fc.Spec.Processor.LogLevel = "debug"
 			})
 			By("Expecting PrometheusRule to exist")
-			expectCreation(operatorNamespace, test.PrometheusRule("flowlogs-pipeline-alert"))
+			expectPresence(operatorNamespace, test.PrometheusRule("flowlogs-pipeline-alert"))
 		})
 	})
 
 	Context("Using certificates with loki manual mode", func() {
-		flpKey := deplRef.GetKey(operatorNamespace)
+		flpKey := test.FLPDepl.GetKey(operatorNamespace)
 		depl := appsv1.Deployment{}
 		It("Should update Loki to use TLS", func() {
 			// Create CM certificate
@@ -369,7 +358,7 @@ func ControllerSpecs() {
 	})
 
 	Context("Using certificates with loki distributed mode", func() {
-		flpKey := deplRef.GetKey(operatorNamespace)
+		flpKey := test.FLPDepl.GetKey(operatorNamespace)
 		depl := appsv1.Deployment{}
 		It("Should update Loki to use TLS", func() {
 			// Create CM certificate
@@ -428,7 +417,7 @@ func ControllerSpecs() {
 	})
 
 	Context("Using certificates with loki monolithic mode", func() {
-		flpKey := deplRef.GetKey(operatorNamespace)
+		flpKey := test.FLPDepl.GetKey(operatorNamespace)
 		depl := appsv1.Deployment{}
 		It("Should update Loki to use TLS", func() {
 			// Create CM certificate
@@ -486,7 +475,7 @@ func ControllerSpecs() {
 	})
 
 	Context("Using Certificates With Loki in LokiStack Mode", func() {
-		flpKey := deplRef.GetKey(operatorNamespace)
+		flpKey := test.FLPDepl.GetKey(operatorNamespace)
 		depl := appsv1.Deployment{}
 		It("Should update Loki config successfully", func() {
 			// Create CM certificate
@@ -565,20 +554,10 @@ func ControllerSpecs() {
 
 		It("Should redeploy FLP in new namespace", func() {
 			By("Expecting resources in previous namespace to be deleted")
-			expectDeletion(operatorNamespace,
-				deplRef,
-				cmRef,
-				saRef,
-			)
-
-			objs := expectCreation(otherNamespace,
-				deplRef,
-				cmRef,
-				saRef,
-				crbRef,
-			)
-			Expect(objs).To(HaveLen(4))
-			crb := objs[3].(*rbacv1.ClusterRoleBinding)
+			expectAbsence(operatorNamespace, flpResources...)
+			objs := expectPresence(otherNamespace, flpResourcesWithCRB...)
+			Expect(objs).To(HaveLen(7))
+			crb := objs[6].(*rbacv1.ClusterRoleBinding)
 			Expect(crb.Subjects).To(HaveLen(1))
 			Expect(crb.Subjects[0].Namespace).To(Equal(otherNamespace))
 		})
@@ -586,11 +565,7 @@ func ControllerSpecs() {
 
 	Context("Checking CR ownership", func() {
 		It("Should be garbage collected", func() {
-			expectOwnership(otherNamespace,
-				deplRef,
-				cmRef,
-				saRef,
-			)
+			expectOwnership(otherNamespace, flpResources...)
 		})
 	})
 
@@ -602,11 +577,7 @@ func ControllerSpecs() {
 		})
 
 		It("Should delete kafka transformer", func() {
-			expectDeletion(otherNamespace,
-				deplRef,
-				cmRef,
-				saRef,
-			)
+			expectAbsence(otherNamespace, flpResources...)
 		})
 	})
 
@@ -617,9 +588,7 @@ func ControllerSpecs() {
 
 		It("Should cleanup other data", func() {
 			for _, obj := range cleanupList {
-				Eventually(func() error {
-					return k8sClient.Delete(ctx, obj)
-				}, timeout, interval).Should(Succeed())
+				Eventually(func() error { return k8sClient.Delete(ctx, obj) }, timeout, interval).Should(Succeed())
 			}
 		})
 	})

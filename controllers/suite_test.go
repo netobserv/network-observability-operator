@@ -50,6 +50,7 @@ func TestAPIs(t *testing.T) {
 // go test ./... runs always Ginkgo test suites in parallel and they would interfere
 // this way we make sure that both test sub-suites are executed serially
 var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
+	checkInstalledResources()
 	flowCollectorConsolePluginSpecs()
 	flowCollectorEBPFSpecs()
 	flowCollectorEBPFKafkaSpecs()

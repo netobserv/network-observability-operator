@@ -13,7 +13,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 )
 
@@ -24,15 +23,9 @@ const cpNamespace = "namespace-console-specs"
 
 // nolint:cyclop
 func flowCollectorConsolePluginSpecs() {
-	cpDepl := test.Deployment(constants.PluginName)
-	cpCM := test.ConfigMap("console-plugin-config")
-	cpSvc := test.Service(constants.PluginName)
-	cpSA := test.ServiceAccount(constants.PluginName)
-	cpCRB := test.ClusterRoleBinding(constants.PluginName)
-	cpSM := test.ServiceMonitor(constants.PluginName)
 	crKey := types.NamespacedName{Name: "cluster"}
 	consoleCRKey := types.NamespacedName{Name: "cluster"}
-	configKey := cpCM.GetKey(cpNamespace)
+	configKey := test.PluginCM.GetKey(cpNamespace)
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
@@ -112,25 +105,18 @@ func flowCollectorConsolePluginSpecs() {
 	// test Kubernetes API server, which isn't the goal here.
 	Context("Deploying the console plugin", func() {
 		It("Should create successfully", func() {
-
-			objs := expectCreation(cpNamespace,
-				cpDepl,
-				cpSvc,
-				cpCM,
-				cpSA,
-				cpCRB,
-				cpSM,
-			)
+			all := append(test.PluginResources, test.PluginCRB)
+			objs := expectPresence(cpNamespace, all...)
 			Expect(objs).To(HaveLen(6))
 			Expect(*objs[0].(*appsv1.Deployment).Spec.Replicas).To(Equal(int32(1)))
-			Expect(objs[1].(*v1.Service).Spec.Ports[0].Port).To(Equal(int32(9001)))
+			Expect(objs[2].(*v1.Service).Spec.Ports[0].Port).To(Equal(int32(9001)))
 
 			By("Creating the console plugin configmap")
 			Eventually(getConfigMapData(configKey),
 				timeout, interval).Should(ContainSubstring("url: http://loki:3100/"))
 
 			By("Expecting to create console plugin role binding")
-			rb := objs[4].(*rbacv1.ClusterRoleBinding)
+			rb := objs[5].(*rbacv1.ClusterRoleBinding)
 			Expect(rb.Subjects).Should(HaveLen(1))
 			Expect(rb.Subjects[0].Name).Should(Equal("netobserv-plugin"))
 			Expect(rb.RoleRef.Name).Should(Equal("netobserv-plugin"))
@@ -151,7 +137,7 @@ func flowCollectorConsolePluginSpecs() {
 			By("Expecting the console plugin Deployment to be scaled up")
 			Eventually(func() interface{} {
 				dp := appsv1.Deployment{}
-				if err := k8sClient.Get(ctx, cpDepl.GetKey(cpNamespace), &dp); err != nil {
+				if err := k8sClient.Get(ctx, test.PluginDepl.GetKey(cpNamespace), &dp); err != nil {
 					return err
 				}
 				return *dp.Spec.Replicas
@@ -160,7 +146,7 @@ func flowCollectorConsolePluginSpecs() {
 			By("Expecting the console plugin Service to be updated")
 			Eventually(func() interface{} {
 				svc := v1.Service{}
-				if err := k8sClient.Get(ctx, cpSvc.GetKey(cpNamespace), &svc); err != nil {
+				if err := k8sClient.Get(ctx, test.PluginSvc.GetKey(cpNamespace), &svc); err != nil {
 					return err
 				}
 				return svc.Spec.Ports[0].Port
@@ -170,7 +156,7 @@ func flowCollectorConsolePluginSpecs() {
 		It("Should create desired objects when they're not found (e.g. case of an operator upgrade)", func() {
 			// Manually delete ServiceMonitor
 			By("Deleting ServiceMonitor")
-			Eventually(func() error { return k8sClient.Delete(ctx, cpSM.Resource) }, timeout, interval).Should(Succeed())
+			Eventually(func() error { return k8sClient.Delete(ctx, test.PluginSM.Resource) }, timeout, interval).Should(Succeed())
 
 			// Do a dummy change that will trigger reconcile, and make sure SM is created again
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
@@ -178,7 +164,7 @@ func flowCollectorConsolePluginSpecs() {
 			})
 
 			By("Expecting ServiceMonitor to exist")
-			expectCreation(cpNamespace, cpSM)
+			expectPresence(cpNamespace, test.PluginSM)
 		})
 	})
 
@@ -248,13 +234,7 @@ func flowCollectorConsolePluginSpecs() {
 				fc.Spec.ConsolePlugin.Enable = ptr.To(false)
 			})
 
-			expectDeletion(cpNamespace,
-				cpDepl,
-				cpSvc,
-				cpSA,
-				cpCM,
-				cpSM,
-			)
+			expectAbsence(cpNamespace, test.PluginResources...)
 		})
 
 		It("Should recreate console plugin if enabled back", func() {
@@ -262,25 +242,13 @@ func flowCollectorConsolePluginSpecs() {
 				fc.Spec.ConsolePlugin.Enable = ptr.To(true)
 			})
 
-			expectCreation(cpNamespace,
-				cpDepl,
-				cpSvc,
-				cpSA,
-				cpCM,
-				cpSM,
-			)
+			expectPresence(cpNamespace, test.PluginResources...)
 		})
 	})
 
 	Context("Checking CR ownership", func() {
 		It("Should be garbage collected", func() {
-			expectOwnership(cpNamespace,
-				cpDepl,
-				cpSvc,
-				cpSA,
-				cpCM,
-				cpSM,
-			)
+			expectOwnership(cpNamespace, test.PluginResources...)
 		})
 	})
 
@@ -294,21 +262,8 @@ func flowCollectorConsolePluginSpecs() {
 		})
 
 		It("Should redeploy console plugin in new namespace", func() {
-			expectDeletion(cpNamespace,
-				cpDepl,
-				cpSvc,
-				cpSA,
-				cpCM,
-				cpSM,
-			)
-
-			expectCreation(otherNamespace,
-				cpDepl,
-				cpSvc,
-				cpSA,
-				cpCM,
-				cpSM,
-			)
+			expectAbsence(cpNamespace, test.PluginResources...)
+			expectPresence(otherNamespace, test.PluginResources...)
 		})
 	})
 
