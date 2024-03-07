@@ -4,19 +4,17 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	operatorsv1 "github.com/openshift/api/operator/v1"
-	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
+	"github.com/netobserv/network-observability-operator/pkg/test"
 )
 
 // Because the simulated Kube server doesn't manage automatic resource cleanup like an actual Kube would do,
@@ -26,21 +24,15 @@ const cpNamespace = "namespace-console-specs"
 
 // nolint:cyclop
 func flowCollectorConsolePluginSpecs() {
-	cpKey := types.NamespacedName{
-		Name:      "netobserv-plugin",
-		Namespace: cpNamespace,
-	}
-	configKey := types.NamespacedName{
-		Name:      "console-plugin-config",
-		Namespace: cpNamespace,
-	}
-	crKey := types.NamespacedName{
-		Name: "cluster",
-	}
-	consoleCRKey := types.NamespacedName{
-		Name: "cluster",
-	}
-	rbKeyPlugin := types.NamespacedName{Name: constants.PluginName}
+	cpDepl := test.Deployment(constants.PluginName)
+	cpCM := test.ConfigMap("console-plugin-config")
+	cpSvc := test.Service(constants.PluginName)
+	cpSA := test.ServiceAccount(constants.PluginName)
+	cpCRB := test.ClusterRoleBinding(constants.PluginName)
+	cpSM := test.ServiceMonitor(constants.PluginName)
+	crKey := types.NamespacedName{Name: "cluster"}
+	consoleCRKey := types.NamespacedName{Name: "cluster"}
+	configKey := cpCM.GetKey(cpNamespace)
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
@@ -120,33 +112,25 @@ func flowCollectorConsolePluginSpecs() {
 	// test Kubernetes API server, which isn't the goal here.
 	Context("Deploying the console plugin", func() {
 		It("Should create successfully", func() {
-			By("Expecting to create the console plugin Deployment")
-			Eventually(func() interface{} {
-				dp := appsv1.Deployment{}
-				if err := k8sClient.Get(ctx, cpKey, &dp); err != nil {
-					return err
-				}
-				return *dp.Spec.Replicas
-			}, timeout, interval).Should(Equal(int32(1)))
 
-			By("Expecting to create the console plugin Service")
-			Eventually(func() interface{} {
-				svc := v1.Service{}
-				if err := k8sClient.Get(ctx, cpKey, &svc); err != nil {
-					return err
-				}
-				return svc.Spec.Ports[0].Port
-			}, timeout, interval).Should(Equal(int32(9001)))
+			objs := expectCreation(cpNamespace,
+				cpDepl,
+				cpSvc,
+				cpCM,
+				cpSA,
+				cpCRB,
+				cpSM,
+			)
+			Expect(objs).To(HaveLen(6))
+			Expect(*objs[0].(*appsv1.Deployment).Spec.Replicas).To(Equal(int32(1)))
+			Expect(objs[1].(*v1.Service).Spec.Ports[0].Port).To(Equal(int32(9001)))
 
 			By("Creating the console plugin configmap")
 			Eventually(getConfigMapData(configKey),
 				timeout, interval).Should(ContainSubstring("url: http://loki:3100/"))
 
 			By("Expecting to create console plugin role binding")
-			rb := rbacv1.ClusterRoleBinding{}
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyPlugin, &rb)
-			}, timeout, interval).Should(Succeed())
+			rb := objs[4].(*rbacv1.ClusterRoleBinding)
 			Expect(rb.Subjects).Should(HaveLen(1))
 			Expect(rb.Subjects[0].Name).Should(Equal("netobserv-plugin"))
 			Expect(rb.RoleRef.Name).Should(Equal("netobserv-plugin"))
@@ -167,7 +151,7 @@ func flowCollectorConsolePluginSpecs() {
 			By("Expecting the console plugin Deployment to be scaled up")
 			Eventually(func() interface{} {
 				dp := appsv1.Deployment{}
-				if err := k8sClient.Get(ctx, cpKey, &dp); err != nil {
+				if err := k8sClient.Get(ctx, cpDepl.GetKey(cpNamespace), &dp); err != nil {
 					return err
 				}
 				return *dp.Spec.Replicas
@@ -176,7 +160,7 @@ func flowCollectorConsolePluginSpecs() {
 			By("Expecting the console plugin Service to be updated")
 			Eventually(func() interface{} {
 				svc := v1.Service{}
-				if err := k8sClient.Get(ctx, cpKey, &svc); err != nil {
+				if err := k8sClient.Get(ctx, cpSvc.GetKey(cpNamespace), &svc); err != nil {
 					return err
 				}
 				return svc.Spec.Ports[0].Port
@@ -184,33 +168,17 @@ func flowCollectorConsolePluginSpecs() {
 		})
 
 		It("Should create desired objects when they're not found (e.g. case of an operator upgrade)", func() {
-			sm := monitoringv1.ServiceMonitor{}
-
-			By("Expecting ServiceMonitor to exist")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "netobserv-plugin",
-					Namespace: cpNamespace,
-				}, &sm)
-			}, timeout, interval).Should(Succeed())
-
 			// Manually delete ServiceMonitor
 			By("Deleting ServiceMonitor")
-			Eventually(func() error {
-				return k8sClient.Delete(ctx, &sm)
-			}, timeout, interval).Should(Succeed())
+			Eventually(func() error { return k8sClient.Delete(ctx, cpSM.Resource) }, timeout, interval).Should(Succeed())
 
 			// Do a dummy change that will trigger reconcile, and make sure SM is created again
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor.LogLevel = "trace"
 			})
+
 			By("Expecting ServiceMonitor to exist")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "netobserv-plugin",
-					Namespace: cpNamespace,
-				}, &sm)
-			}, timeout, interval).Should(Succeed())
+			expectCreation(cpNamespace, cpSM)
 		})
 	})
 
@@ -279,80 +247,45 @@ func flowCollectorConsolePluginSpecs() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.ConsolePlugin.Enable = ptr.To(false)
 			})
-			Eventually(func() error {
-				d := appsv1.Deployment{}
-				return k8sClient.Get(ctx, cpKey, &d)
-			}).WithTimeout(timeout).WithPolling(interval).
-				Should(Satisfy(errors.IsNotFound))
-			Eventually(func() error {
-				d := v1.Service{}
-				return k8sClient.Get(ctx, cpKey, &d)
-			}).WithTimeout(timeout).WithPolling(interval).
-				Should(Satisfy(errors.IsNotFound))
-			Eventually(func() error {
-				d := v1.ServiceAccount{}
-				return k8sClient.Get(ctx, cpKey, &d)
-			}).WithTimeout(timeout).WithPolling(interval).
-				Should(Satisfy(errors.IsNotFound))
+
+			expectDeletion(cpNamespace,
+				cpDepl,
+				cpSvc,
+				cpSA,
+				cpCM,
+				cpSM,
+			)
 		})
 
 		It("Should recreate console plugin if enabled back", func() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.ConsolePlugin.Enable = ptr.To(true)
 			})
-			Eventually(func() error {
-				d := appsv1.Deployment{}
-				return k8sClient.Get(ctx, cpKey, &d)
-			}).WithTimeout(timeout).WithPolling(interval).
-				Should(Succeed())
-			Eventually(func() error {
-				d := v1.Service{}
-				return k8sClient.Get(ctx, cpKey, &d)
-			}).WithTimeout(timeout).WithPolling(interval).
-				Should(Succeed())
-			Eventually(func() error {
-				d := v1.ServiceAccount{}
-				return k8sClient.Get(ctx, cpKey, &d)
-			}).WithTimeout(timeout).WithPolling(interval).
-				Should(Succeed())
+
+			expectCreation(cpNamespace,
+				cpDepl,
+				cpSvc,
+				cpSA,
+				cpCM,
+				cpSM,
+			)
 		})
 	})
 
 	Context("Checking CR ownership", func() {
 		It("Should be garbage collected", func() {
-			// Retrieve CR to get its UID
-			By("Getting the CR")
-			flowCR := getCR(crKey)
-
-			By("Expecting console plugin deployment to be garbage collected")
-			Eventually(func() interface{} {
-				d := appsv1.Deployment{}
-				_ = k8sClient.Get(ctx, cpKey, &d)
-				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
-
-			By("Expecting console plugin service to be garbage collected")
-			Eventually(func() interface{} {
-				svc := v1.Service{}
-				_ = k8sClient.Get(ctx, cpKey, &svc)
-				return &svc
-			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
-
-			By("Expecting console plugin service account to be garbage collected")
-			Eventually(func() interface{} {
-				svcAcc := v1.ServiceAccount{}
-				_ = k8sClient.Get(ctx, cpKey, &svcAcc)
-				return &svcAcc
-			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
+			expectOwnership(cpNamespace,
+				cpDepl,
+				cpSvc,
+				cpSA,
+				cpCM,
+				cpSM,
+			)
 		})
 	})
 
 	Context("Changing namespace", func() {
 		const otherNamespace = "other-namespace"
-		cpKey2 := types.NamespacedName{
-			Name:      "netobserv-plugin",
-			Namespace: otherNamespace,
-		}
 
 		It("Should update namespace successfully", func() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
@@ -361,35 +294,21 @@ func flowCollectorConsolePluginSpecs() {
 		})
 
 		It("Should redeploy console plugin in new namespace", func() {
-			By("Expecting deployment in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, cpKey, &appsv1.Deployment{})
-			}, timeout, interval).Should(MatchError(`deployments.apps "netobserv-plugin" not found`))
+			expectDeletion(cpNamespace,
+				cpDepl,
+				cpSvc,
+				cpSA,
+				cpCM,
+				cpSM,
+			)
 
-			By("Expecting service in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, cpKey, &v1.Service{})
-			}, timeout, interval).Should(MatchError(`services "netobserv-plugin" not found`))
-
-			By("Expecting service account in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, cpKey, &v1.ServiceAccount{})
-			}, timeout, interval).Should(MatchError(`serviceaccounts "netobserv-plugin" not found`))
-
-			By("Expecting deployment to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, cpKey2, &appsv1.Deployment{})
-			}, timeout, interval).Should(Succeed())
-
-			By("Expecting service to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, cpKey2, &v1.Service{})
-			}, timeout, interval).Should(Succeed())
-
-			By("Expecting service account to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, cpKey2, &v1.ServiceAccount{})
-			}, timeout, interval).Should(Succeed())
+			expectCreation(otherNamespace,
+				cpDepl,
+				cpSvc,
+				cpSA,
+				cpCM,
+				cpSM,
+			)
 		})
 	})
 

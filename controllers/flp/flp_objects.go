@@ -9,6 +9,8 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,28 +38,14 @@ const (
 	appLabel                = "app"
 )
 
-type ConfKind string
-
-const (
-	ConfMonolith         ConfKind = "allInOne"
-	ConfKafkaIngester    ConfKind = "kafkaIngester"
-	ConfKafkaTransformer ConfKind = "kafkaTransformer"
-)
-
-var FlpConfSuffix = map[ConfKind]string{
-	ConfMonolith:         "",
-	ConfKafkaIngester:    "-ingester",
-	ConfKafkaTransformer: "-transformer",
-}
-
 type Builder struct {
 	info        *reconcilers.Instance
+	appName     string
 	labels      map[string]string
 	selector    map[string]string
 	desired     *flowslatest.FlowCollectorSpec
 	flowMetrics *metricslatest.FlowMetricList
 	promTLS     *flowslatest.CertificateReference
-	confKind    ConfKind
 	volumes     volumes.Builder
 	loki        *helper.LokiConfig
 	pipeline    *PipelineBuilder
@@ -65,9 +53,33 @@ type Builder struct {
 
 type builder = Builder
 
-func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, ck ConfKind) (Builder, error) {
+func newInProcessBuilder(info *reconcilers.Instance, appName string, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList) (*Builder, error) {
+	b, err := newBuilder(info, appName, desired, flowMetrics)
+	if err != nil {
+		return nil, err
+	}
+
+	pipeline := b.createInProcessPipeline()
+	if err = pipeline.AddProcessorStages(); err != nil {
+		return nil, err
+	}
+	return &b, nil
+}
+
+func newKafkaConsumerBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList) (*Builder, error) {
+	b, err := newBuilder(info, constants.FLPName, desired, flowMetrics)
+	if err != nil {
+		return nil, err
+	}
+	pipeline := b.createKafkaPipeline()
+	if err = pipeline.AddProcessorStages(); err != nil {
+		return nil, err
+	}
+	return &b, nil
+}
+
+func newBuilder(info *reconcilers.Instance, appName string, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList) (Builder, error) {
 	version := helper.ExtractVersion(info.Image)
-	name := name(ck)
 	var promTLS *flowslatest.CertificateReference
 	switch desired.Processor.Metrics.Server.TLS.Type {
 	case flowslatest.ServerTLSProvided:
@@ -78,7 +90,7 @@ func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 	case flowslatest.ServerTLSAuto:
 		promTLS = &flowslatest.CertificateReference{
 			Type:     "secret",
-			Name:     promServiceName(ck),
+			Name:     appName,
 			CertFile: "tls.crt",
 			CertKey:  "tls.key",
 		}
@@ -86,48 +98,39 @@ func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 		// nothing to do there
 	}
 	return builder{
-		info: info,
+		info:    info,
+		appName: appName,
 		labels: map[string]string{
-			appLabel:  name,
+			appLabel:  appName,
 			"version": helper.MaxLabelLength(version),
 		},
 		selector: map[string]string{
-			appLabel: name,
+			appLabel: appName,
 		},
 		desired:     desired,
 		flowMetrics: flowMetrics,
-		confKind:    ck,
 		promTLS:     promTLS,
 		loki:        info.Loki,
 	}, nil
 }
 
-func name(ck ConfKind) string                 { return constants.FLPName + FlpConfSuffix[ck] }
-func RoleBindingName(ck ConfKind) string      { return name(ck) + "-role" }
-func RoleBindingMonoName(ck ConfKind) string  { return name(ck) + "-role-mono" }
-func promServiceName(ck ConfKind) string      { return name(ck) + "-prom" }
-func configMapName(ck ConfKind) string        { return name(ck) + "-config" }
-func serviceMonitorName(ck ConfKind) string   { return name(ck) + "-monitor" }
-func prometheusRuleName(ck ConfKind) string   { return name(ck) + "-alert" }
-func (b *builder) name() string               { return name(b.confKind) }
-func (b *builder) promServiceName() string    { return promServiceName(b.confKind) }
-func (b *builder) configMapName() string      { return configMapName(b.confKind) }
-func (b *builder) serviceMonitorName() string { return serviceMonitorName(b.confKind) }
-func (b *builder) prometheusRuleName() string { return prometheusRuleName(b.confKind) }
+func promServiceName(appName string) string    { return appName + "-prom" }
+func configMapName(appName string) string      { return appName + "-config" }
+func serviceMonitorName(appName string) string { return appName + "-monitor" }
+func prometheusRuleName(appName string) string { return appName + "-alert" }
+func (b *builder) promServiceName() string     { return promServiceName(b.appName) }
+func (b *builder) configMapName() string       { return configMapName(b.appName) }
+func (b *builder) serviceMonitorName() string  { return serviceMonitorName(b.appName) }
+func (b *builder) prometheusRuleName() string  { return prometheusRuleName(b.appName) }
+
 func (b *builder) Pipeline() *PipelineBuilder { return b.pipeline }
 
-func (b *builder) NewGRPCPipeline() PipelineBuilder {
-	return b.initPipeline(config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
-		Port: int(*helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced).Port),
-	}))
-}
-
-func (b *builder) NewKafkaPipeline() PipelineBuilder {
+func (b *builder) createKafkaPipeline() PipelineBuilder {
 	decoder := api.Decoder{Type: "protobuf"}
 	return b.initPipeline(config.NewKafkaPipeline("kafka-read", api.IngestKafka{
 		Brokers:           []string{b.desired.Kafka.Address},
 		Topic:             b.desired.Kafka.Topic,
-		GroupId:           b.name(), // Without groupid, each message is delivered to each consumers
+		GroupId:           b.appName, // Without groupid, each message is delivered to each consumers
 		Decoder:           decoder,
 		TLS:               getKafkaTLS(&b.desired.Kafka.TLS, "kafka-cert", &b.volumes),
 		SASL:              getKafkaSASL(&b.desired.Kafka.SASL, "kafka-ingest", &b.volumes),
@@ -136,7 +139,7 @@ func (b *builder) NewKafkaPipeline() PipelineBuilder {
 	}))
 }
 
-func (b *builder) NewInProcessPipeline() PipelineBuilder {
+func (b *builder) createInProcessPipeline() PipelineBuilder {
 	return b.initPipeline(config.NewPresetIngesterPipeline())
 }
 
@@ -146,26 +149,9 @@ func (b *builder) initPipeline(ingest config.PipelineBuilderStage) PipelineBuild
 	return pipeline
 }
 
-func (b *builder) overrideApp(app string) {
-	b.labels[appLabel] = app
-	b.selector[appLabel] = app
-}
-
-func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[string]string) corev1.PodTemplateSpec {
+func (b *builder) podTemplate(annotations map[string]string) corev1.PodTemplateSpec {
 	debugConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 	var ports []corev1.ContainerPort
-	var tolerations []corev1.Toleration
-	if hasHostPort {
-		ports = []corev1.ContainerPort{{
-			Name:          constants.FLPPortName,
-			HostPort:      *debugConfig.Port,
-			ContainerPort: *debugConfig.Port,
-			Protocol:      corev1.ProtocolTCP,
-		}}
-		// This allows deploying an instance in the master node, the same technique used in the
-		// companion ovnkube-node daemonset definition
-		tolerations = []corev1.Toleration{{Operator: corev1.TolerationOpExists}}
-	}
 
 	ports = append(ports, corev1.ContainerPort{
 		Name:          healthServiceName,
@@ -243,10 +229,6 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 			FailureThreshold: startupFailureThreshold,
 		}
 	}
-	dnsPolicy := corev1.DNSClusterFirst
-	if hostNetwork {
-		dnsPolicy = corev1.DNSClusterFirstWithHostNet
-	}
 	annotations["prometheus.io/scrape"] = "true"
 	annotations["prometheus.io/scrape_port"] = fmt.Sprint(b.desired.Processor.Metrics.Server.Port)
 
@@ -256,19 +238,17 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 			Annotations: annotations,
 		},
 		Spec: corev1.PodSpec{
-			Tolerations:        tolerations,
 			Volumes:            volumes,
 			Containers:         []corev1.Container{container},
-			ServiceAccountName: b.name(),
-			HostNetwork:        hostNetwork,
-			DNSPolicy:          dnsPolicy,
+			ServiceAccountName: b.appName,
+			DNSPolicy:          corev1.DNSClusterFirst,
 		},
 	}
 }
 
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
-func (b *builder) ConfigMap() (*corev1.ConfigMap, string, error) {
+func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
 	configStr, err := b.GetJSONConfig()
 	if err != nil {
 		return nil, "", err
@@ -356,45 +336,6 @@ func (b *builder) promService() *corev1.Service {
 		}
 	}
 	return &svc
-}
-
-func (b *builder) serviceAccount() *corev1.ServiceAccount {
-	return &corev1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.name(),
-			Namespace: b.info.Namespace,
-			Labels: map[string]string{
-				appLabel: b.name(),
-			},
-		},
-	}
-}
-
-func (b *builder) clusterRoleBinding(ck ConfKind, mono bool) *rbacv1.ClusterRoleBinding {
-	var rbName string
-	if mono {
-		rbName = RoleBindingMonoName(ck)
-	} else {
-		rbName = RoleBindingName(ck)
-	}
-	return &rbacv1.ClusterRoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: rbName,
-			Labels: map[string]string{
-				appLabel: b.name(),
-			},
-		},
-		RoleRef: rbacv1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "ClusterRole",
-			Name:     name(ck),
-		},
-		Subjects: []rbacv1.Subject{{
-			Kind:      "ServiceAccount",
-			Name:      b.name(),
-			Namespace: b.info.Namespace,
-		}},
-	}
 }
 
 func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
@@ -516,20 +457,89 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 	return &flpPrometheusRuleObject
 }
 
-func buildClusterRoleIngester(useOpenShiftSCC bool) *rbacv1.ClusterRole {
+func (b *Builder) deployment(annotations map[string]string) *appsv1.Deployment {
+	pod := b.podTemplate(annotations)
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      b.appName,
+			Namespace: b.info.Namespace,
+			Labels:    b.labels,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: b.desired.Processor.KafkaConsumerReplicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: b.selector,
+			},
+			Template: pod,
+		},
+	}
+}
+
+func (b *Builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
+	return &ascv2.HorizontalPodAutoscaler{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      b.appName,
+			Namespace: b.info.Namespace,
+			Labels:    b.labels,
+		},
+		Spec: ascv2.HorizontalPodAutoscalerSpec{
+			ScaleTargetRef: ascv2.CrossVersionObjectReference{
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+				Name:       b.appName,
+			},
+			MinReplicas: b.desired.Processor.KafkaConsumerAutoscaler.MinReplicas,
+			MaxReplicas: b.desired.Processor.KafkaConsumerAutoscaler.MaxReplicas,
+			Metrics:     b.desired.Processor.KafkaConsumerAutoscaler.Metrics,
+		},
+	}
+}
+
+// The operator needs to have at least the same permissions as flowlogs-pipeline in order to grant them
+//+kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get;list;watch
+//+kubebuilder:rbac:groups=core,resources=pods;services;nodes,verbs=get;list;watch
+
+func rbacInfo(appName, saName, saNamespace string) (*corev1.ServiceAccount, *rbacv1.ClusterRole, *rbacv1.ClusterRoleBinding) {
+	sa := corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      saName,
+			Namespace: saNamespace,
+			Labels: map[string]string{
+				appLabel: appName,
+			},
+		},
+	}
 	cr := rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name(ConfKafkaIngester),
+			Name: constants.FLPName,
 		},
-		Rules: []rbacv1.PolicyRule{},
+		Rules: []rbacv1.PolicyRule{{
+			APIGroups: []string{""},
+			Verbs:     []string{"list", "get", "watch"},
+			Resources: []string{"pods", "services", "nodes"},
+		}, {
+			APIGroups: []string{"apps"},
+			Verbs:     []string{"list", "get", "watch"},
+			Resources: []string{"replicasets"},
+		}},
 	}
-	if useOpenShiftSCC {
-		cr.Rules = append(cr.Rules, rbacv1.PolicyRule{
-			APIGroups:     []string{"security.openshift.io"},
-			Verbs:         []string{"use"},
-			Resources:     []string{"securitycontextconstraints"},
-			ResourceNames: []string{"hostnetwork"},
-		})
+	crb := rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: constants.FLPName,
+			Labels: map[string]string{
+				appLabel: appName,
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     cr.Name,
+		},
+		Subjects: []rbacv1.Subject{{
+			Kind:      "ServiceAccount",
+			Name:      saName,
+			Namespace: saNamespace,
+		}},
 	}
-	return &cr
+	return &sa, &cr, &crb
 }

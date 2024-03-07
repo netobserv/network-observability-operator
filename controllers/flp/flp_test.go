@@ -1,19 +1,3 @@
-/*
-Copyright 2021.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package flp
 
 import (
@@ -30,7 +14,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
@@ -168,17 +151,21 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 	return autoScaler, getConfig().Processor.KafkaConsumerAutoscaler
 }
 
-func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
+func inProcessForImage(img string, ns string, cfg *flowslatest.FlowCollectorSpec) *Builder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki}
-	b, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{})
+	b, _ := newInProcessBuilder(info.NewInstance(img, status.Instance{}), constants.FLPName, cfg, &metricslatest.FlowMetricList{})
 	return b
 }
 
-func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) transfoBuilder {
+func inProcessBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) *Builder {
+	return inProcessForImage(image, ns, cfg)
+}
+
+func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) *Builder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki}
-	b, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{})
+	b, _ := newKafkaConsumerBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{})
 	return b
 }
 
@@ -186,150 +173,6 @@ func annotate(digest string) map[string]string {
 	return map[string]string{
 		constants.PodConfigurationDigest: digest,
 	}
-}
-
-func TestDaemonSetNoChange(t *testing.T) {
-	assert := assert.New(t)
-
-	// Get first
-	ns := "namespace"
-	cfg := getConfig()
-	b := monoBuilder(ns, &cfg)
-	_, digest, err := b.configMap()
-	assert.NoError(err)
-	first := b.daemonSet(annotate(digest))
-
-	// Check no change
-	cfg = getConfig()
-	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
-	assert.NoError(err)
-	second := b.daemonSet(annotate(digest))
-
-	report := helper.NewChangeReport("")
-	assert.False(helper.PodChanged(&first.Spec.Template, &second.Spec.Template, constants.FLPName, &report))
-	assert.Contains(report.String(), "no change")
-}
-
-func TestDaemonSetChanged(t *testing.T) {
-	assert := assert.New(t)
-
-	// Get first
-	ns := "namespace"
-	cfg := getConfig()
-	b := monoBuilder(ns, &cfg)
-	_, digest, err := b.configMap()
-	assert.NoError(err)
-	first := b.daemonSet(annotate(digest))
-
-	// Check probes enabled change
-	cfg.Processor.Advanced.EnableKubeProbes = ptr.To(true)
-	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
-	assert.NoError(err)
-	second := b.daemonSet(annotate(digest))
-
-	report := helper.NewChangeReport("")
-	assert.True(helper.PodChanged(&first.Spec.Template, &second.Spec.Template, constants.FLPName, &report))
-	assert.Contains(report.String(), "probe changed")
-
-	// Check probes DON'T change infinitely (bc DeepEqual/Derivative checks won't work there)
-	assert.NoError(err)
-	secondBis := b.daemonSet(annotate(digest))
-	secondBis.Spec.Template.Spec.Containers[0].LivenessProbe = &corev1.Probe{
-		FailureThreshold: 3,
-		PeriodSeconds:    10,
-		SuccessThreshold: 1,
-		TimeoutSeconds:   5,
-		ProbeHandler: corev1.ProbeHandler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path:   "/live",
-				Port:   intstr.FromString("health"),
-				Scheme: "http",
-			},
-		},
-	}
-	report = helper.NewChangeReport("")
-	assert.False(helper.PodChanged(&second.Spec.Template, &secondBis.Spec.Template, constants.FLPName, &report))
-	assert.Contains(report.String(), "no change")
-
-	// Check log level change
-	cfg.Processor.LogLevel = "info"
-	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
-	assert.NoError(err)
-	third := b.daemonSet(annotate(digest))
-
-	report = helper.NewChangeReport("")
-	assert.True(helper.PodChanged(&second.Spec.Template, &third.Spec.Template, constants.FLPName, &report))
-	assert.Contains(report.String(), "config-digest")
-
-	// Check resource change
-	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
-		corev1.ResourceCPU:    resource.MustParse("500m"),
-		corev1.ResourceMemory: resource.MustParse("500Gi"),
-	}
-	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
-	assert.NoError(err)
-	fourth := b.daemonSet(annotate(digest))
-
-	report = helper.NewChangeReport("")
-	assert.True(helper.PodChanged(&third.Spec.Template, &fourth.Spec.Template, constants.FLPName, &report))
-	assert.Contains(report.String(), "req/limit changed")
-
-	// Check reverting limits
-	cfg.Processor.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
-		corev1.ResourceCPU:    resource.MustParse("1"),
-		corev1.ResourceMemory: resource.MustParse("512Mi"),
-	}
-	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
-	assert.NoError(err)
-	fifth := b.daemonSet(annotate(digest))
-
-	report = helper.NewChangeReport("")
-	assert.True(helper.PodChanged(&fourth.Spec.Template, &fifth.Spec.Template, constants.FLPName, &report))
-	assert.Contains(report.String(), "req/limit changed")
-	report = helper.NewChangeReport("")
-	assert.False(helper.PodChanged(&third.Spec.Template, &fifth.Spec.Template, constants.FLPName, &report))
-	assert.Contains(report.String(), "no change")
-
-	// Check Loki config change
-	cfg.Loki.Manual.TLS = flowslatest.ClientTLS{
-		Enable: true,
-		CACert: flowslatest.CertificateReference{
-			Type:     "configmap",
-			Name:     "loki-cert",
-			CertFile: "ca.crt",
-		},
-	}
-	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
-	assert.NoError(err)
-	sixth := b.daemonSet(annotate(digest))
-
-	report = helper.NewChangeReport("")
-	assert.True(helper.PodChanged(&fifth.Spec.Template, &sixth.Spec.Template, constants.FLPName, &report))
-	assert.Contains(report.String(), "config-digest")
-
-	// Check volumes change
-	cfg.Loki.Manual.TLS = flowslatest.ClientTLS{
-		Enable: true,
-		CACert: flowslatest.CertificateReference{
-			Type:     "configmap",
-			Name:     "loki-cert-2",
-			CertFile: "ca.crt",
-		},
-	}
-	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
-	assert.NoError(err)
-	seventh := b.daemonSet(annotate(digest))
-
-	report = helper.NewChangeReport("")
-	assert.True(helper.PodChanged(&sixth.Spec.Template, &seventh.Spec.Template, constants.FLPName, &report))
-	assert.Contains(report.String(), "Volumes changed")
 }
 
 func TestDeploymentNoChange(t *testing.T) {
@@ -466,7 +309,7 @@ func TestServiceNoChange(t *testing.T) {
 	// Get first
 	ns := "namespace"
 	cfg := getConfig()
-	b := monoBuilder(ns, &cfg)
+	b := inProcessBuilder(ns, &cfg)
 	first := b.promService()
 
 	// Check no change
@@ -483,12 +326,12 @@ func TestServiceChanged(t *testing.T) {
 	// Get first
 	ns := "namespace"
 	cfg := getConfig()
-	b := monoBuilder(ns, &cfg)
+	b := inProcessBuilder(ns, &cfg)
 	first := b.promService()
 
 	// Check port changed
 	cfg.Processor.Metrics.Server.Port = 9999
-	b = monoBuilder(ns, &cfg)
+	b = inProcessBuilder(ns, &cfg)
 	second := b.promService()
 
 	report := helper.NewChangeReport("")
@@ -497,7 +340,7 @@ func TestServiceChanged(t *testing.T) {
 
 	// Make sure non-service settings doesn't trigger service update
 	cfg.Processor.LogLevel = "error"
-	b = monoBuilder(ns, &cfg)
+	b = inProcessBuilder(ns, &cfg)
 	third := b.promService()
 
 	report = helper.NewChangeReport("")
@@ -506,7 +349,7 @@ func TestServiceChanged(t *testing.T) {
 
 	// Check annotations change
 	cfg.Processor.LogLevel = "error"
-	b = monoBuilder(ns, &cfg)
+	b = inProcessBuilder(ns, &cfg)
 	fourth := b.promService()
 	fourth.ObjectMeta.Annotations = map[string]string{
 		"name": "value",
@@ -523,8 +366,8 @@ func TestServiceMonitorNoChange(t *testing.T) {
 	// Get first
 	ns := "namespace"
 	cfg := getConfig()
-	b := monoBuilder(ns, &cfg)
-	first := b.generic.serviceMonitor()
+	b := inProcessBuilder(ns, &cfg)
+	first := b.serviceMonitor()
 
 	// Check no change
 	newServiceMonitor := first.DeepCopy()
@@ -540,29 +383,28 @@ func TestServiceMonitorChanged(t *testing.T) {
 	// Get first
 	ns := "namespace"
 	cfg := getConfig()
-	b := monoBuilder(ns, &cfg)
-	first := b.generic.serviceMonitor()
+	b := inProcessBuilder(ns, &cfg)
+	first := b.serviceMonitor()
 
 	// Check namespace change
-	b = monoBuilder("namespace2", &cfg)
-	second := b.generic.serviceMonitor()
+	b = inProcessBuilder("namespace2", &cfg)
+	second := b.serviceMonitor()
 
 	report := helper.NewChangeReport("")
 	assert.True(helper.ServiceMonitorChanged(first, second, &report))
 	assert.Contains(report.String(), "ServiceMonitor spec changed")
 
 	// Check labels change
-	info := reconcilers.Common{Namespace: "namespace2"}
-	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics)
-	third := b.generic.serviceMonitor()
+	b = inProcessForImage(image2, "namespace2", &cfg)
+	third := b.serviceMonitor()
 
 	report = helper.NewChangeReport("")
 	assert.True(helper.ServiceMonitorChanged(second, third, &report))
 	assert.Contains(report.String(), "ServiceMonitor labels changed")
 
 	// Check scheme changed
-	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics)
-	fourth := b.generic.serviceMonitor()
+	b = inProcessForImage(image2, "namespace2", &cfg)
+	fourth := b.serviceMonitor()
 	fourth.Spec.Endpoints[0].Scheme = "https"
 
 	report = helper.NewChangeReport("")
@@ -576,8 +418,8 @@ func TestPrometheusRuleNoChange(t *testing.T) {
 	// Get first
 	ns := "namespace"
 	cfg := getConfig()
-	b := monoBuilder(ns, &cfg)
-	first := b.generic.prometheusRule()
+	b := inProcessBuilder(ns, &cfg)
+	first := b.prometheusRule()
 
 	// Check no change
 	newServiceMonitor := first.DeepCopy()
@@ -592,22 +434,21 @@ func TestPrometheusRuleChanged(t *testing.T) {
 
 	// Get first
 	cfg := getConfig()
-	b := monoBuilder("namespace", &cfg)
-	first := b.generic.prometheusRule()
+	b := inProcessBuilder("namespace", &cfg)
+	first := b.prometheusRule()
 
 	// Check enabled rule change
 	cfg.Processor.Metrics.DisableAlerts = []flowslatest.FLPAlert{flowslatest.AlertNoFlows}
-	b = monoBuilder("namespace", &cfg)
-	second := b.generic.prometheusRule()
+	b = inProcessBuilder("namespace", &cfg)
+	second := b.prometheusRule()
 
 	report := helper.NewChangeReport("")
 	assert.True(helper.PrometheusRuleChanged(first, second, &report))
 	assert.Contains(report.String(), "PrometheusRule spec changed")
 
 	// Check labels change
-	info := reconcilers.Common{Namespace: "namespace2"}
-	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics)
-	third := b.generic.prometheusRule()
+	b = inProcessForImage(image2, "namespace2", &cfg)
+	third := b.prometheusRule()
 
 	report = helper.NewChangeReport("")
 	assert.True(helper.PrometheusRuleChanged(second, third, &report))
@@ -620,7 +461,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	loki := cfg.Loki
-	b := monoBuilder(ns, &cfg)
+	b := inProcessBuilder(ns, &cfg)
 	cm, digest, err := b.configMap()
 	assert.NoError(err)
 	assert.NotEmpty(t, digest)
@@ -637,10 +478,9 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 	assert.Equal("trace", decoded.LogLevel)
 
 	params := decoded.Parameters
-	assert.Len(params, 6)
-	assert.Equal(*cfg.Processor.Advanced.Port, int32(params[0].Ingest.GRPC.Port))
+	assert.Len(params, 5)
 
-	lokiCfg := params[3].Write.Loki
+	lokiCfg := params[2].Write.Loki
 	assert.Equal(loki.Manual.IngesterURL, lokiCfg.URL)
 	assert.Equal(cfg.Loki.WriteBatchWait.Duration.String(), lokiCfg.BatchWait)
 	assert.EqualValues(cfg.Loki.WriteBatchSize, lokiCfg.BatchSize)
@@ -670,7 +510,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	cfg := getConfig()
 	useLokiStack(&cfg)
 	cfg.Agent.Type = flowslatest.AgentEBPF
-	b := monoBuilder(ns, &cfg)
+	b := inProcessBuilder(ns, &cfg)
 	cm, digest, err := b.configMap()
 	assert.NoError(err)
 	assert.NotEmpty(t, digest)
@@ -687,9 +527,9 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	assert.Equal("trace", decoded.LogLevel)
 
 	params := decoded.Parameters
-	assert.Len(params, 6)
+	assert.Len(params, 5)
 
-	lokiCfg := params[3].Write.Loki
+	lokiCfg := params[2].Write.Loki
 	assert.Equal("https://lokistack-gateway-http.ls-namespace.svc:8080/api/logs/v1/network/", lokiCfg.URL)
 	assert.Equal("network", lokiCfg.TenantID)
 	assert.Equal("Bearer", lokiCfg.ClientConfig.Authorization.Type)
@@ -754,23 +594,15 @@ func TestLabels(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	info := reconcilers.Common{Namespace: "ns"}
-	builder, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
-	tBuilder, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
+	builder := inProcessBuilder("ns", &cfg)
+	tBuilder := transfBuilder("ns", &cfg)
 
 	// Deployment
 	depl := tBuilder.deployment(annotate("digest"))
-	assert.Equal("flowlogs-pipeline-transformer", depl.Labels["app"])
-	assert.Equal("flowlogs-pipeline-transformer", depl.Spec.Template.Labels["app"])
+	assert.Equal("flowlogs-pipeline", depl.Labels["app"])
+	assert.Equal("flowlogs-pipeline", depl.Spec.Template.Labels["app"])
 	assert.Equal("dev", depl.Labels["version"])
 	assert.Equal("dev", depl.Spec.Template.Labels["version"])
-
-	// DaemonSet
-	ds := builder.daemonSet(annotate("digest"))
-	assert.Equal("flowlogs-pipeline", ds.Labels["app"])
-	assert.Equal("flowlogs-pipeline", ds.Spec.Template.Labels["app"])
-	assert.Equal("dev", ds.Labels["version"])
-	assert.Equal("dev", ds.Spec.Template.Labels["version"])
 
 	// Service
 	svc := builder.promService()
@@ -780,12 +612,12 @@ func TestLabels(t *testing.T) {
 	assert.Empty(svc.Spec.Selector["version"])
 
 	// ServiceMonitor
-	smMono := builder.generic.serviceMonitor()
+	smMono := builder.serviceMonitor()
 	assert.Equal("flowlogs-pipeline-monitor", smMono.Name)
 	assert.Equal("flowlogs-pipeline", smMono.Spec.Selector.MatchLabels["app"])
-	smTrans := tBuilder.generic.serviceMonitor()
-	assert.Equal("flowlogs-pipeline-transformer-monitor", smTrans.Name)
-	assert.Equal("flowlogs-pipeline-transformer", smTrans.Spec.Selector.MatchLabels["app"])
+	smTrans := tBuilder.serviceMonitor()
+	assert.Equal("flowlogs-pipeline-monitor", smTrans.Name)
+	assert.Equal("flowlogs-pipeline", smTrans.Spec.Selector.MatchLabels["app"])
 }
 
 // This function validate that each stage has its matching parameter
@@ -817,12 +649,12 @@ func TestPipelineConfig(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	cfg.Processor.LogLevel = "info"
-	b := monoBuilder(ns, &cfg)
+	b := inProcessBuilder(ns, &cfg)
 	cm, _, err := b.configMap()
 	assert.NoError(err)
 	_, pipeline := validatePipelineConfig(t, cm)
 	assert.Equal(
-		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
+		`[{"name":"extract_conntrack","follows":"preset-ingester"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
 		pipeline,
 	)
 
@@ -843,12 +675,12 @@ func TestPipelineTraceStage(t *testing.T) {
 
 	cfg := getConfig()
 
-	b := monoBuilder("namespace", &cfg)
+	b := inProcessBuilder("namespace", &cfg)
 	cm, _, err := b.configMap()
 	assert.NoError(err)
 	_, pipeline := validatePipelineConfig(t, cm)
 	assert.Equal(
-		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
+		`[{"name":"extract_conntrack","follows":"preset-ingester"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
 		pipeline,
 	)
 }
@@ -867,17 +699,17 @@ func TestMergeMetricsConfiguration_Default(t *testing.T) {
 
 	cfg := getConfig()
 
-	b := monoBuilder("namespace", &cfg)
+	b := inProcessBuilder("namespace", &cfg)
 	cm, _, err := b.configMap()
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, cm)
-	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
+	names := getSortedMetricsNames(cfs.Parameters[4].Encode.Prom.Metrics)
 	assert.Equal([]string{
 		"namespace_flows_total",
 		"node_ingress_bytes_total",
 		"workload_ingress_bytes_total",
 	}, names)
-	assert.Equal("netobserv_", cfs.Parameters[5].Encode.Prom.Prefix)
+	assert.Equal("netobserv_", cfs.Parameters[4].Encode.Prom.Prefix)
 }
 
 func TestMergeMetricsConfiguration_DefaultWithFeatures(t *testing.T) {
@@ -887,11 +719,11 @@ func TestMergeMetricsConfiguration_DefaultWithFeatures(t *testing.T) {
 	cfg.Agent.EBPF.Privileged = true
 	cfg.Agent.EBPF.Features = []flowslatest.AgentFeature{flowslatest.DNSTracking, flowslatest.FlowRTT, flowslatest.PacketDrop}
 
-	b := monoBuilder("namespace", &cfg)
+	b := inProcessBuilder("namespace", &cfg)
 	cm, _, err := b.configMap()
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, cm)
-	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
+	names := getSortedMetricsNames(cfs.Parameters[4].Encode.Prom.Metrics)
 	assert.Equal([]string{
 		"namespace_dns_latency_seconds",
 		"namespace_drop_packets_total",
@@ -900,7 +732,7 @@ func TestMergeMetricsConfiguration_DefaultWithFeatures(t *testing.T) {
 		"node_ingress_bytes_total",
 		"workload_ingress_bytes_total",
 	}, names)
-	assert.Equal("netobserv_", cfs.Parameters[5].Encode.Prom.Prefix)
+	assert.Equal("netobserv_", cfs.Parameters[4].Encode.Prom.Prefix)
 }
 
 func TestMergeMetricsConfiguration_WithList(t *testing.T) {
@@ -909,15 +741,15 @@ func TestMergeMetricsConfiguration_WithList(t *testing.T) {
 	cfg := getConfig()
 	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{"namespace_egress_bytes_total", "namespace_ingress_bytes_total"}
 
-	b := monoBuilder("namespace", &cfg)
+	b := inProcessBuilder("namespace", &cfg)
 	cm, _, err := b.configMap()
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, cm)
-	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
+	names := getSortedMetricsNames(cfs.Parameters[4].Encode.Prom.Metrics)
 	assert.Len(names, 2)
 	assert.Equal("namespace_egress_bytes_total", names[0])
 	assert.Equal("namespace_ingress_bytes_total", names[1])
-	assert.Equal("netobserv_", cfs.Parameters[5].Encode.Prom.Prefix)
+	assert.Equal("netobserv_", cfs.Parameters[4].Encode.Prom.Prefix)
 }
 
 func TestMergeMetricsConfiguration_EmptyList(t *testing.T) {
@@ -926,11 +758,11 @@ func TestMergeMetricsConfiguration_EmptyList(t *testing.T) {
 	cfg := getConfig()
 	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{}
 
-	b := monoBuilder("namespace", &cfg)
+	b := inProcessBuilder("namespace", &cfg)
 	cm, _, err := b.configMap()
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, cm)
-	assert.Len(cfs.Parameters, 5)
+	assert.Len(cfs.Parameters, 4)
 }
 
 func TestPipelineWithExporter(t *testing.T) {
@@ -951,21 +783,21 @@ func TestPipelineWithExporter(t *testing.T) {
 		},
 	})
 
-	b := monoBuilder("namespace", &cfg)
+	b := inProcessBuilder("namespace", &cfg)
 	cm, _, err := b.configMap()
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, cm)
 	assert.Equal(
-		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"kafka-export-0","follows":"enrich"},{"name":"IPFIX-export-1","follows":"enrich"}]`,
+		`[{"name":"extract_conntrack","follows":"preset-ingester"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"kafka-export-0","follows":"enrich"},{"name":"IPFIX-export-1","follows":"enrich"}]`,
 		pipeline,
 	)
 
-	assert.Equal("kafka-test", cfs.Parameters[6].Encode.Kafka.Address)
-	assert.Equal("topic-test", cfs.Parameters[6].Encode.Kafka.Topic)
+	assert.Equal("kafka-test", cfs.Parameters[5].Encode.Kafka.Address)
+	assert.Equal("topic-test", cfs.Parameters[5].Encode.Kafka.Topic)
 
-	assert.Equal("ipfix-receiver-test", cfs.Parameters[7].Write.Ipfix.TargetHost)
-	assert.Equal(9999, cfs.Parameters[7].Write.Ipfix.TargetPort)
-	assert.Equal("tcp", cfs.Parameters[7].Write.Ipfix.Transport)
+	assert.Equal("ipfix-receiver-test", cfs.Parameters[6].Write.Ipfix.TargetHost)
+	assert.Equal(9999, cfs.Parameters[6].Write.Ipfix.TargetPort)
+	assert.Equal("tcp", cfs.Parameters[6].Write.Ipfix.Transport)
 }
 
 func TestPipelineWithoutLoki(t *testing.T) {
@@ -974,12 +806,12 @@ func TestPipelineWithoutLoki(t *testing.T) {
 	cfg := getConfig()
 	cfg.Loki.Enable = ptr.To(false)
 
-	b := monoBuilder("namespace", &cfg)
+	b := inProcessBuilder("namespace", &cfg)
 	cm, _, err := b.configMap()
 	assert.NoError(err)
 	_, pipeline := validatePipelineConfig(t, cm)
 	assert.Equal(
-		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
+		`[{"name":"extract_conntrack","follows":"preset-ingester"},{"name":"enrich","follows":"extract_conntrack"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
 		pipeline,
 	)
 }

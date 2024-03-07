@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
 // nolint:cyclop
@@ -20,10 +19,6 @@ func flowCollectorMinimalSpecs() {
 	agentKey := types.NamespacedName{
 		Name:      "netobserv-ebpf-agent",
 		Namespace: "netobserv-privileged",
-	}
-	flpKey := types.NamespacedName{
-		Name:      constants.FLPName,
-		Namespace: "netobserv",
 	}
 	cpKey := types.NamespacedName{
 		Name:      "netobserv-plugin",
@@ -54,12 +49,6 @@ func flowCollectorMinimalSpecs() {
 			Eventually(func() error {
 				ds := appsv1.DaemonSet{}
 				return k8sClient.Get(ctx, agentKey, &ds)
-			}, timeout, interval).Should(Succeed())
-
-			By("Expecting to create the flowlogs-pipeline DaemonSet")
-			Eventually(func() error {
-				ds := appsv1.DaemonSet{}
-				return k8sClient.Get(ctx, flpKey, &ds)
 			}, timeout, interval).Should(Succeed())
 
 			By("Expecting to create the console plugin Deployment")

@@ -5,6 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"gopkg.in/yaml.v3"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -12,10 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 
+	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/test"
 )
 
 func flowCollectorEBPFSpecs() {
@@ -23,34 +25,24 @@ func flowCollectorEBPFSpecs() {
 	// we need either to cleanup all created resources manually, or to use different namespaces between tests
 	// For simplicity, we'll use a different namespace
 	operatorNamespace := "namespace-ebpf-specs"
+	operatorPrivilegedNamespace := operatorNamespace + "-privileged"
 	agentKey := types.NamespacedName{
 		Name:      "netobserv-ebpf-agent",
-		Namespace: operatorNamespace + "-privileged",
+		Namespace: operatorPrivilegedNamespace,
 	}
 	operatorNamespace2 := "namespace-ebpf-specs2"
-	agentKey2 := types.NamespacedName{
-		Name:      "netobserv-ebpf-agent",
-		Namespace: operatorNamespace2 + "-privileged",
-	}
+	operatorPrivilegedNamespace2 := operatorNamespace2 + "-privileged"
+
+	dsRef := test.DaemonSet(constants.EBPFAgentName)
+	saRef := test.ServiceAccount(constants.EBPFServiceAccount)
+	svcMetricsRef := test.Service(constants.EBPFAgentMetricsSvcName)
+	svcFLPMetricsRef := test.Service("netobserv-ebpf-agent-prom")
+	smRef := test.ServiceMonitor(constants.EBPFAgentMetricsSvcMonitoringName)
+	smFLPRef := test.ServiceMonitor(constants.EBPFAgentName + "-monitor")
+	ruleFLPRef := test.PrometheusRule(constants.EBPFAgentName + "-alert")
+	nsRef := test.Namespace(operatorPrivilegedNamespace)
+
 	crKey := types.NamespacedName{Name: "cluster"}
-	flpKey2 := types.NamespacedName{
-		Name:      constants.FLPName,
-		Namespace: operatorNamespace2,
-	}
-	saKey := types.NamespacedName{
-		Name:      constants.EBPFServiceAccount,
-		Namespace: agentKey.Namespace,
-	}
-	saKey2 := types.NamespacedName{
-		Name:      constants.EBPFServiceAccount,
-		Namespace: agentKey2.Namespace,
-	}
-	promSvcKey := types.NamespacedName{
-		Name:      constants.EBPFAgentMetricsSvcName,
-		Namespace: operatorNamespace + "-privileged",
-	}
-	nsKey := types.NamespacedName{Name: agentKey.Namespace}
-	nsKey2 := types.NamespacedName{Name: agentKey2.Namespace}
 
 	Context("Netobserv eBPF Agent Reconciler", func() {
 		It("Should deploy when it does not exist", func() {
@@ -62,9 +54,6 @@ func flowCollectorEBPFSpecs() {
 					Processor: flowslatest.FlowCollectorFLP{
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
-						Advanced: &flowslatest.AdvancedProcessorConfig{
-							Port: ptr.To(int32(9999)),
-						},
 					},
 					Agent: flowslatest.FlowCollectorAgent{
 						Type: "eBPF",
@@ -89,13 +78,21 @@ func flowCollectorEBPFSpecs() {
 				return k8sClient.Create(ctx, desired)
 			}).WithTimeout(timeout).WithPolling(interval).Should(Succeed())
 
-			ds := appsv1.DaemonSet{}
-			By("Expecting to create the netobserv-ebpf-agent DaemonSet")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, agentKey, &ds)
-			}).WithTimeout(timeout).WithPolling(interval).Should(Succeed())
+			objs := expectCreation(operatorPrivilegedNamespace,
+				dsRef,
+				saRef,
+				svcMetricsRef,
+				svcFLPMetricsRef,
+				smRef,
+				smFLPRef,
+				ruleFLPRef,
+				nsRef,
+			)
+			Expect(objs).To(HaveLen(8))
 
-			spec := ds.Spec.Template.Spec
+			spec := objs[0].(*appsv1.DaemonSet).Spec.Template.Spec
+			ns := objs[7].(*v1.Namespace)
+
 			By("expecting that the netobserv-ebpf-agent daemonset is properly configured")
 			Expect(spec.HostNetwork).To(BeTrue())
 			Expect(spec.DNSPolicy).To(Equal(v1.DNSClusterFirstWithHostNet))
@@ -108,7 +105,7 @@ func flowCollectorEBPFSpecs() {
 			Expect(spec.Containers[0].SecurityContext.RunAsUser).To(Not(BeNil()))
 			Expect(*spec.Containers[0].SecurityContext.RunAsUser).To(Equal(int64(0)))
 			Expect(spec.Containers[0].Env).To(ContainElements(
-				v1.EnvVar{Name: "EXPORT", Value: "grpc"},
+				v1.EnvVar{Name: "EXPORT", Value: "direct-flp"},
 				v1.EnvVar{Name: "CACHE_ACTIVE_TIMEOUT", Value: "15s"},
 				v1.EnvVar{Name: "CACHE_MAX_FLOWS", Value: "100"},
 				v1.EnvVar{Name: "LOG_LEVEL", Value: "trace"},
@@ -117,28 +114,25 @@ func flowCollectorEBPFSpecs() {
 				v1.EnvVar{Name: "BUFFERS_LENGTH", Value: "100"},
 				v1.EnvVar{Name: "GOGC", Value: "400"},
 				v1.EnvVar{Name: "SAMPLING", Value: "123"},
-				v1.EnvVar{Name: "FLOWS_TARGET_PORT", Value: "9999"},
 			))
-			hostFound := false
+			var flpConfig string
 			for _, env := range spec.Containers[0].Env {
-				if env.Name == "FLOWS_TARGET_HOST" {
-					if env.ValueFrom == nil ||
-						env.ValueFrom.FieldRef == nil ||
-						env.ValueFrom.FieldRef.FieldPath != "status.hostIP" {
-						Fail(fmt.Sprintf("FLOWS_TARGET_HOST expected to refer to \"status.hostIP\"."+
-							" Got: %+v", env.ValueFrom))
-					} else {
-						hostFound = true
-						break
-					}
+				if env.Name == "FLP_CONFIG" {
+					flpConfig = env.Value
 				}
 			}
-			Expect(hostFound).To(BeTrue(),
-				fmt.Sprintf("expected FLOWS_TARGET_HOST env var in %+v", spec.Containers[0].Env))
+			Expect(flpConfig).NotTo(BeEmpty())
 
-			ns := v1.Namespace{}
-			By("expecting to create the netobserv-privileged namespace")
-			Expect(k8sClient.Get(ctx, nsKey, &ns)).To(Succeed())
+			// Parse config
+			var cfs config.ConfigFileStruct
+			err := yaml.Unmarshal([]byte(flpConfig), &cfs)
+			Expect(err).To(BeNil())
+			Expect(cfs.Pipeline).To(Equal([]config.Stage{
+				{Name: "enrich", Follows: "preset-ingester"},
+				{Name: "loki", Follows: "enrich"},
+				{Name: "prometheus", Follows: "enrich"},
+			}))
+
 			Expect(ns.Labels).To(Satisfy(func(labels map[string]string) bool {
 				return helper.IsSubSet(ns.Labels, map[string]string{
 					"app":                                constants.OperatorName,
@@ -146,14 +140,6 @@ func flowCollectorEBPFSpecs() {
 					"pod-security.kubernetes.io/audit":   "privileged",
 				})
 			}))
-
-			By("expecting to create the netobserv-ebpf-agent service account")
-			Expect(k8sClient.Get(ctx, saKey, &v1.ServiceAccount{})).To(Succeed())
-
-			By("Expecting to create the netobserv-ebpf-agent prometheus service")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, promSvcKey, &v1.Service{})
-			}).WithTimeout(timeout).WithPolling(interval).Should(Succeed())
 		})
 
 		It("Should update fields that have changed", func() {
@@ -162,6 +148,7 @@ func flowCollectorEBPFSpecs() {
 				*fc.Spec.Agent.EBPF.Sampling = 4
 				fc.Spec.Agent.EBPF.Privileged = true
 				fc.Spec.Agent.EBPF.Metrics.Enable = ptr.To(false)
+				fc.Spec.DeploymentModel = flowslatest.DeploymentModelKafka
 			})
 
 			ds := appsv1.DaemonSet{}
@@ -185,10 +172,13 @@ func flowCollectorEBPFSpecs() {
 			Expect(*container.SecurityContext.Privileged).To(BeTrue())
 			Expect(container.SecurityContext.Capabilities).To(BeNil())
 
-			By("Expecting to delete the netobserv-ebpf-agent prometheus service")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, promSvcKey, &v1.Service{})
-			}).WithTimeout(timeout).WithPolling(interval).Should(MatchError(`services "ebpf-agent-svc-prom" not found`))
+			expectDeletion(operatorNamespace+"-privileged",
+				svcMetricsRef,
+				smRef,
+				svcFLPMetricsRef,
+				smFLPRef,
+				ruleFLPRef,
+			)
 		})
 
 		It("Should redeploy all when changing namespace", func() {
@@ -196,25 +186,22 @@ func flowCollectorEBPFSpecs() {
 				fc.Spec.Namespace = operatorNamespace2
 			})
 
-			By("Expecting daemonset in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, agentKey, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(MatchError(`daemonsets.apps "netobserv-ebpf-agent" not found`))
+			expectDeletion(operatorPrivilegedNamespace,
+				dsRef,
+				saRef,
+			)
+			expectCreation(operatorPrivilegedNamespace2,
+				dsRef,
+				saRef,
+			)
+		})
 
-			By("Expecting service account in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, saKey, &v1.ServiceAccount{})
-			}, timeout, interval).Should(MatchError(`serviceaccounts "netobserv-ebpf-agent" not found`))
-
-			By("Expecting daemonset to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, agentKey2, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(Succeed())
-
-			By("Expecting service account to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, saKey2, &v1.ServiceAccount{})
-			}, timeout, interval).Should(Succeed())
+		It("Should be garbage collected", func() {
+			expectOwnership(operatorPrivilegedNamespace2,
+				dsRef,
+				test.Namespace(operatorPrivilegedNamespace2),
+				saRef,
+			)
 		})
 
 		It("Should undeploy everything when deleted", func() {
@@ -236,61 +223,20 @@ func flowCollectorEBPFSpecs() {
 				)
 			}).WithTimeout(timeout).WithPolling(interval).
 				Should(Satisfy(errors.IsNotFound))
-
-			By("expecting to delete the flowlogs-pipeline deployment")
-			Eventually(func() error {
-				return k8sClient.Get(ctx, flpKey2, &flowslatest.FlowCollector{})
-			}).WithTimeout(timeout).WithPolling(interval).
-				Should(Satisfy(errors.IsNotFound))
-
-			By("expecting to delete netobserv-ebpf-agent daemonset")
-			Eventually(func() interface{} {
-				ds := &appsv1.DaemonSet{}
-				if err := k8sClient.Get(ctx, agentKey2, ds); err != nil {
-					return err
-				}
-				return ds
-			}).WithTimeout(timeout).WithPolling(interval).
-				Should(BeGarbageCollectedBy(flowCR))
-
-			By("expecting to delete the netobserv-privileged namespace")
-			Eventually(func() interface{} {
-				ns := &v1.Namespace{}
-				if err := k8sClient.Get(ctx, nsKey2, ns); err != nil {
-					return err
-				}
-				return ns
-			}).WithTimeout(timeout).WithPolling(interval).
-				Should(BeGarbageCollectedBy(flowCR))
-
-			By("expecting to delete the netobserv-ebpf-agent service account")
-			Eventually(func() interface{} {
-				sa := &v1.ServiceAccount{}
-				if err := k8sClient.Get(ctx, saKey2, sa); err != nil {
-					return err
-				}
-				return sa
-			}).WithTimeout(timeout).WithPolling(interval).
-				Should(BeGarbageCollectedBy(flowCR))
 		})
 	})
 }
 
 func flowCollectorEBPFKafkaSpecs() {
 	operatorNamespace := "ebpf-kafka-specs"
-	agentKey := types.NamespacedName{
-		Name:      "netobserv-ebpf-agent",
-		Namespace: operatorNamespace + "-privileged",
-	}
+	operatorPrivilegedNamespace := operatorNamespace + "-privileged"
+	dsRef := test.DaemonSet(constants.EBPFAgentName)
+	saRef := test.ServiceAccount(constants.EBPFServiceAccount)
+	flpRef := test.Deployment(constants.FLPName)
+	flpSvcRef := test.Service(constants.FLPName + "-prom")
+	flpSMRef := test.ServiceMonitor(constants.FLPName + "-monitor")
 	crKey := types.NamespacedName{Name: "cluster"}
-	flpIngesterKey := types.NamespacedName{
-		Name:      constants.FLPName + "-ingester",
-		Namespace: operatorNamespace,
-	}
-	flpTransformerKey := types.NamespacedName{
-		Name:      constants.FLPName + "-transformer",
-		Namespace: operatorNamespace,
-	}
+
 	Context("Netobserv eBPF Agent Reconciler", func() {
 		It("Should deploy the agent with the proper configuration", func() {
 			descriptor := &flowslatest.FlowCollector{
@@ -307,13 +253,14 @@ func flowCollectorEBPFKafkaSpecs() {
 			}
 			Expect(k8sClient.Create(ctx, descriptor)).Should(Succeed())
 
-			ds := appsv1.DaemonSet{}
-			By("making sure that the proper environment variables have been passed to the agent")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, agentKey, &ds)
-			}).WithTimeout(timeout).WithPolling(interval).Should(Succeed())
+			objs := expectCreation(operatorPrivilegedNamespace,
+				dsRef,
+				saRef,
+			)
+			Expect(objs).To(HaveLen(2))
 
-			spec := ds.Spec.Template.Spec
+			spec := objs[0].(*appsv1.DaemonSet).Spec.Template.Spec
+
 			Expect(len(spec.Containers)).To(Equal(1))
 			Expect(spec.Containers[0].Env).To(ContainElements(
 				v1.EnvVar{Name: "EXPORT", Value: "kafka"},
@@ -321,23 +268,25 @@ func flowCollectorEBPFKafkaSpecs() {
 				v1.EnvVar{Name: "KAFKA_TOPIC", Value: "network-flows"},
 			))
 		})
+
 		It("Should properly deploy flowlogs-pipeline", func() {
-			By("deploying flowlogs-pipeline-transformer")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpTransformerKey, &appsv1.Deployment{})
-			}, timeout, interval).Should(Succeed())
-
-			By("not deploying flowlogs-pipeline-ingester")
-			Expect(k8sClient.Get(ctx, flpIngesterKey, &appsv1.DaemonSet{})).
-				Should(Not(Succeed()))
+			objs := expectCreation(operatorNamespace,
+				flpRef,
+				flpSvcRef,
+				flpSMRef,
+			)
+			Expect(objs).To(HaveLen(3))
 		})
-		It("Should correctly undeploy", func() {
-			// Retrieve CR to get its UID
-			flowCR := &flowslatest.FlowCollector{}
-			Eventually(func() error {
-				return k8sClient.Get(ctx, crKey, flowCR)
-			}, timeout, interval).Should(Succeed())
 
+		It("Should be garbage collected", func() {
+			expectOwnership(operatorNamespace,
+				dsRef,
+				flpRef,
+				saRef,
+			)
+		})
+
+		It("Should correctly undeploy", func() {
 			Expect(k8sClient.Delete(ctx, &flowslatest.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 			})).Should(Succeed())
@@ -350,26 +299,6 @@ func flowCollectorEBPFKafkaSpecs() {
 				)
 			}).WithTimeout(timeout).WithPolling(interval).
 				Should(Satisfy(errors.IsNotFound))
-
-			By("expecting to delete the flowlogs-pipeline-transformer deployment")
-			Eventually(func() interface{} {
-				dp := &appsv1.Deployment{}
-				if err := k8sClient.Get(ctx, flpTransformerKey, dp); err != nil {
-					return err
-				}
-				return dp
-			}).WithTimeout(timeout).WithPolling(interval).
-				Should(BeGarbageCollectedBy(flowCR))
-
-			By("expecting to delete netobserv-ebpf-agent daemonset")
-			Eventually(func() interface{} {
-				ds := &appsv1.DaemonSet{}
-				if err := k8sClient.Get(ctx, agentKey, ds); err != nil {
-					return err
-				}
-				return ds
-			}).WithTimeout(timeout).WithPolling(interval).
-				Should(BeGarbageCollectedBy(flowCR))
 		})
 	})
 }

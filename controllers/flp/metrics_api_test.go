@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
@@ -30,11 +31,11 @@ func getConfiguredMetrics(cm *corev1.ConfigMap) (api.MetricsItems, error) {
 	return nil, errors.New("prom encode stage not found")
 }
 
-func defaultBuilderWithMetrics(metrics *metricslatest.FlowMetricList) (monolithBuilder, error) {
+func defaultBuilderWithMetrics(metrics *metricslatest.FlowMetricList) (*Builder, error) {
 	cfg := getConfig()
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: "namespace", Loki: &loki}
-	return newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, metrics)
+	return newInProcessBuilder(info.NewInstance(image, status.Instance{}), constants.FLPName, &cfg, metrics)
 }
 
 func metric(metrics api.MetricsItems, name string) *api.MetricsItem {

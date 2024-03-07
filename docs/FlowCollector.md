@@ -3503,7 +3503,7 @@ TLS client configuration for Loki URL.
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          Port of the flow collector (host port). By convention, some values are forbidden. It must be greater than 1024 and different from 4500, 4789 and 6081.<br/>
+          [Deprecated (*)] Port of the flow collector (host port). It is not used anymore and will be removed in a future version.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 2055<br/>
@@ -9046,7 +9046,7 @@ TLS client configuration for Loki URL.
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          Port of the flow collector (host port). By convention, some values are forbidden. It must be greater than 1024 and different from 4500, 4789 and 6081.<br/>
+          [Deprecated (*)] Port of the flow collector (host port). It is not used anymore and will be removed in a future version.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 2055<br/>

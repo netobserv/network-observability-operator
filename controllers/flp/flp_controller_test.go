@@ -18,7 +18,6 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 )
 
@@ -35,11 +34,24 @@ var (
 	updateCR          = func(key types.NamespacedName, updater func(*flowslatest.FlowCollector)) {
 		test.UpdateCR(ctx, k8sClient, key, updater)
 	}
-	getCR = func(key types.NamespacedName) *flowslatest.FlowCollector {
-		return test.GetCR(ctx, k8sClient, key)
-	}
 	cleanupCR = func(key types.NamespacedName) {
 		test.CleanupCR(ctx, k8sClient, key)
+	}
+	expectCreation = func(namespace string, objs ...test.ResourceRef) []client.Object {
+		GinkgoHelper()
+		return test.ExpectCreation(ctx, k8sClient, namespace, objs...)
+	}
+	expectDeletion = func(namespace string, objs ...test.ResourceRef) {
+		GinkgoHelper()
+		test.ExpectDeletion(ctx, k8sClient, namespace, objs...)
+	}
+	expectNoCreation = func(namespace string, objs ...test.ResourceRef) {
+		GinkgoHelper()
+		test.ExpectNoCreation(ctx, k8sClient, namespace, objs...)
+	}
+	expectOwnership = func(namespace string, objs ...test.ResourceRef) {
+		GinkgoHelper()
+		test.ExpectOwnership(ctx, k8sClient, namespace, objs...)
 	}
 )
 
@@ -50,22 +62,10 @@ func ControllerSpecs() {
 	crKey := types.NamespacedName{
 		Name: "cluster",
 	}
-	flpKey1 := types.NamespacedName{
-		Name:      constants.FLPName,
-		Namespace: operatorNamespace,
-	}
-	flpKey2 := types.NamespacedName{
-		Name:      constants.FLPName,
-		Namespace: otherNamespace,
-	}
-	flpKeyKafkaTransformer := types.NamespacedName{
-		Name:      constants.FLPName + FlpConfSuffix[ConfKafkaTransformer],
-		Namespace: operatorNamespace,
-	}
-	rbKeyIngest := types.NamespacedName{Name: RoleBindingName(ConfKafkaIngester)}
-	rbKeyTransform := types.NamespacedName{Name: RoleBindingName(ConfKafkaTransformer)}
-	rbKeyIngestMono := types.NamespacedName{Name: RoleBindingMonoName(ConfKafkaIngester)}
-	rbKeyTransformMono := types.NamespacedName{Name: RoleBindingMonoName(ConfKafkaTransformer)}
+	deplRef := test.Deployment(constants.FLPName)
+	cmRef := test.ConfigMap(constants.FLPName + "-config")
+	saRef := test.ServiceAccount(constants.FLPName)
+	crbRef := test.ClusterRoleBinding(constants.FLPName)
 
 	// Created objects to cleanup
 	cleanupList := []client.Object{}
@@ -78,10 +78,8 @@ func ControllerSpecs() {
 		// Add any teardown steps that needs to be executed after each test
 	})
 
-	Context("Deploying as DaemonSet", func() {
-		var digest string
-		ds := appsv1.DaemonSet{}
-		It("Should create successfully", func() {
+	Context("Direct mode / direct-flp", func() {
+		It("Should create CR successfully", func() {
 			created := &flowslatest.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 				Spec: flowslatest.FlowCollectorSpec{
@@ -114,65 +112,54 @@ func ControllerSpecs() {
 
 			// Create
 			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
+		})
 
-			By("Expecting to create the flowlogs-pipeline DaemonSet")
-			Eventually(func() error {
-				if err := k8sClient.Get(ctx, flpKey1, &ds); err != nil {
-					return err
+		It("Should not create flowlogs-pipeline when using agent direct-flp", func() {
+			expectNoCreation(operatorNamespace,
+				deplRef,
+				cmRef,
+				test.DaemonSet(constants.FLPName),
+			)
+		})
+	})
+
+	Context("With Kafka", func() {
+		It("Should update kafka config successfully", func() {
+			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.DeploymentModel = flowslatest.DeploymentModelKafka
+				fc.Spec.Kafka = flowslatest.FlowCollectorKafka{
+					Address: "localhost:9092",
+					Topic:   "FLP",
+					TLS: flowslatest.ClientTLS{
+						CACert: flowslatest.CertificateReference{
+							Type:     "secret",
+							Name:     "some-secret",
+							CertFile: "ca.crt",
+						},
+					},
 				}
-				digest = ds.Spec.Template.Annotations[constants.PodConfigurationDigest]
-				if digest == "" {
-					return fmt.Errorf("%q annotation can't be empty", constants.PodConfigurationDigest)
-				}
-				return nil
-			}, timeout, interval).Should(Succeed())
+			})
+		})
 
-			By("Expecting to create the flowlogs-pipeline ServiceAccount")
-			Eventually(func() interface{} {
-				svcAcc := v1.ServiceAccount{}
-				if err := k8sClient.Get(ctx, flpKey1, &svcAcc); err != nil {
-					return err
-				}
-				return svcAcc
-			}, timeout, interval).Should(Satisfy(func(svcAcc v1.ServiceAccount) bool {
-				return svcAcc.Labels != nil && svcAcc.Labels["app"] == constants.FLPName
-			}))
+		var depl *appsv1.Deployment
+		var digest string
 
-			By("Expecting to create two flowlogs-pipeline role binding")
-			rb1 := rbacv1.ClusterRoleBinding{}
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyIngestMono, &rb1)
-			}, timeout, interval).Should(Succeed())
-			Expect(rb1.Subjects).Should(HaveLen(1))
-			Expect(rb1.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
-			Expect(rb1.RoleRef.Name).Should(Equal("flowlogs-pipeline-ingester"))
+		It("Should deploy kafka transformer", func() {
+			objs := expectCreation(operatorNamespace,
+				deplRef,
+				cmRef,
+				saRef,
+				crbRef,
+			)
+			Expect(objs).To(HaveLen(4))
+			depl = objs[0].(*appsv1.Deployment)
+			digest = depl.Spec.Template.Annotations[constants.PodConfigurationDigest]
+			Expect(digest).NotTo(BeEmpty())
 
-			rb2 := rbacv1.ClusterRoleBinding{}
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyTransformMono, &rb2)
-			}, timeout, interval).Should(Succeed())
-			Expect(rb2.Subjects).Should(HaveLen(1))
-			Expect(rb2.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
-			Expect(rb2.RoleRef.Name).Should(Equal("flowlogs-pipeline-transformer"))
-
-			By("Not expecting ingester role binding")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyIngest, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-ingester-role" not found`))
-
-			By("Not expecting transformer role binding")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyTransform, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-transformer-role" not found`))
-
-			By("Expecting flowlogs-pipeline-config configmap to be created")
-			Eventually(func() interface{} {
-				cm := v1.ConfigMap{}
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "flowlogs-pipeline-config",
-					Namespace: operatorNamespace,
-				}, &cm)
-			}, timeout, interval).Should(Succeed())
+			rb := objs[3].(*rbacv1.ClusterRoleBinding)
+			Expect(rb.Subjects).Should(HaveLen(1))
+			Expect(rb.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
+			Expect(rb.RoleRef.Name).Should(Equal("flowlogs-pipeline"))
 		})
 
 		It("Should update successfully", func() {
@@ -208,45 +195,12 @@ func ControllerSpecs() {
 
 			By("CR updated", func() {
 				Eventually(func() error {
-					err := k8sClient.Get(ctx, flpKey1, &ds)
+					err := k8sClient.Get(ctx, deplRef.GetKey(operatorNamespace), depl)
 					if err != nil {
 						return err
 					}
-					return checkDigestUpdate(&digest, ds.Spec.Template.Annotations)
+					return checkDigestUpdate(&digest, depl.Spec.Template.Annotations)
 				}, timeout, interval).Should(Succeed())
-			})
-
-			By("Creating the required HostPort to access flowlogs-pipeline through the NodeIP", func() {
-				var cnt *v1.Container
-				for i := range ds.Spec.Template.Spec.Containers {
-					if ds.Spec.Template.Spec.Containers[i].Name == constants.FLPName {
-						cnt = &ds.Spec.Template.Spec.Containers[i]
-						break
-					}
-				}
-				Expect(cnt).ToNot(BeNil(), "can't find a container named", constants.FLPName)
-				var cp *v1.ContainerPort
-				for i := range cnt.Ports {
-					if cnt.Ports[i].Name == constants.FLPPortName {
-						cp = &cnt.Ports[i]
-						break
-					}
-				}
-				Expect(cp).ToNot(BeNil(), "can't find a container port named", constants.FLPPortName)
-				Expect(*cp).To(Equal(v1.ContainerPort{
-					Name:          constants.FLPPortName,
-					HostPort:      7891,
-					ContainerPort: 7891,
-					Protocol:      "TCP",
-				}))
-				Expect(cnt.Env).To(Equal([]v1.EnvVar{
-					{Name: "GOGC", Value: "400"}, {Name: "GOMAXPROCS", Value: "33"}, {Name: "GODEBUG", Value: "http2server=0"},
-				}))
-			})
-
-			By("Allocating the proper toleration to allow its placement in the master nodes", func() {
-				Expect(ds.Spec.Template.Spec.Tolerations).
-					To(ContainElement(v1.Toleration{Operator: v1.TolerationOpExists}))
 			})
 		})
 
@@ -259,72 +213,11 @@ func ControllerSpecs() {
 
 			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
 			Eventually(func() error {
-				if err := k8sClient.Get(ctx, flpKey1, &ds); err != nil {
+				if err := k8sClient.Get(ctx, deplRef.GetKey(operatorNamespace), depl); err != nil {
 					return err
 				}
-				return checkDigestUpdate(&digest, ds.Spec.Template.Annotations)
+				return checkDigestUpdate(&digest, depl.Spec.Template.Annotations)
 			}).Should(Succeed())
-		})
-	})
-
-	Context("With Kafka", func() {
-		It("Should update kafka config successfully", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.DeploymentModel = flowslatest.DeploymentModelKafka
-				fc.Spec.Kafka = flowslatest.FlowCollectorKafka{
-					Address: "localhost:9092",
-					Topic:   "FLP",
-					TLS: flowslatest.ClientTLS{
-						CACert: flowslatest.CertificateReference{
-							Type:     "secret",
-							Name:     "some-secret",
-							CertFile: "ca.crt",
-						},
-					},
-				}
-			})
-		})
-
-		It("Should deploy kafka transformer", func() {
-			By("Expecting transformer deployment to be created")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &appsv1.Deployment{})
-			}, timeout, interval).Should(Succeed())
-
-			By("Not Expecting transformer service to be created")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &v1.Service{})
-			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline-transformer" not found`))
-
-			By("Expecting to create transformer flowlogs-pipeline role bindings")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyIngest, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-ingester-role" not found`))
-
-			rb2 := rbacv1.ClusterRoleBinding{}
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyTransform, &rb2)
-			}, timeout, interval).Should(Succeed())
-			Expect(rb2.Subjects).Should(HaveLen(1))
-			Expect(rb2.Subjects[0].Name).Should(Equal("flowlogs-pipeline-transformer"))
-			Expect(rb2.RoleRef.Name).Should(Equal("flowlogs-pipeline-transformer"))
-
-			By("Not expecting mono-transformer role binding")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyIngestMono, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-ingester-role-mono" not found`))
-
-			By("Not expecting mono-ingester role binding")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyTransformMono, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-transformer-role-mono" not found`))
-		})
-
-		It("Should delete previous flp deployment", func() {
-			By("Expecting monolith to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey1, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline" not found`))
 		})
 	})
 
@@ -353,7 +246,7 @@ func ControllerSpecs() {
 		It("Should have HPA installed", func() {
 			By("Expecting HPA to be created")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &hpa)
+				return k8sClient.Get(ctx, deplRef.GetKey(operatorNamespace), &hpa)
 			}, timeout, interval).Should(Succeed())
 			Expect(*hpa.Spec.MinReplicas).To(Equal(int32(1)))
 			Expect(hpa.Spec.MaxReplicas).To(Equal(int32(1)))
@@ -368,7 +261,7 @@ func ControllerSpecs() {
 
 			By("Changing the Horizontal Pod Autoscaler instance")
 			Eventually(func() error {
-				if err := k8sClient.Get(ctx, flpKeyKafkaTransformer, &hpa); err != nil {
+				if err := k8sClient.Get(ctx, deplRef.GetKey(operatorNamespace), &hpa); err != nil {
 					return err
 				}
 				if *hpa.Spec.MinReplicas != int32(2) || hpa.Spec.MaxReplicas != int32(2) ||
@@ -382,99 +275,47 @@ func ControllerSpecs() {
 		})
 	})
 
-	Context("Back without Kafka", func() {
-		It("Should remove kafka config successfully", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.DeploymentModel = flowslatest.DeploymentModelDirect
-			})
-		})
-
-		It("Should deploy single flp again", func() {
-			By("Expecting daemonset to be created")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey1, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(Succeed())
-		})
-
-		It("Should delete kafka transformer", func() {
-			By("Expecting transformer deployment to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &appsv1.Deployment{})
-			}, timeout, interval).Should(MatchError(`deployments.apps "flowlogs-pipeline-transformer" not found`))
-		})
-	})
-
 	Context("Checking monitoring resources", func() {
 		It("Should create desired objects when they're not found (e.g. case of an operator upgrade)", func() {
-			psvc := v1.Service{}
-			sm := monitoringv1.ServiceMonitor{}
-			pr := monitoringv1.PrometheusRule{}
-			By("Expecting prometheus service to exist")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "flowlogs-pipeline-prom",
-					Namespace: operatorNamespace,
-				}, &psvc)
-			}, timeout, interval).Should(Succeed())
-
-			By("Expecting ServiceMonitor to exist")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "flowlogs-pipeline-monitor",
-					Namespace: operatorNamespace,
-				}, &sm)
-			}, timeout, interval).Should(Succeed())
-
-			By("Expecting PrometheusRule to exist and be updated")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "flowlogs-pipeline-alert",
-					Namespace: operatorNamespace,
-				}, &pr)
-			}, timeout, interval).Should(Succeed())
+			objs := expectCreation(operatorNamespace,
+				test.Service("flowlogs-pipeline-prom"),
+				test.ServiceMonitor("flowlogs-pipeline-monitor"),
+				test.PrometheusRule("flowlogs-pipeline-alert"),
+			)
+			Expect(objs).To(HaveLen(3))
+			sm := objs[1].(*monitoringv1.ServiceMonitor)
+			pr := objs[2].(*monitoringv1.PrometheusRule)
 			Expect(pr.Spec.Groups).Should(HaveLen(1))
 			Expect(pr.Spec.Groups[0].Rules).Should(HaveLen(1))
 
 			// Manually delete ServiceMonitor
 			By("Deleting ServiceMonitor")
-			Eventually(func() error {
-				return k8sClient.Delete(ctx, &sm)
-			}, timeout, interval).Should(Succeed())
+			Eventually(func() error { return k8sClient.Delete(ctx, sm) }, timeout, interval).Should(Succeed())
 
 			// Do a dummy change that will trigger reconcile, and make sure SM is created again
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor.LogLevel = "trace"
 			})
+
 			By("Expecting ServiceMonitor to exist")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "flowlogs-pipeline-monitor",
-					Namespace: operatorNamespace,
-				}, &sm)
-			}, timeout, interval).Should(Succeed())
+			expectCreation(operatorNamespace, test.ServiceMonitor("flowlogs-pipeline-monitor"))
 
 			// Manually delete Rule
 			By("Deleting prom rule")
-			Eventually(func() error {
-				return k8sClient.Delete(ctx, &pr)
-			}, timeout, interval).Should(Succeed())
+			Eventually(func() error { return k8sClient.Delete(ctx, pr) }, timeout, interval).Should(Succeed())
 
 			// Do a dummy change that will trigger reconcile, and make sure Rule is created again
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor.LogLevel = "debug"
 			})
 			By("Expecting PrometheusRule to exist")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "flowlogs-pipeline-alert",
-					Namespace: operatorNamespace,
-				}, &pr)
-			}, timeout, interval).Should(Succeed())
+			expectCreation(operatorNamespace, test.PrometheusRule("flowlogs-pipeline-alert"))
 		})
 	})
 
 	Context("Using certificates with loki manual mode", func() {
-		flpDS := appsv1.DaemonSet{}
+		flpKey := deplRef.GetKey(operatorNamespace)
+		depl := appsv1.Deployment{}
 		It("Should update Loki to use TLS", func() {
 			// Create CM certificate
 			cm := &v1.ConfigMap{
@@ -502,13 +343,13 @@ func ControllerSpecs() {
 		It("Should have certificate mounted", func() {
 			By("Expecting certificate mounted")
 			Eventually(func() interface{} {
-				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
+				if err := k8sClient.Get(ctx, flpKey, &depl); err != nil {
 					return err
 				}
-				return flpDS.Spec.Template.Spec.Volumes
+				return depl.Spec.Template.Spec.Volumes
 			}, timeout, interval).Should(HaveLen(2))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
+			Expect(depl.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(depl.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
 		})
 
 		It("Should restore no TLS config", func() {
@@ -518,17 +359,18 @@ func ControllerSpecs() {
 				}
 			})
 			Eventually(func() interface{} {
-				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
+				if err := k8sClient.Get(ctx, flpKey, &depl); err != nil {
 					return err
 				}
-				return flpDS.Spec.Template.Spec.Volumes
+				return depl.Spec.Template.Spec.Volumes
 			}, timeout, interval).Should(HaveLen(1))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(depl.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
 		})
 	})
 
 	Context("Using certificates with loki distributed mode", func() {
-		flpDS := appsv1.DaemonSet{}
+		flpKey := deplRef.GetKey(operatorNamespace)
+		depl := appsv1.Deployment{}
 		It("Should update Loki to use TLS", func() {
 			// Create CM certificate
 			cm := &v1.ConfigMap{
@@ -560,13 +402,13 @@ func ControllerSpecs() {
 		It("Should have certificate mounted", func() {
 			By("Expecting certificate mounted")
 			Eventually(func() interface{} {
-				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
+				if err := k8sClient.Get(ctx, flpKey, &depl); err != nil {
 					return err
 				}
-				return flpDS.Spec.Template.Spec.Volumes
+				return depl.Spec.Template.Spec.Volumes
 			}, timeout, interval).Should(HaveLen(2))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
+			Expect(depl.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(depl.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
 		})
 
 		It("Should restore no TLS config", func() {
@@ -576,17 +418,18 @@ func ControllerSpecs() {
 				}
 			})
 			Eventually(func() interface{} {
-				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
+				if err := k8sClient.Get(ctx, flpKey, &depl); err != nil {
 					return err
 				}
-				return flpDS.Spec.Template.Spec.Volumes
+				return depl.Spec.Template.Spec.Volumes
 			}, timeout, interval).Should(HaveLen(1))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(depl.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
 		})
 	})
 
 	Context("Using certificates with loki monolithic mode", func() {
-		flpDS := appsv1.DaemonSet{}
+		flpKey := deplRef.GetKey(operatorNamespace)
+		depl := appsv1.Deployment{}
 		It("Should update Loki to use TLS", func() {
 			// Create CM certificate
 			cm := &v1.ConfigMap{
@@ -617,13 +460,13 @@ func ControllerSpecs() {
 		It("Should have certificate mounted", func() {
 			By("Expecting certificate mounted")
 			Eventually(func() interface{} {
-				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
+				if err := k8sClient.Get(ctx, flpKey, &depl); err != nil {
 					return err
 				}
-				return flpDS.Spec.Template.Spec.Volumes
+				return depl.Spec.Template.Spec.Volumes
 			}, timeout, interval).Should(HaveLen(2))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
+			Expect(depl.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(depl.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
 		})
 
 		It("Should restore no TLS config", func() {
@@ -633,17 +476,18 @@ func ControllerSpecs() {
 				}
 			})
 			Eventually(func() interface{} {
-				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
+				if err := k8sClient.Get(ctx, flpKey, &depl); err != nil {
 					return err
 				}
-				return flpDS.Spec.Template.Spec.Volumes
+				return depl.Spec.Template.Spec.Volumes
 			}, timeout, interval).Should(HaveLen(1))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(depl.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
 		})
 	})
 
 	Context("Using Certificates With Loki in LokiStack Mode", func() {
-		flpDS := appsv1.DaemonSet{}
+		flpKey := deplRef.GetKey(operatorNamespace)
+		depl := appsv1.Deployment{}
 		It("Should update Loki config successfully", func() {
 			// Create CM certificate
 			cm := &v1.ConfigMap{
@@ -667,14 +511,14 @@ func ControllerSpecs() {
 		It("Should have certificate mounted", func() {
 			By("Expecting certificate mounted")
 			Eventually(func() interface{} {
-				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
+				if err := k8sClient.Get(ctx, flpKey, &depl); err != nil {
 					return err
 				}
-				return flpDS.Spec.Template.Spec.Volumes
+				return depl.Spec.Template.Spec.Volumes
 			}, timeout, interval).Should(HaveLen(3))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("flowlogs-pipeline"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[2].Name).To(Equal("loki-certs-ca"))
+			Expect(depl.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(depl.Spec.Template.Spec.Volumes[1].Name).To(Equal("flowlogs-pipeline"))
+			Expect(depl.Spec.Template.Spec.Volumes[2].Name).To(Equal("loki-certs-ca"))
 		})
 
 		It("Should deploy Loki roles", func() {
@@ -703,80 +547,66 @@ func ControllerSpecs() {
 				}
 			})
 			Eventually(func() interface{} {
-				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
+				if err := k8sClient.Get(ctx, flpKey, &depl); err != nil {
 					return err
 				}
-				return flpDS.Spec.Template.Spec.Volumes
+				return depl.Spec.Template.Spec.Volumes
 			}, timeout, interval).Should(HaveLen(1))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(depl.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
 		})
 	})
 
 	Context("Changing namespace", func() {
 		It("Should update namespace successfully", func() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Processor.Advanced.Port = ptr.To(int32(9999))
 				fc.Spec.Namespace = otherNamespace
 			})
 		})
 
 		It("Should redeploy FLP in new namespace", func() {
-			By("Expecting daemonset in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey1, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline" not found`))
+			By("Expecting resources in previous namespace to be deleted")
+			expectDeletion(operatorNamespace,
+				deplRef,
+				cmRef,
+				saRef,
+			)
 
-			By("Expecting deployment in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey1, &appsv1.Deployment{})
-			}, timeout, interval).Should(MatchError(`deployments.apps "flowlogs-pipeline" not found`))
-
-			By("Expecting service account in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey1, &v1.ServiceAccount{})
-			}, timeout, interval).Should(MatchError(`serviceaccounts "flowlogs-pipeline" not found`))
-
-			By("Expecting daemonset to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey2, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(Succeed())
-
-			By("Expecting service account to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey2, &v1.ServiceAccount{})
-			}, timeout, interval).Should(Succeed())
+			objs := expectCreation(otherNamespace,
+				deplRef,
+				cmRef,
+				saRef,
+				crbRef,
+			)
+			Expect(objs).To(HaveLen(4))
+			crb := objs[3].(*rbacv1.ClusterRoleBinding)
+			Expect(crb.Subjects).To(HaveLen(1))
+			Expect(crb.Subjects[0].Namespace).To(Equal(otherNamespace))
 		})
 	})
 
 	Context("Checking CR ownership", func() {
 		It("Should be garbage collected", func() {
-			// Retrieve CR to get its UID
-			By("Getting the CR")
-			flowCR := getCR(crKey)
+			expectOwnership(otherNamespace,
+				deplRef,
+				cmRef,
+				saRef,
+			)
+		})
+	})
 
-			By("Expecting flowlogs-pipeline daemonset to be garbage collected")
-			Eventually(func() interface{} {
-				d := appsv1.DaemonSet{}
-				_ = k8sClient.Get(ctx, flpKey2, &d)
-				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
+	Context("Back without Kafka", func() {
+		It("Should remove kafka config successfully", func() {
+			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.DeploymentModel = flowslatest.DeploymentModelDirect
+			})
+		})
 
-			By("Expecting flowlogs-pipeline service account to be garbage collected")
-			Eventually(func() interface{} {
-				svcAcc := v1.ServiceAccount{}
-				_ = k8sClient.Get(ctx, flpKey2, &svcAcc)
-				return &svcAcc
-			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
-
-			By("Expecting flowlogs-pipeline configmap to be garbage collected")
-			Eventually(func() interface{} {
-				cm := v1.ConfigMap{}
-				_ = k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "flowlogs-pipeline-config",
-					Namespace: otherNamespace,
-				}, &cm)
-				return &cm
-			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
+		It("Should delete kafka transformer", func() {
+			expectDeletion(otherNamespace,
+				deplRef,
+				cmRef,
+				saRef,
+			)
 		})
 	})
 

@@ -21,9 +21,7 @@ type ComponentName string
 
 const (
 	FlowCollectorLegacy ComponentName = "FlowCollectorLegacy"
-	FLPParent           ComponentName = "FLPParent"
-	FLPMonolith         ComponentName = "FLPMonolith"
-	FLPTransformOnly    ComponentName = "FLPTransformOnly"
+	FLP                 ComponentName = "FLP"
 	Monitoring          ComponentName = "Monitoring"
 )
 

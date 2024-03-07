@@ -70,23 +70,23 @@ func ControllerFlowMetricsSpecs() {
 	})
 
 	Context("Deploying default FLP", func() {
-		ds := appsv1.DaemonSet{}
+		depl := appsv1.Deployment{}
 		cm := v1.ConfigMap{}
 		It("Should create successfully", func() {
 			created := &flowslatest.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
 				Spec: flowslatest.FlowCollectorSpec{
 					Namespace:       operatorNamespace,
-					DeploymentModel: flowslatest.DeploymentModelDirect,
+					DeploymentModel: flowslatest.DeploymentModelKafka,
 				},
 			}
 
 			// Create
 			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
 
-			By("Expecting to create the flowlogs-pipeline DaemonSet")
+			By("Expecting to create the flowlogs-pipeline Deployment")
 			Eventually(func() error {
-				return k8sClient.Get(ctx, flpKey, &ds)
+				return k8sClient.Get(ctx, flpKey, &depl)
 			}, timeout, interval).Should(Succeed())
 
 			By("Expecting flowlogs-pipeline-config configmap to be created")

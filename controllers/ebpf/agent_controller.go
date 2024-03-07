@@ -33,8 +33,6 @@ const (
 	envExcludeInterfaces          = "EXCLUDE_INTERFACES"
 	envInterfaces                 = "INTERFACES"
 	envAgentIP                    = "AGENT_IP"
-	envFlowsTargetHost            = "FLOWS_TARGET_HOST"
-	envFlowsTargetPort            = "FLOWS_TARGET_PORT"
 	envSampling                   = "SAMPLING"
 	envExport                     = "EXPORT"
 	envKafkaBrokers               = "KAFKA_BROKERS"
@@ -143,13 +141,10 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
 
-	var inprocFLPInfo *flp.InProcessInfo
-	if helper.UseMergedAgentFLP(&target.Spec) {
-		// Direct-FLP mode
-		inprocFLPInfo, err = flp.ReconcileInProcess(ctx, c.Instance, target)
-		if err != nil {
-			return fmt.Errorf("reconciling in-process FLP: %w", err)
-		}
+	// Direct-FLP mode
+	inprocFLPInfo, err := flp.ReconcileInProcess(ctx, c.Instance, target, constants.EBPFAgentName)
+	if err != nil {
+		return fmt.Errorf("reconciling in-process FLP: %w", err)
 	}
 
 	desired, err := c.desired(ctx, target, inprocFLPInfo, rlog)
@@ -364,7 +359,6 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			)
 		}
 	} else {
-		debugConfig := helper.GetAdvancedProcessorConfig(coll.Spec.Processor.Advanced)
 		config = append(config,
 			corev1.EnvVar{
 				Name:  envExport,
@@ -373,19 +367,6 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			corev1.EnvVar{
 				Name:  envFLPConfig,
 				Value: inprocFLPInfo.JSONConfig,
-			},
-			corev1.EnvVar{
-				Name: envFlowsTargetHost,
-				ValueFrom: &corev1.EnvVarSource{
-					FieldRef: &corev1.ObjectFieldSelector{
-						APIVersion: "v1",
-						FieldPath:  "status.hostIP",
-					},
-				},
-			},
-			corev1.EnvVar{
-				Name:  envFlowsTargetPort,
-				Value: strconv.Itoa(int(*debugConfig.Port)),
 			},
 		)
 	}

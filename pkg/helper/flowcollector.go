@@ -43,10 +43,6 @@ func UseKafka(spec *flowslatest.FlowCollectorSpec) bool {
 	return spec.DeploymentModel == flowslatest.DeploymentModelKafka
 }
 
-func UseMergedAgentFLP(spec *flowslatest.FlowCollectorSpec) bool {
-	return spec.DeploymentModel == flowslatest.DeploymentModelDirect && spec.Agent.Type == flowslatest.AgentEBPF
-}
-
 func HasKafkaExporter(spec *flowslatest.FlowCollectorSpec) bool {
 	for _, ex := range spec.Exporters {
 		if ex.Type == flowslatest.KafkaExporter {

@@ -14,6 +14,7 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 	configv1 "github.com/openshift/api/config/v1"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -41,15 +42,13 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	r := Reconciler{
 		Client: mgr.Client,
 		mgr:    mgr,
-		status: mgr.Status.ForComponent(status.FLPParent),
+		status: mgr.Status.ForComponent(status.FLP),
 	}
 	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("flp").
 		Owns(&appsv1.Deployment{}).
-		Owns(&appsv1.DaemonSet{}).
 		Owns(&ascv2.HorizontalPodAutoscaler{}).
-		Owns(&corev1.Namespace{}).
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ServiceAccount{}).
 		Watches(
@@ -69,13 +68,6 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	r.watcher = watchers.NewWatcher(ctrl)
 
 	return nil
-}
-
-type subReconciler interface {
-	context(context.Context) context.Context
-	cleanupNamespace(context.Context)
-	reconcile(context.Context, *flowslatest.FlowCollector, *metricslatest.FlowMetricList) error
-	getStatus() *status.Instance
 }
 
 // Reconcile is the controller entry point for reconciling current state with desired state.
@@ -138,21 +130,13 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 		return r.status.Error("CantListFlowMetrics", err)
 	}
 
-	// Create sub-reconcilers
-	// TODO: refactor to move these subReconciler allocations in `Start`. It will involve some decoupling work, as currently
-	// `reconcilers.Common` is dependent on the FlowCollector object, which isn't known at start time.
-	reconcilers := []subReconciler{
-		newMonolithReconciler(cmn.NewInstance(r.mgr.Config.FlowlogsPipelineImage, r.mgr.Status.ForComponent(status.FLPMonolith))),
-		newTransformerReconciler(cmn.NewInstance(r.mgr.Config.FlowlogsPipelineImage, r.mgr.Status.ForComponent(status.FLPTransformOnly))),
-	}
+	objs := newFLPObjects(cmn.NewInstance(r.mgr.Config.FlowlogsPipelineImage, r.status))
 
 	// Check namespace changed
 	if ns != previousNamespace {
 		if previousNamespace != "" {
 			log.Info("FlowCollector namespace change detected: cleaning up previous namespace", "old", previousNamespace, "new", ns)
-			for _, sr := range reconcilers {
-				sr.cleanupNamespace(sr.context(ctx))
-			}
+			objs.cleanupNamespace(ctx)
 		}
 		// Update namespace in status
 		if err := r.status.SetDeployedNamespace(ctx, r.Client, ns); err != nil {
@@ -160,10 +144,8 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 		}
 	}
 
-	for _, sr := range reconcilers {
-		if err := sr.reconcile(sr.context(ctx), fc, &fm); err != nil {
-			return sr.getStatus().Error("FLPReconcileError", err)
-		}
+	if err := objs.reconcile(ctx, fc, &fm); err != nil {
+		return r.status.Error("FLPReconcileError", err)
 	}
 
 	return nil
@@ -236,15 +218,53 @@ func reconcileMonitoringCerts(ctx context.Context, info *reconcilers.Common, tls
 	return nil
 }
 
-func ReconcileLokiRoles(ctx context.Context, r *reconcilers.Common, spec *flowslatest.FlowCollectorSpec, appName, saName, saNamespace string) error {
-	roles := loki.ClusterRoles(spec.Loki.Mode)
+func reconcilePrometheusService(
+	ctx context.Context,
+	r *reconcilers.Instance,
+	promService *corev1.Service,
+	serviceMonitor *monitoringv1.ServiceMonitor,
+	prometheusRule *monitoringv1.PrometheusRule,
+	builder *Builder) error {
+
+	report := helper.NewChangeReport("FLP prometheus service")
+	defer report.LogIfNeeded(ctx)
+
+	if err := r.ReconcileService(ctx, promService, builder.promService(), &report); err != nil {
+		return err
+	}
+	if r.AvailableAPIs.HasSvcMonitor() {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, serviceMonitor, builder.serviceMonitor(), &report, helper.ServiceMonitorChanged); err != nil {
+			return err
+		}
+	}
+	if r.AvailableAPIs.HasPromRule() {
+		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, prometheusRule, builder.prometheusRule(), &report, helper.PrometheusRuleChanged); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func reconcileRBAC(ctx context.Context, r *reconcilers.Common, appName, saName, saNamespace string, lokiMode flowslatest.LokiMode) error {
+	sa, cr, crb := rbacInfo(appName, saName, saNamespace)
+
+	if err := r.ReconcileServiceAccount(ctx, sa); err != nil {
+		return err
+	}
+	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
+		return err
+	}
+	if err := r.ReconcileClusterRoleBinding(ctx, crb); err != nil {
+		return err
+	}
+
+	roles := loki.ClusterRoles(lokiMode)
 	if len(roles) > 0 {
 		for i := range roles {
 			if err := r.ReconcileClusterRole(ctx, &roles[i]); err != nil {
 				return err
 			}
 		}
-		// Binding
 		crb := loki.ClusterRoleBinding(appName, saName, saNamespace)
 		if err := r.ReconcileClusterRoleBinding(ctx, crb); err != nil {
 			return err
