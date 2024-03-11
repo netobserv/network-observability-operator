@@ -125,6 +125,23 @@ func ReconcileRole(ctx context.Context, cl *helper.Client, desired *rbacv1.Role)
 	return cl.UpdateIfOwned(ctx, &actual, desired)
 }
 
+func ReconcileServiceAccount(ctx context.Context, cl *helper.Client, desired *corev1.ServiceAccount) error {
+	actual := corev1.ServiceAccount{}
+	if err := cl.Get(ctx, types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, &actual); err != nil {
+		if errors.IsNotFound(err) {
+			return cl.CreateOwned(ctx, desired)
+		}
+		return fmt.Errorf("can't reconcile Service Account %s: %w", desired.Name, err)
+	}
+
+	if helper.IsSubSet(actual.Labels, desired.Labels) {
+		// sa already reconciled. Exiting
+		return nil
+	}
+
+	return cl.UpdateIfOwned(ctx, &actual, desired)
+}
+
 func ReconcileConfigMap(ctx context.Context, cl *helper.Client, desired *corev1.ConfigMap, delete bool) error {
 	actual := corev1.ConfigMap{}
 	if err := cl.Get(ctx, types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, &actual); err != nil {

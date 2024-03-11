@@ -9,6 +9,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
+	"github.com/netobserv/network-observability-operator/controllers/flp"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
@@ -32,8 +33,6 @@ const (
 	envExcludeInterfaces          = "EXCLUDE_INTERFACES"
 	envInterfaces                 = "INTERFACES"
 	envAgentIP                    = "AGENT_IP"
-	envFlowsTargetHost            = "FLOWS_TARGET_HOST"
-	envFlowsTargetPort            = "FLOWS_TARGET_PORT"
 	envSampling                   = "SAMPLING"
 	envExport                     = "EXPORT"
 	envKafkaBrokers               = "KAFKA_BROKERS"
@@ -51,7 +50,8 @@ const (
 	envKafkaSASLSecretPath        = "KAFKA_SASL_CLIENT_SECRET_PATH"
 	envLogLevel                   = "LOG_LEVEL"
 	envDedupe                     = "DEDUPER"
-	dedupeDefault                 = "firstCome"
+	envDedupeJustMark             = "DEDUPER_JUST_MARK"
+	envFLPConfig                  = "FLP_CONFIG"
 	envGoMemLimit                 = "GOMEMLIMIT"
 	envEnablePktDrop              = "ENABLE_PKT_DROPS"
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
@@ -64,20 +64,13 @@ const (
 
 const (
 	exportKafka        = "kafka"
-	exportGRPC         = "grpc"
+	exportFLP          = "direct-flp"
 	kafkaCerts         = "kafka-certs"
 	averageMessageSize = 100
 	bpfTraceMountName  = "bpf-kernel-debug"
 	bpfTraceMountPath  = "/sys/kernel/debug"
 	bpfNetNSMountName  = "var-run-netns"
 	bpfNetNSMountPath  = "/var/run/netns"
-)
-
-const (
-	EnvDedupeJustMark     = "DEDUPER_JUST_MARK"
-	EnvDedupeMerge        = "DEDUPER_MERGE"
-	DedupeJustMarkDefault = "true"
-	DedupeMergeDefault    = "false"
 )
 
 type reconcileAction int
@@ -147,7 +140,14 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 	if err := c.permissions.Reconcile(ctx, &target.Spec.Agent.EBPF); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
-	desired, err := c.desired(ctx, target, rlog)
+
+	// Direct-FLP mode
+	inprocFLPInfo, err := flp.ReconcileInProcess(ctx, c.Instance, target, constants.EBPFAgentName)
+	if err != nil {
+		return fmt.Errorf("reconciling in-process FLP: %w", err)
+	}
+
+	desired, err := c.desired(ctx, target, inprocFLPInfo, rlog)
 	if err != nil {
 		return err
 	}
@@ -198,18 +198,29 @@ func newMountPropagationMode(m corev1.MountPropagationMode) *corev1.MountPropaga
 	return mode
 }
 
-func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector, rlog logr.Logger) (*v1.DaemonSet, error) {
+func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector, inprocFLPInfo *flp.InProcessInfo, rlog logr.Logger) (*v1.DaemonSet, error) {
 	if coll == nil {
 		return nil, nil
 	}
 	version := helper.ExtractVersion(c.Image)
 	annotations := make(map[string]string)
-	env, err := c.envConfig(ctx, coll, annotations)
+
+	env, err := c.envConfig(ctx, coll, annotations, inprocFLPInfo)
 	if err != nil {
 		return nil, err
 	}
 	volumeMounts := c.volumes.GetMounts()
 	volumes := c.volumes.GetVolumes()
+
+	if inprocFLPInfo != nil {
+		// Merge annotations
+		for k, v := range inprocFLPInfo.Annotations {
+			annotations[k] = v
+		}
+		// Add volumes
+		volumes = inprocFLPInfo.Volumes.AppendVolumes(volumes)
+		volumeMounts = inprocFLPInfo.Volumes.AppendMounts(volumeMounts)
+	}
 
 	if helper.IsPrivileged(&coll.Spec.Agent.EBPF) {
 		volume := corev1.Volume{
@@ -293,7 +304,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	}, nil
 }
 
-func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowCollector, annots map[string]string) ([]corev1.EnvVar, error) {
+func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowCollector, annots map[string]string, inprocFLPInfo *flp.InProcessInfo) ([]corev1.EnvVar, error) {
 	config := c.setEnvConfig(coll)
 
 	if helper.UseKafka(&coll.Spec) {
@@ -348,22 +359,16 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			)
 		}
 	} else {
-		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
-		debugConfig := helper.GetAdvancedProcessorConfig(coll.Spec.Processor.Advanced)
-		// When flowlogs-pipeline is deployed as a daemonset, each agent must send
-		// data to the pod that is deployed in the same host
-		config = append(config, corev1.EnvVar{
-			Name: envFlowsTargetHost,
-			ValueFrom: &corev1.EnvVarSource{
-				FieldRef: &corev1.ObjectFieldSelector{
-					APIVersion: "v1",
-					FieldPath:  "status.hostIP",
-				},
+		config = append(config,
+			corev1.EnvVar{
+				Name:  envExport,
+				Value: exportFLP,
 			},
-		}, corev1.EnvVar{
-			Name:  envFlowsTargetPort,
-			Value: strconv.Itoa(int(*debugConfig.Port)),
-		})
+			corev1.EnvVar{
+				Name:  envFLPConfig,
+				Value: inprocFLPInfo.JSONConfig,
+			},
+		)
 	}
 	return config, nil
 }
@@ -501,27 +506,23 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		})
 	}
 
-	dedup := dedupeDefault
-	dedupJustMark := DedupeJustMarkDefault
-	dedupMerge := DedupeMergeDefault
+	// Init with defaults
+	envs := map[string]string{
+		envDedupe:         "firstCome",
+		envDedupeJustMark: "true",
+	}
+	debugConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
+	// Merge configured
+	for k, v := range debugConfig.Env {
+		envs[k] = v
+	}
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
-	debugConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
-	for _, pair := range helper.KeySorted(debugConfig.Env) {
+	for _, pair := range helper.KeySorted(envs) {
 		k, v := pair[0], pair[1]
-		if k == envDedupe {
-			dedup = v
-		} else if k == EnvDedupeJustMark {
-			dedupJustMark = v
-		} else if k == EnvDedupeMerge {
-			dedupMerge = v
-		} else {
-			config = append(config, corev1.EnvVar{Name: k, Value: v})
-		}
+		config = append(config, corev1.EnvVar{Name: k, Value: v})
 	}
 
-	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
-	config = append(config, corev1.EnvVar{Name: EnvDedupeJustMark, Value: dedupJustMark})
 	config = append(config, corev1.EnvVar{
 		Name: envAgentIP,
 		ValueFrom: &corev1.EnvVarSource{
@@ -532,7 +533,6 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		},
 	},
 	)
-	config = append(config, corev1.EnvVar{Name: EnvDedupeMerge, Value: dedupMerge})
 
 	return config
 }

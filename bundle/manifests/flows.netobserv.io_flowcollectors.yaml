@@ -2674,9 +2674,9 @@ spec:
                     type: boolean
                   port:
                     default: 2055
-                    description: Port of the flow collector (host port). By convention,
-                      some values are forbidden. It must be greater than 1024 and
-                      different from 4500, 4789 and 6081.
+                    description: '[Deprecated (*)] Port of the flow collector (host
+                      port). It is not used anymore and will be removed in a future
+                      version.'
                     format: int32
                     maximum: 65535
                     minimum: 1025
@@ -4968,9 +4968,9 @@ spec:
                         type: integer
                       port:
                         default: 2055
-                        description: Port of the flow collector (host port). By convention,
-                          some values are forbidden. It must be greater than 1024
-                          and different from 4500, 4789 and 6081.
+                        description: '[Deprecated (*)] Port of the flow collector
+                          (host port). It is not used anymore and will be removed
+                          in a future version.'
                         format: int32
                         maximum: 65535
                         minimum: 1025

@@ -13,8 +13,6 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
-	"github.com/netobserv/network-observability-operator/controllers/flp"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 )
@@ -33,7 +31,7 @@ func flowCollectorCertificatesSpecs() {
 		Name: "cluster",
 	}
 	flpKey := types.NamespacedName{
-		Name:      constants.FLPName + flp.FlpConfSuffix[flp.ConfKafkaTransformer],
+		Name:      constants.FLPName,
 		Namespace: operatorNamespace,
 	}
 	pluginKey := types.NamespacedName{
@@ -471,30 +469,11 @@ func flowCollectorCertificatesSpecs() {
 
 	Context("Checking CR ownership", func() {
 		It("Should be garbage collected", func() {
-			// Retrieve CR to get its UID
-			By("Getting the CR")
-			flowCR := getCR(crKey)
-
-			By("Expecting flowlogs-pipeline deployment to be garbage collected")
-			Eventually(func() interface{} {
-				d := appsv1.Deployment{}
-				_ = k8sClient.Get(ctx, flpKey, &d)
-				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
-
-			By("Expecting agent daemonset to be garbage collected")
-			Eventually(func() interface{} {
-				d := appsv1.DaemonSet{}
-				_ = k8sClient.Get(ctx, agentKey, &d)
-				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
-
-			By("Expecting console plugin deployment to be garbage collected")
-			Eventually(func() interface{} {
-				d := appsv1.Deployment{}
-				_ = k8sClient.Get(ctx, pluginKey, &d)
-				return &d
-			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
+			expectOwnership(operatorNamespace,
+				test.Deployment(flpKey.Name),
+				test.Deployment(pluginKey.Name),
+			)
+			expectOwnership(agentKey.Namespace, test.DaemonSet(agentKey.Name))
 		})
 	})
 

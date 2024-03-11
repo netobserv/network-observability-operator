@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"strconv"
 	"strings"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
@@ -14,6 +15,28 @@ func GetSampling(spec *flowslatest.FlowCollectorSpec) int {
 		return 50
 	}
 	return int(*spec.Agent.EBPF.Sampling)
+}
+
+func UseDedupJustMark(spec *flowslatest.FlowCollectorSpec) bool {
+	if spec.Agent.EBPF.Advanced != nil {
+		if v, ok := spec.Agent.EBPF.Advanced.Env["DEDUPER_JUST_MARK"]; ok {
+			b, _ := strconv.ParseBool(v)
+			return b
+		}
+	}
+	// default true
+	return true
+}
+
+func UseDedupMerge(spec *flowslatest.FlowCollectorSpec) bool {
+	if spec.Agent.EBPF.Advanced != nil {
+		if v, ok := spec.Agent.EBPF.Advanced.Env["DEDUPER_MERGE"]; ok {
+			b, _ := strconv.ParseBool(v)
+			return b
+		}
+	}
+	// default false
+	return false
 }
 
 func UseKafka(spec *flowslatest.FlowCollectorSpec) bool {

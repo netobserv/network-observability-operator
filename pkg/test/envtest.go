@@ -37,8 +37,10 @@ import (
 )
 
 const (
-	Timeout  = time.Second * 10
-	Interval = 1 * time.Second
+	Timeout              = time.Second * 10
+	Interval             = 1 * time.Second
+	ConsistentlyTimeout  = 2 * time.Second
+	ConsistentlyInterval = 500 * time.Millisecond
 )
 
 func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, basePath string) (context.Context, client.Client, *envtest.Environment, context.CancelFunc) {

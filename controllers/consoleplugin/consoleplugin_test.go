@@ -330,57 +330,6 @@ func TestConfigMapContent(t *testing.T) {
 	assert.Equal(config.Frontend.Deduper.Merge, false)
 }
 
-func TestConfigMapError(t *testing.T) {
-	assert := assert.New(t)
-
-	agentSpec := flowslatest.FlowCollectorAgent{
-		Type: "eBPF",
-		EBPF: flowslatest.FlowCollectorEBPF{
-			Sampling: ptr.To(int32(1)),
-			Advanced: &flowslatest.AdvancedAgentConfig{
-				Env: map[string]string{
-					"DEDUPER_JUST_MARK": "invalid",
-				},
-			},
-		},
-	}
-	lokiSpec := flowslatest.FlowCollectorLoki{}
-	loki := helper.NewLokiConfig(&lokiSpec, "any")
-
-	// spec with invalid flag
-	spec := flowslatest.FlowCollectorSpec{
-		Agent:         agentSpec,
-		ConsolePlugin: getPluginConfig(),
-		Loki:          lokiSpec,
-	}
-	builder := newBuilder(testNamespace, testImage, &spec, &loki)
-	cm, _, err := builder.configMap()
-	assert.Nil(cm)
-	assert.NotNil(err)
-
-	// update to valid flags
-	agentSpec.EBPF.Advanced.Env = map[string]string{
-		"DEDUPER_JUST_MARK": "false",
-		"DEDUPER_MERGE":     "true",
-	}
-	spec = flowslatest.FlowCollectorSpec{
-		Agent:         agentSpec,
-		ConsolePlugin: getPluginConfig(),
-		Loki:          lokiSpec,
-	}
-	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	cm, _, err = builder.configMap()
-	assert.NotNil(cm)
-	assert.Nil(err)
-
-	// parse output config and check expected values
-	var config config.PluginConfig
-	err = yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &config)
-	assert.Nil(err)
-	assert.Equal(config.Frontend.Deduper.Mark, false)
-	assert.Equal(config.Frontend.Deduper.Merge, true)
-}
-
 func TestServiceUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 	old := getServiceSpecs()

@@ -892,9 +892,7 @@ type AdvancedProcessorConfig struct {
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=2055
 	//+optional
-	// Port of the flow collector (host port).
-	// By convention, some values are forbidden. It must be greater than 1024 and different from
-	// 4500, 4789 and 6081.
+	// [Deprecated (*)] Port of the flow collector (host port). It is not used anymore and will be removed in a future version.
 	Port *int32 `json:"port,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1

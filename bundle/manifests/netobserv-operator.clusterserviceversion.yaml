@@ -1042,14 +1042,6 @@ spec:
           - update
           - watch
         - apiGroups:
-          - security.openshift.io
-          resourceNames:
-          - hostnetwork
-          resources:
-          - securitycontextconstraints
-          verbs:
-          - use
-        - apiGroups:
           - authentication.k8s.io
           resources:
           - tokenreviews
