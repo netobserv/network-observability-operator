@@ -773,7 +773,7 @@ spec:
       name: flowmetrics.flows.netobserv.io
       version: v1alpha1
   description: |-
-    NetObserv Operator is a OpenShift / Kubernetes operator for network observability. It deploys a monitoring pipeline that consists in:
+    NetObserv Operator is an OpenShift / Kubernetes operator for network observability. It deploys a monitoring pipeline that consists in:
     - the NetObserv eBPF agent, that generates network flows from captured packets
     - Flowlogs-pipeline, a component that collects, enriches and exports these flows.
     - When used in OpenShift, a Console plugin for flows visualization with powerful filtering options, a topology representation and more.
