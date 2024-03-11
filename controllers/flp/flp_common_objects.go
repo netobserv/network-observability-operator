@@ -115,13 +115,6 @@ func (b *builder) serviceMonitorName() string { return serviceMonitorName(b.conf
 func (b *builder) prometheusRuleName() string { return prometheusRuleName(b.confKind) }
 func (b *builder) Pipeline() *PipelineBuilder { return b.pipeline }
 
-func (b *builder) NewIPFIXPipeline() PipelineBuilder {
-	return b.initPipeline(config.NewCollectorPipeline("ipfix", api.IngestCollector{
-		Port:     int(*helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced).Port),
-		HostName: "0.0.0.0",
-	}))
-}
-
 func (b *builder) NewGRPCPipeline() PipelineBuilder {
 	return b.initPipeline(config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
 		Port: int(*helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced).Port),
@@ -130,9 +123,6 @@ func (b *builder) NewGRPCPipeline() PipelineBuilder {
 
 func (b *builder) NewKafkaPipeline() PipelineBuilder {
 	decoder := api.Decoder{Type: "protobuf"}
-	if helper.UseIPFIX(b.desired) {
-		decoder = api.Decoder{Type: "json"}
-	}
 	return b.initPipeline(config.NewKafkaPipeline("kafka-read", api.IngestKafka{
 		Brokers:           []string{b.desired.Kafka.Address},
 		Topic:             b.desired.Kafka.Topic,
@@ -151,13 +141,6 @@ func (b *builder) initPipeline(ingest config.PipelineBuilderStage) PipelineBuild
 	return pipeline
 }
 
-func (b *builder) portProtocol() corev1.Protocol {
-	if helper.UseEBPF(b.desired) {
-		return corev1.ProtocolTCP
-	}
-	return corev1.ProtocolUDP
-}
-
 func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[string]string) corev1.PodTemplateSpec {
 	debugConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 	var ports []corev1.ContainerPort
@@ -167,7 +150,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 			Name:          constants.FLPPortName,
 			HostPort:      *debugConfig.Port,
 			ContainerPort: *debugConfig.Port,
-			Protocol:      b.portProtocol(),
+			Protocol:      corev1.ProtocolTCP,
 		}}
 		// This allows deploying an instance in the master node, the same technique used in the
 		// companion ovnkube-node daemonset definition
@@ -521,4 +504,22 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 		},
 	}
 	return &flpPrometheusRuleObject
+}
+
+func buildClusterRoleIngester(useOpenShiftSCC bool) *rbacv1.ClusterRole {
+	cr := rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name(ConfKafkaIngester),
+		},
+		Rules: []rbacv1.PolicyRule{},
+	}
+	if useOpenShiftSCC {
+		cr.Rules = append(cr.Rules, rbacv1.PolicyRule{
+			APIGroups:     []string{"security.openshift.io"},
+			Verbs:         []string{"use"},
+			Resources:     []string{"securitycontextconstraints"},
+			ResourceNames: []string{"hostnetwork"},
+		})
+	}
+	return &cr
 }

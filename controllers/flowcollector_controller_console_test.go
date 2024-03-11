@@ -8,12 +8,14 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 )
 
@@ -38,6 +40,7 @@ func flowCollectorConsolePluginSpecs() {
 	consoleCRKey := types.NamespacedName{
 		Name: "cluster",
 	}
+	rbKeyPlugin := types.NamespacedName{Name: constants.PluginName}
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
@@ -72,7 +75,7 @@ func flowCollectorConsolePluginSpecs() {
 				Spec: flowslatest.FlowCollectorSpec{
 					Namespace:       cpNamespace,
 					DeploymentModel: flowslatest.DeploymentModelDirect,
-					Agent:           flowslatest.FlowCollectorAgent{Type: "IPFIX"},
+					Agent:           flowslatest.FlowCollectorAgent{Type: flowslatest.AgentEBPF},
 					ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
 						Enable:          ptr.To(true),
 						ImagePullPolicy: "Never",
@@ -138,6 +141,15 @@ func flowCollectorConsolePluginSpecs() {
 			By("Creating the console plugin configmap")
 			Eventually(getConfigMapData(configKey),
 				timeout, interval).Should(ContainSubstring("url: http://loki:3100/"))
+
+			By("Expecting to create console plugin role binding")
+			rb := rbacv1.ClusterRoleBinding{}
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyPlugin, &rb)
+			}, timeout, interval).Should(Succeed())
+			Expect(rb.Subjects).Should(HaveLen(1))
+			Expect(rb.Subjects[0].Name).Should(Equal("netobserv-plugin"))
+			Expect(rb.RoleRef.Name).Should(Equal("netobserv-plugin"))
 		})
 
 		It("Should update successfully", func() {
@@ -332,6 +344,52 @@ func flowCollectorConsolePluginSpecs() {
 				_ = k8sClient.Get(ctx, cpKey, &svcAcc)
 				return &svcAcc
 			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
+		})
+	})
+
+	Context("Changing namespace", func() {
+		const otherNamespace = "other-namespace"
+		cpKey2 := types.NamespacedName{
+			Name:      "netobserv-plugin",
+			Namespace: otherNamespace,
+		}
+
+		It("Should update namespace successfully", func() {
+			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Namespace = otherNamespace
+			})
+		})
+
+		It("Should redeploy console plugin in new namespace", func() {
+			By("Expecting deployment in previous namespace to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, cpKey, &appsv1.Deployment{})
+			}, timeout, interval).Should(MatchError(`deployments.apps "netobserv-plugin" not found`))
+
+			By("Expecting service in previous namespace to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, cpKey, &v1.Service{})
+			}, timeout, interval).Should(MatchError(`services "netobserv-plugin" not found`))
+
+			By("Expecting service account in previous namespace to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, cpKey, &v1.ServiceAccount{})
+			}, timeout, interval).Should(MatchError(`serviceaccounts "netobserv-plugin" not found`))
+
+			By("Expecting deployment to be created in new namespace")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, cpKey2, &appsv1.Deployment{})
+			}, timeout, interval).Should(Succeed())
+
+			By("Expecting service to be created in new namespace")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, cpKey2, &v1.Service{})
+			}, timeout, interval).Should(Succeed())
+
+			By("Expecting service account to be created in new namespace")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, cpKey2, &v1.ServiceAccount{})
+			}, timeout, interval).Should(Succeed())
 		})
 	})
 

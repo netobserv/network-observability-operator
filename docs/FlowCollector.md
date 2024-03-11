@@ -183,7 +183,7 @@ Agent configuration for flows extraction.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the flows tracing agent. Possible values are:<br> - `EBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br> `EBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
+          `type` [deprecated (*)] selects the flows tracing agent. The only possible value is `EBPF` (default), to use NetObserv eBPF agent.<br> Previously, using an IPFIX collector was allowed, but was deprecated and it is now removed.<br> Setting `IPFIX` is ignored and still use the eBPF Agent. Since there is only a single option here, this field will be remove in a future API version.<br/>
           <br/>
             <i>Enum</i>: EBPF, IPFIX<br/>
             <i>Default</i>: EBPF<br/>
@@ -3391,7 +3391,7 @@ TLS client configuration for Loki URL.
         <td><b>dropUnusedFields</b></td>
         <td>boolean</td>
         <td>
-          `dropUnusedFields` allows, when set to `true`, to drop fields that are known to be unused by OVS, to save storage space.<br/>
+          `dropUnusedFields` [deprecated (*)] this setting is not used anymore.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -5087,7 +5087,7 @@ Agent configuration for flows extraction.
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the flows tracing agent. Possible values are:<br> - `eBPF` (default) to use NetObserv eBPF agent.<br> - `IPFIX` [deprecated (*)] - to use the legacy IPFIX collector.<br> `eBPF` is recommended as it offers better performances and should work regardless of the CNI installed on the cluster. `IPFIX` works with OVN-Kubernetes CNI (other CNIs could work if they support exporting IPFIX, but they would require manual configuration).<br/>
+          `type` [deprecated (*)] selects the flows tracing agent. The only possible value is `eBPF` (default), to use NetObserv eBPF agent.<br> Previously, using an IPFIX collector was allowed, but was deprecated and it is now removed.<br> Setting `IPFIX` is ignored and still use the eBPF Agent. Since there is only a single option here, this field will be remove in a future API version.<br/>
           <br/>
             <i>Enum</i>: eBPF, IPFIX<br/>
             <i>Default</i>: eBPF<br/>
@@ -9009,7 +9009,7 @@ TLS client configuration for Loki URL.
         <td><b>dropUnusedFields</b></td>
         <td>boolean</td>
         <td>
-          `dropUnusedFields` allows, when set to `true`, to drop fields that are known to be unused by OVS, to save storage space.<br/>
+          `dropUnusedFields` [deprecated (*)] this setting is not used anymore.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>

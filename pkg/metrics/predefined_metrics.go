@@ -207,13 +207,13 @@ func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
 			list = append(list, string(m))
 		}
 	}
-	if !helper.UseEBPF(spec) || !helper.IsPktDropEnabled(&spec.Agent.EBPF) {
+	if !helper.IsPktDropEnabled(&spec.Agent.EBPF) {
 		list = removeMetricsByPattern(list, "_drop_")
 	}
-	if !helper.UseEBPF(spec) || !helper.IsFlowRTTEnabled(&spec.Agent.EBPF) {
+	if !helper.IsFlowRTTEnabled(&spec.Agent.EBPF) {
 		list = removeMetricsByPattern(list, "_rtt_")
 	}
-	if !helper.UseEBPF(spec) || !helper.IsDNSTrackingEnabled(&spec.Agent.EBPF) {
+	if !helper.IsDNSTrackingEnabled(&spec.Agent.EBPF) {
 		list = removeMetricsByPattern(list, "_dns_")
 	}
 	return list

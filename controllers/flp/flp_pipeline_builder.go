@@ -14,7 +14,6 @@ import (
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/conversion"
-	"github.com/netobserv/network-observability-operator/pkg/filters"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/loki"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
@@ -387,14 +386,6 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 		}
 	}
 
-	// Filter-out unused fields?
-	if *helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced).DropUnusedFields {
-		if helper.UseIPFIX(b.desired) {
-			rules := filters.GetOVSGoflowUnusedRules()
-			transformFilterRules = append(transformFilterRules, rules...)
-		}
-		// Else: nothing for eBPF at the moment
-	}
 	if len(transformFilterRules) > 0 {
 		lastStage = lastStage.TransformFilter("filter", api.TransformFilter{
 			Rules: transformFilterRules,

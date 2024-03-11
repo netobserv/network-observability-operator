@@ -144,7 +144,6 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	reconcilers := []subReconciler{
 		newMonolithReconciler(cmn.NewInstance(r.mgr.Config.FlowlogsPipelineImage, r.mgr.Status.ForComponent(status.FLPMonolith))),
 		newTransformerReconciler(cmn.NewInstance(r.mgr.Config.FlowlogsPipelineImage, r.mgr.Status.ForComponent(status.FLPTransformOnly))),
-		newIngesterReconciler(cmn.NewInstance(r.mgr.Config.FlowlogsPipelineImage, r.mgr.Status.ForComponent(status.FLPIngestOnly))),
 	}
 
 	// Check namespace changed

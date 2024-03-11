@@ -9,7 +9,6 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 type monolithBuilder struct {
@@ -41,15 +40,7 @@ func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.Daemo
 }
 
 func (b *monolithBuilder) configMap() (*corev1.ConfigMap, string, error) {
-	var pipeline PipelineBuilder
-	if helper.UseIPFIX(b.generic.desired) {
-		// IPFIX collector
-		pipeline = b.generic.NewIPFIXPipeline()
-	} else {
-		// GRPC collector (eBPF agent)
-		pipeline = b.generic.NewGRPCPipeline()
-	}
-
+	pipeline := b.generic.NewGRPCPipeline()
 	err := pipeline.AddProcessorStages()
 	if err != nil {
 		return nil, "", err

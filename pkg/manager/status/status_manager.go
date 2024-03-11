@@ -23,7 +23,6 @@ const (
 	FlowCollectorLegacy ComponentName = "FlowCollectorLegacy"
 	FLPParent           ComponentName = "FLPParent"
 	FLPMonolith         ComponentName = "FLPMonolith"
-	FLPIngestOnly       ComponentName = "FLPIngestOnly"
 	FLPTransformOnly    ComponentName = "FLPTransformOnly"
 	Monitoring          ComponentName = "Monitoring"
 )

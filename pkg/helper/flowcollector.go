@@ -10,18 +10,10 @@ import (
 )
 
 func GetSampling(spec *flowslatest.FlowCollectorSpec) int {
-	if UseEBPF(spec) {
-		return int(*spec.Agent.EBPF.Sampling)
+	if spec.Agent.EBPF.Sampling == nil {
+		return 50
 	}
-	return int(spec.Agent.IPFIX.Sampling)
-}
-
-func UseEBPF(spec *flowslatest.FlowCollectorSpec) bool {
-	return spec.Agent.Type == flowslatest.AgentEBPF
-}
-
-func UseIPFIX(spec *flowslatest.FlowCollectorSpec) bool {
-	return spec.Agent.Type == flowslatest.AgentIPFIX
+	return int(*spec.Agent.EBPF.Sampling)
 }
 
 func UseKafka(spec *flowslatest.FlowCollectorSpec) bool {

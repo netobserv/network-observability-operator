@@ -58,10 +58,6 @@ func ControllerSpecs() {
 		Name:      constants.FLPName,
 		Namespace: otherNamespace,
 	}
-	flpKeyKafkaIngester := types.NamespacedName{
-		Name:      constants.FLPName + FlpConfSuffix[ConfKafkaIngester],
-		Namespace: operatorNamespace,
-	}
 	flpKeyKafkaTransformer := types.NamespacedName{
 		Name:      constants.FLPName + FlpConfSuffix[ConfKafkaTransformer],
 		Namespace: operatorNamespace,
@@ -159,12 +155,12 @@ func ControllerSpecs() {
 			Expect(rb2.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
 			Expect(rb2.RoleRef.Name).Should(Equal("flowlogs-pipeline-transformer"))
 
-			By("Not expecting transformer role binding")
+			By("Not expecting ingester role binding")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, rbKeyIngest, &rbacv1.ClusterRoleBinding{})
 			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-ingester-role" not found`))
 
-			By("Not expecting ingester role binding")
+			By("Not expecting transformer role binding")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, rbKeyTransform, &rbacv1.ClusterRoleBinding{})
 			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-transformer-role" not found`))
@@ -207,8 +203,6 @@ func ControllerSpecs() {
 						DisableAlerts: []flowslatest.FLPAlert{flowslatest.AlertLokiError},
 					},
 				}
-				// Using IPFIX should change proto to UDP
-				fc.Spec.Agent.Type = flowslatest.AgentIPFIX
 				fc.Spec.Loki = flowslatest.FlowCollectorLoki{}
 			})
 
@@ -243,7 +237,7 @@ func ControllerSpecs() {
 					Name:          constants.FLPPortName,
 					HostPort:      7891,
 					ContainerPort: 7891,
-					Protocol:      "UDP",
+					Protocol:      "TCP",
 				}))
 				Expect(cnt.Env).To(Equal([]v1.EnvVar{
 					{Name: "GOGC", Value: "400"}, {Name: "GOMAXPROCS", Value: "33"}, {Name: "GODEBUG", Value: "http2server=0"},
@@ -291,12 +285,7 @@ func ControllerSpecs() {
 			})
 		})
 
-		It("Should deploy kafka ingester and transformer", func() {
-			By("Expecting ingester daemonset to be created")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKeyKafkaIngester, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(Succeed())
-
+		It("Should deploy kafka transformer", func() {
 			By("Expecting transformer deployment to be created")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &appsv1.Deployment{})
@@ -307,14 +296,10 @@ func ControllerSpecs() {
 				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &v1.Service{})
 			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline-transformer" not found`))
 
-			By("Expecting to create two different flowlogs-pipeline role bindings")
-			rb1 := rbacv1.ClusterRoleBinding{}
+			By("Expecting to create transformer flowlogs-pipeline role bindings")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyIngest, &rb1)
-			}, timeout, interval).Should(Succeed())
-			Expect(rb1.Subjects).Should(HaveLen(1))
-			Expect(rb1.Subjects[0].Name).Should(Equal("flowlogs-pipeline-ingester"))
-			Expect(rb1.RoleRef.Name).Should(Equal("flowlogs-pipeline-ingester"))
+				return k8sClient.Get(ctx, rbKeyIngest, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-ingester-role" not found`))
 
 			rb2 := rbacv1.ClusterRoleBinding{}
 			Eventually(func() interface{} {
@@ -411,12 +396,7 @@ func ControllerSpecs() {
 			}, timeout, interval).Should(Succeed())
 		})
 
-		It("Should delete kafka ingester and transformer", func() {
-			By("Expecting ingester daemonset to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKeyKafkaIngester, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline-ingester" not found`))
-
+		It("Should delete kafka transformer", func() {
 			By("Expecting transformer deployment to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &appsv1.Deployment{})

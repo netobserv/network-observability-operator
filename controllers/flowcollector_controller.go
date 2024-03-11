@@ -11,24 +11,17 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
-	"github.com/netobserv/network-observability-operator/controllers/ovs"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/cleanup"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
-)
-
-const (
-	ovsFlowsConfigMapName = "ovs-flows-config"
-	flowsFinalizer        = "flows.netobserv.io/finalizer"
 )
 
 // FlowCollectorReconciler reconciles a FlowCollector object
@@ -125,10 +118,6 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 	loki := helper.NewLokiConfig(&desired.Spec.Loki, ns)
 	reconcilersInfo := r.newCommonInfo(clh, ns, previousNamespace, &loki)
 
-	if ret, err := r.checkFinalizer(ctx, desired, &reconcilersInfo); ret {
-		return err
-	}
-
 	if err := cleanup.CleanPastReferences(ctx, r.Client, ns); err != nil {
 		return err
 	}
@@ -155,19 +144,6 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 		}
 	}
 
-	// OVS config map for CNO
-	if r.mgr.HasCNO() {
-		ovsConfigController := ovs.NewFlowsConfigCNOController(&reconcilersInfo, desired.Spec.Agent.IPFIX.ClusterNetworkOperator.Namespace, ovsFlowsConfigMapName)
-		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
-			return r.status.Error("ReconcileCNOFailed", err)
-		}
-	} else {
-		ovsConfigController := ovs.NewFlowsConfigOVNKController(&reconcilersInfo, desired.Spec.Agent.IPFIX.OVNKubernetes)
-		if err := ovsConfigController.Reconcile(ctx, desired); err != nil {
-			return r.status.Error("ReconcileOVNKFailed", err)
-		}
-	}
-
 	// eBPF agent
 	ebpfAgentController := ebpf.NewAgentController(reconcilersInfo.NewInstance(r.mgr.Config.EBPFAgentImage, r.status))
 	if err := ebpfAgentController.Reconcile(ctx, desired); err != nil {
@@ -182,43 +158,6 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 		}
 	}
 
-	return nil
-}
-
-// checkFinalizer returns true (and/or error) if the calling function needs to return
-func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *flowslatest.FlowCollector, info *reconcilers.Common) (bool, error) {
-	if !desired.ObjectMeta.DeletionTimestamp.IsZero() {
-		if controllerutil.ContainsFinalizer(desired, flowsFinalizer) {
-			// Run finalization logic
-			if err := r.finalize(ctx, desired, info); err != nil {
-				return true, err
-			}
-			// Remove finalizer
-			controllerutil.RemoveFinalizer(desired, flowsFinalizer)
-			err := r.Update(ctx, desired)
-			return true, err
-		}
-		return true, nil
-	}
-
-	// Add finalizer for this CR
-	if !controllerutil.ContainsFinalizer(desired, flowsFinalizer) {
-		controllerutil.AddFinalizer(desired, flowsFinalizer)
-		if err := r.Update(ctx, desired); err != nil {
-			return true, err
-		}
-	}
-
-	return false, nil
-}
-
-func (r *FlowCollectorReconciler) finalize(ctx context.Context, desired *flowslatest.FlowCollector, info *reconcilers.Common) error {
-	if !r.mgr.HasCNO() {
-		ovsConfigController := ovs.NewFlowsConfigOVNKController(info, desired.Spec.Agent.IPFIX.OVNKubernetes)
-		if err := ovsConfigController.Finalize(ctx, desired); err != nil {
-			return fmt.Errorf("failed to finalize ovn-kubernetes reconciler: %w", err)
-		}
-	}
 	return nil
 }
 
