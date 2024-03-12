@@ -49,9 +49,8 @@ const (
 	LokiCRReader  = "netobserv-reader"
 )
 
-var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type", "K8S_FlowLayer"}
+var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type", "K8S_FlowLayer", "FlowDirection"}
 var LokiConnectionIndexFields = []string{"_RecordType"}
-var LokiDeduperMarkIndexFields = []string{"FlowDirection"}
 var LokiZoneIndexFields = []string{"SrcK8S_Zone", "DstK8S_Zone"}
 var FlowCollectorName = types.NamespacedName{Name: "cluster"}
 var EnvNoHTTP2 = corev1.EnvVar{

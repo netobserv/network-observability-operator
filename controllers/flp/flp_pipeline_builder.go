@@ -100,7 +100,6 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			SrcHostField:       "SrcK8S_HostIP",
 			DstHostField:       "DstK8S_HostIP",
 			FlowDirectionField: "FlowDirection",
-			IfDirectionField:   "IfDirection",
 		},
 	})
 
