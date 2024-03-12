@@ -381,23 +381,30 @@ columns:
     default: false
     width: 10
   - id: FlowDirection
-    name: Direction
-    tooltip: The direction of the flow observed at the Node observation point.
+    name: Node Direction
+    tooltip: The interpreted direction of the flow observed at the Node observation point.
     field: FlowDirection
-    filter: direction
+    filter: node_direction
     default: false
     width: 10
-  - id: Interface
-    name: Interface
-    tooltip: The network interface of the Flow.
-    field: Interface
-    filter: interface
+  - id: Interfaces
+    name: Interfaces
+    tooltip: The network interfaces of the Flow.
+    field: Interfaces
+    filter: interfaces
+    default: false
+    width: 10
+  - id: IfDirections
+    name: Interface Directions
+    tooltip: The directions of the Flow observed at the network interface observation point.
+    field: IfDirections
+    filter: ifdirections
     default: false
     width: 10
   - id: FlowDirInts
     name: Interfaces and Directions
-    tooltip: Pairs of network interface and direction of the Flow observed at the Node observation point.
-    field: FlowDirection
+    tooltip: Pairs of network interface and direction of the Flow observed at the network interface observation point.
+    field: Interfaces
     default: false
     width: 15
   - id: Bytes
@@ -757,21 +764,26 @@ filters:
     name: ICMP code
     component: number
     hint: Specify an ICMP code value as integer number.
-  - id: direction
-    name: Direction
+  - id: node_direction
+    name: Node Direction
     component: autocomplete
     placeholder: 'E.g: Ingress, Egress, Inner'
-    hint: Specify the direction of the Flow observed at the Node observation point.
+    hint: Specify the interpreted direction of the Flow observed at the Node observation point.
   - id: flow_layer
     name: Flow layer
     component: text
     placeholder: 'Either infra or app'
     hint: Specify the layer of Flow.
-  - id: interface
-    name: Network interface
+  - id: interfaces
+    name: Network interfaces
     component: text
     placeholder: 'E.g: br-ex, ovn-k8s-mp0'
     hint: Specify a network interface.
+  - id: ifdirections
+    name: Interface Directions
+    component: autocomplete
+    placeholder: 'E.g: Ingress, Egress'
+    hint: Specify the direction of the Flow observed at the network interface observation point.
   - id: id
     name: Conversation Id
     component: text
@@ -930,20 +942,20 @@ fields:
   - name: FlowDirection
     type: number
     description: |
-      Flow direction from the node observation point. Can be one of: +
+      Flow interpreted direction from the node observation point. Can be one of: +
       - 0: Ingress (incoming traffic, from the node observation point) +
       - 1: Egress (outgoing traffic, from the node observation point) +
       - 2: Inner (with the same source and destination node)
     lokiLabel: true
-  - name: IfDirection
+  - name: IfDirections
     type: number
     description: |
-      Flow direction from the network interface observation point. Can be one of: +
+      Flow directions from the network interface observation point. Can be one of: +
       - 0: Ingress (interface incoming traffic) +
       - 1: Egress (interface outgoing traffic)
-  - name: Interface
+  - name: Interfaces
     type: string
-    description: Network interface
+    description: Network interfaces
   - name: Flags
     type: number
     description: |
