@@ -743,6 +743,12 @@ spec:
         path: loki.readTimeout
       - displayName: Namespace
         path: namespace
+      - displayName: Deduper
+        path: processor.deduper
+      - displayName: Mode
+        path: processor.deduper.mode
+      - displayName: Sampling
+        path: processor.deduper.sampling
       - displayName: Log types
         path: processor.logTypes
       - displayName: Disable alerts

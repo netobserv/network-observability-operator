@@ -21,6 +21,12 @@ type TransformFilter struct {
 	Rules []TransformFilterRule `yaml:"rules,omitempty" json:"rules,omitempty" doc:"list of filter rules, each includes:"`
 }
 
+func (tf *TransformFilter) Preprocess() {
+	for i := range tf.Rules {
+		tf.Rules[i].preprocess()
+	}
+}
+
 type TransformFilterEnum string
 
 const (
@@ -63,9 +69,33 @@ type TransformFilterRule struct {
 	ConditionalSampling     []*SamplingCondition             `yaml:"conditionalSampling,omitempty" json:"conditionalSampling,omitempty" doc:"sampling configuration rules"`
 }
 
+func (r *TransformFilterRule) preprocess() {
+	if r.RemoveField != nil {
+		r.RemoveField.preprocess()
+	}
+	if r.RemoveEntry != nil {
+		r.RemoveEntry.preprocess()
+	}
+	for i := range r.RemoveEntryAllSatisfied {
+		r.RemoveEntryAllSatisfied[i].RemoveEntry.preprocess()
+	}
+	for i := range r.ConditionalSampling {
+		r.ConditionalSampling[i].preprocess()
+	}
+}
+
 type TransformFilterGenericRule struct {
-	Input string      `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
-	Value interface{} `yaml:"value,omitempty" json:"value,omitempty" doc:"specified value of input field:"`
+	Input   string      `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
+	Value   interface{} `yaml:"value,omitempty" json:"value,omitempty" doc:"specified value of input field:"`
+	CastInt bool        `yaml:"castInt,omitempty" json:"castInt,omitempty" doc:"set true to cast the value field as an int (numeric values are float64 otherwise)"`
+}
+
+func (r *TransformFilterGenericRule) preprocess() {
+	if r.CastInt {
+		if f, ok := r.Value.(float64); ok {
+			r.Value = int(f)
+		}
+	}
 }
 
 type TransformFilterRuleWithAssignee struct {
@@ -83,4 +113,10 @@ type RemoveEntryRule struct {
 type SamplingCondition struct {
 	Value uint16             `yaml:"value,omitempty" json:"value,omitempty" doc:"sampling value: 1 flow on <sampling> is kept"`
 	Rules []*RemoveEntryRule `yaml:"rules,omitempty" json:"rules,omitempty" doc:"rules to be satisfied for this sampling configuration"`
+}
+
+func (s *SamplingCondition) preprocess() {
+	for i := range s.Rules {
+		s.Rules[i].RemoveEntry.preprocess()
+	}
 }

@@ -251,3 +251,7 @@ func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flows
 
 	return debugConfig
 }
+
+func HasFLPDeduper(spec *flowslatest.FlowCollectorSpec) bool {
+	return spec.Processor.Deduper != nil && spec.Processor.Deduper.Mode != "" && spec.Processor.Deduper.Mode != flowslatest.FLPDeduperDisabled
+}
