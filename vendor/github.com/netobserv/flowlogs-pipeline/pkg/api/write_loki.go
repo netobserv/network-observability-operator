@@ -73,18 +73,18 @@ func (w *WriteLoki) SetDefaults() {
 	}
 }
 
-func (wl *WriteLoki) Validate() error {
-	if wl == nil {
+func (w *WriteLoki) Validate() error {
+	if w == nil {
 		return errors.New("you must provide a configuration")
 	}
-	if wl.TimestampScale == "" {
+	if w.TimestampScale == "" {
 		return errors.New("timestampUnit must be a valid Duration > 0 (e.g. 1m, 1s or 1ms)")
 	}
-	if wl.URL == "" {
+	if w.URL == "" {
 		return errors.New("url can't be empty")
 	}
-	if wl.BatchSize <= 0 {
-		return fmt.Errorf("invalid batchSize: %v. Required > 0", wl.BatchSize)
+	if w.BatchSize <= 0 {
+		return fmt.Errorf("invalid batchSize: %v. Required > 0", w.BatchSize)
 	}
 	return nil
 }

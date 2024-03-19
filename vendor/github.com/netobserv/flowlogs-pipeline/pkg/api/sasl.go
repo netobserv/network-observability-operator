@@ -1,16 +1,15 @@
 package api
 
 type SASLConfig struct {
-	Type             string
-	ClientIDPath     string `yaml:"clientIDPath,omitempty" json:"clientIDPath,omitempty" doc:"path to the client ID / SASL username"`
-	ClientSecretPath string `yaml:"clientSecretPath,omitempty" json:"clientSecretPath,omitempty" doc:"path to the client secret / SASL password"`
+	Type             SASLTypeEnum `yaml:"type,omitempty" json:"type,omitempty" doc:"SASL type"`
+	ClientIDPath     string       `yaml:"clientIDPath,omitempty" json:"clientIDPath,omitempty" doc:"path to the client ID / SASL username"`
+	ClientSecretPath string       `yaml:"clientSecretPath,omitempty" json:"clientSecretPath,omitempty" doc:"path to the client secret / SASL password"`
 }
 
-type SASLTypeEnum struct {
-	Plain       string `yaml:"plain" json:"plain" doc:"Plain SASL"`
-	ScramSHA512 string `yaml:"scramSHA512" json:"scramSHA512" doc:"SCRAM/SHA512 SASL"`
-}
+type SASLTypeEnum string
 
-func SASLTypeName(operation string) string {
-	return GetEnumName(SASLTypeEnum{}, operation)
-}
+const (
+	// For doc generation, enum definitions must match format `Constant Type = "value" // doc`
+	SASLPlain       SASLTypeEnum = "plain"       // Plain SASL
+	SASLScramSHA512 SASLTypeEnum = "scramSHA512" // SCRAM/SHA512 SASL
+)

@@ -1,14 +1,13 @@
 package api
 
 type Decoder struct {
-	Type string `yaml:"type" json:"type" enum:"DecoderEnum" doc:"one of the following:"`
+	Type DecoderEnum `yaml:"type" json:"type" doc:"(enum) one of the following:"`
 }
 
-type DecoderEnum struct {
-	JSON     string `yaml:"json" json:"json" doc:"JSON decoder"`
-	Protobuf string `yaml:"protobuf" json:"protobuf" doc:"Protobuf decoder"`
-}
+type DecoderEnum string
 
-func DecoderName(decoder string) string {
-	return GetEnumName(DecoderEnum{}, decoder)
-}
+const (
+	// For doc generation, enum definitions must match format `Constant Type = "value" // doc`
+	DecoderJSON     DecoderEnum = "json"     // JSON decoder
+	DecoderProtobuf DecoderEnum = "protobuf" // Protobuf decoder
+)

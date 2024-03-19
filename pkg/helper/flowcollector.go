@@ -3,6 +3,7 @@ package helper
 import (
 	"strings"
 
+	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"k8s.io/utils/ptr"
@@ -33,34 +34,29 @@ func HPAEnabled(spec *flowslatest.FlowCollectorHPA) bool {
 	return spec != nil && spec.Status == flowslatest.HPAStatusEnabled
 }
 
-func GetRecordTypes(processor *flowslatest.FlowCollectorFLP) []string {
-	outputRecordTypes := []string{constants.FlowLogType}
+func GetRecordTypes(processor *flowslatest.FlowCollectorFLP) []api.ConnTrackOutputRecordTypeEnum {
 	if processor.LogTypes != nil {
 		switch *processor.LogTypes {
 		case flowslatest.LogTypeFlows:
-			outputRecordTypes = []string{
-				constants.FlowLogType,
-			}
+			return []api.ConnTrackOutputRecordTypeEnum{api.ConnTrackFlowLog}
 		case flowslatest.LogTypeConversations:
-			outputRecordTypes = []string{
-				constants.NewConnectionType,
-				constants.HeartbeatType,
-				constants.EndConnectionType,
+			return []api.ConnTrackOutputRecordTypeEnum{
+				api.ConnTrackNewConnection,
+				api.ConnTrackHeartbeat,
+				api.ConnTrackEndConnection,
 			}
 		case flowslatest.LogTypeEndedConversations:
-			outputRecordTypes = []string{
-				constants.EndConnectionType,
-			}
+			return []api.ConnTrackOutputRecordTypeEnum{api.ConnTrackEndConnection}
 		case flowslatest.LogTypeAll:
-			outputRecordTypes = []string{
-				constants.FlowLogType,
-				constants.NewConnectionType,
-				constants.HeartbeatType,
-				constants.EndConnectionType,
+			return []api.ConnTrackOutputRecordTypeEnum{
+				api.ConnTrackFlowLog,
+				api.ConnTrackNewConnection,
+				api.ConnTrackHeartbeat,
+				api.ConnTrackEndConnection,
 			}
 		}
 	}
-	return outputRecordTypes
+	return []api.ConnTrackOutputRecordTypeEnum{api.ConnTrackFlowLog}
 }
 
 func UseSASL(cfg *flowslatest.SASLConfig) bool {

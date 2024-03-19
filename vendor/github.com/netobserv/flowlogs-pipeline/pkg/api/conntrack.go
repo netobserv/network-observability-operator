@@ -22,30 +22,29 @@ import (
 )
 
 const (
-	HashIdFieldName     = "_HashId"
+	HashIDFieldName     = "_HashId"
 	RecordTypeFieldName = "_RecordType"
 	IsFirstFieldName    = "_IsFirst"
 )
 
 type ConnTrack struct {
-	KeyDefinition         KeyDefinition              `yaml:"keyDefinition,omitempty" json:"keyDefinition,omitempty" doc:"fields that are used to identify the connection"`
-	OutputRecordTypes     []string                   `yaml:"outputRecordTypes,omitempty" json:"outputRecordTypes,omitempty" enum:"ConnTrackOutputRecordTypeEnum" doc:"output record types to emit"`
-	OutputFields          []OutputField              `yaml:"outputFields,omitempty" json:"outputFields,omitempty" doc:"list of output fields"`
-	Scheduling            []ConnTrackSchedulingGroup `yaml:"scheduling,omitempty" json:"scheduling,omitempty" doc:"list of timeouts and intervals to apply per selector"`
-	MaxConnectionsTracked int                        `yaml:"maxConnectionsTracked,omitempty" json:"maxConnectionsTracked,omitempty" doc:"maximum number of connections we keep in our cache (0 means no limit)"`
-	TCPFlags              ConnTrackTCPFlags          `yaml:"tcpFlags,omitempty" json:"tcpFlags,omitempty" doc:"settings for handling TCP flags"`
+	KeyDefinition         KeyDefinition                   `yaml:"keyDefinition,omitempty" json:"keyDefinition,omitempty" doc:"fields that are used to identify the connection"`
+	OutputRecordTypes     []ConnTrackOutputRecordTypeEnum `yaml:"outputRecordTypes,omitempty" json:"outputRecordTypes,omitempty" doc:"(enum) output record types to emit"`
+	OutputFields          []OutputField                   `yaml:"outputFields,omitempty" json:"outputFields,omitempty" doc:"list of output fields"`
+	Scheduling            []ConnTrackSchedulingGroup      `yaml:"scheduling,omitempty" json:"scheduling,omitempty" doc:"list of timeouts and intervals to apply per selector"`
+	MaxConnectionsTracked int                             `yaml:"maxConnectionsTracked,omitempty" json:"maxConnectionsTracked,omitempty" doc:"maximum number of connections we keep in our cache (0 means no limit)"`
+	TCPFlags              ConnTrackTCPFlags               `yaml:"tcpFlags,omitempty" json:"tcpFlags,omitempty" doc:"settings for handling TCP flags"`
 }
 
-type ConnTrackOutputRecordTypeEnum struct {
-	NewConnection string `yaml:"newConnection" json:"newConnection" doc:"New connection"`
-	EndConnection string `yaml:"endConnection" json:"endConnection" doc:"End connection"`
-	Heartbeat     string `yaml:"heartbeat" json:"heartbeat" doc:"Heartbeat"`
-	FlowLog       string `yaml:"flowLog" json:"flowLog" doc:"Flow log"`
-}
+type ConnTrackOutputRecordTypeEnum string
 
-func ConnTrackOutputRecordTypeName(operation string) string {
-	return GetEnumName(ConnTrackOutputRecordTypeEnum{}, operation)
-}
+const (
+	// For doc generation, enum definitions must match format `Constant Type = "value" // doc`
+	ConnTrackNewConnection ConnTrackOutputRecordTypeEnum = "newConnection" // New connection
+	ConnTrackEndConnection ConnTrackOutputRecordTypeEnum = "endConnection" // End connection
+	ConnTrackHeartbeat     ConnTrackOutputRecordTypeEnum = "heartbeat"     // Heartbeat
+	ConnTrackFlowLog       ConnTrackOutputRecordTypeEnum = "flowLog"       // Flow log
+)
 
 type KeyDefinition struct {
 	FieldGroups []FieldGroup  `yaml:"fieldGroups,omitempty" json:"fieldGroups,omitempty" doc:"list of field group definitions"`
@@ -70,21 +69,24 @@ type ConnTrackHash struct {
 }
 
 type OutputField struct {
-	Name          string `yaml:"name,omitempty" json:"name,omitempty" doc:"output field name"`
-	Operation     string `yaml:"operation,omitempty" json:"operation,omitempty" enum:"ConnTrackOperationEnum" doc:"aggregate operation on the field value"`
-	SplitAB       bool   `yaml:"splitAB,omitempty" json:"splitAB,omitempty" doc:"When true, 2 output fields will be created. One for A->B and one for B->A flows."`
-	Input         string `yaml:"input,omitempty" json:"input,omitempty" doc:"The input field to base the operation on. When omitted, 'name' is used"`
-	ReportMissing bool   `yaml:"reportMissing,omitempty" json:"reportMissing,omitempty" doc:"When true, missing input will produce MissingFieldError metric and error logs"`
+	Name          string                 `yaml:"name,omitempty" json:"name,omitempty" doc:"output field name"`
+	Operation     ConnTrackOperationEnum `yaml:"operation,omitempty" json:"operation,omitempty" doc:"(enum) aggregate operation on the field value"`
+	SplitAB       bool                   `yaml:"splitAB,omitempty" json:"splitAB,omitempty" doc:"When true, 2 output fields will be created. One for A->B and one for B->A flows."`
+	Input         string                 `yaml:"input,omitempty" json:"input,omitempty" doc:"The input field to base the operation on. When omitted, 'name' is used"`
+	ReportMissing bool                   `yaml:"reportMissing,omitempty" json:"reportMissing,omitempty" doc:"When true, missing input will produce MissingFieldError metric and error logs"`
 }
 
-type ConnTrackOperationEnum struct {
-	Sum   string `yaml:"sum" json:"sum" doc:"sum"`
-	Count string `yaml:"count" json:"count" doc:"count"`
-	Min   string `yaml:"min" json:"min" doc:"min"`
-	Max   string `yaml:"max" json:"max" doc:"max"`
-	First string `yaml:"first" json:"first" doc:"first"`
-	Last  string `yaml:"last" json:"last" doc:"last"`
-}
+type ConnTrackOperationEnum string
+
+const (
+	// For doc generation, enum definitions must match format `Constant Type = "value" // doc`
+	ConnTrackSum   ConnTrackOperationEnum = "sum"   // sum
+	ConnTrackCount ConnTrackOperationEnum = "count" // count
+	ConnTrackMin   ConnTrackOperationEnum = "min"   // min
+	ConnTrackMax   ConnTrackOperationEnum = "max"   // max
+	ConnTrackFirst ConnTrackOperationEnum = "first" // first
+	ConnTrackLast  ConnTrackOperationEnum = "last"  // last
+)
 
 type ConnTrackSchedulingGroup struct {
 	Selector             map[string]interface{} `yaml:"selector,omitempty" json:"selector,omitempty" doc:"key-value map to match against connection fields to apply this scheduling"`
@@ -93,16 +95,13 @@ type ConnTrackSchedulingGroup struct {
 	HeartbeatInterval    Duration               `yaml:"heartbeatInterval,omitempty" json:"heartbeatInterval,omitempty" doc:"duration of time to wait between heartbeat reports of a connection"`
 }
 
-func ConnTrackOperationName(operation string) string {
-	return GetEnumName(ConnTrackOperationEnum{}, operation)
-}
-
 type ConnTrackTCPFlags struct {
 	FieldName           string `yaml:"fieldName,omitempty" json:"fieldName,omitempty" doc:"name of the field containing TCP flags"`
 	DetectEndConnection bool   `yaml:"detectEndConnection,omitempty" json:"detectEndConnection,omitempty" doc:"detect end connections by FIN flag"`
 	SwapAB              bool   `yaml:"swapAB,omitempty" json:"swapAB,omitempty" doc:"swap source and destination when the first flowlog contains the SYN_ACK flag"`
 }
 
+//nolint:cyclop
 func (ct *ConnTrack) Validate() error {
 	isGroupAEmpty := ct.KeyDefinition.Hash.FieldGroupARef == ""
 	isGroupBEmpty := ct.KeyDefinition.Hash.FieldGroupBRef == ""
@@ -254,14 +253,14 @@ func addToSet(set map[string]struct{}, item string) bool {
 	return true
 }
 
-func isOperationValid(value string, splitAB bool) bool {
+func isOperationValid(value ConnTrackOperationEnum, splitAB bool) bool {
 	valid := true
 	switch value {
-	case ConnTrackOperationName("Sum"):
-	case ConnTrackOperationName("Count"):
-	case ConnTrackOperationName("Min"):
-	case ConnTrackOperationName("Max"):
-	case ConnTrackOperationName("First"), ConnTrackOperationName("Last"):
+	case ConnTrackSum:
+	case ConnTrackCount:
+	case ConnTrackMin:
+	case ConnTrackMax:
+	case ConnTrackFirst, ConnTrackLast:
 		valid = !splitAB
 	default:
 		valid = false
@@ -269,13 +268,13 @@ func isOperationValid(value string, splitAB bool) bool {
 	return valid
 }
 
-func isOutputRecordTypeValid(value string) bool {
+func isOutputRecordTypeValid(value ConnTrackOutputRecordTypeEnum) bool {
 	valid := true
 	switch value {
-	case ConnTrackOutputRecordTypeName("NewConnection"):
-	case ConnTrackOutputRecordTypeName("EndConnection"):
-	case ConnTrackOutputRecordTypeName("Heartbeat"):
-	case ConnTrackOutputRecordTypeName("FlowLog"):
+	case ConnTrackNewConnection:
+	case ConnTrackEndConnection:
+	case ConnTrackHeartbeat:
+	case ConnTrackFlowLog:
 	default:
 		valid = false
 	}

@@ -61,10 +61,12 @@ func NewPipeline(name string, ingest *Ingest) (PipelineBuilderStage, error) {
 	if ingest.Kafka != nil {
 		return NewKafkaPipeline(name, *ingest.Kafka), nil
 	}
-	return PipelineBuilderStage{}, errors.New("Missing ingest params")
+	return PipelineBuilderStage{}, errors.New("missing ingest params")
 }
 
 // NewCollectorPipeline creates a new pipeline from an `IngestCollector` initial stage (listening for NetFlows / IPFIX)
+//
+//nolint:golint,gocritic
 func NewCollectorPipeline(name string, ingest api.IngestCollector) PipelineBuilderStage {
 	p := pipeline{
 		stages: []Stage{{Name: name}},
@@ -74,6 +76,8 @@ func NewCollectorPipeline(name string, ingest api.IngestCollector) PipelineBuild
 }
 
 // NewGRPCPipeline creates a new pipeline from an `IngestGRPCProto` initial stage (listening for NetObserv's eBPF agent protobuf)
+//
+//nolint:golint,gocritic
 func NewGRPCPipeline(name string, ingest api.IngestGRPCProto) PipelineBuilderStage {
 	p := pipeline{
 		stages: []Stage{{Name: name}},
@@ -83,6 +87,8 @@ func NewGRPCPipeline(name string, ingest api.IngestGRPCProto) PipelineBuilderSta
 }
 
 // NewKafkaPipeline creates a new pipeline from an `IngestKafka` initial stage (listening for flow events on Kafka)
+//
+//nolint:golint,gocritic
 func NewKafkaPipeline(name string, ingest api.IngestKafka) PipelineBuilderStage {
 	p := pipeline{
 		stages: []Stage{{Name: name}},
@@ -127,11 +133,15 @@ func (b *PipelineBuilderStage) TransformFilter(name string, filter api.Transform
 }
 
 // TransformNetwork chains the current stage with a TransformNetwork stage and returns that new stage
+//
+//nolint:golint,gocritic
 func (b *PipelineBuilderStage) TransformNetwork(name string, nw api.TransformNetwork) PipelineBuilderStage {
 	return b.next(name, NewTransformNetworkParams(name, nw))
 }
 
 // ConnTrack chains the current stage with a ConnTrack stage and returns that new stage
+//
+//nolint:golint,gocritic
 func (b *PipelineBuilderStage) ConnTrack(name string, ct api.ConnTrack) PipelineBuilderStage {
 	return b.next(name, NewConnTrackParams(name, ct))
 }
@@ -142,11 +152,15 @@ func (b *PipelineBuilderStage) EncodePrometheus(name string, prom api.PromEncode
 }
 
 // EncodeKafka chains the current stage with an EncodeKafka stage (writing to a Kafka topic) and returns that new stage
+//
+//nolint:golint,gocritic
 func (b *PipelineBuilderStage) EncodeKafka(name string, kafka api.EncodeKafka) PipelineBuilderStage {
 	return b.next(name, NewEncodeKafkaParams(name, kafka))
 }
 
 // EncodeS3 chains the current stage with an EncodeS3 stage (writing to s3 bucket) and returns that new stage
+//
+//nolint:golint,gocritic
 func (b *PipelineBuilderStage) EncodeS3(name string, s3 api.EncodeS3) PipelineBuilderStage {
 	return b.next(name, NewEncodeS3Params(name, s3))
 }
@@ -157,6 +171,8 @@ func (b *PipelineBuilderStage) WriteStdout(name string, stdout api.WriteStdout) 
 }
 
 // WriteLoki chains the current stage with a WriteLoki stage and returns that new stage
+//
+//nolint:golint,gocritic
 func (b *PipelineBuilderStage) WriteLoki(name string, loki api.WriteLoki) PipelineBuilderStage {
 	return b.next(name, NewWriteLokiParams(name, loki))
 }

@@ -20,7 +20,7 @@ package api
 type EncodeS3 struct {
 	Account                string                 `yaml:"account" json:"account" doc:"tenant id for this flow collector"`
 	Endpoint               string                 `yaml:"endpoint" json:"endpoint" doc:"address of s3 server"`
-	AccessKeyId            string                 `yaml:"accessKeyId" json:"accessKeyId" doc:"username to connect to server"`
+	AccessKeyID            string                 `yaml:"accessKeyId" json:"accessKeyId" doc:"username to connect to server"`
 	SecretAccessKey        string                 `yaml:"secretAccessKey" json:"secretAccessKey" doc:"password to connect to server"`
 	Bucket                 string                 `yaml:"bucket" json:"bucket" doc:"bucket into which to store objects"`
 	WriteTimeout           Duration               `yaml:"writeTimeout,omitempty" json:"writeTimeout,omitempty" doc:"timeout (in seconds) for write operation"`

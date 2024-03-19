@@ -59,23 +59,23 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	// enrich stage (transform) configuration
 	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
 		Rules: api.NetworkTransformRules{{
-			Type: api.AddKubernetesRuleType,
+			Type: api.NetworkAddKubernetes,
 			Kubernetes: &api.K8sRule{
 				Input:   "SrcAddr",
 				Output:  "SrcK8S",
 				AddZone: addZone,
 			},
 		}, {
-			Type: api.AddKubernetesRuleType,
+			Type: api.NetworkAddKubernetes,
 			Kubernetes: &api.K8sRule{
 				Input:   "DstAddr",
 				Output:  "DstK8S",
 				AddZone: addZone,
 			},
 		}, {
-			Type: api.ReinterpretDirectionRuleType,
+			Type: api.NetworkReinterpretDirection,
 		}, {
-			Type: api.OpAddKubernetesInfra,
+			Type: api.NetworkAddKubernetesInfra,
 			KubernetesInfra: &api.K8sInfraRule{
 				Inputs: []string{
 					"SrcAddr",
@@ -193,21 +193,21 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem, error) {
 	m := &api.MetricsItem{
 		Name:     flowMetric.MetricName,
-		Type:     strings.ToLower(string(flowMetric.Type)),
+		Type:     api.MetricEncodeOperationEnum(strings.ToLower(string(flowMetric.Type))),
 		Filters:  []api.MetricsFilter{},
 		Labels:   flowMetric.Labels,
 		ValueKey: flowMetric.ValueField,
 	}
 	for _, f := range flowMetric.Filters {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: f.Field, Value: f.Value, Type: conversion.PascalToLower(string(f.MatchType), '_')})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: f.Field, Value: f.Value, Type: api.MetricFilterEnum(conversion.PascalToLower(string(f.MatchType), '_'))})
 	}
 	if !flowMetric.IncludeDuplicates {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "Duplicate", Value: "true", Type: api.PromFilterNotEqual})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "Duplicate", Value: "true", Type: api.MetricFilterNotEqual})
 	}
 	if flowMetric.Direction == metricslatest.Egress {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "1|2", Type: api.PromFilterRegex})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "1|2", Type: api.MetricFilterRegex})
 	} else if flowMetric.Direction == metricslatest.Ingress {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "0|2", Type: api.PromFilterRegex})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "0|2", Type: api.MetricFilterRegex})
 	}
 	for _, b := range flowMetric.Buckets {
 		f, err := strconv.ParseFloat(b, 64)
@@ -377,9 +377,11 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 		if clusterName != "" {
 			transformFilterRules = []api.TransformFilterRule{
 				{
-					Input: constants.ClusterNameLabelName,
-					Type:  "add_field_if_doesnt_exist",
-					Value: clusterName,
+					Type: api.AddFieldIfDoesntExist,
+					AddFieldIfDoesntExist: &api.TransformFilterGenericRule{
+						Input: constants.ClusterNameLabelName,
+						Value: clusterName,
+					},
 				},
 			}
 		}
@@ -452,9 +454,9 @@ func getKafkaSASL(sasl *flowslatest.SASLConfig, volumePrefix string, volumes *vo
 	if !helper.UseSASL(sasl) {
 		return nil
 	}
-	t := "plain"
+	t := api.SASLPlain
 	if sasl.Type == flowslatest.SASLScramSHA512 {
-		t = "scramSHA512"
+		t = api.SASLScramSHA512
 	}
 	idPath := volumes.AddVolume(&sasl.ClientIDReference, volumePrefix+"-sasl-id")
 	secretPath := volumes.AddVolume(&sasl.ClientSecretReference, volumePrefix+"-sasl-secret")

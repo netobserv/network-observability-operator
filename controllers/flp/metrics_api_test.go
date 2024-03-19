@@ -91,8 +91,8 @@ func TestFlowMetricToFLP(t *testing.T) {
 		Name: "m_1",
 		Type: "counter",
 		Filters: []api.MetricsFilter{
-			{Key: "f", Value: "v", Type: api.PromFilterEqual},
-			{Key: "Duplicate", Value: "true", Type: api.PromFilterNotEqual},
+			{Key: "f", Value: "v", Type: api.MetricFilterEqual},
+			{Key: "Duplicate", Value: "true", Type: api.MetricFilterNotEqual},
 		},
 		ValueKey: "val",
 		Labels:   []string{"by_field"},
@@ -102,9 +102,9 @@ func TestFlowMetricToFLP(t *testing.T) {
 		Name: "m_2",
 		Type: "histogram",
 		Filters: []api.MetricsFilter{
-			{Key: "f", Value: "v", Type: api.PromFilterRegex},
-			{Key: "f2", Type: api.PromFilterAbsence},
-			{Key: "FlowDirection", Value: "1|2", Type: api.PromFilterRegex},
+			{Key: "f", Value: "v", Type: api.MetricFilterRegex},
+			{Key: "f2", Type: api.MetricFilterAbsence},
+			{Key: "FlowDirection", Value: "1|2", Type: api.MetricFilterRegex},
 		},
 		Labels:  []string{"by_field"},
 		Buckets: []float64{1, 5, 10, 50, 100},
