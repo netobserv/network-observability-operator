@@ -76,8 +76,8 @@ const (
 const (
 	EnvDedupeJustMark     = "DEDUPER_JUST_MARK"
 	EnvDedupeMerge        = "DEDUPER_MERGE"
-	DedupeJustMarkDefault = "true"
-	DedupeMergeDefault    = "false"
+	DedupeJustMarkDefault = "false"
+	DedupeMergeDefault    = "true"
 )
 
 type reconcileAction int
