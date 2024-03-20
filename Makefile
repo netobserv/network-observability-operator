@@ -241,7 +241,7 @@ ifeq (,$(shell which $(OPSDK) 2>/dev/null))
 	}
 endif
 
-.PHONY: yq
+.PHONY: YQ
 YQ = ./bin/yq
 YQ: ## Download yq locally if necessary.
 ifeq (,$(shell which $(YQ) 2>/dev/null))
@@ -256,8 +256,13 @@ ifeq (,$(shell which $(YQ) 2>/dev/null))
 endif
 
 ##@ Code / files generation
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: YQ controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(YQ) -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.processor.properties.kafkaConsumerAutoscaler.properties.metrics.items | .. | select(has("description")) | .description)' config/crd/bases/flows.netobserv.io_flowcollectors.yaml
+	$(YQ) -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.consolePlugin.properties.autoscaler.properties.metrics.items | .. | select(has("description")) | .description)' config/crd/bases/flows.netobserv.io_flowcollectors.yaml
+	$(YQ) -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.agent.properties.ebpf.properties.advanced.properties.affinity.properties | .. | select(has("description")) | .description)' config/crd/bases/flows.netobserv.io_flowcollectors.yaml
+	$(YQ) -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.processor.properties.advanced.properties.affinity.properties | .. | select(has("description")) | .description)' config/crd/bases/flows.netobserv.io_flowcollectors.yaml
+	$(YQ) -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.consolePlugin.properties.advanced.properties.affinity.properties | .. | select(has("description")) | .description)' config/crd/bases/flows.netobserv.io_flowcollectors.yaml
 
 gencode: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
@@ -361,7 +366,7 @@ deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/c
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:.+~console-plugin:main~' ./config/manager/manager.yaml
-	$(KUSTOMIZE) build config/openshift | sed -r "s/openshift-netobserv-operator\.svc/${NAMESPACE}.svc/" | kubectl create -f -
+	$(KUSTOMIZE) build config/openshift | sed -r "s/openshift-netobserv-operator\.svc/${NAMESPACE}.svc/" | kubectl apply -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/openshift | kubectl --ignore-not-found=true delete -f - || true

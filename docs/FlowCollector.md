@@ -986,7 +986,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).
+
 
 <table>
     <thead>
@@ -1001,42 +1001,42 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type is the type of metric source.  It should be one of "ContainerResource", "External", "Object", "Pods" or "Resource", each mapping to a matching field in the object. Note: "ContainerResource" type is available on when the feature-gate HPAContainerMetrics is enabled<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexcontainerresource">containerResource</a></b></td>
         <td>object</td>
         <td>
-          containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternal">external</a></b></td>
         <td>object</td>
         <td>
-          external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobject">object</a></b></td>
         <td>object</td>
         <td>
-          object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpods">pods</a></b></td>
         <td>object</td>
         <td>
-          pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexresource">resource</a></b></td>
         <td>object</td>
         <td>
-          resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1048,7 +1048,7 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 
 
 
-containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
+
 
 <table>
     <thead>
@@ -1063,21 +1063,21 @@ containerResource refers to a resource metric (such as those specified in reques
         <td><b>container</b></td>
         <td>string</td>
         <td>
-          container is the name of the container in the pods of the scaling target<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexcontainerresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -1089,7 +1089,7 @@ containerResource refers to a resource metric (such as those specified in reques
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -1104,14 +1104,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -1120,14 +1120,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1139,7 +1139,7 @@ target specifies the target value for the given metric
 
 
 
-external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).
+
 
 <table>
     <thead>
@@ -1154,14 +1154,14 @@ external refers to a global metric that is not associated with any Kubernetes ob
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetric">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternaltarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -1173,7 +1173,7 @@ external refers to a global metric that is not associated with any Kubernetes ob
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -1188,14 +1188,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1207,7 +1207,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -1222,14 +1222,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1241,7 +1241,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -1256,21 +1256,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1282,7 +1282,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -1297,14 +1297,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -1313,14 +1313,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1332,7 +1332,7 @@ target specifies the target value for the given metric
 
 
 
-object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).
+
 
 <table>
     <thead>
@@ -1347,21 +1347,21 @@ object refers to a metric describing a single kubernetes object (for example, hi
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectdescribedobject">describedObject</a></b></td>
         <td>object</td>
         <td>
-          describedObject specifies the descriptions of a object,such as kind,name apiVersion<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetric">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjecttarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -1373,7 +1373,7 @@ object refers to a metric describing a single kubernetes object (for example, hi
 
 
 
-describedObject specifies the descriptions of a object,such as kind,name apiVersion
+
 
 <table>
     <thead>
@@ -1388,21 +1388,21 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
         <td><b>kind</b></td>
         <td>string</td>
         <td>
-          kind is the kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the referent; More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>apiVersion</b></td>
         <td>string</td>
         <td>
-          apiVersion is the API version of the referent<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1414,7 +1414,7 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -1429,14 +1429,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1448,7 +1448,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -1463,14 +1463,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1482,7 +1482,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -1497,21 +1497,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1523,7 +1523,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -1538,14 +1538,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -1554,14 +1554,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1573,7 +1573,7 @@ target specifies the target value for the given metric
 
 
 
-pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.
+
 
 <table>
     <thead>
@@ -1588,14 +1588,14 @@ pods refers to a metric describing each pod in the current scale target (for exa
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetric">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodstarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -1607,7 +1607,7 @@ pods refers to a metric describing each pod in the current scale target (for exa
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -1622,14 +1622,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1641,7 +1641,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -1656,14 +1656,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1675,7 +1675,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -1690,21 +1690,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1716,7 +1716,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -1731,14 +1731,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -1747,14 +1747,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1766,7 +1766,7 @@ target specifies the target value for the given metric
 
 
 
-resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.
+
 
 <table>
     <thead>
@@ -1781,14 +1781,14 @@ resource refers to a resource metric (such as those specified in requests and li
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -1800,7 +1800,7 @@ resource refers to a resource metric (such as those specified in requests and li
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -1815,14 +1815,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -1831,14 +1831,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3623,7 +3623,7 @@ TLS client configuration for Loki URL.
 
 
 
-MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).
+
 
 <table>
     <thead>
@@ -3638,42 +3638,42 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type is the type of metric source.  It should be one of "ContainerResource", "External", "Object", "Pods" or "Resource", each mapping to a matching field in the object. Note: "ContainerResource" type is available on when the feature-gate HPAContainerMetrics is enabled<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexcontainerresource">containerResource</a></b></td>
         <td>object</td>
         <td>
-          containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternal">external</a></b></td>
         <td>object</td>
         <td>
-          external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobject">object</a></b></td>
         <td>object</td>
         <td>
-          object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpods">pods</a></b></td>
         <td>object</td>
         <td>
-          pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexresource">resource</a></b></td>
         <td>object</td>
         <td>
-          resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3685,7 +3685,7 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 
 
 
-containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
+
 
 <table>
     <thead>
@@ -3700,21 +3700,21 @@ containerResource refers to a resource metric (such as those specified in reques
         <td><b>container</b></td>
         <td>string</td>
         <td>
-          container is the name of the container in the pods of the scaling target<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexcontainerresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -3726,7 +3726,7 @@ containerResource refers to a resource metric (such as those specified in reques
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -3741,14 +3741,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -3757,14 +3757,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3776,7 +3776,7 @@ target specifies the target value for the given metric
 
 
 
-external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).
+
 
 <table>
     <thead>
@@ -3791,14 +3791,14 @@ external refers to a global metric that is not associated with any Kubernetes ob
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternalmetric">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternaltarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -3810,7 +3810,7 @@ external refers to a global metric that is not associated with any Kubernetes ob
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -3825,14 +3825,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternalmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3844,7 +3844,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -3859,14 +3859,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternalmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3878,7 +3878,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -3893,21 +3893,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3919,7 +3919,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -3934,14 +3934,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -3950,14 +3950,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3969,7 +3969,7 @@ target specifies the target value for the given metric
 
 
 
-object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).
+
 
 <table>
     <thead>
@@ -3984,21 +3984,21 @@ object refers to a metric describing a single kubernetes object (for example, hi
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectdescribedobject">describedObject</a></b></td>
         <td>object</td>
         <td>
-          describedObject specifies the descriptions of a object,such as kind,name apiVersion<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectmetric">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjecttarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -4010,7 +4010,7 @@ object refers to a metric describing a single kubernetes object (for example, hi
 
 
 
-describedObject specifies the descriptions of a object,such as kind,name apiVersion
+
 
 <table>
     <thead>
@@ -4025,21 +4025,21 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
         <td><b>kind</b></td>
         <td>string</td>
         <td>
-          kind is the kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the referent; More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>apiVersion</b></td>
         <td>string</td>
         <td>
-          apiVersion is the API version of the referent<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4051,7 +4051,7 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -4066,14 +4066,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4085,7 +4085,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -4100,14 +4100,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4119,7 +4119,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -4134,21 +4134,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4160,7 +4160,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -4175,14 +4175,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -4191,14 +4191,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4210,7 +4210,7 @@ target specifies the target value for the given metric
 
 
 
-pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.
+
 
 <table>
     <thead>
@@ -4225,14 +4225,14 @@ pods refers to a metric describing each pod in the current scale target (for exa
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodsmetric">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodstarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -4244,7 +4244,7 @@ pods refers to a metric describing each pod in the current scale target (for exa
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -4259,14 +4259,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodsmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4278,7 +4278,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -4293,14 +4293,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodsmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4312,7 +4312,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -4327,21 +4327,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4353,7 +4353,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -4368,14 +4368,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -4384,14 +4384,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4403,7 +4403,7 @@ target specifies the target value for the given metric
 
 
 
-resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.
+
 
 <table>
     <thead>
@@ -4418,14 +4418,14 @@ resource refers to a resource metric (such as those specified in requests and li
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -4437,7 +4437,7 @@ resource refers to a resource metric (such as those specified in requests and li
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -4452,14 +4452,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -4468,14 +4468,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5298,21 +5298,21 @@ If specified, the pod's scheduling constraints
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinity">nodeAffinity</a></b></td>
         <td>object</td>
         <td>
-          Describes node affinity scheduling rules for the pod.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinity">podAffinity</a></b></td>
         <td>object</td>
         <td>
-          Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinity">podAntiAffinity</a></b></td>
         <td>object</td>
         <td>
-          Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5324,7 +5324,7 @@ If specified, the pod's scheduling constraints
 
 
 
-Describes node affinity scheduling rules for the pod.
+
 
 <table>
     <thead>
@@ -5339,14 +5339,14 @@ Describes node affinity scheduling rules for the pod.
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding "weight" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>object</td>
         <td>
-          If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to an update), the system may or may not try to eventually evict the pod from its node.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5358,7 +5358,7 @@ Describes node affinity scheduling rules for the pod.
 
 
 
-An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).
+
 
 <table>
     <thead>
@@ -5373,14 +5373,14 @@ An empty preferred scheduling term matches all objects with implicit weight 0 (i
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference">preference</a></b></td>
         <td>object</td>
         <td>
-          A node selector term, associated with the corresponding weight.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -5394,7 +5394,7 @@ An empty preferred scheduling term matches all objects with implicit weight 0 (i
 
 
 
-A node selector term, associated with the corresponding weight.
+
 
 <table>
     <thead>
@@ -5409,14 +5409,14 @@ A node selector term, associated with the corresponding weight.
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          A list of node selector requirements by node's labels.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex">matchFields</a></b></td>
         <td>[]object</td>
         <td>
-          A list of node selector requirements by node's fields.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5428,7 +5428,7 @@ A node selector term, associated with the corresponding weight.
 
 
 
-A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -5443,21 +5443,21 @@ A node selector requirement is a selector that contains values, a key, and an op
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5469,7 +5469,7 @@ A node selector requirement is a selector that contains values, a key, and an op
 
 
 
-A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -5484,21 +5484,21 @@ A node selector requirement is a selector that contains values, a key, and an op
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5510,7 +5510,7 @@ A node selector requirement is a selector that contains values, a key, and an op
 
 
 
-If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to an update), the system may or may not try to eventually evict the pod from its node.
+
 
 <table>
     <thead>
@@ -5525,7 +5525,7 @@ If the affinity requirements specified by this field are not met at scheduling t
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex">nodeSelectorTerms</a></b></td>
         <td>[]object</td>
         <td>
-          Required. A list of node selector terms. The terms are ORed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -5537,7 +5537,7 @@ If the affinity requirements specified by this field are not met at scheduling t
 
 
 
-A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
+
 
 <table>
     <thead>
@@ -5552,14 +5552,14 @@ A null or empty node selector term matches no objects. The requirements of them 
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          A list of node selector requirements by node's labels.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex">matchFields</a></b></td>
         <td>[]object</td>
         <td>
-          A list of node selector requirements by node's fields.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5571,7 +5571,7 @@ A null or empty node selector term matches no objects. The requirements of them 
 
 
 
-A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -5586,21 +5586,21 @@ A node selector requirement is a selector that contains values, a key, and an op
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5612,7 +5612,7 @@ A node selector requirement is a selector that contains values, a key, and an op
 
 
 
-A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -5627,21 +5627,21 @@ A node selector requirement is a selector that contains values, a key, and an op
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5653,7 +5653,7 @@ A node selector requirement is a selector that contains values, a key, and an op
 
 
 
-Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+
 
 <table>
     <thead>
@@ -5668,14 +5668,14 @@ Describes pod affinity scheduling rules (e.g. co-locate this pod in the same nod
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5687,7 +5687,7 @@ Describes pod affinity scheduling rules (e.g. co-locate this pod in the same nod
 
 
 
-The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
 
 <table>
     <thead>
@@ -5702,14 +5702,14 @@ The weights of all of the matched WeightedPodAffinityTerm fields are added per-n
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
         <td>object</td>
         <td>
-          Required. A pod affinity term, associated with the corresponding weight.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          weight associated with matching the corresponding podAffinityTerm, in the range 1-100.<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -5723,7 +5723,7 @@ The weights of all of the matched WeightedPodAffinityTerm fields are added per-n
 
 
 
-Required. A pod affinity term, associated with the corresponding weight.
+
 
 <table>
     <thead>
@@ -5738,42 +5738,42 @@ Required. A pod affinity term, associated with the corresponding weight.
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5785,7 +5785,7 @@ Required. A pod affinity term, associated with the corresponding weight.
 
 
 
-A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
+
 
 <table>
     <thead>
@@ -5800,14 +5800,14 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5819,7 +5819,7 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -5834,21 +5834,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5860,7 +5860,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.
+
 
 <table>
     <thead>
@@ -5875,14 +5875,14 @@ A label query over the set of namespaces that the term applies to. The term is a
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5894,7 +5894,7 @@ A label query over the set of namespaces that the term applies to. The term is a
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -5909,21 +5909,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5935,7 +5935,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running
+
 
 <table>
     <thead>
@@ -5950,42 +5950,42 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5997,7 +5997,7 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
 
 
 
-A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
+
 
 <table>
     <thead>
@@ -6012,14 +6012,14 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6031,7 +6031,7 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -6046,21 +6046,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6072,7 +6072,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.
+
 
 <table>
     <thead>
@@ -6087,14 +6087,14 @@ A label query over the set of namespaces that the term applies to. The term is a
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6106,7 +6106,7 @@ A label query over the set of namespaces that the term applies to. The term is a
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -6121,21 +6121,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6147,7 +6147,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+
 
 <table>
     <thead>
@@ -6162,14 +6162,14 @@ Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6181,7 +6181,7 @@ Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the
 
 
 
-The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
 
 <table>
     <thead>
@@ -6196,14 +6196,14 @@ The weights of all of the matched WeightedPodAffinityTerm fields are added per-n
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
         <td>object</td>
         <td>
-          Required. A pod affinity term, associated with the corresponding weight.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          weight associated with matching the corresponding podAffinityTerm, in the range 1-100.<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -6217,7 +6217,7 @@ The weights of all of the matched WeightedPodAffinityTerm fields are added per-n
 
 
 
-Required. A pod affinity term, associated with the corresponding weight.
+
 
 <table>
     <thead>
@@ -6232,42 +6232,42 @@ Required. A pod affinity term, associated with the corresponding weight.
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6279,7 +6279,7 @@ Required. A pod affinity term, associated with the corresponding weight.
 
 
 
-A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
+
 
 <table>
     <thead>
@@ -6294,14 +6294,14 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6313,7 +6313,7 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -6328,21 +6328,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6354,7 +6354,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.
+
 
 <table>
     <thead>
@@ -6369,14 +6369,14 @@ A label query over the set of namespaces that the term applies to. The term is a
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6388,7 +6388,7 @@ A label query over the set of namespaces that the term applies to. The term is a
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -6403,21 +6403,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6429,7 +6429,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running
+
 
 <table>
     <thead>
@@ -6444,42 +6444,42 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6491,7 +6491,7 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
 
 
 
-A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
+
 
 <table>
     <thead>
@@ -6506,14 +6506,14 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6525,7 +6525,7 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -6540,21 +6540,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6566,7 +6566,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.
+
 
 <table>
     <thead>
@@ -6581,14 +6581,14 @@ A label query over the set of namespaces that the term applies to. The term is a
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6600,7 +6600,7 @@ A label query over the set of namespaces that the term applies to. The term is a
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -6615,21 +6615,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7290,21 +7290,21 @@ If specified, the pod's scheduling constraints
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinity">nodeAffinity</a></b></td>
         <td>object</td>
         <td>
-          Describes node affinity scheduling rules for the pod.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinity">podAffinity</a></b></td>
         <td>object</td>
         <td>
-          Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinity">podAntiAffinity</a></b></td>
         <td>object</td>
         <td>
-          Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7316,7 +7316,7 @@ If specified, the pod's scheduling constraints
 
 
 
-Describes node affinity scheduling rules for the pod.
+
 
 <table>
     <thead>
@@ -7331,14 +7331,14 @@ Describes node affinity scheduling rules for the pod.
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding "weight" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>object</td>
         <td>
-          If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to an update), the system may or may not try to eventually evict the pod from its node.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7350,7 +7350,7 @@ Describes node affinity scheduling rules for the pod.
 
 
 
-An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).
+
 
 <table>
     <thead>
@@ -7365,14 +7365,14 @@ An empty preferred scheduling term matches all objects with implicit weight 0 (i
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference">preference</a></b></td>
         <td>object</td>
         <td>
-          A node selector term, associated with the corresponding weight.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -7386,7 +7386,7 @@ An empty preferred scheduling term matches all objects with implicit weight 0 (i
 
 
 
-A node selector term, associated with the corresponding weight.
+
 
 <table>
     <thead>
@@ -7401,14 +7401,14 @@ A node selector term, associated with the corresponding weight.
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          A list of node selector requirements by node's labels.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex">matchFields</a></b></td>
         <td>[]object</td>
         <td>
-          A list of node selector requirements by node's fields.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7420,7 +7420,7 @@ A node selector term, associated with the corresponding weight.
 
 
 
-A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -7435,21 +7435,21 @@ A node selector requirement is a selector that contains values, a key, and an op
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7461,7 +7461,7 @@ A node selector requirement is a selector that contains values, a key, and an op
 
 
 
-A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -7476,21 +7476,21 @@ A node selector requirement is a selector that contains values, a key, and an op
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7502,7 +7502,7 @@ A node selector requirement is a selector that contains values, a key, and an op
 
 
 
-If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to an update), the system may or may not try to eventually evict the pod from its node.
+
 
 <table>
     <thead>
@@ -7517,7 +7517,7 @@ If the affinity requirements specified by this field are not met at scheduling t
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex">nodeSelectorTerms</a></b></td>
         <td>[]object</td>
         <td>
-          Required. A list of node selector terms. The terms are ORed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -7529,7 +7529,7 @@ If the affinity requirements specified by this field are not met at scheduling t
 
 
 
-A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
+
 
 <table>
     <thead>
@@ -7544,14 +7544,14 @@ A null or empty node selector term matches no objects. The requirements of them 
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          A list of node selector requirements by node's labels.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex">matchFields</a></b></td>
         <td>[]object</td>
         <td>
-          A list of node selector requirements by node's fields.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7563,7 +7563,7 @@ A null or empty node selector term matches no objects. The requirements of them 
 
 
 
-A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -7578,21 +7578,21 @@ A node selector requirement is a selector that contains values, a key, and an op
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7604,7 +7604,7 @@ A node selector requirement is a selector that contains values, a key, and an op
 
 
 
-A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -7619,21 +7619,21 @@ A node selector requirement is a selector that contains values, a key, and an op
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7645,7 +7645,7 @@ A node selector requirement is a selector that contains values, a key, and an op
 
 
 
-Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+
 
 <table>
     <thead>
@@ -7660,14 +7660,14 @@ Describes pod affinity scheduling rules (e.g. co-locate this pod in the same nod
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7679,7 +7679,7 @@ Describes pod affinity scheduling rules (e.g. co-locate this pod in the same nod
 
 
 
-The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
 
 <table>
     <thead>
@@ -7694,14 +7694,14 @@ The weights of all of the matched WeightedPodAffinityTerm fields are added per-n
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
         <td>object</td>
         <td>
-          Required. A pod affinity term, associated with the corresponding weight.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          weight associated with matching the corresponding podAffinityTerm, in the range 1-100.<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -7715,7 +7715,7 @@ The weights of all of the matched WeightedPodAffinityTerm fields are added per-n
 
 
 
-Required. A pod affinity term, associated with the corresponding weight.
+
 
 <table>
     <thead>
@@ -7730,42 +7730,42 @@ Required. A pod affinity term, associated with the corresponding weight.
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7777,7 +7777,7 @@ Required. A pod affinity term, associated with the corresponding weight.
 
 
 
-A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
+
 
 <table>
     <thead>
@@ -7792,14 +7792,14 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7811,7 +7811,7 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -7826,21 +7826,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7852,7 +7852,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.
+
 
 <table>
     <thead>
@@ -7867,14 +7867,14 @@ A label query over the set of namespaces that the term applies to. The term is a
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7886,7 +7886,7 @@ A label query over the set of namespaces that the term applies to. The term is a
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -7901,21 +7901,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7927,7 +7927,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running
+
 
 <table>
     <thead>
@@ -7942,42 +7942,42 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7989,7 +7989,7 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
 
 
 
-A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
+
 
 <table>
     <thead>
@@ -8004,14 +8004,14 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8023,7 +8023,7 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -8038,21 +8038,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8064,7 +8064,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.
+
 
 <table>
     <thead>
@@ -8079,14 +8079,14 @@ A label query over the set of namespaces that the term applies to. The term is a
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8098,7 +8098,7 @@ A label query over the set of namespaces that the term applies to. The term is a
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -8113,21 +8113,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8139,7 +8139,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+
 
 <table>
     <thead>
@@ -8154,14 +8154,14 @@ Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8173,7 +8173,7 @@ Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the
 
 
 
-The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
 
 <table>
     <thead>
@@ -8188,14 +8188,14 @@ The weights of all of the matched WeightedPodAffinityTerm fields are added per-n
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
         <td>object</td>
         <td>
-          Required. A pod affinity term, associated with the corresponding weight.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          weight associated with matching the corresponding podAffinityTerm, in the range 1-100.<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -8209,7 +8209,7 @@ The weights of all of the matched WeightedPodAffinityTerm fields are added per-n
 
 
 
-Required. A pod affinity term, associated with the corresponding weight.
+
 
 <table>
     <thead>
@@ -8224,42 +8224,42 @@ Required. A pod affinity term, associated with the corresponding weight.
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8271,7 +8271,7 @@ Required. A pod affinity term, associated with the corresponding weight.
 
 
 
-A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
+
 
 <table>
     <thead>
@@ -8286,14 +8286,14 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8305,7 +8305,7 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -8320,21 +8320,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8346,7 +8346,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.
+
 
 <table>
     <thead>
@@ -8361,14 +8361,14 @@ A label query over the set of namespaces that the term applies to. The term is a
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8380,7 +8380,7 @@ A label query over the set of namespaces that the term applies to. The term is a
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -8395,21 +8395,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8421,7 +8421,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running
+
 
 <table>
     <thead>
@@ -8436,42 +8436,42 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8483,7 +8483,7 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
 
 
 
-A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
+
 
 <table>
     <thead>
@@ -8498,14 +8498,14 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8517,7 +8517,7 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -8532,21 +8532,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8558,7 +8558,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.
+
 
 <table>
     <thead>
@@ -8573,14 +8573,14 @@ A label query over the set of namespaces that the term applies to. The term is a
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8592,7 +8592,7 @@ A label query over the set of namespaces that the term applies to. The term is a
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -8607,21 +8607,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8689,7 +8689,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).
+
 
 <table>
     <thead>
@@ -8704,42 +8704,42 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type is the type of metric source.  It should be one of "ContainerResource", "External", "Object", "Pods" or "Resource", each mapping to a matching field in the object. Note: "ContainerResource" type is available on when the feature-gate HPAContainerMetrics is enabled<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexcontainerresource-1">containerResource</a></b></td>
         <td>object</td>
         <td>
-          containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternal-1">external</a></b></td>
         <td>object</td>
         <td>
-          external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobject-1">object</a></b></td>
         <td>object</td>
         <td>
-          object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpods-1">pods</a></b></td>
         <td>object</td>
         <td>
-          pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexresource-1">resource</a></b></td>
         <td>object</td>
         <td>
-          resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8751,7 +8751,7 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 
 
 
-containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
+
 
 <table>
     <thead>
@@ -8766,21 +8766,21 @@ containerResource refers to a resource metric (such as those specified in reques
         <td><b>container</b></td>
         <td>string</td>
         <td>
-          container is the name of the container in the pods of the scaling target<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexcontainerresourcetarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -8792,7 +8792,7 @@ containerResource refers to a resource metric (such as those specified in reques
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -8807,14 +8807,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -8823,14 +8823,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8842,7 +8842,7 @@ target specifies the target value for the given metric
 
 
 
-external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).
+
 
 <table>
     <thead>
@@ -8857,14 +8857,14 @@ external refers to a global metric that is not associated with any Kubernetes ob
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetric-1">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternaltarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -8876,7 +8876,7 @@ external refers to a global metric that is not associated with any Kubernetes ob
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -8891,14 +8891,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetricselector-1">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8910,7 +8910,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -8925,14 +8925,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetricselectormatchexpressionsindex-1">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8944,7 +8944,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -8959,21 +8959,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8985,7 +8985,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -9000,14 +9000,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -9016,14 +9016,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9035,7 +9035,7 @@ target specifies the target value for the given metric
 
 
 
-object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).
+
 
 <table>
     <thead>
@@ -9050,21 +9050,21 @@ object refers to a metric describing a single kubernetes object (for example, hi
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectdescribedobject-1">describedObject</a></b></td>
         <td>object</td>
         <td>
-          describedObject specifies the descriptions of a object,such as kind,name apiVersion<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetric-1">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjecttarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -9076,7 +9076,7 @@ object refers to a metric describing a single kubernetes object (for example, hi
 
 
 
-describedObject specifies the descriptions of a object,such as kind,name apiVersion
+
 
 <table>
     <thead>
@@ -9091,21 +9091,21 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
         <td><b>kind</b></td>
         <td>string</td>
         <td>
-          kind is the kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the referent; More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>apiVersion</b></td>
         <td>string</td>
         <td>
-          apiVersion is the API version of the referent<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9117,7 +9117,7 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -9132,14 +9132,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetricselector-1">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9151,7 +9151,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -9166,14 +9166,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetricselectormatchexpressionsindex-1">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9185,7 +9185,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -9200,21 +9200,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9226,7 +9226,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -9241,14 +9241,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -9257,14 +9257,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9276,7 +9276,7 @@ target specifies the target value for the given metric
 
 
 
-pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.
+
 
 <table>
     <thead>
@@ -9291,14 +9291,14 @@ pods refers to a metric describing each pod in the current scale target (for exa
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetric-1">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodstarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -9310,7 +9310,7 @@ pods refers to a metric describing each pod in the current scale target (for exa
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -9325,14 +9325,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetricselector-1">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9344,7 +9344,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -9359,14 +9359,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetricselectormatchexpressionsindex-1">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9378,7 +9378,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -9393,21 +9393,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9419,7 +9419,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -9434,14 +9434,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -9450,14 +9450,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9469,7 +9469,7 @@ target specifies the target value for the given metric
 
 
 
-resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.
+
 
 <table>
     <thead>
@@ -9484,14 +9484,14 @@ resource refers to a resource metric (such as those specified in requests and li
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexresourcetarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -9503,7 +9503,7 @@ resource refers to a resource metric (such as those specified in requests and li
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -9518,14 +9518,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -9534,14 +9534,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11869,21 +11869,21 @@ If specified, the pod's scheduling constraints
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinity">nodeAffinity</a></b></td>
         <td>object</td>
         <td>
-          Describes node affinity scheduling rules for the pod.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinity">podAffinity</a></b></td>
         <td>object</td>
         <td>
-          Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinity">podAntiAffinity</a></b></td>
         <td>object</td>
         <td>
-          Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11895,7 +11895,7 @@ If specified, the pod's scheduling constraints
 
 
 
-Describes node affinity scheduling rules for the pod.
+
 
 <table>
     <thead>
@@ -11910,14 +11910,14 @@ Describes node affinity scheduling rules for the pod.
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding "weight" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>object</td>
         <td>
-          If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to an update), the system may or may not try to eventually evict the pod from its node.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11929,7 +11929,7 @@ Describes node affinity scheduling rules for the pod.
 
 
 
-An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).
+
 
 <table>
     <thead>
@@ -11944,14 +11944,14 @@ An empty preferred scheduling term matches all objects with implicit weight 0 (i
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference">preference</a></b></td>
         <td>object</td>
         <td>
-          A node selector term, associated with the corresponding weight.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -11965,7 +11965,7 @@ An empty preferred scheduling term matches all objects with implicit weight 0 (i
 
 
 
-A node selector term, associated with the corresponding weight.
+
 
 <table>
     <thead>
@@ -11980,14 +11980,14 @@ A node selector term, associated with the corresponding weight.
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          A list of node selector requirements by node's labels.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex">matchFields</a></b></td>
         <td>[]object</td>
         <td>
-          A list of node selector requirements by node's fields.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11999,7 +11999,7 @@ A node selector term, associated with the corresponding weight.
 
 
 
-A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -12014,21 +12014,21 @@ A node selector requirement is a selector that contains values, a key, and an op
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12040,7 +12040,7 @@ A node selector requirement is a selector that contains values, a key, and an op
 
 
 
-A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -12055,21 +12055,21 @@ A node selector requirement is a selector that contains values, a key, and an op
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12081,7 +12081,7 @@ A node selector requirement is a selector that contains values, a key, and an op
 
 
 
-If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to an update), the system may or may not try to eventually evict the pod from its node.
+
 
 <table>
     <thead>
@@ -12096,7 +12096,7 @@ If the affinity requirements specified by this field are not met at scheduling t
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex">nodeSelectorTerms</a></b></td>
         <td>[]object</td>
         <td>
-          Required. A list of node selector terms. The terms are ORed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -12108,7 +12108,7 @@ If the affinity requirements specified by this field are not met at scheduling t
 
 
 
-A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
+
 
 <table>
     <thead>
@@ -12123,14 +12123,14 @@ A null or empty node selector term matches no objects. The requirements of them 
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          A list of node selector requirements by node's labels.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex">matchFields</a></b></td>
         <td>[]object</td>
         <td>
-          A list of node selector requirements by node's fields.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12142,7 +12142,7 @@ A null or empty node selector term matches no objects. The requirements of them 
 
 
 
-A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -12157,21 +12157,21 @@ A node selector requirement is a selector that contains values, a key, and an op
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12183,7 +12183,7 @@ A node selector requirement is a selector that contains values, a key, and an op
 
 
 
-A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -12198,21 +12198,21 @@ A node selector requirement is a selector that contains values, a key, and an op
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          The label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12224,7 +12224,7 @@ A node selector requirement is a selector that contains values, a key, and an op
 
 
 
-Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+
 
 <table>
     <thead>
@@ -12239,14 +12239,14 @@ Describes pod affinity scheduling rules (e.g. co-locate this pod in the same nod
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12258,7 +12258,7 @@ Describes pod affinity scheduling rules (e.g. co-locate this pod in the same nod
 
 
 
-The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
 
 <table>
     <thead>
@@ -12273,14 +12273,14 @@ The weights of all of the matched WeightedPodAffinityTerm fields are added per-n
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
         <td>object</td>
         <td>
-          Required. A pod affinity term, associated with the corresponding weight.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          weight associated with matching the corresponding podAffinityTerm, in the range 1-100.<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -12294,7 +12294,7 @@ The weights of all of the matched WeightedPodAffinityTerm fields are added per-n
 
 
 
-Required. A pod affinity term, associated with the corresponding weight.
+
 
 <table>
     <thead>
@@ -12309,42 +12309,42 @@ Required. A pod affinity term, associated with the corresponding weight.
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12356,7 +12356,7 @@ Required. A pod affinity term, associated with the corresponding weight.
 
 
 
-A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
+
 
 <table>
     <thead>
@@ -12371,14 +12371,14 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12390,7 +12390,7 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -12405,21 +12405,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12431,7 +12431,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.
+
 
 <table>
     <thead>
@@ -12446,14 +12446,14 @@ A label query over the set of namespaces that the term applies to. The term is a
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12465,7 +12465,7 @@ A label query over the set of namespaces that the term applies to. The term is a
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -12480,21 +12480,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12506,7 +12506,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running
+
 
 <table>
     <thead>
@@ -12521,42 +12521,42 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12568,7 +12568,7 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
 
 
 
-A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
+
 
 <table>
     <thead>
@@ -12583,14 +12583,14 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12602,7 +12602,7 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -12617,21 +12617,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12643,7 +12643,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.
+
 
 <table>
     <thead>
@@ -12658,14 +12658,14 @@ A label query over the set of namespaces that the term applies to. The term is a
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12677,7 +12677,7 @@ A label query over the set of namespaces that the term applies to. The term is a
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -12692,21 +12692,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12718,7 +12718,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+
 
 <table>
     <thead>
@@ -12733,14 +12733,14 @@ Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12752,7 +12752,7 @@ Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the
 
 
 
-The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
 
 <table>
     <thead>
@@ -12767,14 +12767,14 @@ The weights of all of the matched WeightedPodAffinityTerm fields are added per-n
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
         <td>object</td>
         <td>
-          Required. A pod affinity term, associated with the corresponding weight.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          weight associated with matching the corresponding podAffinityTerm, in the range 1-100.<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -12788,7 +12788,7 @@ The weights of all of the matched WeightedPodAffinityTerm fields are added per-n
 
 
 
-Required. A pod affinity term, associated with the corresponding weight.
+
 
 <table>
     <thead>
@@ -12803,42 +12803,42 @@ Required. A pod affinity term, associated with the corresponding weight.
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12850,7 +12850,7 @@ Required. A pod affinity term, associated with the corresponding weight.
 
 
 
-A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
+
 
 <table>
     <thead>
@@ -12865,14 +12865,14 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12884,7 +12884,7 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -12899,21 +12899,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12925,7 +12925,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.
+
 
 <table>
     <thead>
@@ -12940,14 +12940,14 @@ A label query over the set of namespaces that the term applies to. The term is a
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12959,7 +12959,7 @@ A label query over the set of namespaces that the term applies to. The term is a
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -12974,21 +12974,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13000,7 +13000,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running
+
 
 <table>
     <thead>
@@ -13015,42 +13015,42 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13062,7 +13062,7 @@ Defines a set of pods (namely those matching the labelSelector relative to the g
 
 
 
-A label query over a set of resources, in this case pods. If it's null, this PodAffinityTerm matches with no Pods.
+
 
 <table>
     <thead>
@@ -13077,14 +13077,14 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13096,7 +13096,7 @@ A label query over a set of resources, in this case pods. If it's null, this Pod
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -13111,21 +13111,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13137,7 +13137,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means "this pod's namespace". An empty selector ({}) matches all namespaces.
+
 
 <table>
     <thead>
@@ -13152,14 +13152,14 @@ A label query over the set of namespaces that the term applies to. The term is a
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13171,7 +13171,7 @@ A label query over the set of namespaces that the term applies to. The term is a
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -13186,21 +13186,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13268,7 +13268,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).
+
 
 <table>
     <thead>
@@ -13283,42 +13283,42 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type is the type of metric source.  It should be one of "ContainerResource", "External", "Object", "Pods" or "Resource", each mapping to a matching field in the object. Note: "ContainerResource" type is available on when the feature-gate HPAContainerMetrics is enabled<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexcontainerresource-1">containerResource</a></b></td>
         <td>object</td>
         <td>
-          containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternal-1">external</a></b></td>
         <td>object</td>
         <td>
-          external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobject-1">object</a></b></td>
         <td>object</td>
         <td>
-          object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpods-1">pods</a></b></td>
         <td>object</td>
         <td>
-          pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexresource-1">resource</a></b></td>
         <td>object</td>
         <td>
-          resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13330,7 +13330,7 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 
 
 
-containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
+
 
 <table>
     <thead>
@@ -13345,21 +13345,21 @@ containerResource refers to a resource metric (such as those specified in reques
         <td><b>container</b></td>
         <td>string</td>
         <td>
-          container is the name of the container in the pods of the scaling target<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexcontainerresourcetarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -13371,7 +13371,7 @@ containerResource refers to a resource metric (such as those specified in reques
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -13386,14 +13386,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -13402,14 +13402,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13421,7 +13421,7 @@ target specifies the target value for the given metric
 
 
 
-external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).
+
 
 <table>
     <thead>
@@ -13436,14 +13436,14 @@ external refers to a global metric that is not associated with any Kubernetes ob
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternalmetric-1">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternaltarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -13455,7 +13455,7 @@ external refers to a global metric that is not associated with any Kubernetes ob
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -13470,14 +13470,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternalmetricselector-1">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13489,7 +13489,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -13504,14 +13504,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternalmetricselectormatchexpressionsindex-1">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13523,7 +13523,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -13538,21 +13538,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13564,7 +13564,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -13579,14 +13579,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -13595,14 +13595,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13614,7 +13614,7 @@ target specifies the target value for the given metric
 
 
 
-object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).
+
 
 <table>
     <thead>
@@ -13629,21 +13629,21 @@ object refers to a metric describing a single kubernetes object (for example, hi
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectdescribedobject-1">describedObject</a></b></td>
         <td>object</td>
         <td>
-          describedObject specifies the descriptions of a object,such as kind,name apiVersion<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectmetric-1">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjecttarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -13655,7 +13655,7 @@ object refers to a metric describing a single kubernetes object (for example, hi
 
 
 
-describedObject specifies the descriptions of a object,such as kind,name apiVersion
+
 
 <table>
     <thead>
@@ -13670,21 +13670,21 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
         <td><b>kind</b></td>
         <td>string</td>
         <td>
-          kind is the kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the referent; More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>apiVersion</b></td>
         <td>string</td>
         <td>
-          apiVersion is the API version of the referent<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13696,7 +13696,7 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -13711,14 +13711,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectmetricselector-1">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13730,7 +13730,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -13745,14 +13745,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectmetricselectormatchexpressionsindex-1">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13764,7 +13764,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -13779,21 +13779,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13805,7 +13805,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -13820,14 +13820,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -13836,14 +13836,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13855,7 +13855,7 @@ target specifies the target value for the given metric
 
 
 
-pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.
+
 
 <table>
     <thead>
@@ -13870,14 +13870,14 @@ pods refers to a metric describing each pod in the current scale target (for exa
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodsmetric-1">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodstarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -13889,7 +13889,7 @@ pods refers to a metric describing each pod in the current scale target (for exa
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -13904,14 +13904,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodsmetricselector-1">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13923,7 +13923,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -13938,14 +13938,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodsmetricselectormatchexpressionsindex-1">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13957,7 +13957,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -13972,21 +13972,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13998,7 +13998,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -14013,14 +14013,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -14029,14 +14029,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -14048,7 +14048,7 @@ target specifies the target value for the given metric
 
 
 
-resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.
+
 
 <table>
     <thead>
@@ -14063,14 +14063,14 @@ resource refers to a resource metric (such as those specified in requests and li
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexresourcetarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -14082,7 +14082,7 @@ resource refers to a resource metric (such as those specified in requests and li
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -14097,14 +14097,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -14113,14 +14113,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
