@@ -38,38 +38,27 @@ func (tn *TransformNetwork) GetServiceFiles() (string, string) {
 	return p, s
 }
 
+type TransformNetworkOperationEnum string
+
 const (
-	OpAddSubnet            = "add_subnet"
-	OpAddLocation          = "add_location"
-	OpAddService           = "add_service"
-	OpAddKubernetes        = "add_kubernetes"
-	OpAddKubernetesInfra   = "add_kubernetes_infra"
-	OpReinterpretDirection = "reinterpret_direction"
-	OpAddIPCategory        = "add_ip_category"
+	// For doc generation, enum definitions must match format `Constant Type = "value" // doc`
+	NetworkAddSubnet            TransformNetworkOperationEnum = "add_subnet"            // add output subnet field from input field and prefix length from parameters field
+	NetworkAddLocation          TransformNetworkOperationEnum = "add_location"          // add output location fields from input
+	NetworkAddService           TransformNetworkOperationEnum = "add_service"           // add output network service field from input port and parameters protocol field
+	NetworkAddKubernetes        TransformNetworkOperationEnum = "add_kubernetes"        // add output kubernetes fields from input
+	NetworkAddKubernetesInfra   TransformNetworkOperationEnum = "add_kubernetes_infra"  // add output kubernetes isInfra field from input
+	NetworkReinterpretDirection TransformNetworkOperationEnum = "reinterpret_direction" // reinterpret flow direction at the node level (instead of net interface), to ease the deduplication process
+	NetworkAddIPCategory        TransformNetworkOperationEnum = "add_ip_category"       // categorize IPs based on known subnets configuration
 )
 
-type TransformNetworkOperationEnum struct {
-	AddSubnet            string `yaml:"add_subnet" json:"add_subnet" doc:"add output subnet field from input field and prefix length from parameters field"`
-	AddLocation          string `yaml:"add_location" json:"add_location" doc:"add output location fields from input"`
-	AddService           string `yaml:"add_service" json:"add_service" doc:"add output network service field from input port and parameters protocol field"`
-	AddKubernetes        string `yaml:"add_kubernetes" json:"add_kubernetes" doc:"add output kubernetes fields from input"`
-	AddKubernetesInfra   string `yaml:"add_kubernetes_infra" json:"add_kubernetes_infra" doc:"add output kubernetes isInfra field from input"`
-	ReinterpretDirection string `yaml:"reinterpret_direction" json:"reinterpret_direction" doc:"reinterpret flow direction at the node level (instead of net interface), to ease the deduplication process"`
-	AddIPCategory        string `yaml:"add_ip_category" json:"add_ip_category" doc:"categorize IPs based on known subnets configuration"`
-}
-
-func TransformNetworkOperationName(operation string) string {
-	return GetEnumName(TransformNetworkOperationEnum{}, operation)
-}
-
 type NetworkTransformRule struct {
-	Type            string                 `yaml:"type,omitempty" json:"type,omitempty" enum:"TransformNetworkOperationEnum" doc:"one of the following:"`
-	KubernetesInfra *K8sInfraRule          `yaml:"kubernetes_infra,omitempty" json:"kubernetes_infra,omitempty" doc:"Kubernetes infra rule configuration"`
-	Kubernetes      *K8sRule               `yaml:"kubernetes,omitempty" json:"kubernetes,omitempty" doc:"Kubernetes rule configuration"`
-	AddSubnet       *NetworkAddSubnetRule  `yaml:"add_subnet,omitempty" json:"add_subnet,omitempty" doc:"Add subnet rule configuration"`
-	AddLocation     *NetworkGenericRule    `yaml:"add_location,omitempty" json:"add_location,omitempty" doc:"Add location rule configuration"`
-	AddIPCategory   *NetworkGenericRule    `yaml:"add_ip_category,omitempty" json:"add_ip_category,omitempty" doc:"Add ip category rule configuration"`
-	AddService      *NetworkAddServiceRule `yaml:"add_service,omitempty" json:"add_service,omitempty" doc:"Add service rule configuration"`
+	Type            TransformNetworkOperationEnum `yaml:"type,omitempty" json:"type,omitempty" doc:"(enum) one of the following:"`
+	KubernetesInfra *K8sInfraRule                 `yaml:"kubernetes_infra,omitempty" json:"kubernetes_infra,omitempty" doc:"Kubernetes infra rule configuration"`
+	Kubernetes      *K8sRule                      `yaml:"kubernetes,omitempty" json:"kubernetes,omitempty" doc:"Kubernetes rule configuration"`
+	AddSubnet       *NetworkAddSubnetRule         `yaml:"add_subnet,omitempty" json:"add_subnet,omitempty" doc:"Add subnet rule configuration"`
+	AddLocation     *NetworkGenericRule           `yaml:"add_location,omitempty" json:"add_location,omitempty" doc:"Add location rule configuration"`
+	AddIPCategory   *NetworkGenericRule           `yaml:"add_ip_category,omitempty" json:"add_ip_category,omitempty" doc:"Add ip category rule configuration"`
+	AddService      *NetworkAddServiceRule        `yaml:"add_service,omitempty" json:"add_service,omitempty" doc:"Add service rule configuration"`
 }
 
 type K8sInfraRule struct {

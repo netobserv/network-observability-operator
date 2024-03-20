@@ -18,18 +18,17 @@
 package api
 
 type TransformGeneric struct {
-	Policy string                 `yaml:"policy,omitempty" json:"policy,omitempty" enum:"TransformGenericOperationEnum" doc:"key replacement policy; may be one of the following:"`
-	Rules  []GenericTransformRule `yaml:"rules,omitempty" json:"rules,omitempty" doc:"list of transform rules, each includes:"`
+	Policy TransformGenericOperationEnum `yaml:"policy,omitempty" json:"policy,omitempty" doc:"(enum) key replacement policy; may be one of the following:"`
+	Rules  []GenericTransformRule        `yaml:"rules,omitempty" json:"rules,omitempty" doc:"list of transform rules, each includes:"`
 }
 
-type TransformGenericOperationEnum struct {
-	PreserveOriginalKeys string `yaml:"preserve_original_keys" json:"preserve_original_keys" doc:"adds new keys in addition to existing keys (default)"`
-	ReplaceKeys          string `yaml:"replace_keys" json:"replace_keys" doc:"removes all old keys and uses only the new keys"`
-}
+type TransformGenericOperationEnum string
 
-func TransformGenericOperationName(operation string) string {
-	return GetEnumName(TransformGenericOperationEnum{}, operation)
-}
+const (
+	// For doc generation, enum definitions must match format `Constant Type = "value" // doc`
+	PreserveOriginalKeys TransformGenericOperationEnum = "preserve_original_keys" // adds new keys in addition to existing keys (default)
+	ReplaceKeys          TransformGenericOperationEnum = "replace_keys"           // removes all old keys and uses only the new keys
+)
 
 type GenericTransformRule struct {
 	Input      string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`

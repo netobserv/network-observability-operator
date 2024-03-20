@@ -3388,6 +3388,13 @@ TLS client configuration for Loki URL.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessordeduper">deduper</a></b></td>
+        <td>object</td>
+        <td>
+          `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>dropUnusedFields</b></td>
         <td>boolean</td>
         <td>
@@ -3556,6 +3563,47 @@ TLS client configuration for Loki URL.
         <td>map[string]string</td>
         <td>
           `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.deduper
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
+
+
+
+`deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          Set the Processor deduper mode (de-duplication). It comes in addition to the Agent deduper because the Agent cannot de-duplicate same flows reported from different nodes.<br> - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer.<br> - Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br> - Use `Disabled` to turn off Processor-based de-duplication.<br><br/>
+          <br/>
+            <i>Enum</i>: Disabled, Drop, Sample<br/>
+            <i>Default</i>: Disabled<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          `sampling` is the sampling rate when deduper `mode` is `Sample`.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 50<br/>
+            <i>Minimum</i>: 0<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8868,6 +8916,13 @@ TLS client configuration for Loki URL.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessordeduper-1">deduper</a></b></td>
+        <td>object</td>
+        <td>
+          `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
@@ -9064,6 +9119,47 @@ TLS client configuration for Loki URL.
             <i>Default</i>: 6060<br/>
             <i>Minimum</i>: 0<br/>
             <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.deduper
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor-1)</sup></sup>
+
+
+
+`deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          Set the Processor deduper mode (de-duplication). It comes in addition to the Agent deduper because the Agent cannot de-duplicate same flows reported from different nodes.<br> - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer.<br> - Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br> - Use `Disabled` to turn off Processor-based de-duplication.<br><br/>
+          <br/>
+            <i>Enum</i>: Disabled, Drop, Sample<br/>
+            <i>Default</i>: Disabled<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          `sampling` is the sampling rate when deduper `mode` is `Sample`.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 50<br/>
+            <i>Minimum</i>: 0<br/>
         </td>
         <td>false</td>
       </tr></tbody>

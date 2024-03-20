@@ -69,8 +69,8 @@ func init() {
 						Type:     "counter",
 						ValueKey: valueField,
 						Filters: []flpapi.MetricsFilter{
-							{Key: "Duplicate", Value: "true", Type: flpapi.PromFilterNotEqual},
-							{Key: "FlowDirection", Value: mapDirection[dir], Type: flpapi.PromFilterRegex},
+							{Key: "Duplicate", Value: "true", Type: flpapi.MetricFilterNotEqual},
+							{Key: "FlowDirection", Value: mapDirection[dir], Type: flpapi.MetricFilterRegex},
 						},
 						Labels: labels,
 					},
@@ -94,7 +94,7 @@ func init() {
 				Type:     "histogram",
 				ValueKey: "TimeFlowRttNs",
 				Filters: []flpapi.MetricsFilter{
-					{Key: "TimeFlowRttNs", Type: flpapi.PromFilterPresence},
+					{Key: "TimeFlowRttNs", Type: flpapi.MetricFilterPresence},
 				},
 				Labels:     labels,
 				ValueScale: 1_000_000_000, // ns => s
@@ -108,8 +108,8 @@ func init() {
 				Type:     "counter",
 				ValueKey: "PktDropPackets",
 				Filters: []flpapi.MetricsFilter{
-					{Key: "Duplicate", Value: "true", Type: flpapi.PromFilterNotEqual},
-					{Key: "PktDropPackets", Type: flpapi.PromFilterPresence},
+					{Key: "Duplicate", Value: "true", Type: flpapi.MetricFilterNotEqual},
+					{Key: "PktDropPackets", Type: flpapi.MetricFilterPresence},
 				},
 				Labels: labels,
 			},
@@ -121,8 +121,8 @@ func init() {
 				Type:     "counter",
 				ValueKey: "PktDropBytes",
 				Filters: []flpapi.MetricsFilter{
-					{Key: "Duplicate", Value: "true", Type: flpapi.PromFilterNotEqual},
-					{Key: "PktDropBytes", Type: flpapi.PromFilterPresence},
+					{Key: "Duplicate", Value: "true", Type: flpapi.MetricFilterNotEqual},
+					{Key: "PktDropBytes", Type: flpapi.MetricFilterPresence},
 				},
 				Labels: labels,
 			},
@@ -136,7 +136,7 @@ func init() {
 				Type:     "histogram",
 				ValueKey: "DnsLatencyMs",
 				Filters: []flpapi.MetricsFilter{
-					{Key: "DnsId", Type: flpapi.PromFilterPresence},
+					{Key: "DnsId", Type: flpapi.MetricFilterPresence},
 				},
 				Labels:     dnsLabels,
 				ValueScale: 1000, // ms => s
