@@ -473,7 +473,8 @@ spec:
                         format: int32
                         type: integer
                       metrics:
-                        description: Metrics used by the pod autoscaler
+                        description: Metrics used by the pod autoscaler. For documentation,
+                          refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/
                         items:
                           properties:
                             containerResource:
@@ -1676,7 +1677,8 @@ spec:
                         format: int32
                         type: integer
                       metrics:
-                        description: Metrics used by the pod autoscaler
+                        description: Metrics used by the pod autoscaler. For documentation,
+                          refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/
                         items:
                           properties:
                             containerResource:
@@ -2412,7 +2414,8 @@ spec:
                           Set these values at your own risk.'
                         properties:
                           affinity:
-                            description: If specified, the pod's scheduling constraints
+                            description: If specified, the pod's scheduling constraints.
+                              For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
                             properties:
                               nodeAffinity:
                                 properties:
@@ -3209,7 +3212,8 @@ spec:
                       own risk.'
                     properties:
                       affinity:
-                        description: If specified, the pod's scheduling constraints
+                        description: If specified, the pod's scheduling constraints.
+                          For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
                         properties:
                           nodeAffinity:
                             properties:
@@ -3671,7 +3675,8 @@ spec:
                         format: int32
                         type: integer
                       metrics:
-                        description: Metrics used by the pod autoscaler
+                        description: Metrics used by the pod autoscaler. For documentation,
+                          refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/
                         items:
                           properties:
                             containerResource:
@@ -5033,7 +5038,8 @@ spec:
                       own risk.'
                     properties:
                       affinity:
-                        description: If specified, the pod's scheduling constraints
+                        description: If specified, the pod's scheduling constraints.
+                          For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
                         properties:
                           nodeAffinity:
                             properties:
@@ -5538,7 +5544,8 @@ spec:
                         format: int32
                         type: integer
                       metrics:
-                        description: Metrics used by the pod autoscaler
+                        description: Metrics used by the pod autoscaler. For documentation,
+                          refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/
                         items:
                           properties:
                             containerResource:

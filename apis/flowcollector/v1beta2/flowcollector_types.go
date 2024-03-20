@@ -497,7 +497,7 @@ type FlowCollectorHPA struct {
 	// +optional
 	MaxReplicas int32 `json:"maxReplicas" protobuf:"varint,3,opt,name=maxReplicas"`
 
-	// Metrics used by the pod autoscaler
+	// Metrics used by the pod autoscaler. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/
 	// +optional
 	Metrics []ascv2.MetricSpec `json:"metrics"`
 }
@@ -884,7 +884,7 @@ type AdvancedAgentConfig struct {
 	// +mapType=atomic
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
-	// If specified, the pod's scheduling constraints
+	// If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
 	// +optional
 	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 
@@ -964,7 +964,7 @@ type AdvancedProcessorConfig struct {
 	// +mapType=atomic
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
-	// If specified, the pod's scheduling constraints
+	// If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
 	// +optional
 	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 
@@ -1041,7 +1041,7 @@ type AdvancedPluginConfig struct {
 	// +mapType=atomic
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
-	// If specified, the pod's scheduling constraints
+	// If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
 	// +optional
 	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 

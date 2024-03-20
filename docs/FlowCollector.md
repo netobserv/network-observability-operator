@@ -955,7 +955,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindex">metrics</a></b></td>
         <td>[]object</td>
         <td>
-          Metrics used by the pod autoscaler<br/>
+          Metrics used by the pod autoscaler. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3592,7 +3592,7 @@ TLS client configuration for Loki URL.
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindex">metrics</a></b></td>
         <td>[]object</td>
         <td>
-          Metrics used by the pod autoscaler<br/>
+          Metrics used by the pod autoscaler. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5250,7 +5250,7 @@ Agent configuration for flows extraction.
         <td><b><a href="#flowcollectorspecagentebpfadvancedaffinity">affinity</a></b></td>
         <td>object</td>
         <td>
-          If specified, the pod's scheduling constraints<br/>
+          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5283,7 +5283,7 @@ Agent configuration for flows extraction.
 
 
 
-If specified, the pod's scheduling constraints
+If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
 
 <table>
     <thead>
@@ -7214,7 +7214,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinity">affinity</a></b></td>
         <td>object</td>
         <td>
-          If specified, the pod's scheduling constraints<br/>
+          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7275,7 +7275,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-If specified, the pod's scheduling constraints
+If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
 
 <table>
     <thead>
@@ -8658,7 +8658,7 @@ If specified, the pod's scheduling constraints
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindex-1">metrics</a></b></td>
         <td>[]object</td>
         <td>
-          Metrics used by the pod autoscaler<br/>
+          Metrics used by the pod autoscaler. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11740,7 +11740,7 @@ TLS client configuration for Loki URL.
         <td><b><a href="#flowcollectorspecprocessoradvancedaffinity">affinity</a></b></td>
         <td>object</td>
         <td>
-          If specified, the pod's scheduling constraints<br/>
+          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11854,7 +11854,7 @@ TLS client configuration for Loki URL.
 
 
 
-If specified, the pod's scheduling constraints
+If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
 
 <table>
     <thead>
@@ -13237,7 +13237,7 @@ If specified, the pod's scheduling constraints
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindex-1">metrics</a></b></td>
         <td>[]object</td>
         <td>
-          Metrics used by the pod autoscaler<br/>
+          Metrics used by the pod autoscaler. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/<br/>
         </td>
         <td>false</td>
       </tr><tr>
