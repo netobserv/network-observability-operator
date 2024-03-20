@@ -412,6 +412,7 @@ metadata:
     operators.operatorframework.io/builder: operator-sdk-v1.25.3
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/netobserv/network-observability-operator
+    support: NetObserv team
   labels:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.arm64: supported
