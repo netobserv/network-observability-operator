@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
@@ -22,6 +23,10 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/manager"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
+)
+
+const (
+	flowsFinalizer = "flows.netobserv.io/finalizer"
 )
 
 // FlowCollectorReconciler reconciles a FlowCollector object
@@ -118,6 +123,10 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 	loki := helper.NewLokiConfig(&desired.Spec.Loki, ns)
 	reconcilersInfo := r.newCommonInfo(clh, ns, previousNamespace, &loki)
 
+	if err := r.checkFinalizer(ctx, desired); err != nil {
+		return err
+	}
+
 	if err := cleanup.CleanPastReferences(ctx, r.Client, ns); err != nil {
 		return err
 	}
@@ -156,6 +165,17 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 		if err != nil {
 			return r.status.Error("ReconcileConsolePluginFailed", err)
 		}
+	}
+
+	return nil
+}
+
+func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *flowslatest.FlowCollector) error {
+	// Previous version of the operator (1.5) had a finalizer, this isn't the case anymore.
+	// Remove any finalizer that could remain after an upgrade.
+	if controllerutil.ContainsFinalizer(desired, flowsFinalizer) {
+		controllerutil.RemoveFinalizer(desired, flowsFinalizer)
+		return r.Update(ctx, desired)
 	}
 
 	return nil
