@@ -13,7 +13,7 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.71.2
 	github.com/prometheus/common v0.48.0
 	github.com/stretchr/testify v1.9.0
-	go.uber.org/zap v1.26.0
+	go.uber.org/zap v1.27.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.29.2
 	k8s.io/apiextensions-apiserver v0.29.2
