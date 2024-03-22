@@ -6,7 +6,7 @@ toolchain go1.21.7
 
 require (
 	github.com/go-logr/logr v1.4.1
-	github.com/netobserv/flowlogs-pipeline v0.1.12-0.20240305083238-24bf8cec8807
+	github.com/netobserv/flowlogs-pipeline v0.1.12-0.20240322124726-d2b2352bfe0f
 	github.com/onsi/ginkgo/v2 v2.16.0
 	github.com/onsi/gomega v1.31.1
 	github.com/openshift/api v0.0.0-20220112145620-704957ce4980
@@ -65,10 +65,10 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/net v0.22.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
-	golang.org/x/term v0.17.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
