@@ -33,11 +33,6 @@ const (
 
 	TokensPath = "/var/run/secrets/tokens/"
 
-	FlowLogType       = "flowLog"
-	NewConnectionType = "newConnection"
-	HeartbeatType     = "heartbeat"
-	EndConnectionType = "endConnection"
-
 	ClusterNameLabelName = "K8S_ClusterName"
 
 	MonitoringNamespace      = "openshift-monitoring"

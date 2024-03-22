@@ -58,7 +58,7 @@ func (c *ClientTLS) Build() (*tls.Config, error) {
 			}
 			tlsConfig.Certificates = []tls.Certificate{pair}
 		} else if c.UserCertPath != "" || c.UserKeyPath != "" {
-			return nil, errors.New("userCertPath and userKeyPath must be both present or both absent.")
+			return nil, errors.New("userCertPath and userKeyPath must be both present or both absent")
 		}
 		return tlsConfig, nil
 	}

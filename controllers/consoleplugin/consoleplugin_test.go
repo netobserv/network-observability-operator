@@ -13,6 +13,7 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
+	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	config "github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -321,7 +322,7 @@ func TestConfigMapContent(t *testing.T) {
 	assert.Equal(config.Loki.StatusURL, "https://lokistack-query-frontend-http.ls-namespace.svc:3100/")
 
 	// frontend params
-	assert.Equal(config.Frontend.RecordTypes, []string{"flowLog"})
+	assert.Equal(config.Frontend.RecordTypes, []api.ConnTrackOutputRecordTypeEnum{api.ConnTrackFlowLog})
 	assert.Empty(config.Frontend.Features)
 	assert.NotEmpty(config.Frontend.Columns)
 	assert.NotEmpty(config.Frontend.Filters)

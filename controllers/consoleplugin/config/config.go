@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 )
 
@@ -77,12 +78,12 @@ type Deduper struct {
 }
 
 type FrontendConfig struct {
-	RecordTypes []string       `yaml:"recordTypes" json:"recordTypes"`
-	Columns     []ColumnConfig `yaml:"columns" json:"columns"`
-	Sampling    int            `yaml:"sampling" json:"sampling"`
-	Features    []string       `yaml:"features" json:"features"`
-	Deduper     Deduper        `yaml:"deduper" json:"deduper"`
-	Fields      []FieldConfig  `yaml:"fields" json:"fields"`
+	RecordTypes []api.ConnTrackOutputRecordTypeEnum `yaml:"recordTypes" json:"recordTypes"`
+	Columns     []ColumnConfig                      `yaml:"columns" json:"columns"`
+	Sampling    int                                 `yaml:"sampling" json:"sampling"`
+	Features    []string                            `yaml:"features" json:"features"`
+	Deduper     Deduper                             `yaml:"deduper" json:"deduper"`
+	Fields      []FieldConfig                       `yaml:"fields" json:"fields"`
 
 	PortNaming      flowslatest.ConsolePluginPortConfig `yaml:"portNaming,omitempty" json:"portNaming,omitempty"`
 	Filters         []FilterConfig                      `yaml:"filters,omitempty" json:"filters,omitempty"`

@@ -126,7 +126,7 @@ func (b *builder) NewKafkaPipeline() PipelineBuilder {
 	return b.initPipeline(config.NewKafkaPipeline("kafka-read", api.IngestKafka{
 		Brokers:           []string{b.desired.Kafka.Address},
 		Topic:             b.desired.Kafka.Topic,
-		GroupId:           b.name(), // Without groupid, each message is delivered to each consumers
+		GroupID:           b.name(), // Without groupid, each message is delivered to each consumers
 		Decoder:           decoder,
 		TLS:               getKafkaTLS(&b.desired.Kafka.TLS, "kafka-cert", &b.volumes),
 		SASL:              getKafkaSASL(&b.desired.Kafka.SASL, "kafka-ingest", &b.volumes),
