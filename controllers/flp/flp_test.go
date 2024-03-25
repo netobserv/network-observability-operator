@@ -755,8 +755,8 @@ func TestLabels(t *testing.T) {
 
 	cfg := getConfig()
 	info := reconcilers.Common{Namespace: "ns"}
-	builder, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
-	tBuilder, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
+	builder, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil)
+	tBuilder, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil)
 
 	// Deployment
 	depl := tBuilder.deployment(annotate("digest"))

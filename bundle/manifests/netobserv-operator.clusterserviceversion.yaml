@@ -909,6 +909,7 @@ spec:
           - config.openshift.io
           resources:
           - clusterversions
+          - networks
           verbs:
           - get
           - list
@@ -1023,14 +1024,6 @@ spec:
           - get
           - list
           - update
-          - watch
-        - apiGroups:
-          - operator.openshift.io
-          resources:
-          - networks
-          verbs:
-          - get
-          - list
           - watch
         - apiGroups:
           - rbac.authorization.k8s.io

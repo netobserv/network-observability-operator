@@ -14,7 +14,6 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 	configv1 "github.com/openshift/api/config/v1"
-	operatorv1 "github.com/openshift/api/operator/v1"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -271,7 +270,7 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 
 	// Pods and Services subnets are found in CNO config
 	if r.mgr.HasCNO() {
-		network := &operatorv1.Network{}
+		network := &configv1.Network{}
 		err := r.Get(ctx, types.NamespacedName{Name: "cluster"}, network)
 		if err != nil {
 			return nil, fmt.Errorf("can't get Network information: %w", err)
@@ -286,11 +285,16 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 				CIDRs: podCIDRs,
 			})
 		}
-		svcCIDRs := network.Spec.ServiceNetwork
-		if len(svcCIDRs) > 0 {
+		if len(network.Spec.ServiceNetwork) > 0 {
 			subnets = append(subnets, flowslatest.SubnetLabel{
 				Name:  "Services",
-				CIDRs: svcCIDRs,
+				CIDRs: network.Spec.ServiceNetwork,
+			})
+		}
+		if network.Spec.ExternalIP != nil && len(network.Spec.ExternalIP.AutoAssignCIDRs) > 0 {
+			subnets = append(subnets, flowslatest.SubnetLabel{
+				Name:  "ExternalIP",
+				CIDRs: network.Spec.ExternalIP.AutoAssignCIDRs,
 			})
 		}
 	}

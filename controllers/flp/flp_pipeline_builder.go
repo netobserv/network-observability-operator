@@ -63,25 +63,27 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	allLabels := append(b.detectedSubnets, b.desired.Processor.SubnetLabels.CustomLabels...)
 	flpLabels := subnetLabelsToFLP(allLabels)
 
-	// enrich stage (transform) configuration
-	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
-		Rules: api.NetworkTransformRules{{
+	rules := api.NetworkTransformRules{
+		{
 			Type: api.NetworkAddKubernetes,
 			Kubernetes: &api.K8sRule{
 				Input:   "SrcAddr",
 				Output:  "SrcK8S",
 				AddZone: addZone,
 			},
-		}, {
+		},
+		{
 			Type: api.NetworkAddKubernetes,
 			Kubernetes: &api.K8sRule{
 				Input:   "DstAddr",
 				Output:  "DstK8S",
 				AddZone: addZone,
 			},
-		}, {
+		},
+		{
 			Type: api.NetworkReinterpretDirection,
-		}, {
+		},
+		{
 			Type: api.NetworkAddKubernetesInfra,
 			KubernetesInfra: &api.K8sInfraRule{
 				Inputs: []string{
@@ -101,14 +103,38 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 					},
 				},
 			},
-		}},
+		},
+	}
+
+	if len(flpLabels) > 0 {
+		rules = append(rules, []api.NetworkTransformRule{
+			{
+				Type: api.NetworkAddSubnetLabel,
+				AddSubnetLabel: &api.NetworkAddSubnetLabelRule{
+					Input:  "SrcAddr",
+					Output: "SrcSubnetLabel",
+				},
+			},
+			{
+				Type: api.NetworkAddSubnetLabel,
+				AddSubnetLabel: &api.NetworkAddSubnetLabelRule{
+					Input:  "DstAddr",
+					Output: "DstSubnetLabel",
+				},
+			},
+		}...)
+	}
+
+	// enrich stage (transform) configuration
+	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
+		Rules: rules,
 		DirectionInfo: api.NetworkTransformDirectionInfo{
 			ReporterIPField:    "AgentIP",
 			SrcHostField:       "SrcK8S_HostIP",
 			DstHostField:       "DstK8S_HostIP",
 			FlowDirectionField: "FlowDirection",
 		},
-		IPCategories: flpLabels,
+		SubnetLabels: flpLabels,
 	})
 
 	// loki stage (write) configuration
@@ -475,10 +501,10 @@ func getKafkaSASL(sasl *flowslatest.SASLConfig, volumePrefix string, volumes *vo
 	}
 }
 
-func subnetLabelsToFLP(labels []flowslatest.SubnetLabel) []api.NetworkTransformIPCategory {
-	var cats []api.NetworkTransformIPCategory
+func subnetLabelsToFLP(labels []flowslatest.SubnetLabel) []api.NetworkTransformSubnetLabel {
+	var cats []api.NetworkTransformSubnetLabel
 	for _, subnetLabel := range labels {
-		cats = append(cats, api.NetworkTransformIPCategory{
+		cats = append(cats, api.NetworkTransformSubnetLabel{
 			Name:  subnetLabel.Name,
 			CIDRs: subnetLabel.CIDRs,
 		})
