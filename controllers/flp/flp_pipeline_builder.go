@@ -104,15 +104,15 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	})
 
 	// loki stage (write) configuration
-	debugConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
+	advancedConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
 	if helper.UseLoki(b.desired) {
 		lokiWrite := api.WriteLoki{
 			Labels:         loki.GetLokiLabels(b.desired),
 			BatchSize:      int(b.desired.Loki.WriteBatchSize),
 			BatchWait:      helper.UnstructuredDuration(b.desired.Loki.WriteBatchWait),
-			MaxBackoff:     helper.UnstructuredDuration(debugConfig.WriteMaxBackoff),
-			MaxRetries:     int(helper.PtrInt32(debugConfig.WriteMaxRetries)),
-			MinBackoff:     helper.UnstructuredDuration(debugConfig.WriteMinBackoff),
+			MaxBackoff:     helper.UnstructuredDuration(advancedConfig.WriteMaxBackoff),
+			MaxRetries:     int(helper.PtrInt32(advancedConfig.WriteMaxRetries)),
+			MinBackoff:     helper.UnstructuredDuration(advancedConfig.WriteMinBackoff),
 			StaticLabels:   model.LabelSet{},
 			Timeout:        helper.UnstructuredDuration(b.desired.Loki.WriteTimeout),
 			URL:            b.loki.IngesterURL,
@@ -121,7 +121,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			TenantID:       b.loki.TenantID,
 		}
 
-		for k, v := range debugConfig.StaticLabels {
+		for k, v := range advancedConfig.StaticLabels {
 			lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
 		}
 
@@ -327,7 +327,7 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 	// Connection tracking stage (only if LogTypes is not FLOWS)
 	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
 		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
-		debugConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
+		advancedConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{
 			KeyDefinition: api.KeyDefinition{
 				FieldGroups: []api.FieldGroup{
@@ -348,9 +348,9 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 			Scheduling: []api.ConnTrackSchedulingGroup{
 				{
 					Selector:             nil, // Default group. Match all flowlogs
-					HeartbeatInterval:    api.Duration{Duration: debugConfig.ConversationHeartbeatInterval.Duration},
-					EndConnectionTimeout: api.Duration{Duration: debugConfig.ConversationEndTimeout.Duration},
-					TerminatingTimeout:   api.Duration{Duration: debugConfig.ConversationTerminatingTimeout.Duration},
+					HeartbeatInterval:    api.Duration{Duration: advancedConfig.ConversationHeartbeatInterval.Duration},
+					EndConnectionTimeout: api.Duration{Duration: advancedConfig.ConversationEndTimeout.Duration},
+					TerminatingTimeout:   api.Duration{Duration: advancedConfig.ConversationTerminatingTimeout.Duration},
 				},
 			},
 			TCPFlags: api.ConnTrackTCPFlags{

@@ -52,6 +52,32 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.Loki.Microservices = restored.Spec.Loki.Microservices
 	dst.Spec.Loki.Manual = restored.Spec.Loki.Manual
 
+	if restored.Spec.Agent.EBPF.Advanced != nil {
+		if dst.Spec.Agent.EBPF.Advanced == nil {
+			dst.Spec.Agent.EBPF.Advanced = &v1beta2.AdvancedAgentConfig{}
+		}
+		dst.Spec.Agent.EBPF.Advanced.NodeSelector = restored.Spec.Agent.EBPF.Advanced.NodeSelector
+		dst.Spec.Agent.EBPF.Advanced.Affinity = restored.Spec.Agent.EBPF.Advanced.Affinity
+		dst.Spec.Agent.EBPF.Advanced.PriorityClassName = restored.Spec.Agent.EBPF.Advanced.PriorityClassName
+	}
+	if restored.Spec.Processor.Advanced != nil {
+		if dst.Spec.Processor.Advanced == nil {
+			dst.Spec.Processor.Advanced = &v1beta2.AdvancedProcessorConfig{}
+		}
+		dst.Spec.Processor.Advanced.NodeSelector = restored.Spec.Processor.Advanced.NodeSelector
+		dst.Spec.Processor.Advanced.Affinity = restored.Spec.Processor.Advanced.Affinity
+		dst.Spec.Processor.Advanced.PriorityClassName = restored.Spec.Processor.Advanced.PriorityClassName
+	}
+	if restored.Spec.ConsolePlugin.Advanced != nil {
+		if dst.Spec.ConsolePlugin.Advanced == nil {
+			dst.Spec.ConsolePlugin.Advanced = &v1beta2.AdvancedPluginConfig{}
+		}
+		dst.Spec.ConsolePlugin.Advanced.NodeSelector = restored.Spec.ConsolePlugin.Advanced.NodeSelector
+		dst.Spec.ConsolePlugin.Advanced.Affinity = restored.Spec.ConsolePlugin.Advanced.Affinity
+		dst.Spec.ConsolePlugin.Advanced.PriorityClassName = restored.Spec.ConsolePlugin.Advanced.PriorityClassName
+	}
+	ClearDefaultAdvancedConfig(dst)
+
 	return nil
 }
 
@@ -79,28 +105,32 @@ func (r *FlowCollectorList) ConvertFrom(srcRaw conversion.Hub) error {
 	return Convert_v1beta2_FlowCollectorList_To_v1beta1_FlowCollectorList(src, r, nil)
 }
 
+func ClearDefaultAdvancedConfig(fc *v1beta2.FlowCollector) {
+	// clear Processor advanced config if default
+	if reflect.DeepEqual(helper.GetAdvancedProcessorConfig(nil), helper.GetAdvancedProcessorConfig(fc.Spec.Processor.Advanced)) {
+		fc.Spec.Processor.Advanced = nil
+	}
+	// clear Agent advanced config if default
+	if reflect.DeepEqual(helper.GetAdvancedAgentConfig(nil), helper.GetAdvancedAgentConfig(fc.Spec.Agent.EBPF.Advanced)) {
+		fc.Spec.Agent.EBPF.Advanced = nil
+	}
+	// clear Plugin advanced config if default
+	if reflect.DeepEqual(helper.GetAdvancedPluginConfig(nil), helper.GetAdvancedPluginConfig(fc.Spec.ConsolePlugin.Advanced)) {
+		fc.Spec.ConsolePlugin.Advanced = nil
+	}
+	// clear Loki advanced config if default
+	if reflect.DeepEqual(helper.GetAdvancedLokiConfig(nil), helper.GetAdvancedLokiConfig(fc.Spec.Loki.Advanced)) {
+		fc.Spec.Loki.Advanced = nil
+	}
+}
+
 // This function need to be manually created because we moved fields between v1beta2 and v1beta1
 // nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollector_To_v1beta2_FlowCollector(in *FlowCollector, out *v1beta2.FlowCollector, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta1_FlowCollector_To_v1beta2_FlowCollector(in, out, s); err != nil {
 		return fmt.Errorf("auto convert FlowCollector v1beta1 to v1beta2: %w", err)
 	}
-	// clear Processor advanced config if default
-	if reflect.DeepEqual(helper.GetAdvancedProcessorConfig(nil), helper.GetAdvancedProcessorConfig(out.Spec.Processor.Advanced)) {
-		out.Spec.Processor.Advanced = nil
-	}
-	// clear Agent advanced config if default
-	if reflect.DeepEqual(helper.GetAdvancedAgentConfig(nil), helper.GetAdvancedAgentConfig(out.Spec.Agent.EBPF.Advanced)) {
-		out.Spec.Agent.EBPF.Advanced = nil
-	}
-	// clear Plugin advanced config if default
-	if reflect.DeepEqual(helper.GetAdvancedPluginConfig(nil), helper.GetAdvancedPluginConfig(out.Spec.ConsolePlugin.Advanced)) {
-		out.Spec.ConsolePlugin.Advanced = nil
-	}
-	// clear Loki advanced config if default
-	if reflect.DeepEqual(helper.GetAdvancedLokiConfig(nil), helper.GetAdvancedLokiConfig(out.Spec.Loki.Advanced)) {
-		out.Spec.Loki.Advanced = nil
-	}
+	ClearDefaultAdvancedConfig(out)
 	return nil
 }
 

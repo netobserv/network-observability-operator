@@ -538,7 +538,7 @@ type FlowCollectorHPA struct {
 	// +optional
 	MaxReplicas int32 `json:"maxReplicas" protobuf:"varint,3,opt,name=maxReplicas"`
 
-	// Metrics used by the pod autoscaler
+	// Metrics used by the pod autoscaler. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/
 	// +optional
 	Metrics []ascv2.MetricSpec `json:"metrics"`
 }

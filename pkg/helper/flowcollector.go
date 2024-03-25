@@ -141,21 +141,33 @@ func GetNamespace(spec *flowslatest.FlowCollectorSpec) string {
 }
 
 func GetAdvancedAgentConfig(specConfig *flowslatest.AdvancedAgentConfig) flowslatest.AdvancedAgentConfig {
-	debugConfig := flowslatest.AdvancedAgentConfig{
-		Env: map[string]string{},
+	cfg := flowslatest.AdvancedAgentConfig{
+		Env:               map[string]string{},
+		NodeSelector:      map[string]string{},
+		Affinity:          nil,
+		PriorityClassName: "",
 	}
 
 	if specConfig != nil {
 		if len(specConfig.Env) > 0 {
-			debugConfig.Env = specConfig.Env
+			cfg.Env = specConfig.Env
+		}
+		if len(specConfig.NodeSelector) > 0 {
+			cfg.NodeSelector = specConfig.NodeSelector
+		}
+		if specConfig.Affinity != nil {
+			cfg.Affinity = specConfig.Affinity
+		}
+		if len(specConfig.PriorityClassName) > 0 {
+			cfg.PriorityClassName = specConfig.PriorityClassName
 		}
 	}
 
-	return debugConfig
+	return cfg
 }
 
 func GetAdvancedProcessorConfig(specConfig *flowslatest.AdvancedProcessorConfig) flowslatest.AdvancedProcessorConfig {
-	debugConfig := flowslatest.AdvancedProcessorConfig{
+	cfg := flowslatest.AdvancedProcessorConfig{
 		Env:                            map[string]string{},
 		Port:                           ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "port")),
 		HealthPort:                     ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "healthPort")),
@@ -165,43 +177,55 @@ func GetAdvancedProcessorConfig(specConfig *flowslatest.AdvancedProcessorConfig)
 		ConversationHeartbeatInterval:  ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationHeartbeatInterval")),
 		ConversationEndTimeout:         ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationEndTimeout")),
 		ConversationTerminatingTimeout: ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationTerminatingTimeout")),
+		NodeSelector:                   map[string]string{},
+		Affinity:                       nil,
+		PriorityClassName:              "",
 	}
 
 	if specConfig != nil {
 		if len(specConfig.Env) > 0 {
-			debugConfig.Env = specConfig.Env
+			cfg.Env = specConfig.Env
 		}
 		if specConfig.Port != nil && *specConfig.Port > 0 {
-			debugConfig.Port = specConfig.Port
+			cfg.Port = specConfig.Port
 		}
 		if specConfig.HealthPort != nil && *specConfig.HealthPort > 0 {
-			debugConfig.HealthPort = specConfig.HealthPort
+			cfg.HealthPort = specConfig.HealthPort
 		}
 		if specConfig.ProfilePort != nil && *specConfig.ProfilePort > 0 {
-			debugConfig.ProfilePort = specConfig.ProfilePort
+			cfg.ProfilePort = specConfig.ProfilePort
 		}
 		if specConfig.EnableKubeProbes != nil {
-			debugConfig.EnableKubeProbes = specConfig.EnableKubeProbes
+			cfg.EnableKubeProbes = specConfig.EnableKubeProbes
 		}
 		if specConfig.DropUnusedFields != nil {
-			debugConfig.DropUnusedFields = specConfig.DropUnusedFields
+			cfg.DropUnusedFields = specConfig.DropUnusedFields
 		}
 		if specConfig.ConversationHeartbeatInterval != nil {
-			debugConfig.ConversationHeartbeatInterval = specConfig.ConversationHeartbeatInterval
+			cfg.ConversationHeartbeatInterval = specConfig.ConversationHeartbeatInterval
 		}
 		if specConfig.ConversationEndTimeout != nil {
-			debugConfig.ConversationEndTimeout = specConfig.ConversationEndTimeout
+			cfg.ConversationEndTimeout = specConfig.ConversationEndTimeout
 		}
 		if specConfig.ConversationTerminatingTimeout != nil {
-			debugConfig.ConversationTerminatingTimeout = specConfig.ConversationTerminatingTimeout
+			cfg.ConversationTerminatingTimeout = specConfig.ConversationTerminatingTimeout
+		}
+		if len(specConfig.NodeSelector) > 0 {
+			cfg.NodeSelector = specConfig.NodeSelector
+		}
+		if specConfig.Affinity != nil {
+			cfg.Affinity = specConfig.Affinity
+		}
+		if len(specConfig.PriorityClassName) > 0 {
+			cfg.PriorityClassName = specConfig.PriorityClassName
 		}
 	}
 
-	return debugConfig
+	return cfg
 }
 
 func GetAdvancedLokiConfig(specConfig *flowslatest.AdvancedLokiConfig) flowslatest.AdvancedLokiConfig {
-	debugConfig := flowslatest.AdvancedLokiConfig{
+	cfg := flowslatest.AdvancedLokiConfig{
 		WriteMinBackoff: ptr.To(GetFieldDefaultDuration(LokiAdvancedPath, "writeMinBackoff")),
 		WriteMaxBackoff: ptr.To(GetFieldDefaultDuration(LokiAdvancedPath, "writeMaxBackoff")),
 		WriteMaxRetries: ptr.To(GetFieldDefaultInt32(LokiAdvancedPath, "writeMaxRetries")),
@@ -210,44 +234,56 @@ func GetAdvancedLokiConfig(specConfig *flowslatest.AdvancedLokiConfig) flowslate
 
 	if specConfig != nil {
 		if specConfig.WriteMinBackoff != nil {
-			debugConfig.WriteMinBackoff = specConfig.WriteMinBackoff
+			cfg.WriteMinBackoff = specConfig.WriteMinBackoff
 		}
 		if specConfig.WriteMaxBackoff != nil {
-			debugConfig.WriteMaxBackoff = specConfig.WriteMaxBackoff
+			cfg.WriteMaxBackoff = specConfig.WriteMaxBackoff
 		}
 		if specConfig.WriteMaxRetries != nil {
-			debugConfig.WriteMaxRetries = specConfig.WriteMaxRetries
+			cfg.WriteMaxRetries = specConfig.WriteMaxRetries
 		}
 		if specConfig.StaticLabels != nil {
-			debugConfig.StaticLabels = specConfig.StaticLabels
+			cfg.StaticLabels = specConfig.StaticLabels
 		}
 	}
 
-	return debugConfig
+	return cfg
 }
 
 func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flowslatest.AdvancedPluginConfig {
-	debugConfig := flowslatest.AdvancedPluginConfig{
-		Env:      map[string]string{},
-		Args:     []string{},
-		Register: ptr.To(GetFieldDefaultBool(PluginAdvancedPath, "register")),
-		Port:     ptr.To(GetFieldDefaultInt32(PluginAdvancedPath, "port")),
+	cfg := flowslatest.AdvancedPluginConfig{
+		Env:               map[string]string{},
+		Args:              []string{},
+		Register:          ptr.To(GetFieldDefaultBool(PluginAdvancedPath, "register")),
+		Port:              ptr.To(GetFieldDefaultInt32(PluginAdvancedPath, "port")),
+		NodeSelector:      map[string]string{},
+		Affinity:          nil,
+		PriorityClassName: "",
 	}
 
 	if specConfig != nil {
 		if len(specConfig.Env) > 0 {
-			debugConfig.Env = specConfig.Env
+			cfg.Env = specConfig.Env
 		}
 		if len(specConfig.Args) > 0 {
-			debugConfig.Args = specConfig.Args
+			cfg.Args = specConfig.Args
 		}
 		if specConfig.Register != nil {
-			debugConfig.Register = specConfig.Register
+			cfg.Register = specConfig.Register
 		}
 		if specConfig.Port != nil && *specConfig.Port > 0 {
-			debugConfig.Port = specConfig.Port
+			cfg.Port = specConfig.Port
+		}
+		if len(specConfig.NodeSelector) > 0 {
+			cfg.NodeSelector = specConfig.NodeSelector
+		}
+		if specConfig.Affinity != nil {
+			cfg.Affinity = specConfig.Affinity
+		}
+		if len(specConfig.PriorityClassName) > 0 {
+			cfg.PriorityClassName = specConfig.PriorityClassName
 		}
 	}
 
-	return debugConfig
+	return cfg
 }

@@ -14,13 +14,51 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
+type ReconcileAction int
+
+const (
+	ActionNone = iota
+	ActionCreate
+	ActionUpdate
+)
+
+var (
+	deepEqual      = equality.Semantic.DeepEqual
+	deepDerivative = equality.Semantic.DeepDerivative
+)
+
+func DaemonSetChanged(current, desired *appsv1.DaemonSet) ReconcileAction {
+	if desired == nil {
+		return ActionNone
+	}
+	if current == nil {
+		return ActionCreate
+	}
+	cSpec, dSpec := current.Spec, desired.Spec
+	if !IsSubSet(current.ObjectMeta.Labels, desired.ObjectMeta.Labels) ||
+		!deepDerivative(dSpec.Selector, cSpec.Selector) ||
+		!deepDerivative(dSpec.Template, cSpec.Template) ||
+		assignationChanged(&cSpec.Template, &dSpec.Template, nil) {
+		return ActionUpdate
+	}
+
+	// Env vars aren't covered by DeepDerivative when they are removed: deep-compare them
+	dConts := dSpec.Template.Spec.Containers
+	cConts := cSpec.Template.Spec.Containers
+	if len(dConts) > 0 && len(cConts) > 0 && !deepEqual(dConts[0].Env, cConts[0].Env) {
+		return ActionUpdate
+	}
+
+	return ActionNone
+}
+
 func DeploymentChanged(old, new *appsv1.Deployment, contName string, checkReplicas bool, desiredReplicas int32, report *ChangeReport) bool {
 	return report.Check("Pod changed", PodChanged(&old.Spec.Template, &new.Spec.Template, contName, report)) ||
 		report.Check("Replicas changed", (checkReplicas && *old.Spec.Replicas != desiredReplicas))
 }
 
 func PodChanged(old, new *corev1.PodTemplateSpec, containerName string, report *ChangeReport) bool {
-	if annotationsChanged(old, new, report) || volumesChanged(old, new, report) {
+	if annotationsChanged(old, new, report) || volumesChanged(old, new, report) || assignationChanged(old, new, report) {
 		return true
 	}
 	// Find containers
@@ -57,15 +95,37 @@ func annotationsChanged(old, new *corev1.PodTemplateSpec, report *ChangeReport) 
 	return false
 }
 
+func assignationChanged(old, new *corev1.PodTemplateSpec, report *ChangeReport) bool {
+	if !deepEqual(new.Spec.NodeSelector, old.Spec.NodeSelector) {
+		if report != nil {
+			report.Add("NodeSelector changed")
+		}
+		return true
+	}
+	if !deepDerivative(new.Spec.Affinity, old.Spec.Affinity) {
+		if report != nil {
+			report.Add("Affinity changed")
+		}
+		return true
+	}
+	if new.Spec.PriorityClassName != old.Spec.PriorityClassName {
+		if report != nil {
+			report.Add("PriorityClassName changed")
+		}
+		return true
+	}
+	return false
+}
+
 func volumesChanged(old, new *corev1.PodTemplateSpec, report *ChangeReport) bool {
-	return report.Check("Volumes changed", !equality.Semantic.DeepDerivative(new.Spec.Volumes, old.Spec.Volumes))
+	return report.Check("Volumes changed", !deepDerivative(new.Spec.Volumes, old.Spec.Volumes))
 }
 
 func containerChanged(old, new *corev1.Container, report *ChangeReport) bool {
 	return report.Check("Image changed", new.Image != old.Image) ||
 		report.Check("Pull policy changed", new.ImagePullPolicy != old.ImagePullPolicy) ||
-		report.Check("Args changed", !equality.Semantic.DeepDerivative(new.Args, old.Args)) ||
-		report.Check("Resources req/limit changed", !equality.Semantic.DeepDerivative(new.Resources, old.Resources)) ||
+		report.Check("Args changed", !deepDerivative(new.Args, old.Args)) ||
+		report.Check("Resources req/limit changed", !deepDerivative(new.Resources, old.Resources)) ||
 		report.Check("Liveness probe changed", probeChanged(new.LivenessProbe, old.LivenessProbe)) ||
 		report.Check("Startup probe changed", probeChanged(new.StartupProbe, old.StartupProbe))
 }
@@ -75,19 +135,19 @@ func probeChanged(old, new *corev1.Probe) bool {
 }
 
 func ServiceChanged(old, new *corev1.Service, report *ChangeReport) bool {
-	return report.Check("Service annotations changed", !equality.Semantic.DeepDerivative(new.Annotations, old.Annotations)) ||
-		report.Check("Service labels changed", !equality.Semantic.DeepDerivative(new.Labels, old.Labels)) ||
-		report.Check("Service spec changed", !equality.Semantic.DeepDerivative(new.Spec, old.Spec))
+	return report.Check("Service annotations changed", !deepDerivative(new.Annotations, old.Annotations)) ||
+		report.Check("Service labels changed", !deepDerivative(new.Labels, old.Labels)) ||
+		report.Check("Service spec changed", !deepDerivative(new.Spec, old.Spec))
 }
 
 func ServiceMonitorChanged(old, new *monitoringv1.ServiceMonitor, report *ChangeReport) bool {
-	return report.Check("ServiceMonitor spec changed", !equality.Semantic.DeepDerivative(new.Spec, old.Spec)) ||
+	return report.Check("ServiceMonitor spec changed", !deepDerivative(new.Spec, old.Spec)) ||
 		report.Check("ServiceMonitor labels changed", !IsSubSet(old.Labels, new.Labels))
 }
 
 func PrometheusRuleChanged(old, new *monitoringv1.PrometheusRule, report *ChangeReport) bool {
 	// Note: DeepDerivative misses changes in Spec.Groups.Rules (covered by test "Expecting PrometheusRule to exist and be updated")
-	return report.Check("PrometheusRule spec changed", !equality.Semantic.DeepEqual(new.Spec, old.Spec)) ||
+	return report.Check("PrometheusRule spec changed", !deepEqual(new.Spec, old.Spec)) ||
 		report.Check("PrometheusRule labels changed", !IsSubSet(old.Labels, new.Labels))
 }
 
@@ -109,7 +169,7 @@ func AutoScalerChanged(asc *ascv2.HorizontalPodAutoscaler, desired flowslatest.F
 		report.Check("Min replicas changed", differentPointerValues(asc.Spec.MinReplicas, desired.MinReplicas)) {
 		return true
 	}
-	if report.Check("Metrics changed", !equality.Semantic.DeepDerivative(desired.Metrics, asc.Spec.Metrics)) {
+	if report.Check("Metrics changed", !deepDerivative(desired.Metrics, asc.Spec.Metrics)) {
 		return true
 	}
 	return false

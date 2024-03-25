@@ -18,7 +18,6 @@ import (
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -78,14 +77,6 @@ const (
 	EnvDedupeMerge        = "DEDUPER_MERGE"
 	DedupeJustMarkDefault = "false"
 	DedupeMergeDefault    = "true"
-)
-
-type reconcileAction int
-
-const (
-	actionNone = iota
-	actionCreate
-	actionUpdate
 )
 
 // AgentController reconciles the status of the eBPF agent Daemonset, as well as the
@@ -157,12 +148,12 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 		return fmt.Errorf("reconciling prometheus service: %w", err)
 	}
 
-	switch requiredAction(current, desired) {
-	case actionCreate:
+	switch helper.DaemonSetChanged(current, desired) {
+	case helper.ActionCreate:
 		rlog.Info("action: create agent")
 		c.Status.SetCreatingDaemonSet(desired)
 		return c.CreateOwned(ctx, desired)
-	case actionUpdate:
+	case helper.ActionUpdate:
 		rlog.Info("action: update agent")
 		return c.UpdateIfOwned(ctx, current, desired)
 	default:
@@ -253,6 +244,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		}
 	}
 
+	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
 	return &v1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFAgentName,
@@ -287,6 +279,9 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 						Env:             env,
 						VolumeMounts:    volumeMounts,
 					}},
+					NodeSelector:      advancedConfig.NodeSelector,
+					Affinity:          advancedConfig.Affinity,
+					PriorityClassName: advancedConfig.PriorityClassName,
 				},
 			},
 		},
@@ -349,7 +344,7 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 		}
 	} else {
 		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
-		debugConfig := helper.GetAdvancedProcessorConfig(coll.Spec.Processor.Advanced)
+		advancedConfig := helper.GetAdvancedProcessorConfig(coll.Spec.Processor.Advanced)
 		// When flowlogs-pipeline is deployed as a daemonset, each agent must send
 		// data to the pod that is deployed in the same host
 		config = append(config, corev1.EnvVar{
@@ -362,36 +357,10 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			},
 		}, corev1.EnvVar{
 			Name:  envFlowsTargetPort,
-			Value: strconv.Itoa(int(*debugConfig.Port)),
+			Value: strconv.Itoa(int(*advancedConfig.Port)),
 		})
 	}
 	return config, nil
-}
-
-func requiredAction(current, desired *v1.DaemonSet) reconcileAction {
-	if desired == nil {
-		return actionNone
-	}
-	if current == nil {
-		return actionCreate
-	}
-	cSpec, dSpec := current.Spec, desired.Spec
-	eq := equality.Semantic.DeepDerivative
-	if !helper.IsSubSet(current.ObjectMeta.Labels, desired.ObjectMeta.Labels) ||
-		!eq(dSpec.Selector, cSpec.Selector) ||
-		!eq(dSpec.Template, cSpec.Template) {
-
-		return actionUpdate
-	}
-
-	// Env vars aren't covered by DeepDerivative when they are removed: deep-compare them
-	dConts := dSpec.Template.Spec.Containers
-	cConts := cSpec.Template.Spec.Containers
-	if len(dConts) > 0 && len(cConts) > 0 && !equality.Semantic.DeepEqual(dConts[0].Env, cConts[0].Env) {
-		return actionUpdate
-	}
-
-	return actionNone
 }
 
 func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *corev1.SecurityContext {
@@ -506,8 +475,8 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	dedupMerge := DedupeMergeDefault
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
-	debugConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
-	for _, pair := range helper.KeySorted(debugConfig.Env) {
+	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
+	for _, pair := range helper.KeySorted(advancedConfig.Env) {
 		k, v := pair[0], pair[1]
 		if k == envDedupe {
 			dedup = v

@@ -955,7 +955,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindex">metrics</a></b></td>
         <td>[]object</td>
         <td>
-          Metrics used by the pod autoscaler<br/>
+          Metrics used by the pod autoscaler. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -986,7 +986,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).
+
 
 <table>
     <thead>
@@ -1001,42 +1001,42 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type is the type of metric source.  It should be one of "ContainerResource", "External", "Object", "Pods" or "Resource", each mapping to a matching field in the object. Note: "ContainerResource" type is available on when the feature-gate HPAContainerMetrics is enabled<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexcontainerresource">containerResource</a></b></td>
         <td>object</td>
         <td>
-          containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternal">external</a></b></td>
         <td>object</td>
         <td>
-          external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobject">object</a></b></td>
         <td>object</td>
         <td>
-          object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpods">pods</a></b></td>
         <td>object</td>
         <td>
-          pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexresource">resource</a></b></td>
         <td>object</td>
         <td>
-          resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1048,7 +1048,7 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 
 
 
-containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
+
 
 <table>
     <thead>
@@ -1063,21 +1063,21 @@ containerResource refers to a resource metric (such as those specified in reques
         <td><b>container</b></td>
         <td>string</td>
         <td>
-          container is the name of the container in the pods of the scaling target<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexcontainerresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -1089,7 +1089,7 @@ containerResource refers to a resource metric (such as those specified in reques
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -1104,14 +1104,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -1120,14 +1120,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1139,7 +1139,7 @@ target specifies the target value for the given metric
 
 
 
-external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).
+
 
 <table>
     <thead>
@@ -1154,14 +1154,14 @@ external refers to a global metric that is not associated with any Kubernetes ob
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetric">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternaltarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -1173,7 +1173,7 @@ external refers to a global metric that is not associated with any Kubernetes ob
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -1188,14 +1188,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1207,7 +1207,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -1222,14 +1222,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1241,7 +1241,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -1256,21 +1256,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1282,7 +1282,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -1297,14 +1297,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -1313,14 +1313,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1332,7 +1332,7 @@ target specifies the target value for the given metric
 
 
 
-object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).
+
 
 <table>
     <thead>
@@ -1347,21 +1347,21 @@ object refers to a metric describing a single kubernetes object (for example, hi
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectdescribedobject">describedObject</a></b></td>
         <td>object</td>
         <td>
-          describedObject specifies the descriptions of a object,such as kind,name apiVersion<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetric">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjecttarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -1373,7 +1373,7 @@ object refers to a metric describing a single kubernetes object (for example, hi
 
 
 
-describedObject specifies the descriptions of a object,such as kind,name apiVersion
+
 
 <table>
     <thead>
@@ -1388,21 +1388,21 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
         <td><b>kind</b></td>
         <td>string</td>
         <td>
-          kind is the kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the referent; More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>apiVersion</b></td>
         <td>string</td>
         <td>
-          apiVersion is the API version of the referent<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1414,7 +1414,7 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -1429,14 +1429,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1448,7 +1448,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -1463,14 +1463,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1482,7 +1482,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -1497,21 +1497,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1523,7 +1523,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -1538,14 +1538,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -1554,14 +1554,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1573,7 +1573,7 @@ target specifies the target value for the given metric
 
 
 
-pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.
+
 
 <table>
     <thead>
@@ -1588,14 +1588,14 @@ pods refers to a metric describing each pod in the current scale target (for exa
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetric">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodstarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -1607,7 +1607,7 @@ pods refers to a metric describing each pod in the current scale target (for exa
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -1622,14 +1622,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1641,7 +1641,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -1656,14 +1656,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1675,7 +1675,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -1690,21 +1690,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1716,7 +1716,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -1731,14 +1731,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -1747,14 +1747,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1766,7 +1766,7 @@ target specifies the target value for the given metric
 
 
 
-resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.
+
 
 <table>
     <thead>
@@ -1781,14 +1781,14 @@ resource refers to a resource metric (such as those specified in requests and li
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -1800,7 +1800,7 @@ resource refers to a resource metric (such as those specified in requests and li
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -1815,14 +1815,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -1831,14 +1831,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3592,7 +3592,7 @@ TLS client configuration for Loki URL.
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindex">metrics</a></b></td>
         <td>[]object</td>
         <td>
-          Metrics used by the pod autoscaler<br/>
+          Metrics used by the pod autoscaler. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3623,7 +3623,7 @@ TLS client configuration for Loki URL.
 
 
 
-MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).
+
 
 <table>
     <thead>
@@ -3638,42 +3638,42 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type is the type of metric source.  It should be one of "ContainerResource", "External", "Object", "Pods" or "Resource", each mapping to a matching field in the object. Note: "ContainerResource" type is available on when the feature-gate HPAContainerMetrics is enabled<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexcontainerresource">containerResource</a></b></td>
         <td>object</td>
         <td>
-          containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternal">external</a></b></td>
         <td>object</td>
         <td>
-          external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobject">object</a></b></td>
         <td>object</td>
         <td>
-          object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpods">pods</a></b></td>
         <td>object</td>
         <td>
-          pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexresource">resource</a></b></td>
         <td>object</td>
         <td>
-          resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3685,7 +3685,7 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 
 
 
-containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
+
 
 <table>
     <thead>
@@ -3700,21 +3700,21 @@ containerResource refers to a resource metric (such as those specified in reques
         <td><b>container</b></td>
         <td>string</td>
         <td>
-          container is the name of the container in the pods of the scaling target<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexcontainerresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -3726,7 +3726,7 @@ containerResource refers to a resource metric (such as those specified in reques
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -3741,14 +3741,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -3757,14 +3757,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3776,7 +3776,7 @@ target specifies the target value for the given metric
 
 
 
-external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).
+
 
 <table>
     <thead>
@@ -3791,14 +3791,14 @@ external refers to a global metric that is not associated with any Kubernetes ob
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternalmetric">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternaltarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -3810,7 +3810,7 @@ external refers to a global metric that is not associated with any Kubernetes ob
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -3825,14 +3825,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternalmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3844,7 +3844,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -3859,14 +3859,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternalmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3878,7 +3878,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -3893,21 +3893,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3919,7 +3919,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -3934,14 +3934,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -3950,14 +3950,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -3969,7 +3969,7 @@ target specifies the target value for the given metric
 
 
 
-object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).
+
 
 <table>
     <thead>
@@ -3984,21 +3984,21 @@ object refers to a metric describing a single kubernetes object (for example, hi
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectdescribedobject">describedObject</a></b></td>
         <td>object</td>
         <td>
-          describedObject specifies the descriptions of a object,such as kind,name apiVersion<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectmetric">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjecttarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -4010,7 +4010,7 @@ object refers to a metric describing a single kubernetes object (for example, hi
 
 
 
-describedObject specifies the descriptions of a object,such as kind,name apiVersion
+
 
 <table>
     <thead>
@@ -4025,21 +4025,21 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
         <td><b>kind</b></td>
         <td>string</td>
         <td>
-          kind is the kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the referent; More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>apiVersion</b></td>
         <td>string</td>
         <td>
-          apiVersion is the API version of the referent<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4051,7 +4051,7 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -4066,14 +4066,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4085,7 +4085,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -4100,14 +4100,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4119,7 +4119,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -4134,21 +4134,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4160,7 +4160,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -4175,14 +4175,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -4191,14 +4191,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4210,7 +4210,7 @@ target specifies the target value for the given metric
 
 
 
-pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.
+
 
 <table>
     <thead>
@@ -4225,14 +4225,14 @@ pods refers to a metric describing each pod in the current scale target (for exa
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodsmetric">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodstarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -4244,7 +4244,7 @@ pods refers to a metric describing each pod in the current scale target (for exa
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -4259,14 +4259,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodsmetricselector">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4278,7 +4278,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -4293,14 +4293,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodsmetricselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4312,7 +4312,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -4327,21 +4327,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4353,7 +4353,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -4368,14 +4368,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -4384,14 +4384,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4403,7 +4403,7 @@ target specifies the target value for the given metric
 
 
 
-resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.
+
 
 <table>
     <thead>
@@ -4418,14 +4418,14 @@ resource refers to a resource metric (such as those specified in requests and li
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexresourcetarget">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -4437,7 +4437,7 @@ resource refers to a resource metric (such as those specified in requests and li
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -4452,14 +4452,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -4468,14 +4468,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5247,10 +5247,1389 @@ Agent configuration for flows extraction.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinity">affinity</a></b></td>
+        <td>object</td>
+        <td>
+          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>env</b></td>
         <td>map[string]string</td>
         <td>
           `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>nodeSelector</b></td>
+        <td>map[string]string</td>
+        <td>
+          NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>priorityClassName</b></td>
+        <td>string</td>
+        <td>
+          If specified, indicates the pod's priority. "system-node-critical" and "system-cluster-critical" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvanced)</sup></sup>
+
+
+
+If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinity">nodeAffinity</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinity">podAffinity</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinity">podAntiAffinity</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference">preference</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>weight</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex">matchFields</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchFields[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex">nodeSelectorTerms</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex">matchFields</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchFields[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>weight</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>weight</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5832,6 +7211,13 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinity">affinity</a></b></td>
+        <td>object</td>
+        <td>
+          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>args</b></td>
         <td>[]string</td>
         <td>
@@ -5843,6 +7229,13 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td>map[string]string</td>
         <td>
           `env` allows passing custom environment variables to underlying components. Useful for passing some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be publicly exposed as part of the FlowCollector descriptor, as they are only useful in edge debug or support scenarios.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>nodeSelector</b></td>
+        <td>map[string]string</td>
+        <td>
+          NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5858,12 +7251,1377 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>priorityClassName</b></td>
+        <td>string</td>
+        <td>
+          If specified, indicates the pod's priority. "system-node-critical" and "system-cluster-critical" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>register</b></td>
         <td>boolean</td>
         <td>
           `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator. When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command: `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`<br/>
           <br/>
             <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvanced)</sup></sup>
+
+
+
+If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinity">nodeAffinity</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinity">podAffinity</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinity">podAntiAffinity</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference">preference</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>weight</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex">matchFields</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchFields[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex">nodeSelectorTerms</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex">matchFields</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchFields[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>weight</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>weight</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5900,7 +8658,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindex-1">metrics</a></b></td>
         <td>[]object</td>
         <td>
-          Metrics used by the pod autoscaler<br/>
+          Metrics used by the pod autoscaler. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5931,7 +8689,7 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 
 
 
-MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).
+
 
 <table>
     <thead>
@@ -5946,42 +8704,42 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type is the type of metric source.  It should be one of "ContainerResource", "External", "Object", "Pods" or "Resource", each mapping to a matching field in the object. Note: "ContainerResource" type is available on when the feature-gate HPAContainerMetrics is enabled<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexcontainerresource-1">containerResource</a></b></td>
         <td>object</td>
         <td>
-          containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternal-1">external</a></b></td>
         <td>object</td>
         <td>
-          external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobject-1">object</a></b></td>
         <td>object</td>
         <td>
-          object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpods-1">pods</a></b></td>
         <td>object</td>
         <td>
-          pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexresource-1">resource</a></b></td>
         <td>object</td>
         <td>
-          resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5993,7 +8751,7 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 
 
 
-containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
+
 
 <table>
     <thead>
@@ -6008,21 +8766,21 @@ containerResource refers to a resource metric (such as those specified in reques
         <td><b>container</b></td>
         <td>string</td>
         <td>
-          container is the name of the container in the pods of the scaling target<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexcontainerresourcetarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -6034,7 +8792,7 @@ containerResource refers to a resource metric (such as those specified in reques
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -6049,14 +8807,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -6065,14 +8823,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6084,7 +8842,7 @@ target specifies the target value for the given metric
 
 
 
-external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).
+
 
 <table>
     <thead>
@@ -6099,14 +8857,14 @@ external refers to a global metric that is not associated with any Kubernetes ob
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetric-1">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternaltarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -6118,7 +8876,7 @@ external refers to a global metric that is not associated with any Kubernetes ob
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -6133,14 +8891,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetricselector-1">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6152,7 +8910,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -6167,14 +8925,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexexternalmetricselectormatchexpressionsindex-1">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6186,7 +8944,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -6201,21 +8959,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6227,7 +8985,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -6242,14 +9000,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -6258,14 +9016,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6277,7 +9035,7 @@ target specifies the target value for the given metric
 
 
 
-object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).
+
 
 <table>
     <thead>
@@ -6292,21 +9050,21 @@ object refers to a metric describing a single kubernetes object (for example, hi
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectdescribedobject-1">describedObject</a></b></td>
         <td>object</td>
         <td>
-          describedObject specifies the descriptions of a object,such as kind,name apiVersion<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetric-1">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjecttarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -6318,7 +9076,7 @@ object refers to a metric describing a single kubernetes object (for example, hi
 
 
 
-describedObject specifies the descriptions of a object,such as kind,name apiVersion
+
 
 <table>
     <thead>
@@ -6333,21 +9091,21 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
         <td><b>kind</b></td>
         <td>string</td>
         <td>
-          kind is the kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the referent; More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>apiVersion</b></td>
         <td>string</td>
         <td>
-          apiVersion is the API version of the referent<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6359,7 +9117,7 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -6374,14 +9132,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetricselector-1">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6393,7 +9151,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -6408,14 +9166,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexobjectmetricselectormatchexpressionsindex-1">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6427,7 +9185,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -6442,21 +9200,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6468,7 +9226,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -6483,14 +9241,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -6499,14 +9257,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6518,7 +9276,7 @@ target specifies the target value for the given metric
 
 
 
-pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.
+
 
 <table>
     <thead>
@@ -6533,14 +9291,14 @@ pods refers to a metric describing each pod in the current scale target (for exa
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetric-1">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodstarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -6552,7 +9310,7 @@ pods refers to a metric describing each pod in the current scale target (for exa
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -6567,14 +9325,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetricselector-1">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6586,7 +9344,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -6601,14 +9359,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexpodsmetricselectormatchexpressionsindex-1">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6620,7 +9378,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -6635,21 +9393,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6661,7 +9419,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -6676,14 +9434,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -6692,14 +9450,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6711,7 +9469,7 @@ target specifies the target value for the given metric
 
 
 
-resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.
+
 
 <table>
     <thead>
@@ -6726,14 +9484,14 @@ resource refers to a resource metric (such as those specified in requests and li
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginautoscalermetricsindexresourcetarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -6745,7 +9503,7 @@ resource refers to a resource metric (such as those specified in requests and li
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -6760,14 +9518,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -6776,14 +9534,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8979,6 +11737,13 @@ TLS client configuration for Loki URL.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinity">affinity</a></b></td>
+        <td>object</td>
+        <td>
+          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>conversationEndTimeout</b></td>
         <td>string</td>
         <td>
@@ -9043,6 +11808,13 @@ TLS client configuration for Loki URL.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>nodeSelector</b></td>
+        <td>map[string]string</td>
+        <td>
+          NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>port</b></td>
         <td>integer</td>
         <td>
@@ -9055,6 +11827,13 @@ TLS client configuration for Loki URL.
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>priorityClassName</b></td>
+        <td>string</td>
+        <td>
+          If specified, indicates the pod's priority. "system-node-critical" and "system-cluster-critical" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>profilePort</b></td>
         <td>integer</td>
         <td>
@@ -9064,6 +11843,1364 @@ TLS client configuration for Loki URL.
             <i>Default</i>: 6060<br/>
             <i>Minimum</i>: 0<br/>
             <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvanced)</sup></sup>
+
+
+
+If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinity">nodeAffinity</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinity">podAffinity</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinity">podAntiAffinity</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.nodeAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference">preference</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>weight</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex">matchFields</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchFields[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex">nodeSelectorTerms</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex">matchFields</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchFields[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>weight</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>weight</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinity)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9100,7 +13237,7 @@ TLS client configuration for Loki URL.
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindex-1">metrics</a></b></td>
         <td>[]object</td>
         <td>
-          Metrics used by the pod autoscaler<br/>
+          Metrics used by the pod autoscaler. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9131,7 +13268,7 @@ TLS client configuration for Loki URL.
 
 
 
-MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).
+
 
 <table>
     <thead>
@@ -9146,42 +13283,42 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type is the type of metric source.  It should be one of "ContainerResource", "External", "Object", "Pods" or "Resource", each mapping to a matching field in the object. Note: "ContainerResource" type is available on when the feature-gate HPAContainerMetrics is enabled<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexcontainerresource-1">containerResource</a></b></td>
         <td>object</td>
         <td>
-          containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternal-1">external</a></b></td>
         <td>object</td>
         <td>
-          external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobject-1">object</a></b></td>
         <td>object</td>
         <td>
-          object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpods-1">pods</a></b></td>
         <td>object</td>
         <td>
-          pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexresource-1">resource</a></b></td>
         <td>object</td>
         <td>
-          resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9193,7 +13330,7 @@ MetricSpec specifies how to scale based on a single metric (only `type` and one 
 
 
 
-containerResource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing a single container in each pod of the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source. This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
+
 
 <table>
     <thead>
@@ -9208,21 +13345,21 @@ containerResource refers to a resource metric (such as those specified in reques
         <td><b>container</b></td>
         <td>string</td>
         <td>
-          container is the name of the container in the pods of the scaling target<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexcontainerresourcetarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -9234,7 +13371,7 @@ containerResource refers to a resource metric (such as those specified in reques
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -9249,14 +13386,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -9265,14 +13402,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9284,7 +13421,7 @@ target specifies the target value for the given metric
 
 
 
-external refers to a global metric that is not associated with any Kubernetes object. It allows autoscaling based on information coming from components running outside of cluster (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster).
+
 
 <table>
     <thead>
@@ -9299,14 +13436,14 @@ external refers to a global metric that is not associated with any Kubernetes ob
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternalmetric-1">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternaltarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -9318,7 +13455,7 @@ external refers to a global metric that is not associated with any Kubernetes ob
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -9333,14 +13470,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternalmetricselector-1">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9352,7 +13489,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -9367,14 +13504,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexexternalmetricselectormatchexpressionsindex-1">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9386,7 +13523,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -9401,21 +13538,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9427,7 +13564,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -9442,14 +13579,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -9458,14 +13595,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9477,7 +13614,7 @@ target specifies the target value for the given metric
 
 
 
-object refers to a metric describing a single kubernetes object (for example, hits-per-second on an Ingress object).
+
 
 <table>
     <thead>
@@ -9492,21 +13629,21 @@ object refers to a metric describing a single kubernetes object (for example, hi
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectdescribedobject-1">describedObject</a></b></td>
         <td>object</td>
         <td>
-          describedObject specifies the descriptions of a object,such as kind,name apiVersion<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectmetric-1">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjecttarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -9518,7 +13655,7 @@ object refers to a metric describing a single kubernetes object (for example, hi
 
 
 
-describedObject specifies the descriptions of a object,such as kind,name apiVersion
+
 
 <table>
     <thead>
@@ -9533,21 +13670,21 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
         <td><b>kind</b></td>
         <td>string</td>
         <td>
-          kind is the kind of the referent; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the referent; More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>apiVersion</b></td>
         <td>string</td>
         <td>
-          apiVersion is the API version of the referent<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9559,7 +13696,7 @@ describedObject specifies the descriptions of a object,such as kind,name apiVers
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -9574,14 +13711,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectmetricselector-1">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9593,7 +13730,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -9608,14 +13745,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexobjectmetricselectormatchexpressionsindex-1">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9627,7 +13764,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -9642,21 +13779,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9668,7 +13805,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -9683,14 +13820,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -9699,14 +13836,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9718,7 +13855,7 @@ target specifies the target value for the given metric
 
 
 
-pods refers to a metric describing each pod in the current scale target (for example, transactions-processed-per-second).  The values will be averaged together before being compared to the target value.
+
 
 <table>
     <thead>
@@ -9733,14 +13870,14 @@ pods refers to a metric describing each pod in the current scale target (for exa
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodsmetric-1">metric</a></b></td>
         <td>object</td>
         <td>
-          metric identifies the target metric by name and selector<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodstarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -9752,7 +13889,7 @@ pods refers to a metric describing each pod in the current scale target (for exa
 
 
 
-metric identifies the target metric by name and selector
+
 
 <table>
     <thead>
@@ -9767,14 +13904,14 @@ metric identifies the target metric by name and selector
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodsmetricselector-1">selector</a></b></td>
         <td>object</td>
         <td>
-          selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9786,7 +13923,7 @@ metric identifies the target metric by name and selector
 
 
 
-selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
+
 
 <table>
     <thead>
@@ -9801,14 +13938,14 @@ selector is the string-encoded form of a standard kubernetes label selector for 
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexpodsmetricselectormatchexpressionsindex-1">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9820,7 +13957,7 @@ selector is the string-encoded form of a standard kubernetes label selector for 
 
 
 
-A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+
 
 <table>
     <thead>
@@ -9835,21 +13972,21 @@ A label selector requirement is a selector that contains values, a key, and an o
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          key is the label key that the selector applies to.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9861,7 +13998,7 @@ A label selector requirement is a selector that contains values, a key, and an o
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -9876,14 +14013,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -9892,14 +14029,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -9911,7 +14048,7 @@ target specifies the target value for the given metric
 
 
 
-resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory). Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.
+
 
 <table>
     <thead>
@@ -9926,14 +14063,14 @@ resource refers to a resource metric (such as those specified in requests and li
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          name is the name of the resource in question.<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscalermetricsindexresourcetarget-1">target</a></b></td>
         <td>object</td>
         <td>
-          target specifies the target value for the given metric<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -9945,7 +14082,7 @@ resource refers to a resource metric (such as those specified in requests and li
 
 
 
-target specifies the target value for the given metric
+
 
 <table>
     <thead>
@@ -9960,14 +14097,14 @@ target specifies the target value for the given metric
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type represents whether the metric type is Utilization, Value, or AverageValue<br/>
+          <br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>averageUtilization</b></td>
         <td>integer</td>
         <td>
-          averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type<br/>
+          <br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -9976,14 +14113,14 @@ target specifies the target value for the given metric
         <td><b>averageValue</b></td>
         <td>int or string</td>
         <td>
-          averageValue is the target value of the average of the metric across all relevant pods (as a quantity)<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>value</b></td>
         <td>int or string</td>
         <td>
-          value is the target value of the metric (as a quantity).<br/>
+          <br/>
         </td>
         <td>false</td>
       </tr></tbody>
