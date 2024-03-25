@@ -2,6 +2,7 @@ package ebpf
 
 import (
 	"context"
+	"fmt"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -30,7 +31,7 @@ func (c *AgentController) reconcileMetricsService(ctx context.Context, target *f
 		return err
 	}
 	if c.AvailableAPIs.HasSvcMonitor() {
-		serviceMonitor := c.promServiceMonitoring()
+		serviceMonitor := c.promServiceMonitoring(target)
 		if err := reconcilers.GenericReconcile(ctx, c.Managed, &c.Client, c.serviceMonitor,
 			serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
@@ -60,10 +61,15 @@ func (c *AgentController) promService(target *flowslatest.FlowCollectorEBPF) *co
 			}},
 		},
 	}
+	if target.Metrics.Server.TLS.Type == flowslatest.ServerTLSAuto {
+		svc.ObjectMeta.Annotations = map[string]string{
+			constants.OpenShiftCertificateAnnotation: constants.EBPFAgentMetricsSvcName,
+		}
+	}
 	return &svc
 }
 
-func (c *AgentController) promServiceMonitoring() *monitoringv1.ServiceMonitor {
+func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollectorEBPF) *monitoringv1.ServiceMonitor {
 	agentServiceMonitorObject := monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFAgentMetricsSvcMonitoringName,
@@ -92,6 +98,29 @@ func (c *AgentController) promServiceMonitoring() *monitoringv1.ServiceMonitor {
 			},
 		},
 	}
-
+	serverName := fmt.Sprintf("%s.%s.svc", constants.EBPFAgentMetricsSvcName, c.PrivilegedNamespace())
+	if target.Metrics.Server.TLS.Type == flowslatest.ServerTLSAuto {
+		agentServiceMonitorObject.Spec.Endpoints[0].Scheme = "https"
+		agentServiceMonitorObject.Spec.Endpoints[0].TLSConfig = &monitoringv1.TLSConfig{
+			SafeTLSConfig: monitoringv1.SafeTLSConfig{
+				ServerName: serverName,
+			},
+			CAFile: "/etc/prometheus/configmaps/serving-certs-ca-bundle/service-ca.crt",
+		}
+	}
+	if target.Metrics.Server.TLS.Type == flowslatest.ServerTLSProvided {
+		agentServiceMonitorObject.Spec.Endpoints[0].Scheme = "https"
+		agentServiceMonitorObject.Spec.Endpoints[0].TLSConfig = &monitoringv1.TLSConfig{
+			SafeTLSConfig: monitoringv1.SafeTLSConfig{
+				ServerName:         serverName,
+				InsecureSkipVerify: target.Metrics.Server.TLS.InsecureSkipVerify,
+			},
+		}
+		if !target.Metrics.Server.TLS.InsecureSkipVerify &&
+			target.Metrics.Server.TLS.ProvidedCaFile != nil &&
+			target.Metrics.Server.TLS.ProvidedCaFile.File != "" {
+			agentServiceMonitorObject.Spec.Endpoints[0].TLSConfig.SafeTLSConfig.CA = helper.GetSecretOrConfigMap(target.Metrics.Server.TLS.ProvidedCaFile)
+		}
+	}
 	return &agentServiceMonitorObject
 }

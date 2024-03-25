@@ -36,8 +36,16 @@ func TestPromServiceMonitoring(t *testing.T) {
 	// Create a new instance of your controller
 	controller := &AgentController{}
 
+	// Create a sample FlowCollectorEBPF object for testing
+	target := &flowslatest.FlowCollectorEBPF{
+		Metrics: flowslatest.EBPFMetrics{
+			Server: flowslatest.MetricsServerConfig{
+				Port: 8080, // Sample port for testing
+			},
+		},
+	}
 	// Call the promServiceMonitoring function
-	monitor := controller.promServiceMonitoring()
+	monitor := controller.promServiceMonitoring(target)
 
 	// Assert that the returned monitor is not nil
 	assert.NotNil(t, monitor)
