@@ -117,15 +117,15 @@ func flowCollectorEBPFSpecs() {
 				v1.EnvVar{Name: "BUFFERS_LENGTH", Value: "100"},
 				v1.EnvVar{Name: "GOGC", Value: "400"},
 				v1.EnvVar{Name: "SAMPLING", Value: "123"},
-				v1.EnvVar{Name: "FLOWS_TARGET_PORT", Value: "9999"},
+				v1.EnvVar{Name: "PORT", Value: "9999"},
 			))
 			hostFound := false
 			for _, env := range spec.Containers[0].Env {
-				if env.Name == "FLOWS_TARGET_HOST" {
+				if env.Name == "HOST" {
 					if env.ValueFrom == nil ||
 						env.ValueFrom.FieldRef == nil ||
 						env.ValueFrom.FieldRef.FieldPath != "status.hostIP" {
-						Fail(fmt.Sprintf("FLOWS_TARGET_HOST expected to refer to \"status.hostIP\"."+
+						Fail(fmt.Sprintf("HOST expected to refer to \"status.hostIP\"."+
 							" Got: %+v", env.ValueFrom))
 					} else {
 						hostFound = true
@@ -134,7 +134,7 @@ func flowCollectorEBPFSpecs() {
 				}
 			}
 			Expect(hostFound).To(BeTrue(),
-				fmt.Sprintf("expected FLOWS_TARGET_HOST env var in %+v", spec.Containers[0].Env))
+				fmt.Sprintf("expected HOST env var in %+v", spec.Containers[0].Env))
 
 			ns := v1.Namespace{}
 			By("expecting to create the netobserv-privileged namespace")
