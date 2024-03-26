@@ -301,7 +301,7 @@ type ServerTLSConfigType string
 type ServerTLS struct {
 	// Select the type of TLS configuration:<br>
 	// - `DISABLED` (default) to not configure TLS for the endpoint.
-	// - `PROVIDED` to manually provide cert file and a key file.
+	// - `PROVIDED` to manually provide cert file and a key file. [Unsupported (*)].
 	// - `AUTO` to use OpenShift auto generated certificate using annotations.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="DISABLED";"PROVIDED";"AUTO"
