@@ -64,7 +64,7 @@ func (r *monolithReconciler) getStatus() *status.Instance {
 	return &r.Status
 }
 
-func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector, flowMetrics *metricslatest.FlowMetricList) error {
+func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel) error {
 	// Retrieve current owned objects
 	err := r.Managed.FetchAll(ctx)
 	if err != nil {
@@ -79,7 +79,7 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 
 	r.Status.SetReady() // will be overidden if necessary, as error or pending
 
-	builder, err := newMonolithBuilder(r.Instance, &desired.Spec, flowMetrics)
+	builder, err := newMonolithBuilder(r.Instance, &desired.Spec, flowMetrics, detectedSubnets)
 	if err != nil {
 		return err
 	}

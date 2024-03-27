@@ -114,6 +114,10 @@ func IsEBPFMetricsEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 	return spec.Metrics.Enable != nil && *spec.Metrics.Enable
 }
 
+func IsSubnetLabelsEnabled(spec *flowslatest.FlowCollectorFLP) bool {
+	return AutoDetectOpenShiftNetworks(spec) || len(spec.SubnetLabels.CustomLabels) > 0
+}
+
 func PtrBool(b *bool) bool {
 	if b == nil {
 		return false
@@ -286,4 +290,8 @@ func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flows
 	}
 
 	return cfg
+}
+
+func AutoDetectOpenShiftNetworks(spec *flowslatest.FlowCollectorFLP) bool {
+	return spec.SubnetLabels.OpenShiftAutoDetect != nil && *spec.SubnetLabels.OpenShiftAutoDetect
 }

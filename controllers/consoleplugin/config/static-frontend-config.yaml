@@ -157,6 +157,14 @@ columns:
     default: false
     width: 15
     feature: zones
+  - id: SrcSubnetLabel
+    group: Source
+    name: Subnet Label
+    field: SrcSubnetLabel
+    filter: src_subnet_label
+    default: false
+    width: 10
+    feature: subnetLabels
   - id: DstK8S_Name
     group: Destination
     name: Name
@@ -277,6 +285,14 @@ columns:
     default: false
     width: 15
     feature: zones
+  - id: DstSubnetLabel
+    group: Destination
+    name: Subnet Label
+    field: DstSubnetLabel
+    filter: dst_subnet_label
+    default: false
+    width: 10
+    feature: subnetLabels
   - id: K8S_Name
     name: Names
     calculated: getSrcOrDstValue(SrcK8S_Name,DstK8S_Name)
@@ -606,6 +622,16 @@ filters:
     component: autocomplete
     category: destination
     hint: Specify a single zone.
+  - id: src_subnet_label
+    name: Subnet Label
+    component: autocomplete
+    category: source
+    hint: Specify a subnet label, or an empty string to get unmatched sources.
+  - id: dst_subnet_label
+    name: Subnet Label
+    component: autocomplete
+    category: destination
+    hint: Specify a subnet label, or an empty string to get unmatched destinations.
   - id: src_resource
     name: Resource
     component: autocomplete
@@ -883,6 +909,9 @@ fields:
     type: string
     description: Source availability zone
     lokiLabel: true
+  - name: SrcSubnetLabel
+    type: string
+    description: Source subnet label
   - name: DstK8S_Name
     type: string
     description: Name of the destination Kubernetes object, such as Pod name, Service name or Node name.
@@ -920,6 +949,9 @@ fields:
     type: string
     description: Destination availability zone
     lokiLabel: true
+  - name: DstSubnetLabel
+    type: string
+    description: Destination subnet label
   - name: K8S_FlowLayer
     type: string
     description: "Flow layer: 'app' or 'infra'"

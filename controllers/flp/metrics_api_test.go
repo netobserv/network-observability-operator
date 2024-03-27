@@ -34,7 +34,7 @@ func defaultBuilderWithMetrics(metrics *metricslatest.FlowMetricList) (monolithB
 	cfg := getConfig()
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: "namespace", Loki: &loki}
-	return newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, metrics)
+	return newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, metrics, nil)
 }
 
 func metric(metrics api.MetricsItems, name string) *api.MetricsItem {

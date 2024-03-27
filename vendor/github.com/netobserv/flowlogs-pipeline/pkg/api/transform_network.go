@@ -22,7 +22,7 @@ type TransformNetwork struct {
 	KubeConfigPath string                        `yaml:"kubeConfigPath,omitempty" json:"kubeConfigPath,omitempty" doc:"path to kubeconfig file (optional)"`
 	ServicesFile   string                        `yaml:"servicesFile,omitempty" json:"servicesFile,omitempty" doc:"path to services file (optional, default: /etc/services)"`
 	ProtocolsFile  string                        `yaml:"protocolsFile,omitempty" json:"protocolsFile,omitempty" doc:"path to protocols file (optional, default: /etc/protocols)"`
-	IPCategories   []NetworkTransformIPCategory  `yaml:"ipCategories,omitempty" json:"ipCategories,omitempty" doc:"configure IP categories"`
+	SubnetLabels   []NetworkTransformSubnetLabel `yaml:"subnetLabels,omitempty" json:"subnetLabels,omitempty" doc:"configure subnet and IPs custom labels"`
 	DirectionInfo  NetworkTransformDirectionInfo `yaml:"directionInfo,omitempty" json:"directionInfo,omitempty" doc:"information to reinterpret flow direction (optional, to use with reinterpret_direction rule)"`
 }
 
@@ -48,7 +48,7 @@ const (
 	NetworkAddKubernetes        TransformNetworkOperationEnum = "add_kubernetes"        // add output kubernetes fields from input
 	NetworkAddKubernetesInfra   TransformNetworkOperationEnum = "add_kubernetes_infra"  // add output kubernetes isInfra field from input
 	NetworkReinterpretDirection TransformNetworkOperationEnum = "reinterpret_direction" // reinterpret flow direction at the node level (instead of net interface), to ease the deduplication process
-	NetworkAddIPCategory        TransformNetworkOperationEnum = "add_ip_category"       // categorize IPs based on known subnets configuration
+	NetworkAddSubnetLabel       TransformNetworkOperationEnum = "add_subnet_label"      // categorize IPs based on known subnets configuration
 )
 
 type NetworkTransformRule struct {
@@ -57,7 +57,7 @@ type NetworkTransformRule struct {
 	Kubernetes      *K8sRule                      `yaml:"kubernetes,omitempty" json:"kubernetes,omitempty" doc:"Kubernetes rule configuration"`
 	AddSubnet       *NetworkAddSubnetRule         `yaml:"add_subnet,omitempty" json:"add_subnet,omitempty" doc:"Add subnet rule configuration"`
 	AddLocation     *NetworkGenericRule           `yaml:"add_location,omitempty" json:"add_location,omitempty" doc:"Add location rule configuration"`
-	AddIPCategory   *NetworkGenericRule           `yaml:"add_ip_category,omitempty" json:"add_ip_category,omitempty" doc:"Add ip category rule configuration"`
+	AddSubnetLabel  *NetworkAddSubnetLabelRule    `yaml:"add_subnet_label,omitempty" json:"add_subnet_label,omitempty" doc:"Add subnet label rule configuration"`
 	AddService      *NetworkAddServiceRule        `yaml:"add_service,omitempty" json:"add_service,omitempty" doc:"Add service rule configuration"`
 }
 
@@ -92,6 +92,11 @@ type NetworkAddSubnetRule struct {
 	SubnetMask string `yaml:"subnet_mask,omitempty" json:"subnet_mask,omitempty" doc:"subnet mask field"`
 }
 
+type NetworkAddSubnetLabelRule struct {
+	Input  string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
+	Output string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
+}
+
 type NetworkAddServiceRule struct {
 	Input    string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
 	Output   string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
@@ -108,7 +113,7 @@ type NetworkTransformDirectionInfo struct {
 
 type NetworkTransformRules []NetworkTransformRule
 
-type NetworkTransformIPCategory struct {
-	CIDRs []string `yaml:"cidrs,omitempty" json:"cidrs,omitempty" doc:"list of CIDRs to match a category"`
-	Name  string   `yaml:"name,omitempty" json:"name,omitempty" doc:"name of the category"`
+type NetworkTransformSubnetLabel struct {
+	CIDRs []string `yaml:"cidrs,omitempty" json:"cidrs,omitempty" doc:"list of CIDRs to match a label"`
+	Name  string   `yaml:"name,omitempty" json:"name,omitempty" doc:"name of the label"`
 }
