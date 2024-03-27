@@ -24,6 +24,8 @@ jobs:
       run: make fmt && git add -A && git diff --exit-code
     - name: build, lint, test
       run: make build lint test
+    - name: check clean vendors
+      run: go mod vendor
     - name: Report coverage
       if: ${{ matrix.go == '1.21' }}
       uses: codecov/codecov-action@v2.1.0
