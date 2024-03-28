@@ -2,6 +2,7 @@ package ebpf
 
 import (
 	"context"
+	"fmt"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -30,7 +31,7 @@ func (c *AgentController) reconcileMetricsService(ctx context.Context, target *f
 		return err
 	}
 	if c.AvailableAPIs.HasSvcMonitor() {
-		serviceMonitor := c.promServiceMonitoring()
+		serviceMonitor := c.promServiceMonitoring(target)
 		if err := reconcilers.GenericReconcile(ctx, c.Managed, &c.Client, c.serviceMonitor,
 			serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
@@ -60,11 +61,18 @@ func (c *AgentController) promService(target *flowslatest.FlowCollectorEBPF) *co
 			}},
 		},
 	}
+	if target.Metrics.Server.TLS.Type == flowslatest.ServerTLSAuto {
+		svc.ObjectMeta.Annotations = map[string]string{
+			constants.OpenShiftCertificateAnnotation: constants.EBPFAgentMetricsSvcName,
+		}
+	}
 	return &svc
 }
 
-func (c *AgentController) promServiceMonitoring() *monitoringv1.ServiceMonitor {
-	agentServiceMonitorObject := monitoringv1.ServiceMonitor{
+func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollectorEBPF) *monitoringv1.ServiceMonitor {
+	serverName := fmt.Sprintf("%s.%s.svc", constants.EBPFAgentMetricsSvcName, c.PrivilegedNamespace())
+	scheme, smTLS := helper.GetServiceMonitorTLSConfig(&target.Metrics.Server.TLS, serverName, c.IsDownstream)
+	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFAgentMetricsSvcMonitoringName,
 			Namespace: c.PrivilegedNamespace(),
@@ -75,9 +83,10 @@ func (c *AgentController) promServiceMonitoring() *monitoringv1.ServiceMonitor {
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Endpoints: []monitoringv1.Endpoint{
 				{
-					Port:     "metrics",
-					Interval: "30s",
-					Scheme:   "http",
+					Port:      "metrics",
+					Interval:  "30s",
+					Scheme:    scheme,
+					TLSConfig: smTLS,
 				},
 			},
 			NamespaceSelector: monitoringv1.NamespaceSelector{
@@ -92,6 +101,4 @@ func (c *AgentController) promServiceMonitoring() *monitoringv1.ServiceMonitor {
 			},
 		},
 	}
-
-	return &agentServiceMonitorObject
 }

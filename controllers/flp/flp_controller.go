@@ -179,6 +179,7 @@ func (r *Reconciler) newCommonInfo(clh *helper.Client, ns, prevNs string, loki *
 		Watcher:           r.watcher,
 		Loki:              loki,
 		ClusterID:         r.clusterID,
+		IsDownstream:      r.mgr.Config.DownstreamDeployment,
 	}
 }
 

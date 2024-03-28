@@ -58,6 +58,8 @@ const (
 	envEnableMetrics              = "METRICS_ENABLE"
 	envMetricsPort                = "METRICS_SERVER_PORT"
 	envMetricPrefix               = "METRICS_PREFIX"
+	envMetricsTLSCertPath         = "METRICS_TLS_CERT_PATH"
+	envMetricsTLSKeyPath          = "METRICS_TLS_KEY_PATH"
 	envListSeparator              = ","
 )
 
@@ -138,14 +140,15 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 	if err := c.permissions.Reconcile(ctx, &target.Spec.Agent.EBPF); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
-	desired, err := c.desired(ctx, target, rlog)
-	if err != nil {
-		return err
-	}
 
 	err = c.reconcileMetricsService(ctx, &target.Spec.Agent.EBPF)
 	if err != nil {
 		return fmt.Errorf("reconciling prometheus service: %w", err)
+	}
+
+	desired, err := c.desired(ctx, target, rlog)
+	if err != nil {
+		return err
 	}
 
 	switch helper.DaemonSetChanged(current, desired) {
@@ -199,6 +202,37 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	if err != nil {
 		return nil, err
 	}
+
+	if coll.Spec.Agent.EBPF.Metrics.Server.TLS.Type != flowslatest.ServerTLSDisabled {
+		var promTLS *flowslatest.CertificateReference
+		switch coll.Spec.Agent.EBPF.Metrics.Server.TLS.Type {
+		case flowslatest.ServerTLSProvided:
+			promTLS = coll.Spec.Agent.EBPF.Metrics.Server.TLS.Provided
+			if promTLS == nil {
+				rlog.Info("EBPF agent metric tls configuration set to provided but none is provided")
+			}
+		case flowslatest.ServerTLSAuto:
+			promTLS = &flowslatest.CertificateReference{
+				Type:     "secret",
+				Name:     constants.EBPFAgentMetricsSvcName,
+				CertFile: "tls.crt",
+				CertKey:  "tls.key",
+			}
+		case flowslatest.ServerTLSDisabled:
+			// show never happens added for linting purposes
+		}
+		cert, key := c.volumes.AddCertificate(promTLS, "prom-certs")
+		if cert != "" && key != "" {
+			env = append(env, corev1.EnvVar{Name: envMetricsTLSKeyPath,
+				Value: key,
+			})
+			env = append(env, corev1.EnvVar{
+				Name:  envMetricsTLSCertPath,
+				Value: cert,
+			})
+		}
+	}
+
 	volumeMounts := c.volumes.GetMounts()
 	volumes := c.volumes.GetVolumes()
 

@@ -26,3 +26,45 @@ func GetSecretOrConfigMap(file *flowslatest.FileReference) monitoringv1.SecretOr
 		},
 	}
 }
+
+func GetServiceMonitorTLSConfig(tls *flowslatest.ServerTLS, serverName string, isDownstream bool) (string, *monitoringv1.TLSConfig) {
+	if tls.Type == flowslatest.ServerTLSAuto {
+		if isDownstream {
+			return "https", &monitoringv1.TLSConfig{
+				SafeTLSConfig: monitoringv1.SafeTLSConfig{
+					ServerName: serverName,
+				},
+				CAFile: "/etc/prometheus/configmaps/serving-certs-ca-bundle/service-ca.crt",
+			}
+		}
+		// Upstream prometheus disallows CAFile
+		return "https", &monitoringv1.TLSConfig{
+			SafeTLSConfig: monitoringv1.SafeTLSConfig{
+				ServerName: serverName,
+				CA: monitoringv1.SecretOrConfigMap{
+					ConfigMap: &corev1.ConfigMapKeySelector{
+						Key: "service-ca.crt",
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: "openshift-service-ca.crt",
+						},
+					},
+				},
+			},
+		}
+	}
+
+	if tls.Type == flowslatest.ServerTLSProvided {
+		tlsOut := monitoringv1.TLSConfig{
+			SafeTLSConfig: monitoringv1.SafeTLSConfig{
+				ServerName:         serverName,
+				InsecureSkipVerify: tls.InsecureSkipVerify,
+			},
+		}
+		if !tls.InsecureSkipVerify && tls.ProvidedCaFile != nil && tls.ProvidedCaFile.File != "" {
+			tlsOut.SafeTLSConfig.CA = GetSecretOrConfigMap(tls.ProvidedCaFile)
+		}
+		return "https", &tlsOut
+	}
+
+	return "http", nil
+}

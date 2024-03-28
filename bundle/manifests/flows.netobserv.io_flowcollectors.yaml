@@ -286,8 +286,9 @@ spec:
                                     description: Select the type of TLS configuration:<br>
                                       - `DISABLED` (default) to not configure TLS
                                       for the endpoint. - `PROVIDED` to manually provide
-                                      cert file and a key file. - `AUTO` to use OpenShift
-                                      auto generated certificate using annotations.
+                                      cert file and a key file. [Unsupported (*)].
+                                      - `AUTO` to use OpenShift auto generated certificate
+                                      using annotations.
                                     enum:
                                     - DISABLED
                                     - PROVIDED
@@ -2182,8 +2183,9 @@ spec:
                                 description: Select the type of TLS configuration:<br>
                                   - `DISABLED` (default) to not configure TLS for
                                   the endpoint. - `PROVIDED` to manually provide cert
-                                  file and a key file. - `AUTO` to use OpenShift auto
-                                  generated certificate using annotations.
+                                  file and a key file. [Unsupported (*)]. - `AUTO`
+                                  to use OpenShift auto generated certificate using
+                                  annotations.
                                 enum:
                                 - DISABLED
                                 - PROVIDED
@@ -3029,8 +3031,9 @@ spec:
                                     description: Select the type of TLS configuration:<br>
                                       - `Disabled` (default) to not configure TLS
                                       for the endpoint. - `Provided` to manually provide
-                                      cert file and a key file. - `Auto` to use OpenShift
-                                      auto generated certificate using annotations.
+                                      cert file and a key file. [Unsupported (*)].
+                                      - `Auto` to use OpenShift auto generated certificate
+                                      using annotations.
                                     enum:
                                     - Disabled
                                     - Provided
@@ -6028,8 +6031,9 @@ spec:
                                 description: Select the type of TLS configuration:<br>
                                   - `Disabled` (default) to not configure TLS for
                                   the endpoint. - `Provided` to manually provide cert
-                                  file and a key file. - `Auto` to use OpenShift auto
-                                  generated certificate using annotations.
+                                  file and a key file. [Unsupported (*)]. - `Auto`
+                                  to use OpenShift auto generated certificate using
+                                  annotations.
                                 enum:
                                 - Disabled
                                 - Provided
