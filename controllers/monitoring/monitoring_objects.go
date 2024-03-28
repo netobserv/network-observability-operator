@@ -95,8 +95,8 @@ func buildFlowMetricsDashboard(namespace string, metrics []string) (*corev1.Conf
 	return &configMap, len(dashboard) == 0, nil
 }
 
-func buildHealthDashboard(namespace string, metrics []string) (*corev1.ConfigMap, bool, error) {
-	dashboard, err := dashboards.CreateHealthDashboard(namespace, metrics)
+func buildHealthDashboard(namespace string) (*corev1.ConfigMap, bool, error) {
+	dashboard, err := dashboards.CreateHealthDashboard(namespace)
 	if err != nil {
 		return nil, false, err
 	}

@@ -35,11 +35,11 @@ func init() {
 					scope.titlePart,
 				)
 				metric := fmt.Sprintf("%s_%s_%s_total", scope.metricPart, dir, valueType)
-				allRows = append(allRows, &Row{
-					Metric: metric,
-					Title:  title,
-					Panels: topRatePanels(&scope, metric, scope.joinLabels(), scope.legendPart),
-				})
+				allRows = append(allRows, row(
+					metric,
+					title,
+					topRatePanels(&scope, metric, scope.joinLabels(), scope.legendPart),
+				))
 			}
 			// drops
 			title := fmt.Sprintf(
@@ -48,89 +48,102 @@ func init() {
 				scope.titlePart,
 			)
 			metric := fmt.Sprintf("%s_drop_%s_total", scope.metricPart, valueType)
-			allRows = append(allRows, &Row{
-				Metric: metric,
-				Title:  title,
-				Panels: topRatePanels(&scope, metric, scope.joinLabels(), scope.legendPart),
-			})
+			allRows = append(allRows, row(
+				metric,
+				title,
+				topRatePanels(&scope, metric, scope.joinLabels(), scope.legendPart),
+			))
 		}
 		// RTT
 		title := fmt.Sprintf("Round-trip time %s (milliseconds - p99 and p50)", scope.titlePart)
 		metric := fmt.Sprintf("%s_rtt_seconds", scope.metricPart)
-		allRows = append(allRows, &Row{
-			Metric: metric,
-			Title:  title,
-			Panels: histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart, "*1000"),
-		})
+		allRows = append(allRows, row(
+			metric,
+			title,
+			histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart, "*1000"),
+		))
 		// DNS latency
 		title = fmt.Sprintf("DNS latency %s (milliseconds - p99 and p50)", scope.titlePart)
 		metric = fmt.Sprintf("%s_dns_latency_seconds", scope.metricPart)
-		allRows = append(allRows, &Row{
-			Metric: metric,
-			Title:  title,
-			Panels: histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart, "*1000"),
-		})
+		allRows = append(allRows, row(
+			metric,
+			title,
+			histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart, "*1000"),
+		))
 		// DNS errors
 		title = fmt.Sprintf("DNS request rate per code and %s", scope.titlePart)
 		metric = fmt.Sprintf("%s_dns_latency_seconds", scope.metricPart)
 		labels := scope.joinLabels() + ",DnsFlagsResponseCode"
 		legend := scope.legendPart + ", {{DnsFlagsResponseCode}}"
-		allRows = append(allRows, &Row{
-			Metric: metric,
-			Title:  title,
-			Panels: topRatePanels(&scope, metric+"_count", labels, legend),
-		})
+		allRows = append(allRows, row(
+			metric,
+			title,
+			topRatePanels(&scope, metric+"_count", labels, legend),
+		))
 	}
+}
+
+func row(metrics string, title string, panels []Panel) *Row {
+	r := NewRow(title, false, "250px", panels)
+	r.Metric = metrics
+	return r
 }
 
 func topRatePanels(scope *metricScope, metric, labels, legend string) []Panel {
 	if scope.splitAppInfra {
 		return []Panel{
 			// App
-			{
-				Title: layerApps,
-				Targets: []Target{{
-					Expr: scope.labelReplace(
-						fmt.Sprintf(
-							"topk(10,sum(rate(netobserv_%s{%s}[2m]) or rate(netobserv_%s{%s}[2m])) by (%s))",
-							metric,
-							appsFilters1,
-							metric,
-							appsFilters2,
-							labels,
+			NewPanel(
+				layerApps, PanelTypeGraph, PanelUnitShort, 6, false,
+				[]Target{
+					NewTarget(
+						scope.labelReplace(
+							fmt.Sprintf(
+								"topk(10,sum(rate(netobserv_%s{%s}[2m]) or rate(netobserv_%s{%s}[2m])) by (%s))",
+								metric,
+								appsFilters1,
+								metric,
+								appsFilters2,
+								labels,
+							),
 						),
+						legend,
 					),
-					Legend: legend,
-				}},
-			},
+				},
+			),
 			// Infra
-			{
-				Title: layerInfra,
-				Targets: []Target{{
-					Expr: scope.labelReplace(
-						fmt.Sprintf(
-							"topk(10,sum(rate(netobserv_%s{%s}[2m]) or rate(netobserv_%s{%s}[2m])) by (%s))",
-							metric,
-							infraFilters1,
-							metric,
-							infraFilters2,
-							labels,
+			NewPanel(
+				layerInfra, PanelTypeGraph, PanelUnitShort, 6, false,
+				[]Target{
+					NewTarget(
+						scope.labelReplace(
+							fmt.Sprintf(
+								"topk(10,sum(rate(netobserv_%s{%s}[2m]) or rate(netobserv_%s{%s}[2m])) by (%s))",
+								metric,
+								infraFilters1,
+								metric,
+								infraFilters2,
+								labels,
+							),
 						),
+						legend,
 					),
-					Legend: legend,
-				}},
-			},
+				},
+			),
 		}
 	}
 	// No split
-	return []Panel{{
-		Targets: []Target{{
-			Expr: scope.labelReplace(
-				fmt.Sprintf("topk(10,sum(rate(netobserv_%s[2m])) by (%s))", metric, labels),
+	return []Panel{NewPanel(
+		"", PanelTypeGraph, PanelUnitShort, 6, false,
+		[]Target{
+			NewTarget(
+				scope.labelReplace(
+					fmt.Sprintf("topk(10,sum(rate(netobserv_%s[2m])) by (%s))", metric, labels),
+				),
+				legend,
 			),
-			Legend: legend,
-		}},
-	}}
+		},
+	)}
 }
 
 func histogramPanels(scope *metricScope, metric, labels, legend, scaler string) []Panel {
@@ -151,36 +164,39 @@ func histogramPanels(scope *metricScope, metric, labels, legend, scaler string) 
 		)
 		return []Panel{
 			// App
-			{
-				Title: layerApps,
-				Targets: []Target{
+			NewPanel(
+				layerApps, PanelTypeGraph, PanelUnitShort, 6, false,
+				[]Target{
 					histogramTarget(scope, "0.99", appRateExpr, labels, legend, scaler),
 					histogramTarget(scope, "0.50", appRateExpr, labels, legend, scaler),
 				},
-			},
+			),
 			// Infra
-			{
-				Title: layerInfra,
-				Targets: []Target{
+			NewPanel(
+				layerInfra, PanelTypeGraph, PanelUnitShort, 6, false,
+				[]Target{
 					histogramTarget(scope, "0.99", infraRateExpr, labels, legend, scaler),
 					histogramTarget(scope, "0.50", infraRateExpr, labels, legend, scaler),
 				},
-			},
+			),
 		}
 	}
 	// No split
 	rateExpr := fmt.Sprintf("rate(netobserv_%s_bucket[2m])", metric)
-	return []Panel{{
-		Targets: []Target{
-			histogramTarget(scope, "0.99", rateExpr, labels, legend, scaler),
-			histogramTarget(scope, "0.50", rateExpr, labels, legend, scaler),
-		},
-	}}
+	return []Panel{
+		NewPanel(
+			"", PanelTypeGraph, PanelUnitShort, 6, false,
+			[]Target{
+				histogramTarget(scope, "0.99", rateExpr, labels, legend, scaler),
+				histogramTarget(scope, "0.50", rateExpr, labels, legend, scaler),
+			},
+		),
+	}
 }
 
 func histogramTarget(scope *metricScope, quantile, rateExpr, labels, legend, scaler string) Target {
-	return Target{
-		Expr: scope.labelReplace(
+	return NewTarget(
+		scope.labelReplace(
 			fmt.Sprintf(
 				"topk(10,histogram_quantile(%s, sum(%s) by (le,%s))%s > 0)",
 				quantile,
@@ -189,8 +205,8 @@ func histogramTarget(scope *metricScope, quantile, rateExpr, labels, legend, sca
 				scaler,
 			),
 		),
-		Legend: legend + ", q=" + quantile,
-	}
+		legend+", q="+quantile,
+	)
 }
 
 func dirToVerb(dir string) string {
@@ -228,6 +244,6 @@ func CreateFlowMetricsDashboard(netobsNs string, metrics []string) (string, erro
 			}
 		}
 	}
-	d := Dashboard{Rows: rows}
+	d := Dashboard{Rows: rows, Title: "NetObserv"}
 	return d.ToGrafanaJSON(netobsNs), nil
 }
