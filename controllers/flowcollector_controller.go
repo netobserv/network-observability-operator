@@ -190,5 +190,6 @@ func (r *FlowCollectorReconciler) newCommonInfo(clh *helper.Client, ns, prevNs s
 		AvailableAPIs:     &r.mgr.AvailableAPIs,
 		Watcher:           r.watcher,
 		Loki:              loki,
+		IsDownstream:      r.mgr.Config.DownstreamDeployment,
 	}
 }
