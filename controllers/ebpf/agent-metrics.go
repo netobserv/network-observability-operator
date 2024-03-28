@@ -70,7 +70,9 @@ func (c *AgentController) promService(target *flowslatest.FlowCollectorEBPF) *co
 }
 
 func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollectorEBPF) *monitoringv1.ServiceMonitor {
-	agentServiceMonitorObject := monitoringv1.ServiceMonitor{
+	serverName := fmt.Sprintf("%s.%s.svc", constants.EBPFAgentMetricsSvcName, c.PrivilegedNamespace())
+	scheme, smTLS := helper.GetServiceMonitorTLSConfig(&target.Metrics.Server.TLS, serverName, c.IsDownstream)
+	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFAgentMetricsSvcMonitoringName,
 			Namespace: c.PrivilegedNamespace(),
@@ -81,9 +83,10 @@ func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollecto
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Endpoints: []monitoringv1.Endpoint{
 				{
-					Port:     "metrics",
-					Interval: "30s",
-					Scheme:   "http",
+					Port:      "metrics",
+					Interval:  "30s",
+					Scheme:    scheme,
+					TLSConfig: smTLS,
 				},
 			},
 			NamespaceSelector: monitoringv1.NamespaceSelector{
@@ -98,29 +101,4 @@ func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollecto
 			},
 		},
 	}
-	serverName := fmt.Sprintf("%s.%s.svc", constants.EBPFAgentMetricsSvcName, c.PrivilegedNamespace())
-	if target.Metrics.Server.TLS.Type == flowslatest.ServerTLSAuto {
-		agentServiceMonitorObject.Spec.Endpoints[0].Scheme = "https"
-		agentServiceMonitorObject.Spec.Endpoints[0].TLSConfig = &monitoringv1.TLSConfig{
-			SafeTLSConfig: monitoringv1.SafeTLSConfig{
-				ServerName: serverName,
-			},
-			CAFile: "/etc/prometheus/configmaps/serving-certs-ca-bundle/service-ca.crt",
-		}
-	}
-	if target.Metrics.Server.TLS.Type == flowslatest.ServerTLSProvided {
-		agentServiceMonitorObject.Spec.Endpoints[0].Scheme = "https"
-		agentServiceMonitorObject.Spec.Endpoints[0].TLSConfig = &monitoringv1.TLSConfig{
-			SafeTLSConfig: monitoringv1.SafeTLSConfig{
-				ServerName:         serverName,
-				InsecureSkipVerify: target.Metrics.Server.TLS.InsecureSkipVerify,
-			},
-		}
-		if !target.Metrics.Server.TLS.InsecureSkipVerify &&
-			target.Metrics.Server.TLS.ProvidedCaFile != nil &&
-			target.Metrics.Server.TLS.ProvidedCaFile.File != "" {
-			agentServiceMonitorObject.Spec.Endpoints[0].TLSConfig.SafeTLSConfig.CA = helper.GetSecretOrConfigMap(target.Metrics.Server.TLS.ProvidedCaFile)
-		}
-	}
-	return &agentServiceMonitorObject
 }
