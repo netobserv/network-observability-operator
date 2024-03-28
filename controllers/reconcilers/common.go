@@ -21,6 +21,7 @@ type Common struct {
 	AvailableAPIs     *discover.AvailableAPIs
 	Loki              *helper.LokiConfig
 	ClusterID         string
+	IsDownstream      bool
 }
 
 func (c *Common) PrivilegedNamespace() string {

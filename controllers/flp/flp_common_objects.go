@@ -50,16 +50,17 @@ var FlpConfSuffix = map[ConfKind]string{
 }
 
 type Builder struct {
-	info        *reconcilers.Instance
-	labels      map[string]string
-	selector    map[string]string
-	desired     *flowslatest.FlowCollectorSpec
-	flowMetrics *metricslatest.FlowMetricList
-	promTLS     *flowslatest.CertificateReference
-	confKind    ConfKind
-	volumes     volumes.Builder
-	loki        *helper.LokiConfig
-	pipeline    *PipelineBuilder
+	info         *reconcilers.Instance
+	labels       map[string]string
+	selector     map[string]string
+	desired      *flowslatest.FlowCollectorSpec
+	flowMetrics  *metricslatest.FlowMetricList
+	promTLS      *flowslatest.CertificateReference
+	confKind     ConfKind
+	volumes      volumes.Builder
+	loki         *helper.LokiConfig
+	pipeline     *PipelineBuilder
+	isDownstream bool
 }
 
 type builder = Builder
@@ -93,11 +94,12 @@ func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 		selector: map[string]string{
 			"app": name,
 		},
-		desired:     desired,
-		flowMetrics: flowMetrics,
-		confKind:    ck,
-		promTLS:     promTLS,
-		loki:        info.Loki,
+		desired:      desired,
+		flowMetrics:  flowMetrics,
+		confKind:     ck,
+		promTLS:      promTLS,
+		loki:         info.Loki,
+		isDownstream: info.IsDownstream,
 	}, nil
 }
 
@@ -392,7 +394,8 @@ func (b *builder) clusterRoleBinding(ck ConfKind, mono bool) *rbacv1.ClusterRole
 
 func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 	serverName := fmt.Sprintf("%s.%s.svc", b.promServiceName(), b.info.Namespace)
-	flpServiceMonitorObject := monitoringv1.ServiceMonitor{
+	scheme, smTLS := helper.GetServiceMonitorTLSConfig(&b.desired.Processor.Metrics.Server.TLS, serverName, b.isDownstream)
+	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.serviceMonitorName(),
 			Namespace: b.info.Namespace,
@@ -401,9 +404,10 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Endpoints: []monitoringv1.Endpoint{
 				{
-					Port:     prometheusServiceName,
-					Interval: "15s",
-					Scheme:   "http",
+					Port:      prometheusServiceName,
+					Interval:  "15s",
+					Scheme:    scheme,
+					TLSConfig: smTLS,
 				},
 			},
 			NamespaceSelector: monitoringv1.NamespaceSelector{
@@ -416,32 +420,6 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 			},
 		},
 	}
-	if b.desired.Processor.Metrics.Server.TLS.Type == flowslatest.ServerTLSAuto {
-		flpServiceMonitorObject.Spec.Endpoints[0].Scheme = "https"
-		flpServiceMonitorObject.Spec.Endpoints[0].TLSConfig = &monitoringv1.TLSConfig{
-			SafeTLSConfig: monitoringv1.SafeTLSConfig{
-				ServerName: serverName,
-			},
-			CAFile: "/etc/prometheus/configmaps/serving-certs-ca-bundle/service-ca.crt",
-		}
-	}
-
-	if b.desired.Processor.Metrics.Server.TLS.Type == flowslatest.ServerTLSProvided {
-		flpServiceMonitorObject.Spec.Endpoints[0].Scheme = "https"
-		flpServiceMonitorObject.Spec.Endpoints[0].TLSConfig = &monitoringv1.TLSConfig{
-			SafeTLSConfig: monitoringv1.SafeTLSConfig{
-				ServerName:         serverName,
-				InsecureSkipVerify: b.desired.Processor.Metrics.Server.TLS.InsecureSkipVerify,
-			},
-		}
-		if !b.desired.Processor.Metrics.Server.TLS.InsecureSkipVerify &&
-			b.desired.Processor.Metrics.Server.TLS.ProvidedCaFile != nil &&
-			b.desired.Processor.Metrics.Server.TLS.ProvidedCaFile.File != "" {
-			flpServiceMonitorObject.Spec.Endpoints[0].TLSConfig.SafeTLSConfig.CA = helper.GetSecretOrConfigMap(b.desired.Processor.Metrics.Server.TLS.ProvidedCaFile)
-		}
-	}
-
-	return &flpServiceMonitorObject
 }
 
 func shouldAddAlert(name flowslatest.FLPAlert, disabledList []flowslatest.FLPAlert) bool {

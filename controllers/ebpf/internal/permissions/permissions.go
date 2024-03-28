@@ -66,33 +66,38 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 	}
 	desired := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: ns,
-			Labels: map[string]string{
-				"app":                                constants.OperatorName,
-				"pod-security.kubernetes.io/enforce": "privileged",
-				"pod-security.kubernetes.io/audit":   "privileged",
-			},
+			Name:   ns,
+			Labels: namespaceLabels(true, c.IsDownstream),
 		},
 	}
-	if actual == nil && desired != nil {
+	if actual == nil {
 		rlog.Info("creating namespace")
 		return c.CreateOwned(ctx, desired)
 	}
-	if actual != nil && desired != nil {
-		// We noticed that audit labels are automatically removed
-		// in some configurations of K8s, so to avoid an infinite update loop, we just ignore
-		// it (if the user removes it manually, it's at their own risk)
-		if !helper.IsSubSet(actual.ObjectMeta.Labels,
-			map[string]string{
-				"app":                                constants.OperatorName,
-				"pod-security.kubernetes.io/enforce": "privileged",
-			}) {
-			rlog.Info("updating namespace")
-			return c.UpdateIfOwned(ctx, actual, desired)
-		}
+	// We noticed that audit labels are automatically removed
+	// in some configurations of K8s, so to avoid an infinite update loop, we just ignore
+	// it (if the user removes it manually, it's at their own risk)
+	if !helper.IsSubSet(actual.ObjectMeta.Labels, namespaceLabels(false, c.IsDownstream)) {
+		rlog.Info("updating namespace")
+		return c.UpdateIfOwned(ctx, actual, desired)
 	}
+
 	rlog.Info("namespace is already reconciled. Doing nothing")
 	return nil
+}
+
+func namespaceLabels(includeAudit, isDownstream bool) map[string]string {
+	l := map[string]string{
+		"app":                                constants.OperatorName,
+		"pod-security.kubernetes.io/enforce": "privileged",
+	}
+	if includeAudit {
+		l["pod-security.kubernetes.io/audit"] = "privileged"
+	}
+	if isDownstream {
+		l["openshift.io/cluster-monitoring"] = "true"
+	}
+	return l
 }
 
 func (c *Reconciler) reconcileServiceAccount(ctx context.Context) error {
