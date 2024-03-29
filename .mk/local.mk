@@ -53,7 +53,8 @@ local-deploy-operator:
 	@echo "====> Done"
 
 .PHONY: deploy-kind
-deploy-kind: generate kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy-kind: install-cert-manager kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	kubectl create namespace netobserv || true
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMAGE}
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
