@@ -19,6 +19,7 @@ import (
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -173,6 +174,60 @@ type EBPFMetrics struct {
 	Enable *bool `json:"enable,omitempty"`
 }
 
+// `EBPFFlowFilter` defines the desired eBPF agent configuration regarding flow filtering
+type EBPFFlowFilter struct {
+	// Set `enable` to `true` to enable eBPF flow filtering feature.
+	Enable *bool `json:"enable,omitempty"`
+
+	// CIDR defines the IP CIDR to filter flows by.
+	// Example: 10.10.10.0/24 or 100:100:100:100::/64
+	CIDR string `json:"cidr,omitempty"`
+
+	// Action defines the action to perform on the flows that match the filter.
+	// +kubebuilder:validation:Enum:="Accept";"Reject"
+	Action string `json:"action,omitempty"`
+
+	// Protocol defines the protocol to filter flows by.
+	// +kubebuilder:validation:Enum:="TCP";"UDP";"ICMP";"ICMPv6";"SCTP"
+	// +optional
+	Protocol string `json:"protocol,omitempty"`
+
+	// Direction defines the direction to filter flows by.
+	// +kubebuilder:validation:Enum:="Ingress";"Egress"
+	// +optional
+	Direction string `json:"direction,omitempty"`
+
+	// SourcePorts defines the source ports to filter flows by.
+	// To filter a single port, set a single port as an integer value. For example sourcePorts: 80.
+	// To filter a range of ports, use a "start-end" range, string format. For example sourcePorts: "80-100".
+	// +optional
+	SourcePorts intstr.IntOrString `json:"sourcePorts,omitempty"`
+
+	// DestPorts defines the destination ports to filter flows by.
+	// To filter a single port, set a single port as an integer value. For example destPorts: 80.
+	// To filter a range of ports, use a "start-end" range, string format. For example destPorts: "80-100".
+	// +optional
+	DestPorts intstr.IntOrString `json:"destPorts,omitempty"`
+
+	// Ports defines the ports to filter flows by. it can be user for either source or destination ports.
+	// To filter a single port, set a single port as an integer value. For example ports: 80.
+	// To filter a range of ports, use a "start-end" range, string format. For example ports: "80-10
+	Ports intstr.IntOrString `json:"ports,omitempty"`
+
+	// PeerIP defines the IP address to filter flows by.
+	// Example: 10.10.10.10
+	// +optional
+	PeerIP string `json:"peerIP,omitempty"`
+
+	// ICMPType defines the ICMP type to filter flows by.
+	// +optional
+	ICMPType *int `json:"icmpType,omitempty"`
+
+	// ICMPCode defines the ICMP code to filter flows by.
+	// +optional
+	ICMPCode *int `json:"icmpCode,omitempty"`
+}
+
 // `FlowCollectorEBPF` defines a FlowCollector that uses eBPF to collect the flows information
 type FlowCollectorEBPF struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
@@ -258,6 +313,10 @@ type FlowCollectorEBPF struct {
 	// `metrics` defines the eBPF agent configuration regarding metrics
 	// +optional
 	Metrics EBPFMetrics `json:"metrics,omitempty"`
+
+	// `flowFilter` defines the eBPF agent configuration regarding flow filtering
+	// +optional
+	FlowFilter *EBPFFlowFilter `json:"flowFilter,omitempty"`
 }
 
 // `FlowCollectorKafka` defines the desired Kafka config of FlowCollector

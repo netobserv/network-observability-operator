@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -60,6 +61,20 @@ const (
 	envMetricPrefix               = "METRICS_PREFIX"
 	envMetricsTLSCertPath         = "METRICS_TLS_CERT_PATH"
 	envMetricsTLSKeyPath          = "METRICS_TLS_KEY_PATH"
+	envEnableFlowFilter           = "ENABLE_FLOW_FILTER"
+	envFlowFilterIPCIDR           = "FLOW_FILTER_IP_CIDR"
+	envFlowFilterAction           = "FLOW_FILTER_ACTION"
+	envFlowFilterDirection        = "FLOW_FILTER_DIRECTION"
+	envFlowFilterProtocol         = "FLOW_FILTER_PROTOCOL"
+	envFlowFilterSourcePort       = "FLOW_FILTER_SOURCE_PORT"
+	envFlowFilterDestPort         = "FLOW_FILTER_DESTINATION_PORT"
+	envFlowFilterPort             = "FLOW_FILTER_PORT"
+	envFlowFilterSourcePortRange  = "FLOW_FILTER_SOURCE_PORT_RANGE"
+	envFlowFilterDestPortRange    = "FLOW_FILTER_DESTINATION_PORT_RANGE"
+	envFlowFilterPortRange        = "FLOW_FILTER_PORT_RANGE"
+	envFlowFilterICMPType         = "FLOW_FILTER_ICMP_TYPE"
+	envFlowFilterICMPCode         = "FLOW_FILTER_ICMP_CODE"
+	envFlowFilterPeerIPAddress    = "FLOW_FILTER_PEER_IP"
 	envListSeparator              = ","
 )
 
@@ -394,7 +409,87 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			Value: strconv.Itoa(int(*advancedConfig.Port)),
 		})
 	}
+
+	if helper.IsEBFPFlowFilterEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{Name: envEnableFlowFilter, Value: "true"})
+
+		config = append(config, c.configureFlowFilter(coll.Spec.Agent.EBPF.FlowFilter, config)...)
+	}
+
 	return config, nil
+}
+
+func (c *AgentController) configureFlowFilter(filter *flowslatest.EBPFFlowFilter, config []corev1.EnvVar) []corev1.EnvVar {
+	if filter.CIDR != "" {
+		config = append(config, corev1.EnvVar{Name: envFlowFilterIPCIDR,
+			Value: filter.CIDR,
+		})
+	}
+	if filter.Action != "" {
+		config = append(config, corev1.EnvVar{Name: envFlowFilterAction,
+			Value: filter.Action,
+		})
+	}
+	if filter.Direction != "" {
+		config = append(config, corev1.EnvVar{Name: envFlowFilterDirection,
+			Value: filter.Direction,
+		})
+	}
+	if filter.Protocol != "" {
+		config = append(config, corev1.EnvVar{Name: envFlowFilterProtocol,
+			Value: filter.Protocol,
+		})
+		switch filter.Protocol {
+		case "TCP", "UDP", "SCTP":
+			if filter.SourcePorts.Type == intstr.String {
+				config = append(config, corev1.EnvVar{Name: envFlowFilterSourcePortRange,
+					Value: filter.SourcePorts.String(),
+				})
+			}
+			if filter.SourcePorts.Type == intstr.Int {
+				config = append(config, corev1.EnvVar{Name: envFlowFilterSourcePort,
+					Value: strconv.Itoa(filter.SourcePorts.IntValue()),
+				})
+			}
+			if filter.DestPorts.Type == intstr.String {
+				config = append(config, corev1.EnvVar{Name: envFlowFilterDestPortRange,
+					Value: filter.DestPorts.String(),
+				})
+			}
+			if filter.DestPorts.Type == intstr.Int {
+				config = append(config, corev1.EnvVar{Name: envFlowFilterDestPort,
+					Value: strconv.Itoa(filter.DestPorts.IntValue()),
+				})
+			}
+			if filter.Ports.Type == intstr.String {
+				config = append(config, corev1.EnvVar{Name: envFlowFilterPortRange,
+					Value: filter.Ports.String(),
+				})
+			}
+			if filter.Ports.Type == intstr.Int {
+				config = append(config, corev1.EnvVar{Name: envFlowFilterPort,
+					Value: strconv.Itoa(filter.Ports.IntValue()),
+				})
+			}
+
+		case "ICMP", "ICMPv6":
+			if *filter.ICMPType != 0 {
+				config = append(config, corev1.EnvVar{Name: envFlowFilterICMPType,
+					Value: strconv.Itoa(*filter.ICMPType),
+				})
+			}
+			if *filter.ICMPCode != 0 {
+				config = append(config, corev1.EnvVar{Name: envFlowFilterICMPCode,
+					Value: strconv.Itoa(*filter.ICMPCode)})
+			}
+		}
+	}
+
+	if filter.PeerIP != "" {
+		config = append(config, corev1.EnvVar{Name: envFlowFilterPeerIPAddress,
+			Value: filter.PeerIP})
+	}
+	return config
 }
 
 func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *corev1.SecurityContext {

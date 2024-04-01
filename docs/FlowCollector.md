@@ -286,6 +286,13 @@ If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfflowfilter">flowFilter</a></b></td>
+        <td>object</td>
+        <td>
+          `flowFilter` defines the eBPF agent configuration regarding flow filtering<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
@@ -393,6 +400,117 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be
 publicly exposed as part of the FlowCollector descriptor, as they are only useful
 in edge debug or support scenarios.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.flowFilter
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpf)</sup></sup>
+
+
+
+`flowFilter` defines the eBPF agent configuration regarding flow filtering
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>action</b></td>
+        <td>enum</td>
+        <td>
+          Action defines the action to perform on the flows that match the filter.<br/>
+          <br/>
+            <i>Enum</i>: Accept, Reject<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>cidr</b></td>
+        <td>string</td>
+        <td>
+          CIDR defines the IP CIDR to filter flows by.
+Example: 10.10.10.0/24 or 100:100:100:100::/64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>destPorts</b></td>
+        <td>int or string</td>
+        <td>
+          DestPorts defines the destination ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example destPorts: 80.
+To filter a range of ports, use a "start-end" range, string format. For example destPorts: "80-100".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>direction</b></td>
+        <td>enum</td>
+        <td>
+          Direction defines the direction to filter flows by.<br/>
+          <br/>
+            <i>Enum</i>: Ingress, Egress<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Set `enable` to `true` to enable eBPF flow filtering feature.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>icmpCode</b></td>
+        <td>integer</td>
+        <td>
+          ICMPCode defines the ICMP code to filter flows by.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>icmpType</b></td>
+        <td>integer</td>
+        <td>
+          ICMPType defines the ICMP type to filter flows by.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>peerIP</b></td>
+        <td>string</td>
+        <td>
+          PeerIP defines the IP address to filter flows by.
+Example: 10.10.10.10<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>ports</b></td>
+        <td>int or string</td>
+        <td>
+          Ports defines the ports to filter flows by. it can be user for either source or destination ports.
+To filter a single port, set a single port as an integer value. For example ports: 80.
+To filter a range of ports, use a "start-end" range, string format. For example ports: "80-10<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
+        <td>enum</td>
+        <td>
+          Protocol defines the protocol to filter flows by.<br/>
+          <br/>
+            <i>Enum</i>: TCP, UDP, ICMP, ICMPv6, SCTP<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sourcePorts</b></td>
+        <td>int or string</td>
+        <td>
+          SourcePorts defines the source ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example sourcePorts: 80.
+To filter a range of ports, use a "start-end" range, string format. For example sourcePorts: "80-100".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5020,14 +5138,16 @@ inside a container.<br/>
         <td><b><a href="#flowcollectorspecprocessorsubnetlabelscustomlabelsindex">customLabels</a></b></td>
         <td>[]object</td>
         <td>
-          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services. If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
+          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
+If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>openShiftAutoDetect</b></td>
         <td>boolean</td>
         <td>
-          `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the OpenShift install configuration and the Cluster Network Operator configuration.<br/>
+          `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
+OpenShift install configuration and the Cluster Network Operator configuration.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5476,6 +5596,13 @@ the kernel debug filesystem, so the eBPF pod has to run as privileged.
 If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 - `DNSTracking`: enable the DNS tracking feature.<br>
 - `FlowRTT`: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br><br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfflowfilter-1">flowFilter</a></b></td>
+        <td>object</td>
+        <td>
+          `flowFilter` defines the eBPF agent configuration regarding flow filtering<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6972,6 +7099,117 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td>[]string</td>
         <td>
           <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.flowFilter
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpf-1)</sup></sup>
+
+
+
+`flowFilter` defines the eBPF agent configuration regarding flow filtering
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>action</b></td>
+        <td>enum</td>
+        <td>
+          Action defines the action to perform on the flows that match the filter.<br/>
+          <br/>
+            <i>Enum</i>: Accept, Reject<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>cidr</b></td>
+        <td>string</td>
+        <td>
+          CIDR defines the IP CIDR to filter flows by.
+Example: 10.10.10.0/24 or 100:100:100:100::/64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>destPorts</b></td>
+        <td>int or string</td>
+        <td>
+          DestPorts defines the destination ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example destPorts: 80.
+To filter a range of ports, use a "start-end" range, string format. For example destPorts: "80-100".<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>direction</b></td>
+        <td>enum</td>
+        <td>
+          Direction defines the direction to filter flows by.<br/>
+          <br/>
+            <i>Enum</i>: Ingress, Egress<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Set `enable` to `true` to enable eBPF flow filtering feature.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>icmpCode</b></td>
+        <td>integer</td>
+        <td>
+          ICMPCode defines the ICMP code to filter flows by.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>icmpType</b></td>
+        <td>integer</td>
+        <td>
+          ICMPType defines the ICMP type to filter flows by.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>peerIP</b></td>
+        <td>string</td>
+        <td>
+          PeerIP defines the IP address to filter flows by.
+Example: 10.10.10.10<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>ports</b></td>
+        <td>int or string</td>
+        <td>
+          Ports defines the ports to filter flows by. it can be user for either source or destination ports.
+To filter a single port, set a single port as an integer value. For example ports: 80.
+To filter a range of ports, use a "start-end" range, string format. For example ports: "80-10<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
+        <td>enum</td>
+        <td>
+          Protocol defines the protocol to filter flows by.<br/>
+          <br/>
+            <i>Enum</i>: TCP, UDP, ICMP, ICMPv6, SCTP<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sourcePorts</b></td>
+        <td>int or string</td>
+        <td>
+          SourcePorts defines the source ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example sourcePorts: 80.
+To filter a range of ports, use a "start-end" range, string format. For example sourcePorts: "80-100".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -14996,14 +15234,16 @@ inside a container.<br/>
         <td><b><a href="#flowcollectorspecprocessorsubnetlabelscustomlabelsindex-1">customLabels</a></b></td>
         <td>[]object</td>
         <td>
-          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services. If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
+          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
+If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>openShiftAutoDetect</b></td>
         <td>boolean</td>
         <td>
-          `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the OpenShift install configuration and the Cluster Network Operator configuration.<br/>
+          `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
+OpenShift install configuration and the Cluster Network Operator configuration.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

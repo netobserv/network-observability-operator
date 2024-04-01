@@ -696,6 +696,30 @@ spec:
         path: agent.ebpf.excludeInterfaces
       - displayName: Features
         path: agent.ebpf.features
+      - displayName: Flow filter
+        path: agent.ebpf.flowFilter
+      - displayName: Action
+        path: agent.ebpf.flowFilter.action
+      - displayName: Cidr
+        path: agent.ebpf.flowFilter.cidr
+      - displayName: Dest ports
+        path: agent.ebpf.flowFilter.destPorts
+      - displayName: Direction
+        path: agent.ebpf.flowFilter.direction
+      - displayName: Enable
+        path: agent.ebpf.flowFilter.enable
+      - displayName: Icmp code
+        path: agent.ebpf.flowFilter.icmpCode
+      - displayName: Icmp type
+        path: agent.ebpf.flowFilter.icmpType
+      - displayName: PeerIP
+        path: agent.ebpf.flowFilter.peerIP
+      - displayName: Ports
+        path: agent.ebpf.flowFilter.ports
+      - displayName: Protocol
+        path: agent.ebpf.flowFilter.protocol
+      - displayName: Source ports
+        path: agent.ebpf.flowFilter.sourcePorts
       - displayName: Interfaces
         path: agent.ebpf.interfaces
       - displayName: Metrics
