@@ -3686,7 +3686,7 @@ spec:
                           description: Name of an existing LokiStack resource to use.
                           type: string
                         namespace:
-                          description: Namespace where this `LokiStack` resource is located. If omited, it is assumed to be the same as `spec.namespace`.
+                          description: Namespace where this `LokiStack` resource is located. If omitted, it is assumed to be the same as `spec.namespace`.
                           type: string
                       type: object
                     manual:
