@@ -9,9 +9,13 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
@@ -21,8 +25,9 @@ import (
 
 type Reconciler struct {
 	client.Client
-	mgr    *manager.Manager
-	status status.Instance
+	mgr              *manager.Manager
+	status           status.Instance
+	currentNamespace string
 }
 
 func Start(ctx context.Context, mgr *manager.Manager) error {
@@ -37,6 +42,15 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("monitoring").
 		Owns(&corev1.Namespace{}).
+		Watches(
+			&metricslatest.FlowMetric{},
+			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+				if o.GetNamespace() == r.currentNamespace {
+					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
+				}
+				return []reconcile.Request{}
+			}),
+		).
 		Complete(&r)
 }
 
@@ -74,6 +88,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 
 func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired *flowslatest.FlowCollector) error {
 	ns := helper.GetNamespace(&desired.Spec)
+	r.currentNamespace = ns
 
 	// If namespace does not exist, we create it
 	nsExist, err := r.namespaceExist(ctx, ns)
@@ -104,8 +119,14 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 	}
 
 	if r.mgr.HasSvcMonitor() {
-		names := metrics.GetIncludeList(&desired.Spec)
-		desiredFlowDashboardCM, del, err := buildFlowMetricsDashboard(ns, names)
+		// List custom metrics
+		fm := metricslatest.FlowMetricList{}
+		if err := r.Client.List(ctx, &fm, &client.ListOptions{Namespace: ns}); err != nil {
+			return r.status.Error("CantListFlowMetrics", err)
+		}
+
+		allMetrics := metrics.MergePredefined(fm.Items, &desired.Spec)
+		desiredFlowDashboardCM, del, err := buildFlowMetricsDashboard(allMetrics)
 		if err != nil {
 			return err
 		} else if err = reconcilers.ReconcileConfigMap(ctx, clh, desiredFlowDashboardCM, del); err != nil {
@@ -119,6 +140,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 			return err
 		}
 	}
+
 	return nil
 }
 

@@ -109,6 +109,43 @@ type FlowMetricSpec struct {
 	// A list of buckets to use when `type` is "Histogram". The list must be parseable as floats. Prometheus default buckets will be used if unset.
 	// +optional
 	Buckets []string `json:"buckets,omitempty"`
+
+	// When non-zero, scale factor (divider) of the value. Metric value = Flow value / Divider.
+	// +optional
+	Divider float64 `json:"divider"`
+
+	// Charts configuration
+	// +optional
+	Charts []Chart `json:"charts,omitempty"`
+}
+
+type Unit string
+type ChartType string
+
+const (
+	UnitBytes           Unit      = "bytes"
+	UnitSeconds         Unit      = "seconds"
+	UnitBPS             Unit      = "Bps"
+	UnitPPS             Unit      = "pps"
+	ChartTypeSingleStat ChartType = "SingleStat"
+	ChartTypeLine       ChartType = "Line"
+	ChartTypeStackArea  ChartType = "StackArea"
+)
+
+// Configures charts / dashboard generation associated to a metric
+type Chart struct {
+	DashboardName string    `json:"dashboardName"`
+	SectionName   string    `json:"sectionName"`
+	Title         string    `json:"title"`
+	Unit          Unit      `json:"unit"`
+	Type          ChartType `json:"type"`
+	Queries       []Query   `json:"queries"`
+}
+
+// Configures PromQL queries
+type Query struct {
+	PromQL string `json:"promQL"`
+	Legend string `json:"legend"`
 }
 
 // FlowMetricStatus defines the observed state of FlowMetric

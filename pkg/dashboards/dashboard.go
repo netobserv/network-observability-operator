@@ -4,246 +4,102 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/utils/strings/slices"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 )
 
-const (
-	layerApps        = "Applications"
-	layerInfra       = "Infrastructure"
-	appsFilters1     = `SrcK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
-	appsFilters2     = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace!~"|$NETOBSERV_NS|openshift.*"`
-	infraFilters1    = `SrcK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
-	infraFilters2    = `SrcK8S_Namespace!~"$NETOBSERV_NS|openshift.*",DstK8S_Namespace=~"$NETOBSERV_NS|openshift.*"`
-	metricTagIngress = "ingress"
-	metricTagEgress  = "egress"
-	metricTagBytes   = "bytes"
-	metricTagPackets = "packets"
-)
+type chart struct {
+	metricslatest.Chart
+	mptr *metricslatest.FlowMetric
+}
 
-var allRows []*Row
+func createSingleStatPanels(c *chart) []Panel {
+	var panels []Panel
+	for _, q := range c.Queries {
+		title := c.Title
+		if q.Legend != "" {
+			title += ", " + q.Legend
+		}
+		query := strings.ReplaceAll(q.PromQL, "$METRIC", "netobserv_"+c.mptr.Spec.MetricName)
+		newPanel := NewPanel(title, metricslatest.ChartTypeSingleStat, c.Unit, 3, NewTarget(query, ""))
+		panels = append(panels, newPanel)
+	}
+	return panels
+}
 
-func init() {
-	for _, scope := range []metricScope{srcDstNodeScope, srcDstNamespaceScope, srcDstWorkloadScope} {
-		// byte/pkt rates
-		for _, valueType := range []string{metricTagBytes, metricTagPackets} {
-			valueTypeText := valueTypeToText(valueType)
-			for _, dir := range []string{metricTagEgress, metricTagIngress} {
-				title := fmt.Sprintf(
-					"%s rate %s %s",
-					valueTypeText,
-					dirToVerb(dir),
-					scope.titlePart,
-				)
-				metric := fmt.Sprintf("%s_%s_%s_total", scope.metricPart, dir, valueType)
-				allRows = append(allRows, row(
-					metric,
-					title,
-					topRatePanels(&scope, metric, scope.joinLabels(), scope.legendPart),
-				))
+func createGraphPanel(c *chart) Panel {
+	var targets []Target
+	for _, q := range c.Queries {
+		query := strings.ReplaceAll(q.PromQL, "$METRIC", "netobserv_"+c.mptr.Spec.MetricName)
+		query = fmt.Sprintf("topk(7, %s)", query)
+		targets = append(targets, NewTarget(query, q.Legend))
+	}
+	return NewPanel(c.Title, c.Type, c.Unit, 4, targets...)
+}
+
+func rearrangeRows(rows []*Row, mapTopPanels, mapBodyPanels map[string][]Panel) {
+	for i, row := range rows {
+		topPanels := mapTopPanels[row.Title]
+		bodyPanels := mapBodyPanels[row.Title]
+		// Most of the time, panels are correctly arranged within a section.
+		// Excepted when there are 4 panels (or 3*rows+1), it shows 3 on first row then 1 on the second row
+		// We'll change that to 2 + 2
+		count := len(bodyPanels)
+		if count > 3 && count%3 == 1 {
+			// Set Span=6 (half page) for the two last panels
+			bodyPanels[count-1].Span = 6
+			bodyPanels[count-2].Span = 6
+		}
+		rows[i].Panels = topPanels
+		rows[i].Panels = append(rows[i].Panels, bodyPanels...)
+	}
+}
+
+func createFlowMetricsDashboard(dashboardName string, charts []chart) string {
+	mapRows := make(map[string]*Row)
+	mapTopPanels := make(map[string][]Panel)
+	mapBodyPanels := make(map[string][]Panel)
+	var orderedRows []*Row
+	chartsDedupMap := make(map[string]any)
+	for i := range charts {
+		chart := charts[i]
+		// A chart might be provided by several metrics, e.g. Total ingress bps can be provided by node_ingress_bytes_total and namespace_ingress_bytes_total
+		// Dedup them, assuming they have the same title+unit
+		dedupKey := chart.Title + "/" + string(chart.Unit)
+		if _, exists := chartsDedupMap[dedupKey]; exists {
+			continue
+		}
+		chartsDedupMap[dedupKey] = true
+
+		if chart.Type == metricslatest.ChartTypeSingleStat {
+			mapTopPanels[chart.SectionName] = append(mapTopPanels[chart.SectionName], createSingleStatPanels(&chart)...)
+		} else {
+			mapBodyPanels[chart.SectionName] = append(mapBodyPanels[chart.SectionName], createGraphPanel(&chart))
+		}
+
+		if _, exists := mapRows[chart.SectionName]; !exists {
+			row := NewRow(chart.SectionName, false, "250px", nil)
+			mapRows[chart.SectionName] = row
+			orderedRows = append(orderedRows, row)
+		}
+	}
+
+	rearrangeRows(orderedRows, mapTopPanels, mapBodyPanels)
+	d := Dashboard{Rows: orderedRows, Title: dashboardName}
+	return d.ToGrafanaJSON()
+}
+
+func CreateFlowMetricsDashboards(metrics []metricslatest.FlowMetric) string {
+	chartsPerDashboard := make(map[string][]chart)
+	for i := range metrics {
+		metric := &metrics[i]
+		for j := range metric.Spec.Charts {
+			c := chart{
+				Chart: metric.Spec.Charts[j],
+				mptr:  metric,
 			}
-			// drops
-			title := fmt.Sprintf(
-				"%s drop rate %s",
-				valueTypeText,
-				scope.titlePart,
-			)
-			metric := fmt.Sprintf("%s_drop_%s_total", scope.metricPart, valueType)
-			allRows = append(allRows, row(
-				metric,
-				title,
-				topRatePanels(&scope, metric, scope.joinLabels(), scope.legendPart),
-			))
-		}
-		// RTT
-		title := fmt.Sprintf("Round-trip time %s (milliseconds - p99 and p50)", scope.titlePart)
-		metric := fmt.Sprintf("%s_rtt_seconds", scope.metricPart)
-		allRows = append(allRows, row(
-			metric,
-			title,
-			histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart, "*1000"),
-		))
-		// DNS latency
-		title = fmt.Sprintf("DNS latency %s (milliseconds - p99 and p50)", scope.titlePart)
-		metric = fmt.Sprintf("%s_dns_latency_seconds", scope.metricPart)
-		allRows = append(allRows, row(
-			metric,
-			title,
-			histogramPanels(&scope, metric, scope.joinLabels(), scope.legendPart, "*1000"),
-		))
-		// DNS errors
-		title = fmt.Sprintf("DNS request rate per code and %s", scope.titlePart)
-		metric = fmt.Sprintf("%s_dns_latency_seconds", scope.metricPart)
-		labels := scope.joinLabels() + ",DnsFlagsResponseCode"
-		legend := scope.legendPart + ", {{DnsFlagsResponseCode}}"
-		allRows = append(allRows, row(
-			metric,
-			title,
-			topRatePanels(&scope, metric+"_count", labels, legend),
-		))
-	}
-}
-
-func row(metrics string, title string, panels []Panel) *Row {
-	r := NewRow(title, false, "250px", panels)
-	r.Metric = metrics
-	return r
-}
-
-func topRatePanels(scope *metricScope, metric, labels, legend string) []Panel {
-	if scope.splitAppInfra {
-		return []Panel{
-			// App
-			NewPanel(
-				layerApps, PanelTypeGraph, PanelUnitShort, 6, false,
-				[]Target{
-					NewTarget(
-						scope.labelReplace(
-							fmt.Sprintf(
-								"topk(10,sum(rate(netobserv_%s{%s}[2m]) or rate(netobserv_%s{%s}[2m])) by (%s))",
-								metric,
-								appsFilters1,
-								metric,
-								appsFilters2,
-								labels,
-							),
-						),
-						legend,
-					),
-				},
-			),
-			// Infra
-			NewPanel(
-				layerInfra, PanelTypeGraph, PanelUnitShort, 6, false,
-				[]Target{
-					NewTarget(
-						scope.labelReplace(
-							fmt.Sprintf(
-								"topk(10,sum(rate(netobserv_%s{%s}[2m]) or rate(netobserv_%s{%s}[2m])) by (%s))",
-								metric,
-								infraFilters1,
-								metric,
-								infraFilters2,
-								labels,
-							),
-						),
-						legend,
-					),
-				},
-			),
+			chartsPerDashboard[c.DashboardName] = append(chartsPerDashboard[c.DashboardName], c)
 		}
 	}
-	// No split
-	return []Panel{NewPanel(
-		"", PanelTypeGraph, PanelUnitShort, 6, false,
-		[]Target{
-			NewTarget(
-				scope.labelReplace(
-					fmt.Sprintf("topk(10,sum(rate(netobserv_%s[2m])) by (%s))", metric, labels),
-				),
-				legend,
-			),
-		},
-	)}
-}
-
-func histogramPanels(scope *metricScope, metric, labels, legend, scaler string) []Panel {
-	if scope.splitAppInfra {
-		appRateExpr := fmt.Sprintf(
-			"rate(netobserv_%s_bucket{%s}[2m]) or rate(netobserv_%s_bucket{%s}[2m])",
-			metric,
-			appsFilters1,
-			metric,
-			appsFilters2,
-		)
-		infraRateExpr := fmt.Sprintf(
-			"rate(netobserv_%s_bucket{%s}[2m]) or rate(netobserv_%s_bucket{%s}[2m])",
-			metric,
-			infraFilters1,
-			metric,
-			infraFilters2,
-		)
-		return []Panel{
-			// App
-			NewPanel(
-				layerApps, PanelTypeGraph, PanelUnitShort, 6, false,
-				[]Target{
-					histogramTarget(scope, "0.99", appRateExpr, labels, legend, scaler),
-					histogramTarget(scope, "0.50", appRateExpr, labels, legend, scaler),
-				},
-			),
-			// Infra
-			NewPanel(
-				layerInfra, PanelTypeGraph, PanelUnitShort, 6, false,
-				[]Target{
-					histogramTarget(scope, "0.99", infraRateExpr, labels, legend, scaler),
-					histogramTarget(scope, "0.50", infraRateExpr, labels, legend, scaler),
-				},
-			),
-		}
-	}
-	// No split
-	rateExpr := fmt.Sprintf("rate(netobserv_%s_bucket[2m])", metric)
-	return []Panel{
-		NewPanel(
-			"", PanelTypeGraph, PanelUnitShort, 6, false,
-			[]Target{
-				histogramTarget(scope, "0.99", rateExpr, labels, legend, scaler),
-				histogramTarget(scope, "0.50", rateExpr, labels, legend, scaler),
-			},
-		),
-	}
-}
-
-func histogramTarget(scope *metricScope, quantile, rateExpr, labels, legend, scaler string) Target {
-	return NewTarget(
-		scope.labelReplace(
-			fmt.Sprintf(
-				"topk(10,histogram_quantile(%s, sum(%s) by (le,%s))%s > 0)",
-				quantile,
-				rateExpr,
-				labels,
-				scaler,
-			),
-		),
-		legend+", q="+quantile,
-	)
-}
-
-func dirToVerb(dir string) string {
-	switch dir {
-	case metricTagEgress:
-		return "sent"
-	case metricTagIngress:
-		return "received"
-	}
-	return ""
-}
-
-func valueTypeToText(t string) string {
-	switch t {
-	case metricTagBytes:
-		return "Byte"
-	case metricTagPackets:
-		return "Packet"
-	}
-	return ""
-}
-
-func CreateFlowMetricsDashboard(netobsNs string, metrics []string) (string, error) {
-	var rows []*Row
-	for _, ri := range allRows {
-		if slices.Contains(metrics, ri.Metric) {
-			rows = append(rows, ri)
-		} else if strings.Contains(ri.Metric, "namespace_") {
-			// namespace-based panels can also be displayed using workload-based metrics
-			// Try again, replacing *_namespace_* with *_workload_*
-			equivalentMetric := strings.Replace(ri.Metric, "namespace_", "workload_", 1)
-			if slices.Contains(metrics, equivalentMetric) {
-				clone := ri.replaceMetric(equivalentMetric)
-				rows = append(rows, clone)
-			}
-		}
-	}
-	d := Dashboard{Rows: rows, Title: "NetObserv"}
-	return d.ToGrafanaJSON(netobsNs), nil
+	// TODO: handle more dashboards
+	return createFlowMetricsDashboard("NetObserv", chartsPerDashboard["NetObserv"])
 }

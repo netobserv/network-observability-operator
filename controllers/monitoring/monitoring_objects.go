@@ -1,6 +1,7 @@
 package monitoring
 
 import (
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/dashboards"
 	corev1 "k8s.io/api/core/v1"
@@ -74,11 +75,8 @@ func buildRoleBindingMonitoringReader(ns string) *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func buildFlowMetricsDashboard(namespace string, metrics []string) (*corev1.ConfigMap, bool, error) {
-	dashboard, err := dashboards.CreateFlowMetricsDashboard(namespace, metrics)
-	if err != nil {
-		return nil, false, err
-	}
+func buildFlowMetricsDashboard(metrics []metricslatest.FlowMetric) (*corev1.ConfigMap, bool, error) {
+	dashboard := dashboards.CreateFlowMetricsDashboards(metrics)
 
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{

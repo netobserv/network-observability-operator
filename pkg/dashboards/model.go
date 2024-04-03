@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 )
 
 type Dashboard struct {
@@ -28,45 +30,22 @@ func NewRow(title string, collapse bool, height string, panels []Panel) *Row {
 	}
 }
 
-type PanelType string
-type PanelUnit string
-
-const (
-	PanelTypeSingleStat PanelType = "singlestat"
-	PanelTypeGraph      PanelType = "graph"
-	PanelUnitBytes      PanelUnit = "bytes"
-	PanelUnitShort      PanelUnit = "short"
-	PanelUnitSeconds    PanelUnit = "seconds"
-	PanelUnitBPS        PanelUnit = "Bps"
-	PanelUnitPPS        PanelUnit = "pps"
-)
-
 type Panel struct {
 	Title   string
-	Type    PanelType
+	Type    metricslatest.ChartType
 	Targets []Target
 	Span    int
-	Stacked bool
-	Unit    PanelUnit
+	Unit    metricslatest.Unit
 }
 
-func NewPanel(title string, t PanelType, unit PanelUnit, span int, stacked bool, targets []Target) Panel {
+func NewPanel(title string, t metricslatest.ChartType, unit metricslatest.Unit, span int, targets ...Target) Panel {
 	return Panel{
 		Title:   title,
 		Type:    t,
 		Unit:    unit,
 		Span:    span,
-		Stacked: stacked,
 		Targets: targets,
 	}
-}
-
-func NewGraphPanel(title string, unit PanelUnit, span int, stacked bool, targets []Target) Panel {
-	return NewPanel(title, PanelTypeGraph, unit, span, stacked, targets)
-}
-
-func NewSingleStatPanel(title string, unit PanelUnit, span int, target Target) Panel {
-	return NewPanel(title, PanelTypeSingleStat, unit, span, false, []Target{target})
 }
 
 type Target struct {
@@ -110,7 +89,18 @@ func (d *Dashboard) FindRow(titleSubstr string) *Row {
 	return nil
 }
 
-func (d *Dashboard) ToGrafanaJSON(netobsNs string) string {
+func (d *Dashboard) FindPanel(titleSubstr string) *Panel {
+	for _, r := range d.Rows {
+		for _, p := range r.Panels {
+			if strings.Contains(p.Title, titleSubstr) {
+				return &p
+			}
+		}
+	}
+	return nil
+}
+
+func (d *Dashboard) ToGrafanaJSON() string {
 	// return empty if dashboard doesn't contains rows
 	if len(d.Rows) == 0 {
 		return ""
@@ -118,7 +108,7 @@ func (d *Dashboard) ToGrafanaJSON(netobsNs string) string {
 
 	var rows []string
 	for _, ri := range d.Rows {
-		rows = append(rows, ri.ToGrafanaJSON(netobsNs))
+		rows = append(rows, ri.ToGrafanaJSON())
 	}
 
 	rowsStr := strings.Join(rows, ",")
@@ -181,10 +171,18 @@ func (d *Dashboard) ToGrafanaJSON(netobsNs string) string {
 	`, rowsStr, d.Title)
 }
 
-func (r *Row) ToGrafanaJSON(netobsNs string) string {
+func (r *Row) Titles() []string {
+	var titles []string
+	for _, p := range r.Panels {
+		titles = append(titles, p.Title)
+	}
+	return titles
+}
+
+func (r *Row) ToGrafanaJSON() string {
 	var panels []string
 	for _, panel := range r.Panels {
-		panels = append(panels, panel.ToGrafanaJSON(netobsNs))
+		panels = append(panels, panel.ToGrafanaJSON())
 	}
 	showTitle := true
 	if r.Title == "" {
@@ -202,19 +200,31 @@ func (r *Row) ToGrafanaJSON(netobsNs string) string {
 	`, r.Collapse, r.Height, strings.Join(panels, ","), showTitle, r.Title)
 }
 
-func (r *Row) replaceMetric(newName string) *Row {
-	clone := NewRow(r.Title, r.Collapse, r.Height, nil)
-	clone.Metric = r.Metric
-	for _, p := range r.Panels {
-		clone.Panels = append(clone.Panels, p.replaceMetric(r.Metric, newName))
-	}
-	return clone
-}
-
-func (p *Panel) ToGrafanaJSON(netobsNs string) string {
+func (p *Panel) ToGrafanaJSON() string {
 	var targets []string
 	for _, target := range p.Targets {
-		targets = append(targets, target.ToGrafanaJSON(netobsNs))
+		targets = append(targets, target.ToGrafanaJSON())
+	}
+	unit := string(p.Unit)
+	if unit == "" {
+		unit = "short"
+	}
+	var singleStatFormat string
+	if p.Unit == metricslatest.UnitSeconds {
+		singleStatFormat = "s"
+	} else {
+		singleStatFormat = unit
+	}
+	var t string
+	stacked := false
+	switch p.Type {
+	case metricslatest.ChartTypeSingleStat:
+		t = "singlestat"
+	case metricslatest.ChartTypeLine:
+		t = "graph"
+	case metricslatest.ChartTypeStackArea:
+		t = "graph"
+		stacked = true
 	}
 	return fmt.Sprintf(`
 	{
@@ -225,6 +235,7 @@ func (p *Panel) ToGrafanaJSON(netobsNs string) string {
 		"datasource": "prometheus",
 		"fill": 1,
 		"fillGradient": 0,
+		"format": "%s",
 		"gridPos": {},
 		"id": 1,
 		"legend": {
@@ -282,22 +293,11 @@ func (p *Panel) ToGrafanaJSON(netobsNs string) string {
 			}
 		]
 	}
-	`, p.Span, p.Stacked, strings.Join(targets, ","), p.Title, string(p.Type), string(p.Unit))
+	`, singleStatFormat, p.Span, stacked, strings.Join(targets, ","), p.Title, t, unit)
 }
 
-func (p *Panel) replaceMetric(oldName, newName string) Panel {
-	clone := NewPanel(p.Title, p.Type, p.Unit, p.Span, p.Stacked, nil)
-	for _, t := range p.Targets {
-		clone.Targets = append(
-			clone.Targets,
-			NewTarget(strings.ReplaceAll(t.Expr, oldName, newName), t.Legend),
-		)
-	}
-	return clone
-}
-
-func (t *Target) ToGrafanaJSON(netobsNs string) string {
-	expr := formatCleaner.Replace(strings.ReplaceAll(t.Expr, "$NETOBSERV_NS", netobsNs))
+func (t *Target) ToGrafanaJSON() string {
+	expr := formatCleaner.Replace(t.Expr)
 	return fmt.Sprintf(`
 	{
 		"expr": "%s",
