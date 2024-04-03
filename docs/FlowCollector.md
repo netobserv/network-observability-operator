@@ -3531,6 +3531,13 @@ TLS client configuration for Loki URL.
             <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:100Mi]]<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorsubnetlabels">subnetLabels</a></b></td>
+        <td>object</td>
+        <td>
+          `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -4801,6 +4808,74 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
           Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
         </td>
         <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.subnetLabels
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
+
+
+
+`subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessorsubnetlabelscustomlabelsindex">customLabels</a></b></td>
+        <td>[]object</td>
+        <td>
+          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services. If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>openShiftAutoDetect</b></td>
+        <td>boolean</td>
+        <td>
+          `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the OpenShift install configuration and the Cluster Network Operator configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.subnetLabels.customLabels[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorsubnetlabels)</sup></sup>
+
+
+
+SubnetLabel allows to label subnets and IPs, such as to identify cluster-external workloads or web services.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>cidrs</b></td>
+        <td>[]string</td>
+        <td>
+          List of CIDRs, such as `["1.2.3.4/32"]`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Label name, used to flag matching flows.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -11716,6 +11791,13 @@ TLS client configuration for Loki URL.
             <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:100Mi]]<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorsubnetlabels-1">subnetLabels</a></b></td>
+        <td>object</td>
+        <td>
+          `SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -14437,6 +14519,74 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
           Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.<br/>
         </td>
         <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.subnetLabels
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor-1)</sup></sup>
+
+
+
+`SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessorsubnetlabelscustomlabelsindex-1">customLabels</a></b></td>
+        <td>[]object</td>
+        <td>
+          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services. If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>openShiftAutoDetect</b></td>
+        <td>boolean</td>
+        <td>
+          `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the OpenShift install configuration and the Cluster Network Operator configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.subnetLabels.customLabels[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorsubnetlabels-1)</sup></sup>
+
+
+
+SubnetLabel allows to label subnets and IPs, such as to identify cluster-external workloads or web services.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>cidrs</b></td>
+        <td>[]string</td>
+        <td>
+          List of CIDRs, such as `["1.2.3.4/32"]`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Label name, used to flag matching flows.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 

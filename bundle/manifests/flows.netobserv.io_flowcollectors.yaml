@@ -2272,6 +2272,38 @@ spec:
                           Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
+                  subnetLabels:
+                    description: '`subnetLabels` allows to define custom labels on
+                      subnets and IPs or to enable automatic labelling of recognized
+                      subnets in OpenShift.'
+                    properties:
+                      customLabels:
+                        description: '`customLabels` allows to customize subnets and
+                          IPs labelling, such as to identify cluster-external workloads
+                          or web services. If you enable `openShiftAutoDetect`, `customLabels`
+                          can override the detected subnets in case they overlap.'
+                        items:
+                          description: SubnetLabel allows to label subnets and IPs,
+                            such as to identify cluster-external workloads or web
+                            services.
+                          properties:
+                            cidrs:
+                              description: List of CIDRs, such as `["1.2.3.4/32"]`.
+                              items:
+                                type: string
+                              type: array
+                            name:
+                              description: Label name, used to flag matching flows.
+                              type: string
+                          type: object
+                        type: array
+                      openShiftAutoDetect:
+                        description: '`openShiftAutoDetect` allows, when set to `true`,
+                          to detect automatically the machines, pods and services
+                          subnets based on the OpenShift install configuration and
+                          the Cluster Network Operator configuration.'
+                        type: boolean
+                    type: object
                 type: object
             type: object
           status:
@@ -6103,6 +6135,38 @@ spec:
                           to an implementation-defined value. Requests cannot exceed
                           Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
+                    type: object
+                  subnetLabels:
+                    description: '`SubnetLabels` allows to define custom labels on
+                      subnets and IPs or to enable automatic labelling of recognized
+                      subnets in OpenShift.'
+                    properties:
+                      customLabels:
+                        description: '`customLabels` allows to customize subnets and
+                          IPs labelling, such as to identify cluster-external workloads
+                          or web services. If you enable `openShiftAutoDetect`, `customLabels`
+                          can override the detected subnets in case they overlap.'
+                        items:
+                          description: SubnetLabel allows to label subnets and IPs,
+                            such as to identify cluster-external workloads or web
+                            services.
+                          properties:
+                            cidrs:
+                              description: List of CIDRs, such as `["1.2.3.4/32"]`.
+                              items:
+                                type: string
+                              type: array
+                            name:
+                              description: Label name, used to flag matching flows.
+                              type: string
+                          type: object
+                        type: array
+                      openShiftAutoDetect:
+                        description: '`openShiftAutoDetect` allows, when set to `true`,
+                          to detect automatically the machines, pods and services
+                          subnets based on the OpenShift install configuration and
+                          the Cluster Network Operator configuration.'
+                        type: boolean
                     type: object
                 type: object
             type: object

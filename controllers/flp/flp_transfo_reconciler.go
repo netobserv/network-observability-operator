@@ -65,7 +65,7 @@ func (r *transformerReconciler) getStatus() *status.Instance {
 	return &r.Status
 }
 
-func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector, flowMetrics *metricslatest.FlowMetricList) error {
+func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel) error {
 	// Retrieve current owned objects
 	err := r.Managed.FetchAll(ctx)
 	if err != nil {
@@ -80,7 +80,7 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 
 	r.Status.SetReady() // will be overidden if necessary, as error or pending
 
-	builder, err := newTransfoBuilder(r.Instance, &desired.Spec, flowMetrics)
+	builder, err := newTransfoBuilder(r.Instance, &desired.Spec, flowMetrics, detectedSubnets)
 	if err != nil {
 		return err
 	}

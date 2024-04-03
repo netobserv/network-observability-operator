@@ -171,14 +171,14 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki}
-	b, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{})
+	b, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{}, nil)
 	return b
 }
 
 func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) transfoBuilder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki}
-	b, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{})
+	b, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{}, nil)
 	return b
 }
 
@@ -553,7 +553,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2"}
-	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics)
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics, nil)
 	third := b.generic.serviceMonitor()
 
 	report = helper.NewChangeReport("")
@@ -561,7 +561,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 	assert.Contains(report.String(), "ServiceMonitor labels changed")
 
 	// Check scheme changed
-	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics)
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics, nil)
 	fourth := b.generic.serviceMonitor()
 	fourth.Spec.Endpoints[0].Scheme = "https"
 
@@ -606,7 +606,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2"}
-	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics)
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics, nil)
 	third := b.generic.prometheusRule()
 
 	report = helper.NewChangeReport("")
@@ -755,8 +755,8 @@ func TestLabels(t *testing.T) {
 
 	cfg := getConfig()
 	info := reconcilers.Common{Namespace: "ns"}
-	builder, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
-	tBuilder, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{})
+	builder, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil)
+	tBuilder, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil)
 
 	// Deployment
 	depl := tBuilder.deployment(annotate("digest"))
@@ -982,4 +982,54 @@ func TestPipelineWithoutLoki(t *testing.T) {
 		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
 		pipeline,
 	)
+}
+
+func TestReadMachineNetworks(t *testing.T) {
+	cm := corev1.ConfigMap{
+		Data: map[string]string{
+			"install-config": `
+additionalTrustBundlePolicy: Proxyonly
+apiVersion: v1
+baseDomain: my.openshift.com
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform: {}
+  replicas: 3
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 3
+metadata:
+  creationTimestamp: null
+  name: my-cluster
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 10.0.0.0/16
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  aws:
+    region: eu-west-3
+publish: External`,
+		},
+	}
+
+	machines, err := readMachineNetworks(&cm)
+	assert.NoError(t, err)
+
+	assert.Equal(t,
+		[]flowslatest.SubnetLabel{
+			{
+				Name:  "Machines",
+				CIDRs: []string{"10.0.0.0/16"},
+			},
+		}, machines)
 }
