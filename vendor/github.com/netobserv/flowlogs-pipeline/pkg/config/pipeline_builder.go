@@ -192,6 +192,33 @@ func (b *PipelineBuilderStage) GetStageParams() []StageParam {
 	return b.pipeline.config
 }
 
+func isStaticParam(param StageParam) bool {
+	if param.Encode != nil && param.Encode.Type == api.PromType {
+		return false
+	}
+	return true
+}
+
+func (b *PipelineBuilderStage) GetStaticStageParams() []StageParam {
+	res := []StageParam{}
+	for _, param := range b.pipeline.config {
+		if isStaticParam(param) {
+			res = append(res, param)
+		}
+	}
+	return res
+}
+
+func (b *PipelineBuilderStage) GetDynamicStageParams() []StageParam {
+	res := []StageParam{}
+	for _, param := range b.pipeline.config {
+		if !isStaticParam(param) {
+			res = append(res, param)
+		}
+	}
+	return res
+}
+
 // IntoConfigFileStruct injects the current pipeline and params in the provided ConfigFileStruct object.
 func (b *PipelineBuilderStage) IntoConfigFileStruct(cfs *ConfigFileStruct) *ConfigFileStruct {
 	cfs.Pipeline = b.GetStages()

@@ -27,22 +27,35 @@ import (
 )
 
 type Options struct {
-	PipeLine        string
-	Parameters      string
-	MetricsSettings string
-	Health          Health
-	Profile         Profile
+	PipeLine          string
+	Parameters        string
+	DynamicParameters string
+	MetricsSettings   string
+	Health            Health
+	Profile           Profile
 }
 
 // (nolint => needs refactoring)
 //
 //nolint:revive
 type ConfigFileStruct struct {
-	LogLevel        string          `yaml:"log-level,omitempty" json:"log-level,omitempty"`
-	MetricsSettings MetricsSettings `yaml:"metricsSettings,omitempty" json:"metricsSettings,omitempty"`
-	Pipeline        []Stage         `yaml:"pipeline,omitempty" json:"pipeline,omitempty"`
-	Parameters      []StageParam    `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	PerfSettings    PerfSettings    `yaml:"perfSettings,omitempty" json:"perfSettings,omitempty"`
+	LogLevel          string            `yaml:"log-level,omitempty" json:"log-level,omitempty"`
+	MetricsSettings   MetricsSettings   `yaml:"metricsSettings,omitempty" json:"metricsSettings,omitempty"`
+	Pipeline          []Stage           `yaml:"pipeline,omitempty" json:"pipeline,omitempty"`
+	Parameters        []StageParam      `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	PerfSettings      PerfSettings      `yaml:"perfSettings,omitempty" json:"perfSettings,omitempty"`
+	DynamicParameters DynamicParameters `yaml:"dynamicParameters,omitempty" json:"dynamicParameters,omitempty"`
+}
+
+type DynamicParameters struct {
+	Namespace      string `yaml:"namespace,omitempty" json:"namespace,omitempty"`
+	Name           string `yaml:"name,omitempty" json:"name,omitempty"`
+	FileName       string `yaml:"fileName,omitempty" json:"fileName,omitempty"`
+	KubeConfigPath string `yaml:"kubeConfigPath,omitempty" json:"kubeConfigPath,omitempty" doc:"path to kubeconfig file (optional)"`
+}
+
+type HotReloadStruct struct {
+	Parameters []StageParam `yaml:"parameters,omitempty" json:"parameters,omitempty"`
 }
 
 type Health struct {
@@ -153,6 +166,15 @@ func ParseConfig(opts *Options) (ConfigFileStruct, error) {
 		return out, err
 	}
 	logrus.Debugf("params = %v ", out.Parameters)
+
+	if opts.DynamicParameters != "" {
+		err = JSONUnmarshalStrict([]byte(opts.DynamicParameters), &out.DynamicParameters)
+		if err != nil {
+			logrus.Errorf("error when parsing dynamic pipeline parameters: %v", err)
+			return out, err
+		}
+		logrus.Debugf("dynamicParams = %v ", out.DynamicParameters)
+	}
 
 	if opts.MetricsSettings != "" {
 		err = JSONUnmarshalStrict([]byte(opts.MetricsSettings), &out.MetricsSettings)

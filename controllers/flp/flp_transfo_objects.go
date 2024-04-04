@@ -41,13 +41,22 @@ func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deplo
 	}
 }
 
-func (b *transfoBuilder) configMap() (*corev1.ConfigMap, string, error) {
+func (b *transfoBuilder) staticConfigMap() (*corev1.ConfigMap, string, error) {
 	pipeline := b.generic.NewKafkaPipeline()
 	err := pipeline.AddProcessorStages()
 	if err != nil {
 		return nil, "", err
 	}
-	return b.generic.ConfigMap()
+	return b.generic.StaticConfigMap()
+}
+
+func (b *transfoBuilder) dynamicConfigMap() (*corev1.ConfigMap, error) {
+	pipeline := b.generic.NewKafkaPipeline()
+	err := pipeline.AddProcessorStages()
+	if err != nil {
+		return nil, err
+	}
+	return b.generic.DynamicConfigMap()
 }
 
 func (b *transfoBuilder) promService() *corev1.Service {

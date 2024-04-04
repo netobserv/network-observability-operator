@@ -20,26 +20,28 @@ import (
 
 type monolithReconciler struct {
 	*reconcilers.Instance
-	daemonSet      *appsv1.DaemonSet
-	promService    *corev1.Service
-	serviceAccount *corev1.ServiceAccount
-	configMap      *corev1.ConfigMap
-	roleBindingIn  *rbacv1.ClusterRoleBinding
-	roleBindingTr  *rbacv1.ClusterRoleBinding
-	serviceMonitor *monitoringv1.ServiceMonitor
-	prometheusRule *monitoringv1.PrometheusRule
+	daemonSet        *appsv1.DaemonSet
+	promService      *corev1.Service
+	serviceAccount   *corev1.ServiceAccount
+	staticConfigMap  *corev1.ConfigMap
+	dynamicConfigMap *corev1.ConfigMap
+	roleBindingIn    *rbacv1.ClusterRoleBinding
+	roleBindingTr    *rbacv1.ClusterRoleBinding
+	serviceMonitor   *monitoringv1.ServiceMonitor
+	prometheusRule   *monitoringv1.PrometheusRule
 }
 
 func newMonolithReconciler(cmn *reconcilers.Instance) *monolithReconciler {
 	name := name(ConfMonolith)
 	rec := monolithReconciler{
-		Instance:       cmn,
-		daemonSet:      cmn.Managed.NewDaemonSet(name),
-		promService:    cmn.Managed.NewService(promServiceName(ConfMonolith)),
-		serviceAccount: cmn.Managed.NewServiceAccount(name),
-		configMap:      cmn.Managed.NewConfigMap(configMapName(ConfMonolith)),
-		roleBindingIn:  cmn.Managed.NewCRB(RoleBindingMonoName(ConfKafkaIngester)),
-		roleBindingTr:  cmn.Managed.NewCRB(RoleBindingMonoName(ConfKafkaTransformer)),
+		Instance:         cmn,
+		daemonSet:        cmn.Managed.NewDaemonSet(name),
+		promService:      cmn.Managed.NewService(promServiceName(ConfMonolith)),
+		serviceAccount:   cmn.Managed.NewServiceAccount(name),
+		staticConfigMap:  cmn.Managed.NewConfigMap(staticConfigMapName(ConfMonolith)),
+		dynamicConfigMap: cmn.Managed.NewConfigMap(dynamicConfigMapName(ConfMonolith)),
+		roleBindingIn:    cmn.Managed.NewCRB(RoleBindingMonoName(ConfKafkaIngester)),
+		roleBindingTr:    cmn.Managed.NewCRB(RoleBindingMonoName(ConfKafkaTransformer)),
 	}
 	if cmn.AvailableAPIs.HasSvcMonitor() {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(serviceMonitorName(ConfMonolith))
@@ -83,21 +85,25 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 	if err != nil {
 		return err
 	}
-	newCM, configDigest, err := builder.configMap()
+	newSCM, configDigest, err := builder.staticConfigMap()
 	if err != nil {
 		return err
 	}
 	annotations := map[string]string{
 		constants.PodConfigurationDigest: configDigest,
 	}
-	if !r.Managed.Exists(r.configMap) {
-		if err := r.CreateOwned(ctx, newCM); err != nil {
+	if !r.Managed.Exists(r.staticConfigMap) {
+		if err := r.CreateOwned(ctx, newSCM); err != nil {
 			return err
 		}
-	} else if !equality.Semantic.DeepDerivative(newCM.Data, r.configMap.Data) {
-		if err := r.UpdateIfOwned(ctx, r.configMap, newCM); err != nil {
+	} else if !equality.Semantic.DeepDerivative(newSCM.Data, r.staticConfigMap.Data) {
+		if err := r.UpdateIfOwned(ctx, r.staticConfigMap, newSCM); err != nil {
 			return err
 		}
+	}
+
+	if err := r.reconcileDynamicConfigMap(ctx, &builder); err != nil {
+		return err
 	}
 
 	if err := r.reconcilePermissions(ctx, &builder); err != nil {
@@ -126,6 +132,23 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 	}
 
 	return r.reconcileDaemonSet(ctx, builder.daemonSet(annotations))
+}
+
+func (r *monolithReconciler) reconcileDynamicConfigMap(ctx context.Context, builder *monolithBuilder) error {
+	newDCM, err := builder.dynamicConfigMap()
+	if err != nil {
+		return err
+	}
+	if !r.Managed.Exists(r.dynamicConfigMap) {
+		if err := r.CreateOwned(ctx, newDCM); err != nil {
+			return err
+		}
+	} else if !equality.Semantic.DeepDerivative(newDCM.Data, r.dynamicConfigMap.Data) {
+		if err := r.UpdateIfOwned(ctx, r.dynamicConfigMap, newDCM); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *monolithReconciler) reconcilePrometheusService(ctx context.Context, builder *monolithBuilder) error {

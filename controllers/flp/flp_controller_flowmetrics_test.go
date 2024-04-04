@@ -30,6 +30,10 @@ func ControllerFlowMetricsSpecs() {
 		Name:      "flowlogs-pipeline-config",
 		Namespace: operatorNamespace,
 	}
+	dcmKey := types.NamespacedName{
+		Name:      "flowlogs-pipeline-config-dynamic",
+		Namespace: operatorNamespace,
+	}
 	metric1 := metricslatest.FlowMetric{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "metric-1",
@@ -72,6 +76,7 @@ func ControllerFlowMetricsSpecs() {
 	Context("Deploying default FLP", func() {
 		ds := appsv1.DaemonSet{}
 		cm := v1.ConfigMap{}
+		dcm := v1.ConfigMap{}
 		It("Should create successfully", func() {
 			created := &flowslatest.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{Name: crKey.Name},
@@ -94,7 +99,12 @@ func ControllerFlowMetricsSpecs() {
 				return k8sClient.Get(ctx, cmKey, &cm)
 			}, timeout, interval).Should(Succeed())
 
-			metrics, err := getConfiguredMetrics(&cm)
+			By("Expecting flowlogs-pipeline-config-dynamic configmap to be created")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, dcmKey, &dcm)
+			}, timeout, interval).Should(Succeed())
+
+			metrics, err := getConfiguredMetrics(&dcm)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(metrics).To(HaveLen(3)) // only default metrics
 		})
@@ -110,7 +120,7 @@ func ControllerFlowMetricsSpecs() {
 		It("Should update configmap with custom metrics", func() {
 			Eventually(func() interface{} {
 				cm := v1.ConfigMap{}
-				err := k8sClient.Get(ctx, cmKey, &cm)
+				err := k8sClient.Get(ctx, dcmKey, &cm)
 				if err != nil {
 					return err
 				}
@@ -137,7 +147,7 @@ func ControllerFlowMetricsSpecs() {
 		It("Should update configmap with custom metrics", func() {
 			Eventually(func() interface{} {
 				cm := v1.ConfigMap{}
-				err := k8sClient.Get(ctx, cmKey, &cm)
+				err := k8sClient.Get(ctx, dcmKey, &cm)
 				if err != nil {
 					return err
 				}
