@@ -36,6 +36,7 @@ type Panel struct {
 	Targets []Target
 	Span    int
 	Unit    metricslatest.Unit
+	Format  string // only used for unmarshalling grafana json in tests
 }
 
 func NewPanel(title string, t metricslatest.ChartType, unit metricslatest.Unit, span int, targets ...Target) Panel {
@@ -49,14 +50,14 @@ func NewPanel(title string, t metricslatest.ChartType, unit metricslatest.Unit, 
 }
 
 type Target struct {
-	Expr   string
-	Legend string
+	Expr         string
+	LegendFormat string
 }
 
 func NewTarget(expr, legend string) Target {
 	return Target{
-		Expr:   expr,
-		Legend: legend,
+		Expr:         expr,
+		LegendFormat: legend,
 	}
 }
 
@@ -90,10 +91,17 @@ func (d *Dashboard) FindRow(titleSubstr string) *Row {
 }
 
 func (d *Dashboard) FindPanel(titleSubstr string) *Panel {
+	return d.FindNthPanel(titleSubstr, 1)
+}
+
+func (d *Dashboard) FindNthPanel(titleSubstr string, n int) *Panel {
 	for _, r := range d.Rows {
 		for _, p := range r.Panels {
 			if strings.Contains(p.Title, titleSubstr) {
-				return &p
+				if n <= 1 {
+					return &p
+				}
+				n--
 			}
 		}
 	}
@@ -210,9 +218,14 @@ func (p *Panel) ToGrafanaJSON() string {
 		unit = "short"
 	}
 	var singleStatFormat string
-	if p.Unit == metricslatest.UnitSeconds {
+	//nolint:exhaustive
+	switch p.Unit {
+	case metricslatest.UnitSeconds:
 		singleStatFormat = "s"
-	} else {
+	case metricslatest.UnitPercent:
+		singleStatFormat = "percentunit"
+		unit = "short"
+	default:
 		singleStatFormat = unit
 	}
 	var t string
@@ -306,5 +319,5 @@ func (t *Target) ToGrafanaJSON() string {
 		"legendFormat": "%s",
 		"refId": "A"
 	}
-	`, expr, t.Legend)
+	`, expr, t.LegendFormat)
 }

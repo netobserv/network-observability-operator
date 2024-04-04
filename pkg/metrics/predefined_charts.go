@@ -137,7 +137,7 @@ func dropCharts(group string, unit metricslatest.Unit) []metricslatest.Chart {
 		Title:         "Top drops",
 		Unit:          unit,
 		Queries:       []metricslatest.Query{{PromQL: "sum(rate($METRIC{$FILTERS}[2m])) by ($LABELS)", Legend: "$LEGEND"}},
-	}, group, string(unit))...)
+	}, group, "")...)
 }
 
 func dnsCharts(group string) []metricslatest.Chart {

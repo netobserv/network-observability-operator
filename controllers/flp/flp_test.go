@@ -722,27 +722,27 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 func TestAutoScalerUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 
-	//equals specs
+	// Equals specs
 	autoScalerSpec, hpa := getAutoScalerSpecs()
 	report := helper.NewChangeReport("")
 	assert.False(helper.AutoScalerChanged(&autoScalerSpec, hpa, &report))
 	assert.Contains(report.String(), "no change")
 
-	//wrong max replicas
+	// Wrong max replicas
 	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MaxReplicas = 10
 	report = helper.NewChangeReport("")
 	assert.True(helper.AutoScalerChanged(&autoScalerSpec, hpa, &report))
 	assert.Contains(report.String(), "Max replicas changed")
 
-	//missing min replicas
+	// Missing min replicas
 	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MinReplicas = nil
 	report = helper.NewChangeReport("")
 	assert.True(helper.AutoScalerChanged(&autoScalerSpec, hpa, &report))
 	assert.Contains(report.String(), "Min replicas changed")
 
-	//missing metrics
+	// Missing metrics
 	autoScalerSpec, hpa = getAutoScalerSpecs()
 	autoScalerSpec.Spec.Metrics = []ascv2.MetricSpec{}
 	report = helper.NewChangeReport("")

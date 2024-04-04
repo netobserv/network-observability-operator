@@ -56,7 +56,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		Owns(&corev1.ServiceAccount{}).
 		Watches(
 			&metricslatest.FlowMetric{},
-			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
 				if o.GetNamespace() == r.currentNamespace {
 					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
 				}

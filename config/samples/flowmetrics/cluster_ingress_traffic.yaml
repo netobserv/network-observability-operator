@@ -1,15 +1,9 @@
+# More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
 apiVersion: flows.netobserv.io/v1alpha1
 kind: FlowMetric
 metadata:
-  labels:
-    app.kubernetes.io/name: flowmetric
-    app.kubernetes.io/instance: flowmetric-sample
-    app.kubernetes.io/part-of: netobserv-operator
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: netobserv-operator
-  name: flowmetric-sample
+  name: flowmetric-cluster-ingress-traffic
 spec:
-  # More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
   metricName: cluster_ingress_bytes_total
   type: Counter
   valueField: Bytes

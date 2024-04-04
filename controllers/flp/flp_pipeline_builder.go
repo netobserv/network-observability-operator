@@ -226,12 +226,11 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 
 func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem, error) {
 	m := &api.MetricsItem{
-		Name:       flowMetric.MetricName,
-		Type:       api.MetricEncodeOperationEnum(strings.ToLower(string(flowMetric.Type))),
-		Filters:    []api.MetricsFilter{},
-		Labels:     flowMetric.Labels,
-		ValueKey:   flowMetric.ValueField,
-		ValueScale: flowMetric.Divider,
+		Name:     flowMetric.MetricName,
+		Type:     api.MetricEncodeOperationEnum(strings.ToLower(string(flowMetric.Type))),
+		Filters:  []api.MetricsFilter{},
+		Labels:   flowMetric.Labels,
+		ValueKey: flowMetric.ValueField,
 	}
 	for _, f := range metrics.GetFilters(flowMetric) {
 		m.Filters = append(m.Filters, api.MetricsFilter{Key: f.Field, Value: f.Value, Type: api.MetricFilterEnum(conversion.PascalToLower(string(f.MatchType), '_'))})
@@ -242,6 +241,13 @@ func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem
 			return nil, fmt.Errorf("could not parse metric buckets as floats: '%s'; error was: %w", b, err)
 		}
 		m.Buckets = append(m.Buckets, f)
+	}
+	if flowMetric.Divider != "" {
+		f, err := strconv.ParseFloat(flowMetric.Divider, 64)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse metric divider as float: '%s'; error was: %w", flowMetric.Divider, err)
+		}
+		m.ValueScale = f
 	}
 	return m, nil
 }
@@ -398,7 +404,7 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 		if b.desired.Processor.ClusterName != "" {
 			clusterName = b.desired.Processor.ClusterName
 		} else {
-			//take clustername from openshift
+			// Take clustername from openshift
 			clusterName = string(b.clusterID)
 		}
 		if clusterName != "" {
@@ -460,7 +466,7 @@ func getIPFIXTransport(transport string) string {
 	case "UDP":
 		return "udp"
 	default:
-		return "tcp" //always fallback on tcp
+		return "tcp" // Always fallback on tcp
 	}
 }
 

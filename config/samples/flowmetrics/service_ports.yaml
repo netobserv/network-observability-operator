@@ -1,0 +1,20 @@
+# More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: flowmetric-service-ports
+spec:
+  # Example, counting flows per port <= 9999
+  metricName: service_ports_total
+  type: Counter
+  labels: [DstPort]
+  filters:
+  - field: DstPort
+    value: "^\\d\\d?\\d?\\d?$"
+    matchType: Regex
+  - field: Duplicate
+    value: "true"
+    matchType: NotEqual
+  - field: FlowDirection
+    value: "1|2"
+    matchType: Regex

@@ -18,28 +18,49 @@ metadata:
             "name": "flowmetric-sample"
           },
           "spec": {
+            "charts": [
+              {
+                "dashboardName": "NetObserv",
+                "queries": [
+                  {
+                    "legend": "",
+                    "promQL": "sum(rate($METRIC[2m]))"
+                  }
+                ],
+                "title": "Cluster ingress traffic",
+                "type": "SingleStat",
+                "unit": "Bps"
+              },
+              {
+                "dashboardName": "NetObserv",
+                "queries": [
+                  {
+                    "legend": "{{DstK8S_Namespace}} / {{DstK8S_OwnerName}}",
+                    "promQL": "sum(rate($METRIC{DstK8S_Namespace!=\"\"}[2m])) by (DstK8S_Namespace, DstK8S_OwnerName)"
+                  }
+                ],
+                "sectionName": "Cluster",
+                "title": "Top cluster ingress traffic per workload",
+                "type": "StackArea",
+                "unit": "Bps"
+              }
+            ],
+            "direction": "Ingress",
             "filters": [
               {
-                "field": "DstPort",
-                "matchType": "Regex",
-                "value": "^\\d\\d?\\d?\\d?$"
-              },
-              {
-                "field": "Duplicate",
-                "matchType": "NotEqual",
-                "value": "true"
-              },
-              {
-                "field": "FlowDirection",
-                "matchType": "Regex",
-                "value": "1|2"
+                "field": "SrcSubnetLabel",
+                "matchType": "Absence"
               }
             ],
             "labels": [
-              "DstPort"
+              "DstK8S_HostName",
+              "DstK8S_Namespace",
+              "DstK8S_OwnerName",
+              "DstK8S_OwnerType"
             ],
-            "metricName": "service_ports_total",
-            "type": "Counter"
+            "metricName": "cluster_ingress_bytes_total",
+            "type": "Counter",
+            "valueField": "Bytes"
           }
         },
         {

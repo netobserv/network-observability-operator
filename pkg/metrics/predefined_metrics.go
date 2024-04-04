@@ -96,7 +96,7 @@ func init() {
 					{Field: "TimeFlowRttNs", MatchType: metricslatest.MatchPresence},
 				},
 				Labels:  labels,
-				Divider: 1_000_000_000, // ns => s
+				Divider: "1000000000", // ns => s
 				Buckets: latencyBuckets,
 				Charts:  rttCharts(group),
 			},
@@ -143,7 +143,7 @@ func init() {
 					{Field: "DnsId", MatchType: metricslatest.MatchPresence},
 				},
 				Labels:  dnsLabels,
-				Divider: 1000, // ms => s
+				Divider: "1000", // ms => s
 				Buckets: latencyBuckets,
 				Charts:  dnsCharts(group),
 			},
@@ -238,5 +238,5 @@ func removeMetricsByPattern(list []string, search string) []string {
 func MergePredefined(fm []metricslatest.FlowMetric, fc *flowslatest.FlowCollectorSpec) []metricslatest.FlowMetric {
 	names := getIncludeList(fc)
 	predefined := GetDefinitions(names)
-	return append(fm, predefined...)
+	return append(predefined, fm...)
 }

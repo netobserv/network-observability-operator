@@ -44,7 +44,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		Owns(&corev1.Namespace{}).
 		Watches(
 			&metricslatest.FlowMetric{},
-			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
 				if o.GetNamespace() == r.currentNamespace {
 					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
 				}
@@ -87,6 +87,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 }
 
 func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired *flowslatest.FlowCollector) error {
+	log := log.FromContext(ctx)
 	ns := helper.GetNamespace(&desired.Spec)
 	r.currentNamespace = ns
 
@@ -124,8 +125,11 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 		if err := r.Client.List(ctx, &fm, &client.ListOptions{Namespace: ns}); err != nil {
 			return r.status.Error("CantListFlowMetrics", err)
 		}
+		log.WithValues("items count", len(fm.Items)).Info("FlowMetrics loaded")
 
 		allMetrics := metrics.MergePredefined(fm.Items, &desired.Spec)
+		log.WithValues("metrics count", len(allMetrics)).Info("Merged metrics")
+
 		desiredFlowDashboardCM, del, err := buildFlowMetricsDashboard(allMetrics)
 		if err != nil {
 			return err

@@ -45,7 +45,7 @@ type MetricFilter struct {
 	// +required
 	Field string `json:"field"`
 
-	// Value to filter on
+	// Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.
 	// +optional
 	Value string `json:"value"`
 
@@ -112,7 +112,7 @@ type FlowMetricSpec struct {
 
 	// When non-zero, scale factor (divider) of the value. Metric value = Flow value / Divider.
 	// +optional
-	Divider float64 `json:"divider"`
+	Divider string `json:"divider"`
 
 	// Charts configuration
 	// +optional
@@ -127,6 +127,7 @@ const (
 	UnitSeconds         Unit      = "seconds"
 	UnitBPS             Unit      = "Bps"
 	UnitPPS             Unit      = "pps"
+	UnitPercent         Unit      = "percent"
 	ChartTypeSingleStat ChartType = "SingleStat"
 	ChartTypeLine       ChartType = "Line"
 	ChartTypeStackArea  ChartType = "StackArea"
@@ -134,17 +135,48 @@ const (
 
 // Configures charts / dashboard generation associated to a metric
 type Chart struct {
-	DashboardName string    `json:"dashboardName"`
-	SectionName   string    `json:"sectionName"`
-	Title         string    `json:"title"`
-	Unit          Unit      `json:"unit"`
-	Type          ChartType `json:"type"`
-	Queries       []Query   `json:"queries"`
+	// Name of the containing dashboard. If this name does not refer to an existing dashboard, a new dashboard is created.
+	// +kubebuilder:default:="NetObserv"
+	DashboardName string `json:"dashboardName"`
+
+	// Name of the containing dashboard section. If this name does not refer to an existing section, a new section is created.
+	// If `sectionName` is omitted or empty, the chart is placed in the global top section.
+	// +optional
+	SectionName string `json:"sectionName"`
+
+	// Title of the chart.
+	// +required
+	Title string `json:"title"`
+
+	// Unit of this chart. Only a few units are currently supported. Leave empty to use generic number.
+	// +kubebuilder:validation:Enum:="bytes";"seconds";"Bps";"pps";"percent"
+	// +optional
+	Unit Unit `json:"unit"`
+
+	// Type of the chart.
+	// +kubebuilder:validation:Enum:="SingleStat";"Line";"StackArea"
+	// +required
+	Type ChartType `json:"type"`
+
+	// List of queries to be displayed on this chart. If `type` is `SingleStat` and multiple queries are provided,
+	// this chart will be automatically expanded in several panels (one per query).
+	// +required
+	Queries []Query `json:"queries"`
 }
 
 // Configures PromQL queries
 type Query struct {
+	// The `promQL` query to be run against Prometheus. If the chart `type` is `SingleStat`, this query should only return
+	// a single timeseries. For other types, a top 7 is displayed.
+	// You can use `$METRIC` to refer to the metric defined in this resource. For example: `sum(rate($METRIC[2m]))`.
+	// To learn more about `promQL`, refer to the Prometheus documentation: https://prometheus.io/docs/prometheus/latest/querying/basics/
+	// +required
 	PromQL string `json:"promQL"`
+
+	// The query legend that applies to each timeseries represented in this chart. When multiple timeseries are displayed, you should set a legend
+	// that distinguishes each of them. It can be done with the following format: `{{ Label }}`. For example, if the `promQL` groups timeseries per
+	// label such as: `sum(rate($METRIC[2m])) by (Label1, Label2)`, you may write as the legend: `Label1={{ Label1 }}, Label2={{ Label2 }}`.
+	// +required
 	Legend string `json:"legend"`
 }
 
