@@ -10797,7 +10797,7 @@ Loki configuration for `LokiStack` mode. This is useful for an easy loki-operato
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where this `LokiStack` resource is located. If omited, it is assumed to be the same as `spec.namespace`.<br/>
+          Namespace where this `LokiStack` resource is located. If omitted, it is assumed to be the same as `spec.namespace`.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

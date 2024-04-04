@@ -601,7 +601,7 @@ type LokiStackRef struct {
 	//+kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
 
-	// Namespace where this `LokiStack` resource is located. If omited, it is assumed to be the same as `spec.namespace`.
+	// Namespace where this `LokiStack` resource is located. If omitted, it is assumed to be the same as `spec.namespace`.
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 }
