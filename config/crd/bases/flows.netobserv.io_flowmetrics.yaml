@@ -64,31 +64,24 @@ spec:
                         created.
                       type: string
                     queries:
-                      description: List of queries to be displayed on this chart.
-                        If `type` is `SingleStat` and multiple queries are provided,
-                        this chart will be automatically expanded in several panels
-                        (one per query).
+                      description: |-
+                        List of queries to be displayed on this chart. If `type` is `SingleStat` and multiple queries are provided,
+                        this chart will be automatically expanded in several panels (one per query).
                       items:
                         description: Configures PromQL queries
                         properties:
                           legend:
-                            description: 'The query legend that applies to each timeseries
-                              represented in this chart. When multiple timeseries
-                              are displayed, you should set a legend that distinguishes
-                              each of them. It can be done with the following format:
-                              `{{ Label }}`. For example, if the `promQL` groups timeseries
-                              per label such as: `sum(rate($METRIC[2m])) by (Label1,
-                              Label2)`, you may write as the legend: `Label1={{ Label1
-                              }}, Label2={{ Label2 }}`.'
+                            description: |-
+                              The query legend that applies to each timeseries represented in this chart. When multiple timeseries are displayed, you should set a legend
+                              that distinguishes each of them. It can be done with the following format: `{{ Label }}`. For example, if the `promQL` groups timeseries per
+                              label such as: `sum(rate($METRIC[2m])) by (Label1, Label2)`, you may write as the legend: `Label1={{ Label1 }}, Label2={{ Label2 }}`.
                             type: string
                           promQL:
-                            description: 'The `promQL` query to be run against Prometheus.
-                              If the chart `type` is `SingleStat`, this query should
-                              only return a single timeseries. For other types, a
-                              top 7 is displayed. You can use `$METRIC` to refer to
-                              the metric defined in this resource. For example: `sum(rate($METRIC[2m]))`.
-                              To learn more about `promQL`, refer to the Prometheus
-                              documentation: https://prometheus.io/docs/prometheus/latest/querying/basics/'
+                            description: |-
+                              The `promQL` query to be run against Prometheus. If the chart `type` is `SingleStat`, this query should only return
+                              a single timeseries. For other types, a top 7 is displayed.
+                              You can use `$METRIC` to refer to the metric defined in this resource. For example: `sum(rate($METRIC[2m]))`.
+                              To learn more about `promQL`, refer to the Prometheus documentation: https://prometheus.io/docs/prometheus/latest/querying/basics/
                             type: string
                         required:
                         - legend
@@ -96,10 +89,9 @@ spec:
                         type: object
                       type: array
                     sectionName:
-                      description: Name of the containing dashboard section. If this
-                        name does not refer to an existing section, a new section
-                        is created. If `sectionName` is omitted or empty, the chart
-                        is placed in the global top section.
+                      description: |-
+                        Name of the containing dashboard section. If this name does not refer to an existing section, a new section is created.
+                        If `sectionName` is omitted or empty, the chart is placed in the global top section.
                       type: string
                     title:
                       description: Title of the chart.
