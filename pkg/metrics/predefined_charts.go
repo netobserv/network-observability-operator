@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	netobservDashboard = "NetObserv"
+	mainDashboard = "Main"
 )
 
 func trafficCharts(group, vt, dir string) []metricslatest.Chart {
@@ -24,7 +24,7 @@ func trafficCharts(group, vt, dir string) []metricslatest.Chart {
 	totalSingleStat := metricslatest.Chart{
 		Type:          metricslatest.ChartTypeSingleStat,
 		SectionName:   "",
-		DashboardName: netobservDashboard,
+		DashboardName: mainDashboard,
 		Title:         fmt.Sprintf("Total %s traffic", dir),
 		Unit:          unit,
 		Queries:       []metricslatest.Query{{PromQL: "sum(rate($METRIC[2m]))"}},
@@ -33,7 +33,7 @@ func trafficCharts(group, vt, dir string) []metricslatest.Chart {
 	appSingleStat := metricslatest.Chart{
 		Type:          metricslatest.ChartTypeSingleStat,
 		SectionName:   "",
-		DashboardName: netobservDashboard,
+		DashboardName: mainDashboard,
 		Title:         fmt.Sprintf("Apps %s traffic", dir),
 		Unit:          unit,
 		Queries:       []metricslatest.Query{{PromQL: `sum(rate($METRIC{K8S_FlowLayer="app"}[2m]))`}},
@@ -42,7 +42,7 @@ func trafficCharts(group, vt, dir string) []metricslatest.Chart {
 	infraSingleStat := metricslatest.Chart{
 		Type:          metricslatest.ChartTypeSingleStat,
 		SectionName:   "",
-		DashboardName: netobservDashboard,
+		DashboardName: mainDashboard,
 		Title:         fmt.Sprintf("Infra %s traffic", dir),
 		Unit:          unit,
 		Queries:       []metricslatest.Query{{PromQL: `sum(rate($METRIC{K8S_FlowLayer="infra"}[2m]))`}},
@@ -65,7 +65,7 @@ func trafficCharts(group, vt, dir string) []metricslatest.Chart {
 	return append(charts, chartVariantsFor(&metricslatest.Chart{
 		Type:          metricslatest.ChartTypeStackArea,
 		SectionName:   sectionName,
-		DashboardName: netobservDashboard,
+		DashboardName: mainDashboard,
 		Title:         fmt.Sprintf("Top %s traffic", dir),
 		Unit:          unit,
 		Queries:       []metricslatest.Query{{PromQL: "sum(rate($METRIC{$FILTERS}[2m])) by ($LABELS)", Legend: "$LEGEND"}},
@@ -77,7 +77,7 @@ func rttCharts(group string) []metricslatest.Chart {
 	charts := []metricslatest.Chart{{
 		Type:          metricslatest.ChartTypeSingleStat,
 		SectionName:   "",
-		DashboardName: netobservDashboard,
+		DashboardName: mainDashboard,
 		Title:         "TCP latency",
 		Unit:          metricslatest.UnitSeconds,
 		Queries: []metricslatest.Query{
@@ -90,7 +90,7 @@ func rttCharts(group string) []metricslatest.Chart {
 	charts = append(charts, chartVariantsFor(&metricslatest.Chart{
 		Type:          metricslatest.ChartTypeLine,
 		SectionName:   sectionName,
-		DashboardName: netobservDashboard,
+		DashboardName: mainDashboard,
 		Title:         "Top P50 sRTT",
 		Unit:          metricslatest.UnitSeconds,
 		Queries: []metricslatest.Query{
@@ -103,7 +103,7 @@ func rttCharts(group string) []metricslatest.Chart {
 	charts = append(charts, chartVariantsFor(&metricslatest.Chart{
 		Type:          metricslatest.ChartTypeLine,
 		SectionName:   sectionName,
-		DashboardName: netobservDashboard,
+		DashboardName: mainDashboard,
 		Title:         "Top P99 sRTT",
 		Unit:          metricslatest.UnitSeconds,
 		Queries: []metricslatest.Query{
@@ -124,7 +124,7 @@ func dropCharts(group string, unit metricslatest.Unit) []metricslatest.Chart {
 		charts = append(charts, metricslatest.Chart{
 			Type:          metricslatest.ChartTypeSingleStat,
 			SectionName:   "",
-			DashboardName: netobservDashboard,
+			DashboardName: mainDashboard,
 			Title:         "Drops",
 			Unit:          unit,
 			Queries:       []metricslatest.Query{{PromQL: "sum(rate($METRIC[2m]))"}},
@@ -133,7 +133,7 @@ func dropCharts(group string, unit metricslatest.Unit) []metricslatest.Chart {
 	return append(charts, chartVariantsFor(&metricslatest.Chart{
 		Type:          metricslatest.ChartTypeStackArea,
 		SectionName:   sectionName,
-		DashboardName: netobservDashboard,
+		DashboardName: mainDashboard,
 		Title:         "Top drops",
 		Unit:          unit,
 		Queries:       []metricslatest.Query{{PromQL: "sum(rate($METRIC{$FILTERS}[2m])) by ($LABELS)", Legend: "$LEGEND"}},
@@ -146,7 +146,7 @@ func dnsCharts(group string) []metricslatest.Chart {
 		{
 			Type:          metricslatest.ChartTypeSingleStat,
 			SectionName:   "",
-			DashboardName: netobservDashboard,
+			DashboardName: mainDashboard,
 			Title:         "DNS latency",
 			Unit:          metricslatest.UnitSeconds,
 			Queries: []metricslatest.Query{
@@ -159,7 +159,7 @@ func dnsCharts(group string) []metricslatest.Chart {
 		{
 			Type:          metricslatest.ChartTypeSingleStat,
 			SectionName:   "",
-			DashboardName: netobservDashboard,
+			DashboardName: mainDashboard,
 			Title:         "DNS error rate",
 			Queries:       []metricslatest.Query{{PromQL: `sum(rate($METRIC_count{DnsFlagsResponseCode!="NoError"}[2m]))`}},
 		},
@@ -167,7 +167,7 @@ func dnsCharts(group string) []metricslatest.Chart {
 	charts = append(charts, chartVariantsFor(&metricslatest.Chart{
 		Type:          metricslatest.ChartTypeLine,
 		SectionName:   sectionName,
-		DashboardName: netobservDashboard,
+		DashboardName: mainDashboard,
 		Title:         "Top P50 DNS latency",
 		Unit:          metricslatest.UnitSeconds,
 		Queries: []metricslatest.Query{
@@ -180,7 +180,7 @@ func dnsCharts(group string) []metricslatest.Chart {
 	charts = append(charts, chartVariantsFor(&metricslatest.Chart{
 		Type:          metricslatest.ChartTypeLine,
 		SectionName:   sectionName,
-		DashboardName: netobservDashboard,
+		DashboardName: mainDashboard,
 		Title:         "Top P99 DNS latency",
 		Unit:          metricslatest.UnitSeconds,
 		Queries: []metricslatest.Query{
@@ -194,7 +194,7 @@ func dnsCharts(group string) []metricslatest.Chart {
 	return append(charts, chartVariantsFor(&metricslatest.Chart{
 		Type:          metricslatest.ChartTypeStackArea,
 		SectionName:   sectionName,
-		DashboardName: netobservDashboard,
+		DashboardName: mainDashboard,
 		Title:         "DNS error rate",
 		Queries: []metricslatest.Query{{
 			PromQL: `sum(rate($METRIC_count{DnsFlagsResponseCode!="NoError",$FILTERS}[2m])) by (DnsFlagsResponseCode,$LABELS)`,

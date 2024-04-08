@@ -14,10 +14,10 @@ func TestCreateFlowMetricsDashboard_All(t *testing.T) {
 	defs := metrics.GetDefinitions(metrics.GetAllNames())
 	js := CreateFlowMetricsDashboards(defs)
 
-	d, err := FromBytes([]byte(js))
+	d, err := FromBytes([]byte(js["Main"]))
 	assert.NoError(err)
 
-	assert.Equal("NetObserv", d.Title)
+	assert.Equal("NetObserv / Main", d.Title)
 
 	assert.Equal([]string{"", "Traffic rates", "TCP latencies", "Byte and packet drops", "DNS"}, d.Titles())
 
@@ -89,10 +89,10 @@ func TestCreateFlowMetricsDashboard_OnlyNodeIngressBytes(t *testing.T) {
 	defs := metrics.GetDefinitions([]string{"node_ingress_bytes_total"})
 	js := CreateFlowMetricsDashboards(defs)
 
-	d, err := FromBytes([]byte(js))
+	d, err := FromBytes([]byte(js["Main"]))
 	assert.NoError(err)
 
-	assert.Equal("NetObserv", d.Title)
+	assert.Equal("NetObserv / Main", d.Title)
 	assert.Equal([]string{"", "Traffic rates"}, d.Titles())
 
 	topRow := d.FindRow("")
@@ -108,10 +108,10 @@ func TestCreateFlowMetricsDashboard_DefaultList(t *testing.T) {
 	defs := metrics.GetDefinitions(metrics.DefaultIncludeList)
 	js := CreateFlowMetricsDashboards(defs)
 
-	d, err := FromBytes([]byte(js))
+	d, err := FromBytes([]byte(js["Main"]))
 	assert.NoError(err)
 
-	assert.Equal("NetObserv", d.Title)
+	assert.Equal("NetObserv / Main", d.Title)
 	assert.Equal([]string{"", "Traffic rates", "TCP latencies", "Byte and packet drops", "DNS"}, d.Titles())
 
 	topRow := d.FindRow("")
@@ -188,7 +188,7 @@ func TestCreateCustomDashboard(t *testing.T) {
 				MetricName: "my_metric",
 				Charts: []metricslatest.Chart{
 					{
-						DashboardName: "NetObserv",
+						DashboardName: "Main",
 						SectionName:   "My section",
 						Title:         "My chart",
 						Unit:          metricslatest.UnitBPS,
@@ -201,7 +201,7 @@ func TestCreateCustomDashboard(t *testing.T) {
 						},
 					},
 					{
-						DashboardName: "NetObserv",
+						DashboardName: "Main",
 						SectionName:   "My next section",
 						Title:         "My next chart",
 						Unit:          metricslatest.UnitBPS,
@@ -216,12 +216,32 @@ func TestCreateCustomDashboard(t *testing.T) {
 				},
 			},
 		},
+		{
+			Spec: metricslatest.FlowMetricSpec{
+				MetricName: "my_metric",
+				Charts: []metricslatest.Chart{
+					{
+						DashboardName: "My other dashboard",
+						SectionName:   "Other section",
+						Title:         "Other chart",
+						Unit:          metricslatest.UnitBPS,
+						Type:          metricslatest.ChartTypeLine,
+						Queries: []metricslatest.Query{
+							{
+								PromQL: `sum(rate($METRIC{label="foo"}[5m])) by (lbl1,lbl2)`,
+								Legend: "{{lbl1}}: {{lbl2}}",
+							},
+						},
+					},
+				},
+			},
+		},
 	})
 
-	d, err := FromBytes([]byte(js))
+	d, err := FromBytes([]byte(js["Main"]))
 	assert.NoError(err)
 
-	assert.Equal("NetObserv", d.Title)
+	assert.Equal("NetObserv / Main", d.Title)
 	assert.Equal([]string{"My section", "My next section"}, d.Titles())
 
 	r1 := d.FindRow("My section")
@@ -253,4 +273,25 @@ func TestCreateCustomDashboard(t *testing.T) {
 			},
 		},
 	}, r2.Panels[0])
+
+	d, err = FromBytes([]byte(js["My other dashboard"]))
+	assert.NoError(err)
+
+	assert.Equal("NetObserv / My other dashboard", d.Title)
+	assert.Equal([]string{"Other section"}, d.Titles())
+
+	r1 = d.FindRow("Other section")
+	assert.Equal([]string{"Other chart"}, r1.Titles())
+	assert.Equal(Panel{
+		Title:  "Other chart",
+		Type:   "graph",
+		Span:   4,
+		Format: "Bps",
+		Targets: []Target{
+			{
+				Expr:         "topk(7, sum(rate(netobserv_my_metric{label=\"foo\"}[5m])) by (lbl1,lbl2))",
+				LegendFormat: "{{lbl1}}: {{lbl2}}",
+			},
+		},
+	}, r1.Panels[0])
 }

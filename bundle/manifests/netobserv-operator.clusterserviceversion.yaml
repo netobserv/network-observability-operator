@@ -20,7 +20,7 @@ metadata:
           "spec": {
             "charts": [
               {
-                "dashboardName": "NetObserv",
+                "dashboardName": "Main",
                 "queries": [
                   {
                     "legend": "",
@@ -32,7 +32,7 @@ metadata:
                 "unit": "Bps"
               },
               {
-                "dashboardName": "NetObserv",
+                "dashboardName": "Main",
                 "queries": [
                   {
                     "legend": "{{DstK8S_Namespace}} / {{DstK8S_OwnerName}}",

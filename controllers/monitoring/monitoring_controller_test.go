@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/pkg/dashboards"
 	"github.com/netobserv/network-observability-operator/pkg/test"
@@ -52,6 +53,14 @@ func ControllerSpecs() {
 	})
 
 	Context("Installing CR", func() {
+		It("Create control-cm", func() {
+			// control-cm is a control object installed in openshift-config-managed, aiming to make sure we never delete configmaps that we don't own
+			Expect(k8sClient.Create(ctx, &v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{Name: "control-cm", Namespace: "openshift-config-managed"},
+				Data:       map[string]string{},
+			})).Should(Succeed())
+		})
+
 		It("Should create successfully", func() {
 			created := &flowslatest.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{
@@ -70,7 +79,7 @@ func ControllerSpecs() {
 			Eventually(func() interface{} {
 				cm := v1.ConfigMap{}
 				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "grafana-dashboard-netobserv-flow-metrics",
+					Name:      "netobserv-main",
 					Namespace: "openshift-config-managed",
 				}, &cm)
 			}, timeout, interval).Should(Succeed())
@@ -90,6 +99,11 @@ func ControllerSpecs() {
 				}
 				return d.Titles()
 			}, timeout, interval).Should(Equal([]string{"", "Flowlogs-pipeline statistics", "eBPF agent statistics", "Operator statistics", "Resource usage"}))
+
+			By("Expecting control-cm to remain")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{Name: "control-cm", Namespace: "openshift-config-managed"}, &v1.ConfigMap{})
+			}, timeout, interval).Should(Succeed())
 		})
 
 		It("Should update successfully", func() {
@@ -105,10 +119,10 @@ func ControllerSpecs() {
 			By("Expecting the flow dashboards configmap to be deleted")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "grafana-dashboard-netobserv-flow-metrics",
+					Name:      "netobserv-main",
 					Namespace: "openshift-config-managed",
 				}, &v1.ConfigMap{})
-			}, timeout, interval).Should(MatchError(`configmaps "grafana-dashboard-netobserv-flow-metrics" not found`))
+			}, timeout, interval).Should(MatchError(`configmaps "netobserv-main" not found`))
 
 			By("Expecting the health dashboard to remain")
 			Eventually(func() interface{} {
@@ -125,6 +139,107 @@ func ControllerSpecs() {
 				}
 				return d.Titles()
 			}, timeout, interval).Should(Equal([]string{"", "Flowlogs-pipeline statistics", "eBPF agent statistics", "Operator statistics", "Resource usage"}))
+
+			By("Expecting control-cm to remain")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{Name: "control-cm", Namespace: "openshift-config-managed"}, &v1.ConfigMap{})
+			}, timeout, interval).Should(Succeed())
+		})
+	})
+
+	Context("Installing custom dashboards", func() {
+		It("Should create FlowMetric 1 successfully", func() {
+			Expect(k8sClient.Create(ctx, &metricslatest.FlowMetric{
+				ObjectMeta: metav1.ObjectMeta{Name: "metric1", Namespace: operatorNamespace},
+				Spec: metricslatest.FlowMetricSpec{
+					MetricName: "my-metric",
+					Type:       metricslatest.CounterMetric,
+					Charts: []metricslatest.Chart{
+						{
+							DashboardName: "My dashboard 01",
+							Title:         "title",
+							Type:          metricslatest.ChartTypeSingleStat,
+							Queries:       []metricslatest.Query{{PromQL: "(query)", Legend: "-"}},
+						},
+					},
+				},
+			})).Should(Succeed())
+		})
+
+		It("Should create FlowMetric 2 successfully", func() {
+			Expect(k8sClient.Create(ctx, &metricslatest.FlowMetric{
+				ObjectMeta: metav1.ObjectMeta{Name: "metric2", Namespace: operatorNamespace},
+				Spec: metricslatest.FlowMetricSpec{
+					MetricName: "my-metric",
+					Type:       metricslatest.CounterMetric,
+					Charts: []metricslatest.Chart{
+						{
+							DashboardName: "My dashboard 02",
+							Title:         "title",
+							Type:          metricslatest.ChartTypeSingleStat,
+							Queries:       []metricslatest.Query{{PromQL: "(query)", Legend: "-"}},
+						},
+					},
+				},
+			})).Should(Succeed())
+		})
+
+		It("Should create corresponding dashboards", func() {
+			Eventually(func() interface{} {
+				cm := v1.ConfigMap{}
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "netobserv-my-dashboard-01",
+					Namespace: "openshift-config-managed",
+				}, &cm)
+			}, timeout, interval).Should(Succeed())
+
+			Eventually(func() interface{} {
+				cm := v1.ConfigMap{}
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "netobserv-my-dashboard-02",
+					Namespace: "openshift-config-managed",
+				}, &cm)
+			}, timeout, interval).Should(Succeed())
+		})
+
+		It("Should delete dashboard 2", func() {
+			By("Getting FlowMetric 2")
+			fm := metricslatest.FlowMetric{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, types.NamespacedName{Name: "metric2", Namespace: operatorNamespace}, &fm)
+			}).Should(Succeed())
+
+			By("Deleting FlowMetric 2")
+			Eventually(func() error { return k8sClient.Delete(ctx, &fm) }, timeout, interval).Should(Succeed())
+
+			By("Expecting dashboard 2 to be deleted")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "netobserv-my-dashboard-02",
+					Namespace: "openshift-config-managed",
+				}, &v1.ConfigMap{})
+			}, timeout, interval).Should(MatchError(`configmaps "netobserv-my-dashboard-02" not found`))
+
+			By("Expecting dashboard 1 to remain")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "netobserv-my-dashboard-01",
+					Namespace: "openshift-config-managed",
+				}, &v1.ConfigMap{})
+			}, timeout, interval).Should(Succeed())
+
+			By("Expecting the health dashboard to remain")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "grafana-dashboard-netobserv-health",
+					Namespace: "openshift-config-managed",
+				}, &v1.ConfigMap{})
+			}, timeout, interval).Should(Succeed())
+
+			By("Expecting control-cm to remain")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{Name: "control-cm", Namespace: "openshift-config-managed"}, &v1.ConfigMap{})
+			}, timeout, interval).Should(Succeed())
 		})
 	})
 
@@ -149,6 +264,11 @@ func ControllerSpecs() {
 	Context("Cleanup", func() {
 		It("Should delete CR", func() {
 			cleanupCR(crKey)
+
+			By("Expecting control-cm to remain")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{Name: "control-cm", Namespace: "openshift-config-managed"}, &v1.ConfigMap{})
+			}, timeout, interval).Should(Succeed())
 		})
 	})
 }

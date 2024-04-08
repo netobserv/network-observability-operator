@@ -58,7 +58,7 @@ spec:
                     to a metric
                   properties:
                     dashboardName:
-                      default: NetObserv
+                      default: Main
                       description: Name of the containing dashboard. If this name
                         does not refer to an existing dashboard, a new dashboard is
                         created.

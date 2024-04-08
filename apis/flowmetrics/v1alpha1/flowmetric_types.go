@@ -136,13 +136,13 @@ const (
 // Configures charts / dashboard generation associated to a metric
 type Chart struct {
 	// Name of the containing dashboard. If this name does not refer to an existing dashboard, a new dashboard is created.
-	// +kubebuilder:default:="NetObserv"
+	// +kubebuilder:default:="Main"
 	DashboardName string `json:"dashboardName"`
 
 	// Name of the containing dashboard section. If this name does not refer to an existing section, a new section is created.
 	// If `sectionName` is omitted or empty, the chart is placed in the global top section.
 	// +optional
-	SectionName string `json:"sectionName"`
+	SectionName string `json:"sectionName,omitempty"`
 
 	// Title of the chart.
 	// +required
@@ -151,7 +151,7 @@ type Chart struct {
 	// Unit of this chart. Only a few units are currently supported. Leave empty to use generic number.
 	// +kubebuilder:validation:Enum:="bytes";"seconds";"Bps";"pps";"percent"
 	// +optional
-	Unit Unit `json:"unit"`
+	Unit Unit `json:"unit,omitempty"`
 
 	// Type of the chart.
 	// +kubebuilder:validation:Enum:="SingleStat";"Line";"StackArea"

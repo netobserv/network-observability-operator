@@ -13,14 +13,14 @@ spec:
   - field: DstSubnetLabel
     matchType: Absence
   charts:
-  - dashboardName: NetObserv
+  - dashboardName: Main
     title: Cluster egress traffic
     unit: Bps
     type: SingleStat
     queries:
     - promQL: "sum(rate($METRIC[2m]))"
       legend: ""
-  - dashboardName: NetObserv
+  - dashboardName: Main
     sectionName: Cluster
     title: Top cluster egress traffic per workload
     unit: Bps

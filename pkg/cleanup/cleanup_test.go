@@ -26,11 +26,26 @@ var oldDashboard = corev1.ConfigMap{
 	Data: map[string]string{},
 }
 
+var oldDashboard2 = corev1.ConfigMap{
+	ObjectMeta: v1.ObjectMeta{
+		Name:      "grafana-dashboard-netobserv-flow-metrics",
+		Namespace: "openshift-config-managed",
+		OwnerReferences: []v1.OwnerReference{{
+			APIVersion: "flows.netobserv.io/v1beta2",
+			Kind:       "FlowCollector",
+			Name:       "cluster",
+			Controller: ptr.To(true),
+		}},
+	},
+	Data: map[string]string{},
+}
+
 func TestCleanPastReferences(t *testing.T) {
 	assert := assert.New(t)
 	clientMock := test.NewClient()
 	clientMock.MockConfigMap(&oldDashboard)
-	assert.Equal(1, clientMock.Len())
+	clientMock.MockConfigMap(&oldDashboard2)
+	assert.Equal(2, clientMock.Len())
 	didRun = false
 
 	err := CleanPastReferences(context.Background(), clientMock, "netobserv")
@@ -44,6 +59,7 @@ func TestCleanPastReferences_Empty(t *testing.T) {
 	assert := assert.New(t)
 	clientMock := test.NewClient()
 	clientMock.MockNonExisting(types.NamespacedName{Name: "grafana-dashboard-netobserv", Namespace: "openshift-config-managed"})
+	clientMock.MockNonExisting(types.NamespacedName{Name: "grafana-dashboard-netobserv-flow-metrics", Namespace: "openshift-config-managed"})
 	assert.Equal(0, clientMock.Len())
 	didRun = false
 
@@ -59,6 +75,7 @@ func TestCleanPastReferences_NotManaged(t *testing.T) {
 	unmanaged := oldDashboard
 	unmanaged.OwnerReferences = nil
 	clientMock.MockConfigMap(&unmanaged)
+	clientMock.MockNonExisting(types.NamespacedName{Name: "grafana-dashboard-netobserv-flow-metrics", Namespace: "openshift-config-managed"})
 	assert.Equal(1, clientMock.Len())
 	didRun = false
 
@@ -79,6 +96,7 @@ func TestCleanPastReferences_DifferentOwner(t *testing.T) {
 		Name:       "SomethingElse",
 	}}
 	clientMock.MockConfigMap(&unmanaged)
+	clientMock.MockNonExisting(types.NamespacedName{Name: "grafana-dashboard-netobserv-flow-metrics", Namespace: "openshift-config-managed"})
 	assert.Equal(1, clientMock.Len())
 	didRun = false
 

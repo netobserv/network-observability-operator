@@ -84,11 +84,12 @@ func createFlowMetricsDashboard(dashboardName string, charts []chart) string {
 	}
 
 	rearrangeRows(orderedRows, mapTopPanels, mapBodyPanels)
-	d := Dashboard{Rows: orderedRows, Title: dashboardName}
+	d := Dashboard{Rows: orderedRows, Title: "NetObserv / " + dashboardName}
 	return d.ToGrafanaJSON()
 }
 
-func CreateFlowMetricsDashboards(metrics []metricslatest.FlowMetric) string {
+func CreateFlowMetricsDashboards(metrics []metricslatest.FlowMetric) map[string]string {
+	dashboardsJSON := make(map[string]string)
 	chartsPerDashboard := make(map[string][]chart)
 	for i := range metrics {
 		metric := &metrics[i]
@@ -100,6 +101,8 @@ func CreateFlowMetricsDashboards(metrics []metricslatest.FlowMetric) string {
 			chartsPerDashboard[c.DashboardName] = append(chartsPerDashboard[c.DashboardName], c)
 		}
 	}
-	// TODO: handle more dashboards
-	return createFlowMetricsDashboard("NetObserv", chartsPerDashboard["NetObserv"])
+	for name, charts := range chartsPerDashboard {
+		dashboardsJSON[name] = createFlowMetricsDashboard(name, charts)
+	}
+	return dashboardsJSON
 }

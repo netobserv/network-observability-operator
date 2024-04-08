@@ -130,22 +130,63 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 		allMetrics := metrics.MergePredefined(fm.Items, &desired.Spec)
 		log.WithValues("metrics count", len(allMetrics)).Info("Merged metrics")
 
-		desiredFlowDashboardCM, del, err := buildFlowMetricsDashboard(allMetrics)
-		if err != nil {
+		// List existing dashboards
+		currentDashboards := corev1.ConfigMapList{}
+		if err := r.Client.List(ctx, &currentDashboards, &client.ListOptions{Namespace: dashboardCMNamespace}); err != nil {
+			return r.status.Error("CantListDashboards", err)
+		}
+		filterOwned(&currentDashboards)
+
+		// Build desired dashboards
+		cms := buildFlowMetricsDashboards(allMetrics)
+		if desiredHealthDashboardCM, del, err := buildHealthDashboard(ns); err != nil {
 			return err
-		} else if err = reconcilers.ReconcileConfigMap(ctx, clh, desiredFlowDashboardCM, del); err != nil {
-			return err
+		} else if !del {
+			cms = append(cms, desiredHealthDashboardCM)
 		}
 
-		desiredHealthDashboardCM, del, err := buildHealthDashboard(ns)
-		if err != nil {
-			return err
-		} else if err = reconcilers.ReconcileConfigMap(ctx, clh, desiredHealthDashboardCM, del); err != nil {
-			return err
+		for _, cm := range cms {
+			current := findAndRemoveConfigMapFromList(&currentDashboards, cm.Name)
+			if err := reconcilers.ReconcileConfigMap(ctx, clh, current, cm); err != nil {
+				return err
+			}
+		}
+
+		// Delete any CM that remained in currentDashboards list
+		for i := range currentDashboards.Items {
+			if err := reconcilers.ReconcileConfigMap(ctx, clh, &currentDashboards.Items[i], nil); err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
+}
+
+func filterOwned(list *corev1.ConfigMapList) {
+	for i := len(list.Items) - 1; i >= 0; i-- {
+		if !helper.IsOwned(&list.Items[i]) {
+			removeFromList(list, i)
+		}
+	}
+}
+
+func findAndRemoveConfigMapFromList(list *corev1.ConfigMapList, name string) *corev1.ConfigMap {
+	for i := len(list.Items) - 1; i >= 0; i-- {
+		if list.Items[i].Name == name {
+			cm := list.Items[i]
+			// Remove that element from the list, so the list ends up with elements to delete
+			removeFromList(list, i)
+			return &cm
+		}
+	}
+	return nil
+}
+
+func removeFromList(list *corev1.ConfigMapList, i int) {
+	// (quickest removal as order doesn't matter)
+	list.Items[i] = list.Items[len(list.Items)-1]
+	list.Items = list.Items[:len(list.Items)-1]
 }
 
 func (r *Reconciler) namespaceExist(ctx context.Context, nsName string) (*corev1.Namespace, error) {
