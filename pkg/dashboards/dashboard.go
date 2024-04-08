@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
@@ -91,6 +92,8 @@ func createFlowMetricsDashboard(dashboardName string, charts []chart) string {
 func CreateFlowMetricsDashboards(metrics []metricslatest.FlowMetric) map[string]string {
 	dashboardsJSON := make(map[string]string)
 	chartsPerDashboard := make(map[string][]chart)
+	// Sort alphabetically to enforce consistent ordering
+	sort.Slice(metrics, func(i, j int) bool { return metrics[i].Name < metrics[j].Name })
 	for i := range metrics {
 		metric := &metrics[i]
 		for j := range metric.Spec.Charts {

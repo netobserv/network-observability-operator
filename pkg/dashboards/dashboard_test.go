@@ -6,6 +6,7 @@ import (
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestCreateFlowMetricsDashboard_All(t *testing.T) {
@@ -294,4 +295,44 @@ func TestCreateCustomDashboard(t *testing.T) {
 			},
 		},
 	}, r1.Panels[0])
+}
+
+func TestSortedCharts(t *testing.T) {
+	assert := assert.New(t)
+
+	var quickChart = func(title string) metricslatest.Chart {
+		return metricslatest.Chart{
+			DashboardName: "Main",
+			SectionName:   "S0",
+			Title:         title,
+			Type:          metricslatest.ChartTypeSingleStat,
+			Queries:       []metricslatest.Query{{PromQL: `(query)`, Legend: ""}},
+		}
+	}
+
+	js := CreateFlowMetricsDashboards([]metricslatest.FlowMetric{
+		{
+			ObjectMeta: v1.ObjectMeta{Name: "z"},
+			Spec: metricslatest.FlowMetricSpec{
+				Charts: []metricslatest.Chart{
+					quickChart("C0"),
+					quickChart("C1"),
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{Name: "a"},
+			Spec: metricslatest.FlowMetricSpec{
+				Charts: []metricslatest.Chart{
+					quickChart("C2"),
+				},
+			},
+		},
+	})
+
+	d, err := FromBytes([]byte(js["Main"]))
+	assert.NoError(err)
+
+	r := d.FindRow("S0")
+	assert.Equal([]string{"C2", "C0", "C1"}, r.Titles())
 }
