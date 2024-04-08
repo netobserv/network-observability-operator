@@ -52,6 +52,10 @@ func rearrangeRows(rows []*Row, mapTopPanels, mapBodyPanels map[string][]Panel) 
 		}
 		rows[i].Panels = topPanels
 		rows[i].Panels = append(rows[i].Panels, bodyPanels...)
+		if rows[i].Title == "" && len(rows[i].Panels) > 8 {
+			// When top row has many panels, create a collapsable section
+			rows[i].Title = "Overview"
+		}
 	}
 }
 
