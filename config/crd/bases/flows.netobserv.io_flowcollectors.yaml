@@ -2048,7 +2048,9 @@ spec:
                       description: '`subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.'
                       properties:
                         customLabels:
-                          description: '`customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services. If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.'
+                          description: |-
+                            `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
+                            If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.
                           items:
                             description: SubnetLabel allows to label subnets and IPs, such as to identify cluster-external workloads or web services.
                             properties:
@@ -2063,7 +2065,9 @@ spec:
                             type: object
                           type: array
                         openShiftAutoDetect:
-                          description: '`openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the OpenShift install configuration and the Cluster Network Operator configuration.'
+                          description: |-
+                            `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
+                            OpenShift install configuration and the Cluster Network Operator configuration.
                           type: boolean
                       type: object
                   type: object
@@ -5659,7 +5663,9 @@ spec:
                       description: '`SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.'
                       properties:
                         customLabels:
-                          description: '`customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services. If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.'
+                          description: |-
+                            `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
+                            If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.
                           items:
                             description: SubnetLabel allows to label subnets and IPs, such as to identify cluster-external workloads or web services.
                             properties:
@@ -5674,7 +5680,9 @@ spec:
                             type: object
                           type: array
                         openShiftAutoDetect:
-                          description: '`openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the OpenShift install configuration and the Cluster Network Operator configuration.'
+                          description: |-
+                            `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
+                            OpenShift install configuration and the Cluster Network Operator configuration.
                           type: boolean
                       type: object
                   type: object

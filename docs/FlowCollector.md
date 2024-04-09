@@ -5020,14 +5020,16 @@ inside a container.<br/>
         <td><b><a href="#flowcollectorspecprocessorsubnetlabelscustomlabelsindex">customLabels</a></b></td>
         <td>[]object</td>
         <td>
-          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services. If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
+          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
+If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>openShiftAutoDetect</b></td>
         <td>boolean</td>
         <td>
-          `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the OpenShift install configuration and the Cluster Network Operator configuration.<br/>
+          `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
+OpenShift install configuration and the Cluster Network Operator configuration.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -14996,14 +14998,16 @@ inside a container.<br/>
         <td><b><a href="#flowcollectorspecprocessorsubnetlabelscustomlabelsindex-1">customLabels</a></b></td>
         <td>[]object</td>
         <td>
-          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services. If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
+          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
+If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>openShiftAutoDetect</b></td>
         <td>boolean</td>
         <td>
-          `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the OpenShift install configuration and the Cluster Network Operator configuration.<br/>
+          `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
+OpenShift install configuration and the Cluster Network Operator configuration.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
