@@ -61,6 +61,9 @@ type FlowCollectorSpec struct {
 	// `loki`, the flow store, client settings.
 	Loki FlowCollectorLoki `json:"loki,omitempty"`
 
+	// `prometheus` defines Prometheus settings, such as querier configuration used to fetch metrics from the Console plugin.
+	Prometheus FlowCollectorPrometheus `json:"prometheus,omitempty"`
+
 	// `consolePlugin` defines the settings related to the OpenShift Console plugin, when available.
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
@@ -695,8 +698,13 @@ const (
 type FlowCollectorLoki struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
+	// Set `enable` to `true` to store flows in Loki.
+	// The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.prometheus.querier`), or both.
+	// Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
+	// such as getting per-pod information or viewing raw flows.
+	// If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
+	// If they are both disabled, the Console plugin is not deployed.
 	//+kubebuilder:default:=true
-	// Set `enable` to `true` to store flows in Loki. It is required for the OpenShift Console plugin installation.
 	Enable *bool `json:"enable,omitempty"`
 
 	// `mode` must be set according to the installation mode of Loki:<br>
@@ -755,6 +763,64 @@ type FlowCollectorLoki struct {
 	// This section is aimed mostly for debugging and fine-grained performance optimizations.
 	// +optional
 	Advanced *AdvancedLokiConfig `json:"advanced,omitempty"`
+}
+
+// `PrometheusQuerierManual` defines the full connection parameters to Prometheus.
+type PrometheusQuerierManual struct {
+	//+kubebuilder:default:="http://prometheus:9090"
+	// `url` is the address of an existing Prometheus service to use for querying metrics.
+	URL string `json:"url,omitempty"`
+
+	// TLS client configuration for Prometheus URL.
+	// +optional
+	TLS ClientTLS `json:"tls"`
+
+	// Set `true` to forward logged in user token in queries to Prometheus
+	// +optional
+	ForwardUserToken bool `json:"forwardUserToken"`
+}
+
+type PrometheusMode string
+
+const (
+	PromModeAuto   PrometheusMode = "Auto"
+	PromModeManual PrometheusMode = "Manual"
+)
+
+// `FlowCollectorPrometheus` defines the desired state for usage of Prometheus.
+type FlowCollectorPrometheus struct {
+	// Prometheus querying configuration, such as client settings, used in the Console plugin.
+	Querier PrometheusQuerier `json:"querier,omitempty"`
+}
+
+// `PrometheusQuerier` defines the desired state for querying Prometheus (client...)
+type PrometheusQuerier struct {
+	// Set `enable` to `true` to make the Console plugin querying flow metrics from Prometheus instead of Loki whenever possible.
+	// The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
+	// Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
+	// such as getting per-pod information or viewing raw flows.
+	// If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
+	// If they are both disabled, the Console plugin is not deployed.
+	//+kubebuilder:default:=true
+	Enable *bool `json:"enable,omitempty"`
+
+	// `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
+	// - Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
+	// - Use `Manual` for a manual setup<br>
+	//+unionDiscriminator
+	//+kubebuilder:validation:Enum=Manual;Auto
+	//+kubebuilder:default:="Auto"
+	//+kubebuilder:validation:Required
+	Mode PrometheusMode `json:"mode,omitempty"`
+
+	// Prometheus configuration for `Manual` mode.
+	// +optional
+	Manual PrometheusQuerierManual `json:"manual,omitempty"`
+
+	//+kubebuilder:default:="30s"
+	// `timeout` is the read timeout for console plugin queries to Prometheus.
+	// A timeout of zero means no timeout.
+	Timeout *metav1.Duration `json:"timeout,omitempty"` // Warning: keep as pointer, else default is ignored
 }
 
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector

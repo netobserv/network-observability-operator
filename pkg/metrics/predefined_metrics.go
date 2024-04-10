@@ -25,7 +25,7 @@ var (
 	mapLabels      = map[string][]string{
 		tagNodes:      {"SrcK8S_HostName", "DstK8S_HostName"},
 		tagNamespaces: {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer"},
-		tagWorkloads:  {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType"},
+		tagWorkloads:  {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType", "SrcK8S_Type", "DstK8S_Type"},
 	}
 	mapValueFields = map[string]string{
 		tagBytes:   "Bytes",
@@ -199,7 +199,7 @@ func GetDefinitions(names []string) []metricslatest.FlowMetric {
 	return ret
 }
 
-func getIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
+func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
 	var list []string
 	if spec.Processor.Metrics.IncludeList == nil {
 		list = DefaultIncludeList
@@ -231,7 +231,7 @@ func removeMetricsByPattern(list []string, search string) []string {
 }
 
 func MergePredefined(fm []metricslatest.FlowMetric, fc *flowslatest.FlowCollectorSpec) []metricslatest.FlowMetric {
-	names := getIncludeList(fc)
+	names := GetIncludeList(fc)
 	predefined := GetDefinitions(names)
 	return append(predefined, fm...)
 }

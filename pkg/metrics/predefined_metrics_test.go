@@ -53,5 +53,5 @@ func TestGetDefinitions(t *testing.T) {
 	assert.Equal([]string{"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer"}, res[1].Spec.Labels)
 	assert.Equal("workload_egress_packets_total", res[2].Spec.MetricName)
 	assert.Equal("Packets", res[2].Spec.ValueField)
-	assert.Equal([]string{"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType"}, res[2].Spec.Labels)
+	assert.Equal([]string{"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType", "SrcK8S_Type", "DstK8S_Type"}, res[2].Spec.Labels)
 }

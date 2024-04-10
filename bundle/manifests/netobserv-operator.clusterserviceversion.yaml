@@ -416,6 +416,13 @@ metadata:
                   "memory": "100Mi"
                 }
               }
+            },
+            "prometheus": {
+              "querier": {
+                "enable": true,
+                "mode": "Auto",
+                "timeout": "30s"
+              }
             }
           }
         }
@@ -783,6 +790,22 @@ spec:
         path: processor.subnetLabels.customLabels
       - displayName: Open shift auto detect
         path: processor.subnetLabels.openShiftAutoDetect
+      - displayName: Prometheus
+        path: prometheus
+      - displayName: Querier
+        path: prometheus.querier
+      - displayName: Enable
+        path: prometheus.querier.enable
+      - displayName: Manual
+        path: prometheus.querier.manual
+      - displayName: Forward user token
+        path: prometheus.querier.manual.forwardUserToken
+      - displayName: Url
+        path: prometheus.querier.manual.url
+      - displayName: Mode
+        path: prometheus.querier.mode
+      - displayName: Timeout
+        path: prometheus.querier.timeout
       statusDescriptors:
       - description: Namespace where console plugin and flowlogs-pipeline have been
           deployed.

@@ -69,8 +69,13 @@ func UseLoki(spec *flowslatest.FlowCollectorSpec) bool {
 	return spec.Loki.Enable == nil || *spec.Loki.Enable
 }
 
+func UsePrometheus(spec *flowslatest.FlowCollectorSpec) bool {
+	// nil should fallback to default value, which is "true"
+	return spec.Prometheus.Querier.Enable == nil || *spec.Prometheus.Querier.Enable
+}
+
 func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
-	return UseLoki(spec) &&
+	return (UseLoki(spec) || UsePrometheus(spec)) &&
 		// nil should fallback to default value, which is "true"
 		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
 }

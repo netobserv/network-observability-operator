@@ -186,6 +186,14 @@ func flowCollectorIsoSpecs() {
 					StaticLabels:    map[string]string{"app": "netobserv-flowcollector"},
 				},
 			},
+			Prometheus: flowslatest.FlowCollectorPrometheus{
+				Querier: flowslatest.PrometheusQuerier{
+					Enable:  ptr.To(true),
+					Mode:    "Auto",
+					Timeout: &metav1.Duration{Duration: 30 * time.Second},
+					Manual:  flowslatest.PrometheusQuerierManual{URL: "http://prometheus:9090"},
+				},
+			},
 			Kafka: flowslatest.FlowCollectorKafka{
 				Address: "http://kafka",
 				Topic:   "topic",

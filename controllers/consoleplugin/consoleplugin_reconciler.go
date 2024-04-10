@@ -61,7 +61,6 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 	l := log.FromContext(ctx).WithName("console-plugin")
 	ctx = log.IntoContext(ctx, l)
 
-	ns := r.Managed.Namespace
 	// Retrieve current owned objects
 	err := r.Managed.FetchAll(ctx)
 	if err != nil {
@@ -74,7 +73,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 
 	if helper.UseConsolePlugin(&desired.Spec) {
 		// Create object builder
-		builder := newBuilder(ns, r.Instance.Image, &desired.Spec, r.Loki)
+		builder := newBuilder(r.Instance, &desired.Spec)
 
 		if err := r.reconcilePermissions(ctx, &builder); err != nil {
 			return err
@@ -178,7 +177,7 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, de
 }
 
 func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder *builder) (string, error) {
-	newCM, configDigest, err := builder.configMap()
+	newCM, configDigest, err := builder.configMap(ctx)
 	if err != nil {
 		return "", err
 	}
