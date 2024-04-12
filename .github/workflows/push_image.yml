@@ -74,7 +74,7 @@ jobs:
     - name: Test
       run: make test
     - name: Report coverage
-      uses: codecov/codecov-action@v2.1.0
+      uses: codecov/codecov-action@v4
       with:
         files: ./cover.out
         flags: unittests
