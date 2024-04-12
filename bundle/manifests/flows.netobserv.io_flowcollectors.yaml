@@ -146,6 +146,84 @@ spec:
                           - FlowRTT
                           type: string
                         type: array
+                      flowFilter:
+                        description: '`flowFilter` defines the eBPF agent configuration
+                          regarding flow filtering'
+                        properties:
+                          action:
+                            description: Action defines the action to perform on the
+                              flows that match the filter.
+                            enum:
+                            - Accept
+                            - Reject
+                            type: string
+                          cidr:
+                            description: |-
+                              CIDR defines the IP CIDR to filter flows by.
+                              Example: 10.10.10.0/24 or 100:100:100:100::/64
+                            type: string
+                          destPorts:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: |-
+                              DestPorts defines the destination ports to filter flows by.
+                              To filter a single port, set a single port as an integer value. For example destPorts: 80.
+                              To filter a range of ports, use a "start-end" range, string format. For example destPorts: "80-100".
+                            x-kubernetes-int-or-string: true
+                          direction:
+                            description: Direction defines the direction to filter
+                              flows by.
+                            enum:
+                            - Ingress
+                            - Egress
+                            type: string
+                          enable:
+                            description: Set `enable` to `true` to enable eBPF flow
+                              filtering feature.
+                            type: boolean
+                          icmpCode:
+                            description: ICMPCode defines the ICMP code to filter
+                              flows by.
+                            type: integer
+                          icmpType:
+                            description: ICMPType defines the ICMP type to filter
+                              flows by.
+                            type: integer
+                          peerIP:
+                            description: |-
+                              PeerIP defines the IP address to filter flows by.
+                              Example: 10.10.10.10
+                            type: string
+                          ports:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: |-
+                              Ports defines the ports to filter flows by. it can be user for either source or destination ports.
+                              To filter a single port, set a single port as an integer value. For example ports: 80.
+                              To filter a range of ports, use a "start-end" range, string format. For example ports: "80-10
+                            x-kubernetes-int-or-string: true
+                          protocol:
+                            description: Protocol defines the protocol to filter flows
+                              by.
+                            enum:
+                            - TCP
+                            - UDP
+                            - ICMP
+                            - ICMPv6
+                            - SCTP
+                            type: string
+                          sourcePorts:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: |-
+                              SourcePorts defines the source ports to filter flows by.
+                              To filter a single port, set a single port as an integer value. For example sourcePorts: 80.
+                              To filter a range of ports, use a "start-end" range, string format. For example sourcePorts: "80-100".
+                            x-kubernetes-int-or-string: true
+                        type: object
                       imagePullPolicy:
                         default: IfNotPresent
                         description: '`imagePullPolicy` is the Kubernetes pull policy
@@ -2889,6 +2967,84 @@ spec:
                           - FlowRTT
                           type: string
                         type: array
+                      flowFilter:
+                        description: '`flowFilter` defines the eBPF agent configuration
+                          regarding flow filtering'
+                        properties:
+                          action:
+                            description: Action defines the action to perform on the
+                              flows that match the filter.
+                            enum:
+                            - Accept
+                            - Reject
+                            type: string
+                          cidr:
+                            description: |-
+                              CIDR defines the IP CIDR to filter flows by.
+                              Example: 10.10.10.0/24 or 100:100:100:100::/64
+                            type: string
+                          destPorts:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: |-
+                              DestPorts defines the destination ports to filter flows by.
+                              To filter a single port, set a single port as an integer value. For example destPorts: 80.
+                              To filter a range of ports, use a "start-end" range, string format. For example destPorts: "80-100".
+                            x-kubernetes-int-or-string: true
+                          direction:
+                            description: Direction defines the direction to filter
+                              flows by.
+                            enum:
+                            - Ingress
+                            - Egress
+                            type: string
+                          enable:
+                            description: Set `enable` to `true` to enable eBPF flow
+                              filtering feature.
+                            type: boolean
+                          icmpCode:
+                            description: ICMPCode defines the ICMP code to filter
+                              flows by.
+                            type: integer
+                          icmpType:
+                            description: ICMPType defines the ICMP type to filter
+                              flows by.
+                            type: integer
+                          peerIP:
+                            description: |-
+                              PeerIP defines the IP address to filter flows by.
+                              Example: 10.10.10.10
+                            type: string
+                          ports:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: |-
+                              Ports defines the ports to filter flows by. it can be user for either source or destination ports.
+                              To filter a single port, set a single port as an integer value. For example ports: 80.
+                              To filter a range of ports, use a "start-end" range, string format. For example ports: "80-10
+                            x-kubernetes-int-or-string: true
+                          protocol:
+                            description: Protocol defines the protocol to filter flows
+                              by.
+                            enum:
+                            - TCP
+                            - UDP
+                            - ICMP
+                            - ICMPv6
+                            - SCTP
+                            type: string
+                          sourcePorts:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: |-
+                              SourcePorts defines the source ports to filter flows by.
+                              To filter a single port, set a single port as an integer value. For example sourcePorts: 80.
+                              To filter a range of ports, use a "start-end" range, string format. For example sourcePorts: "80-100".
+                            x-kubernetes-int-or-string: true
+                        type: object
                       imagePullPolicy:
                         default: IfNotPresent
                         description: '`imagePullPolicy` is the Kubernetes pull policy

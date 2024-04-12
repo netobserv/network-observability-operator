@@ -22,6 +22,12 @@ spec:
       interfaces: []
       excludeInterfaces: ["lo"]
       kafkaBatchSize: 1048576
+      #flowFilter:
+      #  action: Accept
+      #  cidr: 0.0.0.0/0
+      #  protocol: UDP
+      #  sourcePorts: 53
+      #  enable: true
       metrics:
         enable: false
         server:

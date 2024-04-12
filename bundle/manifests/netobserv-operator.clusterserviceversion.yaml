@@ -487,6 +487,9 @@ spec:
       - path: agent.ebpf.advanced
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - path: agent.ebpf.flowFilter
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: to use Kafka as a broker as part of the flow collection pipeline.
         displayName: Kafka configuration
         path: kafka

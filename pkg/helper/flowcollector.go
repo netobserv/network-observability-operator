@@ -118,6 +118,10 @@ func IsSubnetLabelsEnabled(spec *flowslatest.FlowCollectorFLP) bool {
 	return AutoDetectOpenShiftNetworks(spec) || len(spec.SubnetLabels.CustomLabels) > 0
 }
 
+func IsEBFPFlowFilterEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+	return spec.FlowFilter != nil && spec.FlowFilter.Enable != nil && *spec.FlowFilter.Enable
+}
+
 func PtrBool(b *bool) bool {
 	if b == nil {
 		return false
