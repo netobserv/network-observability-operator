@@ -450,7 +450,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	}
 
 	sampling := coll.Spec.Agent.EBPF.Sampling
-	if sampling != nil && *sampling > 1 {
+	if sampling != nil && *sampling > 0 {
 		config = append(config, corev1.EnvVar{
 			Name:  envSampling,
 			Value: strconv.Itoa(int(*sampling)),
