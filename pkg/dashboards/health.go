@@ -76,6 +76,9 @@ func CreateHealthDashboard(netobsNs string) (string, error) {
 		NewGraphPanel("Errors per minute", PanelUnitShort, 4, true, []Target{
 			NewTarget(`sum(increase(netobserv_agent_errors_total[1m])) by (component, error)`, "{{component}} {{error}}"),
 		}),
+		NewGraphPanel("Filtered flows rate", PanelUnitShort, 4, false, []Target{
+			NewTarget("sum(rate(netobserv_agent_filtered_flows_total[1m])) by (source, reason)", "{{source}} {{reason}}"),
+		}),
 	}))
 
 	// Operator stats
