@@ -148,7 +148,6 @@ func (b *builder) initPipeline(ingest config.PipelineBuilderStage) PipelineBuild
 func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[string]string) corev1.PodTemplateSpec {
 	advancedConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 	var ports []corev1.ContainerPort
-	var tolerations []corev1.Toleration
 	if hasHostPort {
 		ports = []corev1.ContainerPort{{
 			Name:          constants.FLPPortName,
@@ -156,9 +155,6 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 			ContainerPort: *advancedConfig.Port,
 			Protocol:      corev1.ProtocolTCP,
 		}}
-		// This allows deploying an instance in the master node, the same technique used in the
-		// companion ovnkube-node daemonset definition
-		tolerations = []corev1.Toleration{{Operator: corev1.TolerationOpExists}}
 	}
 
 	ports = append(ports, corev1.ContainerPort{
@@ -243,22 +239,21 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	}
 	annotations["prometheus.io/scrape"] = "true"
 	annotations["prometheus.io/scrape_port"] = fmt.Sprint(b.desired.Processor.Metrics.Server.Port)
-
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:      b.labels,
 			Annotations: annotations,
 		},
 		Spec: corev1.PodSpec{
-			Tolerations:        tolerations,
 			Volumes:            volumes,
 			Containers:         []corev1.Container{container},
 			ServiceAccountName: b.name(),
 			HostNetwork:        hostNetwork,
 			DNSPolicy:          dnsPolicy,
-			NodeSelector:       advancedConfig.NodeSelector,
-			Affinity:           advancedConfig.Affinity,
-			PriorityClassName:  advancedConfig.PriorityClassName,
+			NodeSelector:       advancedConfig.Scheduling.NodeSelector,
+			Tolerations:        advancedConfig.Scheduling.Tolerations,
+			Affinity:           advancedConfig.Scheduling.Affinity,
+			PriorityClassName:  advancedConfig.Scheduling.PriorityClassName,
 		},
 	}
 }
