@@ -211,6 +211,7 @@ func TestCreateCustomDashboard(t *testing.T) {
 							{
 								PromQL: `sum(rate($METRIC{label="foo"}[5m])) by (lbl1,lbl2)`,
 								Legend: "{{lbl1}}: {{lbl2}}",
+								Top:    10,
 							},
 						},
 					},
@@ -269,7 +270,7 @@ func TestCreateCustomDashboard(t *testing.T) {
 		Format: "Bps",
 		Targets: []Target{
 			{
-				Expr:         "topk(7, sum(rate(netobserv_my_metric{label=\"foo\"}[5m])) by (lbl1,lbl2))",
+				Expr:         "topk(10, sum(rate(netobserv_my_metric{label=\"foo\"}[5m])) by (lbl1,lbl2))",
 				LegendFormat: "{{lbl1}}: {{lbl2}}",
 			},
 		},

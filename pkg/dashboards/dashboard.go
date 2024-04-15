@@ -30,8 +30,12 @@ func createSingleStatPanels(c *chart) []Panel {
 func createGraphPanel(c *chart) Panel {
 	var targets []Target
 	for _, q := range c.Queries {
+		top := 7
+		if q.Top > 0 {
+			top = q.Top
+		}
 		query := strings.ReplaceAll(q.PromQL, "$METRIC", "netobserv_"+c.mptr.Spec.MetricName)
-		query = fmt.Sprintf("topk(7, %s)", query)
+		query = fmt.Sprintf("topk(%d, %s)", top, query)
 		targets = append(targets, NewTarget(query, q.Legend))
 	}
 	return NewPanel(c.Title, c.Type, c.Unit, 4, targets...)

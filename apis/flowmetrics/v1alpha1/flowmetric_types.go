@@ -178,6 +178,12 @@ type Query struct {
 	// label such as: `sum(rate($METRIC[2m])) by (Label1, Label2)`, you may write as the legend: `Label1={{ Label1 }}, Label2={{ Label2 }}`.
 	// +required
 	Legend string `json:"legend"`
+
+	// Top N series to display per timestamp. Does not apply to `SingleStat` chart type.
+	// +kubebuilder:default:=7
+	// +kubebuilder:validation:Minimum=1
+	// +required
+	Top int `json:"top"`
 }
 
 // FlowMetricStatus defines the observed state of FlowMetric

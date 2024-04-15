@@ -83,9 +83,16 @@ spec:
                               You can use `$METRIC` to refer to the metric defined in this resource. For example: `sum(rate($METRIC[2m]))`.
                               To learn more about `promQL`, refer to the Prometheus documentation: https://prometheus.io/docs/prometheus/latest/querying/basics/
                             type: string
+                          top:
+                            default: 7
+                            description: Top N series to display per timestamp. Does
+                              not apply to `SingleStat` chart type.
+                            minimum: 1
+                            type: integer
                         required:
                         - legend
                         - promQL
+                        - top
                         type: object
                       type: array
                     sectionName:
