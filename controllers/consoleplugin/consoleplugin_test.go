@@ -306,6 +306,7 @@ func TestConfigMapContent(t *testing.T) {
 		Agent:         agentSpec,
 		ConsolePlugin: getPluginConfig(),
 		Loki:          lokiSpec,
+		Processor:     flowslatest.FlowCollectorFLP{SubnetLabels: flowslatest.SubnetLabels{OpenShiftAutoDetect: ptr.To(false)}},
 	}
 	builder := newBuilder(testNamespace, testImage, &spec, &loki)
 	cm, _, err := builder.configMap()
