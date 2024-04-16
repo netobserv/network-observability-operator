@@ -56,25 +56,43 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 		if dst.Spec.Agent.EBPF.Advanced == nil {
 			dst.Spec.Agent.EBPF.Advanced = &v1beta2.AdvancedAgentConfig{}
 		}
-		dst.Spec.Agent.EBPF.Advanced.NodeSelector = restored.Spec.Agent.EBPF.Advanced.NodeSelector
-		dst.Spec.Agent.EBPF.Advanced.Affinity = restored.Spec.Agent.EBPF.Advanced.Affinity
-		dst.Spec.Agent.EBPF.Advanced.PriorityClassName = restored.Spec.Agent.EBPF.Advanced.PriorityClassName
+		if restored.Spec.Agent.EBPF.Advanced.Scheduling != nil {
+			if dst.Spec.Agent.EBPF.Advanced.Scheduling == nil {
+				dst.Spec.Agent.EBPF.Advanced.Scheduling = &v1beta2.SchedulingConfig{}
+			}
+			dst.Spec.Agent.EBPF.Advanced.Scheduling.NodeSelector = restored.Spec.Agent.EBPF.Advanced.Scheduling.NodeSelector
+			dst.Spec.Agent.EBPF.Advanced.Scheduling.Tolerations = restored.Spec.Agent.EBPF.Advanced.Scheduling.Tolerations
+			dst.Spec.Agent.EBPF.Advanced.Scheduling.Affinity = restored.Spec.Agent.EBPF.Advanced.Scheduling.Affinity
+			dst.Spec.Agent.EBPF.Advanced.Scheduling.PriorityClassName = restored.Spec.Agent.EBPF.Advanced.Scheduling.PriorityClassName
+		}
 	}
 	if restored.Spec.Processor.Advanced != nil {
 		if dst.Spec.Processor.Advanced == nil {
 			dst.Spec.Processor.Advanced = &v1beta2.AdvancedProcessorConfig{}
 		}
-		dst.Spec.Processor.Advanced.NodeSelector = restored.Spec.Processor.Advanced.NodeSelector
-		dst.Spec.Processor.Advanced.Affinity = restored.Spec.Processor.Advanced.Affinity
-		dst.Spec.Processor.Advanced.PriorityClassName = restored.Spec.Processor.Advanced.PriorityClassName
+		if restored.Spec.Processor.Advanced.Scheduling != nil {
+			if dst.Spec.Processor.Advanced.Scheduling == nil {
+				dst.Spec.Processor.Advanced.Scheduling = &v1beta2.SchedulingConfig{}
+			}
+			dst.Spec.Processor.Advanced.Scheduling.NodeSelector = restored.Spec.Processor.Advanced.Scheduling.NodeSelector
+			dst.Spec.Processor.Advanced.Scheduling.Tolerations = restored.Spec.Processor.Advanced.Scheduling.Tolerations
+			dst.Spec.Processor.Advanced.Scheduling.Affinity = restored.Spec.Processor.Advanced.Scheduling.Affinity
+			dst.Spec.Processor.Advanced.Scheduling.PriorityClassName = restored.Spec.Processor.Advanced.Scheduling.PriorityClassName
+		}
 	}
 	if restored.Spec.ConsolePlugin.Advanced != nil {
 		if dst.Spec.ConsolePlugin.Advanced == nil {
 			dst.Spec.ConsolePlugin.Advanced = &v1beta2.AdvancedPluginConfig{}
 		}
-		dst.Spec.ConsolePlugin.Advanced.NodeSelector = restored.Spec.ConsolePlugin.Advanced.NodeSelector
-		dst.Spec.ConsolePlugin.Advanced.Affinity = restored.Spec.ConsolePlugin.Advanced.Affinity
-		dst.Spec.ConsolePlugin.Advanced.PriorityClassName = restored.Spec.ConsolePlugin.Advanced.PriorityClassName
+		if restored.Spec.ConsolePlugin.Advanced.Scheduling != nil {
+			if dst.Spec.ConsolePlugin.Advanced.Scheduling == nil {
+				dst.Spec.ConsolePlugin.Advanced.Scheduling = &v1beta2.SchedulingConfig{}
+			}
+			dst.Spec.ConsolePlugin.Advanced.Scheduling.NodeSelector = restored.Spec.ConsolePlugin.Advanced.Scheduling.NodeSelector
+			dst.Spec.ConsolePlugin.Advanced.Scheduling.Tolerations = restored.Spec.ConsolePlugin.Advanced.Scheduling.Tolerations
+			dst.Spec.ConsolePlugin.Advanced.Scheduling.Affinity = restored.Spec.ConsolePlugin.Advanced.Scheduling.Affinity
+			dst.Spec.ConsolePlugin.Advanced.Scheduling.PriorityClassName = restored.Spec.ConsolePlugin.Advanced.Scheduling.PriorityClassName
+		}
 	}
 	ClearDefaultAdvancedConfig(dst)
 

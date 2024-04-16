@@ -371,7 +371,16 @@ func TestBeta2ConversionRoundtrip_Advanced(t *testing.T) {
 			Agent: v1beta2.FlowCollectorAgent{
 				EBPF: v1beta2.FlowCollectorEBPF{
 					Advanced: &v1beta2.AdvancedAgentConfig{
-						PriorityClassName: "pcn",
+						Scheduling: &v1beta2.SchedulingConfig{
+							PriorityClassName: "pcn",
+							Tolerations: []v1.Toleration{
+								{
+									Key:      "agent",
+									Operator: v1.TolerationOpExists,
+									Effect:   v1.TaintEffectNoSchedule,
+								},
+							},
+						},
 					},
 				},
 			},
@@ -382,14 +391,32 @@ func TestBeta2ConversionRoundtrip_Advanced(t *testing.T) {
 					ConversationEndTimeout:         &metav1.Duration{Duration: time.Second},
 					ConversationHeartbeatInterval:  &metav1.Duration{Duration: time.Minute},
 					ConversationTerminatingTimeout: &metav1.Duration{Duration: time.Hour},
-					NodeSelector:                   map[string]string{"test": "ok"},
+					Scheduling: &v1beta2.SchedulingConfig{
+						NodeSelector: map[string]string{"test": "ok"},
+						Tolerations: []v1.Toleration{
+							{
+								Key:      "processor",
+								Operator: v1.TolerationOpExists,
+								Effect:   v1.TaintEffectNoExecute,
+							},
+						},
+					},
 				},
 			},
 			ConsolePlugin: v1beta2.FlowCollectorConsolePlugin{
 				Advanced: &v1beta2.AdvancedPluginConfig{
 					Register: ptr.To(false),
 					Port:     ptr.To(int32(1000)),
-					Affinity: &affinityExample,
+					Scheduling: &v1beta2.SchedulingConfig{
+						Affinity: &affinityExample,
+						Tolerations: []v1.Toleration{
+							{
+								Key:      "plugin",
+								Operator: v1.TolerationOpExists,
+								Effect:   v1.TaintEffectNoExecute,
+							},
+						},
+					},
 				},
 			},
 			Loki: v1beta2.FlowCollectorLoki{
@@ -423,16 +450,19 @@ func TestBeta2ConversionRoundtrip_Advanced(t *testing.T) {
 	err = converted.ConvertTo(&back)
 	assert.NoError(err)
 
-	assert.Equal("pcn", back.Spec.Agent.EBPF.Advanced.PriorityClassName)
+	assert.Equal("pcn", back.Spec.Agent.EBPF.Advanced.Scheduling.PriorityClassName)
+	assert.Equal(v1.TaintEffectNoSchedule, back.Spec.Agent.EBPF.Advanced.Scheduling.Tolerations[0].Effect)
 	assert.False(*back.Spec.ConsolePlugin.Advanced.Register)
 	assert.Equal(int32(1000), *back.Spec.ConsolePlugin.Advanced.Port)
-	assert.Equal(&affinityExample, back.Spec.ConsolePlugin.Advanced.Affinity)
+	assert.Equal(&affinityExample, back.Spec.ConsolePlugin.Advanced.Scheduling.Affinity)
+	assert.Equal(v1.TaintEffectNoExecute, back.Spec.ConsolePlugin.Advanced.Scheduling.Tolerations[0].Effect)
 	assert.Equal(int32(999), *back.Spec.Processor.Advanced.HealthPort)
 	assert.Equal(int32(998), *back.Spec.Processor.Advanced.ProfilePort)
 	assert.Equal(time.Second, back.Spec.Processor.Advanced.ConversationEndTimeout.Duration)
 	assert.Equal(time.Minute, back.Spec.Processor.Advanced.ConversationHeartbeatInterval.Duration)
 	assert.Equal(time.Hour, back.Spec.Processor.Advanced.ConversationTerminatingTimeout.Duration)
-	assert.Equal(map[string]string{"test": "ok"}, back.Spec.Processor.Advanced.NodeSelector)
+	assert.Equal(map[string]string{"test": "ok"}, back.Spec.Processor.Advanced.Scheduling.NodeSelector)
+	assert.Equal(v1.TaintEffectNoExecute, back.Spec.Processor.Advanced.Scheduling.Tolerations[0].Effect)
 	assert.Equal(time.Minute, back.Spec.Loki.WriteBatchWait.Duration)
 	assert.Equal(time.Minute, back.Spec.Loki.Advanced.WriteMinBackoff.Duration)
 	assert.Equal(time.Hour, back.Spec.Loki.Advanced.WriteMaxBackoff.Duration)

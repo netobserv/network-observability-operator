@@ -6,6 +6,7 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -150,24 +151,32 @@ func GetNamespace(spec *flowslatest.FlowCollectorSpec) string {
 
 func GetAdvancedAgentConfig(specConfig *flowslatest.AdvancedAgentConfig) flowslatest.AdvancedAgentConfig {
 	cfg := flowslatest.AdvancedAgentConfig{
-		Env:               map[string]string{},
-		NodeSelector:      map[string]string{},
-		Affinity:          nil,
-		PriorityClassName: "",
+		Env: map[string]string{},
+		Scheduling: &flowslatest.SchedulingConfig{
+			NodeSelector:      map[string]string{},
+			Tolerations:       []corev1.Toleration{{Operator: corev1.TolerationOpExists}},
+			Affinity:          nil,
+			PriorityClassName: "",
+		},
 	}
 
 	if specConfig != nil {
 		if len(specConfig.Env) > 0 {
 			cfg.Env = specConfig.Env
 		}
-		if len(specConfig.NodeSelector) > 0 {
-			cfg.NodeSelector = specConfig.NodeSelector
-		}
-		if specConfig.Affinity != nil {
-			cfg.Affinity = specConfig.Affinity
-		}
-		if len(specConfig.PriorityClassName) > 0 {
-			cfg.PriorityClassName = specConfig.PriorityClassName
+		if specConfig.Scheduling != nil {
+			if len(specConfig.Scheduling.NodeSelector) > 0 {
+				cfg.Scheduling.NodeSelector = specConfig.Scheduling.NodeSelector
+			}
+			if len(specConfig.Scheduling.Tolerations) > 0 {
+				cfg.Scheduling.Tolerations = specConfig.Scheduling.Tolerations
+			}
+			if specConfig.Scheduling.Affinity != nil {
+				cfg.Scheduling.Affinity = specConfig.Scheduling.Affinity
+			}
+			if len(specConfig.Scheduling.PriorityClassName) > 0 {
+				cfg.Scheduling.PriorityClassName = specConfig.Scheduling.PriorityClassName
+			}
 		}
 	}
 
@@ -185,9 +194,12 @@ func GetAdvancedProcessorConfig(specConfig *flowslatest.AdvancedProcessorConfig)
 		ConversationHeartbeatInterval:  ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationHeartbeatInterval")),
 		ConversationEndTimeout:         ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationEndTimeout")),
 		ConversationTerminatingTimeout: ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationTerminatingTimeout")),
-		NodeSelector:                   map[string]string{},
-		Affinity:                       nil,
-		PriorityClassName:              "",
+		Scheduling: &flowslatest.SchedulingConfig{
+			NodeSelector:      map[string]string{},
+			Tolerations:       []corev1.Toleration{{Operator: corev1.TolerationOpExists}},
+			Affinity:          nil,
+			PriorityClassName: "",
+		},
 	}
 
 	if specConfig != nil {
@@ -218,14 +230,19 @@ func GetAdvancedProcessorConfig(specConfig *flowslatest.AdvancedProcessorConfig)
 		if specConfig.ConversationTerminatingTimeout != nil {
 			cfg.ConversationTerminatingTimeout = specConfig.ConversationTerminatingTimeout
 		}
-		if len(specConfig.NodeSelector) > 0 {
-			cfg.NodeSelector = specConfig.NodeSelector
-		}
-		if specConfig.Affinity != nil {
-			cfg.Affinity = specConfig.Affinity
-		}
-		if len(specConfig.PriorityClassName) > 0 {
-			cfg.PriorityClassName = specConfig.PriorityClassName
+		if specConfig.Scheduling != nil {
+			if len(specConfig.Scheduling.NodeSelector) > 0 {
+				cfg.Scheduling.NodeSelector = specConfig.Scheduling.NodeSelector
+			}
+			if len(specConfig.Scheduling.Tolerations) > 0 {
+				cfg.Scheduling.Tolerations = specConfig.Scheduling.Tolerations
+			}
+			if specConfig.Scheduling.Affinity != nil {
+				cfg.Scheduling.Affinity = specConfig.Scheduling.Affinity
+			}
+			if len(specConfig.Scheduling.PriorityClassName) > 0 {
+				cfg.Scheduling.PriorityClassName = specConfig.Scheduling.PriorityClassName
+			}
 		}
 	}
 
@@ -260,13 +277,16 @@ func GetAdvancedLokiConfig(specConfig *flowslatest.AdvancedLokiConfig) flowslate
 
 func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flowslatest.AdvancedPluginConfig {
 	cfg := flowslatest.AdvancedPluginConfig{
-		Env:               map[string]string{},
-		Args:              []string{},
-		Register:          ptr.To(GetFieldDefaultBool(PluginAdvancedPath, "register")),
-		Port:              ptr.To(GetFieldDefaultInt32(PluginAdvancedPath, "port")),
-		NodeSelector:      map[string]string{},
-		Affinity:          nil,
-		PriorityClassName: "",
+		Env:      map[string]string{},
+		Args:     []string{},
+		Register: ptr.To(GetFieldDefaultBool(PluginAdvancedPath, "register")),
+		Port:     ptr.To(GetFieldDefaultInt32(PluginAdvancedPath, "port")),
+		Scheduling: &flowslatest.SchedulingConfig{
+			NodeSelector:      map[string]string{},
+			Tolerations:       []corev1.Toleration{{Operator: corev1.TolerationOpExists}},
+			Affinity:          nil,
+			PriorityClassName: "",
+		},
 	}
 
 	if specConfig != nil {
@@ -282,14 +302,19 @@ func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flows
 		if specConfig.Port != nil && *specConfig.Port > 0 {
 			cfg.Port = specConfig.Port
 		}
-		if len(specConfig.NodeSelector) > 0 {
-			cfg.NodeSelector = specConfig.NodeSelector
-		}
-		if specConfig.Affinity != nil {
-			cfg.Affinity = specConfig.Affinity
-		}
-		if len(specConfig.PriorityClassName) > 0 {
-			cfg.PriorityClassName = specConfig.PriorityClassName
+		if specConfig.Scheduling != nil {
+			if len(specConfig.Scheduling.NodeSelector) > 0 {
+				cfg.Scheduling.NodeSelector = specConfig.Scheduling.NodeSelector
+			}
+			if len(specConfig.Scheduling.Tolerations) > 0 {
+				cfg.Scheduling.Tolerations = specConfig.Scheduling.Tolerations
+			}
+			if specConfig.Scheduling.Affinity != nil {
+				cfg.Scheduling.Affinity = specConfig.Scheduling.Affinity
+			}
+			if len(specConfig.Scheduling.PriorityClassName) > 0 {
+				cfg.Scheduling.PriorityClassName = specConfig.Scheduling.PriorityClassName
+			}
 		}
 	}
 

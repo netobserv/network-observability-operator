@@ -931,15 +931,11 @@ type SASLConfig struct {
 	ClientSecretReference FileReference `json:"clientSecretReference,omitempty"`
 }
 
-// `AdvancedAgentConfig` allows tweaking some aspects of the internal configuration of the agent.
-// They are aimed mostly for debugging. Set these values at your own risk.
-type AdvancedAgentConfig struct {
-	// `env` allows passing custom environment variables to underlying components. Useful for passing
-	// some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be
-	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
-	// in edge debug or support scenarios.
+// `SchedulingConfig` defines the scheduling configuration for NetObserv pods
+type SchedulingConfig struct {
+	// tolerations is a list of tolerations that allow the pod to schedule onto nodes with matching taints.
 	//+optional
-	Env map[string]string `json:"env,omitempty"`
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
 	// NodeSelector is a selector which must be true for the pod to fit on a node.
 	// Selector which must match a node's labels for the pod to be scheduled on that node.
@@ -960,6 +956,21 @@ type AdvancedAgentConfig struct {
 	// default.
 	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`
+}
+
+// `AdvancedAgentConfig` allows tweaking some aspects of the internal configuration of the agent.
+// They are aimed mostly for debugging. Set these values at your own risk.
+type AdvancedAgentConfig struct {
+	// `env` allows passing custom environment variables to underlying components. Useful for passing
+	// some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be
+	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
+	// in edge debug or support scenarios.
+	//+optional
+	Env map[string]string `json:"env,omitempty"`
+
+	// scheduling controls whether the pod will be scheduled or not.
+	// +optional
+	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 }
 
 // `AdvancedProcessorConfig` allows tweaking some aspects of the internal configuration of the processor.
@@ -1021,25 +1032,9 @@ type AdvancedProcessorConfig struct {
 	// `conversationTerminatingTimeout` is the time to wait from detected FIN flag to end a conversation. Only relevant for TCP flows.
 	ConversationTerminatingTimeout *metav1.Duration `json:"conversationTerminatingTimeout,omitempty"`
 
-	// NodeSelector is a selector which must be true for the pod to fit on a node.
-	// Selector which must match a node's labels for the pod to be scheduled on that node.
-	// More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+	// scheduling controls whether the pod will be scheduled or not.
 	// +optional
-	// +mapType=atomic
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
-
-	// If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
-	// +optional
-	Affinity *corev1.Affinity `json:"affinity,omitempty"`
-
-	// If specified, indicates the pod's priority. "system-node-critical" and
-	// "system-cluster-critical" are two special keywords which indicate the
-	// highest priorities with the former being the highest priority. Any other
-	// name must be defined by creating a PriorityClass object with that name.
-	// If not specified, the pod priority will be default or zero if there is no
-	// default.
-	// +optional
-	PriorityClassName string `json:"priorityClassName,omitempty"`
+	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 }
 
 // `AdvancedLokiConfig` allows tweaking some aspects of the Loki clients.
@@ -1098,25 +1093,9 @@ type AdvancedPluginConfig struct {
 	// `port` is the plugin service port. Do not use 9002, which is reserved for metrics.
 	Port *int32 `json:"port,omitempty"`
 
-	// NodeSelector is a selector which must be true for the pod to fit on a node.
-	// Selector which must match a node's labels for the pod to be scheduled on that node.
-	// More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+	// scheduling controls whether the pod will be scheduled or not.
 	// +optional
-	// +mapType=atomic
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
-
-	// If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
-	// +optional
-	Affinity *corev1.Affinity `json:"affinity,omitempty"`
-
-	// If specified, indicates the pod's priority. "system-node-critical" and
-	// "system-cluster-critical" are two special keywords which indicate the
-	// highest priorities with the former being the highest priority. Any other
-	// name must be defined by creating a PriorityClass object with that name.
-	// If not specified, the pod priority will be default or zero if there is no
-	// default.
-	// +optional
-	PriorityClassName string `json:"priorityClassName,omitempty"`
+	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 }
 
 // `SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.

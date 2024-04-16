@@ -5709,13 +5709,6 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinity">affinity</a></b></td>
-        <td>object</td>
-        <td>
-          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>env</b></td>
         <td>map[string]string</td>
         <td>
@@ -5723,6 +5716,40 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be
 publicly exposed as part of the FlowCollector descriptor, as they are only useful
 in edge debug or support scenarios.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedscheduling">scheduling</a></b></td>
+        <td>object</td>
+        <td>
+          scheduling controls whether the pod will be scheduled or not.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvanced)</sup></sup>
+
+
+
+scheduling controls whether the pod will be scheduled or not.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinity">affinity</a></b></td>
+        <td>object</td>
+        <td>
+          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5746,12 +5773,19 @@ If not specified, the pod priority will be default or zero if there is no
 default.<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingtolerationsindex">tolerations</a></b></td>
+        <td>[]object</td>
+        <td>
+          tolerations is a list of tolerations that allow the pod to schedule onto nodes with matching taints.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvanced)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedscheduling)</sup></sup>
 
 
 
@@ -5767,36 +5801,36 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinity">nodeAffinity</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinity">nodeAffinity</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Describes node affinity scheduling rules for the pod.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinity">podAffinity</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinity">podAffinity</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinity">podAntiAffinity</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinity">podAntiAffinity</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinity)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.nodeAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinity)</sup></sup>
 
 
 
-
+Describes node affinity scheduling rules for the pod.
 
 <table>
     <thead>
@@ -5808,29 +5842,42 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          The scheduler will prefer to schedule pods to nodes that satisfy
+the affinity expressions specified by this field, but it may choose
+a node that violates one or more of the expressions. The node that is
+most preferred is the one with the greatest sum of weights, i.e.
+for each node that meets all of the scheduling requirements (resource
+request, requiredDuringScheduling affinity expressions, etc.),
+compute a sum by iterating through the elements of this field and adding
+"weight" to the sum if the node matches the corresponding matchExpressions; the
+node(s) with the highest sum are the most preferred.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecution">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          If the affinity requirements specified by this field are not met at
+scheduling time, the pod will not be scheduled onto the node.
+If the affinity requirements specified by this field cease to be met
+at some point during pod execution (e.g. due to an update), the system
+may or may not try to eventually evict the pod from its node.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinity)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinity)</sup></sup>
 
 
 
-
+An empty preferred scheduling term matches all objects with implicit weight 0
+(i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).
 
 <table>
     <thead>
@@ -5842,17 +5889,17 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference">preference</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference">preference</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A node selector term, associated with the corresponding weight.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          <br/>
+          Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -5861,12 +5908,12 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
 
 
 
-
+A node selector term, associated with the corresponding weight.
 
 <table>
     <thead>
@@ -5878,29 +5925,30 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          A list of node selector requirements by node's labels.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex">matchFields</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex">matchFields</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          A list of node selector requirements by node's fields.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
 
 
 
-
+A node selector requirement is a selector that contains values, a key, and an operator
+that relates the key and values.
 
 <table>
     <thead>
@@ -5915,33 +5963,39 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          The label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          An array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. If the operator is Gt or Lt, the values
+array must have a single element, which will be interpreted as an integer.
+This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchFields[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchFields[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
 
 
 
-
+A node selector requirement is a selector that contains values, a key, and an operator
+that relates the key and values.
 
 <table>
     <thead>
@@ -5956,33 +6010,42 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          The label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          An array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. If the operator is Gt or Lt, the values
+array must have a single element, which will be interpreted as an integer.
+This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinity)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinity)</sup></sup>
 
 
 
-
+If the affinity requirements specified by this field are not met at
+scheduling time, the pod will not be scheduled onto the node.
+If the affinity requirements specified by this field cease to be met
+at some point during pod execution (e.g. due to an update), the system
+may or may not try to eventually evict the pod from its node.
 
 <table>
     <thead>
@@ -5994,22 +6057,24 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex">nodeSelectorTerms</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex">nodeSelectorTerms</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          Required. A list of node selector terms. The terms are ORed.<br/>
         </td>
         <td>true</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecution)</sup></sup>
 
 
 
-
+A null or empty node selector term matches no objects. The requirements of
+them are ANDed.
+The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
 
 <table>
     <thead>
@@ -6021,29 +6086,30 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          A list of node selector requirements by node's labels.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex">matchFields</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex">matchFields</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          A list of node selector requirements by node's fields.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
 
 
 
-
+A node selector requirement is a selector that contains values, a key, and an operator
+that relates the key and values.
 
 <table>
     <thead>
@@ -6058,33 +6124,39 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          The label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          An array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. If the operator is Gt or Lt, the values
+array must have a single element, which will be interpreted as an integer.
+This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchFields[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchFields[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
 
 
 
-
+A node selector requirement is a selector that contains values, a key, and an operator
+that relates the key and values.
 
 <table>
     <thead>
@@ -6099,33 +6171,38 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          The label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          An array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. If the operator is Gt or Lt, the values
+array must have a single element, which will be interpreted as an integer.
+This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinity)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinity)</sup></sup>
 
 
 
-
+Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
 
 <table>
     <thead>
@@ -6137,29 +6214,43 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          The scheduler will prefer to schedule pods to nodes that satisfy
+the affinity expressions specified by this field, but it may choose
+a node that violates one or more of the expressions. The node that is
+most preferred is the one with the greatest sum of weights, i.e.
+for each node that meets all of the scheduling requirements (resource
+request, requiredDuringScheduling affinity expressions, etc.),
+compute a sum by iterating through the elements of this field and adding
+"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+node(s) with the highest sum are the most preferred.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          If the affinity requirements specified by this field are not met at
+scheduling time, the pod will not be scheduled onto the node.
+If the affinity requirements specified by this field cease to be met
+at some point during pod execution (e.g. due to a pod label update), the
+system may or may not try to eventually evict the pod from its node.
+When there are multiple elements, the lists of nodes corresponding to each
+podAffinityTerm are intersected, i.e. all terms must be satisfied.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinity)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinity)</sup></sup>
 
 
 
-
+The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
 
 <table>
     <thead>
@@ -6171,17 +6262,18 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Required. A pod affinity term, associated with the corresponding weight.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          <br/>
+          weight associated with matching the corresponding podAffinityTerm,
+in the range 1-100.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -6190,224 +6282,12 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
 
 
 
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>topologyKey</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabelKeys</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>mismatchLabelKeys</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>namespaces</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinity)</sup></sup>
-
-
-
-
+Required. A pod affinity term, associated with the corresponding weight.
 
 <table>
     <thead>
@@ -6422,54 +6302,83 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          <br/>
+          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+the labelSelector in the specified namespaces, where co-located is defined as running on a node
+whose value of the label with key topologyKey matches that of any node on which any of the
+selected pods is running.
+Empty topologyKey is not allowed.<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+Also, MatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MismatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector.
+Also, MismatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          namespaces specifies a static list of namespace names that the term applies to.
+The term is applied to the union of the namespaces listed in this field
+and the ones selected by namespaceSelector.
+null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
 
 
 
-
+A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.
 
 <table>
     <thead>
@@ -6481,29 +6390,32 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          <br/>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
 
 
 
-
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
 
 <table>
     <thead>
@@ -6518,33 +6430,41 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          key is the label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
 
 
 
-
+A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.
 
 <table>
     <thead>
@@ -6556,29 +6476,32 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          <br/>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
 
 
 
-
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
 
 <table>
     <thead>
@@ -6593,33 +6516,42 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          key is the label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinity)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinity)</sup></sup>
 
 
 
-
+Defines a set of pods (namely those matching the labelSelector
+relative to the given namespace(s)) that this pod should be
+co-located (affinity) or not co-located (anti-affinity) with,
+where co-located is defined as running on a node whose value of
+the label with key <topologyKey> matches that of any node on which
+a pod of the set of pods is running
 
 <table>
     <thead>
@@ -6631,51 +6563,325 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
-        <td>[]object</td>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
         <td>
-          <br/>
+          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+the labelSelector in the specified namespaces, where co-located is defined as running on a node
+whose value of the label with key topologyKey matches that of any node on which any of the
+selected pods is running.
+Empty topologyKey is not allowed.<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinity)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+Also, MatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MismatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector.
+Also, MismatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          namespaces specifies a static list of namespace names that the term applies to.
+The term is applied to the union of the namespaces listed in this field
+and the ones selected by namespaceSelector.
+null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAntiAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinity)</sup></sup>
+
+
+
+Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          The scheduler will prefer to schedule pods to nodes that satisfy
+the anti-affinity expressions specified by this field, but it may choose
+a node that violates one or more of the expressions. The node that is
+most preferred is the one with the greatest sum of weights, i.e.
+for each node that meets all of the scheduling requirements (resource
+request, requiredDuringScheduling anti-affinity expressions, etc.),
+compute a sum by iterating through the elements of this field and adding
+"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+node(s) with the highest sum are the most preferred.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          If the anti-affinity requirements specified by this field are not met at
+scheduling time, the pod will not be scheduled onto the node.
+If the anti-affinity requirements specified by this field cease to be met
+at some point during pod execution (e.g. due to a pod label update), the
+system may or may not try to eventually evict the pod from its node.
+When there are multiple elements, the lists of nodes corresponding to each
+podAffinityTerm are intersected, i.e. all terms must be satisfied.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinity)</sup></sup>
+
+
+
+The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td>object</td>
+        <td>
+          Required. A pod affinity term, associated with the corresponding weight.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          <br/>
+          weight associated with matching the corresponding podAffinityTerm,
+in the range 1-100.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -6684,224 +6890,12 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
 
 
 
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>topologyKey</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabelKeys</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>mismatchLabelKeys</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>namespaces</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinity)</sup></sup>
-
-
-
-
+Required. A pod affinity term, associated with the corresponding weight.
 
 <table>
     <thead>
@@ -6916,54 +6910,83 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          <br/>
+          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+the labelSelector in the specified namespaces, where co-located is defined as running on a node
+whose value of the label with key topologyKey matches that of any node on which any of the
+selected pods is running.
+Empty topologyKey is not allowed.<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+Also, MatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MismatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector.
+Also, MismatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          namespaces specifies a static list of namespace names that the term applies to.
+The term is applied to the union of the namespaces listed in this field
+and the ones selected by namespaceSelector.
+null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
 
 
 
-
+A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.
 
 <table>
     <thead>
@@ -6975,29 +6998,32 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          <br/>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
 
 
 
-
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
 
 <table>
     <thead>
@@ -7012,33 +7038,41 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          key is the label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
 
 
 
-
+A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.
 
 <table>
     <thead>
@@ -7050,29 +7084,32 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          <br/>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.agent.ebpf.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
 
 
 
-
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
 
 <table>
     <thead>
@@ -7087,21 +7124,356 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          key is the label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinity)</sup></sup>
+
+
+
+Defines a set of pods (namely those matching the labelSelector
+relative to the given namespace(s)) that this pod should be
+co-located (affinity) or not co-located (anti-affinity) with,
+where co-located is defined as running on a node whose value of
+the label with key <topologyKey> matches that of any node on which
+a pod of the set of pods is running
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+the labelSelector in the specified namespaces, where co-located is defined as running on a node
+whose value of the label with key topologyKey matches that of any node on which any of the
+selected pods is running.
+Empty topologyKey is not allowed.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+Also, MatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MismatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector.
+Also, MismatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          namespaces specifies a static list of namespace names that the term applies to.
+The term is applied to the union of the namespaces listed in this field
+and the ones selected by namespaceSelector.
+null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.advanced.scheduling.tolerations[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfadvancedscheduling)</sup></sup>
+
+
+
+The pod this Toleration is attached to tolerates any taint that matches
+the triple <key,value,effect> using the matching operator <operator>.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>effect</b></td>
+        <td>string</td>
+        <td>
+          Effect indicates the taint effect to match. Empty means match all taint effects.
+When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          Key is the taint key that the toleration applies to. Empty means match all taint keys.
+If the key is empty, operator must be Exists; this combination means to match all values and all keys.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          Operator represents a key's relationship to the value.
+Valid operators are Exists and Equal. Defaults to Equal.
+Exists is equivalent to wildcard for value, so that a pod can
+tolerate all taints of a particular category.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tolerationSeconds</b></td>
+        <td>integer</td>
+        <td>
+          TolerationSeconds represents the period of time the toleration (which must be
+of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+it is not set, which means tolerate the taint forever (do not evict). Zero and
+negative values will be treated as 0 (evict immediately) by the system.<br/>
           <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          Value is the taint value the toleration matches to.
+If the operator is Exists, the value should be empty, otherwise just a regular string.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7826,13 +8198,6 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinity">affinity</a></b></td>
-        <td>object</td>
-        <td>
-          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>args</b></td>
         <td>[]string</td>
         <td>
@@ -7853,15 +8218,6 @@ in edge debug or support scenarios.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>nodeSelector</b></td>
-        <td>map[string]string</td>
-        <td>
-          NodeSelector is a selector which must be true for the pod to fit on a node.
-Selector which must match a node's labels for the pod to be scheduled on that node.
-More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>port</b></td>
         <td>integer</td>
         <td>
@@ -7871,6 +8227,60 @@ More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/<br
             <i>Default</i>: 9001<br/>
             <i>Minimum</i>: 1<br/>
             <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>register</b></td>
+        <td>boolean</td>
+        <td>
+          `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator.
+When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
+`oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedscheduling">scheduling</a></b></td>
+        <td>object</td>
+        <td>
+          scheduling controls whether the pod will be scheduled or not.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvanced)</sup></sup>
+
+
+
+scheduling controls whether the pod will be scheduled or not.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinity">affinity</a></b></td>
+        <td>object</td>
+        <td>
+          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>nodeSelector</b></td>
+        <td>map[string]string</td>
+        <td>
+          NodeSelector is a selector which must be true for the pod to fit on a node.
+Selector which must match a node's labels for the pod to be scheduled on that node.
+More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7886,22 +8296,18 @@ default.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>register</b></td>
-        <td>boolean</td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingtolerationsindex">tolerations</a></b></td>
+        <td>[]object</td>
         <td>
-          `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator.
-When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
-`oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`<br/>
-          <br/>
-            <i>Default</i>: true<br/>
+          tolerations is a list of tolerations that allow the pod to schedule onto nodes with matching taints.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvanced)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedscheduling)</sup></sup>
 
 
 
@@ -7917,36 +8323,36 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinity">nodeAffinity</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinity">nodeAffinity</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Describes node affinity scheduling rules for the pod.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinity">podAffinity</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinity">podAffinity</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinity">podAntiAffinity</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinity">podAntiAffinity</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinity)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.nodeAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinity)</sup></sup>
 
 
 
-
+Describes node affinity scheduling rules for the pod.
 
 <table>
     <thead>
@@ -7958,29 +8364,42 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          The scheduler will prefer to schedule pods to nodes that satisfy
+the affinity expressions specified by this field, but it may choose
+a node that violates one or more of the expressions. The node that is
+most preferred is the one with the greatest sum of weights, i.e.
+for each node that meets all of the scheduling requirements (resource
+request, requiredDuringScheduling affinity expressions, etc.),
+compute a sum by iterating through the elements of this field and adding
+"weight" to the sum if the node matches the corresponding matchExpressions; the
+node(s) with the highest sum are the most preferred.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecution">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          If the affinity requirements specified by this field are not met at
+scheduling time, the pod will not be scheduled onto the node.
+If the affinity requirements specified by this field cease to be met
+at some point during pod execution (e.g. due to an update), the system
+may or may not try to eventually evict the pod from its node.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinity)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinity)</sup></sup>
 
 
 
-
+An empty preferred scheduling term matches all objects with implicit weight 0
+(i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).
 
 <table>
     <thead>
@@ -7992,17 +8411,17 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference">preference</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference">preference</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A node selector term, associated with the corresponding weight.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          <br/>
+          Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -8011,12 +8430,12 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
 
 
 
-
+A node selector term, associated with the corresponding weight.
 
 <table>
     <thead>
@@ -8028,29 +8447,30 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          A list of node selector requirements by node's labels.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex">matchFields</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex">matchFields</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          A list of node selector requirements by node's fields.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
 
 
 
-
+A node selector requirement is a selector that contains values, a key, and an operator
+that relates the key and values.
 
 <table>
     <thead>
@@ -8065,33 +8485,39 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          The label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          An array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. If the operator is Gt or Lt, the values
+array must have a single element, which will be interpreted as an integer.
+This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchFields[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchFields[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
 
 
 
-
+A node selector requirement is a selector that contains values, a key, and an operator
+that relates the key and values.
 
 <table>
     <thead>
@@ -8106,33 +8532,42 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          The label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          An array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. If the operator is Gt or Lt, the values
+array must have a single element, which will be interpreted as an integer.
+This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinity)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinity)</sup></sup>
 
 
 
-
+If the affinity requirements specified by this field are not met at
+scheduling time, the pod will not be scheduled onto the node.
+If the affinity requirements specified by this field cease to be met
+at some point during pod execution (e.g. due to an update), the system
+may or may not try to eventually evict the pod from its node.
 
 <table>
     <thead>
@@ -8144,22 +8579,24 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex">nodeSelectorTerms</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex">nodeSelectorTerms</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          Required. A list of node selector terms. The terms are ORed.<br/>
         </td>
         <td>true</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecution)</sup></sup>
 
 
 
-
+A null or empty node selector term matches no objects. The requirements of
+them are ANDed.
+The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
 
 <table>
     <thead>
@@ -8171,29 +8608,30 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          A list of node selector requirements by node's labels.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex">matchFields</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex">matchFields</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          A list of node selector requirements by node's fields.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
 
 
 
-
+A node selector requirement is a selector that contains values, a key, and an operator
+that relates the key and values.
 
 <table>
     <thead>
@@ -8208,33 +8646,39 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          The label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          An array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. If the operator is Gt or Lt, the values
+array must have a single element, which will be interpreted as an integer.
+This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchFields[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchFields[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
 
 
 
-
+A node selector requirement is a selector that contains values, a key, and an operator
+that relates the key and values.
 
 <table>
     <thead>
@@ -8249,33 +8693,38 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          The label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          An array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. If the operator is Gt or Lt, the values
+array must have a single element, which will be interpreted as an integer.
+This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinity)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinity)</sup></sup>
 
 
 
-
+Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
 
 <table>
     <thead>
@@ -8287,29 +8736,43 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          The scheduler will prefer to schedule pods to nodes that satisfy
+the affinity expressions specified by this field, but it may choose
+a node that violates one or more of the expressions. The node that is
+most preferred is the one with the greatest sum of weights, i.e.
+for each node that meets all of the scheduling requirements (resource
+request, requiredDuringScheduling affinity expressions, etc.),
+compute a sum by iterating through the elements of this field and adding
+"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+node(s) with the highest sum are the most preferred.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          If the affinity requirements specified by this field are not met at
+scheduling time, the pod will not be scheduled onto the node.
+If the affinity requirements specified by this field cease to be met
+at some point during pod execution (e.g. due to a pod label update), the
+system may or may not try to eventually evict the pod from its node.
+When there are multiple elements, the lists of nodes corresponding to each
+podAffinityTerm are intersected, i.e. all terms must be satisfied.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinity)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinity)</sup></sup>
 
 
 
-
+The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
 
 <table>
     <thead>
@@ -8321,17 +8784,18 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Required. A pod affinity term, associated with the corresponding weight.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          <br/>
+          weight associated with matching the corresponding podAffinityTerm,
+in the range 1-100.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -8340,224 +8804,12 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
 
 
 
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>topologyKey</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabelKeys</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>mismatchLabelKeys</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>namespaces</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinity)</sup></sup>
-
-
-
-
+Required. A pod affinity term, associated with the corresponding weight.
 
 <table>
     <thead>
@@ -8572,54 +8824,83 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          <br/>
+          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+the labelSelector in the specified namespaces, where co-located is defined as running on a node
+whose value of the label with key topologyKey matches that of any node on which any of the
+selected pods is running.
+Empty topologyKey is not allowed.<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+Also, MatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MismatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector.
+Also, MismatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          namespaces specifies a static list of namespace names that the term applies to.
+The term is applied to the union of the namespaces listed in this field
+and the ones selected by namespaceSelector.
+null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
 
 
 
-
+A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.
 
 <table>
     <thead>
@@ -8631,29 +8912,32 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          <br/>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
 
 
 
-
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
 
 <table>
     <thead>
@@ -8668,33 +8952,41 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          key is the label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
 
 
 
-
+A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.
 
 <table>
     <thead>
@@ -8706,29 +8998,32 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          <br/>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
 
 
 
-
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
 
 <table>
     <thead>
@@ -8743,33 +9038,42 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          key is the label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinity)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinity)</sup></sup>
 
 
 
-
+Defines a set of pods (namely those matching the labelSelector
+relative to the given namespace(s)) that this pod should be
+co-located (affinity) or not co-located (anti-affinity) with,
+where co-located is defined as running on a node whose value of
+the label with key <topologyKey> matches that of any node on which
+a pod of the set of pods is running
 
 <table>
     <thead>
@@ -8781,51 +9085,325 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
-        <td>[]object</td>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
         <td>
-          <br/>
+          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+the labelSelector in the specified namespaces, where co-located is defined as running on a node
+whose value of the label with key topologyKey matches that of any node on which any of the
+selected pods is running.
+Empty topologyKey is not allowed.<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinity)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+Also, MatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MismatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector.
+Also, MismatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          namespaces specifies a static list of namespace names that the term applies to.
+The term is applied to the union of the namespaces listed in this field
+and the ones selected by namespaceSelector.
+null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAntiAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinity)</sup></sup>
+
+
+
+Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          The scheduler will prefer to schedule pods to nodes that satisfy
+the anti-affinity expressions specified by this field, but it may choose
+a node that violates one or more of the expressions. The node that is
+most preferred is the one with the greatest sum of weights, i.e.
+for each node that meets all of the scheduling requirements (resource
+request, requiredDuringScheduling anti-affinity expressions, etc.),
+compute a sum by iterating through the elements of this field and adding
+"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+node(s) with the highest sum are the most preferred.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          If the anti-affinity requirements specified by this field are not met at
+scheduling time, the pod will not be scheduled onto the node.
+If the anti-affinity requirements specified by this field cease to be met
+at some point during pod execution (e.g. due to a pod label update), the
+system may or may not try to eventually evict the pod from its node.
+When there are multiple elements, the lists of nodes corresponding to each
+podAffinityTerm are intersected, i.e. all terms must be satisfied.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinity)</sup></sup>
+
+
+
+The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td>object</td>
+        <td>
+          Required. A pod affinity term, associated with the corresponding weight.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          <br/>
+          weight associated with matching the corresponding podAffinityTerm,
+in the range 1-100.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -8834,224 +9412,12 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
 
 
 
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>topologyKey</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabelKeys</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>mismatchLabelKeys</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>namespaces</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinity)</sup></sup>
-
-
-
-
+Required. A pod affinity term, associated with the corresponding weight.
 
 <table>
     <thead>
@@ -9066,54 +9432,83 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          <br/>
+          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+the labelSelector in the specified namespaces, where co-located is defined as running on a node
+whose value of the label with key topologyKey matches that of any node on which any of the
+selected pods is running.
+Empty topologyKey is not allowed.<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+Also, MatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MismatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector.
+Also, MismatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          namespaces specifies a static list of namespace names that the term applies to.
+The term is applied to the union of the namespaces listed in this field
+and the ones selected by namespaceSelector.
+null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
 
 
 
-
+A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.
 
 <table>
     <thead>
@@ -9125,29 +9520,32 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          <br/>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
 
 
 
-
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
 
 <table>
     <thead>
@@ -9162,33 +9560,41 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          key is the label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
 
 
 
-
+A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.
 
 <table>
     <thead>
@@ -9200,29 +9606,32 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          <br/>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.consolePlugin.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
 
 
 
-
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
 
 <table>
     <thead>
@@ -9237,21 +9646,356 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          key is the label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinity)</sup></sup>
+
+
+
+Defines a set of pods (namely those matching the labelSelector
+relative to the given namespace(s)) that this pod should be
+co-located (affinity) or not co-located (anti-affinity) with,
+where co-located is defined as running on a node whose value of
+the label with key <topologyKey> matches that of any node on which
+a pod of the set of pods is running
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+the labelSelector in the specified namespaces, where co-located is defined as running on a node
+whose value of the label with key topologyKey matches that of any node on which any of the
+selected pods is running.
+Empty topologyKey is not allowed.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+Also, MatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MismatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector.
+Also, MismatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          namespaces specifies a static list of namespace names that the term applies to.
+The term is applied to the union of the namespaces listed in this field
+and the ones selected by namespaceSelector.
+null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.consolePlugin.advanced.scheduling.tolerations[index]
+<sup><sup>[↩ Parent](#flowcollectorspecconsolepluginadvancedscheduling)</sup></sup>
+
+
+
+The pod this Toleration is attached to tolerates any taint that matches
+the triple <key,value,effect> using the matching operator <operator>.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>effect</b></td>
+        <td>string</td>
+        <td>
+          Effect indicates the taint effect to match. Empty means match all taint effects.
+When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          Key is the taint key that the toleration applies to. Empty means match all taint keys.
+If the key is empty, operator must be Exists; this combination means to match all values and all keys.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          Operator represents a key's relationship to the value.
+Valid operators are Exists and Equal. Defaults to Equal.
+Exists is equivalent to wildcard for value, so that a pod can
+tolerate all taints of a particular category.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tolerationSeconds</b></td>
+        <td>integer</td>
+        <td>
+          TolerationSeconds represents the period of time the toleration (which must be
+of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+it is not set, which means tolerate the taint forever (do not evict). Zero and
+negative values will be treated as 0 (evict immediately) by the system.<br/>
           <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          Value is the taint value the toleration matches to.
+If the operator is Exists, the value should be empty, otherwise just a regular string.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12465,13 +13209,6 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinity">affinity</a></b></td>
-        <td>object</td>
-        <td>
-          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>conversationEndTimeout</b></td>
         <td>string</td>
         <td>
@@ -12540,15 +13277,6 @@ in edge debug or support scenarios.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>nodeSelector</b></td>
-        <td>map[string]string</td>
-        <td>
-          NodeSelector is a selector which must be true for the pod to fit on a node.
-Selector which must match a node's labels for the pod to be scheduled on that node.
-More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>port</b></td>
         <td>integer</td>
         <td>
@@ -12560,6 +13288,61 @@ By convention, some values are forbidden. It must be greater than 1024 and diffe
             <i>Default</i>: 2055<br/>
             <i>Minimum</i>: 1025<br/>
             <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>profilePort</b></td>
+        <td>integer</td>
+        <td>
+          `profilePort` allows setting up a Go pprof profiler listening to this port<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 6060<br/>
+            <i>Minimum</i>: 0<br/>
+            <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedscheduling">scheduling</a></b></td>
+        <td>object</td>
+        <td>
+          scheduling controls whether the pod will be scheduled or not.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvanced)</sup></sup>
+
+
+
+scheduling controls whether the pod will be scheduled or not.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinity">affinity</a></b></td>
+        <td>object</td>
+        <td>
+          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>nodeSelector</b></td>
+        <td>map[string]string</td>
+        <td>
+          NodeSelector is a selector which must be true for the pod to fit on a node.
+Selector which must match a node's labels for the pod to be scheduled on that node.
+More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12575,23 +13358,18 @@ default.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>profilePort</b></td>
-        <td>integer</td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingtolerationsindex">tolerations</a></b></td>
+        <td>[]object</td>
         <td>
-          `profilePort` allows setting up a Go pprof profiler listening to this port<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 6060<br/>
-            <i>Minimum</i>: 0<br/>
-            <i>Maximum</i>: 65535<br/>
+          tolerations is a list of tolerations that allow the pod to schedule onto nodes with matching taints.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvanced)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedscheduling)</sup></sup>
 
 
 
@@ -12607,36 +13385,36 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinity">nodeAffinity</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinity">nodeAffinity</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Describes node affinity scheduling rules for the pod.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinity">podAffinity</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinity">podAffinity</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinity">podAntiAffinity</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinity">podAntiAffinity</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.nodeAffinity
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinity)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.nodeAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinity)</sup></sup>
 
 
 
-
+Describes node affinity scheduling rules for the pod.
 
 <table>
     <thead>
@@ -12648,29 +13426,42 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          The scheduler will prefer to schedule pods to nodes that satisfy
+the affinity expressions specified by this field, but it may choose
+a node that violates one or more of the expressions. The node that is
+most preferred is the one with the greatest sum of weights, i.e.
+for each node that meets all of the scheduling requirements (resource
+request, requiredDuringScheduling affinity expressions, etc.),
+compute a sum by iterating through the elements of this field and adding
+"weight" to the sum if the node matches the corresponding matchExpressions; the
+node(s) with the highest sum are the most preferred.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecution">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          If the affinity requirements specified by this field are not met at
+scheduling time, the pod will not be scheduled onto the node.
+If the affinity requirements specified by this field cease to be met
+at some point during pod execution (e.g. due to an update), the system
+may or may not try to eventually evict the pod from its node.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinity)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinity)</sup></sup>
 
 
 
-
+An empty preferred scheduling term matches all objects with implicit weight 0
+(i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).
 
 <table>
     <thead>
@@ -12682,17 +13473,17 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference">preference</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference">preference</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A node selector term, associated with the corresponding weight.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          <br/>
+          Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -12701,12 +13492,12 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
 
 
 
-
+A node selector term, associated with the corresponding weight.
 
 <table>
     <thead>
@@ -12718,29 +13509,30 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          A list of node selector requirements by node's labels.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex">matchFields</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex">matchFields</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          A list of node selector requirements by node's fields.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
 
 
 
-
+A node selector requirement is a selector that contains values, a key, and an operator
+that relates the key and values.
 
 <table>
     <thead>
@@ -12755,33 +13547,39 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          The label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          An array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. If the operator is Gt or Lt, the values
+array must have a single element, which will be interpreted as an integer.
+This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchFields[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchFields[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference)</sup></sup>
 
 
 
-
+A node selector requirement is a selector that contains values, a key, and an operator
+that relates the key and values.
 
 <table>
     <thead>
@@ -12796,33 +13594,42 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          The label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          An array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. If the operator is Gt or Lt, the values
+array must have a single element, which will be interpreted as an integer.
+This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinity)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinity)</sup></sup>
 
 
 
-
+If the affinity requirements specified by this field are not met at
+scheduling time, the pod will not be scheduled onto the node.
+If the affinity requirements specified by this field cease to be met
+at some point during pod execution (e.g. due to an update), the system
+may or may not try to eventually evict the pod from its node.
 
 <table>
     <thead>
@@ -12834,22 +13641,24 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex">nodeSelectorTerms</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex">nodeSelectorTerms</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          Required. A list of node selector terms. The terms are ORed.<br/>
         </td>
         <td>true</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecution)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecution)</sup></sup>
 
 
 
-
+A null or empty node selector term matches no objects. The requirements of
+them are ANDed.
+The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
 
 <table>
     <thead>
@@ -12861,29 +13670,30 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          A list of node selector requirements by node's labels.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex">matchFields</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex">matchFields</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          A list of node selector requirements by node's fields.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
 
 
 
-
+A node selector requirement is a selector that contains values, a key, and an operator
+that relates the key and values.
 
 <table>
     <thead>
@@ -12898,33 +13708,39 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          The label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          An array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. If the operator is Gt or Lt, the values
+array must have a single element, which will be interpreted as an integer.
+This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchFields[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchFields[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex)</sup></sup>
 
 
 
-
+A node selector requirement is a selector that contains values, a key, and an operator
+that relates the key and values.
 
 <table>
     <thead>
@@ -12939,33 +13755,38 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          The label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          An array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. If the operator is Gt or Lt, the values
+array must have a single element, which will be interpreted as an integer.
+This array is replaced during a strategic merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAffinity
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinity)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinity)</sup></sup>
 
 
 
-
+Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
 
 <table>
     <thead>
@@ -12977,29 +13798,43 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          The scheduler will prefer to schedule pods to nodes that satisfy
+the affinity expressions specified by this field, but it may choose
+a node that violates one or more of the expressions. The node that is
+most preferred is the one with the greatest sum of weights, i.e.
+for each node that meets all of the scheduling requirements (resource
+request, requiredDuringScheduling affinity expressions, etc.),
+compute a sum by iterating through the elements of this field and adding
+"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+node(s) with the highest sum are the most preferred.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          If the affinity requirements specified by this field are not met at
+scheduling time, the pod will not be scheduled onto the node.
+If the affinity requirements specified by this field cease to be met
+at some point during pod execution (e.g. due to a pod label update), the
+system may or may not try to eventually evict the pod from its node.
+When there are multiple elements, the lists of nodes corresponding to each
+podAffinityTerm are intersected, i.e. all terms must be satisfied.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinity)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinity)</sup></sup>
 
 
 
-
+The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
 
 <table>
     <thead>
@@ -13011,17 +13846,18 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          Required. A pod affinity term, associated with the corresponding weight.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          <br/>
+          weight associated with matching the corresponding podAffinityTerm,
+in the range 1-100.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -13030,224 +13866,12 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
 
 
 
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>topologyKey</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabelKeys</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>mismatchLabelKeys</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>namespaces</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.advanced.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinity)</sup></sup>
-
-
-
-
+Required. A pod affinity term, associated with the corresponding weight.
 
 <table>
     <thead>
@@ -13262,54 +13886,83 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          <br/>
+          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+the labelSelector in the specified namespaces, where co-located is defined as running on a node
+whose value of the label with key topologyKey matches that of any node on which any of the
+selected pods is running.
+Empty topologyKey is not allowed.<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+Also, MatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MismatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector.
+Also, MismatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          namespaces specifies a static list of namespace names that the term applies to.
+The term is applied to the union of the namespaces listed in this field
+and the ones selected by namespaceSelector.
+null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
 
 
 
-
+A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.
 
 <table>
     <thead>
@@ -13321,29 +13974,32 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          <br/>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
 
 
 
-
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
 
 <table>
     <thead>
@@ -13358,33 +14014,41 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          key is the label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
 
 
 
-
+A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.
 
 <table>
     <thead>
@@ -13396,29 +14060,32 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          <br/>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
 
 
 
-
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
 
 <table>
     <thead>
@@ -13433,33 +14100,42 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          key is the label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinity)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinity)</sup></sup>
 
 
 
-
+Defines a set of pods (namely those matching the labelSelector
+relative to the given namespace(s)) that this pod should be
+co-located (affinity) or not co-located (anti-affinity) with,
+where co-located is defined as running on a node whose value of
+the label with key <topologyKey> matches that of any node on which
+a pod of the set of pods is running
 
 <table>
     <thead>
@@ -13471,51 +14147,325 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
-        <td>[]object</td>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
         <td>
-          <br/>
+          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+the labelSelector in the specified namespaces, where co-located is defined as running on a node
+whose value of the label with key topologyKey matches that of any node on which any of the
+selected pods is running.
+Empty topologyKey is not allowed.<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinity)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+Also, MatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MismatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector.
+Also, MismatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          namespaces specifies a static list of namespace names that the term applies to.
+The term is applied to the union of the namespaces listed in this field
+and the ones selected by namespaceSelector.
+null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAntiAffinity
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinity)</sup></sup>
+
+
+
+Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex">preferredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          The scheduler will prefer to schedule pods to nodes that satisfy
+the anti-affinity expressions specified by this field, but it may choose
+a node that violates one or more of the expressions. The node that is
+most preferred is the one with the greatest sum of weights, i.e.
+for each node that meets all of the scheduling requirements (resource
+request, requiredDuringScheduling anti-affinity expressions, etc.),
+compute a sum by iterating through the elements of this field and adding
+"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+node(s) with the highest sum are the most preferred.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex">requiredDuringSchedulingIgnoredDuringExecution</a></b></td>
+        <td>[]object</td>
+        <td>
+          If the anti-affinity requirements specified by this field are not met at
+scheduling time, the pod will not be scheduled onto the node.
+If the anti-affinity requirements specified by this field cease to be met
+at some point during pod execution (e.g. due to a pod label update), the
+system may or may not try to eventually evict the pod from its node.
+When there are multiple elements, the lists of nodes corresponding to each
+podAffinityTerm are intersected, i.e. all terms must be satisfied.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinity)</sup></sup>
+
+
+
+The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm">podAffinityTerm</a></b></td>
+        <td>object</td>
+        <td>
+          Required. A pod affinity term, associated with the corresponding weight.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>weight</b></td>
         <td>integer</td>
         <td>
-          <br/>
+          weight associated with matching the corresponding podAffinityTerm,
+in the range 1-100.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -13524,224 +14474,12 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex)</sup></sup>
 
 
 
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>topologyKey</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabelKeys</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>mismatchLabelKeys</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
-        <td>object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>namespaces</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
-        <td>[]object</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>matchLabels</b></td>
-        <td>map[string]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>key</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>operator</b></td>
-        <td>string</td>
-        <td>
-          <br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>values</b></td>
-        <td>[]string</td>
-        <td>
-          <br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinity)</sup></sup>
-
-
-
-
+Required. A pod affinity term, associated with the corresponding weight.
 
 <table>
     <thead>
@@ -13756,54 +14494,83 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>topologyKey</b></td>
         <td>string</td>
         <td>
-          <br/>
+          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+the labelSelector in the specified namespaces, where co-located is defined as running on a node
+whose value of the label with key topologyKey matches that of any node on which any of the
+selected pods is running.
+Empty topologyKey is not allowed.<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector">labelSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+Also, MatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>mismatchLabelKeys</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          MismatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector.
+Also, MismatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector">namespaceSelector</a></b></td>
         <td>object</td>
         <td>
-          <br/>
+          A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>namespaces</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          namespaces specifies a static list of namespace names that the term applies to.
+The term is applied to the union of the namespaces listed in this field
+and the ones selected by namespaceSelector.
+null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
 
 
 
-
+A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.
 
 <table>
     <thead>
@@ -13815,29 +14582,32 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          <br/>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector)</sup></sup>
 
 
 
-
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
 
 <table>
     <thead>
@@ -13852,33 +14622,41 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          key is the label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
-          <br/>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm)</sup></sup>
 
 
 
-
+A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.
 
 <table>
     <thead>
@@ -13890,29 +14668,32 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
         <td>[]object</td>
         <td>
-          <br/>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>matchLabels</b></td>
         <td>map[string]string</td>
         <td>
-          <br/>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.advanced.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector)</sup></sup>
 
 
 
-
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
 
 <table>
     <thead>
@@ -13927,21 +14708,356 @@ If specified, the pod's scheduling constraints. For documentation, refer to http
         <td><b>key</b></td>
         <td>string</td>
         <td>
-          <br/>
+          key is the label key that the selector applies to.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>operator</b></td>
         <td>string</td>
         <td>
-          <br/>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>values</b></td>
         <td>[]string</td>
         <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinity)</sup></sup>
+
+
+
+Defines a set of pods (namely those matching the labelSelector
+relative to the given namespace(s)) that this pod should be
+co-located (affinity) or not co-located (anti-affinity) with,
+where co-located is defined as running on a node whose value of
+the label with key <topologyKey> matches that of any node on which
+a pod of the set of pods is running
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>topologyKey</b></td>
+        <td>string</td>
+        <td>
+          This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching
+the labelSelector in the specified namespaces, where co-located is defined as running on a node
+whose value of the label with key topologyKey matches that of any node on which any of the
+selected pods is running.
+Empty topologyKey is not allowed.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector">labelSelector</a></b></td>
+        <td>object</td>
+        <td>
+          A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MatchLabelKeys and LabelSelector.
+Also, MatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mismatchLabelKeys</b></td>
+        <td>[]string</td>
+        <td>
+          MismatchLabelKeys is a set of pod label keys to select which pods will
+be taken into consideration. The keys are used to lookup values from the
+incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)`
+to select the group of existing pods which pods will be taken into consideration
+for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming
+pod labels will be ignored. The default value is empty.
+The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector.
+Also, MismatchLabelKeys cannot be set when LabelSelector isn't set.
+This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector">namespaceSelector</a></b></td>
+        <td>object</td>
+        <td>
+          A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespaces</b></td>
+        <td>[]string</td>
+        <td>
+          namespaces specifies a static list of namespace names that the term applies to.
+The term is applied to the union of the namespaces listed in this field
+and the ones selected by namespaceSelector.
+null or empty namespaces list and null namespaceSelector means "this pod's namespace".<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+A label query over a set of resources, in this case pods.
+If it's null, this PodAffinityTerm matches with no Pods.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex)</sup></sup>
+
+
+
+A label query over the set of namespaces that the term applies to.
+The term is applied to the union of the namespaces selected by this field
+and the ones listed in the namespaces field.
+null selector and null or empty namespaces list means "this pod's namespace".
+An empty selector ({}) matches all namespaces.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex">matchExpressions</a></b></td>
+        <td>[]object</td>
+        <td>
+          matchExpressions is a list of label selector requirements. The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>matchLabels</b></td>
+        <td>map[string]string</td>
+        <td>
+          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+map is equivalent to an element of matchExpressions, whose key field is "key", the
+operator is "In", and the values array contains only "value". The requirements are ANDed.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedschedulingaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector)</sup></sup>
+
+
+
+A label selector requirement is a selector that contains values, a key, and an operator that
+relates the key and values.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          key is the label key that the selector applies to.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          operator represents a key's relationship to a set of values.
+Valid operators are In, NotIn, Exists and DoesNotExist.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>values</b></td>
+        <td>[]string</td>
+        <td>
+          values is an array of string values. If the operator is In or NotIn,
+the values array must be non-empty. If the operator is Exists or DoesNotExist,
+the values array must be empty. This array is replaced during a strategic
+merge patch.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.scheduling.tolerations[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvancedscheduling)</sup></sup>
+
+
+
+The pod this Toleration is attached to tolerates any taint that matches
+the triple <key,value,effect> using the matching operator <operator>.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>effect</b></td>
+        <td>string</td>
+        <td>
+          Effect indicates the taint effect to match. Empty means match all taint effects.
+When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>key</b></td>
+        <td>string</td>
+        <td>
+          Key is the taint key that the toleration applies to. Empty means match all taint keys.
+If the key is empty, operator must be Exists; this combination means to match all values and all keys.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>operator</b></td>
+        <td>string</td>
+        <td>
+          Operator represents a key's relationship to the value.
+Valid operators are Exists and Equal. Defaults to Equal.
+Exists is equivalent to wildcard for value, so that a pod can
+tolerate all taints of a particular category.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tolerationSeconds</b></td>
+        <td>integer</td>
+        <td>
+          TolerationSeconds represents the period of time the toleration (which must be
+of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+it is not set, which means tolerate the taint forever (do not evict). Zero and
+negative values will be treated as 0 (evict immediately) by the system.<br/>
           <br/>
+            <i>Format</i>: int64<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          Value is the taint value the toleration matches to.
+If the operator is Exists, the value should be empty, otherwise just a regular string.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

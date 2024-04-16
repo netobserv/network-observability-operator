@@ -294,6 +294,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	}
 
 	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
+
 	return &v1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFAgentName,
@@ -314,7 +315,6 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 				},
 				Spec: corev1.PodSpec{
 					// Allows deploying an instance in the master node
-					Tolerations:        []corev1.Toleration{{Operator: corev1.TolerationOpExists}},
 					ServiceAccountName: constants.EBPFServiceAccount,
 					HostNetwork:        true,
 					DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
@@ -328,9 +328,10 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 						Env:             env,
 						VolumeMounts:    volumeMounts,
 					}},
-					NodeSelector:      advancedConfig.NodeSelector,
-					Affinity:          advancedConfig.Affinity,
-					PriorityClassName: advancedConfig.PriorityClassName,
+					NodeSelector:      advancedConfig.Scheduling.NodeSelector,
+					Tolerations:       advancedConfig.Scheduling.Tolerations,
+					Affinity:          advancedConfig.Scheduling.Affinity,
+					PriorityClassName: advancedConfig.Scheduling.PriorityClassName,
 				},
 			},
 		},
