@@ -3797,7 +3797,8 @@ More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-co
         <td><b><a href="#flowcollectorspecprocessorsubnetlabels">subnetLabels</a></b></td>
         <td>object</td>
         <td>
-          `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.<br/>
+          `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5124,6 +5125,7 @@ inside a container.<br/>
 
 
 `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
 
 <table>
     <thead>
@@ -5147,7 +5149,8 @@ If you enable `openShiftAutoDetect`, `customLabels` can override the detected su
         <td>boolean</td>
         <td>
           `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
-OpenShift install configuration and the Cluster Network Operator configuration.<br/>
+OpenShift install configuration and the Cluster Network Operator configuration. Indirectly, this is a way to accurately detect
+external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by default on OpenShift.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12435,7 +12438,8 @@ More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-co
         <td><b><a href="#flowcollectorspecprocessorsubnetlabels-1">subnetLabels</a></b></td>
         <td>object</td>
         <td>
-          `SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.<br/>
+          `SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -15220,6 +15224,7 @@ inside a container.<br/>
 
 
 `SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
 
 <table>
     <thead>
@@ -15243,7 +15248,8 @@ If you enable `openShiftAutoDetect`, `customLabels` can override the detected su
         <td>boolean</td>
         <td>
           `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
-OpenShift install configuration and the Cluster Network Operator configuration.<br/>
+OpenShift install configuration and the Cluster Network Operator configuration. Indirectly, this is a way to accurately detect
+external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by default on OpenShift.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

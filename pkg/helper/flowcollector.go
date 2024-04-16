@@ -297,5 +297,5 @@ func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flows
 }
 
 func AutoDetectOpenShiftNetworks(spec *flowslatest.FlowCollectorFLP) bool {
-	return spec.SubnetLabels.OpenShiftAutoDetect != nil && *spec.SubnetLabels.OpenShiftAutoDetect
+	return spec.SubnetLabels.OpenShiftAutoDetect == nil || *spec.SubnetLabels.OpenShiftAutoDetect
 }

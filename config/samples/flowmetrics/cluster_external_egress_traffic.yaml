@@ -1,0 +1,14 @@
+# More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: flowmetric-cluster-external-egress-traffic
+spec:
+  metricName: cluster_external_egress_bytes_total
+  type: Counter
+  valueField: Bytes
+  direction: Egress
+  labels: [SrcK8S_HostName,SrcK8S_Namespace,SrcK8S_OwnerName,SrcK8S_OwnerType]
+  filters:
+  - field: DstSubnetLabel
+    matchType: Absence
