@@ -22,7 +22,7 @@ type Client struct {
 func UnmanagedClient(cl client.Client) Client {
 	return Client{
 		Client:                 cl,
-		SetControllerReference: func(o client.Object) error { return nil },
+		SetControllerReference: func(_ client.Object) error { return nil },
 	}
 }
 
