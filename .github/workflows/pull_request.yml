@@ -29,10 +29,13 @@ jobs:
     - name: Report coverage
       if: ${{ matrix.go == '1.21' }}
       uses: codecov/codecov-action@v4
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
         files: ./cover.out
         flags: unittests
-        fail_ci_if_error: false        
+        fail_ci_if_error: true
+        verbose: true   
 
   bundle-check:
     runs-on: ubuntu-latest
