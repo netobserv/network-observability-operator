@@ -10,7 +10,7 @@ metadata:
   name: flowmetric-sample
 spec:
   # More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
-  metricName: cluster_ingress_bytes_total
+  metricName: cluster_external_ingress_bytes_total
   type: Counter
   valueField: Bytes
   direction: Ingress
@@ -20,15 +20,15 @@ spec:
     matchType: Absence
   charts:
   - dashboardName: Main
-    title: Cluster ingress traffic
+    title: External ingress traffic
     unit: Bps
     type: SingleStat
     queries:
     - promQL: "sum(rate($METRIC[2m]))"
       legend: ""
   - dashboardName: Main
-    sectionName: Cluster
-    title: Top cluster ingress traffic per workload
+    sectionName: External
+    title: Top external ingress traffic per workload
     unit: Bps
     type: StackArea
     queries:

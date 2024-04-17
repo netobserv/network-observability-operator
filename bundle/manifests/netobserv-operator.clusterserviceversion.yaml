@@ -27,7 +27,7 @@ metadata:
                     "promQL": "sum(rate($METRIC[2m]))"
                   }
                 ],
-                "title": "Cluster ingress traffic",
+                "title": "External ingress traffic",
                 "type": "SingleStat",
                 "unit": "Bps"
               },
@@ -39,8 +39,8 @@ metadata:
                     "promQL": "sum(rate($METRIC{DstK8S_Namespace!=\"\"}[2m])) by (DstK8S_Namespace, DstK8S_OwnerName)"
                   }
                 ],
-                "sectionName": "Cluster",
-                "title": "Top cluster ingress traffic per workload",
+                "sectionName": "External",
+                "title": "Top external ingress traffic per workload",
                 "type": "StackArea",
                 "unit": "Bps"
               }
@@ -58,7 +58,7 @@ metadata:
               "DstK8S_OwnerName",
               "DstK8S_OwnerType"
             ],
-            "metricName": "cluster_ingress_bytes_total",
+            "metricName": "cluster_external_ingress_bytes_total",
             "type": "Counter",
             "valueField": "Bytes"
           }

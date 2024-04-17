@@ -6,13 +6,6 @@ import (
 
 func GetFilters(fm *metricslatest.FlowMetricSpec) []metricslatest.MetricFilter {
 	var filters []metricslatest.MetricFilter
-	if !fm.IncludeDuplicates {
-		filters = append(filters, metricslatest.MetricFilter{
-			Field:     "Duplicate",
-			Value:     "true",
-			MatchType: metricslatest.MatchNotEqual,
-		})
-	}
 	if fm.Direction == metricslatest.Egress {
 		filters = append(filters, metricslatest.MetricFilter{
 			Field:     "FlowDirection",

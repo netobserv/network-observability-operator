@@ -61,7 +61,7 @@ type MetricFilter struct {
 // usage of Prometheus workloads as this could potentially have a high impact. Cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric<br>
 // To check the cardinality of all NetObserv metrics, run as `promql`: `count({__name__=~"netobserv.*"}) by (__name__)`.
 type FlowMetricSpec struct {
-	// Name of the metric in Prometheus. It will be automatically prefixed with "netobserv_".
+	// Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_".
 	// +required
 	MetricName string `json:"metricName"`
 
@@ -93,11 +93,6 @@ type FlowMetricSpec struct {
 	// +optional
 	Labels []string `json:"labels"`
 
-	// When set to `true`, flows duplicated across several interfaces will add up in the generated metrics.
-	// When set to `false` (default), it is equivalent to adding the exact filter on `Duplicate` != `true`.
-	// +optional
-	IncludeDuplicates bool `json:"includeDuplicates,omitempty"`
-
 	// Filter for ingress, egress or any direction flows.
 	// When set to `Ingress`, it is equivalent to adding the regex filter on `FlowDirection`: `0|2`.
 	// When set to `Egress`, it is equivalent to adding the regex filter on `FlowDirection`: `1|2`.
@@ -106,7 +101,7 @@ type FlowMetricSpec struct {
 	// +optional
 	Direction FlowDirection `json:"direction,omitempty"`
 
-	// A list of buckets to use when `type` is "Histogram". The list must be parseable as floats. Prometheus default buckets will be used if unset.
+	// A list of buckets to use when `type` is "Histogram". The list must be parseable as floats. When not set, Prometheus default buckets are used.
 	// +optional
 	Buckets []string `json:"buckets,omitempty"`
 
@@ -114,7 +109,7 @@ type FlowMetricSpec struct {
 	// +optional
 	Divider string `json:"divider"`
 
-	// Charts configuration
+	// Charts configuration, for the OpenShift Console in the administrator view, Dashboards menu.
 	// +optional
 	Charts []Chart `json:"charts,omitempty"`
 }
@@ -159,7 +154,7 @@ type Chart struct {
 	Type ChartType `json:"type"`
 
 	// List of queries to be displayed on this chart. If `type` is `SingleStat` and multiple queries are provided,
-	// this chart will be automatically expanded in several panels (one per query).
+	// this chart is automatically expanded in several panels (one per query).
 	// +required
 	Queries []Query `json:"queries"`
 }

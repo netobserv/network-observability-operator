@@ -46,13 +46,14 @@ spec:
             properties:
               buckets:
                 description: A list of buckets to use when `type` is "Histogram".
-                  The list must be parseable as floats. Prometheus default buckets
-                  will be used if unset.
+                  The list must be parseable as floats. When not set, Prometheus default
+                  buckets are used.
                 items:
                   type: string
                 type: array
               charts:
-                description: Charts configuration
+                description: Charts configuration, for the OpenShift Console in the
+                  administrator view, Dashboards menu.
                 items:
                   description: Configures charts / dashboard generation associated
                     to a metric
@@ -66,7 +67,7 @@ spec:
                     queries:
                       description: |-
                         List of queries to be displayed on this chart. If `type` is `SingleStat` and multiple queries are provided,
-                        this chart will be automatically expanded in several panels (one per query).
+                        this chart is automatically expanded in several panels (one per query).
                       items:
                         description: Configures PromQL queries
                         properties:
@@ -173,11 +174,6 @@ spec:
                   - matchType
                   type: object
                 type: array
-              includeDuplicates:
-                description: |-
-                  When set to `true`, flows duplicated across several interfaces will add up in the generated metrics.
-                  When set to `false` (default), it is equivalent to adding the exact filter on `Duplicate` != `true`.
-                type: boolean
               labels:
                 description: |-
                   `labels` is a list of fields that should be used as Prometheus labels, also known as dimensions.
@@ -190,7 +186,7 @@ spec:
                   type: string
                 type: array
               metricName:
-                description: Name of the metric in Prometheus. It will be automatically
+                description: Name of the metric. In Prometheus, it is automatically
                   prefixed with "netobserv_".
                 type: string
               type:

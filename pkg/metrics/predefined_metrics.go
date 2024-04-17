@@ -63,13 +63,12 @@ func init() {
 				lowDir := strings.ToLower(string(dir))
 				predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 					FlowMetricSpec: metricslatest.FlowMetricSpec{
-						MetricName:        fmt.Sprintf("%s_%s_%s_total", groupTrimmed, lowDir, vt),
-						Type:              metricslatest.CounterMetric,
-						ValueField:        valueField,
-						IncludeDuplicates: false,
-						Direction:         dir,
-						Labels:            labels,
-						Charts:            trafficCharts(group, vt, lowDir),
+						MetricName: fmt.Sprintf("%s_%s_%s_total", groupTrimmed, lowDir, vt),
+						Type:       metricslatest.CounterMetric,
+						ValueField: valueField,
+						Direction:  dir,
+						Labels:     labels,
+						Charts:     trafficCharts(group, vt, lowDir),
 					},
 					tags: []string{group, vt, lowDir},
 				})
@@ -78,20 +77,18 @@ func init() {
 		// Flows metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
-				MetricName:        fmt.Sprintf("%s_flows_total", groupTrimmed),
-				Type:              "counter",
-				Labels:            labels,
-				IncludeDuplicates: true,
+				MetricName: fmt.Sprintf("%s_flows_total", groupTrimmed),
+				Type:       "counter",
+				Labels:     labels,
 			},
 			tags: []string{group, group + "-flows", "flows"},
 		})
 		// RTT metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
-				MetricName:        fmt.Sprintf("%s_rtt_seconds", groupTrimmed),
-				Type:              metricslatest.HistogramMetric,
-				ValueField:        "TimeFlowRttNs",
-				IncludeDuplicates: true,
+				MetricName: fmt.Sprintf("%s_rtt_seconds", groupTrimmed),
+				Type:       metricslatest.HistogramMetric,
+				ValueField: "TimeFlowRttNs",
 				Filters: []metricslatest.MetricFilter{
 					{Field: "TimeFlowRttNs", MatchType: metricslatest.MatchPresence},
 				},
@@ -105,10 +102,9 @@ func init() {
 		// Drops metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
-				MetricName:        fmt.Sprintf("%s_drop_packets_total", groupTrimmed),
-				Type:              metricslatest.CounterMetric,
-				ValueField:        "PktDropPackets",
-				IncludeDuplicates: false,
+				MetricName: fmt.Sprintf("%s_drop_packets_total", groupTrimmed),
+				Type:       metricslatest.CounterMetric,
+				ValueField: "PktDropPackets",
 				Filters: []metricslatest.MetricFilter{
 					{Field: "PktDropPackets", MatchType: metricslatest.MatchPresence},
 				},
@@ -119,10 +115,9 @@ func init() {
 		})
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
-				MetricName:        fmt.Sprintf("%s_drop_bytes_total", groupTrimmed),
-				Type:              metricslatest.CounterMetric,
-				ValueField:        "PktDropBytes",
-				IncludeDuplicates: false,
+				MetricName: fmt.Sprintf("%s_drop_bytes_total", groupTrimmed),
+				Type:       metricslatest.CounterMetric,
+				ValueField: "PktDropBytes",
 				Filters: []metricslatest.MetricFilter{
 					{Field: "PktDropBytes", MatchType: metricslatest.MatchPresence},
 				},
