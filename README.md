@@ -4,9 +4,15 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/netobserv/network-observability-operator)](https://goreportcard.com/report/github.com/netobserv/network-observability-operator)
 
 NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a monitoring pipeline that consists in:
-- the NetObserv eBPF agent, that generates network flows from captured packets
-- Flowlogs-pipeline, a component that collects, enriches and exports these flows.
-- When used in OpenShift, a Console plugin for flows visualization with powerful filtering options, a topology representation and more.
+- an eBPF agent, that generates network flows from captured packets
+- flowlogs-pipeline, a component that collects, enriches and exports these flows
+- when used in OpenShift, a Console plugin for flows visualization with powerful filtering options, a topology representation and more
+
+Flow data is then available in multiple ways, each optional:
+
+- As Prometheus metrics
+- As raw flow logs stored in Loki
+- As raw flow logs exported to a collector
 
 ## Getting Started
 
@@ -18,7 +24,7 @@ NetObserv Operator is available in [OperatorHub](https://operatorhub.io/operator
 
 ![OpenShift OperatorHub search](./docs/assets/operatorhub-search.png)
 
-Please read the [operator description in OLM](./config/descriptions/upstream.md). You will need to install Loki, some instructions are provided there.
+Please read the [operator description in OLM](./config/descriptions/upstream.md).
 
 After the operator is installed, create a `FlowCollector` resource:
 
@@ -35,7 +41,7 @@ git clone https://github.com/netobserv/network-observability-operator.git && cd 
 USER=netobserv make deploy deploy-loki deploy-grafana
 ```
 
-It will deploy the operator in its latest version, with port-forwarded Loki and Grafana.
+It will deploy the operator in its latest version, with port-forwarded Loki and Grafana (they are optional).
 
 > Note: the `loki-deploy` script is provided as a quick install path and is not suitable for production. It deploys a single pod, configures a 10GB storage PVC, with 24 hours of retention. For a scalable deployment, please refer to [our distributed Loki guide](https://github.com/netobserv/documents/blob/main/loki_distributed.md) or [Grafana's official documentation](https://grafana.com/docs/loki/latest/).
 
@@ -55,17 +61,9 @@ kubectl edit flowcollector cluster
 
 Refer to the [Configuration section](#configuration) of this document.
 
-#### Install older versions
+### With or without Loki?
 
-To deploy a specific version of the operator, you need to switch to the related git branch, then add a `VERSION` env to the above make command, e.g:
-
-```bash
-git checkout 1.0.4
-USER=netobserv VERSION=1.0.4 make deploy deploy-loki deploy-grafana
-make deploy-sample-cr
-```
-
-Beware that the version of the underlying components, such as flowlogs-pipeline, may be tied to the version of the operator (this is why we recommend switching the git branch). Breaking this correlation may result in crashes. The versions of the underlying components are defined in the `FlowCollector` resource as image tags.
+Historically, Grafana Loki was a strict dependency but it isn't anymore. If you don't want to install it, you can still get the Prometheus metrics, and/or export raw flows to a custom collector. But be aware that some of the Console plugin features will be disabled. For instance, you will not be able to view raw flows there, and the metrics / topology will have a more limited level of details, missing information such as pods or IPs.
 
 ### OpenShift Console
 
@@ -100,15 +98,6 @@ These views are accessible directly from the main menu, and also as contextual t
 
 ![Contextual topology](./docs/assets/topology-pod.png)
 
-
-### Grafana
-
-Grafana can be used to retrieve and show the collected flows from Loki. If you used the `make` commands provided above to install NetObserv from the repository, you should already have Grafana installed and configured with Loki data source. Otherwise, you can install Grafana by following the instructions [here](https://github.com/netobserv/documents/blob/main/hack_loki.md#grafana), and add a new Loki data source that matches your setup. If you used the provided quick install path for Loki, its access URL is `http://loki:3100`.
-
-To get dashboards, import [this file](./config/samples/dashboards/Network%20Observability.json) into Grafana. It includes a table of the flows and some graphs showing the volumetry per source or destination namespaces or workload:
-
-![Grafana dashboard](./docs/assets/netobserv-grafana-dashboard.png)
-
 ## Configuration
 
 The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](./docs/FlowCollector.md), and a full sample file [there](./config/samples/flows_v1beta2_flowcollector.yaml).
@@ -119,7 +108,7 @@ To edit configuration in cluster, run:
 kubectl edit flowcollector cluster
 ```
 
-As it operates cluster-wide, only a single `FlowCollector` is allowed, and it has to be named `cluster`.
+As it operates cluster-wide on every node, only a single `FlowCollector` is allowed, and it has to be named `cluster`.
 
 A couple of settings deserve special attention:
 
@@ -127,7 +116,7 @@ A couple of settings deserve special attention:
 
 - Sampling `spec.agent.ebpf.sampling`: a value of `100` means: one flow every 100 is sampled. `1` means all flows are sampled. The lower it is, the more flows you get, and the more accurate are derived metrics, but the higher amount of resources are consumed. By default, sampling is set to 50 (ie. 1:50). Note that more sampled flows also means more storage needed. We recommend to start with default values and refine empirically, to figure out which setting your cluster can manage.
 
-- Loki (`spec.loki`): configure here how to reach Loki. The default URL values match the Loki quick install paths mentioned in the _Getting Started_ section, but you may have to configure differently if you used another installation method. You will find more information in our guides for deploying Loki: [with Loki Operator](https://github.com/netobserv/documents/blob/main/loki_operator.md), or an alternative ["distributed Loki" guide](https://github.com/netobserv/documents/blob/main/loki_distributed.md). You should set `spec.loki.mode` according to the chosen installation method, for instance use `LokiStack` if you use the Loki Operator.
+- Loki (`spec.loki`): configure here how to reach Loki. The default URL values match the Loki quick install paths mentioned in the _Getting Started_ section, but you may have to configure differently if you used another installation method. You will find more information in our guides for deploying Loki: [with Loki Operator](https://github.com/netobserv/documents/blob/main/loki_operator.md), or an alternative ["distributed Loki" guide](https://github.com/netobserv/documents/blob/main/loki_distributed.md). You should set `spec.loki.mode` according to the chosen installation method, for instance use `LokiStack` if you use the Loki Operator. Make sure to disable Loki (`spec.loki.enable`) if you don't want to use it.
 
 - Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](./docs/QuickFilters.md).
 
@@ -137,6 +126,10 @@ A couple of settings deserve special attention:
 
 - To enable availability zones awareness, set `spec.processor.addZone` to `true`.
 
+### Metrics
+
+More information on Prometheus metrics is available in a dedicated page: [Metrics.md](./docs/Metrics.md).
+
 ### Performance fine-tuning
 
 In addition to sampling and using Kafka or not, other settings can help you get an optimal setup without compromising on the observability.
@@ -145,7 +138,7 @@ Here is what you should pay attention to:
 
 - Resource requirements and limits (`spec.agent.ebpf.resources`, `spec.agent.processor.resources`): adapt the resource requirements and limits to the load and memory usage you expect on your cluster. The default limits (800MB) should be sufficient for most medium sized clusters. You can read more about reqs and limits [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
 
-- eBPF agent's cache max flows (`spec.agent.ebpf.cacheMaxFlows`) and timeout (`spec.agent.ebpf.cacheActiveTimeout`) control how often flows are reported by the agents. The higher are `cacheMaxFlows` and `cacheActiveTimeout`, the less traffic will be generated by the agents themselves, which also ties with less CPU load. But on the flip side, it leads to a slightly higher memory consumption, and might generate more latency in the flow collection.
+- eBPF agent's cache max flows (`spec.agent.ebpf.cacheMaxFlows`) and timeout (`spec.agent.ebpf.cacheActiveTimeout`) control how often flows are reported by the agents. The higher are `cacheMaxFlows` and `cacheActiveTimeout`, the less traffic will be generated by the agents themselves, which also ties with less CPU load. But on the flip side, it leads to a slightly higher memory consumption, and might generate more latency in the flow collection. There is [a blog entry](https://github.com/netobserv/documents/blob/main/blogs/agent_metrics_perf/index.md) dedicated to this fine-tuning.
 
 - It is possible to reduce the overall observed traffic by restricting or excluding interfaces via `spec.agent.ebpf.interfaces` and `spec.agent.ebpf.excludeInterfaces`. Note that the interface names may vary according to the CNI used.
 
