@@ -255,7 +255,13 @@ endif
 
 ##@ Code / files generation
 manifests: YQ controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) \
+	rbac:roleName=manager-role \
+	crd:crdVersions=v1 \
+	paths="./apis/..." \
+	output:crd:artifacts:config=config/crd/bases \
+	output:webhook:dir=./config/webhook \
+	webhook
 	$(YQ) -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.processor.properties.kafkaConsumerAutoscaler.properties.metrics.items | .. | select(has("description")) | .description)' config/crd/bases/flows.netobserv.io_flowcollectors.yaml
 	$(YQ) -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.consolePlugin.properties.autoscaler.properties.metrics.items | .. | select(has("description")) | .description)' config/crd/bases/flows.netobserv.io_flowcollectors.yaml
 	$(YQ) -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.agent.properties.ebpf.properties.advanced.properties.affinity.properties | .. | select(has("description")) | .description)' config/crd/bases/flows.netobserv.io_flowcollectors.yaml

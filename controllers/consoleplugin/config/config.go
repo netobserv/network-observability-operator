@@ -1,6 +1,8 @@
 package config
 
 import (
+	_ "embed"
+
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 )
@@ -104,4 +106,11 @@ type PluginConfig struct {
 	Server   ServerConfig   `yaml:"server" json:"server"`
 	Loki     LokiConfig     `yaml:"loki" json:"loki"`
 	Frontend FrontendConfig `yaml:"frontend" json:"frontend"`
+}
+
+//go:embed static-frontend-config.yaml
+var staticFrontendConfig []byte
+
+func LoadStaticFrontendConfig() []byte {
+	return staticFrontendConfig
 }

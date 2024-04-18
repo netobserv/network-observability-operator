@@ -6,6 +6,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
+
+	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -87,4 +90,26 @@ func UnstructuredDuration(in *metav1.Duration) string {
 		return ""
 	}
 	return in.ToUnstructured().(string)
+}
+
+func FindFilter(labels []string) bool {
+	var cfg config.FrontendConfig
+
+	err := yaml.Unmarshal(config.LoadStaticFrontendConfig(), &cfg)
+	if err != nil {
+		return false
+	}
+
+	labelMap := make(map[string]bool)
+
+	for _, f := range cfg.Fields {
+		labelMap[f.Name] = true
+	}
+	for _, l := range labels {
+		if ok := labelMap[l]; !ok {
+			return false
+		}
+	}
+
+	return true
 }
