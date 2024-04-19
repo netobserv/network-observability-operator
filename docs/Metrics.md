@@ -54,9 +54,14 @@ When the `DNSTracking` feature is enabled in `spec.agent.ebpf.features`, additio
 ## Custom metrics using the FlowMetrics API
 
 The FlowMetrics API ([spec reference](./FlowMetric.md)) has been designed to give you full control on the metrics generation out of the NetObserv' enriched NetFlow data.
-It allows to create counters or histograms with any set of fields as Prometheus labels, and using any filters from the fields. Just a recommendation: be careful about the [metrics cardinality](https://www.robustperception.io/cardinality-is-key/) when creating new metrics. High cardinality metrics can stress the Prometheus instance. Don't hesitate to [reach out](https://github.com/netobserv/network-observability-operator/discussions/new/choose) if you need some guidance.
+It allows to create counters or histograms with any set of fields as Prometheus labels, and using any filters from the fields. Just a recommendation: be careful about the [metrics cardinality](https://www.robustperception.io/cardinality-is-key/) when creating new metrics. High cardinality metrics can stress the Prometheus instance.
 
-The full list of fields is [available there](./flows-format.adoc).
+The full list of fields is [available there](./flows-format.adoc). The "Cardinality" column gives information about the implied metrics cardinality. Fields flagged as `fine` are safe to use as labels. Fields flagged as `careful` need some extra attention: if you want to use them as labels, it is recommended to narrow down the cardinality with filters. For example, you may safely use `DstPort` as a label if you also restrict which `DstPort` are allowed with a `MatchRegex` filter.
+
+Be also aware that for each field used as a label, the fields cardinality is potentially multiplied - and this is especially true when mixing Source and Destination fields. For instance, using `SrcK8S_Name` or `DstK8S_Name` (ie. Pod/Node/Service names) alone as a label might be reasonable, but using both `SrcK8S_Name` and `DstK8S_Name` in the same metric potentially generates the square of the cardinality of Pods/Nodes/Services.
+
+Don't hesitate to [reach out](https://github.com/netobserv/network-observability-operator/discussions/new/choose) if you need more guidance.
+
 Some of those fields require special features to be enabled in `FlowCollector`, such as `TimeFlowRttNs` via `spec.agent.ebpf.features` or `Src/DstK8S_Zone` via `spec.processor.addZone`.
 
 Currently, `FlowMetric` resources need to be created in the namespace defined in `FlowCollector` `spec.namespace`, which is `netobserv` by default. This may change in the future.
