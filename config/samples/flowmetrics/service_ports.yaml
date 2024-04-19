@@ -11,10 +11,10 @@ spec:
   filters:
   - field: DstPort
     value: "^\\d\\d?\\d?\\d?$"
-    matchType: Regex
+    matchType: MatchRegex
   - field: Duplicate
     value: "true"
     matchType: NotEqual
   - field: FlowDirection
     value: "1|2"
-    matchType: Regex
+    matchType: MatchRegex
