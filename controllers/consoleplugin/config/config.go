@@ -64,12 +64,21 @@ type FilterConfig struct {
 	Placeholder            string `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
 }
 
+type CardinalityWarn string
+
+const (
+	CardinalityWarnAvoid   CardinalityWarn = "avoid"
+	CardinalityWarnCareful CardinalityWarn = "careful"
+	CardinalityWarnFine    CardinalityWarn = "fine"
+)
+
 type FieldConfig struct {
-	Name        string `yaml:"name" json:"name"`
-	Type        string `yaml:"type" json:"type"`
-	Description string `yaml:"description" json:"description"`
-	LokiLabel   bool   `yaml:"lokiLabel,omitempty" json:"lokiLabel,omitempty"`
-	Filter      string `yaml:"filter,omitempty" json:"filter,omitempty"`
+	Name            string          `yaml:"name" json:"name"`
+	Type            string          `yaml:"type" json:"type"`
+	Description     string          `yaml:"description" json:"description"`
+	LokiLabel       bool            `yaml:"lokiLabel,omitempty" json:"lokiLabel,omitempty"`
+	Filter          string          `yaml:"filter,omitempty" json:"filter,omitempty"`
+	CardinalityWarn CardinalityWarn `yaml:"cardinalityWarn,omitempty" json:"cardinalityWarn,omitempty"`
 }
 
 type Deduper struct {
