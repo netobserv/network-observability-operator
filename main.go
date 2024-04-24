@@ -169,6 +169,10 @@ func main() {
 		setupLog.Error(err, "unable to create v1beta2 webhook", "webhook", "FlowCollector")
 		os.Exit(1)
 	}
+	if err = (&metricsv1alpha1.FlowMetricWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "FlowMetric")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

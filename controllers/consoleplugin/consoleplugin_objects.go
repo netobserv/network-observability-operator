@@ -1,7 +1,6 @@
 package consoleplugin
 
 import (
-	_ "embed"
 	"fmt"
 	"hash/fnv"
 	"path/filepath"
@@ -18,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	config "github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
+	cfg "github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
@@ -310,7 +309,7 @@ func (b *builder) metricsService() *corev1.Service {
 	}
 }
 
-func (b *builder) setLokiConfig(lconf *config.LokiConfig) {
+func (b *builder) setLokiConfig(lconf *cfg.LokiConfig) {
 	lconf.URL = b.loki.QuerierURL
 	statusURL := b.loki.StatusURL
 	if lconf.URL != statusURL {
@@ -353,7 +352,7 @@ func (b *builder) setLokiConfig(lconf *config.LokiConfig) {
 	}
 }
 
-func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) error {
+func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
 	var err error
 	dedupJustMark, err := strconv.ParseBool(ebpf.DedupeJustMarkDefault)
 	if err != nil {
@@ -395,7 +394,7 @@ func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) error {
 	fconf.QuickFilters = b.desired.ConsolePlugin.QuickFilters
 	fconf.AlertNamespaces = []string{b.namespace}
 	fconf.Sampling = helper.GetSampling(b.desired)
-	fconf.Deduper = config.Deduper{
+	fconf.Deduper = cfg.Deduper{
 		Mark:  dedupJustMark,
 		Merge: dedupMerge,
 	}
@@ -411,13 +410,10 @@ func (b *builder) setFrontendConfig(fconf *config.FrontendConfig) error {
 	return nil
 }
 
-//go:embed config/static-frontend-config.yaml
-var staticFrontendConfig []byte
-
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
 func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
-	config := config.PluginConfig{}
+	config := cfg.PluginConfig{}
 	// configure server
 	config.Server.CertPath = "/var/serving-cert/tls.crt"
 	config.Server.KeyPath = "/var/serving-cert/tls.key"
@@ -427,7 +423,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
 	b.setLokiConfig(&config.Loki)
 
 	// configure frontend from embedded static file
-	err := yaml.Unmarshal(staticFrontendConfig, &config.Frontend)
+	err := yaml.Unmarshal(cfg.LoadStaticFrontendConfig(), &config.Frontend)
 	if err != nil {
 		return nil, "", err
 	}
