@@ -92,21 +92,32 @@ func UnstructuredDuration(in *metav1.Duration) string {
 	return in.ToUnstructured().(string)
 }
 
-func FindFilter(labels []string) bool {
+func FindFilter(labels []string, isNumber bool) bool {
 	var cfg config.FrontendConfig
+	type filter struct {
+		exists bool
+		isNum  bool
+	}
 
 	err := yaml.Unmarshal(config.LoadStaticFrontendConfig(), &cfg)
 	if err != nil {
 		return false
 	}
 
-	labelMap := make(map[string]bool)
+	labelMap := make(map[string]filter)
 
 	for _, f := range cfg.Fields {
-		labelMap[f.Name] = true
+		labelMap[f.Name] = filter{true, false}
+		if f.Type == "number" {
+			labelMap[f.Name] = filter{true, true}
+		}
 	}
+
 	for _, l := range labels {
-		if ok := labelMap[l]; !ok {
+		if ok := labelMap[l].exists; !ok {
+			return false
+		}
+		if isNumber && !labelMap[l].isNum {
 			return false
 		}
 	}

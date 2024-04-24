@@ -79,6 +79,32 @@ func TestFlowMetric(t *testing.T) {
 			},
 			expectedError: "",
 		},
+		{
+			desc: "Valid valueField",
+			m: &FlowMetric{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test1",
+					Namespace: "test-namespace",
+				},
+				Spec: FlowMetricSpec{
+					ValueField: "Bytes",
+				},
+			},
+			expectedError: "",
+		},
+		{
+			desc: "Invalid valueField",
+			m: &FlowMetric{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test1",
+					Namespace: "test-namespace",
+				},
+				Spec: FlowMetricSpec{
+					ValueField: "DstAddr",
+				},
+			},
+			expectedError: "invalid value field",
+		},
 	}
 
 	for _, test := range tests {

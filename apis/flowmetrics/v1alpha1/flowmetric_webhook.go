@@ -70,18 +70,26 @@ func validateFlowMetric(_ context.Context, fMetric *FlowMetric) error {
 	}
 
 	if len(str) != 0 {
-		if !helper.FindFilter(str) {
+		if !helper.FindFilter(str, false) {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "filters"), str,
 				fmt.Sprintf("invalid filter field: %s", str)))
 		}
 	}
 
 	if len(fMetric.Spec.Labels) != 0 {
-		if !helper.FindFilter(fMetric.Spec.Labels) {
+		if !helper.FindFilter(fMetric.Spec.Labels, false) {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "labels"), fMetric.Spec.Labels,
 				fmt.Sprintf("invalid label name: %s", fMetric.Spec.Labels)))
 		}
 	}
+
+	if fMetric.Spec.ValueField != "" {
+		if !helper.FindFilter([]string{fMetric.Spec.ValueField}, true) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "valueField"), fMetric.Spec.ValueField,
+				fmt.Sprintf("invalid value field: %s", fMetric.Spec.ValueField)))
+		}
+	}
+
 	if len(allErrs) != 0 {
 		return apierrors.NewInvalid(
 			schema.GroupKind{Group: GroupVersion.Group, Kind: FlowMetric{}.Kind},
