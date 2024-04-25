@@ -123,6 +123,22 @@ func IsEBFPFlowFilterEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 	return spec.FlowFilter != nil && spec.FlowFilter.Enable != nil && *spec.FlowFilter.Enable
 }
 
+func GetEBPFMetricsPort(spec *flowslatest.FlowCollectorEBPF) int32 {
+	port := int32(constants.EBPFMetricPort)
+	if spec.Metrics.Server.Port != nil {
+		port = *spec.Metrics.Server.Port
+	}
+	return port
+}
+
+func GETFlowCollectorMetricsPort(spec *flowslatest.FlowCollectorSpec) int32 {
+	port := int32(constants.FLPMetricsPort)
+	if spec.Processor.Metrics.Server.Port != nil {
+		port = *spec.Processor.Metrics.Server.Port
+	}
+	return port
+}
+
 func PtrBool(b *bool) bool {
 	if b == nil {
 		return false

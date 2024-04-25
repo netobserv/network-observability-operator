@@ -8,18 +8,18 @@ import (
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
-	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
+
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -161,10 +161,9 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 		Name:          healthServiceName,
 		ContainerPort: *advancedConfig.HealthPort,
 	})
-
 	ports = append(ports, corev1.ContainerPort{
 		Name:          prometheusServiceName,
-		ContainerPort: b.desired.Processor.Metrics.Server.Port,
+		ContainerPort: helper.GETFlowCollectorMetricsPort(b.desired),
 	})
 
 	if advancedConfig.ProfilePort != nil {
@@ -238,7 +237,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 		dnsPolicy = corev1.DNSClusterFirstWithHostNet
 	}
 	annotations["prometheus.io/scrape"] = "true"
-	annotations["prometheus.io/scrape_port"] = fmt.Sprint(b.desired.Processor.Metrics.Server.Port)
+	annotations["prometheus.io/scrape_port"] = fmt.Sprint(helper.GETFlowCollectorMetricsPort(b.desired))
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:      b.labels,
@@ -285,7 +284,7 @@ func (b *builder) ConfigMap() (*corev1.ConfigMap, string, error) {
 func (b *builder) GetJSONConfig() (string, error) {
 	metricsSettings := config.MetricsSettings{
 		PromConnectionInfo: api.PromConnectionInfo{
-			Port: int(b.desired.Processor.Metrics.Server.Port),
+			Port: int(helper.GETFlowCollectorMetricsPort(b.desired)),
 		},
 		Prefix:  "netobserv_",
 		NoPanic: true,
@@ -323,6 +322,7 @@ func (b *builder) GetJSONConfig() (string, error) {
 }
 
 func (b *builder) promService() *corev1.Service {
+	port := helper.GETFlowCollectorMetricsPort(b.desired)
 	svc := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.promServiceName(),
@@ -333,12 +333,12 @@ func (b *builder) promService() *corev1.Service {
 			Selector: b.selector,
 			Ports: []corev1.ServicePort{{
 				Name:     prometheusServiceName,
-				Port:     b.desired.Processor.Metrics.Server.Port,
+				Port:     port,
 				Protocol: corev1.ProtocolTCP,
 				// Some Kubernetes versions might automatically set TargetPort to Port. We need to
 				// explicitly set it here so the reconcile loop verifies that the owned service
 				// is equal as the desired service
-				TargetPort: intstr.FromInt32(b.desired.Processor.Metrics.Server.Port),
+				TargetPort: intstr.FromInt32(port),
 			}},
 		},
 	}

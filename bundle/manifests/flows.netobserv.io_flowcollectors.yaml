@@ -274,7 +274,6 @@ spec:
                               Prometheus scraper
                             properties:
                               port:
-                                default: 9102
                                 description: The prometheus HTTP port
                                 format: int32
                                 maximum: 65535
@@ -2133,7 +2132,6 @@ spec:
                           scraper
                         properties:
                           port:
-                            default: 9102
                             description: The prometheus HTTP port
                             format: int32
                             maximum: 65535
@@ -3648,7 +3646,6 @@ spec:
                               Prometheus scraper
                             properties:
                               port:
-                                default: 9102
                                 description: The prometheus HTTP port
                                 format: int32
                                 maximum: 65535
@@ -7699,7 +7696,6 @@ spec:
                           scraper
                         properties:
                           port:
-                            default: 9102
                             description: The prometheus HTTP port
                             format: int32
                             maximum: 65535

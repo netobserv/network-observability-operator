@@ -24,6 +24,13 @@ import (
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/manager/status"
+
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -32,13 +39,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
-
-	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 )
 
 var resources = corev1.ResourceRequirements{
@@ -66,7 +66,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 			Resources:       resources,
 			Metrics: flowslatest.FLPMetrics{
 				Server: flowslatest.MetricsServerConfig{
-					Port: 9090,
+					Port: ptr.To(int32(9090)),
 					TLS: flowslatest.ServerTLS{
 						Type: flowslatest.ServerTLSDisabled,
 					},
@@ -487,7 +487,7 @@ func TestServiceChanged(t *testing.T) {
 	first := b.promService()
 
 	// Check port changed
-	cfg.Processor.Metrics.Server.Port = 9999
+	cfg.Processor.Metrics.Server.Port = ptr.To(int32(9999))
 	b = monoBuilder(ns, &cfg)
 	second := b.promService()
 
@@ -660,7 +660,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 	}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
-	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))
+	assert.Equal(*cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))
 }
 
 func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
@@ -716,7 +716,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
-	assert.Equal(cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))
+	assert.Equal(*cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))
 }
 
 func TestAutoScalerUpdateCheck(t *testing.T) {

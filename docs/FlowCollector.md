@@ -574,7 +574,6 @@ Metrics server endpoint configuration for Prometheus scraper
           The prometheus HTTP port<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 9102<br/>
             <i>Minimum</i>: 1<br/>
             <i>Maximum</i>: 65535<br/>
         </td>
@@ -4850,7 +4849,6 @@ Metrics server endpoint configuration for Prometheus scraper
           The prometheus HTTP port<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 9102<br/>
             <i>Minimum</i>: 1<br/>
             <i>Maximum</i>: 65535<br/>
         </td>
@@ -7648,7 +7646,6 @@ Metrics server endpoint configuration for Prometheus scraper
           The prometheus HTTP port<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 9102<br/>
             <i>Minimum</i>: 1<br/>
             <i>Maximum</i>: 65535<br/>
         </td>
@@ -16065,7 +16062,6 @@ Metrics server endpoint configuration for Prometheus scraper
           The prometheus HTTP port<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 9102<br/>
             <i>Minimum</i>: 1<br/>
             <i>Maximum</i>: 65535<br/>
         </td>

@@ -11,6 +11,7 @@ const (
 	OperatorName             = "netobserv-operator"
 	FLPName                  = "flowlogs-pipeline"
 	FLPPortName              = "flp" // must be <15 chars
+	FLPMetricsPort           = 9401
 	PluginName               = "netobserv-plugin"
 
 	// EBPFAgentName and other constants for it
@@ -20,6 +21,7 @@ const (
 	EBPFPrivilegedNSSuffix            = "-privileged"
 	EBPFServiceAccount                = EBPFAgentName
 	EBPFSecurityContext               = EBPFAgentName
+	EBPFMetricPort                    = 9400
 
 	OpenShiftCertificateAnnotation = "service.beta.openshift.io/serving-cert-secret-name"
 
