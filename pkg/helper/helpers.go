@@ -8,7 +8,6 @@ import (
 
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 
-	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -93,13 +92,12 @@ func UnstructuredDuration(in *metav1.Duration) string {
 }
 
 func FindFilter(labels []string, isNumber bool) bool {
-	var cfg config.FrontendConfig
 	type filter struct {
 		exists bool
 		isNum  bool
 	}
 
-	err := yaml.Unmarshal(config.LoadStaticFrontendConfig(), &cfg)
+	cfg, err := config.LoadStaticFrontendConfig()
 	if err != nil {
 		return false
 	}
@@ -123,4 +121,18 @@ func FindFilter(labels []string, isNumber bool) bool {
 	}
 
 	return true
+}
+
+func LabelIsHighCardinality(label string) bool {
+	frontendCfg, err := config.LoadStaticFrontendConfig()
+	if err != nil {
+		return false
+	}
+	for _, cfgLabel := range frontendCfg.Fields {
+		if label == cfgLabel.Name {
+			return cfgLabel.CardinalityWarn == config.CardinalityWarnCareful ||
+				cfgLabel.CardinalityWarn == config.CardinalityWarnAvoid
+		}
+	}
+	return false
 }

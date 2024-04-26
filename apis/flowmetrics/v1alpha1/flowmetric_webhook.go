@@ -61,6 +61,16 @@ func (r *FlowMetricWebhook) ValidateDelete(_ context.Context, _ runtime.Object) 
 	return nil, nil
 }
 
+func checkFlowMetricCartinality(fMetric *FlowMetric) {
+	for _, label := range fMetric.Spec.Labels {
+		if helper.LabelIsHighCardinality(label) {
+			//No warning level logging as info since it is not an error
+			flowmetriclog.Info("Warning: metric label has high cardinality, please limit it by using some filters", "labelName", label)
+			return
+		}
+	}
+}
+
 func validateFlowMetric(_ context.Context, fMetric *FlowMetric) error {
 	var str []string
 	var allErrs field.ErrorList
@@ -95,5 +105,6 @@ func validateFlowMetric(_ context.Context, fMetric *FlowMetric) error {
 			schema.GroupKind{Group: GroupVersion.Group, Kind: FlowMetric{}.Kind},
 			fMetric.Name, allErrs)
 	}
+	checkFlowMetricCartinality(fMetric)
 	return nil
 }

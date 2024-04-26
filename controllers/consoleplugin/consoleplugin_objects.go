@@ -423,7 +423,8 @@ func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
 	b.setLokiConfig(&config.Loki)
 
 	// configure frontend from embedded static file
-	err := yaml.Unmarshal(cfg.LoadStaticFrontendConfig(), &config.Frontend)
+	var err error
+	config.Frontend, err = cfg.LoadStaticFrontendConfig()
 	if err != nil {
 		return nil, "", err
 	}

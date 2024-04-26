@@ -5,6 +5,7 @@ import (
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	"gopkg.in/yaml.v2"
 )
 
 type ServerConfig struct {
@@ -109,8 +110,17 @@ type PluginConfig struct {
 }
 
 //go:embed static-frontend-config.yaml
-var staticFrontendConfig []byte
+var rawStaticFrontendConfig []byte
+var staticFrontendConfig *FrontendConfig
 
-func LoadStaticFrontendConfig() []byte {
-	return staticFrontendConfig
+func LoadStaticFrontendConfig() (FrontendConfig, error) {
+	if staticFrontendConfig == nil {
+		cfg := FrontendConfig{}
+		err := yaml.Unmarshal(rawStaticFrontendConfig, &cfg)
+		if err != nil {
+			return cfg, err
+		}
+		staticFrontendConfig = &cfg
+	}
+	return *staticFrontendConfig, nil
 }
