@@ -245,7 +245,7 @@ metadata:
                 "metrics": {
                   "enable": false,
                   "server": {
-                    "port": 9090
+                    "port": 9400
                   }
                 },
                 "privileged": false,
@@ -384,7 +384,7 @@ metadata:
               "metrics": {
                 "disableAlerts": [],
                 "server": {
-                  "port": 9102
+                  "port": 9401
                 }
               },
               "resources": {

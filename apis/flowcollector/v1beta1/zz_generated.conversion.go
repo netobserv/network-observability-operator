@@ -1019,7 +1019,7 @@ func Convert_v1beta2_FlowCollectorStatus_To_v1beta1_FlowCollectorStatus(in *v1be
 }
 
 func autoConvert_v1beta1_MetricsServerConfig_To_v1beta2_MetricsServerConfig(in *MetricsServerConfig, out *v1beta2.MetricsServerConfig, s conversion.Scope) error {
-	out.Port = in.Port
+	out.Port = (*int32)(unsafe.Pointer(in.Port))
 	if err := Convert_v1beta1_ServerTLS_To_v1beta2_ServerTLS(&in.TLS, &out.TLS, s); err != nil {
 		return err
 	}
@@ -1032,7 +1032,7 @@ func Convert_v1beta1_MetricsServerConfig_To_v1beta2_MetricsServerConfig(in *Metr
 }
 
 func autoConvert_v1beta2_MetricsServerConfig_To_v1beta1_MetricsServerConfig(in *v1beta2.MetricsServerConfig, out *MetricsServerConfig, s conversion.Scope) error {
-	out.Port = in.Port
+	out.Port = (*int32)(unsafe.Pointer(in.Port))
 	if err := Convert_v1beta2_ServerTLS_To_v1beta1_ServerTLS(&in.TLS, &out.TLS, s); err != nil {
 		return err
 	}

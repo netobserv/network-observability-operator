@@ -81,7 +81,7 @@ func flowCollectorIsoSpecs() {
 				LogTypes: ptr.To(flowslatest.LogTypeAll),
 				Metrics: flowslatest.FLPMetrics{
 					Server: flowslatest.MetricsServerConfig{
-						Port: 12347,
+						Port: ptr.To(int32(12347)),
 						TLS: flowslatest.ServerTLS{
 							Type:     "Disabled",
 							Provided: nil,
@@ -122,7 +122,7 @@ func flowCollectorIsoSpecs() {
 					Metrics: flowslatest.EBPFMetrics{
 						Enable: ptr.To(false),
 						Server: flowslatest.MetricsServerConfig{
-							Port: 12347,
+							Port: ptr.To(int32(12347)),
 							TLS: flowslatest.ServerTLS{
 								Type:     "Disabled",
 								Provided: nil,

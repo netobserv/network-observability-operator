@@ -7,6 +7,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 
 	"github.com/stretchr/testify/assert" // Import the testify library for assertions
+	"k8s.io/utils/ptr"
 )
 
 func TestPromService(t *testing.T) {
@@ -17,7 +18,7 @@ func TestPromService(t *testing.T) {
 	target := &flowslatest.FlowCollectorEBPF{
 		Metrics: flowslatest.EBPFMetrics{
 			Server: flowslatest.MetricsServerConfig{
-				Port: 8080, // Sample port for testing
+				Port: ptr.To(int32(8080)), // Sample port for testing
 			},
 		},
 	}
@@ -40,7 +41,7 @@ func TestPromServiceMonitoring(t *testing.T) {
 	target := &flowslatest.FlowCollectorEBPF{
 		Metrics: flowslatest.EBPFMetrics{
 			Server: flowslatest.MetricsServerConfig{
-				Port: 8080, // Sample port for testing
+				Port: ptr.To(int32(8080)), // Sample port for testing
 			},
 		},
 	}

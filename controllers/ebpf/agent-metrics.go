@@ -41,6 +41,7 @@ func (c *AgentController) reconcileMetricsService(ctx context.Context, target *f
 }
 
 func (c *AgentController) promService(target *flowslatest.FlowCollectorEBPF) *corev1.Service {
+	port := helper.GetEBPFMetricsPort(target)
 	svc := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFAgentMetricsSvcName,
@@ -55,9 +56,9 @@ func (c *AgentController) promService(target *flowslatest.FlowCollectorEBPF) *co
 			},
 			Ports: []corev1.ServicePort{{
 				Name:       "metrics",
-				Port:       target.Metrics.Server.Port,
+				Port:       port,
 				Protocol:   corev1.ProtocolTCP,
-				TargetPort: intstr.FromInt32(target.Metrics.Server.Port),
+				TargetPort: intstr.FromInt32(port),
 			}},
 		},
 	}

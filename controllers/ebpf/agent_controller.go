@@ -592,7 +592,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		})
 		config = append(config, corev1.EnvVar{
 			Name:  envMetricsPort,
-			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.Metrics.Server.Port)),
+			Value: strconv.Itoa(int(helper.GetEBPFMetricsPort(&coll.Spec.Agent.EBPF))),
 		})
 		config = append(config, corev1.EnvVar{
 			Name:  envMetricPrefix,

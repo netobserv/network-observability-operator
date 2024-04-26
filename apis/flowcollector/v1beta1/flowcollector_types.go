@@ -387,9 +387,8 @@ type MetricsServerConfig struct {
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
-	//+kubebuilder:default:=9102
 	// The prometheus HTTP port
-	Port int32 `json:"port,omitempty"`
+	Port *int32 `json:"port,omitempty"`
 
 	// TLS configuration.
 	// +optional

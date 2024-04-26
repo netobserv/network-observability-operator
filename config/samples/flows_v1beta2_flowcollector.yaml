@@ -31,7 +31,7 @@ spec:
       metrics:
         enable: false
         server:
-          port: 9090
+          port: 9400
       # Custom optionnal resources configuration
       resources:
         requests:
@@ -68,7 +68,7 @@ spec:
     #     name: ""
     metrics:
       server:
-        port: 9102
+        port: 9401
       disableAlerts: []
       # includeList:
       #   - "node_ingress_bytes_total"
