@@ -73,7 +73,7 @@ func TestFlowMetricToFLP(t *testing.T) {
 		},
 	})
 	assert.NoError(err)
-	cm, _, err := b.configMap()
+	cm, err := b.dynamicConfigMap()
 	assert.NoError(err)
 	items, err := getConfiguredMetrics(cm)
 	assert.NoError(err)

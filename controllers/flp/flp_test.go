@@ -195,14 +195,14 @@ func TestDaemonSetNoChange(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := monoBuilder(ns, &cfg)
-	_, digest, err := b.configMap()
+	_, digest, err := b.staticConfigMap()
 	assert.NoError(err)
 	first := b.daemonSet(annotate(digest))
 
 	// Check no change
 	cfg = getConfig()
 	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	second := b.daemonSet(annotate(digest))
 
@@ -218,14 +218,14 @@ func TestDaemonSetChanged(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := monoBuilder(ns, &cfg)
-	_, digest, err := b.configMap()
+	_, digest, err := b.staticConfigMap()
 	assert.NoError(err)
 	first := b.daemonSet(annotate(digest))
 
 	// Check probes enabled change
 	cfg.Processor.Advanced.EnableKubeProbes = ptr.To(true)
 	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	second := b.daemonSet(annotate(digest))
 
@@ -256,7 +256,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
 	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	third := b.daemonSet(annotate(digest))
 
@@ -270,7 +270,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
 	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	fourth := b.daemonSet(annotate(digest))
 
@@ -284,7 +284,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
 	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	fifth := b.daemonSet(annotate(digest))
 
@@ -305,7 +305,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		},
 	}
 	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	sixth := b.daemonSet(annotate(digest))
 
@@ -323,7 +323,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		},
 	}
 	b = monoBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	seventh := b.daemonSet(annotate(digest))
 
@@ -339,14 +339,14 @@ func TestDeploymentNoChange(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := transfBuilder(ns, &cfg)
-	_, digest, err := b.configMap()
+	_, digest, err := b.staticConfigMap()
 	assert.NoError(err)
 	first := b.deployment(annotate(digest))
 
 	// Check no change
 	cfg = getConfig()
 	b = transfBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	second := b.deployment(annotate(digest))
 
@@ -362,14 +362,14 @@ func TestDeploymentChanged(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := transfBuilder(ns, &cfg)
-	_, digest, err := b.configMap()
+	_, digest, err := b.staticConfigMap()
 	assert.NoError(err)
 	first := b.deployment(annotate(digest))
 
 	// Check probes enabled change
 	cfg.Processor.Advanced.EnableKubeProbes = ptr.To(true)
 	b = transfBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	second := b.deployment(annotate(digest))
 
@@ -384,7 +384,7 @@ func TestDeploymentChanged(t *testing.T) {
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
 	b = transfBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	third := b.deployment(annotate(digest))
 
@@ -398,7 +398,7 @@ func TestDeploymentChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
 	b = transfBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	fourth := b.deployment(annotate(digest))
 
@@ -412,7 +412,7 @@ func TestDeploymentChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
 	b = transfBuilder(ns, &cfg)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	fifth := b.deployment(annotate(digest))
 
@@ -427,7 +427,7 @@ func TestDeploymentChanged(t *testing.T) {
 	cfg2 := cfg
 	cfg2.Processor.KafkaConsumerReplicas = ptr.To(int32(5))
 	b = transfBuilder(ns, &cfg2)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	sixth := b.deployment(annotate(digest))
 
@@ -443,7 +443,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfigNoHPA()
 	b := transfBuilder(ns, &cfg)
-	_, digest, err := b.configMap()
+	_, digest, err := b.staticConfigMap()
 	assert.NoError(err)
 	first := b.deployment(annotate(digest))
 
@@ -451,7 +451,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	cfg2 := cfg
 	cfg2.Processor.KafkaConsumerReplicas = ptr.To(int32(5))
 	b = transfBuilder(ns, &cfg2)
-	_, digest, err = b.configMap()
+	_, digest, err = b.staticConfigMap()
 	assert.NoError(err)
 	second := b.deployment(annotate(digest))
 
@@ -621,7 +621,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 	cfg := getConfig()
 	loki := cfg.Loki
 	b := monoBuilder(ns, &cfg)
-	cm, digest, err := b.configMap()
+	cm, digest, err := b.staticConfigMap()
 	assert.NoError(err)
 	assert.NotEmpty(t, digest)
 
@@ -637,7 +637,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 	assert.Equal("trace", decoded.LogLevel)
 
 	params := decoded.Parameters
-	assert.Len(params, 6)
+	assert.Len(params, 5)
 	assert.Equal(*cfg.Processor.Advanced.Port, int32(params[0].Ingest.GRPC.Port))
 
 	lokiCfg := params[3].Write.Loki
@@ -671,7 +671,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	useLokiStack(&cfg)
 	cfg.Agent.Type = flowslatest.AgentEBPF
 	b := monoBuilder(ns, &cfg)
-	cm, digest, err := b.configMap()
+	cm, digest, err := b.staticConfigMap()
 	assert.NoError(err)
 	assert.NotEmpty(t, digest)
 
@@ -687,7 +687,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	assert.Equal("trace", decoded.LogLevel)
 
 	params := decoded.Parameters
-	assert.Len(params, 6)
+	assert.Len(params, 5)
 
 	lokiCfg := params[3].Write.Loki
 	assert.Equal("https://lokistack-gateway-http.ls-namespace.svc:8080/api/logs/v1/network/", lokiCfg.URL)
@@ -789,10 +789,16 @@ func TestLabels(t *testing.T) {
 }
 
 // This function validate that each stage has its matching parameter
-func validatePipelineConfig(t *testing.T, cm *corev1.ConfigMap) (*config.ConfigFileStruct, string) {
+func validatePipelineConfig(t *testing.T, staticCm *corev1.ConfigMap, dynamicCm *corev1.ConfigMap) (*config.ConfigFileStruct, string) {
 	var cfs config.ConfigFileStruct
-	err := json.Unmarshal([]byte(cm.Data[configFile]), &cfs)
+	err := json.Unmarshal([]byte(staticCm.Data[configFile]), &cfs)
 	assert.NoError(t, err)
+
+	var dynCfs config.HotReloadStruct
+	err = json.Unmarshal([]byte(dynamicCm.Data[configFile]), &dynCfs)
+	assert.NoError(t, err)
+
+	cfs.Parameters = append(cfs.Parameters, dynCfs.Parameters...)
 
 	for _, stage := range cfs.Pipeline {
 		assert.NotEmpty(t, stage.Name)
@@ -818,9 +824,11 @@ func TestPipelineConfig(t *testing.T) {
 	cfg := getConfig()
 	cfg.Processor.LogLevel = "info"
 	b := monoBuilder(ns, &cfg)
-	cm, _, err := b.configMap()
+	scm, _, err := b.staticConfigMap()
 	assert.NoError(err)
-	_, pipeline := validatePipelineConfig(t, cm)
+	dcm, err := b.dynamicConfigMap()
+	assert.NoError(err)
+	_, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
 		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
 		pipeline,
@@ -829,9 +837,11 @@ func TestPipelineConfig(t *testing.T) {
 	// Kafka Transformer
 	cfg.DeploymentModel = flowslatest.DeploymentModelKafka
 	bt := transfBuilder(ns, &cfg)
-	cm, _, err = bt.configMap()
+	scm, _, err = bt.staticConfigMap()
 	assert.NoError(err)
-	_, pipeline = validatePipelineConfig(t, cm)
+	dcm, err = bt.dynamicConfigMap()
+	assert.NoError(err)
+	_, pipeline = validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
 		`[{"name":"kafka-read"},{"name":"extract_conntrack","follows":"kafka-read"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
 		pipeline,
@@ -844,9 +854,11 @@ func TestPipelineTraceStage(t *testing.T) {
 	cfg := getConfig()
 
 	b := monoBuilder("namespace", &cfg)
-	cm, _, err := b.configMap()
+	scm, _, err := b.staticConfigMap()
 	assert.NoError(err)
-	_, pipeline := validatePipelineConfig(t, cm)
+	dcm, err := b.dynamicConfigMap()
+	assert.NoError(err)
+	_, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
 		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
 		pipeline,
@@ -868,9 +880,11 @@ func TestMergeMetricsConfiguration_Default(t *testing.T) {
 	cfg := getConfig()
 
 	b := monoBuilder("namespace", &cfg)
-	cm, _, err := b.configMap()
+	scm, _, err := b.staticConfigMap()
 	assert.NoError(err)
-	cfs, _ := validatePipelineConfig(t, cm)
+	dcm, err := b.dynamicConfigMap()
+	assert.NoError(err)
+	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
 	assert.Equal([]string{
 		"namespace_flows_total",
@@ -888,9 +902,11 @@ func TestMergeMetricsConfiguration_DefaultWithFeatures(t *testing.T) {
 	cfg.Agent.EBPF.Features = []flowslatest.AgentFeature{flowslatest.DNSTracking, flowslatest.FlowRTT, flowslatest.PacketDrop}
 
 	b := monoBuilder("namespace", &cfg)
-	cm, _, err := b.configMap()
+	scm, _, err := b.staticConfigMap()
 	assert.NoError(err)
-	cfs, _ := validatePipelineConfig(t, cm)
+	dcm, err := b.dynamicConfigMap()
+	assert.NoError(err)
+	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
 	assert.Equal([]string{
 		"namespace_dns_latency_seconds",
@@ -910,9 +926,11 @@ func TestMergeMetricsConfiguration_WithList(t *testing.T) {
 	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{"namespace_egress_bytes_total", "namespace_ingress_bytes_total"}
 
 	b := monoBuilder("namespace", &cfg)
-	cm, _, err := b.configMap()
+	scm, _, err := b.staticConfigMap()
 	assert.NoError(err)
-	cfs, _ := validatePipelineConfig(t, cm)
+	dcm, err := b.dynamicConfigMap()
+	assert.NoError(err)
+	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
 	assert.Len(names, 2)
 	assert.Equal("namespace_egress_bytes_total", names[0])
@@ -927,9 +945,11 @@ func TestMergeMetricsConfiguration_EmptyList(t *testing.T) {
 	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{}
 
 	b := monoBuilder("namespace", &cfg)
-	cm, _, err := b.configMap()
+	scm, _, err := b.staticConfigMap()
 	assert.NoError(err)
-	cfs, _ := validatePipelineConfig(t, cm)
+	dcm, err := b.dynamicConfigMap()
+	assert.NoError(err)
+	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	assert.Len(cfs.Parameters, 5)
 }
 
@@ -952,20 +972,22 @@ func TestPipelineWithExporter(t *testing.T) {
 	})
 
 	b := monoBuilder("namespace", &cfg)
-	cm, _, err := b.configMap()
+	scm, _, err := b.staticConfigMap()
 	assert.NoError(err)
-	cfs, pipeline := validatePipelineConfig(t, cm)
+	dcm, err := b.dynamicConfigMap()
+	assert.NoError(err)
+	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
 		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"loki","follows":"enrich"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"kafka-export-0","follows":"enrich"},{"name":"IPFIX-export-1","follows":"enrich"}]`,
 		pipeline,
 	)
 
-	assert.Equal("kafka-test", cfs.Parameters[6].Encode.Kafka.Address)
-	assert.Equal("topic-test", cfs.Parameters[6].Encode.Kafka.Topic)
+	assert.Equal("kafka-test", cfs.Parameters[5].Encode.Kafka.Address)
+	assert.Equal("topic-test", cfs.Parameters[5].Encode.Kafka.Topic)
 
-	assert.Equal("ipfix-receiver-test", cfs.Parameters[7].Write.Ipfix.TargetHost)
-	assert.Equal(9999, cfs.Parameters[7].Write.Ipfix.TargetPort)
-	assert.Equal("tcp", cfs.Parameters[7].Write.Ipfix.Transport)
+	assert.Equal("ipfix-receiver-test", cfs.Parameters[6].Write.Ipfix.TargetHost)
+	assert.Equal(9999, cfs.Parameters[6].Write.Ipfix.TargetPort)
+	assert.Equal("tcp", cfs.Parameters[6].Write.Ipfix.Transport)
 }
 
 func TestPipelineWithoutLoki(t *testing.T) {
@@ -975,9 +997,11 @@ func TestPipelineWithoutLoki(t *testing.T) {
 	cfg.Loki.Enable = ptr.To(false)
 
 	b := monoBuilder("namespace", &cfg)
-	cm, _, err := b.configMap()
+	scm, _, err := b.staticConfigMap()
 	assert.NoError(err)
-	_, pipeline := validatePipelineConfig(t, cm)
+	dcm, err := b.dynamicConfigMap()
+	assert.NoError(err)
+	_, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
 		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
 		pipeline,

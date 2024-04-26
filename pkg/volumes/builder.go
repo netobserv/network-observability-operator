@@ -54,6 +54,12 @@ func (b *Builder) AddVolume(config *flowslatest.FileReference, volumeName string
 
 // AddToken will add a volume + volume mount for a service account token if defined
 func (b *Builder) AddToken(name string) string {
+	for i := range b.info {
+		if b.info[i].Volume.Name == name {
+			// Token already added
+			return constants.TokensPath + name
+		}
+	}
 	vol := corev1.Volume{
 		Name: name,
 		VolumeSource: corev1.VolumeSource{

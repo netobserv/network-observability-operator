@@ -39,13 +39,22 @@ func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.Daemo
 	}
 }
 
-func (b *monolithBuilder) configMap() (*corev1.ConfigMap, string, error) {
+func (b *monolithBuilder) staticConfigMap() (*corev1.ConfigMap, string, error) {
 	pipeline := b.generic.NewGRPCPipeline()
 	err := pipeline.AddProcessorStages()
 	if err != nil {
 		return nil, "", err
 	}
-	return b.generic.ConfigMap()
+	return b.generic.StaticConfigMap()
+}
+
+func (b *monolithBuilder) dynamicConfigMap() (*corev1.ConfigMap, error) {
+	pipeline := b.generic.NewGRPCPipeline()
+	err := pipeline.AddProcessorStages()
+	if err != nil {
+		return nil, err
+	}
+	return b.generic.DynamicConfigMap()
 }
 
 func (b *monolithBuilder) promService() *corev1.Service {

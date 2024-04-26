@@ -105,19 +105,21 @@ func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 	}, nil
 }
 
-func name(ck ConfKind) string                 { return constants.FLPName + FlpConfSuffix[ck] }
-func RoleBindingName(ck ConfKind) string      { return name(ck) + "-role" }
-func RoleBindingMonoName(ck ConfKind) string  { return name(ck) + "-role-mono" }
-func promServiceName(ck ConfKind) string      { return name(ck) + "-prom" }
-func configMapName(ck ConfKind) string        { return name(ck) + "-config" }
-func serviceMonitorName(ck ConfKind) string   { return name(ck) + "-monitor" }
-func prometheusRuleName(ck ConfKind) string   { return name(ck) + "-alert" }
-func (b *builder) name() string               { return name(b.confKind) }
-func (b *builder) promServiceName() string    { return promServiceName(b.confKind) }
-func (b *builder) configMapName() string      { return configMapName(b.confKind) }
-func (b *builder) serviceMonitorName() string { return serviceMonitorName(b.confKind) }
-func (b *builder) prometheusRuleName() string { return prometheusRuleName(b.confKind) }
-func (b *builder) Pipeline() *PipelineBuilder { return b.pipeline }
+func name(ck ConfKind) string                   { return constants.FLPName + FlpConfSuffix[ck] }
+func RoleBindingName(ck ConfKind) string        { return name(ck) + "-role" }
+func RoleBindingMonoName(ck ConfKind) string    { return name(ck) + "-role-mono" }
+func promServiceName(ck ConfKind) string        { return name(ck) + "-prom" }
+func staticConfigMapName(ck ConfKind) string    { return name(ck) + "-config" }
+func dynamicConfigMapName(ck ConfKind) string   { return name(ck) + "-config-dynamic" }
+func serviceMonitorName(ck ConfKind) string     { return name(ck) + "-monitor" }
+func prometheusRuleName(ck ConfKind) string     { return name(ck) + "-alert" }
+func (b *builder) name() string                 { return name(b.confKind) }
+func (b *builder) promServiceName() string      { return promServiceName(b.confKind) }
+func (b *builder) staticConfigMapName() string  { return staticConfigMapName(b.confKind) }
+func (b *builder) dynamicConfigMapName() string { return dynamicConfigMapName(b.confKind) }
+func (b *builder) serviceMonitorName() string   { return serviceMonitorName(b.confKind) }
+func (b *builder) prometheusRuleName() string   { return prometheusRuleName(b.confKind) }
+func (b *builder) Pipeline() *PipelineBuilder   { return b.pipeline }
 
 func (b *builder) NewGRPCPipeline() PipelineBuilder {
 	return b.initPipeline(config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
@@ -183,7 +185,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: b.configMapName(),
+					Name: b.staticConfigMapName(),
 				},
 			},
 		},
@@ -259,15 +261,15 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
-func (b *builder) ConfigMap() (*corev1.ConfigMap, string, error) {
-	configStr, err := b.GetJSONConfig()
+func (b *builder) StaticConfigMap() (*corev1.ConfigMap, string, error) {
+	configStr, err := b.GetStaticJSONConfig()
 	if err != nil {
 		return nil, "", err
 	}
 
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.configMapName(),
+			Name:      b.staticConfigMapName(),
 			Namespace: b.info.Namespace,
 			Labels:    b.labels,
 		},
@@ -281,7 +283,28 @@ func (b *builder) ConfigMap() (*corev1.ConfigMap, string, error) {
 	return &configMap, digest, nil
 }
 
-func (b *builder) GetJSONConfig() (string, error) {
+func (b *builder) DynamicConfigMap() (*corev1.ConfigMap, error) {
+	configStr, err := b.GetDynamicJSONConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	configMap := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      b.dynamicConfigMapName(),
+			Namespace: b.info.Namespace,
+			Labels:    b.labels,
+		},
+		Data: map[string]string{
+			configFile: configStr,
+		},
+	}
+	hasher := fnv.New64a()
+	_, _ = hasher.Write([]byte(configStr))
+	return &configMap, nil
+}
+
+func (b *builder) GetStaticJSONConfig() (string, error) {
 	metricsSettings := config.MetricsSettings{
 		PromConnectionInfo: api.PromConnectionInfo{
 			Port: int(helper.GETFlowCollectorMetricsPort(b.desired)),
@@ -305,8 +328,13 @@ func (b *builder) GetJSONConfig() (string, error) {
 			"port": *advancedConfig.HealthPort,
 		},
 		"pipeline":        b.pipeline.GetStages(),
-		"parameters":      b.pipeline.GetStageParams(),
+		"parameters":      b.pipeline.GetStaticStageParams(),
 		"metricsSettings": metricsSettings,
+		"dynamicParameters": config.DynamicParameters{
+			Namespace: b.info.Namespace,
+			Name:      b.dynamicConfigMapName(),
+			FileName:  configFile,
+		},
 	}
 	if advancedConfig.ProfilePort != nil {
 		config["profile"] = map[string]interface{}{
@@ -321,6 +349,18 @@ func (b *builder) GetJSONConfig() (string, error) {
 	return string(bs), nil
 }
 
+func (b *builder) GetDynamicJSONConfig() (string, error) {
+	config := map[string]interface{}{
+		"parameters": b.pipeline.GetDynamicStageParams(),
+	}
+
+	bs, err := json.Marshal(config)
+	if err != nil {
+		return "", err
+	}
+	return string(bs), nil
+
+}
 func (b *builder) promService() *corev1.Service {
 	port := helper.GETFlowCollectorMetricsPort(b.desired)
 	svc := corev1.Service{
@@ -489,7 +529,13 @@ func buildClusterRoleIngester(useOpenShiftSCC bool) *rbacv1.ClusterRole {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name(ConfKafkaIngester),
 		},
-		Rules: []rbacv1.PolicyRule{},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{""},
+				Verbs:     []string{"get", "watch"},
+				Resources: []string{"configmaps"},
+			},
+		},
 	}
 	if useOpenShiftSCC {
 		cr.Rules = append(cr.Rules, rbacv1.PolicyRule{

@@ -21,26 +21,28 @@ import (
 
 type transformerReconciler struct {
 	*reconcilers.Instance
-	deployment     *appsv1.Deployment
-	promService    *corev1.Service
-	hpa            *ascv2.HorizontalPodAutoscaler
-	serviceAccount *corev1.ServiceAccount
-	configMap      *corev1.ConfigMap
-	roleBinding    *rbacv1.ClusterRoleBinding
-	serviceMonitor *monitoringv1.ServiceMonitor
-	prometheusRule *monitoringv1.PrometheusRule
+	deployment       *appsv1.Deployment
+	promService      *corev1.Service
+	hpa              *ascv2.HorizontalPodAutoscaler
+	serviceAccount   *corev1.ServiceAccount
+	staticConfigMap  *corev1.ConfigMap
+	dynamicConfigMap *corev1.ConfigMap
+	roleBinding      *rbacv1.ClusterRoleBinding
+	serviceMonitor   *monitoringv1.ServiceMonitor
+	prometheusRule   *monitoringv1.PrometheusRule
 }
 
 func newTransformerReconciler(cmn *reconcilers.Instance) *transformerReconciler {
 	name := name(ConfKafkaTransformer)
 	rec := transformerReconciler{
-		Instance:       cmn,
-		deployment:     cmn.Managed.NewDeployment(name),
-		promService:    cmn.Managed.NewService(promServiceName(ConfKafkaTransformer)),
-		hpa:            cmn.Managed.NewHPA(name),
-		serviceAccount: cmn.Managed.NewServiceAccount(name),
-		configMap:      cmn.Managed.NewConfigMap(configMapName(ConfKafkaTransformer)),
-		roleBinding:    cmn.Managed.NewCRB(RoleBindingName(ConfKafkaTransformer)),
+		Instance:         cmn,
+		deployment:       cmn.Managed.NewDeployment(name),
+		promService:      cmn.Managed.NewService(promServiceName(ConfKafkaTransformer)),
+		hpa:              cmn.Managed.NewHPA(name),
+		serviceAccount:   cmn.Managed.NewServiceAccount(name),
+		staticConfigMap:  cmn.Managed.NewConfigMap(staticConfigMapName(ConfKafkaTransformer)),
+		dynamicConfigMap: cmn.Managed.NewConfigMap(dynamicConfigMapName(ConfKafkaTransformer)),
+		roleBinding:      cmn.Managed.NewCRB(RoleBindingName(ConfKafkaTransformer)),
 	}
 	if cmn.AvailableAPIs.HasSvcMonitor() {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(serviceMonitorName(ConfKafkaTransformer))
@@ -84,22 +86,27 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 	if err != nil {
 		return err
 	}
-	newCM, configDigest, err := builder.configMap()
+	newSCM, configDigest, err := builder.staticConfigMap()
 	if err != nil {
 		return err
 	}
 	annotations := map[string]string{
 		constants.PodConfigurationDigest: configDigest,
 	}
-	if !r.Managed.Exists(r.configMap) {
-		if err := r.CreateOwned(ctx, newCM); err != nil {
+	if !r.Managed.Exists(r.staticConfigMap) {
+		if err := r.CreateOwned(ctx, newSCM); err != nil {
 			return err
 		}
-	} else if !equality.Semantic.DeepDerivative(newCM.Data, r.configMap.Data) {
-		if err := r.UpdateIfOwned(ctx, r.configMap, newCM); err != nil {
+	} else if !equality.Semantic.DeepDerivative(newSCM.Data, r.staticConfigMap.Data) {
+		if err := r.UpdateIfOwned(ctx, r.staticConfigMap, newSCM); err != nil {
 			return err
 		}
 	}
+
+	if err := r.reconcileDynamicConfigMap(ctx, &builder); err != nil {
+		return err
+	}
+
 	if err := r.reconcilePermissions(ctx, &builder); err != nil {
 		return err
 	}
@@ -133,6 +140,23 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 	}
 
 	return r.reconcileHPA(ctx, &desired.Spec.Processor, &builder)
+}
+
+func (r *transformerReconciler) reconcileDynamicConfigMap(ctx context.Context, builder *transfoBuilder) error {
+	newDCM, err := builder.dynamicConfigMap()
+	if err != nil {
+		return err
+	}
+	if !r.Managed.Exists(r.dynamicConfigMap) {
+		if err := r.CreateOwned(ctx, newDCM); err != nil {
+			return err
+		}
+	} else if !equality.Semantic.DeepDerivative(newDCM.Data, r.dynamicConfigMap.Data) {
+		if err := r.UpdateIfOwned(ctx, r.dynamicConfigMap, newDCM); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *transformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flowslatest.FlowCollectorFLP, builder *transfoBuilder, annotations map[string]string) error {
