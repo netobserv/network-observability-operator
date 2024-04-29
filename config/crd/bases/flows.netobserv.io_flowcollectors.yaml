@@ -237,6 +237,20 @@ spec:
                         metrics:
                           description: '`metrics` defines the eBPF agent configuration regarding metrics'
                           properties:
+                            disableAlerts:
+                              description: |-
+                                `disableAlerts` is a list of alerts that should be disabled.
+                                Possible values are:<br>
+                                `NetObservDroppedFlows`, which is triggered when eBPF agent hashmap table is full.<br>
+                              items:
+                                description: |-
+                                  Name of a ebpf agent alert.
+                                  Possible values are:<br>
+                                  - `NetObservDroppedFlows`, which is triggered when eBPF agent hashmap table is full.<br>
+                                enum:
+                                  - NetObservDroppedFlows
+                                type: string
+                              type: array
                             enable:
                               description: Set `enable` to `true` to enable eBPF agent metrics collection.
                               type: boolean
@@ -3349,6 +3363,20 @@ spec:
                         metrics:
                           description: '`metrics` defines the eBPF agent configuration regarding metrics'
                           properties:
+                            disableAlerts:
+                              description: |-
+                                `disableAlerts` is a list of alerts that should be disabled.
+                                Possible values are:<br>
+                                `NetObservDroppedFlows`, which is triggered when eBPF agent hashmap table is full.<br>
+                              items:
+                                description: |-
+                                  Name of a ebpf agent alert.
+                                  Possible values are:<br>
+                                  - `NetObservDroppedFlows`, which is triggered when eBPF agent hashmap table is full.<br>
+                                enum:
+                                  - NetObservDroppedFlows
+                                type: string
+                              type: array
                             enable:
                               description: Set `enable` to `true` to enable eBPF agent metrics collection.
                               type: boolean

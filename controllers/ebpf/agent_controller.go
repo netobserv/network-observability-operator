@@ -105,6 +105,7 @@ type AgentController struct {
 	volumes        volumes.Builder
 	promSvc        *corev1.Service
 	serviceMonitor *monitoringv1.ServiceMonitor
+	prometheusRule *monitoringv1.PrometheusRule
 }
 
 func NewAgentController(common *reconcilers.Instance) *AgentController {
@@ -116,6 +117,9 @@ func NewAgentController(common *reconcilers.Instance) *AgentController {
 	}
 	if common.AvailableAPIs.HasSvcMonitor() {
 		agent.serviceMonitor = common.Managed.NewServiceMonitor(constants.EBPFAgentMetricsSvcMonitoringName)
+	}
+	if common.AvailableAPIs.HasPromRule() {
+		agent.prometheusRule = common.Managed.NewPrometheusRule(constants.EBPFAgentPromoAlertRule)
 	}
 	return &agent
 }

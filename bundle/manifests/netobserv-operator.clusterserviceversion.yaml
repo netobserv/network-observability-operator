@@ -703,6 +703,8 @@ spec:
         path: agent.ebpf.interfaces
       - displayName: Metrics
         path: agent.ebpf.metrics
+      - displayName: Disable alerts
+        path: agent.ebpf.metrics.disableAlerts
       - displayName: Enable
         path: agent.ebpf.metrics.enable
       - displayName: Server
