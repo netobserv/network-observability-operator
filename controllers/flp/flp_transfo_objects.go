@@ -86,7 +86,7 @@ func (b *transfoBuilder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 // The operator needs to have at least the same permissions as flowlogs-pipeline in order to grant them
 //+kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get;list;watch
 //+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
-//+kubebuilder:rbac:groups=core,resources=pods;services;nodes,verbs=get;list;watch
+//+kubebuilder:rbac:groups=core,resources=pods;services;nodes;configmaps,verbs=get;list;watch
 
 func BuildClusterRoleTransformer() *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{
@@ -96,7 +96,7 @@ func BuildClusterRoleTransformer() *rbacv1.ClusterRole {
 		Rules: []rbacv1.PolicyRule{{
 			APIGroups: []string{""},
 			Verbs:     []string{"list", "get", "watch"},
-			Resources: []string{"pods", "services", "nodes"},
+			Resources: []string{"pods", "services", "nodes", "configmaps"},
 		}, {
 			APIGroups: []string{"apps"},
 			Verbs:     []string{"list", "get", "watch"},
