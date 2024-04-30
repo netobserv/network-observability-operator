@@ -24,6 +24,9 @@ func (c *AgentController) reconcileMetricsService(ctx context.Context, target *f
 		if c.AvailableAPIs.HasSvcMonitor() {
 			c.Managed.TryDelete(ctx, c.serviceMonitor)
 		}
+		if c.AvailableAPIs.HasPromRule() {
+			c.Managed.TryDelete(ctx, c.prometheusRule)
+		}
 		return nil
 	}
 
@@ -34,6 +37,13 @@ func (c *AgentController) reconcileMetricsService(ctx context.Context, target *f
 		serviceMonitor := c.promServiceMonitoring(target)
 		if err := reconcilers.GenericReconcile(ctx, c.Managed, &c.Client, c.serviceMonitor,
 			serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
+			return err
+		}
+	}
+
+	if c.AvailableAPIs.HasPromRule() {
+		promRules := c.agentPrometheusRule(target)
+		if err := reconcilers.GenericReconcile(ctx, c.Managed, &c.Client, c.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
 		}
 	}
@@ -102,4 +112,55 @@ func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollecto
 			},
 		},
 	}
+}
+
+func (c *AgentController) agentPrometheusRule(target *flowslatest.FlowCollectorEBPF) *monitoringv1.PrometheusRule {
+	rules := []monitoringv1.Rule{}
+	d := monitoringv1.Duration("10m")
+
+	// EBPF hashmap table is full Not receiving any new flows
+	if shouldAddAlert(flowslatest.AlertDroppedFlows, target.Metrics.DisableAlerts) {
+
+		rules = append(rules, monitoringv1.Rule{
+			Alert: string(flowslatest.AlertDroppedFlows),
+			Annotations: map[string]string{
+				"description": "NetObserv eBPF agent is not able to process new flows as it's hashmap is full. Hashmap table size can be increased by increasing cacheMaxFlows value in Flowcollector resource.",
+				"summary":     "NetObserv eBPF is not able to process any new flows",
+			},
+			Expr: intstr.FromString("sum(rate(netobserv_agent_dropped_flows_total[1m])) > 0"),
+			For:  &d,
+			Labels: map[string]string{
+				"severity": "warning",
+				"app":      "netobserv",
+			},
+		})
+	}
+
+	prometheusRuleObject := monitoringv1.PrometheusRule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: constants.EBPFAgentPromoAlertRule,
+			Labels: map[string]string{
+				"app": constants.EBPFAgentName,
+			},
+			Namespace: c.PrivilegedNamespace(),
+		},
+		Spec: monitoringv1.PrometheusRuleSpec{
+			Groups: []monitoringv1.RuleGroup{
+				{
+					Name:  "NetobservEBPFAgentAlerts",
+					Rules: rules,
+				},
+			},
+		},
+	}
+	return &prometheusRuleObject
+}
+
+func shouldAddAlert(name flowslatest.EBPFAgentAlert, disabledList []flowslatest.EBPFAgentAlert) bool {
+	for _, disabledAlert := range disabledList {
+		if name == disabledAlert {
+			return false
+		}
+	}
+	return true
 }

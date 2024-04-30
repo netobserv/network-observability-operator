@@ -500,6 +500,7 @@ func autoConvert_v1beta1_EBPFMetrics_To_v1beta2_EBPFMetrics(in *EBPFMetrics, out
 		return err
 	}
 	out.Enable = (*bool)(unsafe.Pointer(in.Enable))
+	out.DisableAlerts = *(*[]v1beta2.EBPFAgentAlert)(unsafe.Pointer(&in.DisableAlerts))
 	return nil
 }
 
@@ -513,6 +514,7 @@ func autoConvert_v1beta2_EBPFMetrics_To_v1beta1_EBPFMetrics(in *v1beta2.EBPFMetr
 		return err
 	}
 	out.Enable = (*bool)(unsafe.Pointer(in.Enable))
+	out.DisableAlerts = *(*[]EBPFAgentAlert)(unsafe.Pointer(&in.DisableAlerts))
 	return nil
 }
 

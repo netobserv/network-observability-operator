@@ -157,6 +157,16 @@ const (
 	FlowRTT     AgentFeature = "FlowRTT"
 )
 
+// Name of a ebpf agent alert.
+// Possible values are:<br>
+// - `NetObservDroppedFlows`, which is triggered when eBPF agent hashmap table is full.<br>
+// +kubebuilder:validation:Enum:="NetObservDroppedFlows"
+type EBPFAgentAlert string
+
+const (
+	AlertDroppedFlows EBPFAgentAlert = "NetObservAgentFlowsDropped"
+)
+
 // `EBPFMetrics` defines the desired eBPF agent configuration regarding metrics
 type EBPFMetrics struct {
 	// Metrics server endpoint configuration for Prometheus scraper
@@ -165,6 +175,12 @@ type EBPFMetrics struct {
 
 	// Set `enable` to `true` to enable eBPF agent metrics collection.
 	Enable *bool `json:"enable,omitempty"`
+
+	// `disableAlerts` is a list of alerts that should be disabled.
+	// Possible values are:<br>
+	// `NetObservDroppedFlows`, which is triggered when eBPF agent hashmap table is full.<br>
+	// +optional
+	DisableAlerts []EBPFAgentAlert `json:"disableAlerts"`
 }
 
 // `EBPFFlowFilter` defines the desired eBPF agent configuration regarding flow filtering
