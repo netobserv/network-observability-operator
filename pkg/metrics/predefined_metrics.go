@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	flpapi "github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
@@ -21,18 +21,15 @@ const (
 )
 
 var (
-	mapLabels = map[string][]string{
+	latencyBuckets = []string{".005", ".01", ".02", ".03", ".04", ".05", ".075", ".1", ".25", "1"}
+	mapLabels      = map[string][]string{
 		tagNodes:      {"SrcK8S_HostName", "DstK8S_HostName"},
-		tagNamespaces: {"SrcK8S_Namespace", "DstK8S_Namespace"},
-		tagWorkloads:  {"SrcK8S_Namespace", "DstK8S_Namespace", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType"},
+		tagNamespaces: {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer"},
+		tagWorkloads:  {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType"},
 	}
 	mapValueFields = map[string]string{
 		tagBytes:   "Bytes",
 		tagPackets: "Packets",
-	}
-	mapDirection = map[string]string{
-		tagIngress: "0|2",
-		tagEgress:  "1|2",
 	}
 	predefinedMetrics []taggedMetricDefinition
 	// Note that we set default in-code rather than in CRD, in order to keep track of value being unset or set intentionnally in FlowCollector
@@ -51,7 +48,7 @@ var (
 )
 
 type taggedMetricDefinition struct {
-	flpapi.MetricsItem
+	metricslatest.FlowMetricSpec
 	tags []string
 }
 
@@ -62,84 +59,88 @@ func init() {
 		// Bytes / packets metrics
 		for _, vt := range []string{tagBytes, tagPackets} {
 			valueField := mapValueFields[vt]
-			for _, dir := range []string{tagEgress, tagIngress} {
+			for _, dir := range []metricslatest.FlowDirection{metricslatest.Egress, metricslatest.Ingress} {
+				lowDir := strings.ToLower(string(dir))
 				predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-					MetricsItem: flpapi.MetricsItem{
-						Name:     fmt.Sprintf("%s_%s_%s_total", groupTrimmed, dir, vt),
-						Type:     "counter",
-						ValueKey: valueField,
-						Filters: []flpapi.MetricsFilter{
-							{Key: "Duplicate", Value: "true", Type: flpapi.MetricFilterNotEqual},
-							{Key: "FlowDirection", Value: mapDirection[dir], Type: flpapi.MetricFilterRegex},
-						},
-						Labels: labels,
+					FlowMetricSpec: metricslatest.FlowMetricSpec{
+						MetricName: fmt.Sprintf("%s_%s_%s_total", groupTrimmed, lowDir, vt),
+						Type:       metricslatest.CounterMetric,
+						ValueField: valueField,
+						Direction:  dir,
+						Labels:     labels,
+						Charts:     trafficCharts(group, vt, lowDir),
 					},
-					tags: []string{group, vt, dir},
+					tags: []string{group, vt, lowDir},
 				})
 			}
 		}
 		// Flows metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-			MetricsItem: flpapi.MetricsItem{
-				Name:   fmt.Sprintf("%s_flows_total", groupTrimmed),
-				Type:   "counter",
-				Labels: labels,
+			FlowMetricSpec: metricslatest.FlowMetricSpec{
+				MetricName: fmt.Sprintf("%s_flows_total", groupTrimmed),
+				Type:       "counter",
+				Labels:     labels,
 			},
 			tags: []string{group, group + "-flows", "flows"},
 		})
 		// RTT metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-			MetricsItem: flpapi.MetricsItem{
-				Name:     fmt.Sprintf("%s_rtt_seconds", groupTrimmed),
-				Type:     "histogram",
-				ValueKey: "TimeFlowRttNs",
-				Filters: []flpapi.MetricsFilter{
-					{Key: "TimeFlowRttNs", Type: flpapi.MetricFilterPresence},
+			FlowMetricSpec: metricslatest.FlowMetricSpec{
+				MetricName: fmt.Sprintf("%s_rtt_seconds", groupTrimmed),
+				Type:       metricslatest.HistogramMetric,
+				ValueField: "TimeFlowRttNs",
+				Filters: []metricslatest.MetricFilter{
+					{Field: "TimeFlowRttNs", MatchType: metricslatest.MatchPresence},
 				},
-				Labels:     labels,
-				ValueScale: 1_000_000_000, // ns => s
+				Labels:  labels,
+				Divider: "1000000000", // ns => s
+				Buckets: latencyBuckets,
+				Charts:  rttCharts(group),
 			},
 			tags: []string{group, "rtt"},
 		})
 		// Drops metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-			MetricsItem: flpapi.MetricsItem{
-				Name:     fmt.Sprintf("%s_drop_packets_total", groupTrimmed),
-				Type:     "counter",
-				ValueKey: "PktDropPackets",
-				Filters: []flpapi.MetricsFilter{
-					{Key: "Duplicate", Value: "true", Type: flpapi.MetricFilterNotEqual},
-					{Key: "PktDropPackets", Type: flpapi.MetricFilterPresence},
+			FlowMetricSpec: metricslatest.FlowMetricSpec{
+				MetricName: fmt.Sprintf("%s_drop_packets_total", groupTrimmed),
+				Type:       metricslatest.CounterMetric,
+				ValueField: "PktDropPackets",
+				Filters: []metricslatest.MetricFilter{
+					{Field: "PktDropPackets", MatchType: metricslatest.MatchPresence},
 				},
 				Labels: labels,
+				Charts: dropCharts(group, "pps"),
 			},
 			tags: []string{group, tagPackets, "drops"},
 		})
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-			MetricsItem: flpapi.MetricsItem{
-				Name:     fmt.Sprintf("%s_drop_bytes_total", groupTrimmed),
-				Type:     "counter",
-				ValueKey: "PktDropBytes",
-				Filters: []flpapi.MetricsFilter{
-					{Key: "Duplicate", Value: "true", Type: flpapi.MetricFilterNotEqual},
-					{Key: "PktDropBytes", Type: flpapi.MetricFilterPresence},
+			FlowMetricSpec: metricslatest.FlowMetricSpec{
+				MetricName: fmt.Sprintf("%s_drop_bytes_total", groupTrimmed),
+				Type:       metricslatest.CounterMetric,
+				ValueField: "PktDropBytes",
+				Filters: []metricslatest.MetricFilter{
+					{Field: "PktDropBytes", MatchType: metricslatest.MatchPresence},
 				},
 				Labels: labels,
+				Charts: dropCharts(group, "Bps"),
 			},
 			tags: []string{group, tagBytes, "drop"},
 		})
 		// DNS metrics
-		dnsLabels := append(labels, "DnsFlagsResponseCode")
+		dnsLabels := labels
+		dnsLabels = append(dnsLabels, "DnsFlagsResponseCode")
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-			MetricsItem: flpapi.MetricsItem{
-				Name:     fmt.Sprintf("%s_dns_latency_seconds", groupTrimmed),
-				Type:     "histogram",
-				ValueKey: "DnsLatencyMs",
-				Filters: []flpapi.MetricsFilter{
-					{Key: "DnsId", Type: flpapi.MetricFilterPresence},
+			FlowMetricSpec: metricslatest.FlowMetricSpec{
+				MetricName: fmt.Sprintf("%s_dns_latency_seconds", groupTrimmed),
+				Type:       metricslatest.HistogramMetric,
+				ValueField: "DnsLatencyMs",
+				Filters: []metricslatest.MetricFilter{
+					{Field: "DnsId", MatchType: metricslatest.MatchPresence},
 				},
-				Labels:     dnsLabels,
-				ValueScale: 1000, // ms => s
+				Labels:  dnsLabels,
+				Divider: "1000", // ms => s
+				Buckets: latencyBuckets,
+				Charts:  dnsCharts(group),
 			},
 			tags: []string{group, "dns"},
 		})
@@ -161,7 +162,7 @@ func convertIgnoreTagsToIncludeList(ignoreTags []string) []flowslatest.FLPMetric
 	ret := []flowslatest.FLPMetric{}
 	for i := range predefinedMetrics {
 		if !isIgnored(&predefinedMetrics[i], ignoreTags) {
-			ret = append(ret, flowslatest.FLPMetric(predefinedMetrics[i].Name))
+			ret = append(ret, flowslatest.FLPMetric(predefinedMetrics[i].MetricName))
 		}
 	}
 	return ret
@@ -181,24 +182,24 @@ func GetAsIncludeList(ignoreTags []string, includeList *[]flowslatest.FLPMetric)
 func GetAllNames() []string {
 	names := []string{}
 	for i := range predefinedMetrics {
-		names = append(names, predefinedMetrics[i].Name)
+		names = append(names, predefinedMetrics[i].MetricName)
 	}
 	return names
 }
 
-func GetDefinitions(names []string) []flpapi.MetricsItem {
-	ret := []flpapi.MetricsItem{}
+func GetDefinitions(names []string) []metricslatest.FlowMetric {
+	ret := []metricslatest.FlowMetric{}
 	for i := range predefinedMetrics {
 		for _, name := range names {
-			if predefinedMetrics[i].Name == name {
-				ret = append(ret, predefinedMetrics[i].MetricsItem)
+			if predefinedMetrics[i].MetricName == name {
+				ret = append(ret, metricslatest.FlowMetric{Spec: predefinedMetrics[i].FlowMetricSpec})
 			}
 		}
 	}
 	return ret
 }
 
-func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
+func getIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
 	var list []string
 	if spec.Processor.Metrics.IncludeList == nil {
 		list = DefaultIncludeList
@@ -227,4 +228,10 @@ func removeMetricsByPattern(list []string, search string) []string {
 		}
 	}
 	return filtered
+}
+
+func MergePredefined(fm []metricslatest.FlowMetric, fc *flowslatest.FlowCollectorSpec) []metricslatest.FlowMetric {
+	names := getIncludeList(fc)
+	predefined := GetDefinitions(names)
+	return append(predefined, fm...)
 }

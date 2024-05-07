@@ -59,11 +59,10 @@ func TestFlowMetricToFLP(t *testing.T) {
 				Filters:    []metricslatest.MetricFilter{{Field: "f", Value: "v", MatchType: metricslatest.MatchEqual}},
 			}},
 			{Spec: metricslatest.FlowMetricSpec{
-				MetricName:        "m_2",
-				Type:              metricslatest.HistogramMetric,
-				Labels:            []string{"by_field"},
-				IncludeDuplicates: true,
-				Direction:         metricslatest.Egress,
+				MetricName: "m_2",
+				Type:       metricslatest.HistogramMetric,
+				Labels:     []string{"by_field"},
+				Direction:  metricslatest.Egress,
 				Filters: []metricslatest.MetricFilter{
 					{Field: "f", Value: "v", MatchType: metricslatest.MatchRegex},
 					{Field: "f2", MatchType: metricslatest.MatchAbsence},
@@ -92,7 +91,6 @@ func TestFlowMetricToFLP(t *testing.T) {
 		Type: "counter",
 		Filters: []api.MetricsFilter{
 			{Key: "f", Value: "v", Type: api.MetricFilterEqual},
-			{Key: "Duplicate", Value: "true", Type: api.MetricFilterNotEqual},
 		},
 		ValueKey: "val",
 		Labels:   []string{"by_field"},

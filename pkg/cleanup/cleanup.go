@@ -20,6 +20,11 @@ var (
 			ref:         client.ObjectKey{Name: "grafana-dashboard-netobserv", Namespace: "openshift-config-managed"},
 			placeholder: &corev1.ConfigMap{},
 		},
+		{
+			// Old name of NetObserv grafana dashboard / configmap (noo 1.5)
+			ref:         client.ObjectKey{Name: "grafana-dashboard-netobserv-flow-metrics", Namespace: "openshift-config-managed"},
+			placeholder: &corev1.ConfigMap{},
+		},
 	}
 	// Need to run only once, at operator startup, this is not part of the reconcile loop
 	didRun = false

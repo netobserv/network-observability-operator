@@ -12,3 +12,19 @@ spec:
   filters:
   - field: DstSubnetLabel
     matchType: Absence
+  charts:
+  - dashboardName: Main
+    title: External egress traffic
+    unit: Bps
+    type: SingleStat
+    queries:
+    - promQL: "sum(rate($METRIC[2m]))"
+      legend: ""
+  - dashboardName: Main
+    sectionName: External
+    title: Top external egress traffic per workload
+    unit: Bps
+    type: StackArea
+    queries:
+    - promQL: "sum(rate($METRIC{SrcK8S_Namespace!=\"\"}[2m])) by (SrcK8S_Namespace, SrcK8S_OwnerName)"
+      legend: "{{SrcK8S_Namespace}} / {{SrcK8S_OwnerName}}"

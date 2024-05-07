@@ -199,23 +199,23 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	}
 
 	// obtain encode_prometheus stage from metrics_definitions
-	names := metrics.GetIncludeList(b.desired)
-	promMetrics := metrics.GetDefinitions(names)
+	allMetrics := metrics.MergePredefined(b.flowMetrics.Items, b.desired)
 
-	for i := range b.flowMetrics.Items {
-		fm := &b.flowMetrics.Items[i]
+	var flpMetrics []api.MetricsItem
+	for i := range allMetrics {
+		fm := &allMetrics[i]
 		m, err := flowMetricToFLP(&fm.Spec)
 		if err != nil {
 			return fmt.Errorf("error reading FlowMetric definition '%s': %w", fm.Name, err)
 		}
-		promMetrics = append(promMetrics, *m)
+		flpMetrics = append(flpMetrics, *m)
 	}
 
-	if len(promMetrics) > 0 {
+	if len(flpMetrics) > 0 {
 		// prometheus stage (encode) configuration
 		promEncode := api.PromEncode{
 			Prefix:  "netobserv_",
-			Metrics: promMetrics,
+			Metrics: flpMetrics,
 		}
 		enrichedStage.EncodePrometheus("prometheus", promEncode)
 	}
@@ -232,16 +232,8 @@ func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem
 		Labels:   flowMetric.Labels,
 		ValueKey: flowMetric.ValueField,
 	}
-	for _, f := range flowMetric.Filters {
+	for _, f := range metrics.GetFilters(flowMetric) {
 		m.Filters = append(m.Filters, api.MetricsFilter{Key: f.Field, Value: f.Value, Type: api.MetricFilterEnum(conversion.PascalToLower(string(f.MatchType), '_'))})
-	}
-	if !flowMetric.IncludeDuplicates {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "Duplicate", Value: "true", Type: api.MetricFilterNotEqual})
-	}
-	if flowMetric.Direction == metricslatest.Egress {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "1|2", Type: api.MetricFilterRegex})
-	} else if flowMetric.Direction == metricslatest.Ingress {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "0|2", Type: api.MetricFilterRegex})
 	}
 	for _, b := range flowMetric.Buckets {
 		f, err := strconv.ParseFloat(b, 64)
@@ -249,6 +241,13 @@ func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem
 			return nil, fmt.Errorf("could not parse metric buckets as floats: '%s'; error was: %w", b, err)
 		}
 		m.Buckets = append(m.Buckets, f)
+	}
+	if flowMetric.Divider != "" {
+		f, err := strconv.ParseFloat(flowMetric.Divider, 64)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse metric divider as float: '%s'; error was: %w", flowMetric.Divider, err)
+		}
+		m.ValueScale = f
 	}
 	return m, nil
 }
@@ -405,7 +404,7 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 		if b.desired.Processor.ClusterName != "" {
 			clusterName = b.desired.Processor.ClusterName
 		} else {
-			//take clustername from openshift
+			// Take clustername from openshift
 			clusterName = string(b.clusterID)
 		}
 		if clusterName != "" {
@@ -467,7 +466,7 @@ func getIPFIXTransport(transport string) string {
 	case "UDP":
 		return "udp"
 	default:
-		return "tcp" //always fallback on tcp
+		return "tcp" // Always fallback on tcp
 	}
 }
 

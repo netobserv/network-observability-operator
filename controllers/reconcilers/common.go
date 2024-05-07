@@ -65,8 +65,8 @@ func (c *Common) ReconcileRole(ctx context.Context, desired *rbacv1.Role) error 
 	return ReconcileRole(ctx, &c.Client, desired)
 }
 
-func (c *Common) ReconcileConfigMap(ctx context.Context, desired *corev1.ConfigMap, delete bool) error {
-	return ReconcileConfigMap(ctx, &c.Client, desired, delete)
+func (c *Common) ReconcileConfigMap(ctx context.Context, old, new *corev1.ConfigMap) error {
+	return ReconcileConfigMap(ctx, &c.Client, old, new)
 }
 
 func (i *Instance) ReconcileService(ctx context.Context, old, new *corev1.Service, report *helper.ChangeReport) error {

@@ -1,0 +1,38 @@
+# More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: flowmetric-traffic-across-az
+spec:
+  metricName: cross_az_ingress_bytes_total
+  type: Counter
+  valueField: Bytes
+  direction: Ingress
+  labels: [SrcK8S_Namespace,SrcK8S_OwnerName,SrcK8S_OwnerType,SrcK8S_Zone,DstK8S_Namespace,DstK8S_OwnerName,DstK8S_OwnerType,DstK8S_Zone]
+  filters:
+  - field: SrcK8S_Zone
+    value: $(DstK8S_Zone)
+    matchType: NotEqual
+  charts:
+  - dashboardName: Main
+    title: Traffic across availability zones
+    unit: Bps
+    type: SingleStat
+    queries:
+    - promQL: "sum(rate($METRIC[2m]))"
+      legend: ""
+  - dashboardName: Main
+    title: Ratio across AZ
+    unit: percent
+    type: SingleStat
+    queries:
+    - promQL: "sum(rate($METRIC[2m])) / sum(rate(netobserv_node_ingress_bytes_total[2m]))"
+      legend: ""
+  - dashboardName: Main
+    sectionName: Traffic rates
+    title: Top traffic across availability zones per namespace
+    unit: Bps
+    type: StackArea
+    queries:
+    - promQL: "sum(rate($METRIC[2m])) by (SrcK8S_Namespace, SrcK8S_Zone, DstK8S_Namespace, DstK8S_Zone)"
+      legend: "{{SrcK8S_Namespace}}, {{ SrcK8S_Zone }} -> {{DstK8S_Namespace}}, {{ DstK8S_Zone }}"

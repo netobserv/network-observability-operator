@@ -45,7 +45,7 @@ type MetricFilter struct {
 	// +required
 	Field string `json:"field"`
 
-	// Value to filter on
+	// Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.
 	// +optional
 	Value string `json:"value"`
 
@@ -61,7 +61,7 @@ type MetricFilter struct {
 // usage of Prometheus workloads as this could potentially have a high impact. Cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric<br>
 // To check the cardinality of all NetObserv metrics, run as `promql`: `count({__name__=~"netobserv.*"}) by (__name__)`.
 type FlowMetricSpec struct {
-	// Name of the metric in Prometheus. It will be automatically prefixed with "netobserv_".
+	// Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_".
 	// +required
 	MetricName string `json:"metricName"`
 
@@ -93,11 +93,6 @@ type FlowMetricSpec struct {
 	// +optional
 	Labels []string `json:"labels"`
 
-	// When set to `true`, flows duplicated across several interfaces will add up in the generated metrics.
-	// When set to `false` (default), it is equivalent to adding the exact filter on `Duplicate` != `true`.
-	// +optional
-	IncludeDuplicates bool `json:"includeDuplicates,omitempty"`
-
 	// Filter for ingress, egress or any direction flows.
 	// When set to `Ingress`, it is equivalent to adding the regex filter on `FlowDirection`: `0|2`.
 	// When set to `Egress`, it is equivalent to adding the regex filter on `FlowDirection`: `1|2`.
@@ -106,9 +101,84 @@ type FlowMetricSpec struct {
 	// +optional
 	Direction FlowDirection `json:"direction,omitempty"`
 
-	// A list of buckets to use when `type` is "Histogram". The list must be parseable as floats. Prometheus default buckets will be used if unset.
+	// A list of buckets to use when `type` is "Histogram". The list must be parseable as floats. When not set, Prometheus default buckets are used.
 	// +optional
 	Buckets []string `json:"buckets,omitempty"`
+
+	// When non-zero, scale factor (divider) of the value. Metric value = Flow value / Divider.
+	// +optional
+	Divider string `json:"divider"`
+
+	// Charts configuration, for the OpenShift Console in the administrator view, Dashboards menu.
+	// +optional
+	Charts []Chart `json:"charts,omitempty"`
+}
+
+type Unit string
+type ChartType string
+
+const (
+	UnitBytes           Unit      = "bytes"
+	UnitSeconds         Unit      = "seconds"
+	UnitBPS             Unit      = "Bps"
+	UnitPPS             Unit      = "pps"
+	UnitPercent         Unit      = "percent"
+	ChartTypeSingleStat ChartType = "SingleStat"
+	ChartTypeLine       ChartType = "Line"
+	ChartTypeStackArea  ChartType = "StackArea"
+)
+
+// Configures charts / dashboard generation associated to a metric
+type Chart struct {
+	// Name of the containing dashboard. If this name does not refer to an existing dashboard, a new dashboard is created.
+	// +kubebuilder:default:="Main"
+	DashboardName string `json:"dashboardName"`
+
+	// Name of the containing dashboard section. If this name does not refer to an existing section, a new section is created.
+	// If `sectionName` is omitted or empty, the chart is placed in the global top section.
+	// +optional
+	SectionName string `json:"sectionName,omitempty"`
+
+	// Title of the chart.
+	// +required
+	Title string `json:"title"`
+
+	// Unit of this chart. Only a few units are currently supported. Leave empty to use generic number.
+	// +kubebuilder:validation:Enum:="bytes";"seconds";"Bps";"pps";"percent"
+	// +optional
+	Unit Unit `json:"unit,omitempty"`
+
+	// Type of the chart.
+	// +kubebuilder:validation:Enum:="SingleStat";"Line";"StackArea"
+	// +required
+	Type ChartType `json:"type"`
+
+	// List of queries to be displayed on this chart. If `type` is `SingleStat` and multiple queries are provided,
+	// this chart is automatically expanded in several panels (one per query).
+	// +required
+	Queries []Query `json:"queries"`
+}
+
+// Configures PromQL queries
+type Query struct {
+	// The `promQL` query to be run against Prometheus. If the chart `type` is `SingleStat`, this query should only return
+	// a single timeseries. For other types, a top 7 is displayed.
+	// You can use `$METRIC` to refer to the metric defined in this resource. For example: `sum(rate($METRIC[2m]))`.
+	// To learn more about `promQL`, refer to the Prometheus documentation: https://prometheus.io/docs/prometheus/latest/querying/basics/
+	// +required
+	PromQL string `json:"promQL"`
+
+	// The query legend that applies to each timeseries represented in this chart. When multiple timeseries are displayed, you should set a legend
+	// that distinguishes each of them. It can be done with the following format: `{{ Label }}`. For example, if the `promQL` groups timeseries per
+	// label such as: `sum(rate($METRIC[2m])) by (Label1, Label2)`, you may write as the legend: `Label1={{ Label1 }}, Label2={{ Label2 }}`.
+	// +required
+	Legend string `json:"legend"`
+
+	// Top N series to display per timestamp. Does not apply to `SingleStat` chart type.
+	// +kubebuilder:default:=7
+	// +kubebuilder:validation:Minimum=1
+	// +required
+	Top int `json:"top"`
 }
 
 // FlowMetricStatus defines the observed state of FlowMetric

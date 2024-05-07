@@ -1,0 +1,42 @@
+# More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: flowmetric-cluster-external-egress-rtt
+spec:
+  metricName: cluster_external_egress_rtt_seconds
+  type: Histogram
+  valueField: TimeFlowRttNs
+  direction: Egress
+  labels: [SrcK8S_HostName,SrcK8S_Namespace,SrcK8S_OwnerName,SrcK8S_OwnerType]
+  filters:
+  - field: DstSubnetLabel
+    matchType: Absence
+  - field: TimeFlowRttNs
+    matchType: Presence
+  divider: "1000000000"
+  buckets: [".001", ".005", ".01", ".02", ".03", ".04", ".05", ".075", ".1", ".25", "1"]
+  charts:
+  - dashboardName: Main
+    title: External egress TCP latency
+    unit: seconds
+    type: SingleStat
+    queries:
+    - promQL: "histogram_quantile(0.99, sum(rate($METRIC_bucket[2m])) by (le)) > 0"
+      legend: "p99"
+  - dashboardName: Main
+    sectionName: External
+    title: "Top external egress sRTT per workload, p50 (ms)"
+    unit: seconds
+    type: Line
+    queries:
+    - promQL: "histogram_quantile(0.5, sum(rate($METRIC_bucket{SrcK8S_Namespace!=\"\"}[2m])) by (le,SrcK8S_Namespace,SrcK8S_OwnerName))*1000 > 0"
+      legend: "{{SrcK8S_Namespace}} / {{SrcK8S_OwnerName}}"
+  - dashboardName: Main
+    sectionName: External
+    title: "Top external egress sRTT per workload, p99 (ms)"
+    unit: seconds
+    type: Line
+    queries:
+    - promQL: "histogram_quantile(0.99, sum(rate($METRIC_bucket{SrcK8S_Namespace!=\"\"}[2m])) by (le,SrcK8S_Namespace,SrcK8S_OwnerName))*1000 > 0"
+      legend: "{{SrcK8S_Namespace}} / {{SrcK8S_OwnerName}}"

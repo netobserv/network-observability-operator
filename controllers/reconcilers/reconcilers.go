@@ -29,9 +29,9 @@ var (
 				!equality.Semantic.DeepEqual(e.ObjectNew.GetAnnotations(), e.ObjectOld.GetAnnotations()) ||
 				!equality.Semantic.DeepEqual(e.ObjectNew.GetLabels(), e.ObjectOld.GetLabels())
 		},
-		CreateFunc:  func(e event.CreateEvent) bool { return true },
-		DeleteFunc:  func(e event.DeleteEvent) bool { return true },
-		GenericFunc: func(e event.GenericEvent) bool { return false },
+		CreateFunc:  func(_ event.CreateEvent) bool { return true },
+		DeleteFunc:  func(_ event.DeleteEvent) bool { return true },
+		GenericFunc: func(_ event.GenericEvent) bool { return false },
 	})
 )
 
@@ -47,7 +47,7 @@ func ReconcileClusterRoleBinding(ctx context.Context, cl *helper.Client, desired
 		actual.RoleRef == desired.RoleRef &&
 		reflect.DeepEqual(actual.Subjects, desired.Subjects) {
 		if actual.RoleRef != desired.RoleRef {
-			//Roleref cannot be updated deleting and creating a new rolebinding
+			// Roleref cannot be updated deleting and creating a new rolebinding
 			log := log.FromContext(ctx)
 			log.Info("Deleting old ClusterRoleBinding", "Namespace", actual.GetNamespace(), "Name", actual.GetName())
 			err := cl.Delete(ctx, &actual)
@@ -74,7 +74,7 @@ func ReconcileRoleBinding(ctx context.Context, cl *helper.Client, desired *rbacv
 		actual.RoleRef == desired.RoleRef &&
 		reflect.DeepEqual(actual.Subjects, desired.Subjects) {
 		if actual.RoleRef != desired.RoleRef {
-			//Roleref cannot be updated deleting and creating a new rolebinding
+			// Roleref cannot be updated deleting and creating a new rolebinding
 			log := log.FromContext(ctx)
 			log.Info("Deleting old RoleBinding", "Namespace", actual.GetNamespace(), "Name", actual.GetName())
 			err := cl.Delete(ctx, &actual)
@@ -125,29 +125,24 @@ func ReconcileRole(ctx context.Context, cl *helper.Client, desired *rbacv1.Role)
 	return cl.UpdateIfOwned(ctx, &actual, desired)
 }
 
-func ReconcileConfigMap(ctx context.Context, cl *helper.Client, desired *corev1.ConfigMap, delete bool) error {
-	actual := corev1.ConfigMap{}
-	if err := cl.Get(ctx, types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, &actual); err != nil {
-		if errors.IsNotFound(err) {
-			if delete {
-				return nil
-			}
-			return cl.CreateOwned(ctx, desired)
+func ReconcileConfigMap(ctx context.Context, cl *helper.Client, current, desired *corev1.ConfigMap) error {
+	if current == nil {
+		if desired == nil {
+			return nil
 		}
-		return fmt.Errorf("can't reconcile Configmap %s: %w", desired.Name, err)
+		return cl.CreateOwned(ctx, desired)
 	}
-
-	if delete {
-		return cl.Delete(ctx, desired)
+	if desired == nil {
+		if helper.IsOwned(current) {
+			return cl.Delete(ctx, current)
+		}
+		return nil
 	}
-
-	if helper.IsSubSet(actual.Labels, desired.Labels) &&
-		reflect.DeepEqual(actual.Data, desired.Data) {
+	if helper.IsSubSet(current.Labels, desired.Labels) && reflect.DeepEqual(current.Data, desired.Data) {
 		// configmap already reconciled. Exiting
 		return nil
 	}
-
-	return cl.UpdateIfOwned(ctx, &actual, desired)
+	return cl.UpdateIfOwned(ctx, current, desired)
 }
 
 func ReconcileDaemonSet(ctx context.Context, ci *Instance, old, new *appsv1.DaemonSet, containerName string, report *helper.ChangeReport) error {

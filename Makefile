@@ -273,6 +273,7 @@ gencode: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and 
 
 doc: crdoc ## Generate markdown documentation
 	$(CRDOC) --resources config/crd/bases/flows.netobserv.io_flowcollectors.yaml --output docs/FlowCollector.md
+	$(CRDOC) --resources config/crd/bases/flows.netobserv.io_flowmetrics.yaml --output docs/FlowMetric.md
 
 generate-go-conversions: $(CONVERSION_GEN) ## Run all generate-go-conversions
 		$(MAKE) clean-generated-conversions SRC_DIRS="./apis/flowcollector/v1beta1"
