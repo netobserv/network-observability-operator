@@ -144,7 +144,7 @@ type Chart struct {
 	Title string `json:"title"`
 
 	// Unit of this chart. Only a few units are currently supported. Leave empty to use generic number.
-	// +kubebuilder:validation:Enum:="bytes";"seconds";"Bps";"pps";"percent"
+	// +kubebuilder:validation:Enum:="bytes";"seconds";"Bps";"pps";"percent";""
 	// +optional
 	Unit Unit `json:"unit,omitempty"`
 

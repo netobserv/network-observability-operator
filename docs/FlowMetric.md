@@ -239,7 +239,7 @@ If `sectionName` is omitted or empty, the chart is placed in the global top sect
         <td>
           Unit of this chart. Only a few units are currently supported. Leave empty to use generic number.<br/>
           <br/>
-            <i>Enum</i>: bytes, seconds, Bps, pps, percent<br/>
+            <i>Enum</i>: bytes, seconds, Bps, pps, percent, <br/>
         </td>
         <td>false</td>
       </tr></tbody>
