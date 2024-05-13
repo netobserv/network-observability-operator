@@ -53,6 +53,7 @@ type MetricInfo struct {
 	Name       string   `yaml:"name,omitempty" json:"name,omitempty"`
 	Type       string   `yaml:"type,omitempty" json:"type,omitempty"`
 	ValueField string   `yaml:"valueField,omitempty" json:"valueField,omitempty"`
+	Direction  string   `yaml:"direction,omitempty" json:"direction,omitempty"`
 	Labels     []string `yaml:"labels,omitempty" json:"labels,omitempty"`
 }
 

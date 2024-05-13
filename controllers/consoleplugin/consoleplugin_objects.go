@@ -421,6 +421,7 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 			Name:       "netobserv_" + mSpec.MetricName,
 			Type:       string(mSpec.Type),
 			ValueField: mSpec.ValueField,
+			Direction:  string(mSpec.Direction),
 			Labels:     mSpec.Labels,
 		})
 	}
