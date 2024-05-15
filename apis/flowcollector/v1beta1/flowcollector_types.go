@@ -159,7 +159,7 @@ const (
 
 // Name of an eBPF agent alert.
 // Possible values are:<br>
-// `NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full.<br>
+// `NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter being triggered.<br>
 // +kubebuilder:validation:Enum:="NetObservDroppedFlows"
 type EBPFAgentAlert string
 
@@ -178,7 +178,7 @@ type EBPFMetrics struct {
 
 	// `disableAlerts` is a list of alerts that should be disabled.
 	// Possible values are:<br>
-	// `NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full.<br>
+	// `NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter being triggered.<br>
 	// +optional
 	DisableAlerts []EBPFAgentAlert `json:"disableAlerts"`
 }
