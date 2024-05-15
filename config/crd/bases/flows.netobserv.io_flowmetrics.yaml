@@ -120,6 +120,7 @@ spec:
                       - Bps
                       - pps
                       - percent
+                      - ""
                       type: string
                   required:
                   - dashboardName
