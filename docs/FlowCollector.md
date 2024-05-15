@@ -539,7 +539,7 @@ To filter a range of ports, use a "start-end" range, string format. For example 
         <td>
           `disableAlerts` is a list of alerts that should be disabled.
 Possible values are:<br>
-`NetObservDroppedFlows`, which is triggered when eBPF agent hashmap table is full.<br><br/>
+`NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter being triggered.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7620,7 +7620,7 @@ To filter a range of ports, use a "start-end" range, string format. For example 
         <td>
           `disableAlerts` is a list of alerts that should be disabled.
 Possible values are:<br>
-`NetObservDroppedFlows`, which is triggered when eBPF agent hashmap table is full.<br><br/>
+`NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter being triggered.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
