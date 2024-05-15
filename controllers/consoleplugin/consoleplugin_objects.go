@@ -372,13 +372,15 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 	config := cfg.PrometheusConfig{
 		URL:              b.desired.Prometheus.Querier.Manual.URL,
 		ForwardUserToken: b.desired.Prometheus.Querier.Manual.ForwardUserToken,
+		Timeout:          api.Duration{Duration: 30 * time.Second},
+	}
+	if b.desired.Prometheus.Querier.Timeout != nil {
+		config.Timeout = api.Duration{Duration: b.desired.Prometheus.Querier.Timeout.Duration}
 	}
 	if b.desired.Prometheus.Querier.Mode == flowslatest.PromModeAuto {
 		if b.info.UseOpenShiftSCC /* aka IsOpenShift */ {
-			config = cfg.PrometheusConfig{
-				URL:              "https://thanos-querier.openshift-monitoring.svc:9091/",
-				ForwardUserToken: true,
-			}
+			config.URL = "https://thanos-querier.openshift-monitoring.svc:9091/"
+			config.ForwardUserToken = true
 			tls = flowslatest.ClientTLS{
 				Enable: true,
 				CACert: flowslatest.CertificateReference{
@@ -403,11 +405,6 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 		}
 	}
 
-	if b.desired.Prometheus.Querier.Timeout != nil {
-		config.Timeout = api.Duration{Duration: b.desired.Prometheus.Querier.Timeout.Duration}
-	} else {
-		config.Timeout = api.Duration{Duration: 30 * time.Second}
-	}
 	config.TokenPath = b.volumes.AddToken(constants.PluginName)
 
 	allMetricNames := metrics.GetAllNames()

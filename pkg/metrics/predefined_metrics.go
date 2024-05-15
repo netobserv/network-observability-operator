@@ -24,8 +24,8 @@ var (
 	latencyBuckets = []string{".005", ".01", ".02", ".03", ".04", ".05", ".075", ".1", ".25", "1"}
 	mapLabels      = map[string][]string{
 		tagNodes:      {"SrcK8S_HostName", "DstK8S_HostName"},
-		tagNamespaces: {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer"},
-		tagWorkloads:  {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType", "SrcK8S_Type", "DstK8S_Type"},
+		tagNamespaces: {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel"},
+		tagWorkloads:  {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType", "SrcK8S_Type", "DstK8S_Type"},
 	}
 	mapValueFields = map[string]string{
 		tagBytes:   "Bytes",
