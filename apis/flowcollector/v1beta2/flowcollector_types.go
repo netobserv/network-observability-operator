@@ -322,7 +322,7 @@ type FlowCollectorEBPF struct {
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
 	// If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 	// - `DNSTracking`: enable the DNS tracking feature.<br>
-	// - `FlowRTT`: enable flow latency (RTT) calculations in the eBPF agent during TCP handshakes. This feature better works with `sampling` set to 1.<br>
+	// - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 

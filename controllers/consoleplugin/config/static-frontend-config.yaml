@@ -859,7 +859,7 @@ filters:
   - id: time_flow_rtt
     name: Flow RTT
     component: number
-    hint: Specify a TCP handshake Round Trip Time in nanoseconds.
+    hint: Specify a TCP smoothed Round Trip Time in nanoseconds.
 
 # Fields definition, used to generate documentation
 # The "cardinalityWarn" property relates to how the field is suitable for usage as a metric label wrt cardinality; it may have 3 values: fine, careful, avoid
