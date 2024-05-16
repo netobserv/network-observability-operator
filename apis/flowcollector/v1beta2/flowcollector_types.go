@@ -171,7 +171,7 @@ const (
 type EBPFAgentAlert string
 
 const (
-	AlertDroppedFlows EBPFAgentAlert = "NetObservAgentFlowsDropped"
+	AlertDroppedFlows EBPFAgentAlert = "NetObservDroppedFlows"
 )
 
 // `EBPFMetrics` defines the desired eBPF agent configuration regarding metrics
