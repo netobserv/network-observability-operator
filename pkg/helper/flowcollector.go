@@ -112,7 +112,7 @@ func IsZoneEnabled(spec *flowslatest.FlowCollectorFLP) bool {
 }
 
 func IsEBPFMetricsEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return spec.Metrics.Enable != nil && *spec.Metrics.Enable
+	return spec.Metrics.Enable == nil || *spec.Metrics.Enable
 }
 
 func IsSubnetLabelsEnabled(spec *flowslatest.FlowCollectorFLP) bool {

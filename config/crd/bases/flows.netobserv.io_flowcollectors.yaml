@@ -252,7 +252,7 @@ spec:
                                 type: string
                               type: array
                             enable:
-                              description: Set `enable` to `true` to enable eBPF agent metrics collection.
+                              description: Set `enable` to `false` to disable eBPF agent metrics collection, by default it's `true`.
                               type: boolean
                             server:
                               description: Metrics server endpoint configuration for Prometheus scraper
@@ -3378,7 +3378,7 @@ spec:
                                 type: string
                               type: array
                             enable:
-                              description: Set `enable` to `true` to enable eBPF agent metrics collection.
+                              description: Set `enable` to `false` to disable eBPF agent metrics collection, by default it's `true`.
                               type: boolean
                             server:
                               description: Metrics server endpoint configuration for Prometheus scraper
