@@ -75,8 +75,6 @@ func CheckCardinality(fm *metricslatest.FlowMetric) {
 }
 
 func Sync(ctx context.Context, c client.Client, fm *metricslatest.FlowMetricList) {
-	log := log.FromContext(ctx)
-	log.WithValues("Number of items", len(fm.Items), "Main conds", len(mapStatuses), "Card conds", len(mapCards)).Info("Updating FlowMetrics status")
 	for i := range fm.Items {
 		nsname := types.NamespacedName{Name: fm.Items[i].Name, Namespace: fm.Items[i].Namespace}
 		// main condition is mandatory; cardinality condition is optional
@@ -106,7 +104,6 @@ func setStatus(ctx context.Context, c client.Client, nsname types.NamespacedName
 		if cardinalityCond != nil {
 			meta.SetStatusCondition(&fm.Status.Conditions, *cardinalityCond)
 		}
-		log.WithValues("NsName", nsname, "Conditions", fm.Status.Conditions).Info("Updating with conditions")
 		return c.Status().Update(ctx, &fm)
 	})
 
