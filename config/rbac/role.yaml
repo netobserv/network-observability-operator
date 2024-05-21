@@ -105,7 +105,6 @@ rules:
   resources:
   - nodes
   - pods
-  - services
   verbs:
   - get
   - list
