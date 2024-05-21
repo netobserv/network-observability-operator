@@ -546,7 +546,7 @@ Possible values are:<br>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `true` to enable eBPF agent metrics collection.<br/>
+          Set `enable` to `false` to disable eBPF agent metrics collection, by default it's `true`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7627,7 +7627,7 @@ Possible values are:<br>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `true` to enable eBPF agent metrics collection.<br/>
+          Set `enable` to `false` to disable eBPF agent metrics collection, by default it's `true`.<br/>
         </td>
         <td>false</td>
       </tr><tr>

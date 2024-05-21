@@ -264,7 +264,6 @@ metadata:
                 "kafkaBatchSize": 1048576,
                 "logLevel": "info",
                 "metrics": {
-                  "enable": false,
                   "server": {
                     "port": 9400
                   }

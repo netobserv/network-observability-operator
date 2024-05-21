@@ -173,7 +173,8 @@ type EBPFMetrics struct {
 	// +optional
 	Server MetricsServerConfig `json:"server,omitempty"`
 
-	// Set `enable` to `true` to enable eBPF agent metrics collection.
+	// Set `enable` to `false` to disable eBPF agent metrics collection, by default it's `true`.
+	// +optional
 	Enable *bool `json:"enable,omitempty"`
 
 	// `disableAlerts` is a list of alerts that should be disabled.

@@ -29,7 +29,6 @@ spec:
       #  sourcePorts: 53
       #  enable: true
       metrics:
-        enable: false
         server:
           port: 9400
       # Custom optionnal resources configuration
