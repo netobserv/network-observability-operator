@@ -5012,18 +5012,18 @@ spec:
                       default:
                         - default: true
                           filter:
-                            flow_layer: app
+                            flow_layer: '"app"'
                           name: Applications
                         - filter:
-                            flow_layer: infra
+                            flow_layer: '"infra"'
                           name: Infrastructure
                         - default: true
                           filter:
-                            dst_kind: Pod
-                            src_kind: Pod
+                            dst_kind: '"Pod"'
+                            src_kind: '"Pod"'
                           name: Pods network
                         - filter:
-                            dst_kind: Service
+                            dst_kind: '"Service"'
                           name: Services network
                       description: '`quickFilters` configures quick filter presets for the Console plugin'
                       items:
