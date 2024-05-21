@@ -1,0 +1,45 @@
+# This metric provides egress (Tx) TCP latency (sRTT) per pod. It also provides dashboard charts.
+# The eBPF Agent feature "FlowRTT" must be enabled.
+# More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: flowmetric-pod-egress-rtt
+spec:
+  metricName: pod_egress_rtt_seconds
+  type: Histogram
+  valueField: TimeFlowRttNs
+  direction: Egress
+  labels: [SrcK8S_Name,SrcK8S_Namespace,SrcK8S_OwnerName,SrcK8S_OwnerType,SrcK8S_HostName]
+  filters:
+  - field: SrcK8S_Type
+    value: Pod
+  - field: TimeFlowRttNs
+    matchType: Presence
+  divider: "1000000000"
+  buckets: [".001", ".005", ".01", ".02", ".03", ".04", ".05", ".075", ".1", ".25", "1"]
+  charts:
+  - dashboardName: Main
+    sectionName: TCP latencies
+    title: "Top egress sRTT per pod, p50 (ms)"
+    unit: seconds
+    type: Line
+    queries:
+    - promQL: "histogram_quantile(0.5, sum(rate($METRIC_bucket{SrcK8S_Namespace!=\"\"}[2m])) by (le,SrcK8S_Namespace,SrcK8S_Name))*1000 > 0"
+      legend: "{{SrcK8S_Namespace}} / {{SrcK8S_Name}}"
+  - dashboardName: Main
+    sectionName: TCP latencies
+    title: "Top egress sRTT per pod, p99 (ms)"
+    unit: seconds
+    type: Line
+    queries:
+    - promQL: "histogram_quantile(0.99, sum(rate($METRIC_bucket{SrcK8S_Namespace!=\"\"}[2m])) by (le,SrcK8S_Namespace,SrcK8S_Name))*1000 > 0"
+      legend: "{{SrcK8S_Namespace}} / {{SrcK8S_Name}}"
+  - dashboardName: Main
+    sectionName: TCP latencies
+    title: "Top egress sRTT per pod, avg (ms)"
+    unit: seconds
+    type: Line
+    queries:
+    - promQL: "(sum(rate($METRIC_sum{SrcK8S_Namespace!=\"\"}[2m])) by (SrcK8S_Namespace,SrcK8S_Name) / sum(rate($METRIC_count{SrcK8S_Namespace!=\"\"}[2m])) by (SrcK8S_Namespace,SrcK8S_Name))*1000"
+      legend: "{{SrcK8S_Namespace}} / {{SrcK8S_Name}}"

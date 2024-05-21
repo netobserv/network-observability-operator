@@ -1,0 +1,24 @@
+# This metric provides egress (Tx) byte-rate per pod. It also provides a dashboard chart.
+# More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: flowmetric-pod-egress-traffic
+spec:
+  metricName: pod_egress_bytes_total
+  type: Counter
+  valueField: Bytes
+  direction: Egress
+  labels: [SrcK8S_Name,SrcK8S_Namespace,SrcK8S_OwnerName,SrcK8S_OwnerType,SrcK8S_HostName]
+  filters:
+  - field: SrcK8S_Type
+    value: Pod
+  charts:
+  - dashboardName: Main
+    sectionName: Pods
+    title: Top egress traffic per pod
+    unit: Bps
+    type: StackArea
+    queries:
+    - promQL: "sum(rate($METRIC{SrcK8S_Namespace!=\"\"}[2m])) by (SrcK8S_Namespace, SrcK8S_Name)"
+      legend: "{{SrcK8S_Namespace}} / {{SrcK8S_Name}}"
