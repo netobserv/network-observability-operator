@@ -13,6 +13,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 // nolint:cyclop
@@ -140,8 +141,14 @@ func ControllerFlowMetricsSpecs() {
 
 	Context("Updating a FlowMetric", func() {
 		It("Should update successfully", func() {
-			metric1.Spec.MetricName = "m_1_bis"
-			Expect(k8sClient.Update(ctx, &metric1)).Should(Succeed())
+			Eventually(func() interface{} {
+				err := k8sClient.Get(ctx, helper.NamespacedName(&metric1), &metric1)
+				if err != nil {
+					return err
+				}
+				metric1.Spec.MetricName = "m_1_bis"
+				return k8sClient.Update(ctx, &metric1)
+			}, timeout, interval).Should(Succeed())
 		})
 
 		It("Should update configmap with custom metrics", func() {
