@@ -41,6 +41,16 @@ var (
 		"namespace_rtt_seconds",
 		"namespace_dns_latency_seconds",
 	}
+	// More metrics enabled when Loki is disabled, to avoid loss of information
+	DefaultIncludeListLokiDisabled = []string{
+		"node_ingress_bytes_total",
+		"workload_ingress_bytes_total",
+		"workload_flows_total",
+		"workload_drop_bytes_total",
+		"workload_drop_packets_total",
+		"workload_rtt_seconds",
+		"workload_dns_latency_seconds",
+	}
 	// Pre-deprecation default IgnoreTags list (1.4) - used before switching to whitelist approach,
 	// to make sure there is no unintended new metrics being collected
 	// Don't add anything here: this is not meant to evolve
@@ -202,7 +212,12 @@ func GetDefinitions(names []string) []metricslatest.FlowMetric {
 func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
 	var list []string
 	if spec.Processor.Metrics.IncludeList == nil {
-		list = DefaultIncludeList
+		if helper.UseLoki(spec) {
+			list = DefaultIncludeList
+		} else {
+			// When loki is disabled, increase what's available through metrics by default, to minimize the loss of information
+			list = DefaultIncludeListLokiDisabled
+		}
 	} else {
 		for _, m := range *spec.Processor.Metrics.IncludeList {
 			list = append(list, string(m))
