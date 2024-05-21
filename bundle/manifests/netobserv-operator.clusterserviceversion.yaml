@@ -1002,6 +1002,7 @@ spec:
           - flows.netobserv.io
           resources:
           - flowcollectors
+          - flowmetrics
           verbs:
           - create
           - delete
@@ -1020,18 +1021,11 @@ spec:
           - flows.netobserv.io
           resources:
           - flowcollectors/status
+          - flowmetrics/status
           verbs:
           - get
           - patch
           - update
-        - apiGroups:
-          - flows.netobserv.io
-          resources:
-          - flowmetrics
-          verbs:
-          - get
-          - list
-          - watch
         - apiGroups:
           - loki.grafana.com
           resourceNames:

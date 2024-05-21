@@ -122,17 +122,3 @@ func FindFilter(labels []string, isNumber bool) bool {
 
 	return true
 }
-
-func LabelIsHighCardinality(label string) bool {
-	frontendCfg, err := config.LoadStaticFrontendConfig()
-	if err != nil {
-		return false
-	}
-	for _, cfgLabel := range frontendCfg.Fields {
-		if label == cfgLabel.Name {
-			return cfgLabel.CardinalityWarn == config.CardinalityWarnCareful ||
-				cfgLabel.CardinalityWarn == config.CardinalityWarnAvoid
-		}
-	}
-	return false
-}

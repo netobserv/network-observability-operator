@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -62,12 +63,13 @@ func (r *FlowMetricWebhook) ValidateDelete(_ context.Context, _ runtime.Object) 
 }
 
 func checkFlowMetricCartinality(fMetric *FlowMetric) {
-	for _, label := range fMetric.Spec.Labels {
-		if helper.LabelIsHighCardinality(label) {
-			//No warning level logging as info since it is not an error
-			flowmetriclog.Info("Warning: metric label has high cardinality, please limit it by using some filters", "labelName", label)
-			return
-		}
+	r, err := helper.CheckCardinality(fMetric.Spec.Labels...)
+	if err != nil {
+		flowmetriclog.WithValues("FlowMetric name", fMetric.Name).Error(err, "Could not check metrics cardinality")
+	}
+	overallCardinality := r.GetOverall()
+	if overallCardinality == config.CardinalityWarnAvoid || overallCardinality == config.CardinalityWarnUnknown {
+		flowmetriclog.WithValues("FlowMetric name", fMetric.Name).Info("Warning: unsafe metric detected with potentially very high cardinality, please check its definition.", "Details", r.GetDetails())
 	}
 }
 

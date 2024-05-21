@@ -1,0 +1,116 @@
+package fmstatus
+
+import (
+	"context"
+
+	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+)
+
+var mapStatuses map[types.NamespacedName]*metav1.Condition
+var mapCards map[types.NamespacedName]*metav1.Condition
+
+func Reset() {
+	mapStatuses = make(map[types.NamespacedName]*metav1.Condition)
+	mapCards = make(map[types.NamespacedName]*metav1.Condition)
+}
+
+func SetPending(fm *metricslatest.FlowMetric) {
+	nsname := types.NamespacedName{Name: fm.Name, Namespace: fm.Namespace}
+	mapStatuses[nsname] = &metav1.Condition{
+		Type:    "Ready",
+		Reason:  "Ready",
+		Message: "flowlogs-pipeline not yet configured",
+		Status:  metav1.ConditionFalse,
+	}
+}
+
+func SetReady(fm *metricslatest.FlowMetric) {
+	nsname := types.NamespacedName{Name: fm.Name, Namespace: fm.Namespace}
+	mapStatuses[nsname] = &metav1.Condition{
+		Type:    "Ready",
+		Reason:  "Ready",
+		Message: "flowlogs-pipeline configured",
+		Status:  metav1.ConditionTrue,
+	}
+}
+
+func SetFailure(fm *metricslatest.FlowMetric, msg string) {
+	nsname := types.NamespacedName{Name: fm.Name, Namespace: fm.Namespace}
+	mapStatuses[nsname] = &metav1.Condition{
+		Type:    "Ready",
+		Reason:  "Failure",
+		Message: msg,
+		Status:  metav1.ConditionFalse,
+	}
+}
+
+func CheckCardinality(fm *metricslatest.FlowMetric) {
+	report, err := helper.CheckCardinality(fm.Spec.Labels...)
+	if err != nil {
+		SetFailure(fm, err.Error())
+		return
+	}
+	cardinality := report.GetOverall()
+	status := metav1.ConditionTrue
+	if cardinality == config.CardinalityWarnAvoid || cardinality == config.CardinalityWarnUnknown {
+		status = metav1.ConditionFalse
+	}
+	nsname := types.NamespacedName{Name: fm.Name, Namespace: fm.Namespace}
+	mapCards[nsname] = &metav1.Condition{
+		Type:    "CardinalityOK",
+		Reason:  string(cardinality),
+		Message: report.GetDetails(),
+		Status:  status,
+	}
+	SetReady(fm)
+}
+
+func Sync(ctx context.Context, c client.Client, fm *metricslatest.FlowMetricList) {
+	log := log.FromContext(ctx)
+	log.WithValues("Number of items", len(fm.Items), "Main conds", len(mapStatuses), "Card conds", len(mapCards)).Info("Updating FlowMetrics status")
+	for i := range fm.Items {
+		nsname := types.NamespacedName{Name: fm.Items[i].Name, Namespace: fm.Items[i].Namespace}
+		// main condition is mandatory; cardinality condition is optional
+		if cond, ok := mapStatuses[nsname]; ok {
+			cardCond := mapCards[nsname]
+			setStatus(ctx, c, nsname, cond, cardCond)
+		}
+	}
+}
+
+func setStatus(ctx context.Context, c client.Client, nsname types.NamespacedName, mainCond *metav1.Condition, cardinalityCond *metav1.Condition) {
+	log := log.FromContext(ctx)
+
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		fm := metricslatest.FlowMetric{}
+		if err := c.Get(ctx, nsname, &fm); err != nil {
+			log.WithValues("NsName", nsname).Error(err, "failed to get FlowMetrics status")
+			if errors.IsNotFound(err) {
+				// ignore: when it's being deleted, there's no point trying to update its status
+				return nil
+			}
+			return err
+		}
+		if mainCond != nil {
+			meta.SetStatusCondition(&fm.Status.Conditions, *mainCond)
+		}
+		if cardinalityCond != nil {
+			meta.SetStatusCondition(&fm.Status.Conditions, *cardinalityCond)
+		}
+		log.WithValues("NsName", nsname, "Conditions", fm.Status.Conditions).Info("Updating with conditions")
+		return c.Status().Update(ctx, &fm)
+	})
+
+	if err != nil {
+		log.Error(err, "failed to update FlowMetrics status")
+	}
+}

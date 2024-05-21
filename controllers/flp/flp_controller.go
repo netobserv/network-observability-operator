@@ -7,6 +7,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/flp/fmstatus"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/loki"
@@ -149,6 +150,8 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	if err := r.Client.List(ctx, &fm, &client.ListOptions{Namespace: ns}); err != nil {
 		return r.status.Error("CantListFlowMetrics", err)
 	}
+	fmstatus.Reset()
+	defer fmstatus.Sync(ctx, r.Client, &fm)
 
 	// Create sub-reconcilers
 	// TODO: refactor to move these subReconciler allocations in `Start`. It will involve some decoupling work, as currently

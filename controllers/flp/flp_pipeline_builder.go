@@ -13,6 +13,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/flp/fmstatus"
 	"github.com/netobserv/network-observability-operator/pkg/conversion"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/loki"
@@ -206,7 +207,16 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		fm := &allMetrics[i]
 		m, err := flowMetricToFLP(&fm.Spec)
 		if err != nil {
+			// fm.Name is empty for predefined metrics; check this is a custom metric, not a predefined one
+			if fm.Name != "" {
+				fmstatus.SetFailure(fm, err.Error())
+				continue
+			}
+			// Predefined metric failure => bug
 			return fmt.Errorf("error reading FlowMetric definition '%s': %w", fm.Name, err)
+		}
+		if fm.Name != "" {
+			fmstatus.CheckCardinality(fm)
 		}
 		flpMetrics = append(flpMetrics, *m)
 	}
