@@ -15,6 +15,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const (
+	ConditionReady         = "Ready"
+	ConditionCardinalityOK = "CardinalityOK"
+)
+
 var mapStatuses map[types.NamespacedName]*metav1.Condition
 var mapCards map[types.NamespacedName]*metav1.Condition
 
@@ -23,20 +28,10 @@ func Reset() {
 	mapCards = make(map[types.NamespacedName]*metav1.Condition)
 }
 
-func SetPending(fm *metricslatest.FlowMetric) {
-	nsname := types.NamespacedName{Name: fm.Name, Namespace: fm.Namespace}
-	mapStatuses[nsname] = &metav1.Condition{
-		Type:    "Ready",
-		Reason:  "Ready",
-		Message: "flowlogs-pipeline not yet configured",
-		Status:  metav1.ConditionFalse,
-	}
-}
-
 func SetReady(fm *metricslatest.FlowMetric) {
 	nsname := types.NamespacedName{Name: fm.Name, Namespace: fm.Namespace}
 	mapStatuses[nsname] = &metav1.Condition{
-		Type:    "Ready",
+		Type:    ConditionReady,
 		Reason:  "Ready",
 		Message: "flowlogs-pipeline configured",
 		Status:  metav1.ConditionTrue,
@@ -46,7 +41,7 @@ func SetReady(fm *metricslatest.FlowMetric) {
 func SetFailure(fm *metricslatest.FlowMetric, msg string) {
 	nsname := types.NamespacedName{Name: fm.Name, Namespace: fm.Namespace}
 	mapStatuses[nsname] = &metav1.Condition{
-		Type:    "Ready",
+		Type:    ConditionReady,
 		Reason:  "Failure",
 		Message: msg,
 		Status:  metav1.ConditionFalse,
@@ -66,7 +61,7 @@ func CheckCardinality(fm *metricslatest.FlowMetric) {
 	}
 	nsname := types.NamespacedName{Name: fm.Name, Namespace: fm.Namespace}
 	mapCards[nsname] = &metav1.Condition{
-		Type:    "CardinalityOK",
+		Type:    ConditionCardinalityOK,
 		Reason:  string(cardinality),
 		Message: report.GetDetails(),
 		Status:  status,
