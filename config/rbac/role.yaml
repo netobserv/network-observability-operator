@@ -95,7 +95,10 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - endpoints
+  - configmaps
+  - nodes
+  - pods
+  - services
   verbs:
   - get
   - list
@@ -103,8 +106,7 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - nodes
-  - pods
+  - endpoints
   verbs:
   - get
   - list

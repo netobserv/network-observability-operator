@@ -983,7 +983,10 @@ spec:
         - apiGroups:
           - ""
           resources:
-          - endpoints
+          - configmaps
+          - nodes
+          - pods
+          - services
           verbs:
           - get
           - list
@@ -991,8 +994,7 @@ spec:
         - apiGroups:
           - ""
           resources:
-          - nodes
-          - pods
+          - endpoints
           verbs:
           - get
           - list
