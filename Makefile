@@ -258,7 +258,7 @@ manifests: YQ controller-gen ## Generate WebhookConfiguration, ClusterRole and C
 	$(CONTROLLER_GEN) \
 	rbac:roleName=manager-role \
 	crd:crdVersions=v1 \
-	paths="./apis/..." \
+	paths="./..." \
 	output:crd:artifacts:config=config/crd/bases \
 	output:webhook:dir=./config/webhook \
 	webhook

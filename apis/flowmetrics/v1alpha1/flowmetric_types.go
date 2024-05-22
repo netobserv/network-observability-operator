@@ -183,13 +183,15 @@ type Query struct {
 
 // FlowMetricStatus defines the observed state of FlowMetric
 type FlowMetricStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// `conditions` represent the latest available observations of an object's state
+	Conditions []metav1.Condition `json:"conditions"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Metric Name",type="string",JSONPath=`.spec.metricName`
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=`.status.conditions[?(@.type=="Ready")].reason`
+// +kubebuilder:printcolumn:name="Cardinality",type="string",JSONPath=`.status.conditions[?(@.type=="CardinalityOK")].reason`
 // FlowMetric is the Schema for the flowmetrics API
 type FlowMetric struct {
 	metav1.TypeMeta   `json:",inline"`

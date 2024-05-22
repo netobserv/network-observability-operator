@@ -73,6 +73,7 @@ const (
 	CardinalityWarnAvoid   CardinalityWarn = "avoid"
 	CardinalityWarnCareful CardinalityWarn = "careful"
 	CardinalityWarnFine    CardinalityWarn = "fine"
+	CardinalityWarnUnknown CardinalityWarn = "unknown"
 )
 
 type FieldConfig struct {

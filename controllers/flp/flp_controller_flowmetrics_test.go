@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/strings/slices"
@@ -12,7 +13,10 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/flp/fmstatus"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 )
 
 // nolint:cyclop
@@ -52,6 +56,7 @@ func ControllerFlowMetricsSpecs() {
 		Spec: metricslatest.FlowMetricSpec{
 			MetricName: "m_2",
 			Type:       metricslatest.CounterMetric,
+			Labels:     []string{"DstAddr"},
 		},
 	}
 	metricUnwatched := metricslatest.FlowMetric{
@@ -136,12 +141,40 @@ func ControllerFlowMetricsSpecs() {
 					!slices.Contains(names, metricUnwatched.Spec.MetricName)
 			}))
 		})
+
+		It("Should be updated with status", func() {
+			Eventually(func() interface{} {
+				err := k8sClient.Get(ctx, helper.NamespacedName(&metric1), &metric1)
+				if err != nil {
+					return err
+				}
+				return metric1.Status.Conditions
+			}, timeout, interval).Should(Satisfy(func(conds []metav1.Condition) bool {
+				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
+				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
+				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionTrue &&
+					ready.Reason == "Ready" && card.Reason == string(config.CardinalityWarnFine)
+			}))
+
+			Eventually(func() interface{} {
+				err := k8sClient.Get(ctx, helper.NamespacedName(&metric2), &metric2)
+				if err != nil {
+					return err
+				}
+				return metric2.Status.Conditions
+			}, timeout, interval).Should(Satisfy(func(conds []metav1.Condition) bool {
+				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
+				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
+				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionFalse &&
+					ready.Reason == "Ready" && card.Reason == string(config.CardinalityWarnAvoid)
+			}))
+		})
 	})
 
 	Context("Updating a FlowMetric", func() {
 		It("Should update successfully", func() {
 			metric1.Spec.MetricName = "m_1_bis"
-			Expect(k8sClient.Update(ctx, &metric1)).Should(Succeed())
+			Expect(k8sClient.Update(ctx, &metric1)).To(Succeed())
 		})
 
 		It("Should update configmap with custom metrics", func() {

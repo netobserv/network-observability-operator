@@ -156,10 +156,3 @@ func TestCRDDefault(t *testing.T) {
 	assert.Equal(t, "app: netobserv-flowcollector\n", GetFieldDefaultString([]string{"spec", "processor", "debug"}, "lokiStaticLabels"))
 
 }
-
-func TestLabelCardinality(t *testing.T) {
-	assert.True(t, LabelIsHighCardinality("SrcK8S_Name"))
-	assert.True(t, LabelIsHighCardinality("DstK8S_Name"))
-	assert.True(t, LabelIsHighCardinality("TimeReceived"))
-	assert.False(t, LabelIsHighCardinality("SrcK8S_OwnerName"))
-}

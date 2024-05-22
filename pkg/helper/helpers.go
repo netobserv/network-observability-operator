@@ -7,8 +7,10 @@ import (
 	"strings"
 
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // maximum length of a metadata label in Kubernetes
@@ -123,16 +125,6 @@ func FindFilter(labels []string, isNumber bool) bool {
 	return true
 }
 
-func LabelIsHighCardinality(label string) bool {
-	frontendCfg, err := config.LoadStaticFrontendConfig()
-	if err != nil {
-		return false
-	}
-	for _, cfgLabel := range frontendCfg.Fields {
-		if label == cfgLabel.Name {
-			return cfgLabel.CardinalityWarn == config.CardinalityWarnCareful ||
-				cfgLabel.CardinalityWarn == config.CardinalityWarnAvoid
-		}
-	}
-	return false
+func NamespacedName(obj client.Object) types.NamespacedName {
+	return types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}
 }
