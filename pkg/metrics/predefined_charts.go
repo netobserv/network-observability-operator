@@ -69,7 +69,7 @@ func trafficCharts(group, vt, dir string) []metricslatest.Chart {
 		Title:         fmt.Sprintf("Top %s traffic", dir),
 		Unit:          unit,
 		Queries:       []metricslatest.Query{{PromQL: "sum(rate($METRIC{$FILTERS}[2m])) by ($LABELS)", Legend: "$LEGEND"}},
-	}, group, "")...)
+	}, group, string(unit))...)
 }
 
 func rttCharts(group string) []metricslatest.Chart {
@@ -137,7 +137,7 @@ func dropCharts(group string, unit metricslatest.Unit) []metricslatest.Chart {
 		Title:         "Top drops",
 		Unit:          unit,
 		Queries:       []metricslatest.Query{{PromQL: "sum(rate($METRIC{$FILTERS}[2m])) by ($LABELS)", Legend: "$LEGEND"}},
-	}, group, "")...)
+	}, group, string(unit))...)
 }
 
 func dnsCharts(group string) []metricslatest.Chart {

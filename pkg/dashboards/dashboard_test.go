@@ -100,7 +100,7 @@ func TestCreateFlowMetricsDashboard_OnlyNodeIngressBytes(t *testing.T) {
 	assert.Equal([]string{"Total ingress traffic"}, topRow.Titles())
 
 	trafficRow := d.FindRow("Traffic rates")
-	assert.Equal([]string{"Top ingress traffic per node"}, trafficRow.Titles())
+	assert.Equal([]string{"Top ingress traffic per node (Bps)"}, trafficRow.Titles())
 }
 
 func TestCreateFlowMetricsDashboard_DefaultList(t *testing.T) {
@@ -128,11 +128,11 @@ func TestCreateFlowMetricsDashboard_DefaultList(t *testing.T) {
 
 	trafficRow := d.FindRow("Traffic rates")
 	assert.Equal([]string{
-		"Top ingress traffic per node",
-		"Top ingress traffic per infra namespace",
-		"Top ingress traffic per app namespace",
-		"Top ingress traffic per infra workload",
-		"Top ingress traffic per app workload",
+		"Top ingress traffic per node (Bps)",
+		"Top ingress traffic per infra namespace (Bps)",
+		"Top ingress traffic per app namespace (Bps)",
+		"Top ingress traffic per infra workload (Bps)",
+		"Top ingress traffic per app workload (Bps)",
 	}, trafficRow.Titles())
 
 	rttRow := d.FindRow("TCP latencies")
@@ -145,8 +145,8 @@ func TestCreateFlowMetricsDashboard_DefaultList(t *testing.T) {
 
 	dropsRow := d.FindRow("Byte and packet drops")
 	assert.Equal([]string{
-		"Top drops per infra namespace",
-		"Top drops per app namespace",
+		"Top drops per infra namespace (pps)",
+		"Top drops per app namespace (pps)",
 	}, dropsRow.Titles())
 
 	dnsRow := d.FindRow("DNS")
