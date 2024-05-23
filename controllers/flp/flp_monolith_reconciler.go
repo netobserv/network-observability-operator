@@ -115,10 +115,12 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 		return err
 	}
 
-	// Watch for Loki certificate if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
-	// because certificate is always reloaded from file
-	if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &r.Loki.TLS, r.Namespace); err != nil {
-		return err
+	if helper.UseLoki(&desired.Spec) {
+		// Watch for Loki certificate if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
+		// because certificate is always reloaded from file
+		if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &r.Loki.TLS, r.Namespace); err != nil {
+			return err
+		}
 	}
 
 	// Watch for Kafka exporter certificate if necessary; need to restart pods in case of cert rotation
