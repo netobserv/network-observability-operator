@@ -5847,10 +5847,8 @@ is set to `IPFIX`.<br/>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` [deprecated (*)] selects the flows tracing agent. The only possible value is `eBPF` (default), to use NetObserv eBPF agent.<br>
-Previously, using an IPFIX collector was allowed, but was deprecated and it is now removed.<br>
-Setting `IPFIX` is ignored and still use the eBPF Agent.
-Since there is only a single option here, this field will be remove in a future API version.<br/>
+          `type` [deprecated (*)] selects the flows tracing agent. Previously, this field allowed to select between `eBPF` or `IPFIX`.
+Only `eBPF` is allowed now, so this field is deprecated and will be removed in a future version of the API.<br/>
           <br/>
             <i>Enum</i>: eBPF, IPFIX<br/>
             <i>Default</i>: eBPF<br/>
@@ -6054,7 +6052,7 @@ in edge debug or support scenarios.<br/>
         <td><b><a href="#flowcollectorspecagentebpfadvancedscheduling">scheduling</a></b></td>
         <td>object</td>
         <td>
-          scheduling controls whether the pod will be scheduled or not.<br/>
+          scheduling controls how the pods are scheduled on nodes.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6066,7 +6064,7 @@ in edge debug or support scenarios.<br/>
 
 
 
-scheduling controls whether the pod will be scheduled or not.
+scheduling controls how the pods are scheduled on nodes.
 
 <table>
     <thead>
@@ -6081,35 +6079,31 @@ scheduling controls whether the pod will be scheduled or not.
         <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingaffinity">affinity</a></b></td>
         <td>object</td>
         <td>
-          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
+          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>nodeSelector</b></td>
         <td>map[string]string</td>
         <td>
-          NodeSelector is a selector which must be true for the pod to fit on a node.
-Selector which must match a node's labels for the pod to be scheduled on that node.
-More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/<br/>
+          `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>priorityClassName</b></td>
         <td>string</td>
         <td>
-          If specified, indicates the pod's priority. "system-node-critical" and
-"system-cluster-critical" are two special keywords which indicate the
-highest priorities with the former being the highest priority. Any other
-name must be defined by creating a PriorityClass object with that name.
-If not specified, the pod priority will be default or zero if there is no
-default.<br/>
+          If specified, indicates the pod's priority. For documentation, refer to https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#how-to-use-priority-and-preemption.
+If not specified, default priority is used, or zero if there is no default.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecagentebpfadvancedschedulingtolerationsindex">tolerations</a></b></td>
         <td>[]object</td>
         <td>
-          tolerations is a list of tolerations that allow the pod to schedule onto nodes with matching taints.<br/>
+          `tolerations` is a list of tolerations that allow the pod to schedule onto nodes with matching taints.
+For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6121,7 +6115,7 @@ default.<br/>
 
 
 
-If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
+If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
 
 <table>
     <thead>
@@ -7832,7 +7826,7 @@ If the operator is Exists, the value should be empty, otherwise just a regular s
         <td><b>action</b></td>
         <td>enum</td>
         <td>
-          Action defines the action to perform on the flows that match the filter.<br/>
+          `action` defines the action to perform on the flows that match the filter.<br/>
           <br/>
             <i>Enum</i>: Accept, Reject<br/>
         </td>
@@ -7841,24 +7835,24 @@ If the operator is Exists, the value should be empty, otherwise just a regular s
         <td><b>cidr</b></td>
         <td>string</td>
         <td>
-          CIDR defines the IP CIDR to filter flows by.
-Example: 10.10.10.0/24 or 100:100:100:100::/64<br/>
+          `cidr` defines the IP CIDR to filter flows by.
+Examples: `10.10.10.0/24` or `100:100:100:100::/64`<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>destPorts</b></td>
         <td>int or string</td>
         <td>
-          DestPorts defines the destination ports to filter flows by.
-To filter a single port, set a single port as an integer value. For example destPorts: 80.
-To filter a range of ports, use a "start-end" range, string format. For example destPorts: "80-100".<br/>
+          `destPorts` defines the destination ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example: `destPorts: 80`.
+To filter a range of ports, use a "start-end" range, string format. For example: `destPorts: "80-100"`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>direction</b></td>
         <td>enum</td>
         <td>
-          Direction defines the direction to filter flows by.<br/>
+          `direction` defines the direction to filter flows by.<br/>
           <br/>
             <i>Enum</i>: Ingress, Egress<br/>
         </td>
@@ -7874,38 +7868,38 @@ To filter a range of ports, use a "start-end" range, string format. For example 
         <td><b>icmpCode</b></td>
         <td>integer</td>
         <td>
-          ICMPCode defines the ICMP code to filter flows by.<br/>
+          `icmpCode` defines the ICMP code to filter flows by.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>icmpType</b></td>
         <td>integer</td>
         <td>
-          ICMPType defines the ICMP type to filter flows by.<br/>
+          `icmpType` defines the ICMP type to filter flows by.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>peerIP</b></td>
         <td>string</td>
         <td>
-          PeerIP defines the IP address to filter flows by.
-Example: 10.10.10.10<br/>
+          `peerIP` defines the IP address to filter flows by.
+Example: `10.10.10.10`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>ports</b></td>
         <td>int or string</td>
         <td>
-          Ports defines the ports to filter flows by. it can be user for either source or destination ports.
-To filter a single port, set a single port as an integer value. For example ports: 80.
-To filter a range of ports, use a "start-end" range, string format. For example ports: "80-10<br/>
+          `ports` defines the ports to filter flows by, used both for source and destination ports.
+To filter a single port, set a single port as an integer value. For example: `ports: 80`.
+To filter a range of ports, use a "start-end" range, string format. For example: `ports: "80-100"`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>protocol</b></td>
         <td>enum</td>
         <td>
-          Protocol defines the protocol to filter flows by.<br/>
+          `protocol` defines the protocol to filter flows by.<br/>
           <br/>
             <i>Enum</i>: TCP, UDP, ICMP, ICMPv6, SCTP<br/>
         </td>
@@ -7914,9 +7908,9 @@ To filter a range of ports, use a "start-end" range, string format. For example 
         <td><b>sourcePorts</b></td>
         <td>int or string</td>
         <td>
-          SourcePorts defines the source ports to filter flows by.
-To filter a single port, set a single port as an integer value. For example sourcePorts: 80.
-To filter a range of ports, use a "start-end" range, string format. For example sourcePorts: "80-100".<br/>
+          `sourcePorts` defines the source ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example: `sourcePorts: 80`.
+To filter a range of ports, use a "start-end" range, string format. For example: `sourcePorts: "80-100"`.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7952,7 +7946,7 @@ Possible values are:<br>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `false` to disable eBPF agent metrics collection, by default it's `true`.<br/>
+          Set `enable` to `false` to disable eBPF agent metrics collection. It is enabled by default.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8584,7 +8578,7 @@ When set to `false`, you can still register it manually by editing console.opera
         <td><b><a href="#flowcollectorspecconsolepluginadvancedscheduling">scheduling</a></b></td>
         <td>object</td>
         <td>
-          scheduling controls whether the pod will be scheduled or not.<br/>
+          scheduling controls how the pods are scheduled on nodes.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8596,7 +8590,7 @@ When set to `false`, you can still register it manually by editing console.opera
 
 
 
-scheduling controls whether the pod will be scheduled or not.
+scheduling controls how the pods are scheduled on nodes.
 
 <table>
     <thead>
@@ -8611,35 +8605,31 @@ scheduling controls whether the pod will be scheduled or not.
         <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingaffinity">affinity</a></b></td>
         <td>object</td>
         <td>
-          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
+          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>nodeSelector</b></td>
         <td>map[string]string</td>
         <td>
-          NodeSelector is a selector which must be true for the pod to fit on a node.
-Selector which must match a node's labels for the pod to be scheduled on that node.
-More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/<br/>
+          `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>priorityClassName</b></td>
         <td>string</td>
         <td>
-          If specified, indicates the pod's priority. "system-node-critical" and
-"system-cluster-critical" are two special keywords which indicate the
-highest priorities with the former being the highest priority. Any other
-name must be defined by creating a PriorityClass object with that name.
-If not specified, the pod priority will be default or zero if there is no
-default.<br/>
+          If specified, indicates the pod's priority. For documentation, refer to https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#how-to-use-priority-and-preemption.
+If not specified, default priority is used, or zero if there is no default.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecconsolepluginadvancedschedulingtolerationsindex">tolerations</a></b></td>
         <td>[]object</td>
         <td>
-          tolerations is a list of tolerations that allow the pod to schedule onto nodes with matching taints.<br/>
+          `tolerations` is a list of tolerations that allow the pod to schedule onto nodes with matching taints.
+For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8651,7 +8641,7 @@ default.<br/>
 
 
 
-If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
+If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
 
 <table>
     <thead>
@@ -13527,7 +13517,7 @@ More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-co
         <td><b><a href="#flowcollectorspecprocessorsubnetlabels-1">subnetLabels</a></b></td>
         <td>object</td>
         <td>
-          `SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+          `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
 When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.<br/>
         </td>
         <td>false</td>
@@ -13651,7 +13641,7 @@ By convention, some values are forbidden. It must be greater than 1024 and diffe
         <td><b><a href="#flowcollectorspecprocessoradvancedscheduling">scheduling</a></b></td>
         <td>object</td>
         <td>
-          scheduling controls whether the pod will be scheduled or not.<br/>
+          scheduling controls how the pods are scheduled on nodes.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13663,7 +13653,7 @@ By convention, some values are forbidden. It must be greater than 1024 and diffe
 
 
 
-scheduling controls whether the pod will be scheduled or not.
+scheduling controls how the pods are scheduled on nodes.
 
 <table>
     <thead>
@@ -13678,35 +13668,31 @@ scheduling controls whether the pod will be scheduled or not.
         <td><b><a href="#flowcollectorspecprocessoradvancedschedulingaffinity">affinity</a></b></td>
         <td>object</td>
         <td>
-          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling<br/>
+          If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>nodeSelector</b></td>
         <td>map[string]string</td>
         <td>
-          NodeSelector is a selector which must be true for the pod to fit on a node.
-Selector which must match a node's labels for the pod to be scheduled on that node.
-More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/<br/>
+          `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>priorityClassName</b></td>
         <td>string</td>
         <td>
-          If specified, indicates the pod's priority. "system-node-critical" and
-"system-cluster-critical" are two special keywords which indicate the
-highest priorities with the former being the highest priority. Any other
-name must be defined by creating a PriorityClass object with that name.
-If not specified, the pod priority will be default or zero if there is no
-default.<br/>
+          If specified, indicates the pod's priority. For documentation, refer to https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#how-to-use-priority-and-preemption.
+If not specified, default priority is used, or zero if there is no default.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecprocessoradvancedschedulingtolerationsindex">tolerations</a></b></td>
         <td>[]object</td>
         <td>
-          tolerations is a list of tolerations that allow the pod to schedule onto nodes with matching taints.<br/>
+          `tolerations` is a list of tolerations that allow the pod to schedule onto nodes with matching taints.
+For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13718,7 +13704,7 @@ default.<br/>
 
 
 
-If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
+If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
 
 <table>
     <thead>
@@ -16683,7 +16669,7 @@ inside a container.<br/>
 
 
 
-`SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+`subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
 When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
 
 <table>
@@ -16797,14 +16783,13 @@ Prometheus querying configuration, such as client settings, used in the Console 
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `true` to make the Console plugin querying flow metrics from Prometheus instead of Loki whenever possible.
+          When `enable` is `true`, the Console plugin queries flow metrics from Prometheus instead of Loki whenever possible.
+It is enbaled by default: set it to `false` to disable this feature.
 The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
 Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
 such as getting per-pod information or viewing raw flows.
 If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
 If they are both disabled, the Console plugin is not deployed.<br/>
-          <br/>
-            <i>Default</i>: true<br/>
         </td>
         <td>false</td>
       </tr><tr>

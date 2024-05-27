@@ -9,10 +9,17 @@ jq '.definitions |= ({"io.netobserv.flows.v1beta2.FlowCollector"})
   | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.status)
   | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.metadata."$ref")
   | .definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.metadata += {type:"object"}
+  | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.agent.properties.ipfix)
   | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.agent.properties.ebpf.properties.resources.properties.claims)
+  | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.agent.properties.ebpf.properties.advanced.properties.scheduling.properties.affinity.properties)
+  | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.agent.properties.ebpf.properties.advanced.properties.scheduling.properties.tolerations.items)
   | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.processor.properties.resources.properties.claims)
+  | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.processor.properties.advanced.properties.scheduling.properties.affinity.properties)
+  | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.processor.properties.advanced.properties.scheduling.properties.tolerations.items)
   | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.consolePlugin.properties.resources.properties.claims)
   | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.consolePlugin.properties.autoscaler.properties)
+  | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.consolePlugin.properties.advanced.properties.scheduling.properties.affinity.properties)
+  | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.consolePlugin.properties.advanced.properties.scheduling.properties.tolerations.items)
   | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.processor.properties.kafkaConsumerAutoscaler.properties)
   | .definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.consolePlugin.properties.autoscaler.description |= . + " Refer to HorizontalPodAutoscaler documentation (autoscaling/v2)."
   | .definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.processor.properties.kafkaConsumerAutoscaler.description |= . + " Refer to HorizontalPodAutoscaler documentation (autoscaling/v2)."' \
