@@ -1,6 +1,7 @@
 package consoleplugin
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -18,7 +19,9 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	config "github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 )
 
 const testImage = "quay.io/netobserv/network-observability-console-plugin:dev"
@@ -106,23 +109,28 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 	return autoScaler, getPluginConfig()
 }
 
+func getBuilder(spec *flowslatest.FlowCollectorSpec, lk *helper.LokiConfig) builder {
+	info := reconcilers.Common{Namespace: testNamespace, Loki: lk}
+	return newBuilder(info.NewInstance(testImage, status.Instance{}), spec)
+}
+
 func TestContainerUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 
-	//equals specs
+	// equals specs
 	plugin := getPluginConfig()
 	loki := helper.LokiConfig{
 		LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://loki:3100/", TenantID: "netobserv"},
 	}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin}
-	builder := newBuilder(testNamespace, testImage, &spec, &loki)
+	builder := getBuilder(&spec, &loki)
 	old := builder.deployment("digest")
 	nEw := builder.deployment("digest")
 	report := helper.NewChangeReport("")
 	assert.False(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "no change")
 
-	//wrong resources
+	// wrong resources
 	spec.ConsolePlugin.Resources.Limits = map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
@@ -133,15 +141,15 @@ func TestContainerUpdateCheck(t *testing.T) {
 	assert.Contains(report.String(), "req/limit changed")
 	old = nEw
 
-	//new image
-	builder.imageName = "quay.io/netobserv/network-observability-console-plugin:latest"
+	// new image
+	builder.info.Image = "quay.io/netobserv/network-observability-console-plugin:latest"
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "Image changed")
 	old = nEw
 
-	//new pull policy
+	// new pull policy
 	spec.ConsolePlugin.ImagePullPolicy = string(corev1.PullAlways)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
@@ -149,7 +157,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	assert.Contains(report.String(), "Pull policy changed")
 	old = nEw
 
-	//new log level
+	// new log level
 	spec.ConsolePlugin.LogLevel = "debug"
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
@@ -157,7 +165,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	assert.Contains(report.String(), "Args changed")
 	old = nEw
 
-	//new loki config
+	// new loki config
 	loki = helper.LokiConfig{
 		LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://loki:3100/", TenantID: "netobserv", TLS: flowslatest.ClientTLS{
 			Enable: true,
@@ -167,25 +175,25 @@ func TestContainerUpdateCheck(t *testing.T) {
 				CertFile: "ca.crt",
 			},
 		}}}
-	builder = newBuilder(testNamespace, testImage, &spec, &loki)
+	builder = getBuilder(&spec, &loki)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "Volumes changed")
 	old = nEw
 
-	//new loki cert name
+	// new loki cert name
 	loki.LokiManualParams.TLS.CACert.Name = "cm-name-2"
-	builder = newBuilder(testNamespace, testImage, &spec, &loki)
+	builder = getBuilder(&spec, &loki)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "Volumes changed")
 	old = nEw
 
-	//test again no change
+	// test again no change
 	loki.LokiManualParams.TLS.CACert.Name = "cm-name-2"
-	builder = newBuilder(testNamespace, testImage, &spec, &loki)
+	builder = getBuilder(&spec, &loki)
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.False(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
@@ -195,18 +203,18 @@ func TestContainerUpdateCheck(t *testing.T) {
 func TestConfigMapUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 
-	//equals specs
+	// equals specs
 	plugin := getPluginConfig()
 	loki := helper.LokiConfig{
 		LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://loki:3100/", TenantID: "netobserv"},
 	}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin}
-	builder := newBuilder(testNamespace, testImage, &spec, &loki)
-	old, _, _ := builder.configMap()
-	nEw, _, _ := builder.configMap()
+	builder := getBuilder(&spec, &loki)
+	old, _, _ := builder.configMap(context.Background())
+	nEw, _, _ := builder.configMap(context.Background())
 	assert.Equal(old.Data, nEw.Data)
 
-	//update loki
+	// update loki
 	loki = helper.LokiConfig{
 		LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://loki:3100/", TenantID: "netobserv", TLS: flowslatest.ClientTLS{
 			Enable: true,
@@ -217,46 +225,46 @@ func TestConfigMapUpdateCheck(t *testing.T) {
 			},
 		}},
 	}
-	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	nEw, _, _ = builder.configMap()
+	builder = getBuilder(&spec, &loki)
+	nEw, _, _ = builder.configMap(context.Background())
 	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
-	//set status url and enable default tls
+	// set status url and enable default tls
 	loki.LokiManualParams.StatusURL = "http://loki.status:3100/"
 	loki.LokiManualParams.StatusTLS.Enable = true
-	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	nEw, _, _ = builder.configMap()
+	builder = getBuilder(&spec, &loki)
+	nEw, _, _ = builder.configMap(context.Background())
 	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
-	//update status ca cert
+	// update status ca cert
 	loki.LokiManualParams.StatusTLS.CACert = flowslatest.CertificateReference{
 		Type:     "configmap",
 		Name:     "status-cm-name",
 		CertFile: "status-ca.crt",
 	}
-	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	nEw, _, _ = builder.configMap()
+	builder = getBuilder(&spec, &loki)
+	nEw, _, _ = builder.configMap(context.Background())
 	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
-	//update status user cert
+	// update status user cert
 	loki.LokiManualParams.StatusTLS.UserCert = flowslatest.CertificateReference{
 		Type:     "secret",
 		Name:     "sec-name",
 		CertFile: "tls.crt",
 		CertKey:  "tls.key",
 	}
-	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	nEw, _, _ = builder.configMap()
+	builder = getBuilder(&spec, &loki)
+	nEw, _, _ = builder.configMap(context.Background())
 	assert.NotEqual(old.Data, nEw.Data)
 }
 
 func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 	assert := assert.New(t)
 
-	//equals specs
+	// equals specs
 	plugin := getPluginConfig()
 	lokiSpec := flowslatest.FlowCollectorLoki{
 		Mode:      flowslatest.LokiModeLokiStack,
@@ -264,28 +272,28 @@ func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 	}
 	loki := helper.NewLokiConfig(&lokiSpec, "any")
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
-	builder := newBuilder(testNamespace, testImage, &spec, &loki)
-	old, _, _ := builder.configMap()
-	nEw, _, _ := builder.configMap()
+	builder := getBuilder(&spec, &loki)
+	old, _, _ := builder.configMap(context.Background())
+	nEw, _, _ := builder.configMap(context.Background())
 	assert.Equal(old.Data, nEw.Data)
 
-	//update lokistack name
+	// update lokistack name
 	lokiSpec.LokiStack.Name = "lokistack-updated"
 	loki = helper.NewLokiConfig(&lokiSpec, "any")
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
-	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	nEw, _, _ = builder.configMap()
+	builder = getBuilder(&spec, &loki)
+	nEw, _, _ = builder.configMap(context.Background())
 	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
-	//update lokistack namespace
+	// update lokistack namespace
 	lokiSpec.LokiStack.Namespace = "ls-namespace-updated"
 	loki = helper.NewLokiConfig(&lokiSpec, "any")
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
-	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	nEw, _, _ = builder.configMap()
+	builder = getBuilder(&spec, &loki)
+	nEw, _, _ = builder.configMap(context.Background())
 	assert.NotEqual(old.Data, nEw.Data)
 }
 
@@ -309,8 +317,8 @@ func TestConfigMapContent(t *testing.T) {
 		Loki:          lokiSpec,
 		Processor:     flowslatest.FlowCollectorFLP{SubnetLabels: flowslatest.SubnetLabels{OpenShiftAutoDetect: ptr.To(false)}},
 	}
-	builder := newBuilder(testNamespace, testImage, &spec, &loki)
-	cm, _, err := builder.configMap()
+	builder := getBuilder(&spec, &loki)
+	cm, _, err := builder.configMap(context.Background())
 	assert.NotNil(cm)
 	assert.Nil(err)
 
@@ -356,8 +364,8 @@ func TestConfigMapError(t *testing.T) {
 		ConsolePlugin: getPluginConfig(),
 		Loki:          lokiSpec,
 	}
-	builder := newBuilder(testNamespace, testImage, &spec, &loki)
-	cm, _, err := builder.configMap()
+	builder := getBuilder(&spec, &loki)
+	cm, _, err := builder.configMap(context.Background())
 	assert.Nil(cm)
 	assert.NotNil(err)
 
@@ -371,8 +379,8 @@ func TestConfigMapError(t *testing.T) {
 		ConsolePlugin: getPluginConfig(),
 		Loki:          lokiSpec,
 	}
-	builder = newBuilder(testNamespace, testImage, &spec, &loki)
-	cm, _, err = builder.configMap()
+	builder = getBuilder(&spec, &loki)
+	cm, _, err = builder.configMap(context.Background())
 	assert.NotNil(cm)
 	assert.Nil(err)
 
@@ -388,20 +396,20 @@ func TestServiceUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 	old := getServiceSpecs()
 
-	//equals specs
+	// equals specs
 	serviceSpec := getServiceSpecs()
 	report := helper.NewChangeReport("")
 	assert.Equal(helper.ServiceChanged(&old, &serviceSpec, &report), false)
 	assert.Contains(report.String(), "no change")
 
-	//wrong port protocol
+	// wrong port protocol
 	serviceSpec = getServiceSpecs()
 	serviceSpec.Spec.Ports[0].Protocol = "UDP"
 	report = helper.NewChangeReport("")
 	assert.Equal(helper.ServiceChanged(&old, &serviceSpec, &report), true)
 	assert.Contains(report.String(), "Service spec changed")
 
-	//wrong port number
+	// wrong port number
 	serviceSpec = getServiceSpecs()
 	serviceSpec.Spec.Ports[0].Port = 8080
 	report = helper.NewChangeReport("")
@@ -412,11 +420,11 @@ func TestServiceUpdateCheck(t *testing.T) {
 func TestBuiltService(t *testing.T) {
 	assert := assert.New(t)
 
-	//newly created service should not need update
+	// newly created service should not need update
 	plugin := getPluginConfig()
 	loki := helper.LokiConfig{LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://foo:1234"}}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin}
-	builder := newBuilder(testNamespace, testImage, &spec, &loki)
+	builder := getBuilder(&spec, &loki)
 	old := builder.mainService()
 	nEw := builder.mainService()
 	report := helper.NewChangeReport("")
@@ -430,7 +438,7 @@ func TestLabels(t *testing.T) {
 	plugin := getPluginConfig()
 	loki := helper.LokiConfig{LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://foo:1234"}}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin}
-	builder := newBuilder(testNamespace, testImage, &spec, &loki)
+	builder := getBuilder(&spec, &loki)
 
 	// Deployment
 	depl := builder.deployment("digest")
@@ -450,27 +458,27 @@ func TestLabels(t *testing.T) {
 func TestAutoScalerUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 
-	//equals specs
+	// equals specs
 	autoScalerSpec, plugin := getAutoScalerSpecs()
 	report := helper.NewChangeReport("")
 	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), false)
 	assert.Contains(report.String(), "no change")
 
-	//wrong max replicas
+	// wrong max replicas
 	autoScalerSpec, plugin = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MaxReplicas = 10
 	report = helper.NewChangeReport("")
 	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Max replicas changed")
 
-	//missing min replicas
+	// missing min replicas
 	autoScalerSpec, plugin = getAutoScalerSpecs()
 	autoScalerSpec.Spec.MinReplicas = nil
 	report = helper.NewChangeReport("")
 	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Min replicas changed")
 
-	//missing metrics
+	// missing metrics
 	autoScalerSpec, plugin = getAutoScalerSpecs()
 	autoScalerSpec.Spec.Metrics = []ascv2.MetricSpec{}
 	report = helper.NewChangeReport("")

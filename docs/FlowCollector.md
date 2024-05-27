@@ -159,6 +159,13 @@ Kafka can provide better scalability, resiliency, and high availability (for mor
 enriches them, generates metrics, and forwards them to the Loki persistence layer and/or any available exporter.<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheus">prometheus</a></b></td>
+        <td>object</td>
+        <td>
+          `prometheus` defines Prometheus settings, such as querier configuration used to fetch metrics from the Console plugin.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -3107,7 +3114,12 @@ When using the Loki Operator, this must be set to `FORWARD`.<br/>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `true` to store flows in Loki. It is required for the OpenShift Console plugin installation.<br/>
+          Set `enable` to `true` to store flows in Loki.
+The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.prometheus.querier`), or both.
+Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
+such as getting per-pod information or viewing raw flows.
+If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
+If they are both disabled, the Console plugin is not deployed.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -5198,6 +5210,312 @@ SubnetLabel allows to label subnets and IPs, such as to identify cluster-externa
 </table>
 
 
+### FlowCollector.spec.prometheus
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+`prometheus` defines Prometheus settings, such as querier configuration used to fetch metrics from the Console plugin.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprometheusquerier">querier</a></b></td>
+        <td>object</td>
+        <td>
+          Prometheus querying configuration, such as client settings, used in the Console plugin.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier
+<sup><sup>[↩ Parent](#flowcollectorspecprometheus)</sup></sup>
+
+
+
+Prometheus querying configuration, such as client settings, used in the Console plugin.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Set `enable` to `true` to make the Console plugin querying flow metrics from Prometheus instead of Loki whenever possible.
+The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
+Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
+such as getting per-pod information or viewing raw flows.
+If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
+If they are both disabled, the Console plugin is not deployed.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanual">manual</a></b></td>
+        <td>object</td>
+        <td>
+          Prometheus configuration for `Manual` mode.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
+- Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
+- Use `Manual` for a manual setup<br><br/>
+          <br/>
+            <i>Enum</i>: Manual, Auto<br/>
+            <i>Default</i>: Auto<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>timeout</b></td>
+        <td>string</td>
+        <td>
+          `timeout` is the read timeout for console plugin queries to Prometheus.
+A timeout of zero means no timeout.<br/>
+          <br/>
+            <i>Default</i>: 30s<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusquerier)</sup></sup>
+
+
+
+Prometheus configuration for `Manual` mode.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>forwardUserToken</b></td>
+        <td>boolean</td>
+        <td>
+          Set `true` to forward logged in user token in queries to Prometheus<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualtls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS client configuration for Prometheus URL.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          `url` is the address of an existing Prometheus service to use for querying metrics.<br/>
+          <br/>
+            <i>Default</i>: http://prometheus:9090<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.tls
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanual)</sup></sup>
+
+
+
+TLS client configuration for Prometheus URL.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualtlscacert">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate.
+If set to `true`, the `caCert` field is ignored.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualtlsusercert">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.tls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanualtls)</sup></sup>
+
+
+
+`caCert` defines the reference of the certificate for the Certificate Authority
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.tls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanualtls)</sup></sup>
+
+
+
+`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### FlowCollector.status
 <sup><sup>[↩ Parent](#flowcollector)</sup></sup>
 
@@ -5480,6 +5798,13 @@ Kafka can provide better scalability, resiliency, and high availability (for mor
         <td>
           `processor` defines the settings of the component that receives the flows from the agent,
 enriches them, generates metrics, and forwards them to the Loki persistence layer and/or any available exporter.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheus-1">prometheus</a></b></td>
+        <td>object</td>
+        <td>
+          `prometheus` defines Prometheus settings, such as querier configuration used to fetch metrics from the Console plugin.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8166,7 +8491,7 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/
         <td>
           `quickFilters` configures quick filter presets for the Console plugin<br/>
           <br/>
-            <i>Default</i>: [map[default:true filter:map[flow_layer:app] name:Applications] map[filter:map[flow_layer:infra] name:Infrastructure] map[default:true filter:map[dst_kind:Pod src_kind:Pod] name:Pods network] map[filter:map[dst_kind:Service] name:Services network]]<br/>
+            <i>Default</i>: [map[default:true filter:map[flow_layer:"app"] name:Applications] map[filter:map[flow_layer:"infra"] name:Infrastructure] map[default:true filter:map[dst_kind:"Pod" src_kind:"Pod"] name:Pods network] map[filter:map[dst_kind:"Service"] name:Services network]]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11971,7 +12296,12 @@ This section is aimed mostly for debugging and fine-grained performance optimiza
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `true` to store flows in Loki. It is required for the OpenShift Console plugin installation.<br/>
+          Set `enable` to `true` to store flows in Loki.
+The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.prometheus.querier`), or both.
+Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
+such as getting per-pod information or viewing raw flows.
+If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
+If they are both disabled, the Console plugin is not deployed.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -16414,6 +16744,312 @@ SubnetLabel allows to label subnets and IPs, such as to identify cluster-externa
         <td>string</td>
         <td>
           Label name, used to flag matching flows.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus
+<sup><sup>[↩ Parent](#flowcollectorspec-1)</sup></sup>
+
+
+
+`prometheus` defines Prometheus settings, such as querier configuration used to fetch metrics from the Console plugin.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprometheusquerier-1">querier</a></b></td>
+        <td>object</td>
+        <td>
+          Prometheus querying configuration, such as client settings, used in the Console plugin.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier
+<sup><sup>[↩ Parent](#flowcollectorspecprometheus-1)</sup></sup>
+
+
+
+Prometheus querying configuration, such as client settings, used in the Console plugin.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Set `enable` to `true` to make the Console plugin querying flow metrics from Prometheus instead of Loki whenever possible.
+The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
+Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
+such as getting per-pod information or viewing raw flows.
+If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
+If they are both disabled, the Console plugin is not deployed.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanual-1">manual</a></b></td>
+        <td>object</td>
+        <td>
+          Prometheus configuration for `Manual` mode.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
+- Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
+- Use `Manual` for a manual setup<br><br/>
+          <br/>
+            <i>Enum</i>: Manual, Auto<br/>
+            <i>Default</i>: Auto<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>timeout</b></td>
+        <td>string</td>
+        <td>
+          `timeout` is the read timeout for console plugin queries to Prometheus.
+A timeout of zero means no timeout.<br/>
+          <br/>
+            <i>Default</i>: 30s<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusquerier-1)</sup></sup>
+
+
+
+Prometheus configuration for `Manual` mode.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>forwardUserToken</b></td>
+        <td>boolean</td>
+        <td>
+          Set `true` to forward logged in user token in queries to Prometheus<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualtls-1">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS client configuration for Prometheus URL.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          `url` is the address of an existing Prometheus service to use for querying metrics.<br/>
+          <br/>
+            <i>Default</i>: http://prometheus:9090<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.tls
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanual-1)</sup></sup>
+
+
+
+TLS client configuration for Prometheus URL.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualtlscacert-1">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate.
+If set to `true`, the `caCert` field is ignored.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualtlsusercert-1">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.tls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanualtls-1)</sup></sup>
+
+
+
+`caCert` defines the reference of the certificate for the Certificate Authority
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.tls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanualtls-1)</sup></sup>
+
+
+
+`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>

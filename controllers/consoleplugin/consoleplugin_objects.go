@@ -1,10 +1,13 @@
 package consoleplugin
 
 import (
+	"context"
 	"fmt"
 	"hash/fnv"
 	"path/filepath"
+	"slices"
 	"strconv"
+	"time"
 
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -15,13 +18,17 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	cfg "github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/loki"
+	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
 
@@ -38,21 +45,19 @@ const metricsPort = 9002
 const metricsPortName = "metrics"
 
 type builder struct {
-	namespace string
-	labels    map[string]string
-	selector  map[string]string
-	desired   *flowslatest.FlowCollectorSpec
-	advanced  *flowslatest.AdvancedPluginConfig
-	imageName string
-	volumes   volumes.Builder
-	loki      *helper.LokiConfig
+	info     *reconcilers.Instance
+	labels   map[string]string
+	selector map[string]string
+	desired  *flowslatest.FlowCollectorSpec
+	advanced *flowslatest.AdvancedPluginConfig
+	volumes  volumes.Builder
 }
 
-func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec, loki *helper.LokiConfig) builder {
-	version := helper.ExtractVersion(imageName)
+func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) builder {
+	version := helper.ExtractVersion(info.Image)
 	advanced := helper.GetAdvancedPluginConfig(desired.ConsolePlugin.Advanced)
 	return builder{
-		namespace: ns,
+		info: info,
 		labels: map[string]string{
 			"app":     constants.PluginName,
 			"version": helper.MaxLabelLength(version),
@@ -60,10 +65,8 @@ func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec, lo
 		selector: map[string]string{
 			"app": constants.PluginName,
 		},
-		desired:   desired,
-		advanced:  &advanced,
-		imageName: imageName,
-		loki:      loki,
+		desired:  desired,
+		advanced: &advanced,
 	}
 }
 
@@ -76,7 +79,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 			DisplayName: displayName,
 			Service: osv1alpha1.ConsolePluginService{
 				Name:      constants.PluginName,
-				Namespace: b.namespace,
+				Namespace: b.info.Namespace,
 				Port:      *b.advanced.Port,
 				BasePath:  "/",
 			},
@@ -86,7 +89,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 				Authorize: true,
 				Service: osv1alpha1.ConsolePluginProxyServiceConfig{
 					Name:      constants.PluginName,
-					Namespace: b.namespace,
+					Namespace: b.info.Namespace,
 					Port:      *b.advanced.Port,
 				},
 			}},
@@ -95,11 +98,11 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 }
 
 func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
-	serverName := fmt.Sprintf("%s.%s.svc", constants.PluginName, b.namespace)
+	serverName := fmt.Sprintf("%s.%s.svc", constants.PluginName, b.info.Namespace)
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.PluginName,
-			Namespace: b.namespace,
+			Namespace: b.info.Namespace,
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Endpoints: []monitoringv1.Endpoint{
@@ -138,7 +141,7 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 			},
 			NamespaceSelector: monitoringv1.NamespaceSelector{
 				MatchNames: []string{
-					b.namespace,
+					b.info.Namespace,
 				},
 			},
 			Selector: metav1.LabelSelector{
@@ -154,7 +157,7 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.PluginName,
-			Namespace: b.namespace,
+			Namespace: b.info.Namespace,
 			Labels:    b.labels,
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -201,13 +204,14 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 	}
 
 	// ensure volumes are up to date
-	if b.loki.TLS.Enable && !b.loki.TLS.InsecureSkipVerify {
-		b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
+	loki := b.info.Loki
+	if loki.TLS.Enable && !loki.TLS.InsecureSkipVerify {
+		b.volumes.AddCACertificate(&loki.TLS, "loki-certs")
 	}
-	if b.loki.StatusTLS.Enable && !b.loki.StatusTLS.InsecureSkipVerify {
-		b.volumes.AddMutualTLSCertificates(&b.loki.StatusTLS, "loki-status-certs")
+	if loki.StatusTLS.Enable && !loki.StatusTLS.InsecureSkipVerify {
+		b.volumes.AddMutualTLSCertificates(&loki.StatusTLS, "loki-status-certs")
 	}
-	if b.loki.UseHostToken() {
+	if loki.UseHostToken() {
 		b.volumes.AddToken(constants.PluginName)
 	}
 
@@ -221,7 +225,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
 				Name:            constants.PluginName,
-				Image:           b.imageName,
+				Image:           b.info.Image,
 				ImagePullPolicy: corev1.PullPolicy(b.desired.ConsolePlugin.ImagePullPolicy),
 				Resources:       *b.desired.ConsolePlugin.Resources.DeepCopy(),
 				VolumeMounts:    b.volumes.AppendMounts(volumeMounts),
@@ -247,7 +251,7 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 	return &ascv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.PluginName,
-			Namespace: b.namespace,
+			Namespace: b.info.Namespace,
 			Labels:    b.labels,
 		},
 		Spec: ascv2.HorizontalPodAutoscalerSpec{
@@ -267,7 +271,7 @@ func (b *builder) mainService() *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.PluginName,
-			Namespace: b.namespace,
+			Namespace: b.info.Namespace,
 			Labels:    b.labels,
 			Annotations: map[string]string{
 				constants.OpenShiftCertificateAnnotation: "console-serving-cert",
@@ -291,7 +295,7 @@ func (b *builder) metricsService() *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      metricsSvcName,
-			Namespace: b.namespace,
+			Namespace: b.info.Namespace,
 			Labels:    b.labels,
 		},
 		Spec: corev1.ServiceSpec{
@@ -309,35 +313,40 @@ func (b *builder) metricsService() *corev1.Service {
 	}
 }
 
-func (b *builder) setLokiConfig(lconf *cfg.LokiConfig) {
-	lconf.URL = b.loki.QuerierURL
-	statusURL := b.loki.StatusURL
-	if lconf.URL != statusURL {
-		lconf.StatusURL = statusURL
+func (b *builder) getLokiConfig() cfg.LokiConfig {
+	if !helper.UseLoki(b.desired) {
+		// Empty config/URL will disable Loki in the console plugin
+		return cfg.LokiConfig{}
 	}
-	lconf.Labels = loki.GetLokiLabels(b.desired)
+	lk := b.info.Loki
+	lconf := cfg.LokiConfig{
+		URL:              lk.QuerierURL,
+		Labels:           loki.GetLokiLabels(b.desired),
+		Timeout:          api.Duration{Duration: 30 * time.Second},
+		TenantID:         lk.TenantID,
+		ForwardUserToken: lk.UseForwardToken(),
+	}
+	if lk.QuerierURL != lk.StatusURL {
+		lconf.StatusURL = lk.StatusURL
+	}
 	if b.desired.Loki.ReadTimeout != nil {
-		lconf.Timeout = helper.UnstructuredDuration(b.desired.Loki.ReadTimeout)
-	} else {
-		lconf.Timeout = "30s"
+		lconf.Timeout = api.Duration{Duration: b.desired.Loki.ReadTimeout.Duration}
 	}
-	lconf.TenantID = b.loki.TenantID
-	lconf.ForwardUserToken = b.loki.UseForwardToken()
-	if b.loki.TLS.Enable {
-		if b.loki.TLS.InsecureSkipVerify {
+	if lk.TLS.Enable {
+		if lk.TLS.InsecureSkipVerify {
 			lconf.SkipTLS = true
 		} else {
-			caPath := b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
+			caPath := b.volumes.AddCACertificate(&lk.TLS, "loki-certs")
 			if caPath != "" {
 				lconf.CAPath = caPath
 			}
 		}
 	}
-	if b.loki.StatusTLS.Enable {
-		if b.loki.StatusTLS.InsecureSkipVerify {
+	if lk.StatusTLS.Enable {
+		if lk.StatusTLS.InsecureSkipVerify {
 			lconf.StatusSkipTLS = true
 		} else {
-			statusCaPath, userCertPath, userKeyPath := b.volumes.AddMutualTLSCertificates(&b.loki.StatusTLS, "loki-status-certs")
+			statusCaPath, userCertPath, userKeyPath := b.volumes.AddMutualTLSCertificates(&lk.StatusTLS, "loki-status-certs")
 			if statusCaPath != "" {
 				lconf.StatusCAPath = statusCaPath
 			}
@@ -347,9 +356,74 @@ func (b *builder) setLokiConfig(lconf *cfg.LokiConfig) {
 			}
 		}
 	}
-	if b.loki.UseHostToken() {
+	if lk.UseHostToken() {
 		lconf.TokenPath = b.volumes.AddToken(constants.PluginName)
 	}
+	return lconf
+}
+
+func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
+	if !helper.UsePrometheus(b.desired) {
+		return cfg.PrometheusConfig{}
+	}
+
+	// Default config = manual
+	tls := b.desired.Prometheus.Querier.Manual.TLS
+	config := cfg.PrometheusConfig{
+		URL:              b.desired.Prometheus.Querier.Manual.URL,
+		ForwardUserToken: b.desired.Prometheus.Querier.Manual.ForwardUserToken,
+		Timeout:          api.Duration{Duration: 30 * time.Second},
+	}
+	if b.desired.Prometheus.Querier.Timeout != nil {
+		config.Timeout = api.Duration{Duration: b.desired.Prometheus.Querier.Timeout.Duration}
+	}
+	if b.desired.Prometheus.Querier.Mode == "" || b.desired.Prometheus.Querier.Mode == flowslatest.PromModeAuto {
+		if b.info.UseOpenShiftSCC /* aka IsOpenShift */ {
+			config.URL = "https://thanos-querier.openshift-monitoring.svc:9091/"
+			config.ForwardUserToken = true
+			tls = flowslatest.ClientTLS{
+				Enable: true,
+				CACert: flowslatest.CertificateReference{
+					Type:     flowslatest.RefTypeConfigMap,
+					Name:     "openshift-service-ca.crt",
+					CertFile: "service-ca.crt",
+				},
+			}
+		} else {
+			log.FromContext(ctx).Info("Could not configure Prometheus querier automatically. Using manual configuration.")
+		}
+	}
+
+	if tls.Enable {
+		if tls.InsecureSkipVerify {
+			config.SkipTLS = true
+		} else {
+			caPath := b.volumes.AddCACertificate(&tls, "prom-certs")
+			if caPath != "" {
+				config.CAPath = caPath
+			}
+		}
+	}
+
+	config.TokenPath = b.volumes.AddToken(constants.PluginName)
+
+	allMetricNames := metrics.GetAllNames()
+	includeList := metrics.GetIncludeList(b.desired)
+	allMetrics := metrics.GetDefinitions(allMetricNames)
+	for i := range allMetrics {
+		mSpec := allMetrics[i].Spec
+		enabled := slices.Contains(includeList, mSpec.MetricName)
+		config.Metrics = append(config.Metrics, cfg.MetricInfo{
+			Enabled:    enabled,
+			Name:       "netobserv_" + mSpec.MetricName,
+			Type:       string(mSpec.Type),
+			ValueField: mSpec.ValueField,
+			Direction:  string(mSpec.Direction),
+			Labels:     mSpec.Labels,
+		})
+	}
+
+	return config
 }
 
 func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
@@ -392,7 +466,7 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
 	fconf.RecordTypes = helper.GetRecordTypes(&b.desired.Processor)
 	fconf.PortNaming = b.desired.ConsolePlugin.PortNaming
 	fconf.QuickFilters = b.desired.ConsolePlugin.QuickFilters
-	fconf.AlertNamespaces = []string{b.namespace}
+	fconf.AlertNamespaces = []string{b.info.Namespace}
 	fconf.Sampling = helper.GetSampling(b.desired)
 	fconf.Deduper = cfg.Deduper{
 		Mark:  dedupJustMark,
@@ -412,7 +486,7 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
 
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
-func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
+func (b *builder) configMap(ctx context.Context) (*corev1.ConfigMap, string, error) {
 	config := cfg.PluginConfig{}
 	// configure server
 	config.Server.CertPath = "/var/serving-cert/tls.crt"
@@ -420,7 +494,10 @@ func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
 	config.Server.Port = int(*b.advanced.Port)
 
 	// configure loki
-	b.setLokiConfig(&config.Loki)
+	config.Loki = b.getLokiConfig()
+
+	// configure prometheus
+	config.Prometheus = b.getPromConfig(ctx)
 
 	// configure frontend from embedded static file
 	var err error
@@ -444,7 +521,7 @@ func (b *builder) configMap() (*corev1.ConfigMap, string, error) {
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
-			Namespace: b.namespace,
+			Namespace: b.info.Namespace,
 			Labels:    b.labels,
 		},
 		Data: map[string]string{
@@ -464,7 +541,7 @@ func (b *builder) serviceAccount() *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.PluginName,
-			Namespace: b.namespace,
+			Namespace: b.info.Namespace,
 			Labels: map[string]string{
 				"app": constants.PluginName,
 			},
@@ -504,7 +581,7 @@ func (b *builder) clusterRoleBinding() *rbacv1.ClusterRoleBinding {
 		Subjects: []rbacv1.Subject{{
 			Kind:      "ServiceAccount",
 			Name:      constants.PluginName,
-			Namespace: b.namespace,
+			Namespace: b.info.Namespace,
 		}},
 	}
 }

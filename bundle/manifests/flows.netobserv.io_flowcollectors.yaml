@@ -1416,8 +1416,13 @@ spec:
                     type: string
                   enable:
                     default: true
-                    description: Set `enable` to `true` to store flows in Loki. It
-                      is required for the OpenShift Console plugin installation.
+                    description: |-
+                      Set `enable` to `true` to store flows in Loki.
+                      The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.prometheus.querier`), or both.
+                      Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
+                      such as getting per-pod information or viewing raw flows.
+                      If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
+                      If they are both disabled, the Console plugin is not deployed.
                     type: boolean
                   maxBackoff:
                     default: 5s
@@ -2350,6 +2355,136 @@ spec:
                           OpenShift install configuration and the Cluster Network Operator configuration. Indirectly, this is a way to accurately detect
                           external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by default on OpenShift.
                         type: boolean
+                    type: object
+                type: object
+              prometheus:
+                description: '`prometheus` defines Prometheus settings, such as querier
+                  configuration used to fetch metrics from the Console plugin.'
+                properties:
+                  querier:
+                    description: Prometheus querying configuration, such as client
+                      settings, used in the Console plugin.
+                    properties:
+                      enable:
+                        default: true
+                        description: |-
+                          Set `enable` to `true` to make the Console plugin querying flow metrics from Prometheus instead of Loki whenever possible.
+                          The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
+                          Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
+                          such as getting per-pod information or viewing raw flows.
+                          If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
+                          If they are both disabled, the Console plugin is not deployed.
+                        type: boolean
+                      manual:
+                        description: Prometheus configuration for `Manual` mode.
+                        properties:
+                          forwardUserToken:
+                            description: Set `true` to forward logged in user token
+                              in queries to Prometheus
+                            type: boolean
+                          tls:
+                            description: TLS client configuration for Prometheus URL.
+                            properties:
+                              caCert:
+                                description: '`caCert` defines the reference of the
+                                  certificate for the Certificate Authority'
+                                properties:
+                                  certFile:
+                                    description: '`certFile` defines the path to the
+                                      certificate file name within the config map
+                                      or secret'
+                                    type: string
+                                  certKey:
+                                    description: '`certKey` defines the path to the
+                                      certificate private key file name within the
+                                      config map or secret. Omit when the key is not
+                                      necessary.'
+                                    type: string
+                                  name:
+                                    description: Name of the config map or secret
+                                      containing certificates
+                                    type: string
+                                  namespace:
+                                    default: ""
+                                    description: |-
+                                      Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+                                      If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
+                                    type: string
+                                  type:
+                                    description: 'Type for the certificate reference:
+                                      `configmap` or `secret`'
+                                    enum:
+                                    - configmap
+                                    - secret
+                                    type: string
+                                type: object
+                              enable:
+                                default: false
+                                description: Enable TLS
+                                type: boolean
+                              insecureSkipVerify:
+                                default: false
+                                description: |-
+                                  `insecureSkipVerify` allows skipping client-side verification of the server certificate.
+                                  If set to `true`, the `caCert` field is ignored.
+                                type: boolean
+                              userCert:
+                                description: '`userCert` defines the user certificate
+                                  reference and is used for mTLS (you can ignore it
+                                  when using one-way TLS)'
+                                properties:
+                                  certFile:
+                                    description: '`certFile` defines the path to the
+                                      certificate file name within the config map
+                                      or secret'
+                                    type: string
+                                  certKey:
+                                    description: '`certKey` defines the path to the
+                                      certificate private key file name within the
+                                      config map or secret. Omit when the key is not
+                                      necessary.'
+                                    type: string
+                                  name:
+                                    description: Name of the config map or secret
+                                      containing certificates
+                                    type: string
+                                  namespace:
+                                    default: ""
+                                    description: |-
+                                      Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+                                      If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
+                                    type: string
+                                  type:
+                                    description: 'Type for the certificate reference:
+                                      `configmap` or `secret`'
+                                    enum:
+                                    - configmap
+                                    - secret
+                                    type: string
+                                type: object
+                            type: object
+                          url:
+                            default: http://prometheus:9090
+                            description: '`url` is the address of an existing Prometheus
+                              service to use for querying metrics.'
+                            type: string
+                        type: object
+                      mode:
+                        default: Auto
+                        description: |-
+                          `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
+                          - Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
+                          - Use `Manual` for a manual setup<br>
+                        enum:
+                        - Manual
+                        - Auto
+                        type: string
+                      timeout:
+                        default: 30s
+                        description: |-
+                          `timeout` is the read timeout for console plugin queries to Prometheus.
+                          A timeout of zero means no timeout.
+                        type: string
                     type: object
                 type: object
             type: object
@@ -5278,18 +5413,18 @@ spec:
                     default:
                     - default: true
                       filter:
-                        flow_layer: app
+                        flow_layer: '"app"'
                       name: Applications
                     - filter:
-                        flow_layer: infra
+                        flow_layer: '"infra"'
                       name: Infrastructure
                     - default: true
                       filter:
-                        dst_kind: Pod
-                        src_kind: Pod
+                        dst_kind: '"Pod"'
+                        src_kind: '"Pod"'
                       name: Pods network
                     - filter:
-                        dst_kind: Service
+                        dst_kind: '"Service"'
                       name: Services network
                     description: '`quickFilters` configures quick filter presets for
                       the Console plugin'
@@ -5799,8 +5934,13 @@ spec:
                     type: object
                   enable:
                     default: true
-                    description: Set `enable` to `true` to store flows in Loki. It
-                      is required for the OpenShift Console plugin installation.
+                    description: |-
+                      Set `enable` to `true` to store flows in Loki.
+                      The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.prometheus.querier`), or both.
+                      Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
+                      such as getting per-pod information or viewing raw flows.
+                      If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
+                      If they are both disabled, the Console plugin is not deployed.
                     type: boolean
                   lokiStack:
                     description: |-
@@ -7911,6 +8051,136 @@ spec:
                           OpenShift install configuration and the Cluster Network Operator configuration. Indirectly, this is a way to accurately detect
                           external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by default on OpenShift.
                         type: boolean
+                    type: object
+                type: object
+              prometheus:
+                description: '`prometheus` defines Prometheus settings, such as querier
+                  configuration used to fetch metrics from the Console plugin.'
+                properties:
+                  querier:
+                    description: Prometheus querying configuration, such as client
+                      settings, used in the Console plugin.
+                    properties:
+                      enable:
+                        default: true
+                        description: |-
+                          Set `enable` to `true` to make the Console plugin querying flow metrics from Prometheus instead of Loki whenever possible.
+                          The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
+                          Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
+                          such as getting per-pod information or viewing raw flows.
+                          If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
+                          If they are both disabled, the Console plugin is not deployed.
+                        type: boolean
+                      manual:
+                        description: Prometheus configuration for `Manual` mode.
+                        properties:
+                          forwardUserToken:
+                            description: Set `true` to forward logged in user token
+                              in queries to Prometheus
+                            type: boolean
+                          tls:
+                            description: TLS client configuration for Prometheus URL.
+                            properties:
+                              caCert:
+                                description: '`caCert` defines the reference of the
+                                  certificate for the Certificate Authority'
+                                properties:
+                                  certFile:
+                                    description: '`certFile` defines the path to the
+                                      certificate file name within the config map
+                                      or secret'
+                                    type: string
+                                  certKey:
+                                    description: '`certKey` defines the path to the
+                                      certificate private key file name within the
+                                      config map or secret. Omit when the key is not
+                                      necessary.'
+                                    type: string
+                                  name:
+                                    description: Name of the config map or secret
+                                      containing certificates
+                                    type: string
+                                  namespace:
+                                    default: ""
+                                    description: |-
+                                      Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+                                      If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
+                                    type: string
+                                  type:
+                                    description: 'Type for the certificate reference:
+                                      `configmap` or `secret`'
+                                    enum:
+                                    - configmap
+                                    - secret
+                                    type: string
+                                type: object
+                              enable:
+                                default: false
+                                description: Enable TLS
+                                type: boolean
+                              insecureSkipVerify:
+                                default: false
+                                description: |-
+                                  `insecureSkipVerify` allows skipping client-side verification of the server certificate.
+                                  If set to `true`, the `caCert` field is ignored.
+                                type: boolean
+                              userCert:
+                                description: '`userCert` defines the user certificate
+                                  reference and is used for mTLS (you can ignore it
+                                  when using one-way TLS)'
+                                properties:
+                                  certFile:
+                                    description: '`certFile` defines the path to the
+                                      certificate file name within the config map
+                                      or secret'
+                                    type: string
+                                  certKey:
+                                    description: '`certKey` defines the path to the
+                                      certificate private key file name within the
+                                      config map or secret. Omit when the key is not
+                                      necessary.'
+                                    type: string
+                                  name:
+                                    description: Name of the config map or secret
+                                      containing certificates
+                                    type: string
+                                  namespace:
+                                    default: ""
+                                    description: |-
+                                      Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+                                      If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
+                                    type: string
+                                  type:
+                                    description: 'Type for the certificate reference:
+                                      `configmap` or `secret`'
+                                    enum:
+                                    - configmap
+                                    - secret
+                                    type: string
+                                type: object
+                            type: object
+                          url:
+                            default: http://prometheus:9090
+                            description: '`url` is the address of an existing Prometheus
+                              service to use for querying metrics.'
+                            type: string
+                        type: object
+                      mode:
+                        default: Auto
+                        description: |-
+                          `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
+                          - Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
+                          - Use `Manual` for a manual setup<br>
+                        enum:
+                        - Manual
+                        - Auto
+                        type: string
+                      timeout:
+                        default: 30s
+                        description: |-
+                          `timeout` is the read timeout for console plugin queries to Prometheus.
+                          A timeout of zero means no timeout.
+                        type: string
                     type: object
                 type: object
             type: object

@@ -17,25 +17,44 @@ type ServerConfig struct {
 	CORSMethods string `yaml:"corsMethods,omitempty" json:"corsMethods,omitempty"`
 	CORSHeaders string `yaml:"corsHeaders,omitempty" json:"corsHeaders,omitempty"`
 	CORSMaxAge  string `yaml:"corsMaxAge,omitempty" json:"corsMaxAge,omitempty"`
+	AuthCheck   string `yaml:"authCheck,omitempty" json:"authCheck,omitempty"`
 }
 
 type LokiConfig struct {
 	URL    string   `yaml:"url" json:"url"`
 	Labels []string `yaml:"labels" json:"labels"`
 
-	StatusURL          string `yaml:"statusUrl,omitempty" json:"statusUrl,omitempty"`
-	Timeout            string `yaml:"timeout,omitempty" json:"timeout,omitempty"`
-	TenantID           string `yaml:"tenantID,omitempty" json:"tenantID,omitempty"`
-	TokenPath          string `yaml:"tokenPath,omitempty" json:"tokenPath,omitempty"`
-	SkipTLS            bool   `yaml:"skipTls,omitempty" json:"skipTls,omitempty"`
-	CAPath             string `yaml:"caPath,omitempty" json:"caPath,omitempty"`
-	StatusSkipTLS      bool   `yaml:"statusSkipTls,omitempty" json:"statusSkipTls,omitempty"`
-	StatusCAPath       string `yaml:"statusCaPath,omitempty" json:"statusCaPath,omitempty"`
-	StatusUserCertPath string `yaml:"statusUserCertPath,omitempty" json:"statusUserCertPath,omitempty"`
-	StatusUserKeyPath  string `yaml:"statusUserKeyPath,omitempty" json:"statusUserKeyPath,omitempty"`
-	UseMocks           bool   `yaml:"useMocks,omitempty" json:"useMocks,omitempty"`
-	ForwardUserToken   bool   `yaml:"forwardUserToken,omitempty" json:"forwardUserToken,omitempty"`
-	AuthCheck          string `yaml:"authCheck,omitempty" json:"authCheck,omitempty"`
+	StatusURL          string       `yaml:"statusUrl,omitempty" json:"statusUrl,omitempty"`
+	Timeout            api.Duration `yaml:"timeout,omitempty" json:"timeout,omitempty"`
+	TenantID           string       `yaml:"tenantID,omitempty" json:"tenantID,omitempty"`
+	TokenPath          string       `yaml:"tokenPath,omitempty" json:"tokenPath,omitempty"`
+	SkipTLS            bool         `yaml:"skipTls,omitempty" json:"skipTls,omitempty"`
+	CAPath             string       `yaml:"caPath,omitempty" json:"caPath,omitempty"`
+	StatusSkipTLS      bool         `yaml:"statusSkipTls,omitempty" json:"statusSkipTls,omitempty"`
+	StatusCAPath       string       `yaml:"statusCaPath,omitempty" json:"statusCaPath,omitempty"`
+	StatusUserCertPath string       `yaml:"statusUserCertPath,omitempty" json:"statusUserCertPath,omitempty"`
+	StatusUserKeyPath  string       `yaml:"statusUserKeyPath,omitempty" json:"statusUserKeyPath,omitempty"`
+	UseMocks           bool         `yaml:"useMocks,omitempty" json:"useMocks,omitempty"`
+	ForwardUserToken   bool         `yaml:"forwardUserToken,omitempty" json:"forwardUserToken,omitempty"`
+}
+
+type PrometheusConfig struct {
+	URL              string       `yaml:"url" json:"url"`
+	Timeout          api.Duration `yaml:"timeout,omitempty" json:"timeout,omitempty"`
+	TokenPath        string       `yaml:"tokenPath,omitempty" json:"tokenPath,omitempty"`
+	SkipTLS          bool         `yaml:"skipTls,omitempty" json:"skipTls,omitempty"`
+	CAPath           string       `yaml:"caPath,omitempty" json:"caPath,omitempty"`
+	ForwardUserToken bool         `yaml:"forwardUserToken,omitempty" json:"forwardUserToken,omitempty"`
+	Metrics          []MetricInfo `yaml:"metrics,omitempty" json:"metrics,omitempty"`
+}
+
+type MetricInfo struct {
+	Enabled    bool     `yaml:"enabled" json:"enabled"`
+	Name       string   `yaml:"name,omitempty" json:"name,omitempty"`
+	Type       string   `yaml:"type,omitempty" json:"type,omitempty"`
+	ValueField string   `yaml:"valueField,omitempty" json:"valueField,omitempty"`
+	Direction  string   `yaml:"direction,omitempty" json:"direction,omitempty"`
+	Labels     []string `yaml:"labels,omitempty" json:"labels,omitempty"`
 }
 
 type ColumnConfig struct {
@@ -105,9 +124,10 @@ type FrontendConfig struct {
 }
 
 type PluginConfig struct {
-	Server   ServerConfig   `yaml:"server" json:"server"`
-	Loki     LokiConfig     `yaml:"loki" json:"loki"`
-	Frontend FrontendConfig `yaml:"frontend" json:"frontend"`
+	Server     ServerConfig     `yaml:"server" json:"server"`
+	Loki       LokiConfig       `yaml:"loki" json:"loki"`
+	Prometheus PrometheusConfig `yaml:"prometheus" json:"prometheus"`
+	Frontend   FrontendConfig   `yaml:"frontend" json:"frontend"`
 }
 
 //go:embed static-frontend-config.yaml

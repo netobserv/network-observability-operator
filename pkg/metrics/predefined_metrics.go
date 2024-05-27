@@ -24,8 +24,8 @@ var (
 	latencyBuckets = []string{".005", ".01", ".02", ".03", ".04", ".05", ".075", ".1", ".25", "1"}
 	mapLabels      = map[string][]string{
 		tagNodes:      {"SrcK8S_HostName", "DstK8S_HostName"},
-		tagNamespaces: {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer"},
-		tagWorkloads:  {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType"},
+		tagNamespaces: {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel"},
+		tagWorkloads:  {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType", "SrcK8S_Type", "DstK8S_Type"},
 	}
 	mapValueFields = map[string]string{
 		tagBytes:   "Bytes",
@@ -40,6 +40,16 @@ var (
 		"namespace_drop_packets_total",
 		"namespace_rtt_seconds",
 		"namespace_dns_latency_seconds",
+	}
+	// More metrics enabled when Loki is disabled, to avoid loss of information
+	DefaultIncludeListLokiDisabled = []string{
+		"node_ingress_bytes_total",
+		"workload_ingress_bytes_total",
+		"workload_flows_total",
+		"workload_drop_bytes_total",
+		"workload_drop_packets_total",
+		"workload_rtt_seconds",
+		"workload_dns_latency_seconds",
 	}
 	// Pre-deprecation default IgnoreTags list (1.4) - used before switching to whitelist approach,
 	// to make sure there is no unintended new metrics being collected
@@ -199,10 +209,15 @@ func GetDefinitions(names []string) []metricslatest.FlowMetric {
 	return ret
 }
 
-func getIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
+func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
 	var list []string
 	if spec.Processor.Metrics.IncludeList == nil {
-		list = DefaultIncludeList
+		if helper.UseLoki(spec) {
+			list = DefaultIncludeList
+		} else {
+			// When loki is disabled, increase what's available through metrics by default, to minimize the loss of information
+			list = DefaultIncludeListLokiDisabled
+		}
 	} else {
 		for _, m := range *spec.Processor.Metrics.IncludeList {
 			list = append(list, string(m))
@@ -231,7 +246,7 @@ func removeMetricsByPattern(list []string, search string) []string {
 }
 
 func MergePredefined(fm []metricslatest.FlowMetric, fc *flowslatest.FlowCollectorSpec) []metricslatest.FlowMetric {
-	names := getIncludeList(fc)
+	names := GetIncludeList(fc)
 	predefined := GetDefinitions(names)
 	return append(predefined, fm...)
 }
