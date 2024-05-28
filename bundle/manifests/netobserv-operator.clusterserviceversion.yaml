@@ -820,9 +820,7 @@ spec:
         - urn:alm:descriptor:io.kubernetes.conditions
       version: v1beta2
     - description: '`FlowMetric` is the schema for the custom metrics API, which allows
-        to generate more metrics out of flow logs. It is at an early stage of development
-        (dev preview) and thus is currently not supported. Creating metrics with high
-        labels cardinality might impact the cluster stability.'
+        to generate more metrics out of flow logs. You can find examples here: https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics'
       displayName: Flow Metric
       kind: FlowMetric
       name: flowmetrics.flows.netobserv.io
@@ -1335,8 +1333,7 @@ spec:
   version: 1.6.0-community
   webhookdefinitions:
   - admissionReviewVersions:
-    - v1beta1
-    - v1beta2
+    - v1
     containerPort: 443
     conversionCRDs:
     - flowcollectors.flows.netobserv.io
