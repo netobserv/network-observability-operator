@@ -59,7 +59,7 @@ deploy-kind: install-cert-manager kustomize ## Deploy controller to the K8s clus
 	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~console-plugin:.+~console-plugin:main~' ./config/manager/manager.yaml
-	$(KUSTOMIZE) build config/k8s-olm/default | kubectl apply -f -
+	$(KUSTOMIZE) build config/k8s-olm/default | kubectl apply --server-side -f -
 
 .PHONY: undeploy-kind
 undeploy-kind: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.

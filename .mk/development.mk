@@ -83,14 +83,6 @@ undeploy-kafka: ## Undeploy kafka.
 	kubectl delete kafka kafka-cluster -n $(NAMESPACE) --ignore-not-found=true
 	kubectl delete -f "https://strimzi.io/install/latest?namespace="$(NAMESPACE) -n $(NAMESPACE) --ignore-not-found=true
 
-.PHONY: fix-ebpf-kafka-tls
-fix-ebpf-kafka-tls:
-	@echo -e "\n==> Fix eBPF with Kafka on TLS: copying secrets to privileged namespace"
-	kubectl get secret flp-kafka -n $(NAMESPACE) -o yaml | yq 'del(.metadata)' | yq '.metadata.name = "flp-kafka"' | kubectl apply -n "$(NAMESPACE)-privileged" -f -
-	kubectl get secret kafka-cluster-cluster-ca-cert -n $(NAMESPACE) -o yaml | yq 'del(.metadata)' | yq '.metadata.name = "kafka-cluster-cluster-ca-cert"' | kubectl apply -n "$(NAMESPACE)-privileged" -f -
-	@echo -e "\n===> Restarting eBPF pods"
-	kubectl delete pods -n "$(NAMESPACE)-privileged" --all --force
-
 .PHONY: deploy-grafana
 deploy-grafana: ## Deploy grafana.
 	@echo -e "\n==> Deploy grafana"
