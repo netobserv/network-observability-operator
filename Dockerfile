@@ -23,7 +23,7 @@ COPY config/ config/
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH GO111MODULE=on go build -ldflags "-X 'main.buildVersion=$BUILD_VERSION' -X 'main.buildDate=`date +%Y-%m-%d\ %H:%M`'" -mod vendor -a -o manager main.go
 
 # Create final image from minimal + built binary
-FROM --platform=$TARGETPLATFORM registry.access.redhat.com/ubi9/ubi-minimal:9.3
+FROM --platform=$TARGETPLATFORM registry.access.redhat.com/ubi9/ubi-minimal:9.4
 WORKDIR /
 COPY --from=builder /opt/app-root/manager .
 USER 65532:65532
