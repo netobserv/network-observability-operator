@@ -13,5 +13,4 @@ spec:
           name: webhook-service
           path: /convert
       conversionReviewVersions:
-      - v1beta1
-      - v1beta2
+      - v1
