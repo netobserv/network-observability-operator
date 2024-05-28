@@ -29,7 +29,7 @@ jobs:
       - name: validate tag
         run: |
           tag=`git describe --exact-match --tags 2> /dev/null`
-          if [[ $tag =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$ ]]; then
+          if [[ $tag =~ ^[0-9]+\.[0-9]+\.[0-9]+(-crc[0-9]+|-community)$ ]]; then
               echo "$tag is a valid release tag"
               set -e
               echo "tag=$tag" >> $GITHUB_ENV
