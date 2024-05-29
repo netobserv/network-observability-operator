@@ -22,6 +22,7 @@ spec:
       # - "PacketDrop"
       # - "DNSTracking"
       # - "FlowRTT"
+      # - "NetworkEvents"
       interfaces: []
       excludeInterfaces: ["lo"]
       kafkaBatchSize: 1048576

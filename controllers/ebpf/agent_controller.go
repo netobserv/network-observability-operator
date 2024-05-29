@@ -56,6 +56,8 @@ const (
 	envEnablePktDrop              = "ENABLE_PKT_DROPS"
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
 	envEnableFlowRTT              = "ENABLE_RTT"
+	envEnableNetworkEvents        = "ENABLE_NETWORK_EVENTS_MONITORING"
+	envNetworkEventsGroupID       = "NETWORK_EVENTS_MONITORING_GROUP_ID"
 	envEnableMetrics              = "METRICS_ENABLE"
 	envMetricsPort                = "METRICS_SERVER_PORT"
 	envMetricPrefix               = "METRICS_PREFIX"
@@ -80,15 +82,22 @@ const (
 )
 
 const (
-	exportKafka                = "kafka"
-	exportGRPC                 = "grpc"
-	kafkaCerts                 = "kafka-certs"
-	averageMessageSize         = 100
-	bpfTraceMountName          = "bpf-kernel-debug"
-	bpfTraceMountPath          = "/sys/kernel/debug"
-	bpfNetNSMountName          = "var-run-netns"
-	bpfNetNSMountPath          = "/var/run/netns"
-	droppedFlowsAlertThreshold = 100
+	exportKafka                 = "kafka"
+	exportGRPC                  = "grpc"
+	kafkaCerts                  = "kafka-certs"
+	averageMessageSize          = 100
+	bpfTraceMountName           = "bpf-kernel-debug"
+	bpfTraceMountPath           = "/sys/kernel/debug"
+	bpfNetNSMountName           = "var-run-netns"
+	bpfNetNSMountPath           = "/var/run/netns"
+	droppedFlowsAlertThreshold  = 100
+	ovnObservMountName          = "var-run-ovn"
+	ovnObservMountPath          = "/var/run/ovn"
+	ovnObservHostMountPath      = "/var/run/ovn-ic"
+	ovsMountPath                = "/var/run/openvswitch"
+	ovsHostMountPath            = "/var/run/openvswitch"
+	ovsMountName                = "var-run-ovs"
+	defaultNetworkEventsGroupID = "10"
 )
 
 const (
@@ -299,6 +308,47 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 			}
 			volumeMounts = append(volumeMounts, volumeMount)
 		}
+	}
+
+	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.NetworkEvents) {
+		if !coll.Spec.Agent.EBPF.Privileged {
+			rlog.Error(fmt.Errorf("invalid configuration"), "To use Network Events Monitor feature privileged mode needs to be enabled")
+		} else {
+			volume := corev1.Volume{
+				Name: ovnObservMountName,
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Type: newHostPathType(corev1.HostPathDirectory),
+						Path: ovnObservHostMountPath,
+					},
+				},
+			}
+			volumes = append(volumes, volume)
+			volumeMount := corev1.VolumeMount{
+				Name:             ovnObservMountName,
+				MountPath:        ovnObservMountPath,
+				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+			}
+			volumeMounts = append(volumeMounts, volumeMount)
+
+			volume = corev1.Volume{
+				Name: ovsMountName,
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Type: newHostPathType(corev1.HostPathDirectory),
+						Path: ovsHostMountPath,
+					},
+				},
+			}
+			volumes = append(volumes, volume)
+			volumeMount = corev1.VolumeMount{
+				Name:             ovsMountName,
+				MountPath:        ovsMountPath,
+				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+			}
+			volumeMounts = append(volumeMounts, volumeMount)
+		}
+
 	}
 
 	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
@@ -522,6 +572,7 @@ func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *core
 	return sc
 }
 
+// nolint:golint,cyclop
 func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1.EnvVar {
 	var config []corev1.EnvVar
 
@@ -575,6 +626,13 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		})
 	}
 
+	if helper.IsNetworkEventsEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableNetworkEvents,
+			Value: "true",
+		})
+	}
+
 	// set GOMEMLIMIT which allows specifying a soft memory cap to force GC when resource limit is reached
 	// to prevent OOM
 	if coll.Spec.Agent.EBPF.Resources.Limits.Memory() != nil {
@@ -619,6 +677,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	dedupJustMark := DedupeJustMarkDefault
 	dedupMerge := DedupeMergeDefault
 	dnsTrackingPort := defaultDNSTrackingPort
+	networkEventsGroupID := defaultNetworkEventsGroupID
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
 	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
@@ -632,6 +691,8 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 			dedupMerge = v
 		} else if k == envDNSTrackingPort {
 			dnsTrackingPort = v
+		} else if k == envNetworkEventsGroupID {
+			networkEventsGroupID = v
 		} else {
 			config = append(config, corev1.EnvVar{Name: k, Value: v})
 		}
@@ -640,6 +701,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
 	config = append(config, corev1.EnvVar{Name: EnvDedupeJustMark, Value: dedupJustMark})
 	config = append(config, corev1.EnvVar{Name: envDNSTrackingPort, Value: dnsTrackingPort})
+	config = append(config, corev1.EnvVar{Name: envNetworkEventsGroupID, Value: networkEventsGroupID})
 	config = append(config, corev1.EnvVar{
 		Name: envAgentIP,
 		ValueFrom: &corev1.EnvVarSource{
