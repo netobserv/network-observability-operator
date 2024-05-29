@@ -17,6 +17,7 @@ If you can't find help here, don't hesitate to open [an issue](https://github.co
   * [There is no Network Traffic menu entry in OpenShift Console](#there-is-no-network-traffic-menu-entry-in-openshift-console)
   * [I first deployed flowcollector, and then kafka. Flowlogs-pipeline is not consuming any flow from Kafka](#i-first-deployed-flowcollector-and-then-kafka-flowlogs-pipeline-is-not-consuming-any-flow-from-kafka)
   * [I don't see flows from either the `br-int` or `br-ex` interfaces](#i-dont-see-flows-from-either-the-br-int-or-br-ex-interfaces)
+  * [I'm finding discrepancies in metrics](#im-finding-discrepancies-in-metrics)
 
 ## Q&A
 
@@ -183,3 +184,19 @@ by the agent when it is processed by other interfaces (e.g. physical host or vir
 
 This means that, if you restrict the agent interfaces (using the `interfaces` or `excludeInterfaces`
 properties) to attach only to `br-int` and/or `br-ex`, you won't be able to see any flow.
+
+### I'm finding discrepancies in metrics
+
+1. NetObserv metrics (such as `netobserv_workload_ingress_bytes_total`) show *higher values* than cadvisor metrics (such as `container_network_receive_bytes_total`)
+
+This can be caused when traffic goes through Kubernetes Services: when a Pod talks to another Pod via a Service, two flows are generated: one against the service and one against the pod. To avoid querying duplicated counts, you can refine your promQL to ignore traffic targeting Services: e.g: `sum(rate(netobserv_workload_ingress_bytes_total{DstK8S_Namespace="my-namespace",SrcK8S_Type!="Service",DstK8S_Type!="Service"}[2m]))`
+	
+2. NetObserv metrics (such as `netobserv_workload_ingress_bytes_total`) show *lower values* than cadvisor metrics (such as `container_network_receive_bytes_total`)
+
+There are several possible causes:
+
+- Sampling is being used. Check your `FlowCollector` `spec.agent.ebpf.sampling`: a value greater than 1 means not every flows are sampled. NetObserv metrics aren't normalized automatically, but you can do so in your promQL by multiplying with the sampling rate, for instance: `sum(rate(netobserv_workload_ingress_bytes_total{DstK8S_Namespace="my-namespace"}[2m])) * avg(netobserv_agent_sampling_rate > 0)`. Be aware that, the higher the sampling, the less accurate the metrics.
+
+- Filters are configured in the agent, resulting in ignoring some of the traffic. Check your `FlowCollector` `spec.agent.ebpf.flowFilter`, `spec.agent.ebpf.interfaces`, `spec.agent.ebpf.excludeInterfaces` and make sure it doesn't filter out some of the traffic that you are looking at.
+
+- Flows may also be dropped due to constraints on resources. Monitor the eBPF agent health in the `NetObserv / Health` dashboard: there are graphs showing drops. Increasing `spec.agent.ebpf.cacheMaxSize` can help to avoid these drops, at the cost of an increased memory usage.
