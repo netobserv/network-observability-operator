@@ -56,6 +56,7 @@ const (
 	envEnablePktDrop              = "ENABLE_PKT_DROPS"
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
 	envEnableFlowRTT              = "ENABLE_RTT"
+	envEnableOvsMonitor           = "ENABLE_OVS_MONITORING"
 	envEnableMetrics              = "METRICS_ENABLE"
 	envMetricsPort                = "METRICS_SERVER_PORT"
 	envMetricPrefix               = "METRICS_PREFIX"
@@ -89,6 +90,9 @@ const (
 	bpfNetNSMountName          = "var-run-netns"
 	bpfNetNSMountPath          = "/var/run/netns"
 	droppedFlowsAlertThreshold = 100
+	ovnObservMountName         = "var-run-ovn"
+	ovnObservMountPath         = "/var/run/ovn"
+	ovnObservHostMountPath     = "/var/run/ovn-ic"
 )
 
 const (
@@ -295,6 +299,29 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 			volumeMount := corev1.VolumeMount{
 				Name:             bpfTraceMountName,
 				MountPath:        bpfTraceMountPath,
+				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+			}
+			volumeMounts = append(volumeMounts, volumeMount)
+		}
+	}
+
+	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.OvsMonitor) {
+		if !coll.Spec.Agent.EBPF.Privileged {
+			rlog.Error(fmt.Errorf("invalid configuration"), "To use OvsMonitor feature privileged mode needs to be enabled")
+		} else {
+			volume := corev1.Volume{
+				Name: ovnObservMountName,
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Type: newHostPathType(corev1.HostPathDirectory),
+						Path: ovnObservHostMountPath,
+					},
+				},
+			}
+			volumes = append(volumes, volume)
+			volumeMount := corev1.VolumeMount{
+				Name:             ovnObservMountName,
+				MountPath:        ovnObservMountPath,
 				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
 			}
 			volumeMounts = append(volumeMounts, volumeMount)
@@ -571,6 +598,13 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	if helper.IsFlowRTTEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableFlowRTT,
+			Value: "true",
+		})
+	}
+
+	if helper.IsOvsMonitorEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableOvsMonitor,
 			Value: "true",
 		})
 	}

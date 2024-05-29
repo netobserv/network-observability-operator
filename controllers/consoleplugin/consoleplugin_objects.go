@@ -448,6 +448,10 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
 		fconf.Features = append(fconf.Features, "flowRTT")
 	}
 
+	if helper.IsOvsMonitorEnabled(&b.desired.Agent.EBPF) {
+		fconf.Features = append(fconf.Features, "ovsMonitor")
+	}
+
 	if b.desired.Agent.EBPF.Advanced != nil {
 		if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeJustMark]; ok {
 			dedupJustMark, err = strconv.ParseBool(v)

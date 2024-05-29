@@ -175,13 +175,15 @@ type FlowCollectorIPFIX struct {
 // - `PacketDrop`, to track packet drops.<br>
 // - `DNSTracking`, to track specific information on DNS traffic.<br>
 // - `FlowRTT`, to track TCP latency.<br>
-// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT"
+// - `OvsMonitor`, to track OVS flows.<br>
+// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"OvsMonitor"
 type AgentFeature string
 
 const (
 	PacketDrop  AgentFeature = "PacketDrop"
 	DNSTracking AgentFeature = "DNSTracking"
 	FlowRTT     AgentFeature = "FlowRTT"
+	OvsMonitor  AgentFeature = "OvsMonitor"
 )
 
 // Name of an eBPF agent alert.
@@ -349,6 +351,7 @@ type FlowCollectorEBPF struct {
 	// If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 	// - `DNSTracking`: enable the DNS tracking feature.<br>
 	// - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
+	// - `OvsMonitor`: enable the OVS monitoring feature.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 
