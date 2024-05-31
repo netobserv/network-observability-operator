@@ -67,11 +67,13 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 		return err
 	}
 
-	if err = r.checkAutoPatch(ctx, desired); err != nil {
-		return err
+	if r.AvailableAPIs.HasConsolePlugin() {
+		if err = r.checkAutoPatch(ctx, desired); err != nil {
+			return err
+		}
 	}
 
-	if helper.UseConsolePlugin(&desired.Spec) {
+	if helper.UseConsolePlugin(&desired.Spec) && (r.AvailableAPIs.HasConsolePlugin() || helper.UseTestConsolePlugin(&desired.Spec)) {
 		// Create object builder
 		builder := newBuilder(r.Instance, &desired.Spec)
 
@@ -79,8 +81,10 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 			return err
 		}
 
-		if err = r.reconcilePlugin(ctx, &builder, &desired.Spec); err != nil {
-			return err
+		if r.AvailableAPIs.HasConsolePlugin() {
+			if err = r.reconcilePlugin(ctx, &builder, &desired.Spec); err != nil {
+				return err
+			}
 		}
 
 		cmDigest, err := r.reconcileConfigMap(ctx, &builder)

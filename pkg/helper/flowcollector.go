@@ -80,6 +80,14 @@ func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
 		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
 }
 
+func UseTestConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
+	if spec.ConsolePlugin.Advanced != nil {
+		env := spec.ConsolePlugin.Advanced.Env[constants.EnvTestConsole]
+		return env == "true"
+	}
+	return false
+}
+
 func IsAgentFeatureEnabled(spec *flowslatest.FlowCollectorEBPF, feature flowslatest.AgentFeature) bool {
 	for _, f := range spec.Features {
 		if f == feature {
