@@ -45,13 +45,12 @@ const metricsPort = 9002
 const metricsPortName = "metrics"
 
 type builder struct {
-	info           *reconcilers.Instance
-	labels         map[string]string
-	selector       map[string]string
-	desired        *flowslatest.FlowCollectorSpec
-	advanced       *flowslatest.AdvancedPluginConfig
-	volumes        volumes.Builder
-	useTestConsole bool
+	info     *reconcilers.Instance
+	labels   map[string]string
+	selector map[string]string
+	desired  *flowslatest.FlowCollectorSpec
+	advanced *flowslatest.AdvancedPluginConfig
+	volumes  volumes.Builder
 }
 
 func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) builder {
@@ -66,9 +65,8 @@ func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 		selector: map[string]string{
 			"app": constants.PluginName,
 		},
-		desired:        desired,
-		advanced:       &advanced,
-		useTestConsole: helper.UseTestConsolePlugin(desired),
+		desired:  desired,
+		advanced: &advanced,
 	}
 }
 
@@ -194,7 +192,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 		},
 	}
 
-	if !b.useTestConsole {
+	if !helper.UseTestConsolePlugin(b.desired) {
 		volumes = append(volumes, corev1.Volume{
 			Name: secretName,
 			VolumeSource: corev1.VolumeSource{
@@ -499,7 +497,7 @@ func (b *builder) configMap(ctx context.Context) (*corev1.ConfigMap, string, err
 			Port: int(*b.advanced.Port),
 		},
 	}
-	if b.useTestConsole {
+	if helper.UseTestConsolePlugin(b.desired) {
 		config.Server.AuthCheck = "none"
 	} else {
 		config.Server.CertPath = "/var/serving-cert/tls.crt"
