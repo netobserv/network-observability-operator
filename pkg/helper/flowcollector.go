@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
@@ -78,6 +79,16 @@ func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
 	return (UseLoki(spec) || UsePrometheus(spec)) &&
 		// nil should fallback to default value, which is "true"
 		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
+}
+
+func UseTestConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
+	if spec.ConsolePlugin.Advanced != nil {
+		env := spec.ConsolePlugin.Advanced.Env[constants.EnvTestConsole]
+		// Use ParseBool to allow common variants ("true", "True", "1"...) and ignore non-bools
+		b, err := strconv.ParseBool(env)
+		return err == nil && b
+	}
+	return false
 }
 
 func IsAgentFeatureEnabled(spec *flowslatest.FlowCollectorEBPF, feature flowslatest.AgentFeature) bool {

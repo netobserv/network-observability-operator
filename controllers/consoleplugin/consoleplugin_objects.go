@@ -173,13 +173,6 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 	volumes := []corev1.Volume{
 		{
-			Name: secretName,
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretName,
-				},
-			},
-		}, {
 			Name: configVolume,
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
@@ -193,14 +186,26 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 
 	volumeMounts := []corev1.VolumeMount{
 		{
-			Name:      secretName,
-			MountPath: "/var/serving-cert",
-			ReadOnly:  true,
-		}, {
 			Name:      configVolume,
 			MountPath: configPath,
 			ReadOnly:  true,
 		},
+	}
+
+	if !helper.UseTestConsolePlugin(b.desired) {
+		volumes = append(volumes, corev1.Volume{
+			Name: secretName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: secretName,
+				},
+			},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      secretName,
+			MountPath: "/var/serving-cert",
+			ReadOnly:  true,
+		})
 	}
 
 	// ensure volumes are up to date
@@ -487,11 +492,17 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
 func (b *builder) configMap(ctx context.Context) (*corev1.ConfigMap, string, error) {
-	config := cfg.PluginConfig{}
-	// configure server
-	config.Server.CertPath = "/var/serving-cert/tls.crt"
-	config.Server.KeyPath = "/var/serving-cert/tls.key"
-	config.Server.Port = int(*b.advanced.Port)
+	config := cfg.PluginConfig{
+		Server: cfg.ServerConfig{
+			Port: int(*b.advanced.Port),
+		},
+	}
+	if helper.UseTestConsolePlugin(b.desired) {
+		config.Server.AuthCheck = "none"
+	} else {
+		config.Server.CertPath = "/var/serving-cert/tls.crt"
+		config.Server.KeyPath = "/var/serving-cert/tls.key"
+	}
 
 	// configure loki
 	config.Loki = b.getLokiConfig()

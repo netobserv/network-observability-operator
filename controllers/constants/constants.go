@@ -45,6 +45,8 @@ const (
 	LokiCRWriter  = "netobserv-writer"
 	LokiCRBWriter = "netobserv-writer-flp"
 	LokiCRReader  = "netobserv-reader"
+
+	EnvTestConsole = "TEST_CONSOLE"
 )
 
 var LokiIndexFields = []string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type", "K8S_FlowLayer", "FlowDirection"}

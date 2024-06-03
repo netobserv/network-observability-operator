@@ -133,14 +133,11 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 	r.watcher.Reset(ns)
 
 	// Create reconcilers
-	var cpReconciler consoleplugin.CPReconciler
-	if r.mgr.HasConsolePlugin() {
-		cpReconciler = consoleplugin.NewReconciler(reconcilersInfo.NewInstance(r.mgr.Config.ConsolePluginImage, r.status))
-	}
+	cpReconciler := consoleplugin.NewReconciler(reconcilersInfo.NewInstance(r.mgr.Config.ConsolePluginImage, r.status))
 
 	// Check namespace changed
 	if ns != previousNamespace {
-		if previousNamespace != "" && r.mgr.HasConsolePlugin() {
+		if previousNamespace != "" {
 			// Namespace updated, clean up previous namespace
 			log.FromContext(ctx).
 				Info("FlowCollector namespace change detected: cleaning up previous namespace", "old", previousNamespace, "new", ns)
@@ -160,11 +157,9 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 	}
 
 	// Console plugin
-	if r.mgr.HasConsolePlugin() {
-		err := cpReconciler.Reconcile(ctx, desired)
-		if err != nil {
-			return r.status.Error("ReconcileConsolePluginFailed", err)
-		}
+	err := cpReconciler.Reconcile(ctx, desired)
+	if err != nil {
+		return r.status.Error("ReconcileConsolePluginFailed", err)
 	}
 
 	return nil
