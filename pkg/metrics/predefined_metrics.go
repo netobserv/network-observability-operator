@@ -24,9 +24,9 @@ const (
 var (
 	latencyBuckets = []string{".005", ".01", ".02", ".03", ".04", ".05", ".075", ".1", ".25", "1"}
 	mapLabels      = map[string][]string{
-		tagNodes:      {"K8S_Clustername", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_HostName", "DstK8S_HostName"},
-		tagNamespaces: {"K8S_Clustername", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel"},
-		tagWorkloads:  {"K8S_Clustername", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType", "SrcK8S_Type", "DstK8S_Type"},
+		tagNodes:      {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_HostName", "DstK8S_HostName"},
+		tagNamespaces: {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel"},
+		tagWorkloads:  {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType", "SrcK8S_Type", "DstK8S_Type"},
 	}
 	mapValueFields = map[string]string{
 		tagBytes:   "Bytes",
@@ -265,7 +265,7 @@ func MergePredefined(fm []metricslatest.FlowMetric, fc *flowslatest.FlowCollecto
 		toRemove = append(toRemove, "SrcK8S_Zone", "DstK8S_Zone")
 	}
 	if !helper.IsMultiClusterEnabled(&fc.Processor) {
-		toRemove = append(toRemove, "K8S_Clustername")
+		toRemove = append(toRemove, "K8S_ClusterName")
 	}
 	predefined := GetDefinitions(names, toRemove)
 	return append(predefined, fm...)
