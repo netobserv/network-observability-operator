@@ -503,38 +503,14 @@ columns:
     default: true
     width: 5
     feature: flowRTT
-  - id: OvsMonitorMD0
-    name: 1st OVS metadata
-    tooltip: OVS monitor metadata for the 1st event
-    field: OvsMonitorMD[0]
-    filter: ovs_metadata_0
+  - id: OvsMonitorMDs
+    name: OVS metadatas
+    tooltip: OVS monitor metadatas
+    field: OvsMonitorMDs
+    filter: ovs_metadatas
     default: true
     width: 5
-    feature: OvsMonitor
-  - id: OvsMonitorMD1
-    name: 2nd OVS metadata
-    tooltip: OVS monitor metadata for the 2nd event
-    field: OvsMonitorMD[1]
-    filter: ovs_metadata_1
-    default: true
-    width: 5
-    feature: OvsMonitor
-  - id: OvsMonitorMD2
-    name: 3rd OVS metadata
-    tooltip: OVS monitor metadata for the 3rd event
-    field: OvsMonitorMD[2]
-    filter: ovs_metadata_2
-    default: true
-    width: 5
-    feature: OvsMonitor
-  - id: OvsMonitorMD3
-    name: 4th OVS metadata
-    tooltip: OVS monitor metadata for the 4th event
-    field: OvsMonitorMD[3]
-    filter: ovs_metadata_3
-    default: true
-    width: 5
-    feature: OvsMonitor
+    feature: ovsMonitor
 filters:
   - id: cluster_name
     name: Cluster
@@ -892,20 +868,8 @@ filters:
     name: Flow RTT
     component: number
     hint: Specify a TCP smoothed Round Trip Time in nanoseconds.
-  - id: ovs_metadata_0
-    name: OVS monitor metadata for the 1st event
-    component: text
-    hint: Specify a single metadata.
-  - id: ovs_metadata_1
-    name: OVS monitor metadata for the 2nd event
-    component: text
-    hint: Specify a single metadata.
-  - id: ovs_metadata_2
-    name: OVS monitor metadata for the 3rd event
-    component: text
-    hint: Specify a single metadata.
-  - id: ovs_metadata_3
-    name: OVS monitor metadata for the 4th event
+  - id: ovs_metadatas
+    name: OVS monitor metadatas
     component: text
     hint: Specify a single metadata.
 # Fields definition, used to generate documentation
@@ -1134,21 +1098,9 @@ fields:
     type: number
     description: TCP Smoothed Round Trip Time (SRTT), in nanoseconds
     cardinalityWarn: avoid
-  - name: OvsMonitorMD[0]
+  - name: OvsMonitorMDs
     type: string
-    description: OVS monitor metadata for the 1st event
-    cardinalityWarn: avoid
-  - name: OvsMonitorMD[1]
-    type: string
-    description: OVS monitor metadata for the 2nd event
-    cardinalityWarn: avoid
-  - name: OvsMonitorMD[2]
-    type: string
-    description: OVS monitor metadata for the 3rd event
-    cardinalityWarn: avoid
-  - name: OvsMonitorMD[3]
-    type: string
-    description: OVS monitor metadata for the 4th event
+    description: OVS monitor metadatas
     cardinalityWarn: avoid
   - name: K8S_ClusterName
     type: string
