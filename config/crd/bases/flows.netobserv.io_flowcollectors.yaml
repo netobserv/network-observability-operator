@@ -3450,7 +3450,7 @@ spec:
                         interfaces:
                           description: |-
                             `interfaces` contains the interface names from where flows are collected. If empty, the agent
-                            fetches all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
+                            fetches all the interfaces in the system, excepting the ones listed in `excludeInterfaces`.
                             An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
                             Otherwise it is matched as a case-sensitive string.
                           items:
@@ -3496,7 +3496,7 @@ spec:
                               description: Metrics server endpoint configuration for Prometheus scraper
                               properties:
                                 port:
-                                  description: The prometheus HTTP port
+                                  description: The metrics server HTTP port
                                   format: int32
                                   maximum: 65535
                                   minimum: 1
@@ -3713,7 +3713,7 @@ spec:
                       default: eBPF
                       description: |-
                         `type` [deprecated (*)] selects the flows tracing agent. Previously, this field allowed to select between `eBPF` or `IPFIX`.
-                        Only `eBPF` is allowed now, so this field is deprecated and will be removed in a future version of the API.
+                        Only `eBPF` is allowed now, so this field is deprecated and is planned for removal in a future version of the API.
                       enum:
                         - eBPF
                         - IPFIX
@@ -5467,7 +5467,7 @@ spec:
                       type: boolean
                     lokiStack:
                       description: |-
-                        Loki configuration for `LokiStack` mode. This is useful for an easy loki-operator configuration.
+                        Loki configuration for `LokiStack` mode. This is useful for an easy Loki Operator configuration.
                         It is ignored for other modes.
                       properties:
                         name:
@@ -7247,7 +7247,7 @@ spec:
                           description: Metrics server endpoint configuration for Prometheus scraper
                           properties:
                             port:
-                              description: The prometheus HTTP port
+                              description: The metrics server HTTP port
                               format: int32
                               maximum: 65535
                               minimum: 1

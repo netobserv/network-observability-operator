@@ -5848,7 +5848,7 @@ is set to `IPFIX`.<br/>
         <td>enum</td>
         <td>
           `type` [deprecated (*)] selects the flows tracing agent. Previously, this field allowed to select between `eBPF` or `IPFIX`.
-Only `eBPF` is allowed now, so this field is deprecated and will be removed in a future version of the API.<br/>
+Only `eBPF` is allowed now, so this field is deprecated and is planned for removal in a future version of the API.<br/>
           <br/>
             <i>Enum</i>: eBPF, IPFIX<br/>
             <i>Default</i>: eBPF<br/>
@@ -5953,7 +5953,7 @@ If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<
         <td>[]string</td>
         <td>
           `interfaces` contains the interface names from where flows are collected. If empty, the agent
-fetches all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
+fetches all the interfaces in the system, excepting the ones listed in `excludeInterfaces`.
 An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 Otherwise it is matched as a case-sensitive string.<br/>
         </td>
@@ -7980,7 +7980,7 @@ Metrics server endpoint configuration for Prometheus scraper
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          The prometheus HTTP port<br/>
+          The metrics server HTTP port<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Minimum</i>: 1<br/>
@@ -12300,7 +12300,7 @@ If they are both disabled, the Console plugin is not deployed.<br/>
         <td><b><a href="#flowcollectorspeclokilokistack">lokiStack</a></b></td>
         <td>object</td>
         <td>
-          Loki configuration for `LokiStack` mode. This is useful for an easy loki-operator configuration.
+          Loki configuration for `LokiStack` mode. This is useful for an easy Loki Operator configuration.
 It is ignored for other modes.<br/>
         </td>
         <td>false</td>
@@ -12452,7 +12452,7 @@ This section is aimed mostly for debugging and fine-grained performance optimiza
 
 
 
-Loki configuration for `LokiStack` mode. This is useful for an easy loki-operator configuration.
+Loki configuration for `LokiStack` mode. This is useful for an easy Loki Operator configuration.
 It is ignored for other modes.
 
 <table>
@@ -16393,7 +16393,7 @@ Metrics server endpoint configuration for Prometheus scraper
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          The prometheus HTTP port<br/>
+          The metrics server HTTP port<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Minimum</i>: 1<br/>

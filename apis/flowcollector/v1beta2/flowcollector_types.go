@@ -98,7 +98,7 @@ const (
 // +union
 type FlowCollectorAgent struct {
 	// `type` [deprecated (*)] selects the flows tracing agent. Previously, this field allowed to select between `eBPF` or `IPFIX`.
-	// Only `eBPF` is allowed now, so this field is deprecated and will be removed in a future version of the API.
+	// Only `eBPF` is allowed now, so this field is deprecated and is planned for removal in a future version of the API.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="eBPF";"IPFIX"
 	// +kubebuilder:default:=eBPF
@@ -282,7 +282,7 @@ type FlowCollectorEBPF struct {
 	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty"`
 
 	// `interfaces` contains the interface names from where flows are collected. If empty, the agent
-	// fetches all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
+	// fetches all the interfaces in the system, excepting the ones listed in `excludeInterfaces`.
 	// An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 	// Otherwise it is matched as a case-sensitive string.
 	//+optional
@@ -412,7 +412,7 @@ type MetricsServerConfig struct {
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
-	// The prometheus HTTP port
+	// The metrics server HTTP port
 	Port *int32 `json:"port,omitempty"`
 
 	// TLS configuration.
@@ -733,7 +733,7 @@ type FlowCollectorLoki struct {
 	// +optional
 	Monolithic LokiMonolithParams `json:"monolithic,omitempty"`
 
-	// Loki configuration for `LokiStack` mode. This is useful for an easy loki-operator configuration.
+	// Loki configuration for `LokiStack` mode. This is useful for an easy Loki Operator configuration.
 	// It is ignored for other modes.
 	// +optional
 	LokiStack LokiStackRef `json:"lokiStack,omitempty"`

@@ -151,7 +151,7 @@ is set to `eBPF`.
 | `type`
 | `string`
 | `type` [deprecated (*)] selects the flows tracing agent. Previously, this field allowed to select between `eBPF` or `IPFIX`.
-Only `eBPF` is allowed now, so this field is deprecated and will be removed in a future version of the API.
+Only `eBPF` is allowed now, so this field is deprecated and is planned for removal in a future version of the API.
 
 |===
 == .spec.agent.ebpf
@@ -220,7 +220,7 @@ If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported. 
 | `interfaces`
 | `array (string)`
 | `interfaces` contains the interface names from where flows are collected. If empty, the agent
-fetches all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
+fetches all the interfaces in the system, excepting the ones listed in `excludeInterfaces`.
 An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 Otherwise it is matched as a case-sensitive string.
 
@@ -472,7 +472,7 @@ Type::
 
 | `port`
 | `integer`
-| The prometheus HTTP port
+| The metrics server HTTP port
 
 | `tls`
 | `object`
@@ -1522,7 +1522,7 @@ If they are both disabled, the Console plugin is not deployed.
 
 | `lokiStack`
 | `object`
-| Loki configuration for `LokiStack` mode. This is useful for an easy loki-operator configuration.
+| Loki configuration for `LokiStack` mode. This is useful for an easy Loki Operator configuration.
 It is ignored for other modes.
 
 | `manual`
@@ -1613,7 +1613,7 @@ Type::
 Description::
 +
 --
-Loki configuration for `LokiStack` mode. This is useful for an easy loki-operator configuration.
+Loki configuration for `LokiStack` mode. This is useful for an easy Loki Operator configuration.
 It is ignored for other modes.
 --
 
@@ -2518,7 +2518,7 @@ Type::
 
 | `port`
 | `integer`
-| The prometheus HTTP port
+| The metrics server HTTP port
 
 | `tls`
 | `object`
