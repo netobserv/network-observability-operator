@@ -414,7 +414,7 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 
 	allMetricNames := metrics.GetAllNames()
 	includeList := metrics.GetIncludeList(b.desired)
-	allMetrics := metrics.GetDefinitions(allMetricNames)
+	allMetrics := metrics.GetDefinitions(allMetricNames, nil)
 	for i := range allMetrics {
 		mSpec := allMetrics[i].Spec
 		enabled := slices.Contains(includeList, mSpec.MetricName)
