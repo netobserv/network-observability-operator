@@ -3,6 +3,7 @@ package metrics
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
@@ -23,9 +24,9 @@ const (
 var (
 	latencyBuckets = []string{".005", ".01", ".02", ".03", ".04", ".05", ".075", ".1", ".25", "1"}
 	mapLabels      = map[string][]string{
-		tagNodes:      {"SrcK8S_HostName", "DstK8S_HostName"},
-		tagNamespaces: {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel"},
-		tagWorkloads:  {"SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType", "SrcK8S_Type", "DstK8S_Type"},
+		tagNodes:      {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_HostName", "DstK8S_HostName"},
+		tagNamespaces: {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel"},
+		tagWorkloads:  {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType", "SrcK8S_Type", "DstK8S_Type"},
 	}
 	mapValueFields = map[string]string{
 		tagBytes:   "Bytes",
@@ -197,16 +198,28 @@ func GetAllNames() []string {
 	return names
 }
 
-func GetDefinitions(names []string) []metricslatest.FlowMetric {
+func GetDefinitions(names []string, toRemove []string) []metricslatest.FlowMetric {
 	ret := []metricslatest.FlowMetric{}
 	for i := range predefinedMetrics {
 		for _, name := range names {
 			if predefinedMetrics[i].MetricName == name {
-				ret = append(ret, metricslatest.FlowMetric{Spec: predefinedMetrics[i].FlowMetricSpec})
+				spec := predefinedMetrics[i].FlowMetricSpec
+				spec.Labels = removeLabels(spec.Labels, toRemove)
+				ret = append(ret, metricslatest.FlowMetric{Spec: spec})
 			}
 		}
 	}
 	return ret
+}
+
+func removeLabels(initial []string, toRemove []string) []string {
+	var labels []string
+	for _, lbl := range initial {
+		if !slices.Contains(toRemove, lbl) {
+			labels = append(labels, lbl)
+		}
+	}
+	return labels
 }
 
 func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
@@ -247,6 +260,13 @@ func removeMetricsByPattern(list []string, search string) []string {
 
 func MergePredefined(fm []metricslatest.FlowMetric, fc *flowslatest.FlowCollectorSpec) []metricslatest.FlowMetric {
 	names := GetIncludeList(fc)
-	predefined := GetDefinitions(names)
+	var toRemove []string
+	if !helper.IsZoneEnabled(&fc.Processor) {
+		toRemove = append(toRemove, "SrcK8S_Zone", "DstK8S_Zone")
+	}
+	if !helper.IsMultiClusterEnabled(&fc.Processor) {
+		toRemove = append(toRemove, "K8S_ClusterName")
+	}
+	predefined := GetDefinitions(names, toRemove)
 	return append(predefined, fm...)
 }

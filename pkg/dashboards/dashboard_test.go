@@ -12,7 +12,7 @@ import (
 func TestCreateFlowMetricsDashboard_All(t *testing.T) {
 	assert := assert.New(t)
 
-	defs := metrics.GetDefinitions(metrics.GetAllNames())
+	defs := metrics.GetDefinitions(metrics.GetAllNames(), nil)
 	js := CreateFlowMetricsDashboards(defs)
 
 	d, err := FromBytes([]byte(js["Main"]))
@@ -87,7 +87,7 @@ func TestCreateFlowMetricsDashboard_All(t *testing.T) {
 func TestCreateFlowMetricsDashboard_OnlyNodeIngressBytes(t *testing.T) {
 	assert := assert.New(t)
 
-	defs := metrics.GetDefinitions([]string{"node_ingress_bytes_total"})
+	defs := metrics.GetDefinitions([]string{"node_ingress_bytes_total"}, nil)
 	js := CreateFlowMetricsDashboards(defs)
 
 	d, err := FromBytes([]byte(js["Main"]))
@@ -106,7 +106,7 @@ func TestCreateFlowMetricsDashboard_OnlyNodeIngressBytes(t *testing.T) {
 func TestCreateFlowMetricsDashboard_DefaultList(t *testing.T) {
 	assert := assert.New(t)
 
-	defs := metrics.GetDefinitions(metrics.DefaultIncludeList)
+	defs := metrics.GetDefinitions(metrics.DefaultIncludeList, nil)
 	js := CreateFlowMetricsDashboards(defs)
 
 	d, err := FromBytes([]byte(js["Main"]))
