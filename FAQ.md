@@ -8,14 +8,13 @@ If you can't find help here, don't hesitate to open [an issue](https://github.co
   * [Is it for OpenShift only?](#is-it-for-openshift-only)
   * [Which version of Kubernetes / OpenShift is supported?](#which-version-of-kubernetes--openshift-is-supported)
 * How-to
-  * [To run the eBPF agent](#to-run-the-ebpf-agent)
-  * [To use IPFIX exports](#to-use-ipfix-exports)
-  * [To get the OpenShift Console plugin](#to-get-the-openshift-console-plugin)
+  * [How do I visualize flows and metrics?](#how-do-i-visualize-flows-and-metrics)
   * [How can I make sure everything is correctly deployed?](#how-can-i-make-sure-everything-is-correctly-deployed)
 * Troubleshooting
   * [Everything seems correctly deployed but there isn't any flow showing up](#everything-seems-correctly-deployed-but-there-isnt-any-flow-showing-up)
   * [There is no Network Traffic menu entry in OpenShift Console](#there-is-no-network-traffic-menu-entry-in-openshift-console)
   * [I first deployed flowcollector, and then kafka. Flowlogs-pipeline is not consuming any flow from Kafka](#i-first-deployed-flowcollector-and-then-kafka-flowlogs-pipeline-is-not-consuming-any-flow-from-kafka)
+  * [I get a Loki error / timeout, when trying to run a large query, such as querying for the last month of data](#i-get-a-loki-error--timeout-when-trying-to-run-a-large-query-such-as-querying-for-the-last-month-of-data)
   * [I don't see flows from either the `br-int` or `br-ex` interfaces](#i-dont-see-flows-from-either-the-br-int-or-br-ex-interfaces)
   * [I'm finding discrepancies in metrics](#im-finding-discrepancies-in-metrics)
 
@@ -51,7 +50,6 @@ If you feel ready for hacking, there is also a way to view the Test Console, use
 - Build the console plugin in "standalone" mode: https://github.com/netobserv/network-observability-console-plugin?tab=readme-ov-file#standalone-frontend (you can just build the image, no need to run it locally).
 - Configure the Operator to use this build: `kubectl set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN="<your build image here>"`
 - Configure the Operator to deploy the Test Console: in `FlowCollector` yaml, set `spec.consolePlugin.advanced.env.TEST_CONSOLE` to `true`.
-
 
 ### How can I make sure everything is correctly deployed?
 
