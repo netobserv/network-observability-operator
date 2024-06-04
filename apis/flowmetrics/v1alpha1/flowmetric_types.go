@@ -192,7 +192,7 @@ type FlowMetricStatus struct {
 // +kubebuilder:printcolumn:name="Metric Name",type="string",JSONPath=`.spec.metricName`
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=`.status.conditions[?(@.type=="Ready")].reason`
 // +kubebuilder:printcolumn:name="Cardinality",type="string",JSONPath=`.status.conditions[?(@.type=="CardinalityOK")].reason`
-// FlowMetric is the Schema for the flowmetrics API
+// FlowMetric is the API allowing to create custom metrics from the collected flow logs.
 type FlowMetric struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
