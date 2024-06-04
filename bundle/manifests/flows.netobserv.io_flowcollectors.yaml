@@ -2642,12 +2642,12 @@ spec:
                               in edge debug or support scenarios.
                             type: object
                           scheduling:
-                            description: scheduling controls whether the pod will
-                              be scheduled or not.
+                            description: scheduling controls how the pods are scheduled
+                              on nodes.
                             properties:
                               affinity:
                                 description: If specified, the pod's scheduling constraints.
-                                  For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
+                                  For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
                                 properties:
                                   nodeAffinity:
                                     description: Describes node affinity scheduling
@@ -3562,24 +3562,19 @@ spec:
                                 additionalProperties:
                                   type: string
                                 description: |-
-                                  NodeSelector is a selector which must be true for the pod to fit on a node.
-                                  Selector which must match a node's labels for the pod to be scheduled on that node.
-                                  More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+                                  `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+                                  For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.
                                 type: object
                                 x-kubernetes-map-type: atomic
                               priorityClassName:
                                 description: |-
-                                  If specified, indicates the pod's priority. "system-node-critical" and
-                                  "system-cluster-critical" are two special keywords which indicate the
-                                  highest priorities with the former being the highest priority. Any other
-                                  name must be defined by creating a PriorityClass object with that name.
-                                  If not specified, the pod priority will be default or zero if there is no
-                                  default.
+                                  If specified, indicates the pod's priority. For documentation, refer to https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#how-to-use-priority-and-preemption.
+                                  If not specified, default priority is used, or zero if there is no default.
                                 type: string
                               tolerations:
-                                description: tolerations is a list of tolerations
-                                  that allow the pod to schedule onto nodes with matching
-                                  taints.
+                                description: |-
+                                  `tolerations` is a list of tolerations that allow the pod to schedule onto nodes with matching taints.
+                                  For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
                                 items:
                                   description: |-
                                     The pod this Toleration is attached to tolerates any taint that matches
@@ -3671,29 +3666,29 @@ spec:
                           regarding flow filtering'
                         properties:
                           action:
-                            description: Action defines the action to perform on the
-                              flows that match the filter.
+                            description: '`action` defines the action to perform on
+                              the flows that match the filter.'
                             enum:
                             - Accept
                             - Reject
                             type: string
                           cidr:
                             description: |-
-                              CIDR defines the IP CIDR to filter flows by.
-                              Example: 10.10.10.0/24 or 100:100:100:100::/64
+                              `cidr` defines the IP CIDR to filter flows by.
+                              Examples: `10.10.10.0/24` or `100:100:100:100::/64`
                             type: string
                           destPorts:
                             anyOf:
                             - type: integer
                             - type: string
                             description: |-
-                              DestPorts defines the destination ports to filter flows by.
-                              To filter a single port, set a single port as an integer value. For example destPorts: 80.
-                              To filter a range of ports, use a "start-end" range, string format. For example destPorts: "80-100".
+                              `destPorts` defines the destination ports to filter flows by.
+                              To filter a single port, set a single port as an integer value. For example: `destPorts: 80`.
+                              To filter a range of ports, use a "start-end" range, string format. For example: `destPorts: "80-100"`.
                             x-kubernetes-int-or-string: true
                           direction:
-                            description: Direction defines the direction to filter
-                              flows by.
+                            description: '`direction` defines the direction to filter
+                              flows by.'
                             enum:
                             - Ingress
                             - Egress
@@ -3703,30 +3698,30 @@ spec:
                               filtering feature.
                             type: boolean
                           icmpCode:
-                            description: ICMPCode defines the ICMP code to filter
-                              flows by.
+                            description: '`icmpCode` defines the ICMP code to filter
+                              flows by.'
                             type: integer
                           icmpType:
-                            description: ICMPType defines the ICMP type to filter
-                              flows by.
+                            description: '`icmpType` defines the ICMP type to filter
+                              flows by.'
                             type: integer
                           peerIP:
                             description: |-
-                              PeerIP defines the IP address to filter flows by.
-                              Example: 10.10.10.10
+                              `peerIP` defines the IP address to filter flows by.
+                              Example: `10.10.10.10`.
                             type: string
                           ports:
                             anyOf:
                             - type: integer
                             - type: string
                             description: |-
-                              Ports defines the ports to filter flows by. it can be user for either source or destination ports.
-                              To filter a single port, set a single port as an integer value. For example ports: 80.
-                              To filter a range of ports, use a "start-end" range, string format. For example ports: "80-10
+                              `ports` defines the ports to filter flows by, used both for source and destination ports.
+                              To filter a single port, set a single port as an integer value. For example: `ports: 80`.
+                              To filter a range of ports, use a "start-end" range, string format. For example: `ports: "80-100"`.
                             x-kubernetes-int-or-string: true
                           protocol:
-                            description: Protocol defines the protocol to filter flows
-                              by.
+                            description: '`protocol` defines the protocol to filter
+                              flows by.'
                             enum:
                             - TCP
                             - UDP
@@ -3739,9 +3734,9 @@ spec:
                             - type: integer
                             - type: string
                             description: |-
-                              SourcePorts defines the source ports to filter flows by.
-                              To filter a single port, set a single port as an integer value. For example sourcePorts: 80.
-                              To filter a range of ports, use a "start-end" range, string format. For example sourcePorts: "80-100".
+                              `sourcePorts` defines the source ports to filter flows by.
+                              To filter a single port, set a single port as an integer value. For example: `sourcePorts: 80`.
+                              To filter a range of ports, use a "start-end" range, string format. For example: `sourcePorts: "80-100"`.
                             x-kubernetes-int-or-string: true
                         type: object
                       imagePullPolicy:
@@ -3756,7 +3751,7 @@ spec:
                       interfaces:
                         description: |-
                           `interfaces` contains the interface names from where flows are collected. If empty, the agent
-                          fetches all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
+                          fetches all the interfaces in the system, excepting the ones listed in `excludeInterfaces`.
                           An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
                           Otherwise it is matched as a case-sensitive string.
                         items:
@@ -3801,14 +3796,14 @@ spec:
                             type: array
                           enable:
                             description: Set `enable` to `false` to disable eBPF agent
-                              metrics collection, by default it's `true`.
+                              metrics collection. It is enabled by default.
                             type: boolean
                           server:
                             description: Metrics server endpoint configuration for
                               Prometheus scraper
                             properties:
                               port:
-                                description: The prometheus HTTP port
+                                description: The metrics server HTTP port
                                 format: int32
                                 maximum: 65535
                                 minimum: 1
@@ -4048,10 +4043,8 @@ spec:
                   type:
                     default: eBPF
                     description: |-
-                      `type` [deprecated (*)] selects the flows tracing agent. The only possible value is `eBPF` (default), to use NetObserv eBPF agent.<br>
-                      Previously, using an IPFIX collector was allowed, but was deprecated and it is now removed.<br>
-                      Setting `IPFIX` is ignored and still use the eBPF Agent.
-                      Since there is only a single option here, this field will be remove in a future API version.
+                      `type` [deprecated (*)] selects the flows tracing agent. Previously, this field allowed to select between `eBPF` or `IPFIX`.
+                      Only `eBPF` is allowed now, so this field is deprecated and is planned for removal in a future version of the API.
                     enum:
                     - eBPF
                     - IPFIX
@@ -4101,12 +4094,12 @@ spec:
                           `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`
                         type: boolean
                       scheduling:
-                        description: scheduling controls whether the pod will be scheduled
-                          or not.
+                        description: scheduling controls how the pods are scheduled
+                          on nodes.
                         properties:
                           affinity:
                             description: If specified, the pod's scheduling constraints.
-                              For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
+                              For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
                             properties:
                               nodeAffinity:
                                 description: Describes node affinity scheduling rules
@@ -5011,23 +5004,19 @@ spec:
                             additionalProperties:
                               type: string
                             description: |-
-                              NodeSelector is a selector which must be true for the pod to fit on a node.
-                              Selector which must match a node's labels for the pod to be scheduled on that node.
-                              More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+                              `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+                              For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.
                             type: object
                             x-kubernetes-map-type: atomic
                           priorityClassName:
                             description: |-
-                              If specified, indicates the pod's priority. "system-node-critical" and
-                              "system-cluster-critical" are two special keywords which indicate the
-                              highest priorities with the former being the highest priority. Any other
-                              name must be defined by creating a PriorityClass object with that name.
-                              If not specified, the pod priority will be default or zero if there is no
-                              default.
+                              If specified, indicates the pod's priority. For documentation, refer to https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#how-to-use-priority-and-preemption.
+                              If not specified, default priority is used, or zero if there is no default.
                             type: string
                           tolerations:
-                            description: tolerations is a list of tolerations that
-                              allow the pod to schedule onto nodes with matching taints.
+                            description: |-
+                              `tolerations` is a list of tolerations that allow the pod to schedule onto nodes with matching taints.
+                              For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
                             items:
                               description: |-
                                 The pod this Toleration is attached to tolerates any taint that matches
@@ -5943,7 +5932,7 @@ spec:
                     type: boolean
                   lokiStack:
                     description: |-
-                      Loki configuration for `LokiStack` mode. This is useful for an easy loki-operator configuration.
+                      Loki configuration for `LokiStack` mode. This is useful for an easy Loki Operator configuration.
                       It is ignored for other modes.
                     properties:
                       name:
@@ -6472,12 +6461,12 @@ spec:
                         minimum: 0
                         type: integer
                       scheduling:
-                        description: scheduling controls whether the pod will be scheduled
-                          or not.
+                        description: scheduling controls how the pods are scheduled
+                          on nodes.
                         properties:
                           affinity:
                             description: If specified, the pod's scheduling constraints.
-                              For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
+                              For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
                             properties:
                               nodeAffinity:
                                 description: Describes node affinity scheduling rules
@@ -7382,23 +7371,19 @@ spec:
                             additionalProperties:
                               type: string
                             description: |-
-                              NodeSelector is a selector which must be true for the pod to fit on a node.
-                              Selector which must match a node's labels for the pod to be scheduled on that node.
-                              More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+                              `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+                              For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.
                             type: object
                             x-kubernetes-map-type: atomic
                           priorityClassName:
                             description: |-
-                              If specified, indicates the pod's priority. "system-node-critical" and
-                              "system-cluster-critical" are two special keywords which indicate the
-                              highest priorities with the former being the highest priority. Any other
-                              name must be defined by creating a PriorityClass object with that name.
-                              If not specified, the pod priority will be default or zero if there is no
-                              default.
+                              If specified, indicates the pod's priority. For documentation, refer to https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#how-to-use-priority-and-preemption.
+                              If not specified, default priority is used, or zero if there is no default.
                             type: string
                           tolerations:
-                            description: tolerations is a list of tolerations that
-                              allow the pod to schedule onto nodes with matching taints.
+                            description: |-
+                              `tolerations` is a list of tolerations that allow the pod to schedule onto nodes with matching taints.
+                              For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
                             items:
                               description: |-
                                 The pod this Toleration is attached to tolerates any taint that matches
@@ -7863,7 +7848,7 @@ spec:
                           scraper
                         properties:
                           port:
-                            description: The prometheus HTTP port
+                            description: The metrics server HTTP port
                             format: int32
                             maximum: 65535
                             minimum: 1
@@ -8022,7 +8007,7 @@ spec:
                     type: object
                   subnetLabels:
                     description: |-
-                      `SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+                      `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
                       When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
                     properties:
                       customLabels:
@@ -8061,9 +8046,9 @@ spec:
                       settings, used in the Console plugin.
                     properties:
                       enable:
-                        default: true
                         description: |-
-                          Set `enable` to `true` to make the Console plugin querying flow metrics from Prometheus instead of Loki whenever possible.
+                          When `enable` is `true`, the Console plugin queries flow metrics from Prometheus instead of Loki whenever possible.
+                          It is enbaled by default: set it to `false` to disable this feature.
                           The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
                           Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
                           such as getting per-pod information or viewing raw flows.

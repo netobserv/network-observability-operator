@@ -97,10 +97,8 @@ const (
 // allow defining both fields.
 // +union
 type FlowCollectorAgent struct {
-	// `type` [deprecated (*)] selects the flows tracing agent. The only possible value is `eBPF` (default), to use NetObserv eBPF agent.<br>
-	// Previously, using an IPFIX collector was allowed, but was deprecated and it is now removed.<br>
-	// Setting `IPFIX` is ignored and still use the eBPF Agent.
-	// Since there is only a single option here, this field will be remove in a future API version.
+	// `type` [deprecated (*)] selects the flows tracing agent. Previously, this field allowed to select between `eBPF` or `IPFIX`.
+	// Only `eBPF` is allowed now, so this field is deprecated and is planned for removal in a future version of the API.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="eBPF";"IPFIX"
 	// +kubebuilder:default:=eBPF
@@ -183,7 +181,7 @@ type EBPFMetrics struct {
 	// +optional
 	Server MetricsServerConfig `json:"server,omitempty"`
 
-	// Set `enable` to `false` to disable eBPF agent metrics collection, by default it's `true`.
+	// Set `enable` to `false` to disable eBPF agent metrics collection. It is enabled by default.
 	// +optional
 	Enable *bool `json:"enable,omitempty"`
 
@@ -199,51 +197,51 @@ type EBPFFlowFilter struct {
 	// Set `enable` to `true` to enable eBPF flow filtering feature.
 	Enable *bool `json:"enable,omitempty"`
 
-	// CIDR defines the IP CIDR to filter flows by.
-	// Example: 10.10.10.0/24 or 100:100:100:100::/64
+	// `cidr` defines the IP CIDR to filter flows by.
+	// Examples: `10.10.10.0/24` or `100:100:100:100::/64`
 	CIDR string `json:"cidr,omitempty"`
 
-	// Action defines the action to perform on the flows that match the filter.
+	// `action` defines the action to perform on the flows that match the filter.
 	// +kubebuilder:validation:Enum:="Accept";"Reject"
 	Action string `json:"action,omitempty"`
 
-	// Protocol defines the protocol to filter flows by.
+	// `protocol` defines the protocol to filter flows by.
 	// +kubebuilder:validation:Enum:="TCP";"UDP";"ICMP";"ICMPv6";"SCTP"
 	// +optional
 	Protocol string `json:"protocol,omitempty"`
 
-	// Direction defines the direction to filter flows by.
+	// `direction` defines the direction to filter flows by.
 	// +kubebuilder:validation:Enum:="Ingress";"Egress"
 	// +optional
 	Direction string `json:"direction,omitempty"`
 
-	// SourcePorts defines the source ports to filter flows by.
-	// To filter a single port, set a single port as an integer value. For example sourcePorts: 80.
-	// To filter a range of ports, use a "start-end" range, string format. For example sourcePorts: "80-100".
+	// `sourcePorts` defines the source ports to filter flows by.
+	// To filter a single port, set a single port as an integer value. For example: `sourcePorts: 80`.
+	// To filter a range of ports, use a "start-end" range, string format. For example: `sourcePorts: "80-100"`.
 	// +optional
 	SourcePorts intstr.IntOrString `json:"sourcePorts,omitempty"`
 
-	// DestPorts defines the destination ports to filter flows by.
-	// To filter a single port, set a single port as an integer value. For example destPorts: 80.
-	// To filter a range of ports, use a "start-end" range, string format. For example destPorts: "80-100".
+	// `destPorts` defines the destination ports to filter flows by.
+	// To filter a single port, set a single port as an integer value. For example: `destPorts: 80`.
+	// To filter a range of ports, use a "start-end" range, string format. For example: `destPorts: "80-100"`.
 	// +optional
 	DestPorts intstr.IntOrString `json:"destPorts,omitempty"`
 
-	// Ports defines the ports to filter flows by. it can be user for either source or destination ports.
-	// To filter a single port, set a single port as an integer value. For example ports: 80.
-	// To filter a range of ports, use a "start-end" range, string format. For example ports: "80-10
+	// `ports` defines the ports to filter flows by, used both for source and destination ports.
+	// To filter a single port, set a single port as an integer value. For example: `ports: 80`.
+	// To filter a range of ports, use a "start-end" range, string format. For example: `ports: "80-100"`.
 	Ports intstr.IntOrString `json:"ports,omitempty"`
 
-	// PeerIP defines the IP address to filter flows by.
-	// Example: 10.10.10.10
+	// `peerIP` defines the IP address to filter flows by.
+	// Example: `10.10.10.10`.
 	// +optional
 	PeerIP string `json:"peerIP,omitempty"`
 
-	// ICMPType defines the ICMP type to filter flows by.
+	// `icmpType` defines the ICMP type to filter flows by.
 	// +optional
 	ICMPType *int `json:"icmpType,omitempty"`
 
-	// ICMPCode defines the ICMP code to filter flows by.
+	// `icmpCode` defines the ICMP code to filter flows by.
 	// +optional
 	ICMPCode *int `json:"icmpCode,omitempty"`
 }
@@ -284,7 +282,7 @@ type FlowCollectorEBPF struct {
 	CacheMaxFlows int32 `json:"cacheMaxFlows,omitempty"`
 
 	// `interfaces` contains the interface names from where flows are collected. If empty, the agent
-	// fetches all the interfaces in the system, excepting the ones listed in ExcludeInterfaces.
+	// fetches all the interfaces in the system, excepting the ones listed in `excludeInterfaces`.
 	// An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 	// Otherwise it is matched as a case-sensitive string.
 	//+optional
@@ -414,7 +412,7 @@ type MetricsServerConfig struct {
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
-	// The prometheus HTTP port
+	// The metrics server HTTP port
 	Port *int32 `json:"port,omitempty"`
 
 	// TLS configuration.
@@ -541,7 +539,7 @@ type FlowCollectorFLP struct {
 	AddZone *bool `json:"addZone,omitempty"`
 
 	//+optional
-	// `SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+	// `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
 	// When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
 	SubnetLabels SubnetLabels `json:"subnetLabels,omitempty"`
 
@@ -735,7 +733,7 @@ type FlowCollectorLoki struct {
 	// +optional
 	Monolithic LokiMonolithParams `json:"monolithic,omitempty"`
 
-	// Loki configuration for `LokiStack` mode. This is useful for an easy loki-operator configuration.
+	// Loki configuration for `LokiStack` mode. This is useful for an easy Loki Operator configuration.
 	// It is ignored for other modes.
 	// +optional
 	LokiStack LokiStackRef `json:"lokiStack,omitempty"`
@@ -795,13 +793,13 @@ type FlowCollectorPrometheus struct {
 
 // `PrometheusQuerier` defines the desired state for querying Prometheus (client...)
 type PrometheusQuerier struct {
-	// Set `enable` to `true` to make the Console plugin querying flow metrics from Prometheus instead of Loki whenever possible.
+	// When `enable` is `true`, the Console plugin queries flow metrics from Prometheus instead of Loki whenever possible.
+	// It is enbaled by default: set it to `false` to disable this feature.
 	// The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
 	// Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
 	// such as getting per-pod information or viewing raw flows.
 	// If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
 	// If they are both disabled, the Console plugin is not deployed.
-	//+kubebuilder:default:=true
 	Enable *bool `json:"enable,omitempty"`
 
 	// `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
@@ -1015,27 +1013,23 @@ type SASLConfig struct {
 
 // `SchedulingConfig` defines the scheduling configuration for NetObserv pods
 type SchedulingConfig struct {
-	// tolerations is a list of tolerations that allow the pod to schedule onto nodes with matching taints.
+	// `tolerations` is a list of tolerations that allow the pod to schedule onto nodes with matching taints.
+	// For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
 	//+optional
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
-	// NodeSelector is a selector which must be true for the pod to fit on a node.
-	// Selector which must match a node's labels for the pod to be scheduled on that node.
-	// More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+	// `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+	// For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.
 	// +optional
 	// +mapType=atomic
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
-	// If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling
+	// If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
 	// +optional
 	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 
-	// If specified, indicates the pod's priority. "system-node-critical" and
-	// "system-cluster-critical" are two special keywords which indicate the
-	// highest priorities with the former being the highest priority. Any other
-	// name must be defined by creating a PriorityClass object with that name.
-	// If not specified, the pod priority will be default or zero if there is no
-	// default.
+	// If specified, indicates the pod's priority. For documentation, refer to https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#how-to-use-priority-and-preemption.
+	// If not specified, default priority is used, or zero if there is no default.
 	// +optional
 	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
@@ -1050,7 +1044,7 @@ type AdvancedAgentConfig struct {
 	//+optional
 	Env map[string]string `json:"env,omitempty"`
 
-	// scheduling controls whether the pod will be scheduled or not.
+	// scheduling controls how the pods are scheduled on nodes.
 	// +optional
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 }
@@ -1114,7 +1108,7 @@ type AdvancedProcessorConfig struct {
 	// `conversationTerminatingTimeout` is the time to wait from detected FIN flag to end a conversation. Only relevant for TCP flows.
 	ConversationTerminatingTimeout *metav1.Duration `json:"conversationTerminatingTimeout,omitempty"`
 
-	// scheduling controls whether the pod will be scheduled or not.
+	// scheduling controls how the pods are scheduled on nodes.
 	// +optional
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 }
@@ -1175,7 +1169,7 @@ type AdvancedPluginConfig struct {
 	// `port` is the plugin service port. Do not use 9002, which is reserved for metrics.
 	Port *int32 `json:"port,omitempty"`
 
-	// scheduling controls whether the pod will be scheduled or not.
+	// scheduling controls how the pods are scheduled on nodes.
 	// +optional
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 }

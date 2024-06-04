@@ -21,7 +21,7 @@ Resource Types:
 
 
 
-FlowMetric is the Schema for the flowmetrics API
+FlowMetric is the API allowing to create custom metrics from the collected flow logs.
 
 <table>
     <thead>
