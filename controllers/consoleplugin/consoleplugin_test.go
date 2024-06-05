@@ -111,7 +111,9 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 
 func getBuilder(spec *flowslatest.FlowCollectorSpec, lk *helper.LokiConfig) builder {
 	info := reconcilers.Common{Namespace: testNamespace, Loki: lk}
-	return newBuilder(info.NewInstance(testImage, status.Instance{}), spec)
+	b := newBuilder(info.NewInstance(testImage, status.Instance{}), spec)
+	_, _, _ = b.configMap(context.Background()) // build configmap to update builder's volumes
+	return b
 }
 
 func TestContainerUpdateCheck(t *testing.T) {

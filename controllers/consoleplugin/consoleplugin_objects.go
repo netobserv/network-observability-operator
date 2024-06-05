@@ -208,21 +208,6 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 		})
 	}
 
-	// ensure volumes are up to date
-	// TODO/FIXME: why? The same is done in `getLokiConfig`, why doing it in two places? If there's a reason it should be commented
-	loki := b.info.Loki
-	if helper.UseLoki(b.desired) {
-		if loki.TLS.Enable && !loki.TLS.InsecureSkipVerify {
-			b.volumes.AddCACertificate(&loki.TLS, "loki-certs")
-		}
-		if loki.StatusTLS.Enable && !loki.StatusTLS.InsecureSkipVerify {
-			b.volumes.AddMutualTLSCertificates(&loki.StatusTLS, "loki-status-certs")
-		}
-		if loki.UseHostToken() {
-			b.volumes.AddToken(constants.PluginName)
-		}
-	}
-
 	return &corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: b.labels,
