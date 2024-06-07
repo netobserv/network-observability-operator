@@ -85,7 +85,7 @@ type FlowMetricSpec struct {
 	Filters []MetricFilter `json:"filters"`
 
 	// `labels` is a list of fields that should be used as Prometheus labels, also known as dimensions.
-	// From choosing labels results the level of granularity of this metric, as well as the available aggregations at query time.
+	// From choosing labels results the level of granularity of this metric, and the available aggregations at query time.
 	// It must be done carefully as it impacts the metric cardinality (cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric).
 	// In general, avoid setting very high cardinality labels such as IP or MAC addresses.
 	// "SrcK8S_OwnerName" or "DstK8S_OwnerName" should be preferred over "SrcK8S_Name" or "DstK8S_Name" as much as possible.
@@ -94,18 +94,18 @@ type FlowMetricSpec struct {
 	Labels []string `json:"labels"`
 
 	// Filter for ingress, egress or any direction flows.
-	// When set to `Ingress`, it is equivalent to adding the regex filter on `FlowDirection`: `0|2`.
-	// When set to `Egress`, it is equivalent to adding the regex filter on `FlowDirection`: `1|2`.
+	// When set to `Ingress`, it is equivalent to adding the regular expression filter on `FlowDirection`: `0|2`.
+	// When set to `Egress`, it is equivalent to adding the regular expression filter on `FlowDirection`: `1|2`.
 	// +kubebuilder:validation:Enum:="Any";"Egress";"Ingress"
 	// +kubebuilder:default:="Any"
 	// +optional
 	Direction FlowDirection `json:"direction,omitempty"`
 
-	// A list of buckets to use when `type` is "Histogram". The list must be parseable as floats. When not set, Prometheus default buckets are used.
+	// A list of buckets to use when `type` is "Histogram". The list must be parsable as floats. When not set, Prometheus default buckets are used.
 	// +optional
 	Buckets []string `json:"buckets,omitempty"`
 
-	// When non-zero, scale factor (divider) of the value. Metric value = Flow value / Divider.
+	// When nonzero, scale factor (divider) of the value. Metric value = Flow value / Divider.
 	// +optional
 	Divider string `json:"divider"`
 

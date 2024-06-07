@@ -113,7 +113,7 @@ Use "Histogram" for any value that must be sampled independently, such as latenc
         <td><b>buckets</b></td>
         <td>[]string</td>
         <td>
-          A list of buckets to use when `type` is "Histogram". The list must be parseable as floats. When not set, Prometheus default buckets are used.<br/>
+          A list of buckets to use when `type` is "Histogram". The list must be parsable as floats. When not set, Prometheus default buckets are used.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -128,8 +128,8 @@ Use "Histogram" for any value that must be sampled independently, such as latenc
         <td>enum</td>
         <td>
           Filter for ingress, egress or any direction flows.
-When set to `Ingress`, it is equivalent to adding the regex filter on `FlowDirection`: `0|2`.
-When set to `Egress`, it is equivalent to adding the regex filter on `FlowDirection`: `1|2`.<br/>
+When set to `Ingress`, it is equivalent to adding the regular expression filter on `FlowDirection`: `0|2`.
+When set to `Egress`, it is equivalent to adding the regular expression filter on `FlowDirection`: `1|2`.<br/>
           <br/>
             <i>Enum</i>: Any, Egress, Ingress<br/>
             <i>Default</i>: Any<br/>
@@ -139,7 +139,7 @@ When set to `Egress`, it is equivalent to adding the regex filter on `FlowDirect
         <td><b>divider</b></td>
         <td>string</td>
         <td>
-          When non-zero, scale factor (divider) of the value. Metric value = Flow value / Divider.<br/>
+          When nonzero, scale factor (divider) of the value. Metric value = Flow value / Divider.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -156,7 +156,7 @@ Refer to the documentation for the list of available fields: https://docs.opensh
         <td>[]string</td>
         <td>
           `labels` is a list of fields that should be used as Prometheus labels, also known as dimensions.
-From choosing labels results the level of granularity of this metric, as well as the available aggregations at query time.
+From choosing labels results the level of granularity of this metric, and the available aggregations at query time.
 It must be done carefully as it impacts the metric cardinality (cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric).
 In general, avoid setting very high cardinality labels such as IP or MAC addresses.
 "SrcK8S_OwnerName" or "DstK8S_OwnerName" should be preferred over "SrcK8S_Name" or "DstK8S_Name" as much as possible.

@@ -5697,7 +5697,7 @@ Resource Types:
         <td>
           Defines the desired state of the FlowCollector resource.
 <br><br>
-*: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature
+*: the mention of "unsupported" or "deprecated" for a feature throughout this document means that this feature
 is not officially supported by Red Hat. It might have been, for example, contributed by the community
 and accepted without a formal agreement for maintenance. The product maintainers might provide some support
 for these features as a best effort only.<br/>
@@ -5721,7 +5721,7 @@ for these features as a best effort only.<br/>
 
 Defines the desired state of the FlowCollector resource.
 <br><br>
-*: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature
+*: the mention of "unsupported" or "deprecated" for a feature throughout this document means that this feature
 is not officially supported by Red Hat. It might have been, for example, contributed by the community
 and accepted without a formal agreement for maintenance. The product maintainers might provide some support
 for these features as a best effort only.
@@ -5754,7 +5754,7 @@ for these features as a best effort only.
         <td>enum</td>
         <td>
           `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br>
-- `Direct` (default) to make the flow processor listening directly from the agents.<br>
+- `Direct` (default) to make the flow processor listen directly from the agents.<br>
 - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br>
 Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
           <br/>
@@ -5935,7 +5935,7 @@ If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<
         <td><b><a href="#flowcollectorspecagentebpfflowfilter-1">flowFilter</a></b></td>
         <td>object</td>
         <td>
-          `flowFilter` defines the eBPF agent configuration regarding flow filtering<br/>
+          `flowFilter` defines the eBPF agent configuration regarding flow filtering.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5981,7 +5981,7 @@ Otherwise it is matched as a case-sensitive string.<br/>
         <td><b><a href="#flowcollectorspecagentebpfmetrics-1">metrics</a></b></td>
         <td>object</td>
         <td>
-          `metrics` defines the eBPF agent configuration regarding metrics<br/>
+          `metrics` defines the eBPF agent configuration regarding metrics.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6000,7 +6000,7 @@ Some agent features require the privileged mode, such as packet drops tracking (
         <td>object</td>
         <td>
           `resources` are the compute resources required by this container.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:50Mi]]<br/>
         </td>
@@ -6086,7 +6086,7 @@ scheduling controls how the pods are scheduled on nodes.
         <td><b>nodeSelector</b></td>
         <td>map[string]string</td>
         <td>
-          `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+          `nodeSelector` allows scheduling of pods only onto nodes that have each of the specified labels.
 For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.<br/>
         </td>
         <td>false</td>
@@ -7811,7 +7811,7 @@ If the operator is Exists, the value should be empty, otherwise just a regular s
 
 
 
-`flowFilter` defines the eBPF agent configuration regarding flow filtering
+`flowFilter` defines the eBPF agent configuration regarding flow filtering.
 
 <table>
     <thead>
@@ -7845,7 +7845,7 @@ Examples: `10.10.10.0/24` or `100:100:100:100::/64`<br/>
         <td>
           `destPorts` defines the destination ports to filter flows by.
 To filter a single port, set a single port as an integer value. For example: `destPorts: 80`.
-To filter a range of ports, use a "start-end" range, string format. For example: `destPorts: "80-100"`.<br/>
+To filter a range of ports, use a "start-end" range in string format. For example: `destPorts: "80-100"`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7861,21 +7861,21 @@ To filter a range of ports, use a "start-end" range, string format. For example:
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `true` to enable eBPF flow filtering feature.<br/>
+          Set `enable` to `true` to enable the eBPF flow filtering feature.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>icmpCode</b></td>
         <td>integer</td>
         <td>
-          `icmpCode` defines the ICMP code to filter flows by.<br/>
+          `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, defines the ICMP code to filter flows by.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>icmpType</b></td>
         <td>integer</td>
         <td>
-          `icmpType` defines the ICMP type to filter flows by.<br/>
+          `icmpType`, for ICMP traffic, defines the ICMP type to filter flows by.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7890,9 +7890,9 @@ Example: `10.10.10.10`.<br/>
         <td><b>ports</b></td>
         <td>int or string</td>
         <td>
-          `ports` defines the ports to filter flows by, used both for source and destination ports.
+          `ports` defines the ports to filter flows by. It is used both for source and destination ports.
 To filter a single port, set a single port as an integer value. For example: `ports: 80`.
-To filter a range of ports, use a "start-end" range, string format. For example: `ports: "80-100"`.<br/>
+To filter a range of ports, use a "start-end" range in string format. For example: `ports: "80-100"`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7910,7 +7910,7 @@ To filter a range of ports, use a "start-end" range, string format. For example:
         <td>
           `sourcePorts` defines the source ports to filter flows by.
 To filter a single port, set a single port as an integer value. For example: `sourcePorts: 80`.
-To filter a range of ports, use a "start-end" range, string format. For example: `sourcePorts: "80-100"`.<br/>
+To filter a range of ports, use a "start-end" range in string format. For example: `sourcePorts: "80-100"`.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7922,7 +7922,7 @@ To filter a range of ports, use a "start-end" range, string format. For example:
 
 
 
-`metrics` defines the eBPF agent configuration regarding metrics
+`metrics` defines the eBPF agent configuration regarding metrics.
 
 <table>
     <thead>
@@ -7939,7 +7939,7 @@ To filter a range of ports, use a "start-end" range, string format. For example:
         <td>
           `disableAlerts` is a list of alerts that should be disabled.
 Possible values are:<br>
-`NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter being triggered.<br><br/>
+`NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter is being triggered.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7953,7 +7953,7 @@ Possible values are:<br>
         <td><b><a href="#flowcollectorspecagentebpfmetricsserver-1">server</a></b></td>
         <td>object</td>
         <td>
-          Metrics server endpoint configuration for Prometheus scraper<br/>
+          Metrics server endpoint configuration for the Prometheus scraper.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7965,7 +7965,7 @@ Possible values are:<br>
 
 
 
-Metrics server endpoint configuration for Prometheus scraper
+Metrics server endpoint configuration for the Prometheus scraper.
 
 <table>
     <thead>
@@ -7980,7 +7980,7 @@ Metrics server endpoint configuration for Prometheus scraper
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          The metrics server HTTP port<br/>
+          The metrics server HTTP port.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Minimum</i>: 1<br/>
@@ -8135,14 +8135,14 @@ Reference to the CA file when `type` is set to `Provided`.
         <td><b>file</b></td>
         <td>string</td>
         <td>
-          File name within the config map or secret<br/>
+          File name within the config map or secret.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the config map or secret containing the file<br/>
+          Name of the config map or secret containing the file.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8159,7 +8159,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the file reference: "configmap" or "secret"<br/>
+          Type for the file reference: "configmap" or "secret".<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -8174,7 +8174,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 `resources` are the compute resources required by this container.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 <table>
     <thead>
@@ -8444,8 +8444,7 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Enables the console plugin deployment.
-`spec.loki.enable` must also be `true`<br/>
+          Enables the console plugin deployment.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -8504,7 +8503,7 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/
         <td>object</td>
         <td>
           `resources`, in terms of compute resources, required by this container.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:100Mi] requests:map[cpu:100m memory:50Mi]]<br/>
         </td>
@@ -8536,7 +8535,7 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
         <td>[]string</td>
         <td>
           `args` allows passing custom arguments to underlying components. Useful for overriding
-some parameters, such as an url or a configuration path, that should not be
+some parameters, such as a URL or a configuration path, that should not be
 publicly exposed as part of the FlowCollector descriptor, as they are only useful
 in edge debug or support scenarios.<br/>
         </td>
@@ -8578,7 +8577,7 @@ When set to `false`, you can still register it manually by editing console.opera
         <td><b><a href="#flowcollectorspecconsolepluginadvancedscheduling">scheduling</a></b></td>
         <td>object</td>
         <td>
-          scheduling controls how the pods are scheduled on nodes.<br/>
+          `scheduling` controls how the pods are scheduled on nodes.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8590,7 +8589,7 @@ When set to `false`, you can still register it manually by editing console.opera
 
 
 
-scheduling controls how the pods are scheduled on nodes.
+`scheduling` controls how the pods are scheduled on nodes.
 
 <table>
     <thead>
@@ -8612,7 +8611,7 @@ scheduling controls how the pods are scheduled on nodes.
         <td><b>nodeSelector</b></td>
         <td>map[string]string</td>
         <td>
-          `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+          `nodeSelector` allows scheduling of pods only onto nodes that have each of the specified labels.
 For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.<br/>
         </td>
         <td>false</td>
@@ -11343,7 +11342,7 @@ for example, `filter: {"src_namespace": "namespace1,namespace2"}`.<br/>
 
 
 `resources`, in terms of compute resources, required by this container.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 <table>
     <thead>
@@ -11624,14 +11623,14 @@ Reference to the secret or config map containing the client ID
         <td><b>file</b></td>
         <td>string</td>
         <td>
-          File name within the config map or secret<br/>
+          File name within the config map or secret.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the config map or secret containing the file<br/>
+          Name of the config map or secret containing the file.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11648,7 +11647,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the file reference: "configmap" or "secret"<br/>
+          Type for the file reference: "configmap" or "secret".<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -11677,14 +11676,14 @@ Reference to the secret or config map containing the client secret
         <td><b>file</b></td>
         <td>string</td>
         <td>
-          File name within the config map or secret<br/>
+          File name within the config map or secret.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the config map or secret containing the file<br/>
+          Name of the config map or secret containing the file.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11701,7 +11700,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the file reference: "configmap" or "secret"<br/>
+          Type for the file reference: "configmap" or "secret".<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -11999,14 +11998,14 @@ Reference to the secret or config map containing the client ID
         <td><b>file</b></td>
         <td>string</td>
         <td>
-          File name within the config map or secret<br/>
+          File name within the config map or secret.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the config map or secret containing the file<br/>
+          Name of the config map or secret containing the file.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12023,7 +12022,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the file reference: "configmap" or "secret"<br/>
+          Type for the file reference: "configmap" or "secret".<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -12052,14 +12051,14 @@ Reference to the secret or config map containing the client secret
         <td><b>file</b></td>
         <td>string</td>
         <td>
-          File name within the config map or secret<br/>
+          File name within the config map or secret.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the config map or secret containing the file<br/>
+          Name of the config map or secret containing the file.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12076,7 +12075,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the file reference: "configmap" or "secret"<br/>
+          Type for the file reference: "configmap" or "secret".<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -13508,7 +13507,7 @@ This setting is ignored when Kafka is disabled.<br/>
         <td>object</td>
         <td>
           `resources` are the compute resources required by this container.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:800Mi] requests:map[cpu:100m memory:100Mi]]<br/>
         </td>
@@ -13675,7 +13674,7 @@ scheduling controls how the pods are scheduled on nodes.
         <td><b>nodeSelector</b></td>
         <td>map[string]string</td>
         <td>
-          `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+          `nodeSelector` allows scheduling of pods only onto nodes that have each of the specified labels.
 For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.<br/>
         </td>
         <td>false</td>
@@ -16393,7 +16392,7 @@ Metrics server endpoint configuration for Prometheus scraper
         <td><b>port</b></td>
         <td>integer</td>
         <td>
-          The metrics server HTTP port<br/>
+          The metrics server HTTP port.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Minimum</i>: 1<br/>
@@ -16548,14 +16547,14 @@ Reference to the CA file when `type` is set to `Provided`.
         <td><b>file</b></td>
         <td>string</td>
         <td>
-          File name within the config map or secret<br/>
+          File name within the config map or secret.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the config map or secret containing the file<br/>
+          Name of the config map or secret containing the file.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -16572,7 +16571,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the file reference: "configmap" or "secret"<br/>
+          Type for the file reference: "configmap" or "secret".<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -16587,7 +16586,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 `resources` are the compute resources required by this container.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 <table>
     <thead>
