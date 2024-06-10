@@ -537,7 +537,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -545,7 +545,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -554,7 +554,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.agent.ebpf.metrics.server.tls.providedCaFile
@@ -1179,7 +1179,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1187,7 +1187,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1196,7 +1196,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.exporters[].kafka.tls.userCert
@@ -1218,7 +1218,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1226,7 +1226,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1235,7 +1235,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.kafka
@@ -1429,7 +1429,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1437,7 +1437,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1446,7 +1446,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.kafka.tls.userCert
@@ -1468,7 +1468,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1476,7 +1476,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1485,7 +1485,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki
@@ -1754,7 +1754,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1762,7 +1762,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1771,7 +1771,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.manual.statusTls.userCert
@@ -1793,7 +1793,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1801,7 +1801,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1810,7 +1810,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.manual.tls
@@ -1867,7 +1867,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1875,7 +1875,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1884,7 +1884,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.manual.tls.userCert
@@ -1906,7 +1906,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1914,7 +1914,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1923,7 +1923,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.microservices
@@ -2016,7 +2016,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2024,7 +2024,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2033,7 +2033,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.microservices.tls.userCert
@@ -2055,7 +2055,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2063,7 +2063,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2072,7 +2072,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.monolithic
@@ -2161,7 +2161,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2169,7 +2169,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2178,7 +2178,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.monolithic.tls.userCert
@@ -2200,7 +2200,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2208,7 +2208,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2217,7 +2217,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.processor
@@ -2582,7 +2582,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2590,7 +2590,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2599,7 +2599,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.processor.metrics.server.tls.providedCaFile
@@ -2890,7 +2890,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2898,7 +2898,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2907,7 +2907,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.prometheus.querier.manual.tls.userCert
@@ -2929,7 +2929,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2937,7 +2937,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2946,7 +2946,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 

@@ -949,10 +949,10 @@ type FileReference struct {
 
 type CertificateReference struct {
 	//+kubebuilder:validation:Enum=configmap;secret
-	// Type for the certificate reference: `configmap` or `secret`
+	// Type for the certificate reference: `configmap` or `secret`.
 	Type MountableType `json:"type,omitempty"`
 
-	// Name of the config map or secret containing certificates
+	// Name of the config map or secret containing certificates.
 	Name string `json:"name,omitempty"`
 
 	// Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
@@ -961,7 +961,7 @@ type CertificateReference struct {
 	//+kubebuilder:default:=""
 	Namespace string `json:"namespace,omitempty"`
 
-	// `certFile` defines the path to the certificate file name within the config map or secret
+	// `certFile` defines the path to the certificate file name within the config map or secret.
 	CertFile string `json:"certFile,omitempty"`
 
 	// `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.

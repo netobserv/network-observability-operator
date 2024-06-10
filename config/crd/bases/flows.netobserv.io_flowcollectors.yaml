@@ -3514,13 +3514,13 @@ spec:
                                       description: TLS configuration when `type` is set to `Provided`.
                                       properties:
                                         certFile:
-                                          description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                          description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                           type: string
                                         certKey:
                                           description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                           type: string
                                         name:
-                                          description: Name of the config map or secret containing certificates
+                                          description: Name of the config map or secret containing certificates.
                                           type: string
                                         namespace:
                                           default: ""
@@ -3529,7 +3529,7 @@ spec:
                                             If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                           type: string
                                         type:
-                                          description: 'Type for the certificate reference: `configmap` or `secret`'
+                                          description: 'Type for the certificate reference: `configmap` or `secret`.'
                                           enum:
                                             - configmap
                                             - secret
@@ -5213,13 +5213,13 @@ spec:
                                 description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                                 properties:
                                   certFile:
-                                    description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                    description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                     type: string
                                   certKey:
                                     description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                     type: string
                                   name:
-                                    description: Name of the config map or secret containing certificates
+                                    description: Name of the config map or secret containing certificates.
                                     type: string
                                   namespace:
                                     default: ""
@@ -5228,7 +5228,7 @@ spec:
                                       If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                     type: string
                                   type:
-                                    description: 'Type for the certificate reference: `configmap` or `secret`'
+                                    description: 'Type for the certificate reference: `configmap` or `secret`.'
                                     enum:
                                       - configmap
                                       - secret
@@ -5248,13 +5248,13 @@ spec:
                                 description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                                 properties:
                                   certFile:
-                                    description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                    description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                     type: string
                                   certKey:
                                     description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                     type: string
                                   name:
-                                    description: Name of the config map or secret containing certificates
+                                    description: Name of the config map or secret containing certificates.
                                     type: string
                                   namespace:
                                     default: ""
@@ -5263,7 +5263,7 @@ spec:
                                       If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                     type: string
                                   type:
-                                    description: 'Type for the certificate reference: `configmap` or `secret`'
+                                    description: 'Type for the certificate reference: `configmap` or `secret`.'
                                     enum:
                                       - configmap
                                       - secret
@@ -5358,13 +5358,13 @@ spec:
                           description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                           properties:
                             certFile:
-                              description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                              description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                               type: string
                             certKey:
                               description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                               type: string
                             name:
-                              description: Name of the config map or secret containing certificates
+                              description: Name of the config map or secret containing certificates.
                               type: string
                             namespace:
                               default: ""
@@ -5373,7 +5373,7 @@ spec:
                                 If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                               type: string
                             type:
-                              description: 'Type for the certificate reference: `configmap` or `secret`'
+                              description: 'Type for the certificate reference: `configmap` or `secret`.'
                               enum:
                                 - configmap
                                 - secret
@@ -5393,13 +5393,13 @@ spec:
                           description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                           properties:
                             certFile:
-                              description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                              description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                               type: string
                             certKey:
                               description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                               type: string
                             name:
-                              description: Name of the config map or secret containing certificates
+                              description: Name of the config map or secret containing certificates.
                               type: string
                             namespace:
                               default: ""
@@ -5408,7 +5408,7 @@ spec:
                                 If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                               type: string
                             type:
-                              description: 'Type for the certificate reference: `configmap` or `secret`'
+                              description: 'Type for the certificate reference: `configmap` or `secret`.'
                               enum:
                                 - configmap
                                 - secret
@@ -5515,13 +5515,13 @@ spec:
                               description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5530,7 +5530,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5550,13 +5550,13 @@ spec:
                               description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5565,7 +5565,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5594,13 +5594,13 @@ spec:
                               description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5609,7 +5609,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5629,13 +5629,13 @@ spec:
                               description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5644,7 +5644,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5677,13 +5677,13 @@ spec:
                               description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5692,7 +5692,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5712,13 +5712,13 @@ spec:
                               description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5727,7 +5727,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5766,13 +5766,13 @@ spec:
                               description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5781,7 +5781,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5801,13 +5801,13 @@ spec:
                               description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5816,7 +5816,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -7263,13 +7263,13 @@ spec:
                                   description: TLS configuration when `type` is set to `Provided`.
                                   properties:
                                     certFile:
-                                      description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                      description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                       type: string
                                     certKey:
                                       description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                       type: string
                                     name:
-                                      description: Name of the config map or secret containing certificates
+                                      description: Name of the config map or secret containing certificates.
                                       type: string
                                     namespace:
                                       default: ""
@@ -7278,7 +7278,7 @@ spec:
                                         If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                       type: string
                                     type:
-                                      description: 'Type for the certificate reference: `configmap` or `secret`'
+                                      description: 'Type for the certificate reference: `configmap` or `secret`.'
                                       enum:
                                         - configmap
                                         - secret
@@ -7447,13 +7447,13 @@ spec:
                                   description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                                   properties:
                                     certFile:
-                                      description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                      description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                       type: string
                                     certKey:
                                       description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                       type: string
                                     name:
-                                      description: Name of the config map or secret containing certificates
+                                      description: Name of the config map or secret containing certificates.
                                       type: string
                                     namespace:
                                       default: ""
@@ -7462,7 +7462,7 @@ spec:
                                         If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                       type: string
                                     type:
-                                      description: 'Type for the certificate reference: `configmap` or `secret`'
+                                      description: 'Type for the certificate reference: `configmap` or `secret`.'
                                       enum:
                                         - configmap
                                         - secret
@@ -7482,13 +7482,13 @@ spec:
                                   description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                                   properties:
                                     certFile:
-                                      description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                      description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                       type: string
                                     certKey:
                                       description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                       type: string
                                     name:
-                                      description: Name of the config map or secret containing certificates
+                                      description: Name of the config map or secret containing certificates.
                                       type: string
                                     namespace:
                                       default: ""
@@ -7497,7 +7497,7 @@ spec:
                                         If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                       type: string
                                     type:
-                                      description: 'Type for the certificate reference: `configmap` or `secret`'
+                                      description: 'Type for the certificate reference: `configmap` or `secret`.'
                                       enum:
                                         - configmap
                                         - secret
