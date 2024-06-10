@@ -441,7 +441,7 @@ Type::
 | `disableAlerts` is a list of alerts that should be disabled.
 Possible values are: +
 
-`NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter is being triggered. +
+`NetObservDroppedFlows`, which is triggered when the eBPF agent is missing packets or flows, such as when the BPF hashmap is busy or full, or the capacity limiter is being triggered. +
 
 
 | `enable`
