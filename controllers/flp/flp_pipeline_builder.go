@@ -230,7 +230,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		enrichedStage.EncodePrometheus("prometheus", promEncode)
 	}
 
-	b.addCustomExportStages(&enrichedStage)
+	b.addCustomExportStages(&enrichedStage, flpMetrics)
 	return nil
 }
 
@@ -438,13 +438,16 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 	return lastStage
 }
 
-func (b *PipelineBuilder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage) {
+func (b *PipelineBuilder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage, flpMetrics []api.MetricsItem) {
 	for i, exporter := range b.desired.Exporters {
 		if exporter.Type == flowslatest.KafkaExporter {
 			b.createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), &exporter.Kafka, enrichedStage)
 		}
 		if exporter.Type == flowslatest.IpfixExporter {
 			createIPFIXWriteStage(fmt.Sprintf("IPFIX-export-%d", i), &exporter.IPFIX, enrichedStage)
+		}
+		if exporter.Type == flowslatest.OpenTelemetryExporter {
+			b.createOpenTelemetryStage(fmt.Sprintf("Otel-export-%d", i), &exporter.OpenTelemetry, enrichedStage, flpMetrics)
 		}
 	}
 }
@@ -453,8 +456,8 @@ func (b *PipelineBuilder) createKafkaWriteStage(name string, spec *flowslatest.F
 	return fromStage.EncodeKafka(name, api.EncodeKafka{
 		Address: spec.Address,
 		Topic:   spec.Topic,
-		TLS:     getKafkaTLS(&spec.TLS, name, b.volumes),
-		SASL:    getKafkaSASL(&spec.SASL, name, b.volumes),
+		TLS:     getClientTLS(&spec.TLS, name, b.volumes),
+		SASL:    getSASL(&spec.SASL, name, b.volumes),
 	})
 }
 
@@ -480,7 +483,57 @@ func getIPFIXTransport(transport string) string {
 	}
 }
 
-func getKafkaTLS(tls *flowslatest.ClientTLS, volumeName string, volumes *volumes.Builder) *api.ClientTLS {
+func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslatest.FlowCollectorOpenTelemetry, fromStage *config.PipelineBuilderStage, flpMetrics []api.MetricsItem) {
+	conn := api.OtlpConnectionInfo{
+		Address:        spec.TargetHost,
+		Port:           spec.TargetPort,
+		ConnectionType: getOtelConnType(spec.Type),
+		TLS:            getClientTLS(&spec.TLS, name, b.volumes),
+		Headers:        spec.Headers,
+	}
+
+	// otel logs config
+	if spec.Logs.Enable != nil && *spec.Logs.Enable {
+		transformConfig := api.TransformGeneric{
+			Policy: "replace_keys",
+			Rules:  constants.OpenTelemetryDefaultTransformRules,
+		}
+		// set custom rules if specified
+		if spec.Rules != nil {
+			transformConfig.Rules = *spec.Rules
+		}
+		// add transform stage
+		transformStage := fromStage.TransformGeneric(fmt.Sprintf("%s-transform", name), transformConfig)
+		// add encode stage(s)
+		transformStage.EncodeOtelLogs(fmt.Sprintf("%s-logs", name), api.EncodeOtlpLogs{
+			OtlpConnectionInfo: &conn,
+		})
+	}
+
+	// otel metrics config
+	if spec.Metrics.Enable != nil && *spec.Metrics.Enable {
+		fromStage.EncodeOtelMetrics(fmt.Sprintf("%s-metrics", name), api.EncodeOtlpMetrics{
+			OtlpConnectionInfo: &conn,
+			Prefix:             constants.OperatorName,
+			Metrics:            flpMetrics,
+			PushTimeInterval:   api.Duration{Duration: spec.Metrics.PushTimeInterval.Duration},
+			ExpiryTime:         api.Duration{Duration: spec.Metrics.ExpiryTime.Duration},
+		})
+	}
+
+	// TODO: implement api.EncodeOtlpTraces
+}
+
+func getOtelConnType(connType string) string {
+	switch connType {
+	case "http":
+		return "http"
+	default:
+		return "grpc"
+	}
+}
+
+func getClientTLS(tls *flowslatest.ClientTLS, volumeName string, volumes *volumes.Builder) *api.ClientTLS {
 	if tls.Enable {
 		caPath, userCertPath, userKeyPath := volumes.AddMutualTLSCertificates(tls, volumeName)
 		return &api.ClientTLS{
@@ -493,7 +546,7 @@ func getKafkaTLS(tls *flowslatest.ClientTLS, volumeName string, volumes *volumes
 	return nil
 }
 
-func getKafkaSASL(sasl *flowslatest.SASLConfig, volumePrefix string, volumes *volumes.Builder) *api.SASLConfig {
+func getSASL(sasl *flowslatest.SASLConfig, volumePrefix string, volumes *volumes.Builder) *api.SASLConfig {
 	if !helper.UseSASL(sasl) {
 		return nil
 	}

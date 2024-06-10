@@ -57,7 +57,7 @@ require (
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.19.0 // indirect
+	github.com/prometheus/client_golang v1.19.1 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
@@ -84,3 +84,5 @@ require (
 )
 
 replace github.com/prometheus/common v0.48.0 => github.com/netobserv/prometheus-common v0.48.0-netobserv
+
+replace github.com/netobserv/flowlogs-pipeline => ../flowlogs-pipeline

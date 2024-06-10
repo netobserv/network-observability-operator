@@ -736,6 +736,7 @@ func autoConvert_v1beta2_FlowCollectorExporter_To_v1beta1_FlowCollectorExporter(
 	if err := Convert_v1beta2_FlowCollectorIPFIXReceiver_To_v1beta1_FlowCollectorIPFIXReceiver(&in.IPFIX, &out.IPFIX, s); err != nil {
 		return err
 	}
+	// WARNING: in.OpenTelemetry requires manual conversion: does not exist in peer-type
 	return nil
 }
 

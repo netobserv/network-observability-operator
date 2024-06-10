@@ -172,3 +172,16 @@ spec:
     #     targetHost: "ipfix-collector.ipfix.svc.cluster.local"
     #     targetPort: 4739
     #     transport: TCP or UDP (optional - defaults to TCP)
+    # or
+    # - type: OpenTelemetry
+    #   openTelemetry:
+    #     targetHost: "1.2.3.4:443"
+    #     targetPort: 4317
+    #     connectionType: grpc
+    #     logs:
+    #       enable: true
+    #     metrics:
+    #       enable: true
+    #       prefix: netobserv
+    #       pushTimeInterval: 20s
+    #       expiryTime: 2m

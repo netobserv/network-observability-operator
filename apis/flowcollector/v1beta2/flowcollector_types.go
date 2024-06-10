@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta2
 
 import (
+	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -371,6 +372,83 @@ type FlowCollectorIPFIXReceiver struct {
 	// +kubebuilder:validation:Enum:="TCP";"UDP"
 	// +optional
 	Transport string `json:"transport,omitempty"`
+}
+
+type FlowCollectorOpenTelemetryLogs struct {
+	// Set `enable` to `true` to send logs to Open Telemetry receiver.
+	//+kubebuilder:default:=true
+	Enable *bool `json:"enable,omitempty"`
+}
+
+type FlowCollectorOpenTelemetryMetrics struct {
+	// Set `enable` to `true` to send metrics to Open Telemetry receiver.
+	//+kubebuilder:default:=true
+	Enable *bool `json:"enable,omitempty"`
+
+	// Prefix added to each metric name
+	// +optional
+	Prefix string `json:"prefix,omitempty"`
+
+	// How often should metrics be sent to collector
+	// +kubebuilder:default:="20s"
+	PushTimeInterval *metav1.Duration `json:"pushTimeInterval,omitempty"`
+
+	// Time duration of no-flow to wait before deleting data item
+	// +kubebuilder:default:="2m"
+	ExpiryTime *metav1.Duration `json:"expiryTime,omitempty"`
+}
+
+type FlowCollectorOpenTelemetryTraces struct {
+	// Set `enable` to `true` to send traces to Open Telemetry receiver.
+	//+kubebuilder:default:=true
+	Enable *bool `json:"enable,omitempty"`
+
+	// Separate span for each prefix listed
+	//+optional
+	SpanSplitter []string `json:"spanSplitter,omitempty"`
+}
+
+// Add more exporter types below
+type ConnectionType string
+
+type FlowCollectorOpenTelemetry struct {
+	// Address of the Open Telemetry receiver
+	// +kubebuilder:default:=""
+	TargetHost string `json:"targetHost"`
+
+	// Port for the Open Telemetry receiver
+	TargetPort int `json:"targetPort"`
+
+	// Type of Open Telemetry connection. The available options are `http` and `grpc`.
+	// +optional
+	Type string `json:"type"`
+
+	// Headers to add to messages (optional)
+	// +optional
+	Headers map[string]string `json:"headers,omitempty"`
+
+	// TLS client configuration.
+	// +optional
+	TLS ClientTLS `json:"tls"`
+
+	// Custom rules to transform flow logs to Opentelemetry-conformant format.
+	// By default the following format will be used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal
+	// Setting `customRules` will fully override the default rules allowing you to export each field to your naming convention
+	// +optional
+	Rules *[]api.GenericTransformRule `json:"customRules,omitempty"`
+
+	// Open telemetry configuration for logs.
+	// +optional
+	Logs FlowCollectorOpenTelemetryLogs `json:"logs"`
+
+	// Open telemetry configuration for metrics.
+	// +optional
+	Metrics FlowCollectorOpenTelemetryMetrics `json:"metrics"`
+
+	// TODO: add traces in future
+	// Open telemetry configuration for traces.
+	// +optional
+	//Traces FlowCollectorOpenTelemetryTraces `json:"traces"`
 }
 
 type ServerTLSConfigType string
@@ -1201,15 +1279,16 @@ type SubnetLabel struct {
 type ExporterType string
 
 const (
-	KafkaExporter ExporterType = "Kafka"
-	IpfixExporter ExporterType = "IPFIX"
+	KafkaExporter         ExporterType = "Kafka"
+	IpfixExporter         ExporterType = "IPFIX"
+	OpenTelemetryExporter ExporterType = "OpenTelemetry"
 )
 
 // `FlowCollectorExporter` defines an additional exporter to send enriched flows to.
 type FlowCollectorExporter struct {
 	// `type` selects the type of exporters. The available options are `Kafka` and `IPFIX`.
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="Kafka";"IPFIX"
+	// +kubebuilder:validation:Enum:="Kafka";"IPFIX";"OpenTelemetry"
 	// +kubebuilder:validation:Required
 	Type ExporterType `json:"type"`
 
@@ -1220,6 +1299,10 @@ type FlowCollectorExporter struct {
 	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
 	// +optional
 	IPFIX FlowCollectorIPFIXReceiver `json:"ipfix,omitempty"`
+
+	// Open telemetry configuration, such as the IP address and port to send enriched logs, metrics and or traces to.
+	// +optional
+	OpenTelemetry FlowCollectorOpenTelemetry `json:"openTelemetry,omitempty"`
 }
 
 // `FlowCollectorStatus` defines the observed state of FlowCollector
