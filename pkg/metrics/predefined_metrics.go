@@ -46,6 +46,7 @@ var (
 	DefaultIncludeListLokiDisabled = []string{
 		"node_ingress_bytes_total",
 		"workload_ingress_bytes_total",
+		"workload_ingress_packets_total",
 		"workload_flows_total",
 		"workload_drop_bytes_total",
 		"workload_drop_packets_total",
@@ -111,6 +112,8 @@ func init() {
 			tags: []string{group, "rtt"},
 		})
 		// Drops metrics
+		dropLabels := labels
+		dropLabels = append(dropLabels, "PktDropLatestState", "PktDropLatestDropCause")
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
 				MetricName: fmt.Sprintf("%s_drop_packets_total", groupTrimmed),
@@ -119,7 +122,7 @@ func init() {
 				Filters: []metricslatest.MetricFilter{
 					{Field: "PktDropPackets", MatchType: metricslatest.MatchPresence},
 				},
-				Labels: labels,
+				Labels: dropLabels,
 				Charts: dropCharts(group, "pps"),
 			},
 			tags: []string{group, tagPackets, "drops"},
@@ -132,7 +135,7 @@ func init() {
 				Filters: []metricslatest.MetricFilter{
 					{Field: "PktDropBytes", MatchType: metricslatest.MatchPresence},
 				},
-				Labels: labels,
+				Labels: dropLabels,
 				Charts: dropCharts(group, "Bps"),
 			},
 			tags: []string{group, tagBytes, "drop"},
