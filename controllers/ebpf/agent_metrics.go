@@ -124,10 +124,10 @@ func (c *AgentController) agentPrometheusRule(target *flowslatest.FlowCollectorE
 		rules = append(rules, monitoringv1.Rule{
 			Alert: string(flowslatest.AlertDroppedFlows),
 			Annotations: map[string]string{
-				"description": "NetObserv eBPF agent is not able to process new flows. Possible reasons are the BPF hashmap being full, or the capacity limiter being triggered. Both causes can be worked around by increasing cacheMaxFlows value in Flowcollector resource.",
-				"summary":     "NetObserv eBPF is not able to process any new flows",
+				"description": "NetObserv eBPF agent is missing packets or flows. The metric netobserv_agent_dropped_flows_total provides more information on the cause. Possible reasons are the BPF hashmap being busy or full, or the capacity limiter being triggered. This may be worked around by increasing cacheMaxFlows value in Flowcollector resource.",
+				"summary":     "NetObserv eBPF agent is missing packets or flows",
 			},
-			Expr: intstr.FromString("sum(rate(netobserv_agent_dropped_flows_total[1m])) > 0"),
+			Expr: intstr.FromString(fmt.Sprintf("sum(rate(netobserv_agent_dropped_flows_total[1m])) > %d", droppedFlowsAlertThreshold)),
 			For:  &d,
 			Labels: map[string]string{
 				"severity": "warning",
