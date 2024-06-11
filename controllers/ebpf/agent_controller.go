@@ -79,14 +79,15 @@ const (
 )
 
 const (
-	exportKafka        = "kafka"
-	exportGRPC         = "grpc"
-	kafkaCerts         = "kafka-certs"
-	averageMessageSize = 100
-	bpfTraceMountName  = "bpf-kernel-debug"
-	bpfTraceMountPath  = "/sys/kernel/debug"
-	bpfNetNSMountName  = "var-run-netns"
-	bpfNetNSMountPath  = "/var/run/netns"
+	exportKafka                = "kafka"
+	exportGRPC                 = "grpc"
+	kafkaCerts                 = "kafka-certs"
+	averageMessageSize         = 100
+	bpfTraceMountName          = "bpf-kernel-debug"
+	bpfTraceMountPath          = "/sys/kernel/debug"
+	bpfNetNSMountName          = "var-run-netns"
+	bpfNetNSMountPath          = "/var/run/netns"
+	droppedFlowsAlertThreshold = 100
 )
 
 const (
