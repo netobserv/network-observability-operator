@@ -285,13 +285,13 @@ func (in *EBPFFlowFilter) DeepCopyInto(out *EBPFFlowFilter) {
 	out.SourcePorts = in.SourcePorts
 	out.DestPorts = in.DestPorts
 	out.Ports = in.Ports
-	if in.ICMPType != nil {
-		in, out := &in.ICMPType, &out.ICMPType
+	if in.ICMPCode != nil {
+		in, out := &in.ICMPCode, &out.ICMPCode
 		*out = new(int)
 		**out = **in
 	}
-	if in.ICMPCode != nil {
-		in, out := &in.ICMPCode, &out.ICMPCode
+	if in.ICMPType != nil {
+		in, out := &in.ICMPType, &out.ICMPType
 		*out = new(int)
 		**out = **in
 	}

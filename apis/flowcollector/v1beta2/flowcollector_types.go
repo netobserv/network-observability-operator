@@ -40,7 +40,7 @@ const (
 
 // Defines the desired state of the FlowCollector resource.
 // <br><br>
-// *: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature
+// *: the mention of "unsupported" or "deprecated" for a feature throughout this document means that this feature
 // is not officially supported by Red Hat. It might have been, for example, contributed by the community
 // and accepted without a formal agreement for maintenance. The product maintainers might provide some support
 // for these features as a best effort only.
@@ -68,7 +68,7 @@ type FlowCollectorSpec struct {
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
 	// `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br>
-	// - `Direct` (default) to make the flow processor listening directly from the agents.<br>
+	// - `Direct` (default) to make the flow processor listen directly from the agents.<br>
 	// - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br>
 	// Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
 	// +unionDiscriminator
@@ -167,7 +167,7 @@ const (
 
 // Name of an eBPF agent alert.
 // Possible values are:<br>
-// `NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter being triggered.<br>
+// `NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter is being triggered.<br>
 // +kubebuilder:validation:Enum:="NetObservDroppedFlows"
 type EBPFAgentAlert string
 
@@ -177,7 +177,7 @@ const (
 
 // `EBPFMetrics` defines the desired eBPF agent configuration regarding metrics
 type EBPFMetrics struct {
-	// Metrics server endpoint configuration for Prometheus scraper
+	// Metrics server endpoint configuration for the Prometheus scraper.
 	// +optional
 	Server MetricsServerConfig `json:"server,omitempty"`
 
@@ -187,14 +187,14 @@ type EBPFMetrics struct {
 
 	// `disableAlerts` is a list of alerts that should be disabled.
 	// Possible values are:<br>
-	// `NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter being triggered.<br>
+	// `NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter is being triggered.<br>
 	// +optional
 	DisableAlerts []EBPFAgentAlert `json:"disableAlerts"`
 }
 
-// `EBPFFlowFilter` defines the desired eBPF agent configuration regarding flow filtering
+// `EBPFFlowFilter` defines the desired eBPF agent configuration regarding flow filtering.
 type EBPFFlowFilter struct {
-	// Set `enable` to `true` to enable eBPF flow filtering feature.
+	// Set `enable` to `true` to enable the eBPF flow filtering feature.
 	Enable *bool `json:"enable,omitempty"`
 
 	// `cidr` defines the IP CIDR to filter flows by.
@@ -217,19 +217,19 @@ type EBPFFlowFilter struct {
 
 	// `sourcePorts` defines the source ports to filter flows by.
 	// To filter a single port, set a single port as an integer value. For example: `sourcePorts: 80`.
-	// To filter a range of ports, use a "start-end" range, string format. For example: `sourcePorts: "80-100"`.
+	// To filter a range of ports, use a "start-end" range in string format. For example: `sourcePorts: "80-100"`.
 	// +optional
 	SourcePorts intstr.IntOrString `json:"sourcePorts,omitempty"`
 
 	// `destPorts` defines the destination ports to filter flows by.
 	// To filter a single port, set a single port as an integer value. For example: `destPorts: 80`.
-	// To filter a range of ports, use a "start-end" range, string format. For example: `destPorts: "80-100"`.
+	// To filter a range of ports, use a "start-end" range in string format. For example: `destPorts: "80-100"`.
 	// +optional
 	DestPorts intstr.IntOrString `json:"destPorts,omitempty"`
 
-	// `ports` defines the ports to filter flows by, used both for source and destination ports.
+	// `ports` defines the ports to filter flows by. It is used both for source and destination ports.
 	// To filter a single port, set a single port as an integer value. For example: `ports: 80`.
-	// To filter a range of ports, use a "start-end" range, string format. For example: `ports: "80-100"`.
+	// To filter a range of ports, use a "start-end" range in string format. For example: `ports: "80-100"`.
 	Ports intstr.IntOrString `json:"ports,omitempty"`
 
 	// `peerIP` defines the IP address to filter flows by.
@@ -237,13 +237,13 @@ type EBPFFlowFilter struct {
 	// +optional
 	PeerIP string `json:"peerIP,omitempty"`
 
-	// `icmpType` defines the ICMP type to filter flows by.
-	// +optional
-	ICMPType *int `json:"icmpType,omitempty"`
-
-	// `icmpCode` defines the ICMP code to filter flows by.
+	// `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, defines the ICMP code to filter flows by.
 	// +optional
 	ICMPCode *int `json:"icmpCode,omitempty"`
+
+	// `icmpType`, for ICMP traffic, defines the ICMP type to filter flows by.
+	// +optional
+	ICMPType *int `json:"icmpType,omitempty"`
 }
 
 // `FlowCollectorEBPF` defines a FlowCollector that uses eBPF to collect the flows information
@@ -257,7 +257,7 @@ type FlowCollectorEBPF struct {
 
 	//+kubebuilder:default:={requests:{memory:"50Mi",cpu:"100m"},limits:{memory:"800Mi"}}
 	// `resources` are the compute resources required by this container.
-	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+	// For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
@@ -328,11 +328,11 @@ type FlowCollectorEBPF struct {
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 
-	// `metrics` defines the eBPF agent configuration regarding metrics
+	// `metrics` defines the eBPF agent configuration regarding metrics.
 	// +optional
 	Metrics EBPFMetrics `json:"metrics,omitempty"`
 
-	// `flowFilter` defines the eBPF agent configuration regarding flow filtering
+	// `flowFilter` defines the eBPF agent configuration regarding flow filtering.
 	// +optional
 	FlowFilter *EBPFFlowFilter `json:"flowFilter,omitempty"`
 }
@@ -412,7 +412,7 @@ type MetricsServerConfig struct {
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
-	// The metrics server HTTP port
+	// The metrics server HTTP port.
 	Port *int32 `json:"port,omitempty"`
 
 	// TLS configuration.
@@ -489,7 +489,7 @@ type FlowCollectorFLP struct {
 
 	//+kubebuilder:default:={requests:{memory:"100Mi",cpu:"100m"},limits:{memory:"800Mi"}}
 	// `resources` are the compute resources required by this container.
-	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+	// For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
@@ -827,7 +827,6 @@ type FlowCollectorConsolePlugin struct {
 
 	//+kubebuilder:default:=true
 	// Enables the console plugin deployment.
-	// `spec.loki.enable` must also be `true`
 	Enable *bool `json:"enable,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
@@ -842,7 +841,7 @@ type FlowCollectorConsolePlugin struct {
 
 	//+kubebuilder:default:={requests:{memory:"50Mi",cpu:"100m"},limits:{memory:"100Mi"}}
 	// `resources`, in terms of compute resources, required by this container.
-	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+	// For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
@@ -932,10 +931,10 @@ const (
 
 type FileReference struct {
 	//+kubebuilder:validation:Enum=configmap;secret
-	// Type for the file reference: "configmap" or "secret"
+	// Type for the file reference: "configmap" or "secret".
 	Type MountableType `json:"type,omitempty"`
 
-	// Name of the config map or secret containing the file
+	// Name of the config map or secret containing the file.
 	Name string `json:"name,omitempty"`
 
 	// Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed.
@@ -944,16 +943,16 @@ type FileReference struct {
 	//+kubebuilder:default:=""
 	Namespace string `json:"namespace,omitempty"`
 
-	// File name within the config map or secret
+	// File name within the config map or secret.
 	File string `json:"file,omitempty"`
 }
 
 type CertificateReference struct {
 	//+kubebuilder:validation:Enum=configmap;secret
-	// Type for the certificate reference: `configmap` or `secret`
+	// Type for the certificate reference: `configmap` or `secret`.
 	Type MountableType `json:"type,omitempty"`
 
-	// Name of the config map or secret containing certificates
+	// Name of the config map or secret containing certificates.
 	Name string `json:"name,omitempty"`
 
 	// Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
@@ -962,7 +961,7 @@ type CertificateReference struct {
 	//+kubebuilder:default:=""
 	Namespace string `json:"namespace,omitempty"`
 
-	// `certFile` defines the path to the certificate file name within the config map or secret
+	// `certFile` defines the path to the certificate file name within the config map or secret.
 	CertFile string `json:"certFile,omitempty"`
 
 	// `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.
@@ -1018,7 +1017,7 @@ type SchedulingConfig struct {
 	//+optional
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
-	// `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+	// `nodeSelector` allows scheduling of pods only onto nodes that have each of the specified labels.
 	// For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.
 	// +optional
 	// +mapType=atomic
@@ -1149,7 +1148,7 @@ type AdvancedPluginConfig struct {
 	Env map[string]string `json:"env,omitempty"`
 
 	// `args` allows passing custom arguments to underlying components. Useful for overriding
-	// some parameters, such as an url or a configuration path, that should not be
+	// some parameters, such as a URL or a configuration path, that should not be
 	// publicly exposed as part of the FlowCollector descriptor, as they are only useful
 	// in edge debug or support scenarios.
 	//+optional
@@ -1169,7 +1168,7 @@ type AdvancedPluginConfig struct {
 	// `port` is the plugin service port. Do not use 9002, which is reserved for metrics.
 	Port *int32 `json:"port,omitempty"`
 
-	// scheduling controls how the pods are scheduled on nodes.
+	// `scheduling` controls how the pods are scheduled on nodes.
 	// +optional
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 }

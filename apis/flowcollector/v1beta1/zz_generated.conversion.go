@@ -515,8 +515,8 @@ func autoConvert_v1beta2_EBPFFlowFilter_To_v1beta1_EBPFFlowFilter(in *v1beta2.EB
 	out.DestPorts = in.DestPorts
 	out.Ports = in.Ports
 	out.PeerIP = in.PeerIP
-	out.ICMPType = (*int)(unsafe.Pointer(in.ICMPType))
 	out.ICMPCode = (*int)(unsafe.Pointer(in.ICMPCode))
+	out.ICMPType = (*int)(unsafe.Pointer(in.ICMPType))
 	return nil
 }
 

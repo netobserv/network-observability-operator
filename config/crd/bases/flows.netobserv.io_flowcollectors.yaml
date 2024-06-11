@@ -2387,7 +2387,7 @@ spec:
               description: |-
                 Defines the desired state of the FlowCollector resource.
                 <br><br>
-                *: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature
+                *: the mention of "unsupported" or "deprecated" for a feature throughout this document means that this feature
                 is not officially supported by Red Hat. It might have been, for example, contributed by the community
                 and accepted without a formal agreement for maintenance. The product maintainers might provide some support
                 for these features as a best effort only.
@@ -3269,7 +3269,7 @@ spec:
                                   additionalProperties:
                                     type: string
                                   description: |-
-                                    `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+                                    `nodeSelector` allows scheduling of pods only onto nodes that have each of the specified labels.
                                     For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.
                                   type: object
                                   x-kubernetes-map-type: atomic
@@ -3369,7 +3369,7 @@ spec:
                             type: string
                           type: array
                         flowFilter:
-                          description: '`flowFilter` defines the eBPF agent configuration regarding flow filtering'
+                          description: '`flowFilter` defines the eBPF agent configuration regarding flow filtering.'
                           properties:
                             action:
                               description: '`action` defines the action to perform on the flows that match the filter.'
@@ -3389,7 +3389,7 @@ spec:
                               description: |-
                                 `destPorts` defines the destination ports to filter flows by.
                                 To filter a single port, set a single port as an integer value. For example: `destPorts: 80`.
-                                To filter a range of ports, use a "start-end" range, string format. For example: `destPorts: "80-100"`.
+                                To filter a range of ports, use a "start-end" range in string format. For example: `destPorts: "80-100"`.
                               x-kubernetes-int-or-string: true
                             direction:
                               description: '`direction` defines the direction to filter flows by.'
@@ -3398,13 +3398,13 @@ spec:
                                 - Egress
                               type: string
                             enable:
-                              description: Set `enable` to `true` to enable eBPF flow filtering feature.
+                              description: Set `enable` to `true` to enable the eBPF flow filtering feature.
                               type: boolean
                             icmpCode:
-                              description: '`icmpCode` defines the ICMP code to filter flows by.'
+                              description: '`icmpCode`, for Internet Control Message Protocol (ICMP) traffic, defines the ICMP code to filter flows by.'
                               type: integer
                             icmpType:
-                              description: '`icmpType` defines the ICMP type to filter flows by.'
+                              description: '`icmpType`, for ICMP traffic, defines the ICMP type to filter flows by.'
                               type: integer
                             peerIP:
                               description: |-
@@ -3416,9 +3416,9 @@ spec:
                                 - type: integer
                                 - type: string
                               description: |-
-                                `ports` defines the ports to filter flows by, used both for source and destination ports.
+                                `ports` defines the ports to filter flows by. It is used both for source and destination ports.
                                 To filter a single port, set a single port as an integer value. For example: `ports: 80`.
-                                To filter a range of ports, use a "start-end" range, string format. For example: `ports: "80-100"`.
+                                To filter a range of ports, use a "start-end" range in string format. For example: `ports: "80-100"`.
                               x-kubernetes-int-or-string: true
                             protocol:
                               description: '`protocol` defines the protocol to filter flows by.'
@@ -3436,7 +3436,7 @@ spec:
                               description: |-
                                 `sourcePorts` defines the source ports to filter flows by.
                                 To filter a single port, set a single port as an integer value. For example: `sourcePorts: 80`.
-                                To filter a range of ports, use a "start-end" range, string format. For example: `sourcePorts: "80-100"`.
+                                To filter a range of ports, use a "start-end" range in string format. For example: `sourcePorts: "80-100"`.
                               x-kubernetes-int-or-string: true
                           type: object
                         imagePullPolicy:
@@ -3473,18 +3473,18 @@ spec:
                             - panic
                           type: string
                         metrics:
-                          description: '`metrics` defines the eBPF agent configuration regarding metrics'
+                          description: '`metrics` defines the eBPF agent configuration regarding metrics.'
                           properties:
                             disableAlerts:
                               description: |-
                                 `disableAlerts` is a list of alerts that should be disabled.
                                 Possible values are:<br>
-                                `NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter being triggered.<br>
+                                `NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter is being triggered.<br>
                               items:
                                 description: |-
                                   Name of an eBPF agent alert.
                                   Possible values are:<br>
-                                  `NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter being triggered.<br>
+                                  `NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter is being triggered.<br>
                                 enum:
                                   - NetObservDroppedFlows
                                 type: string
@@ -3493,10 +3493,10 @@ spec:
                               description: Set `enable` to `false` to disable eBPF agent metrics collection. It is enabled by default.
                               type: boolean
                             server:
-                              description: Metrics server endpoint configuration for Prometheus scraper
+                              description: Metrics server endpoint configuration for the Prometheus scraper.
                               properties:
                                 port:
-                                  description: The metrics server HTTP port
+                                  description: The metrics server HTTP port.
                                   format: int32
                                   maximum: 65535
                                   minimum: 1
@@ -3514,13 +3514,13 @@ spec:
                                       description: TLS configuration when `type` is set to `Provided`.
                                       properties:
                                         certFile:
-                                          description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                          description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                           type: string
                                         certKey:
                                           description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                           type: string
                                         name:
-                                          description: Name of the config map or secret containing certificates
+                                          description: Name of the config map or secret containing certificates.
                                           type: string
                                         namespace:
                                           default: ""
@@ -3529,7 +3529,7 @@ spec:
                                             If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                           type: string
                                         type:
-                                          description: 'Type for the certificate reference: `configmap` or `secret`'
+                                          description: 'Type for the certificate reference: `configmap` or `secret`.'
                                           enum:
                                             - configmap
                                             - secret
@@ -3539,10 +3539,10 @@ spec:
                                       description: Reference to the CA file when `type` is set to `Provided`.
                                       properties:
                                         file:
-                                          description: File name within the config map or secret
+                                          description: File name within the config map or secret.
                                           type: string
                                         name:
-                                          description: Name of the config map or secret containing the file
+                                          description: Name of the config map or secret containing the file.
                                           type: string
                                         namespace:
                                           default: ""
@@ -3551,7 +3551,7 @@ spec:
                                             If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                           type: string
                                         type:
-                                          description: 'Type for the file reference: "configmap" or "secret"'
+                                          description: 'Type for the file reference: "configmap" or "secret".'
                                           enum:
                                             - configmap
                                             - secret
@@ -3589,7 +3589,7 @@ spec:
                               memory: 50Mi
                           description: |-
                             `resources` are the compute resources required by this container.
-                            More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                            For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                           properties:
                             claims:
                               description: |-
@@ -3731,7 +3731,7 @@ spec:
                         args:
                           description: |-
                             `args` allows passing custom arguments to underlying components. Useful for overriding
-                            some parameters, such as an url or a configuration path, that should not be
+                            some parameters, such as a URL or a configuration path, that should not be
                             publicly exposed as part of the FlowCollector descriptor, as they are only useful
                             in edge debug or support scenarios.
                           items:
@@ -3761,7 +3761,7 @@ spec:
                             `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`
                           type: boolean
                         scheduling:
-                          description: scheduling controls how the pods are scheduled on nodes.
+                          description: '`scheduling` controls how the pods are scheduled on nodes.'
                           properties:
                             affinity:
                               description: If specified, the pod's scheduling constraints. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
@@ -4614,7 +4614,7 @@ spec:
                               additionalProperties:
                                 type: string
                               description: |-
-                                `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+                                `nodeSelector` allows scheduling of pods only onto nodes that have each of the specified labels.
                                 For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.
                               type: object
                               x-kubernetes-map-type: atomic
@@ -4959,9 +4959,7 @@ spec:
                       type: object
                     enable:
                       default: true
-                      description: |-
-                        Enables the console plugin deployment.
-                        `spec.loki.enable` must also be `true`
+                      description: Enables the console plugin deployment.
                       type: boolean
                     imagePullPolicy:
                       default: IfNotPresent
@@ -5054,7 +5052,7 @@ spec:
                           memory: 50Mi
                       description: |-
                         `resources`, in terms of compute resources, required by this container.
-                        More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                       properties:
                         claims:
                           description: |-
@@ -5113,7 +5111,7 @@ spec:
                   default: Direct
                   description: |-
                     `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br>
-                    - `Direct` (default) to make the flow processor listening directly from the agents.<br>
+                    - `Direct` (default) to make the flow processor listen directly from the agents.<br>
                     - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br>
                     Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
                   enum:
@@ -5159,10 +5157,10 @@ spec:
                                 description: Reference to the secret or config map containing the client ID
                                 properties:
                                   file:
-                                    description: File name within the config map or secret
+                                    description: File name within the config map or secret.
                                     type: string
                                   name:
-                                    description: Name of the config map or secret containing the file
+                                    description: Name of the config map or secret containing the file.
                                     type: string
                                   namespace:
                                     default: ""
@@ -5171,7 +5169,7 @@ spec:
                                       If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                     type: string
                                   type:
-                                    description: 'Type for the file reference: "configmap" or "secret"'
+                                    description: 'Type for the file reference: "configmap" or "secret".'
                                     enum:
                                       - configmap
                                       - secret
@@ -5181,10 +5179,10 @@ spec:
                                 description: Reference to the secret or config map containing the client secret
                                 properties:
                                   file:
-                                    description: File name within the config map or secret
+                                    description: File name within the config map or secret.
                                     type: string
                                   name:
-                                    description: Name of the config map or secret containing the file
+                                    description: Name of the config map or secret containing the file.
                                     type: string
                                   namespace:
                                     default: ""
@@ -5193,7 +5191,7 @@ spec:
                                       If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                     type: string
                                   type:
-                                    description: 'Type for the file reference: "configmap" or "secret"'
+                                    description: 'Type for the file reference: "configmap" or "secret".'
                                     enum:
                                       - configmap
                                       - secret
@@ -5215,13 +5213,13 @@ spec:
                                 description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                                 properties:
                                   certFile:
-                                    description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                    description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                     type: string
                                   certKey:
                                     description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                     type: string
                                   name:
-                                    description: Name of the config map or secret containing certificates
+                                    description: Name of the config map or secret containing certificates.
                                     type: string
                                   namespace:
                                     default: ""
@@ -5230,7 +5228,7 @@ spec:
                                       If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                     type: string
                                   type:
-                                    description: 'Type for the certificate reference: `configmap` or `secret`'
+                                    description: 'Type for the certificate reference: `configmap` or `secret`.'
                                     enum:
                                       - configmap
                                       - secret
@@ -5250,13 +5248,13 @@ spec:
                                 description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                                 properties:
                                   certFile:
-                                    description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                    description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                     type: string
                                   certKey:
                                     description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                     type: string
                                   name:
-                                    description: Name of the config map or secret containing certificates
+                                    description: Name of the config map or secret containing certificates.
                                     type: string
                                   namespace:
                                     default: ""
@@ -5265,7 +5263,7 @@ spec:
                                       If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                     type: string
                                   type:
-                                    description: 'Type for the certificate reference: `configmap` or `secret`'
+                                    description: 'Type for the certificate reference: `configmap` or `secret`.'
                                     enum:
                                       - configmap
                                       - secret
@@ -5304,10 +5302,10 @@ spec:
                           description: Reference to the secret or config map containing the client ID
                           properties:
                             file:
-                              description: File name within the config map or secret
+                              description: File name within the config map or secret.
                               type: string
                             name:
-                              description: Name of the config map or secret containing the file
+                              description: Name of the config map or secret containing the file.
                               type: string
                             namespace:
                               default: ""
@@ -5316,7 +5314,7 @@ spec:
                                 If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                               type: string
                             type:
-                              description: 'Type for the file reference: "configmap" or "secret"'
+                              description: 'Type for the file reference: "configmap" or "secret".'
                               enum:
                                 - configmap
                                 - secret
@@ -5326,10 +5324,10 @@ spec:
                           description: Reference to the secret or config map containing the client secret
                           properties:
                             file:
-                              description: File name within the config map or secret
+                              description: File name within the config map or secret.
                               type: string
                             name:
-                              description: Name of the config map or secret containing the file
+                              description: Name of the config map or secret containing the file.
                               type: string
                             namespace:
                               default: ""
@@ -5338,7 +5336,7 @@ spec:
                                 If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                               type: string
                             type:
-                              description: 'Type for the file reference: "configmap" or "secret"'
+                              description: 'Type for the file reference: "configmap" or "secret".'
                               enum:
                                 - configmap
                                 - secret
@@ -5360,13 +5358,13 @@ spec:
                           description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                           properties:
                             certFile:
-                              description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                              description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                               type: string
                             certKey:
                               description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                               type: string
                             name:
-                              description: Name of the config map or secret containing certificates
+                              description: Name of the config map or secret containing certificates.
                               type: string
                             namespace:
                               default: ""
@@ -5375,7 +5373,7 @@ spec:
                                 If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                               type: string
                             type:
-                              description: 'Type for the certificate reference: `configmap` or `secret`'
+                              description: 'Type for the certificate reference: `configmap` or `secret`.'
                               enum:
                                 - configmap
                                 - secret
@@ -5395,13 +5393,13 @@ spec:
                           description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                           properties:
                             certFile:
-                              description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                              description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                               type: string
                             certKey:
                               description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                               type: string
                             name:
-                              description: Name of the config map or secret containing certificates
+                              description: Name of the config map or secret containing certificates.
                               type: string
                             namespace:
                               default: ""
@@ -5410,7 +5408,7 @@ spec:
                                 If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                               type: string
                             type:
-                              description: 'Type for the certificate reference: `configmap` or `secret`'
+                              description: 'Type for the certificate reference: `configmap` or `secret`.'
                               enum:
                                 - configmap
                                 - secret
@@ -5517,13 +5515,13 @@ spec:
                               description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5532,7 +5530,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5552,13 +5550,13 @@ spec:
                               description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5567,7 +5565,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5596,13 +5594,13 @@ spec:
                               description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5611,7 +5609,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5631,13 +5629,13 @@ spec:
                               description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5646,7 +5644,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5679,13 +5677,13 @@ spec:
                               description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5694,7 +5692,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5714,13 +5712,13 @@ spec:
                               description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5729,7 +5727,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5768,13 +5766,13 @@ spec:
                               description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5783,7 +5781,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -5803,13 +5801,13 @@ spec:
                               description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                               properties:
                                 certFile:
-                                  description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                  description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                   type: string
                                 name:
-                                  description: Name of the config map or secret containing certificates
+                                  description: Name of the config map or secret containing certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5818,7 +5816,7 @@ spec:
                                     If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                   type: string
                                 type:
-                                  description: 'Type for the certificate reference: `configmap` or `secret`'
+                                  description: 'Type for the certificate reference: `configmap` or `secret`.'
                                   enum:
                                     - configmap
                                     - secret
@@ -6782,7 +6780,7 @@ spec:
                               additionalProperties:
                                 type: string
                               description: |-
-                                `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+                                `nodeSelector` allows scheduling of pods only onto nodes that have each of the specified labels.
                                 For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.
                               type: object
                               x-kubernetes-map-type: atomic
@@ -7247,7 +7245,7 @@ spec:
                           description: Metrics server endpoint configuration for Prometheus scraper
                           properties:
                             port:
-                              description: The metrics server HTTP port
+                              description: The metrics server HTTP port.
                               format: int32
                               maximum: 65535
                               minimum: 1
@@ -7265,13 +7263,13 @@ spec:
                                   description: TLS configuration when `type` is set to `Provided`.
                                   properties:
                                     certFile:
-                                      description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                      description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                       type: string
                                     certKey:
                                       description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                       type: string
                                     name:
-                                      description: Name of the config map or secret containing certificates
+                                      description: Name of the config map or secret containing certificates.
                                       type: string
                                     namespace:
                                       default: ""
@@ -7280,7 +7278,7 @@ spec:
                                         If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                       type: string
                                     type:
-                                      description: 'Type for the certificate reference: `configmap` or `secret`'
+                                      description: 'Type for the certificate reference: `configmap` or `secret`.'
                                       enum:
                                         - configmap
                                         - secret
@@ -7290,10 +7288,10 @@ spec:
                                   description: Reference to the CA file when `type` is set to `Provided`.
                                   properties:
                                     file:
-                                      description: File name within the config map or secret
+                                      description: File name within the config map or secret.
                                       type: string
                                     name:
-                                      description: Name of the config map or secret containing the file
+                                      description: Name of the config map or secret containing the file.
                                       type: string
                                     namespace:
                                       default: ""
@@ -7302,7 +7300,7 @@ spec:
                                         If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                       type: string
                                     type:
-                                      description: 'Type for the file reference: "configmap" or "secret"'
+                                      description: 'Type for the file reference: "configmap" or "secret".'
                                       enum:
                                         - configmap
                                         - secret
@@ -7336,7 +7334,7 @@ spec:
                           memory: 100Mi
                       description: |-
                         `resources` are the compute resources required by this container.
-                        More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                       properties:
                         claims:
                           description: |-
@@ -7449,13 +7447,13 @@ spec:
                                   description: '`caCert` defines the reference of the certificate for the Certificate Authority'
                                   properties:
                                     certFile:
-                                      description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                      description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                       type: string
                                     certKey:
                                       description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                       type: string
                                     name:
-                                      description: Name of the config map or secret containing certificates
+                                      description: Name of the config map or secret containing certificates.
                                       type: string
                                     namespace:
                                       default: ""
@@ -7464,7 +7462,7 @@ spec:
                                         If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                       type: string
                                     type:
-                                      description: 'Type for the certificate reference: `configmap` or `secret`'
+                                      description: 'Type for the certificate reference: `configmap` or `secret`.'
                                       enum:
                                         - configmap
                                         - secret
@@ -7484,13 +7482,13 @@ spec:
                                   description: '`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)'
                                   properties:
                                     certFile:
-                                      description: '`certFile` defines the path to the certificate file name within the config map or secret'
+                                      description: '`certFile` defines the path to the certificate file name within the config map or secret.'
                                       type: string
                                     certKey:
                                       description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
                                       type: string
                                     name:
-                                      description: Name of the config map or secret containing certificates
+                                      description: Name of the config map or secret containing certificates.
                                       type: string
                                     namespace:
                                       default: ""
@@ -7499,7 +7497,7 @@ spec:
                                         If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                       type: string
                                     type:
-                                      description: 'Type for the certificate reference: `configmap` or `secret`'
+                                      description: 'Type for the certificate reference: `configmap` or `secret`.'
                                       enum:
                                         - configmap
                                         - secret

@@ -39,7 +39,7 @@ Type::
  +
  +
 
-*: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature
+*: the mention of "unsupported" or "deprecated" for a feature throughout this document means that this feature
 is not officially supported by Red Hat. It might have been, for example, contributed by the community
 and accepted without a formal agreement for maintenance. The product maintainers might provide some support
 for these features as a best effort only.
@@ -66,7 +66,7 @@ Defines the desired state of the FlowCollector resource.
  +
  +
 
-*: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature
+*: the mention of "unsupported" or "deprecated" for a feature throughout this document means that this feature
 is not officially supported by Red Hat. It might have been, for example, contributed by the community
 and accepted without a formal agreement for maintenance. The product maintainers might provide some support
 for these features as a best effort only.
@@ -94,7 +94,7 @@ Type::
 | `string`
 | `deploymentModel` defines the desired type of deployment for flow processing. Possible values are: +
 
-- `Direct` (default) to make the flow processor listening directly from the agents. +
+- `Direct` (default) to make the flow processor listen directly from the agents. +
 
 - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor. +
 
@@ -211,7 +211,7 @@ If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported. 
 
 | `flowFilter`
 | `object`
-| `flowFilter` defines the eBPF agent configuration regarding flow filtering
+| `flowFilter` defines the eBPF agent configuration regarding flow filtering.
 
 | `imagePullPolicy`
 | `string`
@@ -234,7 +234,7 @@ Otherwise it is matched as a case-sensitive string.
 
 | `metrics`
 | `object`
-| `metrics` defines the eBPF agent configuration regarding metrics
+| `metrics` defines the eBPF agent configuration regarding metrics.
 
 | `privileged`
 | `boolean`
@@ -247,7 +247,7 @@ Some agent features require the privileged mode, such as packet drops tracking (
 | `resources`
 | `object`
 | `resources` are the compute resources required by this container.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 | `sampling`
 | `integer`
@@ -308,7 +308,7 @@ Type::
 
 | `nodeSelector`
 | `object (string)`
-| `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+| `nodeSelector` allows scheduling of pods only onto nodes that have each of the specified labels.
 For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.
 
 | `priorityClassName`
@@ -353,7 +353,7 @@ Type::
 Description::
 +
 --
-`flowFilter` defines the eBPF agent configuration regarding flow filtering
+`flowFilter` defines the eBPF agent configuration regarding flow filtering.
 --
 
 Type::
@@ -379,7 +379,7 @@ Examples: `10.10.10.0/24` or `100:100:100:100::/64`
 | `integer-or-string`
 | `destPorts` defines the destination ports to filter flows by.
 To filter a single port, set a single port as an integer value. For example: `destPorts: 80`.
-To filter a range of ports, use a "start-end" range, string format. For example: `destPorts: "80-100"`.
+To filter a range of ports, use a "start-end" range in string format. For example: `destPorts: "80-100"`.
 
 | `direction`
 | `string`
@@ -387,15 +387,15 @@ To filter a range of ports, use a "start-end" range, string format. For example:
 
 | `enable`
 | `boolean`
-| Set `enable` to `true` to enable eBPF flow filtering feature.
+| Set `enable` to `true` to enable the eBPF flow filtering feature.
 
 | `icmpCode`
 | `integer`
-| `icmpCode` defines the ICMP code to filter flows by.
+| `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, defines the ICMP code to filter flows by.
 
 | `icmpType`
 | `integer`
-| `icmpType` defines the ICMP type to filter flows by.
+| `icmpType`, for ICMP traffic, defines the ICMP type to filter flows by.
 
 | `peerIP`
 | `string`
@@ -404,9 +404,9 @@ Example: `10.10.10.10`.
 
 | `ports`
 | `integer-or-string`
-| `ports` defines the ports to filter flows by, used both for source and destination ports.
+| `ports` defines the ports to filter flows by. It is used both for source and destination ports.
 To filter a single port, set a single port as an integer value. For example: `ports: 80`.
-To filter a range of ports, use a "start-end" range, string format. For example: `ports: "80-100"`.
+To filter a range of ports, use a "start-end" range in string format. For example: `ports: "80-100"`.
 
 | `protocol`
 | `string`
@@ -416,14 +416,14 @@ To filter a range of ports, use a "start-end" range, string format. For example:
 | `integer-or-string`
 | `sourcePorts` defines the source ports to filter flows by.
 To filter a single port, set a single port as an integer value. For example: `sourcePorts: 80`.
-To filter a range of ports, use a "start-end" range, string format. For example: `sourcePorts: "80-100"`.
+To filter a range of ports, use a "start-end" range in string format. For example: `sourcePorts: "80-100"`.
 
 |===
 == .spec.agent.ebpf.metrics
 Description::
 +
 --
-`metrics` defines the eBPF agent configuration regarding metrics
+`metrics` defines the eBPF agent configuration regarding metrics.
 --
 
 Type::
@@ -441,7 +441,7 @@ Type::
 | `disableAlerts` is a list of alerts that should be disabled.
 Possible values are: +
 
-`NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter being triggered. +
+`NetObservDroppedFlows`, which is triggered when the eBPF agent is dropping flows, such as when the BPF hashmap is full or the capacity limiter is being triggered. +
 
 
 | `enable`
@@ -450,14 +450,14 @@ Possible values are: +
 
 | `server`
 | `object`
-| Metrics server endpoint configuration for Prometheus scraper
+| Metrics server endpoint configuration for the Prometheus scraper.
 
 |===
 == .spec.agent.ebpf.metrics.server
 Description::
 +
 --
-Metrics server endpoint configuration for Prometheus scraper
+Metrics server endpoint configuration for the Prometheus scraper.
 --
 
 Type::
@@ -472,7 +472,7 @@ Type::
 
 | `port`
 | `integer`
-| The metrics server HTTP port
+| The metrics server HTTP port.
 
 | `tls`
 | `object`
@@ -537,7 +537,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -545,7 +545,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -554,7 +554,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.agent.ebpf.metrics.server.tls.providedCaFile
@@ -576,11 +576,11 @@ Type::
 
 | `file`
 | `string`
-| File name within the config map or secret
+| File name within the config map or secret.
 
 | `name`
 | `string`
-| Name of the config map or secret containing the file
+| Name of the config map or secret containing the file.
 
 | `namespace`
 | `string`
@@ -589,7 +589,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the file reference: "configmap" or "secret"
+| Type for the file reference: "configmap" or "secret".
 
 |===
 == .spec.agent.ebpf.resources
@@ -597,7 +597,7 @@ Description::
 +
 --
 `resources` are the compute resources required by this container.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 --
 
 Type::
@@ -653,7 +653,6 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 | `enable`
 | `boolean`
 | Enables the console plugin deployment.
-`spec.loki.enable` must also be `true`
 
 | `imagePullPolicy`
 | `string`
@@ -678,7 +677,7 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 | `resources`
 | `object`
 | `resources`, in terms of compute resources, required by this container.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 |===
 == .spec.consolePlugin.advanced
@@ -703,7 +702,7 @@ Type::
 | `args`
 | `array (string)`
 | `args` allows passing custom arguments to underlying components. Useful for overriding
-some parameters, such as an url or a configuration path, that should not be
+some parameters, such as a URL or a configuration path, that should not be
 publicly exposed as part of the FlowCollector descriptor, as they are only useful
 in edge debug or support scenarios.
 
@@ -726,14 +725,14 @@ When set to `false`, you can still register it manually by editing console.opera
 
 | `scheduling`
 | `object`
-| scheduling controls how the pods are scheduled on nodes.
+| `scheduling` controls how the pods are scheduled on nodes.
 
 |===
 == .spec.consolePlugin.advanced.scheduling
 Description::
 +
 --
-scheduling controls how the pods are scheduled on nodes.
+`scheduling` controls how the pods are scheduled on nodes.
 --
 
 Type::
@@ -752,7 +751,7 @@ Type::
 
 | `nodeSelector`
 | `object (string)`
-| `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+| `nodeSelector` allows scheduling of pods only onto nodes that have each of the specified labels.
 For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.
 
 | `priorityClassName`
@@ -885,7 +884,7 @@ Description::
 +
 --
 `resources`, in terms of compute resources, required by this container.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 --
 
 Type::
@@ -1075,11 +1074,11 @@ Type::
 
 | `file`
 | `string`
-| File name within the config map or secret
+| File name within the config map or secret.
 
 | `name`
 | `string`
-| Name of the config map or secret containing the file
+| Name of the config map or secret containing the file.
 
 | `namespace`
 | `string`
@@ -1088,7 +1087,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the file reference: "configmap" or "secret"
+| Type for the file reference: "configmap" or "secret".
 
 |===
 == .spec.exporters[].kafka.sasl.clientSecretReference
@@ -1110,11 +1109,11 @@ Type::
 
 | `file`
 | `string`
-| File name within the config map or secret
+| File name within the config map or secret.
 
 | `name`
 | `string`
-| Name of the config map or secret containing the file
+| Name of the config map or secret containing the file.
 
 | `namespace`
 | `string`
@@ -1123,7 +1122,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the file reference: "configmap" or "secret"
+| Type for the file reference: "configmap" or "secret".
 
 |===
 == .spec.exporters[].kafka.tls
@@ -1180,7 +1179,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1188,7 +1187,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1197,7 +1196,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.exporters[].kafka.tls.userCert
@@ -1219,7 +1218,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1227,7 +1226,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1236,7 +1235,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.kafka
@@ -1325,11 +1324,11 @@ Type::
 
 | `file`
 | `string`
-| File name within the config map or secret
+| File name within the config map or secret.
 
 | `name`
 | `string`
-| Name of the config map or secret containing the file
+| Name of the config map or secret containing the file.
 
 | `namespace`
 | `string`
@@ -1338,7 +1337,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the file reference: "configmap" or "secret"
+| Type for the file reference: "configmap" or "secret".
 
 |===
 == .spec.kafka.sasl.clientSecretReference
@@ -1360,11 +1359,11 @@ Type::
 
 | `file`
 | `string`
-| File name within the config map or secret
+| File name within the config map or secret.
 
 | `name`
 | `string`
-| Name of the config map or secret containing the file
+| Name of the config map or secret containing the file.
 
 | `namespace`
 | `string`
@@ -1373,7 +1372,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the file reference: "configmap" or "secret"
+| Type for the file reference: "configmap" or "secret".
 
 |===
 == .spec.kafka.tls
@@ -1430,7 +1429,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1438,7 +1437,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1447,7 +1446,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.kafka.tls.userCert
@@ -1469,7 +1468,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1477,7 +1476,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1486,7 +1485,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki
@@ -1755,7 +1754,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1763,7 +1762,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1772,7 +1771,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.manual.statusTls.userCert
@@ -1794,7 +1793,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1802,7 +1801,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1811,7 +1810,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.manual.tls
@@ -1868,7 +1867,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1876,7 +1875,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1885,7 +1884,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.manual.tls.userCert
@@ -1907,7 +1906,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -1915,7 +1914,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -1924,7 +1923,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.microservices
@@ -2017,7 +2016,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2025,7 +2024,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2034,7 +2033,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.microservices.tls.userCert
@@ -2056,7 +2055,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2064,7 +2063,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2073,7 +2072,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.monolithic
@@ -2162,7 +2161,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2170,7 +2169,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2179,7 +2178,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.loki.monolithic.tls.userCert
@@ -2201,7 +2200,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2209,7 +2208,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2218,7 +2217,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.processor
@@ -2304,7 +2303,7 @@ This setting is ignored when Kafka is disabled.
 | `resources`
 | `object`
 | `resources` are the compute resources required by this container.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 
 | `subnetLabels`
 | `object`
@@ -2401,7 +2400,7 @@ Type::
 
 | `nodeSelector`
 | `object (string)`
-| `nodeSelector` allows to schedule pods only onto nodes that have each of the specified labels.
+| `nodeSelector` allows scheduling of pods only onto nodes that have each of the specified labels.
 For documentation, refer to https://kubernetes.io/docs/concepts/configuration/assign-pod-node/.
 
 | `priorityClassName`
@@ -2518,7 +2517,7 @@ Type::
 
 | `port`
 | `integer`
-| The metrics server HTTP port
+| The metrics server HTTP port.
 
 | `tls`
 | `object`
@@ -2583,7 +2582,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2591,7 +2590,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2600,7 +2599,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.processor.metrics.server.tls.providedCaFile
@@ -2622,11 +2621,11 @@ Type::
 
 | `file`
 | `string`
-| File name within the config map or secret
+| File name within the config map or secret.
 
 | `name`
 | `string`
-| Name of the config map or secret containing the file
+| Name of the config map or secret containing the file.
 
 | `namespace`
 | `string`
@@ -2635,7 +2634,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the file reference: "configmap" or "secret"
+| Type for the file reference: "configmap" or "secret".
 
 |===
 == .spec.processor.resources
@@ -2643,7 +2642,7 @@ Description::
 +
 --
 `resources` are the compute resources required by this container.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 --
 
 Type::
@@ -2891,7 +2890,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2899,7 +2898,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2908,7 +2907,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 == .spec.prometheus.querier.manual.tls.userCert
@@ -2930,7 +2929,7 @@ Type::
 
 | `certFile`
 | `string`
-| `certFile` defines the path to the certificate file name within the config map or secret
+| `certFile` defines the path to the certificate file name within the config map or secret.
 
 | `certKey`
 | `string`
@@ -2938,7 +2937,7 @@ Type::
 
 | `name`
 | `string`
-| Name of the config map or secret containing certificates
+| Name of the config map or secret containing certificates.
 
 | `namespace`
 | `string`
@@ -2947,7 +2946,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 | `type`
 | `string`
-| Type for the certificate reference: `configmap` or `secret`
+| Type for the certificate reference: `configmap` or `secret`.
 
 |===
 
