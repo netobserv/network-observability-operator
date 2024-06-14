@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	"github.com/netobserv/network-observability-operator/pkg/test/util"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/utils/ptr"
 )
 
 func TestIncludeExclude(t *testing.T) {
@@ -43,7 +45,7 @@ func TestIncludeExclude(t *testing.T) {
 func TestGetDefinitions(t *testing.T) {
 	assert := assert.New(t)
 
-	res := GetDefinitions([]string{"namespace_flows_total", "node_ingress_bytes_total", "workload_egress_packets_total"}, nil)
+	res := GetDefinitions(util.SpecForMetrics("namespace_flows_total", "node_ingress_bytes_total", "workload_egress_packets_total"), false)
 	assert.Len(res, 3)
 	assert.Equal("node_ingress_bytes_total", res[0].Spec.MetricName)
 	assert.Equal("Bytes", res[0].Spec.ValueField)
@@ -59,7 +61,10 @@ func TestGetDefinitions(t *testing.T) {
 func TestGetDefinitionsRemoveZoneCluster(t *testing.T) {
 	assert := assert.New(t)
 
-	res := GetDefinitions([]string{"namespace_flows_total", "node_ingress_bytes_total", "workload_egress_packets_total"}, []string{"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone"})
+	spec := util.SpecForMetrics("namespace_flows_total", "node_ingress_bytes_total", "workload_egress_packets_total")
+	spec.Processor.AddZone = ptr.To(false)
+	spec.Processor.MultiClusterDeployment = ptr.To(false)
+	res := GetDefinitions(spec, false)
 	assert.Len(res, 3)
 	assert.Equal("node_ingress_bytes_total", res[0].Spec.MetricName)
 	assert.Equal("Bytes", res[0].Spec.ValueField)
