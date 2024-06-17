@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
@@ -487,7 +488,7 @@ func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslates
 	conn := api.OtlpConnectionInfo{
 		Address:        spec.TargetHost,
 		Port:           spec.TargetPort,
-		ConnectionType: getOtelConnType(spec.Type),
+		ConnectionType: getOtelConnType(spec.Protocol),
 		TLS:            getClientTLS(&spec.TLS, name, b.volumes),
 		Headers:        spec.Headers,
 	}
@@ -500,7 +501,14 @@ func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslates
 		}
 		// set custom rules if specified
 		if spec.Rules != nil {
-			transformConfig.Rules = *spec.Rules
+			transformConfig.Rules = []api.GenericTransformRule{}
+			for _, r := range *spec.Rules {
+				transformConfig.Rules = append(transformConfig.Rules, api.GenericTransformRule{
+					Input:      r.Input,
+					Output:     r.Output,
+					Multiplier: r.Multiplier,
+				})
+			}
 		}
 		// add transform stage
 		transformStage := fromStage.TransformGeneric(fmt.Sprintf("%s-transform", name), transformConfig)
@@ -514,10 +522,11 @@ func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslates
 	if spec.Metrics.Enable != nil && *spec.Metrics.Enable {
 		fromStage.EncodeOtelMetrics(fmt.Sprintf("%s-metrics", name), api.EncodeOtlpMetrics{
 			OtlpConnectionInfo: &conn,
-			Prefix:             constants.OperatorName,
-			Metrics:            flpMetrics,
-			PushTimeInterval:   api.Duration{Duration: spec.Metrics.PushTimeInterval.Duration},
-			ExpiryTime:         api.Duration{Duration: spec.Metrics.ExpiryTime.Duration},
+			Prefix:             "netobserv",
+			// TODO: rewrite flpMetrics to map labels / filters with the otel semantic
+			Metrics:          flpMetrics,
+			PushTimeInterval: api.Duration{Duration: spec.Metrics.PushTimeInterval.Duration},
+			ExpiryTime:       api.Duration{Duration: 2 * time.Minute},
 		})
 	}
 

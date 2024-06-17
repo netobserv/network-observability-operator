@@ -16,7 +16,6 @@ limitations under the License.
 package v1beta2
 
 import (
-	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -385,17 +384,9 @@ type FlowCollectorOpenTelemetryMetrics struct {
 	//+kubebuilder:default:=true
 	Enable *bool `json:"enable,omitempty"`
 
-	// Prefix added to each metric name
-	// +optional
-	Prefix string `json:"prefix,omitempty"`
-
 	// How often should metrics be sent to collector
 	// +kubebuilder:default:="20s"
 	PushTimeInterval *metav1.Duration `json:"pushTimeInterval,omitempty"`
-
-	// Time duration of no-flow to wait before deleting data item
-	// +kubebuilder:default:="2m"
-	ExpiryTime *metav1.Duration `json:"expiryTime,omitempty"`
 }
 
 type FlowCollectorOpenTelemetryTraces struct {
@@ -408,8 +399,13 @@ type FlowCollectorOpenTelemetryTraces struct {
 	SpanSplitter []string `json:"spanSplitter,omitempty"`
 }
 
-// Add more exporter types below
-type ConnectionType string
+type GenericTransformRule struct {
+	Input      string `json:"input,omitempty"`
+	Output     string `json:"output,omitempty"`
+	Multiplier int    `json:"multiplier,omitempty"`
+}
+
+type GenericTransform []GenericTransformRule
 
 type FlowCollectorOpenTelemetry struct {
 	// Address of the Open Telemetry receiver
@@ -419,9 +415,9 @@ type FlowCollectorOpenTelemetry struct {
 	// Port for the Open Telemetry receiver
 	TargetPort int `json:"targetPort"`
 
-	// Type of Open Telemetry connection. The available options are `http` and `grpc`.
+	// Protocol of Open Telemetry connection. The available options are `http` and `grpc`.
 	// +optional
-	Type string `json:"type"`
+	Protocol string `json:"protocol"`
 
 	// Headers to add to messages (optional)
 	// +optional
@@ -435,7 +431,7 @@ type FlowCollectorOpenTelemetry struct {
 	// By default the following format will be used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal
 	// Setting `customRules` will fully override the default rules allowing you to export each field to your naming convention
 	// +optional
-	Rules *[]api.GenericTransformRule `json:"customRules,omitempty"`
+	Rules *[]GenericTransformRule `json:"customRules,omitempty"`
 
 	// Open telemetry configuration for logs.
 	// +optional

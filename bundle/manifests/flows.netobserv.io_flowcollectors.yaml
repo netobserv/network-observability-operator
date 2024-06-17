@@ -5841,19 +5841,15 @@ spec:
                               description: Set `enable` to `true` to send metrics
                                 to Open Telemetry receiver.
                               type: boolean
-                            expiryTime:
-                              default: 2m
-                              description: Time duration of no-flow to wait before
-                                deleting data item
-                              type: string
-                            prefix:
-                              description: Prefix added to each metric name
-                              type: string
                             pushTimeInterval:
                               default: 20s
                               description: How often should metrics be sent to collector
                               type: string
                           type: object
+                        protocol:
+                          description: Protocol of Open Telemetry connection. The
+                            available options are `http` and `grpc`.
+                          type: string
                         targetHost:
                           default: ""
                           description: Address of the Open Telemetry receiver
@@ -5940,10 +5936,6 @@ spec:
                                   type: string
                               type: object
                           type: object
-                        type:
-                          description: Type of Open Telemetry connection. The available
-                            options are `http` and `grpc`.
-                          type: string
                       required:
                       - targetHost
                       - targetPort

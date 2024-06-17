@@ -11952,17 +11952,17 @@ Setting `customRules` will fully override the default rules allowing you to expo
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>protocol</b></td>
+        <td>string</td>
+        <td>
+          Protocol of Open Telemetry connection. The available options are `http` and `grpc`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindexopentelemetrytls">tls</a></b></td>
         <td>object</td>
         <td>
           TLS client configuration.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>string</td>
-        <td>
-          Type of Open Telemetry connection. The available options are `http` and `grpc`.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12062,22 +12062,6 @@ Open telemetry configuration for metrics.
           Set `enable` to `true` to send metrics to Open Telemetry receiver.<br/>
           <br/>
             <i>Default</i>: true<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>expiryTime</b></td>
-        <td>string</td>
-        <td>
-          Time duration of no-flow to wait before deleting data item<br/>
-          <br/>
-            <i>Default</i>: 2m<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>prefix</b></td>
-        <td>string</td>
-        <td>
-          Prefix added to each metric name<br/>
         </td>
         <td>false</td>
       </tr><tr>
