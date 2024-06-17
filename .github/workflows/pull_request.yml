@@ -27,7 +27,7 @@ jobs:
     - name: check clean vendors
       run: go mod vendor
     - name: Report coverage
-      if: ${{ matrix.go == '1.21' }}
+      if: ${{ matrix.go == '1.22' }}
       uses: codecov/codecov-action@v4
       with:
         files: ./cover.out
