@@ -203,7 +203,7 @@ func (c *Client) callHandlers(ctx context.Context, key string, ev watch.Event) {
 	}
 }
 
-func (c *Client) GetSource(ctx context.Context, obj client.Object) (source.Source, error) {
+func (c *Client) GetSource(ctx context.Context, obj client.Object, h handler.EventHandler) (source.Source, error) {
 	// Prepare a Source and make sure it is associated with a watch
 	rlog := log.FromContext(ctx).WithName("narrowcache")
 	rlog.WithValues("name", obj.GetName(), "namespace", obj.GetNamespace()).Info("Getting Source:")
@@ -223,7 +223,8 @@ func (c *Client) GetSource(ctx context.Context, obj client.Object) (source.Sourc
 	}
 
 	return &NarrowSource{
-		onStart: func(ctx context.Context, h handler.EventHandler, q workqueue.RateLimitingInterface) {
+		handler: h,
+		onStart: func(ctx context.Context, q workqueue.RateLimitingInterface) {
 			c.addHandler(key, handlerOnQueue{handler: h, queue: q})
 		},
 	}, nil
