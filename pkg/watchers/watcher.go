@@ -79,15 +79,9 @@ func (w *Watcher) watch(ctx context.Context, cl *narrowcache.Client, kind flowsl
 		// Don't register again
 		return nil
 	}
-	s, err := cl.GetSource(ctx, obj)
-	if err != nil {
-		return err
-	}
-	// Note that currently, watches are never removed (they can't - cf https://github.com/kubernetes-sigs/controller-runtime/issues/1884)
-	// This isn't a big deal here, as the number of watches that we set is very limited and not meant to grow over and over
-	// (unless user keeps reconfiguring cert references endlessly)
-	err = w.ctrl.Watch(
-		s,
+	s, err := cl.GetSource(
+		ctx,
+		obj,
 		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
 			// The watch might be registered, but inactive
 			k := key(kind, o.GetName(), o.GetNamespace())
@@ -101,6 +95,13 @@ func (w *Watcher) watch(ctx context.Context, cl *narrowcache.Client, kind flowsl
 			return []reconcile.Request{}
 		}),
 	)
+	if err != nil {
+		return err
+	}
+	// Note that currently, watches are never removed (they can't - cf https://github.com/kubernetes-sigs/controller-runtime/issues/1884)
+	// This isn't a big deal here, as the number of watches that we set is very limited and not meant to grow over and over
+	// (unless user keeps reconfiguring cert references endlessly)
+	err = w.ctrl.Watch(s)
 	if err != nil {
 		return err
 	}
