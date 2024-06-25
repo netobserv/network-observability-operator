@@ -198,13 +198,13 @@ func GetAllNames() []string {
 	return names
 }
 
-func GetDefinitions(names []string, toRemove []string) []metricslatest.FlowMetric {
+func getUpdatedDefsFromNames(names []string, labelsToRemove []string) []metricslatest.FlowMetric {
 	ret := []metricslatest.FlowMetric{}
 	for i := range predefinedMetrics {
 		for _, name := range names {
 			if predefinedMetrics[i].MetricName == name {
 				spec := predefinedMetrics[i].FlowMetricSpec
-				spec.Labels = removeLabels(spec.Labels, toRemove)
+				spec.Labels = removeLabels(spec.Labels, labelsToRemove)
 				ret = append(ret, metricslatest.FlowMetric{Spec: spec})
 			}
 		}
@@ -258,15 +258,26 @@ func removeMetricsByPattern(list []string, search string) []string {
 	return filtered
 }
 
-func MergePredefined(fm []metricslatest.FlowMetric, fc *flowslatest.FlowCollectorSpec) []metricslatest.FlowMetric {
-	names := GetIncludeList(fc)
-	var toRemove []string
+func GetDefinitions(fc *flowslatest.FlowCollectorSpec, allMetrics bool) []metricslatest.FlowMetric {
+	var names []string
+	if allMetrics {
+		names = GetAllNames()
+	} else {
+		names = GetIncludeList(fc)
+	}
+
+	var labelsToRemove []string
 	if !helper.IsZoneEnabled(&fc.Processor) {
-		toRemove = append(toRemove, "SrcK8S_Zone", "DstK8S_Zone")
+		labelsToRemove = append(labelsToRemove, "SrcK8S_Zone", "DstK8S_Zone")
 	}
 	if !helper.IsMultiClusterEnabled(&fc.Processor) {
-		toRemove = append(toRemove, "K8S_ClusterName")
+		labelsToRemove = append(labelsToRemove, "K8S_ClusterName")
 	}
-	predefined := GetDefinitions(names, toRemove)
+
+	return getUpdatedDefsFromNames(names, labelsToRemove)
+}
+
+func MergePredefined(fm []metricslatest.FlowMetric, fc *flowslatest.FlowCollectorSpec) []metricslatest.FlowMetric {
+	predefined := GetDefinitions(fc, false)
 	return append(predefined, fm...)
 }

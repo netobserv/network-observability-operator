@@ -5,6 +5,7 @@ import (
 
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
+	"github.com/netobserv/network-observability-operator/pkg/test/util"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -12,7 +13,7 @@ import (
 func TestCreateFlowMetricsDashboard_All(t *testing.T) {
 	assert := assert.New(t)
 
-	defs := metrics.GetDefinitions(metrics.GetAllNames(), nil)
+	defs := metrics.GetDefinitions(util.SpecForMetrics(), true)
 	js := CreateFlowMetricsDashboards(defs)
 
 	d, err := FromBytes([]byte(js["Main"]))
@@ -87,7 +88,7 @@ func TestCreateFlowMetricsDashboard_All(t *testing.T) {
 func TestCreateFlowMetricsDashboard_OnlyNodeIngressBytes(t *testing.T) {
 	assert := assert.New(t)
 
-	defs := metrics.GetDefinitions([]string{"node_ingress_bytes_total"}, nil)
+	defs := metrics.GetDefinitions(util.SpecForMetrics("node_ingress_bytes_total"), false)
 	js := CreateFlowMetricsDashboards(defs)
 
 	d, err := FromBytes([]byte(js["Main"]))
@@ -106,7 +107,7 @@ func TestCreateFlowMetricsDashboard_OnlyNodeIngressBytes(t *testing.T) {
 func TestCreateFlowMetricsDashboard_DefaultList(t *testing.T) {
 	assert := assert.New(t)
 
-	defs := metrics.GetDefinitions(metrics.DefaultIncludeList, nil)
+	defs := metrics.GetDefinitions(util.SpecForMetrics(), false)
 	js := CreateFlowMetricsDashboards(defs)
 
 	d, err := FromBytes([]byte(js["Main"]))

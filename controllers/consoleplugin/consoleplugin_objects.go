@@ -410,9 +410,8 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 
 	config.TokenPath = b.volumes.AddToken(constants.PluginName)
 
-	allMetricNames := metrics.GetAllNames()
 	includeList := metrics.GetIncludeList(b.desired)
-	allMetrics := metrics.GetDefinitions(allMetricNames, nil)
+	allMetrics := metrics.GetDefinitions(b.desired, true)
 	for i := range allMetrics {
 		mSpec := allMetrics[i].Spec
 		enabled := slices.Contains(includeList, mSpec.MetricName)
