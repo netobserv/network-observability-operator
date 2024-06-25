@@ -6382,6 +6382,25 @@ spec:
                 default: netobserv
                 description: Namespace where NetObserv pods are deployed.
                 type: string
+              networkPolicy:
+                description: '`networkPolicy` define network policy settings for netobserv'
+                properties:
+                  additionalNamespaces:
+                    default:
+                    - openshift-console
+                    - openshift-monitoring
+                    description: |-
+                      `additionalNamespaces` contains additional namespaces alowed to connect to the network observability namespaces
+                      In particular if additional application deployed in this namespaces (such as kafka or loki) need external connection, this should be added here.
+                    items:
+                      type: string
+                    type: array
+                  enable:
+                    description: |-
+                      Set `enable` to `false` to disable network policy deployment. It is enabled by default.
+                      This network policy better isolates the NetObserv components to prevent undesired connections to them. It is recommended to install it.
+                    type: boolean
+                type: object
               processor:
                 description: |-
                   `processor` defines the settings of the component that receives the flows from the agent,

@@ -5793,6 +5793,13 @@ Kafka can provide better scalability, resiliency, and high availability (for mor
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecnetworkpolicy">networkPolicy</a></b></td>
+        <td>object</td>
+        <td>
+          `networkPolicy` define network policy settings for netobserv<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessor-1">processor</a></b></td>
         <td>object</td>
         <td>
@@ -13366,6 +13373,44 @@ If the namespace is different, the config map or the secret is copied so that it
           Type for the certificate reference: `configmap` or `secret`<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.networkPolicy
+<sup><sup>[↩ Parent](#flowcollectorspec-1)</sup></sup>
+
+
+
+`networkPolicy` define network policy settings for netobserv
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>additionalNamespaces</b></td>
+        <td>[]string</td>
+        <td>
+          `additionalNamespaces` contains additional namespaces alowed to connect to the network observability namespaces
+In particular if additional application deployed in this namespaces (such as kafka or loki) need external connection, this should be added here.<br/>
+          <br/>
+            <i>Default</i>: [openshift-console openshift-monitoring]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Set `enable` to `false` to disable network policy deployment. It is enabled by default.
+This network policy better isolates the NetObserv components to prevent undesired connections to them. It is recommended to install it.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

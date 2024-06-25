@@ -776,6 +776,12 @@ spec:
         path: loki.readTimeout
       - displayName: Namespace
         path: namespace
+      - displayName: Network policy
+        path: networkPolicy
+      - displayName: Additional namespaces
+        path: networkPolicy.additionalNamespaces
+      - displayName: Enable
+        path: networkPolicy.enable
       - displayName: Log types
         path: processor.logTypes
       - displayName: Disable alerts
@@ -1068,6 +1074,16 @@ spec:
           - get
           - list
           - patch
+          - update
+          - watch
+        - apiGroups:
+          - networking.k8s.io
+          resources:
+          - networkpolicies
+          verbs:
+          - create
+          - get
+          - list
           - update
           - watch
         - apiGroups:
