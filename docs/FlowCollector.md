@@ -12150,7 +12150,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          `certFile` defines the path to the certificate file name within the config map or secret<br/>
+          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12164,7 +12164,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the config map or secret containing certificates<br/>
+          Name of the config map or secret containing certificates.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12181,7 +12181,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the certificate reference: `configmap` or `secret`<br/>
+          Type for the certificate reference: `configmap` or `secret`.<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -12210,7 +12210,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>certFile</b></td>
         <td>string</td>
         <td>
-          `certFile` defines the path to the certificate file name within the config map or secret<br/>
+          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12224,7 +12224,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Name of the config map or secret containing certificates<br/>
+          Name of the config map or secret containing certificates.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12241,7 +12241,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the certificate reference: `configmap` or `secret`<br/>
+          Type for the certificate reference: `configmap` or `secret`.<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>

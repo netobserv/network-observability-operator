@@ -5867,7 +5867,7 @@ spec:
                                 certFile:
                                   description: '`certFile` defines the path to the
                                     certificate file name within the config map or
-                                    secret'
+                                    secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the
@@ -5876,7 +5876,7 @@ spec:
                                   type: string
                                 name:
                                   description: Name of the config map or secret containing
-                                    certificates
+                                    certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5886,7 +5886,7 @@ spec:
                                   type: string
                                 type:
                                   description: 'Type for the certificate reference:
-                                    `configmap` or `secret`'
+                                    `configmap` or `secret`.'
                                   enum:
                                   - configmap
                                   - secret
@@ -5910,7 +5910,7 @@ spec:
                                 certFile:
                                   description: '`certFile` defines the path to the
                                     certificate file name within the config map or
-                                    secret'
+                                    secret.'
                                   type: string
                                 certKey:
                                   description: '`certKey` defines the path to the
@@ -5919,7 +5919,7 @@ spec:
                                   type: string
                                 name:
                                   description: Name of the config map or secret containing
-                                    certificates
+                                    certificates.
                                   type: string
                                 namespace:
                                   default: ""
@@ -5929,7 +5929,7 @@ spec:
                                   type: string
                                 type:
                                   description: 'Type for the certificate reference:
-                                    `configmap` or `secret`'
+                                    `configmap` or `secret`.'
                                   enum:
                                   - configmap
                                   - secret
