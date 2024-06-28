@@ -62,19 +62,19 @@ const (
 	envMetricsTLSCertPath         = "METRICS_TLS_CERT_PATH"
 	envMetricsTLSKeyPath          = "METRICS_TLS_KEY_PATH"
 	envEnableFlowFilter           = "ENABLE_FLOW_FILTER"
-	envFlowFilterIPCIDR           = "FLOW_FILTER_IP_CIDR"
-	envFlowFilterAction           = "FLOW_FILTER_ACTION"
-	envFlowFilterDirection        = "FLOW_FILTER_DIRECTION"
-	envFlowFilterProtocol         = "FLOW_FILTER_PROTOCOL"
-	envFlowFilterSourcePort       = "FLOW_FILTER_SOURCE_PORT"
-	envFlowFilterDestPort         = "FLOW_FILTER_DESTINATION_PORT"
-	envFlowFilterPort             = "FLOW_FILTER_PORT"
-	envFlowFilterSourcePortRange  = "FLOW_FILTER_SOURCE_PORT_RANGE"
-	envFlowFilterDestPortRange    = "FLOW_FILTER_DESTINATION_PORT_RANGE"
-	envFlowFilterPortRange        = "FLOW_FILTER_PORT_RANGE"
-	envFlowFilterICMPType         = "FLOW_FILTER_ICMP_TYPE"
-	envFlowFilterICMPCode         = "FLOW_FILTER_ICMP_CODE"
-	envFlowFilterPeerIPAddress    = "FLOW_FILTER_PEER_IP"
+	envFilterIPCIDR               = "FILTER_IP_CIDR"
+	envFilterAction               = "FILTER_ACTION"
+	envFilterDirection            = "FILTER_DIRECTION"
+	envFilterProtocol             = "FILTER_PROTOCOL"
+	envFilterSourcePort           = "FILTER_SOURCE_PORT"
+	envFilterDestPort             = "FILTER_DESTINATION_PORT"
+	envFilterPort                 = "FILTER_PORT"
+	envFilterSourcePortRange      = "FILTER_SOURCE_PORT_RANGE"
+	envFilterDestPortRange        = "FILTER_DESTINATION_PORT_RANGE"
+	envFilterPortRange            = "FILTER_PORT_RANGE"
+	envFilterICMPType             = "FILTER_ICMP_TYPE"
+	envFilterICMPCode             = "FILTER_ICMP_CODE"
+	envFilterPeerIPAddress        = "FILTER_PEER_IP"
 	envListSeparator              = ","
 )
 
@@ -427,72 +427,72 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 
 func (c *AgentController) configureFlowFilter(filter *flowslatest.EBPFFlowFilter, config []corev1.EnvVar) []corev1.EnvVar {
 	if filter.CIDR != "" {
-		config = append(config, corev1.EnvVar{Name: envFlowFilterIPCIDR,
+		config = append(config, corev1.EnvVar{Name: envFilterIPCIDR,
 			Value: filter.CIDR,
 		})
 	}
 	if filter.Action != "" {
-		config = append(config, corev1.EnvVar{Name: envFlowFilterAction,
+		config = append(config, corev1.EnvVar{Name: envFilterAction,
 			Value: filter.Action,
 		})
 	}
 	if filter.Direction != "" {
-		config = append(config, corev1.EnvVar{Name: envFlowFilterDirection,
+		config = append(config, corev1.EnvVar{Name: envFilterDirection,
 			Value: filter.Direction,
 		})
 	}
 	if filter.Protocol != "" {
-		config = append(config, corev1.EnvVar{Name: envFlowFilterProtocol,
+		config = append(config, corev1.EnvVar{Name: envFilterProtocol,
 			Value: filter.Protocol,
 		})
 		switch filter.Protocol {
 		case "TCP", "UDP", "SCTP":
 			if filter.SourcePorts.Type == intstr.String {
-				config = append(config, corev1.EnvVar{Name: envFlowFilterSourcePortRange,
+				config = append(config, corev1.EnvVar{Name: envFilterSourcePortRange,
 					Value: filter.SourcePorts.String(),
 				})
 			}
 			if filter.SourcePorts.Type == intstr.Int {
-				config = append(config, corev1.EnvVar{Name: envFlowFilterSourcePort,
+				config = append(config, corev1.EnvVar{Name: envFilterSourcePort,
 					Value: strconv.Itoa(filter.SourcePorts.IntValue()),
 				})
 			}
 			if filter.DestPorts.Type == intstr.String {
-				config = append(config, corev1.EnvVar{Name: envFlowFilterDestPortRange,
+				config = append(config, corev1.EnvVar{Name: envFilterDestPortRange,
 					Value: filter.DestPorts.String(),
 				})
 			}
 			if filter.DestPorts.Type == intstr.Int {
-				config = append(config, corev1.EnvVar{Name: envFlowFilterDestPort,
+				config = append(config, corev1.EnvVar{Name: envFilterDestPort,
 					Value: strconv.Itoa(filter.DestPorts.IntValue()),
 				})
 			}
 			if filter.Ports.Type == intstr.String {
-				config = append(config, corev1.EnvVar{Name: envFlowFilterPortRange,
+				config = append(config, corev1.EnvVar{Name: envFilterPortRange,
 					Value: filter.Ports.String(),
 				})
 			}
 			if filter.Ports.Type == intstr.Int {
-				config = append(config, corev1.EnvVar{Name: envFlowFilterPort,
+				config = append(config, corev1.EnvVar{Name: envFilterPort,
 					Value: strconv.Itoa(filter.Ports.IntValue()),
 				})
 			}
 
 		case "ICMP", "ICMPv6":
 			if *filter.ICMPType != 0 {
-				config = append(config, corev1.EnvVar{Name: envFlowFilterICMPType,
+				config = append(config, corev1.EnvVar{Name: envFilterICMPType,
 					Value: strconv.Itoa(*filter.ICMPType),
 				})
 			}
 			if *filter.ICMPCode != 0 {
-				config = append(config, corev1.EnvVar{Name: envFlowFilterICMPCode,
+				config = append(config, corev1.EnvVar{Name: envFilterICMPCode,
 					Value: strconv.Itoa(*filter.ICMPCode)})
 			}
 		}
 	}
 
 	if filter.PeerIP != "" {
-		config = append(config, corev1.EnvVar{Name: envFlowFilterPeerIPAddress,
+		config = append(config, corev1.EnvVar{Name: envFilterPeerIPAddress,
 			Value: filter.PeerIP})
 	}
 	return config
