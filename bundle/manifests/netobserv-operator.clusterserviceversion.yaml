@@ -517,6 +517,9 @@ spec:
       - path: agent.ebpf.flowFilter
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
+      - path: agent.ebpf.metrics.enable
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: to use Kafka as a broker as part of the flow collection pipeline.
         displayName: Kafka configuration
         path: kafka
@@ -603,6 +606,9 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - path: processor.subnetLabels.openShiftAutoDetect
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:hidden
       - displayName: Log level
         path: processor.logLevel
         x-descriptors:
@@ -732,8 +738,6 @@ spec:
         path: agent.ebpf.metrics
       - displayName: Disable alerts
         path: agent.ebpf.metrics.disableAlerts
-      - displayName: Enable
-        path: agent.ebpf.metrics.enable
       - displayName: Server
         path: agent.ebpf.metrics.server
       - displayName: Port
@@ -788,8 +792,6 @@ spec:
         path: processor.subnetLabels
       - displayName: Custom labels
         path: processor.subnetLabels.customLabels
-      - displayName: Open shift auto detect
-        path: processor.subnetLabels.openShiftAutoDetect
       - displayName: Prometheus
         path: prometheus
       - displayName: Querier

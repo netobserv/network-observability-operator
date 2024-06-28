@@ -39,6 +39,7 @@ spec:
       name: flowcollectors.flows.netobserv.io
       version: v1beta2
       specDescriptors:
+        # Reference: https://github.com/openshift/console/blob/master/frontend/packages/operator-lifecycle-manager/src/components/descriptors/reference/reference.md
         # ROOT
         - description: defines the desired type of deployment for flow processing.
           path: deploymentModel
@@ -86,6 +87,9 @@ spec:
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:hidden
         - path: agent.ebpf.flowFilter
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:hidden
+        - path: agent.ebpf.metrics.enable
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:hidden
         # KAFKA
@@ -170,6 +174,9 @@ spec:
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
             - urn:alm:descriptor:com.tectonic.ui:advanced
+        - path: processor.subnetLabels.openShiftAutoDetect
+          x-descriptors:
+            - urn:alm:descriptor:com.tectonic.ui:hidden
         - path: processor.logLevel
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:advanced
