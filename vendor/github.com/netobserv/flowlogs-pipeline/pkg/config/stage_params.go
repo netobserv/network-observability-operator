@@ -74,6 +74,21 @@ func NewEncodeS3Params(name string, s3 api.EncodeS3) StageParam {
 	return StageParam{Name: name, Encode: &Encode{Type: api.S3Type, S3: &s3}}
 }
 
+//nolint:golint,gocritic
+func NewEncodeOtelLogsParams(name string, otelLogs api.EncodeOtlpLogs) StageParam {
+	return StageParam{Name: name, Encode: &Encode{Type: api.OtlpLogsType, OtlpLogs: &otelLogs}}
+}
+
+//nolint:golint,gocritic
+func NewEncodeOtelMetricsParams(name string, otelMetrics api.EncodeOtlpMetrics) StageParam {
+	return StageParam{Name: name, Encode: &Encode{Type: api.OtlpMetricsType, OtlpMetrics: &otelMetrics}}
+}
+
+//nolint:golint,gocritic
+func NewEncodeOtelTracesParams(name string, otelTraces api.EncodeOtlpTraces) StageParam {
+	return StageParam{Name: name, Encode: &Encode{Type: api.OtlpTracesType, OtlpTraces: &otelTraces}}
+}
+
 func NewWriteStdoutParams(name string, stdout api.WriteStdout) StageParam {
 	return StageParam{Name: name, Write: &Write{Type: api.StdoutType, Stdout: &stdout}}
 }

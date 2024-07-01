@@ -126,6 +126,18 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		}...)
 	}
 
+	// enrichment using Kafka cache
+	var kafkaCache *api.IngestKafka
+	if helper.UseKafka(b.desired) {
+		// Re-use the initial stage (which should be Kafka ingester), with a different topic
+		// TODO: that's ugly and deserves more refactoring
+		params := b.GetStageParams()[0]
+		kc := *params.Ingest.Kafka
+		kc.Topic = flpCacheTopic
+		kc.GroupID = ""
+		kafkaCache = &kc
+	}
+
 	// enrich stage (transform) configuration
 	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
 		Rules: rules,
@@ -135,7 +147,8 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			DstHostField:       "DstK8S_HostIP",
 			FlowDirectionField: "FlowDirection",
 		},
-		SubnetLabels: flpLabels,
+		SubnetLabels:     flpLabels,
+		KafkaCacheConfig: kafkaCache,
 	})
 
 	// loki stage (write) configuration

@@ -22,11 +22,13 @@ import (
 type transformerReconciler struct {
 	*reconcilers.Instance
 	deployment       *appsv1.Deployment
+	cacheDeployment  *appsv1.Deployment
 	promService      *corev1.Service
 	hpa              *ascv2.HorizontalPodAutoscaler
 	serviceAccount   *corev1.ServiceAccount
 	staticConfigMap  *corev1.ConfigMap
 	dynamicConfigMap *corev1.ConfigMap
+	cacheConfigMap   *corev1.ConfigMap
 	roleBinding      *rbacv1.ClusterRoleBinding
 	serviceMonitor   *monitoringv1.ServiceMonitor
 	prometheusRule   *monitoringv1.PrometheusRule
@@ -37,11 +39,13 @@ func newTransformerReconciler(cmn *reconcilers.Instance) *transformerReconciler 
 	rec := transformerReconciler{
 		Instance:         cmn,
 		deployment:       cmn.Managed.NewDeployment(name),
+		cacheDeployment:  cmn.Managed.NewDeployment(flpCacheName),
 		promService:      cmn.Managed.NewService(promServiceName(ConfKafkaTransformer)),
 		hpa:              cmn.Managed.NewHPA(name),
 		serviceAccount:   cmn.Managed.NewServiceAccount(name),
 		staticConfigMap:  cmn.Managed.NewConfigMap(staticConfigMapName(ConfKafkaTransformer)),
 		dynamicConfigMap: cmn.Managed.NewConfigMap(dynamicConfigMapName(ConfKafkaTransformer)),
+		cacheConfigMap:   cmn.Managed.NewConfigMap(flpCacheConfigMap),
 		roleBinding:      cmn.Managed.NewCRB(RoleBindingName(ConfKafkaTransformer)),
 	}
 	if cmn.AvailableAPIs.HasSvcMonitor() {
@@ -86,19 +90,36 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 	if err != nil {
 		return err
 	}
+
+	// Main, static config map
 	newSCM, configDigest, err := builder.staticConfigMap()
 	if err != nil {
 		return err
 	}
-	annotations := map[string]string{
-		constants.PodConfigurationDigest: configDigest,
-	}
+	annotations := map[string]string{constants.PodConfigurationDigest: configDigest}
 	if !r.Managed.Exists(r.staticConfigMap) {
 		if err := r.CreateOwned(ctx, newSCM); err != nil {
 			return err
 		}
 	} else if !equality.Semantic.DeepDerivative(newSCM.Data, r.staticConfigMap.Data) {
 		if err := r.UpdateIfOwned(ctx, r.staticConfigMap, newSCM); err != nil {
+			return err
+		}
+	}
+
+	// Cache config map
+	// TODO: factorize with main static CM code
+	newCCM, configDigest, err := builder.generic.cacheConfigMap()
+	if err != nil {
+		return err
+	}
+	cacheAnnotations := map[string]string{constants.PodConfigurationDigest: configDigest}
+	if !r.Managed.Exists(r.cacheConfigMap) {
+		if err := r.CreateOwned(ctx, newCCM); err != nil {
+			return err
+		}
+	} else if !equality.Semantic.DeepDerivative(newCCM.Data, r.cacheConfigMap.Data) {
+		if err := r.UpdateIfOwned(ctx, r.cacheConfigMap, newCCM); err != nil {
 			return err
 		}
 	}
@@ -125,6 +146,7 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 	}
 
 	// Watch for Kafka certificate if necessary; need to restart pods in case of cert rotation
+	// TODO: cacheAnnotations
 	if err = annotateKafkaCerts(ctx, r.Common, &desired.Spec.Kafka, "kafka", annotations); err != nil {
 		return err
 	}
@@ -137,7 +159,7 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 		return err
 	}
 
-	if err = r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, annotations); err != nil {
+	if err = r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, annotations, cacheAnnotations); err != nil {
 		return err
 	}
 
@@ -161,11 +183,11 @@ func (r *transformerReconciler) reconcileDynamicConfigMap(ctx context.Context, b
 	return nil
 }
 
-func (r *transformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flowslatest.FlowCollectorFLP, builder *transfoBuilder, annotations map[string]string) error {
+func (r *transformerReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flowslatest.FlowCollectorFLP, builder *transfoBuilder, annotations, cacheAnnots map[string]string) error {
 	report := helper.NewChangeReport("FLP Deployment")
 	defer report.LogIfNeeded(ctx)
 
-	return reconcilers.ReconcileDeployment(
+	if err := reconcilers.ReconcileDeployment(
 		ctx,
 		r.Instance,
 		r.deployment,
@@ -174,7 +196,10 @@ func (r *transformerReconciler) reconcileDeployment(ctx context.Context, desired
 		helper.PtrInt32(desiredFLP.KafkaConsumerReplicas),
 		&desiredFLP.KafkaConsumerAutoscaler,
 		&report,
-	)
+	); err != nil {
+		return err
+	}
+	return reconcilers.ReconcileDeployment(ctx, r.Instance, r.cacheDeployment, builder.cacheDeployment(cacheAnnots), flpCacheName, 1, nil, &report)
 }
 
 func (r *transformerReconciler) reconcileHPA(ctx context.Context, desiredFLP *flowslatest.FlowCollectorFLP, builder *transfoBuilder) error {
