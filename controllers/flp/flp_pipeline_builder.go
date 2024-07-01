@@ -61,7 +61,8 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	addZone := helper.IsZoneEnabled(&b.desired.Processor)
 
 	// Get all subnet labels
-	allLabels := append(b.detectedSubnets, b.desired.Processor.SubnetLabels.CustomLabels...)
+	allLabels := b.desired.Processor.SubnetLabels.CustomLabels
+	allLabels = append(allLabels, b.detectedSubnets...)
 	flpLabels := subnetLabelsToFLP(allLabels)
 
 	rules := api.NetworkTransformRules{

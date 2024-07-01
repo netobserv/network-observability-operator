@@ -1057,3 +1057,52 @@ publish: External`,
 			},
 		}, machines)
 }
+
+func TestPipelineWithSubnetLabels(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := flowslatest.FlowCollectorSpec{
+		Processor: flowslatest.FlowCollectorFLP{
+			SubnetLabels: flowslatest.SubnetLabels{
+				OpenShiftAutoDetect: ptr.To(true),
+				CustomLabels: []flowslatest.SubnetLabel{
+					{
+						Name:  "Foo",
+						CIDRs: []string{"8.8.8.8/32"},
+					},
+				},
+			},
+		},
+		Loki: flowslatest.FlowCollectorLoki{Enable: ptr.To(false)},
+	}
+
+	b := monoBuilder("namespace", &cfg)
+	b.generic.detectedSubnets = []flowslatest.SubnetLabel{
+		{
+			Name:  "Pods",
+			CIDRs: []string{"10.128.0.0/14"},
+		},
+	}
+	scm, _, err := b.staticConfigMap()
+	assert.NoError(err)
+	dcm, err := b.dynamicConfigMap()
+	assert.NoError(err)
+	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
+	assert.Equal(
+		`[{"name":"grpc"},{"name":"enrich","follows":"grpc"},{"name":"prometheus","follows":"enrich"}]`,
+		pipeline,
+	)
+	assert.Equal(
+		[]api.NetworkTransformSubnetLabel{
+			{
+				Name:  "Foo",
+				CIDRs: []string{"8.8.8.8/32"},
+			},
+			{
+				Name:  "Pods",
+				CIDRs: []string{"10.128.0.0/14"},
+			},
+		},
+		cfs.Parameters[1].Transform.Network.SubnetLabels,
+	)
+}
