@@ -10,6 +10,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -198,6 +199,30 @@ func ReconcileService(ctx context.Context, ci *Instance, old, new *corev1.Servic
 		}
 	}
 	return nil
+}
+
+func ReconcileNetworkPolicy(ctx context.Context, cl *helper.Client, name types.NamespacedName, desired *networkingv1.NetworkPolicy) error {
+	current := networkingv1.NetworkPolicy{}
+	if err := cl.Get(ctx, name, &current); err != nil {
+		if errors.IsNotFound(err) {
+			if desired != nil {
+				return cl.CreateOwned(ctx, desired)
+			}
+			return nil
+		}
+		return fmt.Errorf("can't reconcile Network Policy %s: %w", name.Name, err)
+	}
+	if desired == nil {
+		if helper.IsOwned(&current) {
+			return cl.Delete(ctx, &current)
+		}
+		return nil
+	}
+	if helper.IsSubSet(current.Labels, desired.Labels) && reflect.DeepEqual(current.Spec, desired.Spec) {
+		// network policy already reconciled. Exiting
+		return nil
+	}
+	return cl.UpdateIfOwned(ctx, &current, desired)
 }
 
 func GenericReconcile[K client.Object](ctx context.Context, m *NamespacedObjectManager, cl *helper.Client, old, new K, report *helper.ChangeReport, changeFunc func(old, new K, report *helper.ChangeReport) bool) error {

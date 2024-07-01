@@ -84,6 +84,23 @@ type FlowCollectorSpec struct {
 	// +optional
 	// +k8s:conversion-gen=false
 	Exporters []*FlowCollectorExporter `json:"exporters"`
+
+	// `networkPolicy` define network policy settings for netobserv
+	// +k8s:conversion-gen=false
+	NetworkPolicy NetworkPolicy `json:"networkPolicy,omitempty"`
+}
+
+type NetworkPolicy struct {
+	// Set `enable` to `false` to disable network policy deployment. It is enabled by default.
+	// This network policy better isolates the NetObserv components to prevent undesired connections to them. It is recommended to install it.
+	// +optional
+	Enable *bool `json:"enable,omitempty"`
+
+	// `additionalNamespaces` contains additional namespaces alowed to connect to the network observability namespaces
+	// In particular if additional application deployed in this namespaces (such as kafka or loki) need external connection, this should be added here.
+	//+kubebuilder:default:={"openshift-console", "openshift-monitoring"}
+	//+optional
+	AdditionalNamespaces []string `json:"additionalNamespaces"`
 }
 
 type FlowCollectorAgentType string

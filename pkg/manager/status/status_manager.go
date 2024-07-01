@@ -25,6 +25,7 @@ const (
 	FLPMonolith         ComponentName = "FLPMonolith"
 	FLPTransformOnly    ComponentName = "FLPTransformOnly"
 	Monitoring          ComponentName = "Monitoring"
+	NetworkPolicy       ComponentName = "NetworkPolicy"
 )
 
 var allNames = []ComponentName{FlowCollectorLegacy, Monitoring}

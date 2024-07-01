@@ -215,6 +215,10 @@ func flowCollectorIsoSpecs() {
 				},
 			},
 			Exporters: []*flowslatest.FlowCollectorExporter{},
+			NetworkPolicy: flowslatest.NetworkPolicy{
+				Enable:               nil,
+				AdditionalNamespaces: []string{},
+			},
 		}
 
 		It("Should create CR successfully", func() {
