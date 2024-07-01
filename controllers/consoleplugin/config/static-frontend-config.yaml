@@ -503,6 +503,14 @@ columns:
     default: true
     width: 5
     feature: flowRTT
+  - id: OvsMonitorMDs
+    name: OVS metadatas
+    tooltip: OVS monitor metadatas
+    field: OvsMonitorMDs
+    filter: ovs_metadatas
+    default: true
+    width: 5
+    feature: ovsMonitor
 filters:
   - id: cluster_name
     name: Cluster
@@ -860,7 +868,10 @@ filters:
     name: Flow RTT
     component: number
     hint: Specify a TCP smoothed Round Trip Time in nanoseconds.
-
+  - id: ovs_metadatas
+    name: OVS monitor metadatas
+    component: text
+    hint: Specify a single metadata.
 # Fields definition, used to generate documentation
 # The "cardinalityWarn" property relates to how the field is suitable for usage as a metric label wrt cardinality; it may have 3 values: fine, careful, avoid
 fields:
@@ -1086,6 +1097,10 @@ fields:
   - name: TimeFlowRttNs
     type: number
     description: TCP Smoothed Round Trip Time (SRTT), in nanoseconds
+    cardinalityWarn: avoid
+  - name: OvsMonitorMDs
+    type: string
+    description: OVS monitor metadatas
     cardinalityWarn: avoid
   - name: K8S_ClusterName
     type: string
