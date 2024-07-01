@@ -495,23 +495,8 @@ func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslates
 
 	// otel logs config
 	if spec.Logs.Enable != nil && *spec.Logs.Enable {
-		transformConfig := api.TransformGeneric{
-			Policy: "replace_keys",
-			Rules:  constants.OpenTelemetryDefaultTransformRules,
-		}
-		// set custom rules if specified
-		if spec.Rules != nil {
-			transformConfig.Rules = []api.GenericTransformRule{}
-			for _, r := range *spec.Rules {
-				transformConfig.Rules = append(transformConfig.Rules, api.GenericTransformRule{
-					Input:      r.Input,
-					Output:     r.Output,
-					Multiplier: r.Multiplier,
-				})
-			}
-		}
 		// add transform stage
-		transformStage := fromStage.TransformGeneric(fmt.Sprintf("%s-transform", name), transformConfig)
+		transformStage := fromStage.TransformGeneric(fmt.Sprintf("%s-transform", name), helper.GetOtelTransformConfig(spec.Rules))
 		// add encode stage(s)
 		transformStage.EncodeOtelLogs(fmt.Sprintf("%s-logs", name), api.EncodeOtlpLogs{
 			OtlpConnectionInfo: &conn,
@@ -523,10 +508,9 @@ func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslates
 		fromStage.EncodeOtelMetrics(fmt.Sprintf("%s-metrics", name), api.EncodeOtlpMetrics{
 			OtlpConnectionInfo: &conn,
 			Prefix:             "netobserv",
-			// TODO: rewrite flpMetrics to map labels / filters with the otel semantic
-			Metrics:          flpMetrics,
-			PushTimeInterval: api.Duration{Duration: spec.Metrics.PushTimeInterval.Duration},
-			ExpiryTime:       api.Duration{Duration: 2 * time.Minute},
+			Metrics:            helper.GetOtelMetrics(flpMetrics),
+			PushTimeInterval:   api.Duration{Duration: spec.Metrics.PushTimeInterval.Duration},
+			ExpiryTime:         api.Duration{Duration: 2 * time.Minute},
 		})
 	}
 
