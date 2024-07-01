@@ -403,7 +403,7 @@ spec:
         - name: name
           value: sbom-json-check
         - name: bundle
-          value: quay.io/konflux-ci/tekton-catalog/task-sbom-json-check:0.1@sha256:fe6e910cf25664dc6c192023f178a4066e20307d7f888f6d0fe0304c5c11a3c4
+          value: quay.io/konflux-ci/tekton-catalog/task-sbom-json-check:0.1@sha256:acc9cb8a714f33c0e48d6ca219b6bd0191f09cdd767af4ef3a35d0a5cac53b5d
         - name: kind
           value: task
         resolver: bundles
