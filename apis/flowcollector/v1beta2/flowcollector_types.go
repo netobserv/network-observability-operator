@@ -416,8 +416,10 @@ type FlowCollectorOpenTelemetry struct {
 	TargetPort int `json:"targetPort"`
 
 	// Protocol of Open Telemetry connection. The available options are `http` and `grpc`.
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="http";"grpc"
 	// +optional
-	Protocol string `json:"protocol"`
+	Protocol string `json:"protocol,omitempty"`
 
 	// Headers to add to messages (optional)
 	// +optional
@@ -427,11 +429,11 @@ type FlowCollectorOpenTelemetry struct {
 	// +optional
 	TLS ClientTLS `json:"tls"`
 
-	// Custom rules to transform flow logs to Opentelemetry-conformant format.
-	// By default the following format will be used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal
-	// Setting `customRules` will fully override the default rules allowing you to export each field to your naming convention
+	// Custom fields mapping to an OpenTelemetry conformant format.
+	// By default, NetObserv format proposal is used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal .
+	// As there is currently no accepted otlp standard for L3/4 network logs, you can freely override it with your own.
 	// +optional
-	Rules *[]GenericTransformRule `json:"customRules,omitempty"`
+	FieldsMapping *[]GenericTransformRule `json:"fieldsMapping,omitempty"`
 
 	// Open telemetry configuration for logs.
 	// +optional

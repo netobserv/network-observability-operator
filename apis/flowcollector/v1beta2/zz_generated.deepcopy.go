@@ -734,8 +734,8 @@ func (in *FlowCollectorOpenTelemetry) DeepCopyInto(out *FlowCollectorOpenTelemet
 		}
 	}
 	out.TLS = in.TLS
-	if in.Rules != nil {
-		in, out := &in.Rules, &out.Rules
+	if in.FieldsMapping != nil {
+		in, out := &in.FieldsMapping, &out.FieldsMapping
 		*out = new([]GenericTransformRule)
 		if **in != nil {
 			in, out := *in, *out

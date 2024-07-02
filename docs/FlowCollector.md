@@ -11922,12 +11922,12 @@ Open telemetry configuration, such as the IP address and port to send enriched l
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecexportersindexopentelemetrycustomrulesindex">customRules</a></b></td>
+        <td><b><a href="#flowcollectorspecexportersindexopentelemetryfieldsmappingindex">fieldsMapping</a></b></td>
         <td>[]object</td>
         <td>
-          Custom rules to transform flow logs to Opentelemetry-conformant format.
-By default the following format will be used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal
-Setting `customRules` will fully override the default rules allowing you to export each field to your naming convention<br/>
+          Custom fields mapping to an OpenTelemetry conformant format.
+By default, NetObserv format proposal is used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal .
+As there is currently no accepted otlp standard for L3/4 network logs, you can freely override it with your own.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11953,9 +11953,11 @@ Setting `customRules` will fully override the default rules allowing you to expo
         <td>false</td>
       </tr><tr>
         <td><b>protocol</b></td>
-        <td>string</td>
+        <td>enum</td>
         <td>
           Protocol of Open Telemetry connection. The available options are `http` and `grpc`.<br/>
+          <br/>
+            <i>Enum</i>: http, grpc<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11969,7 +11971,7 @@ Setting `customRules` will fully override the default rules allowing you to expo
 </table>
 
 
-### FlowCollector.spec.exporters[index].openTelemetry.customRules[index]
+### FlowCollector.spec.exporters[index].openTelemetry.fieldsMapping[index]
 <sup><sup>[↩ Parent](#flowcollectorspecexportersindexopentelemetry)</sup></sup>
 
 

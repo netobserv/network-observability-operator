@@ -496,7 +496,7 @@ func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslates
 	// otel logs config
 	if spec.Logs.Enable != nil && *spec.Logs.Enable {
 		// add transform stage
-		transformStage := fromStage.TransformGeneric(fmt.Sprintf("%s-transform", name), helper.GetOtelTransformConfig(spec.Rules))
+		transformStage := fromStage.TransformGeneric(fmt.Sprintf("%s-transform", name), helper.GetOtelTransformConfig(spec.FieldsMapping))
 		// add encode stage(s)
 		transformStage.EncodeOtelLogs(fmt.Sprintf("%s-logs", name), api.EncodeOtlpLogs{
 			OtlpConnectionInfo: &conn,
