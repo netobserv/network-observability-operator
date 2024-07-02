@@ -373,6 +373,82 @@ type FlowCollectorIPFIXReceiver struct {
 	Transport string `json:"transport,omitempty"`
 }
 
+type FlowCollectorOpenTelemetryLogs struct {
+	// Set `enable` to `true` to send logs to Open Telemetry receiver.
+	//+kubebuilder:default:=true
+	Enable *bool `json:"enable,omitempty"`
+}
+
+type FlowCollectorOpenTelemetryMetrics struct {
+	// Set `enable` to `true` to send metrics to Open Telemetry receiver.
+	//+kubebuilder:default:=true
+	Enable *bool `json:"enable,omitempty"`
+
+	// How often should metrics be sent to collector
+	// +kubebuilder:default:="20s"
+	PushTimeInterval *metav1.Duration `json:"pushTimeInterval,omitempty"`
+}
+
+type FlowCollectorOpenTelemetryTraces struct {
+	// Set `enable` to `true` to send traces to Open Telemetry receiver.
+	//+kubebuilder:default:=true
+	Enable *bool `json:"enable,omitempty"`
+
+	// Separate span for each prefix listed
+	//+optional
+	SpanSplitter []string `json:"spanSplitter,omitempty"`
+}
+
+type GenericTransformRule struct {
+	Input      string `json:"input,omitempty"`
+	Output     string `json:"output,omitempty"`
+	Multiplier int    `json:"multiplier,omitempty"`
+}
+
+type GenericTransform []GenericTransformRule
+
+type FlowCollectorOpenTelemetry struct {
+	// Address of the Open Telemetry receiver
+	// +kubebuilder:default:=""
+	TargetHost string `json:"targetHost"`
+
+	// Port for the Open Telemetry receiver
+	TargetPort int `json:"targetPort"`
+
+	// Protocol of Open Telemetry connection. The available options are `http` and `grpc`.
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="http";"grpc"
+	// +optional
+	Protocol string `json:"protocol,omitempty"`
+
+	// Headers to add to messages (optional)
+	// +optional
+	Headers map[string]string `json:"headers,omitempty"`
+
+	// TLS client configuration.
+	// +optional
+	TLS ClientTLS `json:"tls"`
+
+	// Custom fields mapping to an OpenTelemetry conformant format.
+	// By default, NetObserv format proposal is used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal .
+	// As there is currently no accepted otlp standard for L3/4 network logs, you can freely override it with your own.
+	// +optional
+	FieldsMapping *[]GenericTransformRule `json:"fieldsMapping,omitempty"`
+
+	// Open telemetry configuration for logs.
+	// +optional
+	Logs FlowCollectorOpenTelemetryLogs `json:"logs"`
+
+	// Open telemetry configuration for metrics.
+	// +optional
+	Metrics FlowCollectorOpenTelemetryMetrics `json:"metrics"`
+
+	// TODO: add traces in future
+	// Open telemetry configuration for traces.
+	// +optional
+	//Traces FlowCollectorOpenTelemetryTraces `json:"traces"`
+}
+
 type ServerTLSConfigType string
 
 const (
@@ -1201,15 +1277,16 @@ type SubnetLabel struct {
 type ExporterType string
 
 const (
-	KafkaExporter ExporterType = "Kafka"
-	IpfixExporter ExporterType = "IPFIX"
+	KafkaExporter         ExporterType = "Kafka"
+	IpfixExporter         ExporterType = "IPFIX"
+	OpenTelemetryExporter ExporterType = "OpenTelemetry"
 )
 
 // `FlowCollectorExporter` defines an additional exporter to send enriched flows to.
 type FlowCollectorExporter struct {
 	// `type` selects the type of exporters. The available options are `Kafka` and `IPFIX`.
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="Kafka";"IPFIX"
+	// +kubebuilder:validation:Enum:="Kafka";"IPFIX";"OpenTelemetry"
 	// +kubebuilder:validation:Required
 	Type ExporterType `json:"type"`
 
@@ -1220,6 +1297,10 @@ type FlowCollectorExporter struct {
 	// IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
 	// +optional
 	IPFIX FlowCollectorIPFIXReceiver `json:"ipfix,omitempty"`
+
+	// Open telemetry configuration, such as the IP address and port to send enriched logs, metrics and or traces to.
+	// +optional
+	OpenTelemetry FlowCollectorOpenTelemetry `json:"openTelemetry,omitempty"`
 }
 
 // `FlowCollectorStatus` defines the observed state of FlowCollector

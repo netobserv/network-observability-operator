@@ -11441,7 +11441,7 @@ inside a container.<br/>
         <td>
           `type` selects the type of exporters. The available options are `Kafka` and `IPFIX`.<br/>
           <br/>
-            <i>Enum</i>: Kafka, IPFIX<br/>
+            <i>Enum</i>: Kafka, IPFIX, OpenTelemetry<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -11456,6 +11456,13 @@ inside a container.<br/>
         <td>object</td>
         <td>
           Kafka configuration, such as the address and topic, to send enriched flows to.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexopentelemetry">openTelemetry</a></b></td>
+        <td>object</td>
+        <td>
+          Open telemetry configuration, such as the IP address and port to send enriched logs, metrics and or traces to.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11824,6 +11831,369 @@ If the namespace is different, the config map or the secret is copied so that it
 
 ### FlowCollector.spec.exporters[index].kafka.tls.userCert
 <sup><sup>[↩ Parent](#flowcollectorspecexportersindexkafkatls-1)</sup></sup>
+
+
+
+`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`.<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].openTelemetry
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindex-1)</sup></sup>
+
+
+
+Open telemetry configuration, such as the IP address and port to send enriched logs, metrics and or traces to.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>targetHost</b></td>
+        <td>string</td>
+        <td>
+          Address of the Open Telemetry receiver<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>targetPort</b></td>
+        <td>integer</td>
+        <td>
+          Port for the Open Telemetry receiver<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexopentelemetryfieldsmappingindex">fieldsMapping</a></b></td>
+        <td>[]object</td>
+        <td>
+          Custom fields mapping to an OpenTelemetry conformant format.
+By default, NetObserv format proposal is used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal .
+As there is currently no accepted otlp standard for L3/4 network logs, you can freely override it with your own.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>headers</b></td>
+        <td>map[string]string</td>
+        <td>
+          Headers to add to messages (optional)<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexopentelemetrylogs">logs</a></b></td>
+        <td>object</td>
+        <td>
+          Open telemetry configuration for logs.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexopentelemetrymetrics">metrics</a></b></td>
+        <td>object</td>
+        <td>
+          Open telemetry configuration for metrics.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
+        <td>enum</td>
+        <td>
+          Protocol of Open Telemetry connection. The available options are `http` and `grpc`.<br/>
+          <br/>
+            <i>Enum</i>: http, grpc<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexopentelemetrytls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS client configuration.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].openTelemetry.fieldsMapping[index]
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexopentelemetry)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>input</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>multiplier</b></td>
+        <td>integer</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>output</b></td>
+        <td>string</td>
+        <td>
+          <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].openTelemetry.logs
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexopentelemetry)</sup></sup>
+
+
+
+Open telemetry configuration for logs.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Set `enable` to `true` to send logs to Open Telemetry receiver.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].openTelemetry.metrics
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexopentelemetry)</sup></sup>
+
+
+
+Open telemetry configuration for metrics.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Set `enable` to `true` to send metrics to Open Telemetry receiver.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>pushTimeInterval</b></td>
+        <td>string</td>
+        <td>
+          How often should metrics be sent to collector<br/>
+          <br/>
+            <i>Default</i>: 20s<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].openTelemetry.tls
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexopentelemetry)</sup></sup>
+
+
+
+TLS client configuration.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecexportersindexopentelemetrytlscacert">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate.
+If set to `true`, the `caCert` field is ignored.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexopentelemetrytlsusercert">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].openTelemetry.tls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexopentelemetrytls)</sup></sup>
+
+
+
+`caCert` defines the reference of the certificate for the Certificate Authority
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`.<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].openTelemetry.tls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexopentelemetrytls)</sup></sup>
 
 
 
