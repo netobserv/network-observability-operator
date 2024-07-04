@@ -31,7 +31,7 @@ spec:
         - --profiling-bind-address=$(PROFILING_BIND_ADDRESS)
         env:
           - name: RELATED_IMAGE_EBPF_AGENT
-            value: quay.io/netobserv/netobserv-ebpf-agent:v1.6.1-crc1
+            value: quay.io/netobserv/netobserv-ebpf-agent:v1.6.1-crc2
           - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
             value: quay.io/netobserv/flowlogs-pipeline:v1.6.1-crc0
           - name: RELATED_IMAGE_CONSOLE_PLUGIN
