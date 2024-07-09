@@ -222,6 +222,21 @@ spec:
                               To filter a single port, set a single port as an integer value. For example sourcePorts: 80.
                               To filter a range of ports, use a "start-end" range, string format. For example sourcePorts: "80-100".
                             x-kubernetes-int-or-string: true
+                          tcpFlags:
+                            description: '`tcpFlags` defines the TCP flags to filter
+                              flows by.'
+                            enum:
+                            - SYN
+                            - SYN-ACK
+                            - ACK
+                            - FIN
+                            - RST
+                            - URG
+                            - ECE
+                            - CWR
+                            - FIN-ACK
+                            - RST-ACK
+                            type: string
                         type: object
                       imagePullPolicy:
                         default: IfNotPresent
@@ -3785,6 +3800,21 @@ spec:
                               To filter a single port, set a single port as an integer value. For example: `sourcePorts: 80`.
                               To filter a range of ports, use a "start-end" range in string format. For example: `sourcePorts: "80-100"`.
                             x-kubernetes-int-or-string: true
+                          tcpFlags:
+                            description: '`tcpFlags` defines the TCP flags to filter
+                              flows by.'
+                            enum:
+                            - SYN
+                            - SYN-ACK
+                            - ACK
+                            - FIN
+                            - RST
+                            - URG
+                            - ECE
+                            - CWR
+                            - FIN-ACK
+                            - RST-ACK
+                            type: string
                         type: object
                       imagePullPolicy:
                         default: IfNotPresent

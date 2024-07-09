@@ -215,6 +215,11 @@ type EBPFFlowFilter struct {
 	// +optional
 	Direction string `json:"direction,omitempty"`
 
+	// `tcpFlags` defines the TCP flags to filter flows by.
+	// +kubebuilder:validation:Enum:="SYN";"SYN-ACK";"ACK";"FIN";"RST";"URG";"ECE";"CWR";"FIN-ACK";"RST-ACK"
+	// +optional
+	TCPFlags string `json:"tcpFlags,omitempty"`
+
 	// `sourcePorts` defines the source ports to filter flows by.
 	// To filter a single port, set a single port as an integer value. For example: `sourcePorts: 80`.
 	// To filter a range of ports, use a "start-end" range in string format. For example: `sourcePorts: "80-100"`.

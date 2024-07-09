@@ -75,6 +75,7 @@ const (
 	envFilterICMPType             = "FILTER_ICMP_TYPE"
 	envFilterICMPCode             = "FILTER_ICMP_CODE"
 	envFilterPeerIPAddress        = "FILTER_PEER_IP"
+	envFilterTCPFlags             = "FILTER_TCP_FLAGS"
 	envListSeparator              = ","
 )
 
@@ -495,6 +496,13 @@ func (c *AgentController) configureFlowFilter(filter *flowslatest.EBPFFlowFilter
 		config = append(config, corev1.EnvVar{Name: envFilterPeerIPAddress,
 			Value: filter.PeerIP})
 	}
+
+	if filter.TCPFlags != "" {
+		config = append(config, corev1.EnvVar{Name: envFilterTCPFlags,
+			Value: filter.TCPFlags,
+		})
+	}
+
 	return config
 }
 

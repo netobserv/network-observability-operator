@@ -520,6 +520,15 @@ To filter a single port, set a single port as an integer value. For example sour
 To filter a range of ports, use a "start-end" range, string format. For example sourcePorts: "80-100".<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>tcpFlags</b></td>
+        <td>enum</td>
+        <td>
+          `tcpFlags` defines the TCP flags to filter flows by.<br/>
+          <br/>
+            <i>Enum</i>: SYN, SYN-ACK, ACK, FIN, RST, URG, ECE, CWR, FIN-ACK, RST-ACK<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -7911,6 +7920,15 @@ To filter a range of ports, use a "start-end" range in string format. For exampl
           `sourcePorts` defines the source ports to filter flows by.
 To filter a single port, set a single port as an integer value. For example: `sourcePorts: 80`.
 To filter a range of ports, use a "start-end" range in string format. For example: `sourcePorts: "80-100"`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tcpFlags</b></td>
+        <td>enum</td>
+        <td>
+          `tcpFlags` defines the TCP flags to filter flows by.<br/>
+          <br/>
+            <i>Enum</i>: SYN, SYN-ACK, ACK, FIN, RST, URG, ECE, CWR, FIN-ACK, RST-ACK<br/>
         </td>
         <td>false</td>
       </tr></tbody>
