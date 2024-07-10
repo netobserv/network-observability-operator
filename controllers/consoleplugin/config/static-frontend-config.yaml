@@ -396,6 +396,13 @@ columns:
     filter: icmp_code
     default: false
     width: 10
+  - id: TCPFlags
+    name: TCP Flags
+    tooltip: Logical OR combination of unique TCP flags comprised in the flow, as per RFC-9293, with additional custom values.
+    field: Flags
+    filter: tcp_flags
+    default: false
+    width: 10
   - id: FlowDirection
     name: Node Direction
     tooltip: The interpreted direction of the flow observed at the Node observation point.
@@ -790,6 +797,24 @@ filters:
     name: ICMP code
     component: number
     hint: Specify an ICMP code value as integer number.
+  - id: tcp_flags
+    name: TCP flags
+    component: autocomplete
+    hint: Specify a TCP flags value as integer number.
+    examples: |-
+      Logical OR combination of unique TCP flags comprised in the flow, as per RFC-9293, with additional custom flags
+      users can specify either numeric value or string representation of the flags as follows :
+      - FIN or 1,
+      - SYN or 2,
+      - RST or 4,
+      - PSH or 8,
+      - ACK or 16,
+      - URG or 32,
+      - ECE or 64,
+      - CWR or 128,
+      - SYN_ACK or 256,
+      - FIN_ACK or 512,
+      - RST_ACK or 1024,
   - id: node_direction
     name: Node Direction
     component: autocomplete
