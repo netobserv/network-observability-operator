@@ -493,28 +493,34 @@ func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslates
 		Headers:        spec.Headers,
 	}
 
-	// otel logs config
-	if spec.Logs.Enable != nil && *spec.Logs.Enable {
+	logsEnabled := spec.Logs.Enable != nil && *spec.Logs.Enable
+	metricsEnabled := spec.Metrics.Enable != nil && *spec.Metrics.Enable
+
+	if logsEnabled || metricsEnabled {
 		// add transform stage
 		transformStage := fromStage.TransformGeneric(fmt.Sprintf("%s-transform", name), helper.GetOtelTransformConfig(spec.FieldsMapping))
-		// add encode stage(s)
-		transformStage.EncodeOtelLogs(fmt.Sprintf("%s-logs", name), api.EncodeOtlpLogs{
-			OtlpConnectionInfo: &conn,
-		})
-	}
 
-	// otel metrics config
-	if spec.Metrics.Enable != nil && *spec.Metrics.Enable {
-		fromStage.EncodeOtelMetrics(fmt.Sprintf("%s-metrics", name), api.EncodeOtlpMetrics{
-			OtlpConnectionInfo: &conn,
-			Prefix:             "netobserv",
-			Metrics:            helper.GetOtelMetrics(flpMetrics),
-			PushTimeInterval:   api.Duration{Duration: spec.Metrics.PushTimeInterval.Duration},
-			ExpiryTime:         api.Duration{Duration: 2 * time.Minute},
-		})
-	}
+		// otel logs config
+		if logsEnabled {
+			// add encode stage(s)
+			transformStage.EncodeOtelLogs(fmt.Sprintf("%s-logs", name), api.EncodeOtlpLogs{
+				OtlpConnectionInfo: &conn,
+			})
+		}
 
-	// TODO: implement api.EncodeOtlpTraces
+		// otel metrics config
+		if metricsEnabled {
+			transformStage.EncodeOtelMetrics(fmt.Sprintf("%s-metrics", name), api.EncodeOtlpMetrics{
+				OtlpConnectionInfo: &conn,
+				Prefix:             "netobserv",
+				Metrics:            helper.GetOtelMetrics(flpMetrics),
+				PushTimeInterval:   api.Duration{Duration: spec.Metrics.PushTimeInterval.Duration},
+				ExpiryTime:         api.Duration{Duration: 2 * time.Minute},
+			})
+		}
+
+		// TODO: implement api.EncodeOtlpTraces
+	}
 }
 
 func getOtelConnType(connType string) string {
