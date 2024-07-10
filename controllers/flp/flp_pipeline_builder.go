@@ -512,7 +512,7 @@ func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslates
 		if metricsEnabled {
 			transformStage.EncodeOtelMetrics(fmt.Sprintf("%s-metrics", name), api.EncodeOtlpMetrics{
 				OtlpConnectionInfo: &conn,
-				Prefix:             "netobserv",
+				Prefix:             "netobserv_",
 				Metrics:            helper.GetOtelMetrics(flpMetrics),
 				PushTimeInterval:   api.Duration{Duration: spec.Metrics.PushTimeInterval.Duration},
 				ExpiryTime:         api.Duration{Duration: 2 * time.Minute},
