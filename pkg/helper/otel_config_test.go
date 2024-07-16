@@ -100,7 +100,7 @@ func TestOtelMetrics(t *testing.T) {
 				Type:  "equal",
 			},
 		},
-		ValueKey: "Bytes",
+		ValueKey: "bytes",
 		Labels:   []string{"source.k8s.name"},
 	}, metrics[0])
 }

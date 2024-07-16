@@ -195,7 +195,7 @@ func GetOtelMetrics(flpMetrics []api.MetricsItem) []api.MetricsItem {
 			Name:       convertToOtelLabel(m.Name),
 			Type:       m.Type,
 			Filters:    convertToOtelFilters(m.Filters),
-			ValueKey:   m.ValueKey,
+			ValueKey:   convertToOtelLabel(m.ValueKey),
 			Labels:     convertToOtelLabels(m.Labels),
 			Buckets:    m.Buckets,
 			ValueScale: m.ValueScale,
