@@ -179,6 +179,9 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	volumeMounts := b.volumes.AppendMounts([]corev1.VolumeMount{{
 		MountPath: configPath,
 		Name:      configVolume,
+	}, {
+		MountPath: constants.TmpDir,
+		Name:      constants.TmpDir,
 	}})
 	volumes := b.volumes.AppendVolumes([]corev1.Volume{{
 		Name: configVolume,
@@ -188,6 +191,11 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 					Name: b.staticConfigMapName(),
 				},
 			},
+		},
+	}, {
+		Name: constants.TmpDir,
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 	}})
 

@@ -83,6 +83,20 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			},
 		},
 		{
+			Type: api.NetworkAddLocation,
+			AddLocation: &api.NetworkGenericRule{
+				Input:  "SrcAddr",
+				Output: "SrcLoc",
+			},
+		},
+		{
+			Type: api.NetworkAddLocation,
+			AddLocation: &api.NetworkGenericRule{
+				Input:  "DstAddr",
+				Output: "DstLoc",
+			},
+		},
+		{
 			Type: api.NetworkReinterpretDirection,
 		},
 		{

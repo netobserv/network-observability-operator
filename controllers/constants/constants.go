@@ -34,6 +34,7 @@ const (
 	ConversionAnnotation    = AnnotationDomain + "/conversion-data"
 	NamespaceCopyAnnotation = AnnotationDomain + "/copied-from"
 
+	TmpDir     = "tmp"
 	TokensPath = "/var/run/secrets/tokens/"
 
 	ClusterNameLabelName = "K8S_ClusterName"
