@@ -53,6 +53,8 @@ type Builder struct {
 	info            *reconcilers.Instance
 	labels          map[string]string
 	selector        map[string]string
+	cacheLabels     map[string]string
+	cacheSelector   map[string]string
 	desired         *flowslatest.FlowCollectorSpec
 	flowMetrics     *metricslatest.FlowMetricList
 	detectedSubnets []flowslatest.SubnetLabel
@@ -94,6 +96,13 @@ func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 		},
 		selector: map[string]string{
 			"app": name,
+		},
+		cacheLabels: map[string]string{
+			"app":     flpCacheName,
+			"version": helper.MaxLabelLength(version),
+		},
+		cacheSelector: map[string]string{
+			"app": flpCacheName,
 		},
 		desired:         desired,
 		flowMetrics:     flowMetrics,
@@ -192,7 +201,6 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	}})
 
 	var envs []corev1.EnvVar
-	advancedConfig = helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
 	for _, pair := range helper.KeySorted(advancedConfig.Env) {
