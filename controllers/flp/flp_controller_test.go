@@ -506,9 +506,10 @@ func ControllerSpecs() {
 					return err
 				}
 				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(2))
+			}, timeout, interval).Should(HaveLen(3))
 			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("tmp"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[2].Name).To(Equal("loki-certs-ca"))
 		})
 
 		It("Should restore no TLS config", func() {
@@ -522,8 +523,9 @@ func ControllerSpecs() {
 					return err
 				}
 				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(1))
+			}, timeout, interval).Should(HaveLen(2))
 			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("tmp"))
 		})
 	})
 
@@ -564,9 +566,10 @@ func ControllerSpecs() {
 					return err
 				}
 				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(2))
+			}, timeout, interval).Should(HaveLen(3))
 			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("tmp"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[2].Name).To(Equal("loki-certs-ca"))
 		})
 
 		It("Should restore no TLS config", func() {
@@ -580,8 +583,9 @@ func ControllerSpecs() {
 					return err
 				}
 				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(1))
+			}, timeout, interval).Should(HaveLen(2))
 			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("tmp"))
 		})
 	})
 
@@ -621,9 +625,11 @@ func ControllerSpecs() {
 					return err
 				}
 				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(2))
+			}, timeout, interval).Should(HaveLen(3))
 			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("tmp"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[2].Name).To(Equal("loki-certs-ca"))
+
 		})
 
 		It("Should restore no TLS config", func() {
@@ -637,8 +643,10 @@ func ControllerSpecs() {
 					return err
 				}
 				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(1))
+			}, timeout, interval).Should(HaveLen(2))
 			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("tmp"))
+
 		})
 	})
 
@@ -671,10 +679,11 @@ func ControllerSpecs() {
 					return err
 				}
 				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(3))
+			}, timeout, interval).Should(HaveLen(4))
 			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("flowlogs-pipeline"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[2].Name).To(Equal("loki-certs-ca"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("tmp"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[2].Name).To(Equal("flowlogs-pipeline"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[3].Name).To(Equal("loki-certs-ca"))
 		})
 
 		It("Should deploy Loki roles", func() {
@@ -707,8 +716,10 @@ func ControllerSpecs() {
 					return err
 				}
 				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(1))
+			}, timeout, interval).Should(HaveLen(2))
 			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("tmp"))
+
 		})
 	})
 
