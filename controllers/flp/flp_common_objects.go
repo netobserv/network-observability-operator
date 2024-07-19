@@ -134,8 +134,8 @@ func (b *builder) NewKafkaPipeline() PipelineBuilder {
 		Topic:             b.desired.Kafka.Topic,
 		GroupID:           b.name(), // Without groupid, each message is delivered to each consumers
 		Decoder:           decoder,
-		TLS:               getKafkaTLS(&b.desired.Kafka.TLS, "kafka-cert", &b.volumes),
-		SASL:              getKafkaSASL(&b.desired.Kafka.SASL, "kafka-ingest", &b.volumes),
+		TLS:               getClientTLS(&b.desired.Kafka.TLS, "kafka-cert", &b.volumes),
+		SASL:              getSASL(&b.desired.Kafka.SASL, "kafka-ingest", &b.volumes),
 		PullQueueCapacity: b.desired.Processor.KafkaConsumerQueueCapacity,
 		PullMaxBytes:      b.desired.Processor.KafkaConsumerBatchSize,
 	}))
