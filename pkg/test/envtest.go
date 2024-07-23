@@ -27,6 +27,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	// openshift/api changed where generated CRD manifests are tracked. These imports
+	// are now required to get the CRD manifests vendored
+	_ "github.com/openshift/api/config/v1/zz_generated.crd-manifests"
+	_ "github.com/openshift/api/console/v1/zz_generated.crd-manifests"
+	_ "github.com/openshift/api/operator/v1/zz_generated.crd-manifests"
+
 	// nolint:staticcheck
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta1"
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
@@ -54,9 +60,9 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 				filepath.Join(basePath, "..", "config", "crd", "bases"),
 				// filepath.Join(basePath, "..", "hack"),
 				// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
-				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "console", "v1"),
-				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "config", "v1"),
-				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "operator", "v1"),
+				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "console", "v1", "zz_generated.crd-manifests"),
+				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "config", "v1", "zz_generated.crd-manifests"),
+				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "operator", "v1", "zz_generated.crd-manifests"),
 				filepath.Join(basePath, "..", "test-assets"),
 			},
 			CleanUpAfterUse: true,
