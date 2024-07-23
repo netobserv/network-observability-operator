@@ -1,0 +1,11 @@
+# This metric counts flows per source host and resource, with TCP flags. Combined with alerts, it can be used to detect
+# undesired behaviours such as SYN-flood attacks originating from the cluster.
+# More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: flows-with-flags-per-source
+spec:
+  metricName: flows_with_flags_per_source_total
+  type: Counter
+  labels: [DstSubnetLabel,SrcSubnetLabel,SrcK8S_Name,SrcK8S_Type,SrcK8S_HostName,SrcK8S_Namespace,Flags]
