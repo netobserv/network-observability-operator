@@ -4,14 +4,14 @@ import (
 	"strings"
 
 	configv1 "github.com/openshift/api/config/v1"
-	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
+	osv1 "github.com/openshift/api/console/v1"
 	operatorv1 "github.com/openshift/api/operator/v1"
 	monitoring "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"
 	"k8s.io/client-go/discovery"
 )
 
 var (
-	consolePlugin = "consoleplugins." + osv1alpha1.GroupName
+	consolePlugin = "consoleplugins." + osv1.GroupName
 	consoleConfig = "consoles." + configv1.GroupName
 	cno           = "networks." + operatorv1.GroupName
 	svcMonitor    = "servicemonitors." + monitoring.GroupName

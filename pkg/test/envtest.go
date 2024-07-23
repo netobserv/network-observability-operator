@@ -11,7 +11,7 @@ import (
 	//nolint:revive,stylecheck
 	. "github.com/onsi/gomega"
 	configv1 "github.com/openshift/api/config/v1"
-	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
+	osv1 "github.com/openshift/api/console/v1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -54,7 +54,7 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 				filepath.Join(basePath, "..", "config", "crd", "bases"),
 				// filepath.Join(basePath, "..", "hack"),
 				// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
-				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "console", "v1alpha1"),
+				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "console", "v1"),
 				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "config", "v1"),
 				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "operator", "v1"),
 				filepath.Join(basePath, "..", "test-assets"),
@@ -85,7 +85,7 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	err = corev1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = osv1alpha1.Install(scheme.Scheme)
+	err = osv1.Install(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = configv1.Install(scheme.Scheme)
