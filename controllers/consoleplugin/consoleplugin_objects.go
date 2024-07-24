@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
+	osv1 "github.com/openshift/api/console/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
@@ -70,29 +70,37 @@ func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 	}
 }
 
-func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
-	return &osv1alpha1.ConsolePlugin{
+func (b *builder) consolePlugin() *osv1.ConsolePlugin {
+	return &osv1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: constants.PluginName,
 		},
-		Spec: osv1alpha1.ConsolePluginSpec{
+		Spec: osv1.ConsolePluginSpec{
 			DisplayName: displayName,
-			Service: osv1alpha1.ConsolePluginService{
-				Name:      constants.PluginName,
-				Namespace: b.info.Namespace,
-				Port:      *b.advanced.Port,
-				BasePath:  "/",
-			},
-			Proxy: []osv1alpha1.ConsolePluginProxy{{
-				Type:      osv1alpha1.ProxyTypeService,
-				Alias:     proxyAlias,
-				Authorize: true,
-				Service: osv1alpha1.ConsolePluginProxyServiceConfig{
+			Backend: osv1.ConsolePluginBackend{
+				Type: osv1.Service,
+				Service: &osv1.ConsolePluginService{
 					Name:      constants.PluginName,
 					Namespace: b.info.Namespace,
 					Port:      *b.advanced.Port,
+					BasePath:  "/"},
+			},
+			Proxy: []osv1.ConsolePluginProxy{
+				{
+					Endpoint: osv1.ConsolePluginProxyEndpoint{
+						Type: osv1.ProxyTypeService,
+						Service: &osv1.ConsolePluginProxyServiceConfig{
+							Name:      constants.PluginName,
+							Namespace: b.info.Namespace,
+							Port:      *b.advanced.Port}},
+					Alias:         proxyAlias,
+					Authorization: osv1.UserToken,
+					CACertificate: "",
 				},
-			}},
+			},
+			I18n: osv1.ConsolePluginI18n{
+				LoadType: osv1.Lazy,
+			},
 		},
 	}
 }

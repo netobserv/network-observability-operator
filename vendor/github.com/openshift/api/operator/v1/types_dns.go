@@ -1,9 +1,9 @@
 package v1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	v1 "github.com/openshift/api/config/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // +genclient
@@ -12,6 +12,9 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=dnses,scope=Cluster
 // +kubebuilder:subresource:status
+// +kubebuilder:subresource:status
+// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/475
+// +openshift:file-pattern=cvoRunLevel=0000_70,operatorName=dns,operatorOrdering=00
 
 // DNS manages the CoreDNS component to provide a name resolution service
 // for pods and services in the cluster.
@@ -24,7 +27,10 @@ import (
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
 type DNS struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec is the specification of the desired behavior of the DNS.
@@ -100,6 +106,47 @@ type DNSSpec struct {
 	// +optional
 	// +kubebuilder:default=Normal
 	LogLevel DNSLogLevel `json:"logLevel,omitempty"`
+
+	// cache describes the caching configuration that applies to all server blocks listed in the Corefile.
+	// This field allows a cluster admin to optionally configure:
+	// * positiveTTL which is a duration for which positive responses should be cached.
+	// * negativeTTL which is a duration for which negative responses should be cached.
+	// If this is not configured, OpenShift will configure positive and negative caching with a default value that is
+	// subject to change. At the time of writing, the default positiveTTL is 900 seconds and the default negativeTTL is
+	// 30 seconds or as noted in the respective Corefile for your version of OpenShift.
+	// +optional
+	Cache DNSCache `json:"cache,omitempty"`
+}
+
+// DNSCache defines the fields for configuring DNS caching.
+type DNSCache struct {
+	// positiveTTL is optional and specifies the amount of time that a positive response should be cached.
+	//
+	// If configured, it must be a value of 1s (1 second) or greater up to a theoretical maximum of several years. This
+	// field expects an unsigned duration string of decimal numbers, each with optional fraction and a unit suffix,
+	// e.g. "100s", "1m30s", "12h30m10s". Values that are fractions of a second are rounded down to the nearest second.
+	// If the configured value is less than 1s, the default value will be used.
+	// If not configured, the value will be 0s and OpenShift will use a default value of 900 seconds unless noted
+	// otherwise in the respective Corefile for your version of OpenShift. The default value of 900 seconds is subject
+	// to change.
+	// +kubebuilder:validation:Pattern=^(0|([0-9]+(\.[0-9]+)?(ns|us|µs|μs|ms|s|m|h))+)$
+	// +kubebuilder:validation:Type:=string
+	// +optional
+	PositiveTTL metav1.Duration `json:"positiveTTL,omitempty"`
+
+	// negativeTTL is optional and specifies the amount of time that a negative response should be cached.
+	//
+	// If configured, it must be a value of 1s (1 second) or greater up to a theoretical maximum of several years. This
+	// field expects an unsigned duration string of decimal numbers, each with optional fraction and a unit suffix,
+	// e.g. "100s", "1m30s", "12h30m10s". Values that are fractions of a second are rounded down to the nearest second.
+	// If the configured value is less than 1s, the default value will be used.
+	// If not configured, the value will be 0s and OpenShift will use a default value of 30 seconds unless noted
+	// otherwise in the respective Corefile for your version of OpenShift. The default value of 30 seconds is subject
+	// to change.
+	// +kubebuilder:validation:Pattern=^(0|([0-9]+(\.[0-9]+)?(ns|us|µs|μs|ms|s|m|h))+)$
+	// +kubebuilder:validation:Type:=string
+	// +optional
+	NegativeTTL metav1.Duration `json:"negativeTTL,omitempty"`
 }
 
 // +kubebuilder:validation:Enum:=Normal;Debug;Trace
@@ -128,6 +175,73 @@ type Server struct {
 	// forwardPlugin defines a schema for configuring CoreDNS to proxy DNS messages
 	// to upstream resolvers.
 	ForwardPlugin ForwardPlugin `json:"forwardPlugin"`
+}
+
+// DNSTransport indicates what type of connection should be used.
+// +kubebuilder:validation:Enum=TLS;Cleartext;""
+type DNSTransport string
+
+const (
+	// TLSTransport indicates that TLS should be used for the connection.
+	TLSTransport DNSTransport = "TLS"
+
+	// CleartextTransport indicates that no encryption should be used for
+	// the connection.
+	CleartextTransport DNSTransport = "Cleartext"
+)
+
+// DNSTransportConfig groups related configuration parameters used for configuring
+// forwarding to upstream resolvers that support DNS-over-TLS.
+// +union
+type DNSTransportConfig struct {
+	// transport allows cluster administrators to opt-in to using a DNS-over-TLS
+	// connection between cluster DNS and an upstream resolver(s). Configuring
+	// TLS as the transport at this level without configuring a CABundle will
+	// result in the system certificates being used to verify the serving
+	// certificate of the upstream resolver(s).
+	//
+	// Possible values:
+	// "" (empty) - This means no explicit choice has been made and the platform chooses the default which is subject
+	// to change over time. The current default is "Cleartext".
+	// "Cleartext" - Cluster admin specified cleartext option. This results in the same functionality
+	// as an empty value but may be useful when a cluster admin wants to be more explicit about the transport,
+	// or wants to switch from "TLS" to "Cleartext" explicitly.
+	// "TLS" - This indicates that DNS queries should be sent over a TLS connection. If Transport is set to TLS,
+	// you MUST also set ServerName. If a port is not included with the upstream IP, port 853 will be tried by default
+	// per RFC 7858 section 3.1; https://datatracker.ietf.org/doc/html/rfc7858#section-3.1.
+	//
+	// +optional
+	// +unionDiscriminator
+	Transport DNSTransport `json:"transport,omitempty"`
+
+	// tls contains the additional configuration options to use when Transport is set to "TLS".
+	TLS *DNSOverTLSConfig `json:"tls,omitempty"`
+}
+
+// DNSOverTLSConfig describes optional DNSTransportConfig fields that should be captured.
+type DNSOverTLSConfig struct {
+	// serverName is the upstream server to connect to when forwarding DNS queries. This is required when Transport is
+	// set to "TLS". ServerName will be validated against the DNS naming conventions in RFC 1123 and should match the
+	// TLS certificate installed in the upstream resolver(s).
+	//
+	// + ---
+	// + Inspired by the DNS1123 patterns in Kubernetes: https://github.com/kubernetes/kubernetes/blob/7c46f40bdf89a437ecdbc01df45e235b5f6d9745/staging/src/k8s.io/apimachinery/pkg/util/validation/validation.go#L178-L218
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=`^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$`
+	ServerName string `json:"serverName"`
+
+	// caBundle references a ConfigMap that must contain either a single
+	// CA Certificate or a CA Bundle. This allows cluster administrators to provide their
+	// own CA or CA bundle for validating the certificate of upstream resolvers.
+	//
+	// 1. The configmap must contain a `ca-bundle.crt` key.
+	// 2. The value must be a PEM encoded CA certificate or CA bundle.
+	// 3. The administrator must create this configmap in the openshift-config namespace.
+	// 4. The upstream server certificate must contain a Subject Alternative Name (SAN) that matches ServerName.
+	//
+	// +optional
+	CABundle v1.ConfigMapNameReference `json:"caBundle,omitempty"`
 }
 
 // ForwardingPolicy is the policy to use when forwarding DNS requests.
@@ -170,6 +284,33 @@ type ForwardPlugin struct {
 	// +optional
 	// +kubebuilder:default:="Random"
 	Policy ForwardingPolicy `json:"policy,omitempty"`
+
+	// transportConfig is used to configure the transport type, server name, and optional custom CA or CA bundle to use
+	// when forwarding DNS requests to an upstream resolver.
+	//
+	// The default value is "" (empty) which results in a standard cleartext connection being used when forwarding DNS
+	// requests to an upstream resolver.
+	//
+	// +optional
+	TransportConfig DNSTransportConfig `json:"transportConfig,omitempty"`
+
+	// protocolStrategy specifies the protocol to use for upstream DNS
+	// requests.
+	// Valid values for protocolStrategy are "TCP" and omitted.
+	// When omitted, this means no opinion and the platform is left to choose
+	// a reasonable default, which is subject to change over time.
+	// The current default is to use the protocol of the original client request.
+	// "TCP" specifies that the platform should use TCP for all upstream DNS requests,
+	// even if the client request uses UDP.
+	// "TCP" is useful for UDP-specific issues such as those created by
+	// non-compliant upstream resolvers, but may consume more bandwidth or
+	// increase DNS response time. Note that protocolStrategy only affects
+	// the protocol of DNS requests that CoreDNS makes to upstream resolvers.
+	// It does not affect the protocol of DNS requests between clients and
+	// CoreDNS.
+	//
+	// +optional
+	ProtocolStrategy ProtocolStrategy `json:"protocolStrategy"`
 }
 
 // UpstreamResolvers defines a schema for configuring the CoreDNS forward plugin in the
@@ -203,14 +344,41 @@ type UpstreamResolvers struct {
 	// +optional
 	// +kubebuilder:default="Sequential"
 	Policy ForwardingPolicy `json:"policy,omitempty"`
+
+	// transportConfig is used to configure the transport type, server name, and optional custom CA or CA bundle to use
+	// when forwarding DNS requests to an upstream resolver.
+	//
+	// The default value is "" (empty) which results in a standard cleartext connection being used when forwarding DNS
+	// requests to an upstream resolver.
+	//
+	// +optional
+	TransportConfig DNSTransportConfig `json:"transportConfig,omitempty"`
+
+	// protocolStrategy specifies the protocol to use for upstream DNS
+	// requests.
+	// Valid values for protocolStrategy are "TCP" and omitted.
+	// When omitted, this means no opinion and the platform is left to choose
+	// a reasonable default, which is subject to change over time.
+	// The current default is to use the protocol of the original client request.
+	// "TCP" specifies that the platform should use TCP for all upstream DNS requests,
+	// even if the client request uses UDP.
+	// "TCP" is useful for UDP-specific issues such as those created by
+	// non-compliant upstream resolvers, but may consume more bandwidth or
+	// increase DNS response time. Note that protocolStrategy only affects
+	// the protocol of DNS requests that CoreDNS makes to upstream resolvers.
+	// It does not affect the protocol of DNS requests between clients and
+	// CoreDNS.
+	//
+	// +optional
+	ProtocolStrategy ProtocolStrategy `json:"protocolStrategy"`
 }
 
 // Upstream can either be of type SystemResolvConf, or of type Network.
 //
-// * For an Upstream of type SystemResolvConf, no further fields are necessary:
-//   The upstream will be configured to use /etc/resolv.conf.
-// * For an Upstream of type Network, a NetworkResolver field needs to be defined
-//   with an IP address or IP:port if the upstream listens on a port other than 53.
+//   - For an Upstream of type SystemResolvConf, no further fields are necessary:
+//     The upstream will be configured to use /etc/resolv.conf.
+//   - For an Upstream of type Network, a NetworkResolver field needs to be defined
+//     with an IP address or IP:port if the upstream listens on a port other than 53.
 type Upstream struct {
 
 	// Type defines whether this upstream contains an IP/IP:port resolver or the local /etc/resolv.conf.
@@ -248,6 +416,23 @@ type UpstreamType string
 const (
 	SystemResolveConfType UpstreamType = "SystemResolvConf"
 	NetworkResolverType   UpstreamType = "Network"
+)
+
+// ProtocolStrategy is a preference for the protocol to use for DNS queries.
+// + ---
+// + When consumers observe an unknown value, they should use the default strategy.
+// +kubebuilder:validation:Enum:=TCP;""
+type ProtocolStrategy string
+
+var (
+	// ProtocolStrategyDefault specifies no opinion for DNS protocol.
+	// If empty, the default behavior of CoreDNS is used. Currently, this means that CoreDNS uses the protocol of the
+	// originating client request as the upstream protocol.
+	// Note that the default behavior of CoreDNS is subject to change.
+	ProtocolStrategyDefault ProtocolStrategy = ""
+
+	// ProtocolStrategyTCP instructs CoreDNS to always use TCP, regardless of the originating client's request protocol.
+	ProtocolStrategyTCP ProtocolStrategy = "TCP"
 )
 
 // DNSNodePlacement describes the node scheduling configuration for DNS pods.
@@ -329,7 +514,6 @@ type DNSStatus struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:object:root=true
 
 // DNSList contains a list of DNS
 //
@@ -337,6 +521,9 @@ type DNSStatus struct {
 // +openshift:compatibility-gen:level=1
 type DNSList struct {
 	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []DNS `json:"items"`
