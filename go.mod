@@ -1,23 +1,23 @@
 module github.com/netobserv/network-observability-operator
 
-go 1.21.0
+go 1.22.0
 
-toolchain go1.21.7
+toolchain go1.22.7
 
 require (
 	github.com/go-logr/logr v1.4.1
 	github.com/netobserv/flowlogs-pipeline v0.1.12-0.20240426113456-2ab1f8dd0cc9
 	github.com/onsi/ginkgo/v2 v2.18.0
 	github.com/onsi/gomega v1.33.1
-	github.com/openshift/api v0.0.0-20220112145620-704957ce4980
+	github.com/openshift/api v0.0.0-20240722135205-ae4f370f361f
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.73.2
 	github.com/prometheus/common v0.48.0
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.29.3
+	k8s.io/api v0.30.1
 	k8s.io/apiextensions-apiserver v0.29.3
-	k8s.io/apimachinery v0.29.3
+	k8s.io/apimachinery v0.30.1
 	k8s.io/client-go v0.29.3
 	k8s.io/kube-aggregator v0.29.3
 	k8s.io/utils v0.0.0-20240310230437-4693a0247e57
@@ -79,7 +79,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/component-base v0.29.3 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // indirect
+	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )

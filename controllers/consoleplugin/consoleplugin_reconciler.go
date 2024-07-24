@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
+	osv1 "github.com/openshift/api/console/v1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -153,7 +153,7 @@ func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builde
 
 func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec) error {
 	// Console plugin is cluster-scope (it's not deployed in our namespace) however it must still be updated if our namespace changes
-	oldPlg := osv1alpha1.ConsolePlugin{}
+	oldPlg := osv1.ConsolePlugin{}
 	pluginExists := true
 	err := r.Get(ctx, types.NamespacedName{Name: constants.PluginName}, &oldPlg)
 	if err != nil {
@@ -244,7 +244,7 @@ func (r *CPReconciler) reconcileHPA(ctx context.Context, builder *builder, desir
 	)
 }
 
-func pluginNeedsUpdate(plg *osv1alpha1.ConsolePlugin, desired *pluginSpec) bool {
+func pluginNeedsUpdate(plg *osv1.ConsolePlugin, desired *pluginSpec) bool {
 	advancedConfig := helper.GetAdvancedPluginConfig(desired.Advanced)
-	return plg.Spec.Service.Port != *advancedConfig.Port
+	return plg.Spec.Backend.Service.Port != *advancedConfig.Port
 }

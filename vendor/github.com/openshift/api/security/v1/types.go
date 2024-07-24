@@ -22,19 +22,27 @@ var AllowAllCapabilities corev1.Capability = "*"
 // SecurityContextConstraints.
 //
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
-// +kubebuilder:printcolumn:name="Priv",type=string,JSONPath=`.allowPrivilegedContainer`,description="Determines if a container can request to be run as privileged"
-// +kubebuilder:printcolumn:name="Caps",type=string,JSONPath=`.allowedCapabilities`,description="A list of capabilities that can be requested to add to the container"
-// +kubebuilder:printcolumn:name="SELinux",type=string,JSONPath=`.seLinuxContext.type`,description="Strategy that will dictate what labels will be set in the SecurityContext"
-// +kubebuilder:printcolumn:name="RunAsUser",type=string,JSONPath=`.runAsUser.type`,description="Strategy that will dictate what RunAsUser is used in the SecurityContext"
-// +kubebuilder:printcolumn:name="FSGroup",type=string,JSONPath=`.fsGroup.type`,description="Strategy that will dictate what fs group is used by the SecurityContext"
-// +kubebuilder:printcolumn:name="SupGroup",type=string,JSONPath=`.supplementalGroups.type`,description="Strategy that will dictate what supplemental groups are used by the SecurityContext"
-// +kubebuilder:printcolumn:name="Priority",type=string,JSONPath=`.priority`,description="Sort order of SCCs"
-// +kubebuilder:printcolumn:name="ReadOnlyRootFS",type=string,JSONPath=`.readOnlyRootFilesystem`,description="Force containers to run with a read only root file system"
-// +kubebuilder:printcolumn:name="Volumes",type=string,JSONPath=`.volumes`,description="White list of allowed volume plugins"
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:path=securitycontextconstraints,scope=Cluster
+// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/470
+// +openshift:file-pattern=cvoRunLevel=0000_03,operatorName=config-operator,operatorOrdering=01
+// +kubebuilder:printcolumn:name="Priv",type=string,JSONPath=.allowPrivilegedContainer,description="Determines if a container can request to be run as privileged"
+// +kubebuilder:printcolumn:name="Caps",type=string,JSONPath=.allowedCapabilities,description="A list of capabilities that can be requested to add to the container"
+// +kubebuilder:printcolumn:name="SELinux",type=string,JSONPath=.seLinuxContext.type,description="Strategy that will dictate what labels will be set in the SecurityContext"
+// +kubebuilder:printcolumn:name="RunAsUser",type=string,JSONPath=.runAsUser.type,description="Strategy that will dictate what RunAsUser is used in the SecurityContext"
+// +kubebuilder:printcolumn:name="FSGroup",type=string,JSONPath=.fsGroup.type,description="Strategy that will dictate what fs group is used by the SecurityContext"
+// +kubebuilder:printcolumn:name="SupGroup",type=string,JSONPath=.supplementalGroups.type,description="Strategy that will dictate what supplemental groups are used by the SecurityContext"
+// +kubebuilder:printcolumn:name="Priority",type=string,JSONPath=.priority,description="Sort order of SCCs"
+// +kubebuilder:printcolumn:name="ReadOnlyRootFS",type=string,JSONPath=.readOnlyRootFilesystem,description="Force containers to run with a read only root file system"
+// +kubebuilder:printcolumn:name="Volumes",type=string,JSONPath=.volumes,description="White list of allowed volume plugins"
 // +kubebuilder:singular=securitycontextconstraint
 // +openshift:compatibility-gen:level=1
+// +kubebuilder:metadata:annotations=release.openshift.io/bootstrap-required=true
 type SecurityContextConstraints struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// Priority influences the sort order of SCCs when evaluating which SCCs to try first for
@@ -295,6 +303,9 @@ const (
 // +openshift:compatibility-gen:level=1
 type SecurityContextConstraintsList struct {
 	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// List of security context constraints.
@@ -307,8 +318,8 @@ type SecurityContextConstraintsList struct {
 
 // PodSecurityPolicySubjectReview checks whether a particular user/SA tuple can create the PodTemplateSpec.
 //
-// Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
-// +openshift:compatibility-gen:level=1
+// Compatibility level 2: Stable within a major release for a minimum of 9 months or 3 minor releases (whichever is longer).
+// +openshift:compatibility-gen:level=2
 type PodSecurityPolicySubjectReview struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -356,8 +367,8 @@ type PodSecurityPolicySubjectReviewStatus struct {
 
 // PodSecurityPolicySelfSubjectReview checks whether this user/SA tuple can create the PodTemplateSpec
 //
-// Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
-// +openshift:compatibility-gen:level=1
+// Compatibility level 2: Stable within a major release for a minimum of 9 months or 3 minor releases (whichever is longer).
+// +openshift:compatibility-gen:level=2
 type PodSecurityPolicySelfSubjectReview struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -380,8 +391,8 @@ type PodSecurityPolicySelfSubjectReviewSpec struct {
 
 // PodSecurityPolicyReview checks which service accounts (not users, since that would be cluster-wide) can create the `PodTemplateSpec` in question.
 //
-// Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
-// +openshift:compatibility-gen:level=1
+// Compatibility level 2: Stable within a major release for a minimum of 9 months or 3 minor releases (whichever is longer).
+// +openshift:compatibility-gen:level=2
 type PodSecurityPolicyReview struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -427,10 +438,13 @@ type ServiceAccountPodSecurityPolicyReviewStatus struct {
 
 // RangeAllocation is used so we can easily expose a RangeAllocation typed for security group
 //
-// Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
-// +openshift:compatibility-gen:level=1
+// Compatibility level 4: No compatibility is provided, the API can change at any point for any reason. These capabilities should not be used by applications needing long term support.
+// +openshift:compatibility-gen:level=4
 type RangeAllocation struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// range is a string representing a unique label for a range of uids, "1000000000-2000000000/10000".
@@ -449,6 +463,9 @@ type RangeAllocation struct {
 // +openshift:compatibility-gen:level=1
 type RangeAllocationList struct {
 	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// List of RangeAllocations.

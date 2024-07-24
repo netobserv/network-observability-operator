@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
+	osv1 "github.com/openshift/api/console/v1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -60,7 +60,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		builder.Owns(&securityv1.SecurityContextConstraints{})
 	}
 	if mgr.HasConsolePlugin() {
-		builder.Owns(&osv1alpha1.ConsolePlugin{})
+		builder.Owns(&osv1.ConsolePlugin{})
 	} else {
 		log.Info("Console not detected: the console plugin is not available")
 	}
