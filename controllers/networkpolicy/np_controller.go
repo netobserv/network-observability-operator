@@ -10,7 +10,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
@@ -19,8 +18,8 @@ import (
 
 type Reconciler struct {
 	client.Client
-	mgr              *manager.Manager
-	status           status.Instance
+	mgr    *manager.Manager
+	status status.Instance
 }
 
 func Start(ctx context.Context, mgr *manager.Manager) error {
@@ -71,20 +70,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 }
 
 func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired *flowslatest.FlowCollector) error {
-	// log := log.FromContext(ctx)
-	ns := helper.GetNamespace(&desired.Spec)
-	privilegedNs := ns + constants.EBPFPrivilegedNSSuffix
-	authorizedNs := append([]string{privilegedNs}, desired.Spec.NetworkPolicy.AdditionalNamespaces...)
-	if desired.Spec.Loki.Mode == flowslatest.LokiModeLokiStack && desired.Spec.Loki.LokiStack.Namespace != "" {
-		authorizedNs = append(authorizedNs, desired.Spec.Loki.LokiStack.Namespace)
-	}
-	npName, desiredNp := buildNetworkPolicy(ns, desired, authorizedNs)
+	npName, desiredNp := buildMainNetworkPolicy(desired, r.mgr)
 	if err := reconcilers.ReconcileNetworkPolicy(ctx, clh, npName, desiredNp); err != nil {
 		return err
 	}
-	privilegedNpName, desiredPrivilegedNp := buildNetworkPolicy(privilegedNs, desired, append([]string{ns}, desired.Spec.NetworkPolicy.AdditionalNamespaces...))
 
-	err := reconcilers.ReconcileNetworkPolicy(ctx, clh, privilegedNpName, desiredPrivilegedNp)
-
-	return err
+	privilegedNpName, desiredPrivilegedNp := buildPrivilegedNetworkPolicy(desired, r.mgr)
+	return reconcilers.ReconcileNetworkPolicy(ctx, clh, privilegedNpName, desiredPrivilegedNp)
 }

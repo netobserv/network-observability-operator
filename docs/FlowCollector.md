@@ -5796,7 +5796,7 @@ Kafka can provide better scalability, resiliency, and high availability (for mor
         <td><b><a href="#flowcollectorspecnetworkpolicy">networkPolicy</a></b></td>
         <td>object</td>
         <td>
-          `networkPolicy` define network policy settings for netobserv<br/>
+          `networkPolicy` defines network policy settings for NetObserv components isolation.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -13384,7 +13384,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-`networkPolicy` define network policy settings for netobserv
+`networkPolicy` defines network policy settings for NetObserv components isolation.
 
 <table>
     <thead>
@@ -13399,8 +13399,9 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>additionalNamespaces</b></td>
         <td>[]string</td>
         <td>
-          `additionalNamespaces` contains additional namespaces alowed to connect to the network observability namespaces
-In particular if additional application deployed in this namespaces (such as kafka or loki) need external connection, this should be added here.<br/>
+          `additionalNamespaces` contains additional namespaces allowed to connect to the NetObserv namespace.
+It gives some flexibility in the network policy configuration, however should you need a more specific
+configuration, you can disable it and install your own instead.<br/>
           <br/>
             <i>Default</i>: [openshift-console openshift-monitoring]<br/>
         </td>
@@ -13409,8 +13410,9 @@ In particular if additional application deployed in this namespaces (such as kaf
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `false` to disable network policy deployment. It is enabled by default.
-This network policy better isolates the NetObserv components to prevent undesired connections to them. It is recommended to install it.<br/>
+          Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
+These network policies better isolate the NetObserv components to prevent undesired connections to them.
+We recommend you either enable it, or create your own network policy for NetObserv.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

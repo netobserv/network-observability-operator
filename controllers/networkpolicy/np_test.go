@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/manager"
 	"github.com/stretchr/testify/assert"
 
 	ascv2 "k8s.io/api/autoscaling/v2"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 )
@@ -68,32 +69,80 @@ func getConfig() flowslatest.FlowCollector {
 func TestNpBuilder(t *testing.T) {
 	assert := assert.New(t)
 
-	ns := "namespace1"
 	desired := getConfig()
-	additionalNs := []string{}
+	mgr := &manager.Manager{}
 
 	desired.Spec.NetworkPolicy.Enable = nil
-	name, np := buildNetworkPolicy(ns, &desired, additionalNs)
-	assert.Equal(name.Name, constants.OperatorName)
-	assert.Equal(name.Namespace, ns)
+	name, np := buildMainNetworkPolicy(&desired, mgr)
+	assert.Equal(netpolName, name.Name)
+	assert.Equal("netobserv", name.Namespace)
+	assert.Nil(np)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
+	assert.Equal(netpolName, name.Name)
+	assert.Equal("netobserv-privileged", name.Namespace)
 	assert.Nil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(false)
-	name, np = buildNetworkPolicy(ns, &desired, additionalNs)
+	_, np = buildMainNetworkPolicy(&desired, mgr)
+	assert.Nil(np)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.Nil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(true)
-	name, np = buildNetworkPolicy(ns, &desired, additionalNs)
+	name, np = buildMainNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
-	assert.Len(np.Spec.Ingress, 1)
-	assert.Len(np.Spec.Ingress[0].From, 1)
+	assert.Equal([]networkingv1.NetworkPolicyIngressRule{
+		{From: []networkingv1.NetworkPolicyPeer{
+			{PodSelector: &metav1.LabelSelector{}},
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"kubernetes.io/metadata.name": "netobserv-privileged",
+				},
+			}},
+		}},
+	}, np.Spec.Ingress)
 
-	name, np = buildNetworkPolicy(ns, &desired, []string{"foo", "bar"})
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
-	assert.Len(np.Spec.Ingress, 1)
-	assert.Len(np.Spec.Ingress[0].From, 3)
+	assert.Equal([]networkingv1.NetworkPolicyIngressRule{}, np.Spec.Ingress)
+
+	desired.Spec.NetworkPolicy.AdditionalNamespaces = []string{"foo", "bar"}
+	name, np = buildMainNetworkPolicy(&desired, mgr)
+	assert.NotNil(np)
+	assert.Equal(np.ObjectMeta.Name, name.Name)
+	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
+	assert.Equal([]networkingv1.NetworkPolicyIngressRule{
+		{From: []networkingv1.NetworkPolicyPeer{
+			{PodSelector: &metav1.LabelSelector{}},
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"kubernetes.io/metadata.name": "netobserv-privileged",
+				},
+			}},
+		}},
+		{From: []networkingv1.NetworkPolicyPeer{
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"kubernetes.io/metadata.name": "foo",
+				},
+			}},
+		}},
+		{From: []networkingv1.NetworkPolicyPeer{
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"kubernetes.io/metadata.name": "bar",
+				},
+			}},
+		}},
+	}, np.Spec.Ingress)
+
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
+	assert.NotNil(np)
+	assert.Equal(np.ObjectMeta.Name, name.Name)
+	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
+	assert.Equal([]networkingv1.NetworkPolicyIngressRule{}, np.Spec.Ingress)
 }

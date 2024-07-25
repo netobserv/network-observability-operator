@@ -6383,22 +6383,25 @@ spec:
                 description: Namespace where NetObserv pods are deployed.
                 type: string
               networkPolicy:
-                description: '`networkPolicy` define network policy settings for netobserv'
+                description: '`networkPolicy` defines network policy settings for
+                  NetObserv components isolation.'
                 properties:
                   additionalNamespaces:
                     default:
                     - openshift-console
                     - openshift-monitoring
                     description: |-
-                      `additionalNamespaces` contains additional namespaces alowed to connect to the network observability namespaces
-                      In particular if additional application deployed in this namespaces (such as kafka or loki) need external connection, this should be added here.
+                      `additionalNamespaces` contains additional namespaces allowed to connect to the NetObserv namespace.
+                      It gives some flexibility in the network policy configuration, however should you need a more specific
+                      configuration, you can disable it and install your own instead.
                     items:
                       type: string
                     type: array
                   enable:
                     description: |-
-                      Set `enable` to `false` to disable network policy deployment. It is enabled by default.
-                      This network policy better isolates the NetObserv components to prevent undesired connections to them. It is recommended to install it.
+                      Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
+                      These network policies better isolate the NetObserv components to prevent undesired connections to them.
+                      We recommend you either enable it, or create your own network policy for NetObserv.
                     type: boolean
                 type: object
               processor:

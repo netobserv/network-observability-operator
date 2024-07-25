@@ -393,6 +393,10 @@ metadata:
               "writeTimeout": "10s"
             },
             "namespace": "netobserv",
+            "networkPolicy": {
+              "additionalNamespaces": [],
+              "enable": false
+            },
             "processor": {
               "imagePullPolicy": "IfNotPresent",
               "kafkaConsumerAutoscaler": null,
@@ -1082,8 +1086,10 @@ spec:
           - networkpolicies
           verbs:
           - create
+          - delete
           - get
           - list
+          - patch
           - update
           - watch
         - apiGroups:
