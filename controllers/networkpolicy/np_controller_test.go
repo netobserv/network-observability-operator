@@ -13,7 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
 	networkingv1 "k8s.io/api/networking/v1"
 
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
@@ -44,7 +43,7 @@ func ControllerSpecs() {
 		Name: "cluster",
 	}
 	npKey1 := types.NamespacedName{
-		Name:      constants.OperatorName,
+		Name:      netpolName,
 		Namespace: operatorNamespace,
 	}
 
