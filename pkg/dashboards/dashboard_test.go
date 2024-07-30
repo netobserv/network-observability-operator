@@ -164,7 +164,7 @@ func TestCreateFlowMetricsDashboard_DefaultList(t *testing.T) {
 func TestCreateHealthDashboard_Default(t *testing.T) {
 	assert := assert.New(t)
 
-	js, err := CreateHealthDashboard("netobserv")
+	js, err := CreateHealthDashboard("netobserv", "netobserv_namespace_flows_total")
 	assert.NoError(err)
 
 	d, err := FromBytes([]byte(js))

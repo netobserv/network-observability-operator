@@ -6,7 +6,7 @@ import (
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 )
 
-func CreateHealthDashboard(netobsNs string) (string, error) {
+func CreateHealthDashboard(netobsNs, nsFlowsMetric string) (string, error) {
 	d := Dashboard{Title: "NetObserv / Health"}
 
 	// Global stats
@@ -30,7 +30,15 @@ func CreateHealthDashboard(netobsNs string) (string, error) {
 	}))
 
 	// FLP stats
-	overheadQuery := fmt.Sprintf("100 * sum(rate(netobserv_namespace_flows_total{SrcK8S_Namespace='%s'}[1m]) or rate(netobserv_namespace_flows_total{SrcK8S_Namespace!='%s',DstK8S_Namespace='%s'}[1m])) / sum(rate(netobserv_namespace_flows_total[1m]))", netobsNs, netobsNs, netobsNs)
+	overheadQuery := fmt.Sprintf(
+		"100 * sum(rate(%s{SrcK8S_Namespace='%s'}[1m]) or rate(%s{SrcK8S_Namespace!='%s',DstK8S_Namespace='%s'}[1m])) / sum(rate(%s[1m]))",
+		nsFlowsMetric,
+		netobsNs,
+		nsFlowsMetric,
+		netobsNs,
+		netobsNs,
+		nsFlowsMetric,
+	)
 	d.Rows = append(d.Rows,
 		NewRow("Flowlogs-pipeline statistics", false, "250px", []Panel{
 			NewPanel("Flows per second", metricslatest.ChartTypeLine, "", 4,
@@ -47,8 +55,14 @@ func CreateHealthDashboard(netobsNs string) (string, error) {
 				NewTarget(`sum(increase(netobserv_loki_batch_retries_total[1m]))`, "loki retries"),
 			),
 			NewPanel("By namespace", metricslatest.ChartTypeLine, "", 6,
-				NewTarget(`topk(10,sum(rate(netobserv_namespace_flows_total{SrcK8S_Namespace!=""}[1m])) by (SrcK8S_Namespace))`, "From {{SrcK8S_Namespace}}"),
-				NewTarget(`topk(10,sum(rate(netobserv_namespace_flows_total{DstK8S_Namespace!=""}[1m])) by (DstK8S_Namespace))`, "To {{DstK8S_Namespace}}"),
+				NewTarget(
+					fmt.Sprintf(`topk(10,sum(rate(%s{SrcK8S_Namespace!=""}[1m])) by (SrcK8S_Namespace))`, nsFlowsMetric),
+					"From {{SrcK8S_Namespace}}",
+				),
+				NewTarget(
+					fmt.Sprintf(`topk(10,sum(rate(%s{DstK8S_Namespace!=""}[1m])) by (DstK8S_Namespace))`, nsFlowsMetric),
+					"To {{DstK8S_Namespace}}",
+				),
 			),
 			NewPanel("By node", metricslatest.ChartTypeLine, "", 6,
 				NewTarget(`topk(10,sum(rate(netobserv_node_flows_total{SrcK8S_HostName!=""}[1m])) by (SrcK8S_HostName))`, "From {{SrcK8S_HostName}}"),
