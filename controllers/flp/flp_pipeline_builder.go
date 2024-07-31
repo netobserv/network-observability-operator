@@ -224,14 +224,12 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	}
 
 	if len(flpMetrics) > 0 {
-		namespaceStage := b.addPromMetricsNamespace(enrichedStage, &flpMetrics)
-
 		// prometheus stage (encode) configuration
 		promEncode := api.PromEncode{
 			Prefix:  "netobserv_",
 			Metrics: flpMetrics,
 		}
-		namespaceStage.EncodePrometheus("prometheus", promEncode)
+		enrichedStage.EncodePrometheus("prometheus", promEncode)
 	}
 
 	b.addCustomExportStages(&enrichedStage, flpMetrics)
@@ -439,24 +437,6 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 			Rules: transformFilterRules,
 		})
 	}
-	return lastStage
-}
-
-func (b *PipelineBuilder) addPromMetricsNamespace(lastStage config.PipelineBuilderStage, flpMetrics *[]api.MetricsItem) config.PipelineBuilderStage {
-	// developer console namespace hack until https://issues.redhat.com/browse/NETOBSERV-1701 implementation
-	lastStage = lastStage.TransformGeneric("namespace-transform", api.TransformGeneric{
-		Policy: "preserve_original_keys",
-		Rules: []api.GenericTransformRule{{
-			Input:  "SrcK8S_Namespace",
-			Output: "namespace",
-		}},
-	})
-
-	for i := range *flpMetrics {
-		fm := (*flpMetrics)[i]
-		fm.Labels = append(fm.Labels, "namespace")
-	}
-
 	return lastStage
 }
 
