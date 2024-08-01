@@ -85,7 +85,7 @@ type FlowCollectorSpec struct {
 	// +k8s:conversion-gen=false
 	Exporters []*FlowCollectorExporter `json:"exporters"`
 
-	// `networkPolicy` defines network policy settings for NetObserv components isolation.
+	// `networkPolicy` defines ingress network policy settings for NetObserv components isolation.
 	// +k8s:conversion-gen=false
 	NetworkPolicy NetworkPolicy `json:"networkPolicy,omitempty"`
 }

@@ -5796,7 +5796,7 @@ Kafka can provide better scalability, resiliency, and high availability (for mor
         <td><b><a href="#flowcollectorspecnetworkpolicy">networkPolicy</a></b></td>
         <td>object</td>
         <td>
-          `networkPolicy` defines network policy settings for NetObserv components isolation.<br/>
+          `networkPolicy` defines ingress network policy settings for NetObserv components isolation.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -13384,7 +13384,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-`networkPolicy` defines network policy settings for NetObserv components isolation.
+`networkPolicy` defines ingress network policy settings for NetObserv components isolation.
 
 <table>
     <thead>

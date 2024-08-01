@@ -6383,8 +6383,8 @@ spec:
                 description: Namespace where NetObserv pods are deployed.
                 type: string
               networkPolicy:
-                description: '`networkPolicy` defines network policy settings for
-                  NetObserv components isolation.'
+                description: '`networkPolicy` defines ingress network policy settings
+                  for NetObserv components isolation.'
                 properties:
                   additionalNamespaces:
                     default:
