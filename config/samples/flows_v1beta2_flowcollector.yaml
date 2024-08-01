@@ -5,6 +5,9 @@ metadata:
 spec:
   namespace: netobserv
   deploymentModel: Direct
+  networkPolicy:
+    enable: false
+    additionalNamespaces: []
   agent:
     type: eBPF
     ebpf:

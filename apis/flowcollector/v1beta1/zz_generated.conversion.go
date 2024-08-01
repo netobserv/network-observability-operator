@@ -1056,6 +1056,7 @@ func autoConvert_v1beta2_FlowCollectorSpec_To_v1beta1_FlowCollectorSpec(in *v1be
 		return err
 	}
 	// INFO: in.Exporters opted out of conversion generation
+	// INFO: in.NetworkPolicy opted out of conversion generation
 	return nil
 }
 

@@ -30,6 +30,7 @@ import (
 //+kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors;prometheusrules,verbs=get;create;delete;update;patch;list;watch
 //+kubebuilder:rbac:groups=config.openshift.io,resources=clusterversions;networks,verbs=get;list;watch
 //+kubebuilder:rbac:groups=loki.grafana.com,resources=network,resourceNames=logs,verbs=get;create
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:urls="/metrics",verbs=get
 
 type Registerer func(context.Context, *Manager) error

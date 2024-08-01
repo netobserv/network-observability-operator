@@ -5793,6 +5793,13 @@ Kafka can provide better scalability, resiliency, and high availability (for mor
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecnetworkpolicy">networkPolicy</a></b></td>
+        <td>object</td>
+        <td>
+          `networkPolicy` defines ingress network policy settings for NetObserv components isolation.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessor-1">processor</a></b></td>
         <td>object</td>
         <td>
@@ -13735,6 +13742,46 @@ If the namespace is different, the config map or the secret is copied so that it
           Type for the certificate reference: `configmap` or `secret`.<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.networkPolicy
+<sup><sup>[↩ Parent](#flowcollectorspec-1)</sup></sup>
+
+
+
+`networkPolicy` defines ingress network policy settings for NetObserv components isolation.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>additionalNamespaces</b></td>
+        <td>[]string</td>
+        <td>
+          `additionalNamespaces` contains additional namespaces allowed to connect to the NetObserv namespace.
+It gives some flexibility in the network policy configuration, however should you need a more specific
+configuration, you can disable it and install your own instead.<br/>
+          <br/>
+            <i>Default</i>: [openshift-console openshift-monitoring]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
+These network policies better isolate the NetObserv components to prevent undesired connections to them.
+We recommend you either enable it, or create your own network policy for NetObserv.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

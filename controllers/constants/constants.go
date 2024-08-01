@@ -40,6 +40,8 @@ const (
 
 	MonitoringNamespace      = "openshift-monitoring"
 	MonitoringServiceAccount = "prometheus-k8s"
+	UWMonitoringNamespace    = "openshift-user-workload-monitoring"
+	ConsoleNamespace         = "openshift-console"
 
 	// Loki roles
 	LokiCRWriter  = "netobserv-writer"
