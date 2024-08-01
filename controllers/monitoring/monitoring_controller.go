@@ -139,7 +139,8 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 
 		// Build desired dashboards
 		cms := buildFlowMetricsDashboards(allMetrics)
-		if desiredHealthDashboardCM, del, err := buildHealthDashboard(ns); err != nil {
+		nsFlowsMetric := getNamespacedFlowsMetric(allMetrics)
+		if desiredHealthDashboardCM, del, err := buildHealthDashboard(ns, nsFlowsMetric); err != nil {
 			return err
 		} else if !del {
 			cms = append(cms, desiredHealthDashboardCM)
@@ -161,6 +162,15 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 	}
 
 	return nil
+}
+
+func getNamespacedFlowsMetric(metrics []metricslatest.FlowMetric) string {
+	for i := range metrics {
+		if metrics[i].Spec.MetricName == "namespace_flows_total" {
+			return "netobserv_namespace_flows_total"
+		}
+	}
+	return "netobserv_workload_flows_total"
 }
 
 func filterOwned(list *corev1.ConfigMapList) {

@@ -102,8 +102,8 @@ func buildFlowMetricsDashboards(metrics []metricslatest.FlowMetric) []*corev1.Co
 	return cms
 }
 
-func buildHealthDashboard(namespace string) (*corev1.ConfigMap, bool, error) {
-	dashboard, err := dashboards.CreateHealthDashboard(namespace)
+func buildHealthDashboard(namespace, nsFlowsMetric string) (*corev1.ConfigMap, bool, error) {
+	dashboard, err := dashboards.CreateHealthDashboard(namespace, nsFlowsMetric)
 	if err != nil {
 		return nil, false, err
 	}
