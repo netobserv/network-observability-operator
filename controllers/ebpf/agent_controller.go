@@ -93,6 +93,9 @@ const (
 	ovnObservMountName         = "var-run-ovn"
 	ovnObservMountPath         = "/var/run/ovn"
 	ovnObservHostMountPath     = "/var/run/ovn-ic"
+	ovsMountPath               = "/var/run/openvswitch"
+	ovsHostMountPath           = "/var/run/openvswitch"
+	ovsMountName               = "var-run-ovs"
 )
 
 const (
@@ -325,7 +328,25 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
 			}
 			volumeMounts = append(volumeMounts, volumeMount)
+
+			volume = corev1.Volume{
+				Name: ovsMountName,
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Type: newHostPathType(corev1.HostPathDirectory),
+						Path: ovsHostMountPath,
+					},
+				},
+			}
+			volumes = append(volumes, volume)
+			volumeMount = corev1.VolumeMount{
+				Name:             ovsMountName,
+				MountPath:        ovsMountPath,
+				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+			}
+			volumeMounts = append(volumeMounts, volumeMount)
 		}
+
 	}
 
 	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
