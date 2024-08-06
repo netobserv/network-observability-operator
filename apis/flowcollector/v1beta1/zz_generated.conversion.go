@@ -491,6 +491,7 @@ func autoConvert_v1beta1_EBPFFlowFilter_To_v1beta2_EBPFFlowFilter(in *EBPFFlowFi
 	out.Action = in.Action
 	out.Protocol = in.Protocol
 	out.Direction = in.Direction
+	out.TCPFlags = in.TCPFlags
 	out.SourcePorts = in.SourcePorts
 	out.DestPorts = in.DestPorts
 	out.Ports = in.Ports
@@ -511,6 +512,7 @@ func autoConvert_v1beta2_EBPFFlowFilter_To_v1beta1_EBPFFlowFilter(in *v1beta2.EB
 	out.Action = in.Action
 	out.Protocol = in.Protocol
 	out.Direction = in.Direction
+	out.TCPFlags = in.TCPFlags
 	out.SourcePorts = in.SourcePorts
 	out.DestPorts = in.DestPorts
 	out.Ports = in.Ports
