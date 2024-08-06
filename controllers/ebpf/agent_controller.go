@@ -92,10 +92,12 @@ const (
 )
 
 const (
-	EnvDedupeJustMark     = "DEDUPER_JUST_MARK"
-	EnvDedupeMerge        = "DEDUPER_MERGE"
-	DedupeJustMarkDefault = "false"
-	DedupeMergeDefault    = "true"
+	EnvDedupeJustMark      = "DEDUPER_JUST_MARK"
+	EnvDedupeMerge         = "DEDUPER_MERGE"
+	envDNSTrackingPort     = "DNS_TRACKING_PORT"
+	DedupeJustMarkDefault  = "false"
+	DedupeMergeDefault     = "true"
+	defaultDNSTrackingPort = "53"
 )
 
 // AgentController reconciles the status of the eBPF agent Daemonset, as well as the
@@ -616,6 +618,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	dedup := dedupeDefault
 	dedupJustMark := DedupeJustMarkDefault
 	dedupMerge := DedupeMergeDefault
+	dnsTrackingPort := defaultDNSTrackingPort
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
 	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
@@ -627,6 +630,8 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 			dedupJustMark = v
 		} else if k == EnvDedupeMerge {
 			dedupMerge = v
+		} else if k == envDNSTrackingPort {
+			dnsTrackingPort = v
 		} else {
 			config = append(config, corev1.EnvVar{Name: k, Value: v})
 		}
@@ -634,6 +639,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 
 	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
 	config = append(config, corev1.EnvVar{Name: EnvDedupeJustMark, Value: dedupJustMark})
+	config = append(config, corev1.EnvVar{Name: envDNSTrackingPort, Value: dnsTrackingPort})
 	config = append(config, corev1.EnvVar{
 		Name: envAgentIP,
 		ValueFrom: &corev1.EnvVarSource{
