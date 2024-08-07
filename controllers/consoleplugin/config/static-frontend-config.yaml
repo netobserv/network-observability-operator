@@ -516,7 +516,7 @@ columns:
     field: OvsMonitorMDs
     filter: ovs_metadatas
     default: true
-    width: 5
+    width: 15
     feature: ovsMonitor
 filters:
   - id: cluster_name

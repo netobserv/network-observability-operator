@@ -57,6 +57,7 @@ const (
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
 	envEnableFlowRTT              = "ENABLE_RTT"
 	envEnableOvsMonitor           = "ENABLE_OVS_MONITORING"
+	envOvsMonitorGroupID          = "OVS_MONITORING_GROUP_ID"
 	envEnableMetrics              = "METRICS_ENABLE"
 	envMetricsPort                = "METRICS_SERVER_PORT"
 	envMetricPrefix               = "METRICS_PREFIX"
@@ -96,6 +97,7 @@ const (
 	ovsMountPath               = "/var/run/openvswitch"
 	ovsHostMountPath           = "/var/run/openvswitch"
 	ovsMountName               = "var-run-ovs"
+	defaultOvsMonitorGroupID   = "10"
 )
 
 const (
@@ -674,6 +676,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	dedupJustMark := DedupeJustMarkDefault
 	dedupMerge := DedupeMergeDefault
 	dnsTrackingPort := defaultDNSTrackingPort
+	ovsMonitorGroupID := defaultOvsMonitorGroupID
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
 	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
@@ -687,6 +690,8 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 			dedupMerge = v
 		} else if k == envDNSTrackingPort {
 			dnsTrackingPort = v
+		} else if k == envOvsMonitorGroupID {
+			ovsMonitorGroupID = v
 		} else {
 			config = append(config, corev1.EnvVar{Name: k, Value: v})
 		}
@@ -695,6 +700,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
 	config = append(config, corev1.EnvVar{Name: EnvDedupeJustMark, Value: dedupJustMark})
 	config = append(config, corev1.EnvVar{Name: envDNSTrackingPort, Value: dnsTrackingPort})
+	config = append(config, corev1.EnvVar{Name: envOvsMonitorGroupID, Value: ovsMonitorGroupID})
 	config = append(config, corev1.EnvVar{
 		Name: envAgentIP,
 		ValueFrom: &corev1.EnvVarSource{
