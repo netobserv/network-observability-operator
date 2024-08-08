@@ -250,6 +250,7 @@ func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem
 		Type:     api.MetricEncodeOperationEnum(strings.ToLower(string(flowMetric.Type))),
 		Filters:  []api.MetricsFilter{},
 		Labels:   flowMetric.Labels,
+		Remap:    flowMetric.Remap,
 		ValueKey: flowMetric.ValueField,
 	}
 	for _, f := range metrics.GetFilters(flowMetric) {

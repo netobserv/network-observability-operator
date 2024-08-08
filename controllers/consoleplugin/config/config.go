@@ -135,7 +135,7 @@ type PluginConfig struct {
 var rawStaticFrontendConfig []byte
 var staticFrontendConfig *FrontendConfig
 
-func LoadStaticFrontendConfig() (FrontendConfig, error) {
+func GetStaticFrontendConfig() (FrontendConfig, error) {
 	if staticFrontendConfig == nil {
 		cfg := FrontendConfig{}
 		err := yaml.Unmarshal(rawStaticFrontendConfig, &cfg)

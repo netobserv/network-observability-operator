@@ -515,7 +515,7 @@ func TestHTTPClientConfig(t *testing.T) {
 }
 
 func TestNoMissingFields(t *testing.T) {
-	cfg, err := config.LoadStaticFrontendConfig()
+	cfg, err := config.GetStaticFrontendConfig()
 	assert.NoError(t, err)
 
 	hasField := func(name string) bool {
@@ -546,7 +546,7 @@ func TestNoMissingFields(t *testing.T) {
 }
 
 func TestFieldsCardinalityWarns(t *testing.T) {
-	cfg, err := config.LoadStaticFrontendConfig()
+	cfg, err := config.GetStaticFrontendConfig()
 	assert.NoError(t, err)
 
 	allowed := []config.CardinalityWarn{config.CardinalityWarnAvoid, config.CardinalityWarnCareful, config.CardinalityWarnFine}

@@ -8,7 +8,7 @@ import (
 )
 
 func CheckCardinality(labels ...string) (*CardinalityReport, error) {
-	frontendCfg, err := config.LoadStaticFrontendConfig()
+	frontendCfg, err := config.GetStaticFrontendConfig()
 	if err != nil {
 		return nil, err
 	}

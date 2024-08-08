@@ -1,0 +1,25 @@
+# Metric tracking DNS responses
+# More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: dns-responses
+spec:
+  metricName: dns_responses_total
+  type: Counter
+  labels: [DstK8S_Namespace,DstK8S_OwnerName,SrcK8S_Name,DnsFlagsResponseCode]
+  remap:
+    DstK8S_Namespace: client_namespace
+    DstK8S_OwnerName: client
+    SrcK8S_Name: server
+    DnsFlagsResponseCode: code
+  filters:
+  - field: DstK8S_Type
+    value: Pod
+  - field: SrcK8S_Type
+    value: Pod
+  - field: SrcK8S_Namespace
+    value: "openshift-dns"
+  - field: SrcPort
+    value: "^53$|^5353$"
+    matchType: MatchRegex
