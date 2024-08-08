@@ -7,7 +7,7 @@ toolchain go1.22.4
 require (
 	github.com/go-logr/logr v1.4.2
 	github.com/netobserv/flowlogs-pipeline v1.6.1-crc0
-	github.com/onsi/ginkgo/v2 v2.19.0
+	github.com/onsi/ginkgo/v2 v2.19.1
 	github.com/onsi/gomega v1.34.1
 	github.com/openshift/api v0.0.0-20240722135205-ae4f370f361f
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.73.2

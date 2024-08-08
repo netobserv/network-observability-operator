@@ -86,8 +86,8 @@ github.com/netobserv/flowlogs-pipeline v1.6.1-crc0 h1:RSpHpM67a+Zw5GLnz8rNyAZ35N
 github.com/netobserv/flowlogs-pipeline v1.6.1-crc0/go.mod h1:v9NJojW+PbkITmjfq/Q99/OpL3YV9bmGeSiZSbwP1q8=
 github.com/netobserv/prometheus-common v0.48.0-netobserv h1:yNde6dteyK69t7l3k8CcR2uM6q+S10xgCap7mofvvV8=
 github.com/netobserv/prometheus-common v0.48.0-netobserv/go.mod h1:0/KsvlIEfPQCQ5I2iNSAWKPZziNCvRs5EC6ILDTlAPc=
-github.com/onsi/ginkgo/v2 v2.19.0 h1:9Cnnf7UHo57Hy3k6/m5k3dRfGTMXGvxhHFvkDTCTpvA=
-github.com/onsi/ginkgo/v2 v2.19.0/go.mod h1:rlwLi9PilAFJ8jCg9UE1QP6VBpd6/xj3SRC0d6TU0To=
+github.com/onsi/ginkgo/v2 v2.19.1 h1:QXgq3Z8Crl5EL1WBAC98A5sEBHARrAJNzAmMxzLcRF0=
+github.com/onsi/ginkgo/v2 v2.19.1/go.mod h1:O3DtEWQkPa/F7fBMgmZQKKsluAy8pd3rEQdrjkPb9zA=
 github.com/onsi/gomega v1.34.1 h1:EUMJIKUjM8sKjYbtxQI9A4z2o+rruxnzNvpknOXie6k=
 github.com/onsi/gomega v1.34.1/go.mod h1:kU1QgUvBDLXBJq618Xvm2LUX6rSAfRaFRTcdOeDLwwY=
 github.com/openshift/api v0.0.0-20240722135205-ae4f370f361f h1:B+uJ4LmjO+qwMTZP2YhlpMziMPD4MD1++WdCAV2y+GI=
