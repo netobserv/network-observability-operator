@@ -119,8 +119,8 @@ func IsFlowRTTEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 	return IsAgentFeatureEnabled(spec, flowslatest.FlowRTT)
 }
 
-func IsOvsMonitorEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return IsAgentFeatureEnabled(spec, flowslatest.OvsMonitor)
+func IsNetworkEventsMonitorEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+	return IsAgentFeatureEnabled(spec, flowslatest.NetworkEventsMonitor)
 }
 
 func IsMultiClusterEnabled(spec *flowslatest.FlowCollectorFLP) bool {

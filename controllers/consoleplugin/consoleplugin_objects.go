@@ -448,8 +448,8 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
 		fconf.Features = append(fconf.Features, "flowRTT")
 	}
 
-	if helper.IsOvsMonitorEnabled(&b.desired.Agent.EBPF) {
-		fconf.Features = append(fconf.Features, "ovsMonitor")
+	if helper.IsNetworkEventsMonitorEnabled(&b.desired.Agent.EBPF) {
+		fconf.Features = append(fconf.Features, "networkEventsMonitor")
 	}
 
 	if b.desired.Agent.EBPF.Advanced != nil {

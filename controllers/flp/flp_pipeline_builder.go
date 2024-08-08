@@ -361,18 +361,14 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 		outputFields = append(outputFields, outDNSTrackingFields...)
 	}
 
-	if helper.IsOvsMonitorEnabled(&b.desired.Agent.EBPF) {
-		var outOvsFlowFields []api.OutputField
-		for i := 0; i < constants.MaxOvsMonitorEvents; i++ {
-			outOvsFlowFields = []api.OutputField{
-				{
-					Name:      fmt.Sprintf("OvsMonitorMDEvent%d", i),
-					Operation: "last",
-					Input:     fmt.Sprintf("OvsMonitorMD[%d]", i),
-				},
-			}
-			outputFields = append(outputFields, outOvsFlowFields...)
+	if helper.IsNetworkEventsMonitorEnabled(&b.desired.Agent.EBPF) {
+		outNetworkEventsFlowFields := []api.OutputField{
+			{
+				Name:      "NetworkEvents",
+				Operation: "last",
+			},
 		}
+		outputFields = append(outputFields, outNetworkEventsFlowFields...)
 	}
 
 	if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
