@@ -13,6 +13,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	osv1 "github.com/openshift/api/console/v1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
+	securityv1 "github.com/openshift/api/security/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -32,6 +33,7 @@ import (
 	_ "github.com/openshift/api/config/v1/zz_generated.crd-manifests"
 	_ "github.com/openshift/api/console/v1/zz_generated.crd-manifests"
 	_ "github.com/openshift/api/operator/v1/zz_generated.crd-manifests"
+	_ "github.com/openshift/api/security/v1/zz_generated.crd-manifests"
 
 	// nolint:staticcheck
 	flowsv1beta1 "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta1"
@@ -63,6 +65,7 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "console", "v1", "zz_generated.crd-manifests"),
 				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "config", "v1", "zz_generated.crd-manifests"),
 				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "operator", "v1", "zz_generated.crd-manifests"),
+				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "security", "v1", "zz_generated.crd-manifests"),
 				filepath.Join(basePath, "..", "test-assets"),
 			},
 			CleanUpAfterUse: true,
@@ -107,6 +110,9 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	Expect(err).NotTo(HaveOccurred())
 
 	err = monitoringv1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = securityv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	k8sClient, err := client.New(cfg, client.Options{Scheme: scheme.Scheme})

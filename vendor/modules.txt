@@ -157,6 +157,7 @@ github.com/openshift/api/console/v1/zz_generated.crd-manifests
 github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1/zz_generated.crd-manifests
 github.com/openshift/api/security/v1
+github.com/openshift/api/security/v1/zz_generated.crd-manifests
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
