@@ -199,3 +199,24 @@ pprof-pf:
 	@echo -e "\n==> Port-forwarding..."
 	oc get pods
 	kubectl port-forward -n $(NAMESPACE) $(shell kubectl get pod -l app=netobserv-operator -o jsonpath="{.items[0].metadata.name}") 6060
+
+.PHONY: use-test-console
+use-test-console:
+	@echo -e "\n==> Enabling the test console..."
+ifeq ("", "$(CSV)")
+	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN=quay.io/$(USER)/network-observability-standalone-frontend:$(VERSION)
+else
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_CONSOLE_PLUGIN quay.io/$(USER)/network-observability-standalone-frontend:$(VERSION)
+endif
+	@echo -e "\n==> Waiting for operator redeployed..."
+	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
+	kubectl wait -n $(OPERATOR_NS) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
+	oc patch flowcollector cluster --type='json' -p '[{"op": "add", "path": "/spec/consolePlugin/advanced/env", "value": {"TEST_CONSOLE": "true"}}]'
+	@echo -e "\n==> Waiting for console-plugin pod..."
+	kubectl delete -n $(NAMESPACE) deployment netobserv-plugin
+	while ! kubectl get deployment netobserv-plugin; do sleep 1; done
+	kubectl rollout status -n $(NAMESPACE) --timeout=60s deployment netobserv-plugin
+	kubectl wait -n $(NAMESPACE) --timeout=60s --for condition=Available=True deployment netobserv-plugin
+	-pkill --oldest --full "9001:9001"
+	kubectl port-forward -n $(NAMESPACE) svc/netobserv-plugin 9001:9001 2>&1 >/dev/null &
+	@echo -e "\n===> Test console available at http://localhost:9001\n"
