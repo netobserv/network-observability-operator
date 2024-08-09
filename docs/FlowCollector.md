@@ -289,7 +289,8 @@ Otherwise it is matched as a case-sensitive string.<br/>
 the kernel debug filesystem, so the eBPF pod has to run as privileged.
 If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 - `DNSTracking`: enable the DNS tracking feature.<br>
-- `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br><br/>
+- `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
+- `NetworkEventsMonitor`: enable the Network events monitoring feature.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5944,7 +5945,8 @@ Otherwise it is matched as a case-sensitive string.<br/>
 the kernel debug filesystem, so the eBPF pod has to run as privileged.
 If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 - `DNSTracking`: enable the DNS tracking feature.<br>
-- `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br><br/>
+- `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
+- `NetworkEventsMonitor`: enable the Network events monitoring feature.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>

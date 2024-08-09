@@ -118,16 +118,19 @@ spec:
                             If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
                             - `DNSTracking`: enable the DNS tracking feature.<br>
                             - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
+                            - `NetworkEventsMonitor`: enable the Network events monitoring feature.<br>
                           items:
                             description: |-
                               Agent feature, can be one of:<br>
                               - `PacketDrop`, to track packet drops.<br>
                               - `DNSTracking`, to track specific information on DNS traffic.<br>
-                              - `FlowRTT`, to track TCP latency. [Unsupported (*)].<br>
+                              - `FlowRTT`, to track TCP latency [Unsupported (*)].<br>
+                              - `NetworkEventsMonitor`, to track Network events.<br>
                             enum:
                               - PacketDrop
                               - DNSTracking
                               - FlowRTT
+                              - NetworkEventsMonitor
                             type: string
                           type: array
                         flowFilter:
@@ -3416,16 +3419,19 @@ spec:
                             If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
                             - `DNSTracking`: enable the DNS tracking feature.<br>
                             - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
+                            - `NetworkEventsMonitor`: enable the Network events monitoring feature.<br>
                           items:
                             description: |-
                               Agent feature, can be one of:<br>
                               - `PacketDrop`, to track packet drops.<br>
                               - `DNSTracking`, to track specific information on DNS traffic.<br>
                               - `FlowRTT`, to track TCP latency.<br>
+                              - `NetworkEventsMonitor`, to track Network events.<br>
                             enum:
                               - PacketDrop
                               - DNSTracking
                               - FlowRTT
+                              - NetworkEventsMonitor
                             type: string
                           type: array
                         flowFilter:
