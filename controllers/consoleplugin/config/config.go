@@ -40,6 +40,7 @@ type LokiConfig struct {
 
 type PrometheusConfig struct {
 	URL              string       `yaml:"url" json:"url"`
+	DevURL           string       `yaml:"devUrl,omitempty" json:"devUrl,omitempty"`
 	Timeout          api.Duration `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	TokenPath        string       `yaml:"tokenPath,omitempty" json:"tokenPath,omitempty"`
 	SkipTLS          bool         `yaml:"skipTls,omitempty" json:"skipTls,omitempty"`

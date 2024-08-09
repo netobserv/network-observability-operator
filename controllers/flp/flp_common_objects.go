@@ -20,6 +20,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -441,10 +442,29 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Endpoints: []monitoringv1.Endpoint{
 				{
-					Port:      prometheusServiceName,
-					Interval:  "15s",
-					Scheme:    scheme,
-					TLSConfig: smTLS,
+					Port:        prometheusServiceName,
+					Interval:    "15s",
+					Scheme:      scheme,
+					TLSConfig:   smTLS,
+					HonorLabels: true,
+					MetricRelabelConfigs: []*monitoringv1.RelabelConfig{
+						{
+							SourceLabels: []monitoringv1.LabelName{"__name__", "DstK8S_Namespace"},
+							Separator:    ptr.To("@"),
+							Regex:        "netobserv_(workload|namespace)_ingress_.*@(.*)",
+							Replacement:  "${2}",
+							TargetLabel:  "namespace",
+							Action:       "replace",
+						},
+						{
+							SourceLabels: []monitoringv1.LabelName{"__name__", "SrcK8S_Namespace"},
+							Separator:    ptr.To("@"),
+							Regex:        "netobserv_(workload|namespace)_(egress|flows|drop|rtt|dns)_.*@(.*)",
+							Replacement:  "${3}",
+							TargetLabel:  "namespace",
+							Action:       "replace",
+						},
+					},
 				},
 			},
 			NamespaceSelector: monitoringv1.NamespaceSelector{
