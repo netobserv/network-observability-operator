@@ -117,6 +117,13 @@ func (in *FlowMetricSpec) DeepCopyInto(out *FlowMetricSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Remap != nil {
+		in, out := &in.Remap, &out.Remap
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.Buckets != nil {
 		in, out := &in.Buckets, &out.Buckets
 		*out = make([]string, len(*in))

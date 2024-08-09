@@ -211,6 +211,13 @@ spec:
                 description: Name of the metric. In Prometheus, it is automatically
                   prefixed with "netobserv_".
                 type: string
+              remap:
+                additionalProperties:
+                  type: string
+                description: '`remap` allows to use different names for the generated
+                  metric labels than the flow fields. Use the origin flow fields as
+                  keys, and the desired label names as values.'
+                type: object
               type:
                 description: |-
                   Metric type: "Counter" or "Histogram".
