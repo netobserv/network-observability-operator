@@ -24,7 +24,10 @@ REPO ?= quay.io/$(IMAGE_ORG)
 
 # Component versions to use in bundle / release (do not use $VERSION for that)
 PREVIOUS_VERSION ?= v1.6.0-community
+
 BUNDLE_VERSION ?= 1.6.1-community
+#File based catalog
+FBC_VERSION ?= 1.6.1-community
 # console plugin
 export PLG_VERSION ?= v1.6.1-community
 # flowlogs-pipeline
@@ -73,6 +76,11 @@ IMAGE_TAG_BASE ?= $(REPO)/network-observability-operator
 # BUNDLE_IMAGE defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMAGE=<some-registry>/<project-name-bundle>:<tag>)
 BUNDLE_IMAGE ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
+
+
+# FBC_IMAGE defines the image:tag used for the file based catalog.
+# You can use it as an arg. (E.g make bundle-build FBC_IMAGE=<some-registry>/<project-name-fbc>:<tag>)
+FBC_IMAGE ?= $(IMAGE_TAG_BASE)-fbc:v$(FBC_VERSION)
 
 # BUNDLE_CONFIG is the config sources to use for OLM bundle - "config/openshift-olm" for OpenShift, or "config/k8s-olm" for upstream Kubernetes.
 BUNDLE_CONFIG ?= config/openshift-olm
@@ -178,7 +186,7 @@ ifeq (,$(shell which opm 2>/dev/null))
 	set -e ;\
 	mkdir -p $(dir $(OPM)) ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.19.5/$${OS}-$${ARCH}-opm ;\
+	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.45.0/$${OS}-$${ARCH}-opm ;\
 	chmod +x $(OPM) ;\
 	}
 else
@@ -429,6 +437,14 @@ bundle-build: ## Build the bundle image.
 bundle-push: ## Push the bundle image.
 	$(OCI_BIN) push ${BUNDLE_IMAGE};
 
+.PHONY: file-based-catalog-build
+file-based-catalog-build: ## Build the bundle image.
+	$(OCI_BIN) build $(OCI_BUILD_OPTS) -f catalog.Dockerfile -t $(FBC_IMAGE) .
+
+.PHONY: file-based-catalog-push
+file-based-catalog-push: ## Push the bundle image.
+	$(OCI_BIN) push ${FBC_IMAGE};
+
 # A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMAGES=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
 BUNDLE_IMAGES ?= $(BUNDLE_IMAGE)
@@ -447,6 +463,10 @@ endif
 .PHONY: catalog-build
 catalog-build: opm ## Build a catalog image.
 	$(OPM) index add --container-tool ${OCI_BIN} --mode semver --tag $(CATALOG_IMAGE) --bundles $(BUNDLE_IMAGES) $(FROM_INDEX_OPT) $(OPM_OPTS)
+
+.PHONY: file-based-catalog-update
+file-based-catalog-update: opm ## Build a catalog image.
+	OPM=$(OPM) BUNDLE_IMAGE=$(BUNDLE_IMAGE) BUNDLE_TAG="v$(BUNDLE_VERSION)" ./hack/update_fbc.sh
 
 shortlived-catalog-build: ## Build a temporary catalog image, expiring after 2 weeks on quay
 	$(MAKE) catalog-build CATALOG_IMAGE=temp-catalog
