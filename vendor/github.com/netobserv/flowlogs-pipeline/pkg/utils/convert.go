@@ -243,27 +243,27 @@ func ConvertToBool(unk interface{}) (bool, error) {
 	}
 }
 
-func ConvertToString(unk interface{}) (string, error) {
+func ConvertToString(unk interface{}) string {
 	switch i := unk.(type) {
 	case float64:
-		return strconv.FormatFloat(i, 'E', -1, 64), nil
+		return strconv.FormatFloat(i, 'E', -1, 64)
 	case float32:
-		return strconv.FormatFloat(float64(i), 'E', -1, 32), nil
+		return strconv.FormatFloat(float64(i), 'E', -1, 32)
 	case int64:
-		return strconv.FormatInt(i, 10), nil
+		return strconv.FormatInt(i, 10)
 	case int32:
-		return strconv.FormatInt(int64(i), 10), nil
+		return strconv.FormatInt(int64(i), 10)
 	case int:
-		return strconv.FormatInt(int64(i), 10), nil
+		return strconv.FormatInt(int64(i), 10)
 	case uint64:
-		return strconv.FormatUint(i, 10), nil
+		return strconv.FormatUint(i, 10)
 	case uint32:
-		return strconv.FormatUint(uint64(i), 10), nil
+		return strconv.FormatUint(uint64(i), 10)
 	case uint:
-		return strconv.FormatUint(uint64(i), 10), nil
+		return strconv.FormatUint(uint64(i), 10)
 	case string:
-		return i, nil
+		return i
 	default:
-		return fmt.Sprintf("%v", unk), nil
+		return fmt.Sprintf("%v", unk)
 	}
 }

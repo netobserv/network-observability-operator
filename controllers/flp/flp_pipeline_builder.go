@@ -66,21 +66,29 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	allLabels = append(allLabels, b.detectedSubnets...)
 	flpLabels := subnetLabelsToFLP(allLabels)
 
+	var srcMacInput, dstMacInput string
+	if b.desired.Processor.Advanced != nil && b.desired.Processor.Advanced.Env["EnrichFromMac"] == "true" {
+		srcMacInput = "SrcMac"
+		dstMacInput = "DstMac"
+	}
+
 	rules := api.NetworkTransformRules{
 		{
 			Type: api.NetworkAddKubernetes,
 			Kubernetes: &api.K8sRule{
-				Input:   "SrcAddr",
-				Output:  "SrcK8S",
-				AddZone: addZone,
+				Input:    "SrcAddr",
+				MacInput: srcMacInput,
+				Output:   "SrcK8S",
+				AddZone:  addZone,
 			},
 		},
 		{
 			Type: api.NetworkAddKubernetes,
 			Kubernetes: &api.K8sRule{
-				Input:   "DstAddr",
-				Output:  "DstK8S",
-				AddZone: addZone,
+				Input:    "DstAddr",
+				MacInput: dstMacInput,
+				Output:   "DstK8S",
+				AddZone:  addZone,
 			},
 		},
 		{
