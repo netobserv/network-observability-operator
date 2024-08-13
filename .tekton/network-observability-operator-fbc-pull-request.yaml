@@ -172,6 +172,22 @@ spec:
         workspace: workspace
       - name: basic-auth
         workspace: git-auth
+    - name: update-downstream
+      taskSpec:
+        steps:
+          - image: ubuntu
+            script: |
+              #!/usr/bin/env bash
+              echo "Starting update-downstream task"
+              cd workspace/source/source
+              COMMIT={{revision}} ./hack/update-build.sh
+      runAfter:
+      - clone-repository
+      workspaces:
+      - name: source
+        workspace: workspace
+      - name: git-basic-auth
+        workspace: git-auth
     - name: build-container
       params:
       - name: IMAGE
@@ -188,6 +204,7 @@ spec:
         value: $(tasks.clone-repository.results.commit)
       runAfter:
       - clone-repository
+      - update-downstream
       taskRef:
         params:
         - name: name
