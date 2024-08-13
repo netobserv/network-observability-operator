@@ -46,10 +46,23 @@ Without OpenShift, you can still access the data (Loki logs, Prometheus metrics)
 
 All these options depend on how you installed these components.
 
-If you feel ready for hacking, there is also a way to view the Test Console, used by the development team, which is similar to the OpenShift console plugin and can work without OpenShift. You need to:
-- Build the console plugin in "standalone" mode: https://github.com/netobserv/network-observability-console-plugin?tab=readme-ov-file#standalone-frontend (you can just build the image, no need to run it locally).
-- Configure the Operator to use this build: `kubectl set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN="<your build image here>"`
-- Configure the Operator to deploy the Test Console: in `FlowCollector` yaml, set `spec.consolePlugin.advanced.env.TEST_CONSOLE` to `true`.
+You may also want to try the Test Console, which is used by the development team. It is similar to the OpenShift console plugin and can work without OpenShift.
+After cloning this repo, run:
+
+```bash
+USER=netobserv make use-test-console
+# If you deployed netobserv in non-default namespaces, use NAMESPACE and/or OPERATOR_NS envs. If you want to point to a specific version, use VERSION.
+# Example:
+USER=netobserv NAMESPACE=other-namespace OPERATOR_NS=operator-namespace VERSION=vX.Y.Z make use-test-console
+```
+
+Or without cloning, run the following steps:
+
+- Configure the operator to use a console-plugin standalone build: `kubectl set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN="quay.io/netobserv/network-observability-standalone-frontend:main"`
+- Configure the operator to deploy it: in `FlowCollector` yaml, set `spec.consolePlugin.advanced.env.TEST_CONSOLE` to `true`.
+- Then port-forward port 9001: `kubectl port-forward svc/netobserv-plugin 9001:9001` and open http://localhost:9001/ .
+
+Remember that it is only an internal dev tool, not a fully finished one. Do not expect the perfect user experience! By the way, contributions are welcome.
 
 ### How can I make sure everything is correctly deployed?
 
