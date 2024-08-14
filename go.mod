@@ -82,6 +82,6 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )
 
-replace github.com/prometheus/common v0.48.0 => github.com/netobserv/prometheus-common v0.55.0-netobserv
+replace github.com/prometheus/common v0.55.0 => github.com/netobserv/prometheus-common v0.55.0-netobserv
 
 replace github.com/netobserv/flowlogs-pipeline => ../flowlogs-pipeline

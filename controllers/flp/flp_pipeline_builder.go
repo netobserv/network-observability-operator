@@ -97,9 +97,9 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		{
 			Type: api.NetworkAddKubernetesInfra,
 			KubernetesInfra: &api.K8sInfraRule{
-				Inputs: []string{
-					"SrcAddr",
-					"DstAddr",
+				NamespaceNameFields: []api.K8sReference{
+					{Namespace: "SrcK8S_Namespace", Name: "SrcK8S_Name"},
+					{Namespace: "DstK8S_Namespace", Name: "DstK8S_Name"},
 				},
 				Output:        "K8S_FlowLayer",
 				InfraPrefixes: []string{b.desired.Namespace, openshiftNamespacesPrefixes},
