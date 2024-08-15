@@ -451,8 +451,9 @@ Example: 10.10.10.0/24 or 100:100:100:100::/64<br/>
         <td>int or string</td>
         <td>
           DestPorts defines the destination ports to filter flows by.
-To filter a single port, set a single port as an integer value. For example destPorts: 80.
-To filter a range of ports, use a "start-end" range, string format. For example destPorts: "80-100".<br/>
+To filter a single port, set a single port as an integer value. For example, destPorts: 80.
+To filter a range of ports, use a "start-end" range, string format. For example, destPorts: "80-100".
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -498,8 +499,9 @@ Example: 10.10.10.10<br/>
         <td>int or string</td>
         <td>
           Ports defines the ports to filter flows by. it can be user for either source or destination ports.
-To filter a single port, set a single port as an integer value. For example ports: 80.
-To filter a range of ports, use a "start-end" range, string format. For example ports: "80-10<br/>
+To filter a single port, set a single port as an integer value. For example, ports: 80.
+To filter a range of ports, use a "start-end" range, string format. For example, ports: "80-10
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -516,8 +518,9 @@ To filter a range of ports, use a "start-end" range, string format. For example 
         <td>int or string</td>
         <td>
           SourcePorts defines the source ports to filter flows by.
-To filter a single port, set a single port as an integer value. For example sourcePorts: 80.
-To filter a range of ports, use a "start-end" range, string format. For example sourcePorts: "80-100".<br/>
+To filter a single port, set a single port as an integer value. For example, sourcePorts: 80.
+To filter a range of ports, use a "start-end" range, string format. For example, sourcePorts: "80-100".
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7844,8 +7847,9 @@ Examples: `10.10.10.0/24` or `100:100:100:100::/64`<br/>
         <td>int or string</td>
         <td>
           `destPorts` defines the destination ports to filter flows by.
-To filter a single port, set a single port as an integer value. For example: `destPorts: 80`.
-To filter a range of ports, use a "start-end" range in string format. For example: `destPorts: "80-100"`.<br/>
+To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7891,8 +7895,9 @@ Example: `10.10.10.10`.<br/>
         <td>int or string</td>
         <td>
           `ports` defines the ports to filter flows by. It is used both for source and destination ports.
-To filter a single port, set a single port as an integer value. For example: `ports: 80`.
-To filter a range of ports, use a "start-end" range in string format. For example: `ports: "80-100"`.<br/>
+To filter a single port, set a single port as an integer value. For example, `ports: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7909,8 +7914,9 @@ To filter a range of ports, use a "start-end" range in string format. For exampl
         <td>int or string</td>
         <td>
           `sourcePorts` defines the source ports to filter flows by.
-To filter a single port, set a single port as an integer value. For example: `sourcePorts: 80`.
-To filter a range of ports, use a "start-end" range in string format. For example: `sourcePorts: "80-100"`.<br/>
+To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
