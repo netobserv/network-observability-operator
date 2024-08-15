@@ -242,20 +242,23 @@ type EBPFFlowFilter struct {
 	TCPFlags string `json:"tcpFlags,omitempty"`
 
 	// `sourcePorts` defines the source ports to filter flows by.
-	// To filter a single port, set a single port as an integer value. For example: `sourcePorts: 80`.
-	// To filter a range of ports, use a "start-end" range in string format. For example: `sourcePorts: "80-100"`.
+	// To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
+	// To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
+	// To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
 	// +optional
 	SourcePorts intstr.IntOrString `json:"sourcePorts,omitempty"`
 
 	// `destPorts` defines the destination ports to filter flows by.
-	// To filter a single port, set a single port as an integer value. For example: `destPorts: 80`.
-	// To filter a range of ports, use a "start-end" range in string format. For example: `destPorts: "80-100"`.
+	// To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
+	// To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
+	// To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
 	// +optional
 	DestPorts intstr.IntOrString `json:"destPorts,omitempty"`
 
 	// `ports` defines the ports to filter flows by. It is used both for source and destination ports.
-	// To filter a single port, set a single port as an integer value. For example: `ports: 80`.
-	// To filter a range of ports, use a "start-end" range in string format. For example: `ports: "80-100"`.
+	// To filter a single port, set a single port as an integer value. For example, `ports: 80`.
+	// To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
+	// To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
 	Ports intstr.IntOrString `json:"ports,omitempty"`
 
 	// `peerIP` defines the IP address to filter flows by.
