@@ -500,7 +500,7 @@ Example: 10.10.10.10<br/>
         <td>
           Ports defines the ports to filter flows by. it can be user for either source or destination ports.
 To filter a single port, set a single port as an integer value. For example, ports: 80.
-To filter a range of ports, use a "start-end" range, string format. For example, ports: "80-10
+To filter a range of ports, use a "start-end" range, string format. For example, ports: "80-100".
 To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
         </td>
         <td>false</td>
