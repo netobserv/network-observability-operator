@@ -12755,7 +12755,7 @@ A timeout of zero means no timeout.<br/>
           `writeBatchSize` is the maximum batch size (in bytes) of Loki logs to accumulate before sending.<br/>
           <br/>
             <i>Format</i>: int64<br/>
-            <i>Default</i>: 102400<br/>
+            <i>Default</i>: 10485760<br/>
             <i>Minimum</i>: 1<br/>
         </td>
         <td>false</td>
