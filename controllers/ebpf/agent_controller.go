@@ -449,74 +449,46 @@ func (c *AgentController) configureFlowFilter(filter *flowslatest.EBPFFlowFilter
 		config = append(config, corev1.EnvVar{Name: envFilterProtocol,
 			Value: filter.Protocol,
 		})
-		switch filter.Protocol {
-		case "TCP", "UDP", "SCTP":
-			if filter.SourcePorts.Type == intstr.String {
-				if strings.Contains(filter.SourcePorts.String(), "-") {
-					config = append(config, corev1.EnvVar{Name: envFilterSourcePortRange,
-						Value: filter.SourcePorts.String(),
-					})
-				}
-				if strings.Contains(filter.SourcePorts.String(), ",") {
-					config = append(config, corev1.EnvVar{Name: envFilterSourcePorts,
-						Value: filter.SourcePorts.String(),
-					})
-				}
-			}
-			if filter.SourcePorts.Type == intstr.Int {
-				config = append(config, corev1.EnvVar{Name: envFilterSourcePort,
-					Value: strconv.Itoa(filter.SourcePorts.IntValue()),
-				})
-			}
-			if filter.DestPorts.Type == intstr.String {
-				if strings.Contains(filter.DestPorts.String(), "-") {
-					config = append(config, corev1.EnvVar{Name: envFilterDestPortRange,
-						Value: filter.DestPorts.String(),
-					})
-				}
-				if strings.Contains(filter.DestPorts.String(), ",") {
-					config = append(config, corev1.EnvVar{Name: envFilterDestPorts,
-						Value: filter.DestPorts.String(),
-					})
-				}
-			}
-			if filter.DestPorts.Type == intstr.Int {
-				config = append(config, corev1.EnvVar{Name: envFilterDestPort,
-					Value: strconv.Itoa(filter.DestPorts.IntValue()),
-				})
-
-			}
-			if filter.Ports.Type == intstr.String {
-				if strings.Contains(filter.Ports.String(), "-") {
-					config = append(config, corev1.EnvVar{Name: envFilterPortRange,
-						Value: filter.Ports.String(),
-					})
-				}
-				if strings.Contains(filter.Ports.String(), ",") {
-					config = append(config, corev1.EnvVar{Name: envFilterPorts,
-						Value: filter.Ports.String(),
-					})
-				}
-			}
-			if filter.Ports.Type == intstr.Int {
-				config = append(config, corev1.EnvVar{Name: envFilterPort,
-					Value: strconv.Itoa(filter.Ports.IntValue()),
-				})
-			}
-
-		case "ICMP", "ICMPv6":
-			if *filter.ICMPType != 0 {
-				config = append(config, corev1.EnvVar{Name: envFilterICMPType,
-					Value: strconv.Itoa(*filter.ICMPType),
-				})
-			}
-			if *filter.ICMPCode != 0 {
-				config = append(config, corev1.EnvVar{Name: envFilterICMPCode,
-					Value: strconv.Itoa(*filter.ICMPCode)})
-			}
-		}
 	}
-
+	if filter.SourcePorts.Type == intstr.String {
+		config = append(config, corev1.EnvVar{Name: envFilterSourcePortRange,
+			Value: filter.SourcePorts.String(),
+		})
+	}
+	if filter.SourcePorts.Type == intstr.Int {
+		config = append(config, corev1.EnvVar{Name: envFilterSourcePort,
+			Value: strconv.Itoa(filter.SourcePorts.IntValue()),
+		})
+	}
+	if filter.DestPorts.Type == intstr.String {
+		config = append(config, corev1.EnvVar{Name: envFilterDestPortRange,
+			Value: filter.DestPorts.String(),
+		})
+	}
+	if filter.DestPorts.Type == intstr.Int {
+		config = append(config, corev1.EnvVar{Name: envFilterDestPort,
+			Value: strconv.Itoa(filter.DestPorts.IntValue()),
+		})
+	}
+	if filter.Ports.Type == intstr.String {
+		config = append(config, corev1.EnvVar{Name: envFilterPortRange,
+			Value: filter.Ports.String(),
+		})
+	}
+	if filter.Ports.Type == intstr.Int {
+		config = append(config, corev1.EnvVar{Name: envFilterPort,
+			Value: strconv.Itoa(filter.Ports.IntValue()),
+		})
+	}
+	if *filter.ICMPType != 0 {
+		config = append(config, corev1.EnvVar{Name: envFilterICMPType,
+			Value: strconv.Itoa(*filter.ICMPType),
+		})
+	}
+	if *filter.ICMPCode != 0 {
+		config = append(config, corev1.EnvVar{Name: envFilterICMPCode,
+			Value: strconv.Itoa(*filter.ICMPCode)})
+	}
 	if filter.PeerIP != "" {
 		config = append(config, corev1.EnvVar{Name: envFilterPeerIPAddress,
 			Value: filter.PeerIP})
