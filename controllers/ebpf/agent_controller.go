@@ -498,18 +498,15 @@ func (c *AgentController) configureFlowFilter(filter *flowslatest.EBPFFlowFilter
 		config = append(config, corev1.EnvVar{Name: envFilterProtocol,
 			Value: filter.Protocol,
 		})
-		switch filter.Protocol {
-		case "ICMP", "ICMPv6":
-			if filter.ICMPType != nil && *filter.ICMPType != 0 {
-				config = append(config, corev1.EnvVar{Name: envFilterICMPType,
-					Value: strconv.Itoa(*filter.ICMPType),
-				})
-			}
-			if filter.ICMPCode != nil && *filter.ICMPCode != 0 {
-				config = append(config, corev1.EnvVar{Name: envFilterICMPCode,
-					Value: strconv.Itoa(*filter.ICMPCode)})
-			}
-		}
+	}
+	if filter.ICMPType != nil && *filter.ICMPType != 0 {
+		config = append(config, corev1.EnvVar{Name: envFilterICMPType,
+			Value: strconv.Itoa(*filter.ICMPType),
+		})
+	}
+	if filter.ICMPCode != nil && *filter.ICMPCode != 0 {
+		config = append(config, corev1.EnvVar{Name: envFilterICMPCode,
+			Value: strconv.Itoa(*filter.ICMPCode)})
 	}
 	if filter.SourcePorts.Type == intstr.String {
 		config = append(config, corev1.EnvVar{Name: envFilterSourcePortRange,
