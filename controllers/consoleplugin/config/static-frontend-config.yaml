@@ -385,6 +385,9 @@ columns:
     name: Type
     tooltip: The type of the ICMP message
     field: IcmpType
+    fields: 
+    - Proto
+    - IcmpType
     filter: icmp_type
     default: false
     width: 10
@@ -393,6 +396,10 @@ columns:
     name: Code
     tooltip: The code of the ICMP message
     field: IcmpCode
+    fields: 
+    - Proto
+    - IcmpType
+    - IcmpCode
     filter: icmp_code
     default: false
     width: 10
