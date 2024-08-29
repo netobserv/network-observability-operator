@@ -380,7 +380,8 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 	}
 	if b.desired.Prometheus.Querier.Mode == "" || b.desired.Prometheus.Querier.Mode == flowslatest.PromModeAuto {
 		if b.info.UseOpenShiftSCC /* aka IsOpenShift */ {
-			config.URL = "https://thanos-querier.openshift-monitoring.svc:9091/"
+			config.URL = "https://thanos-querier.openshift-monitoring.svc:9091/"    // requires cluster-monitoringv-view cluster role
+			config.DevURL = "https://thanos-querier.openshift-monitoring.svc:9092/" // restricted to a particular namespace
 			config.ForwardUserToken = true
 			tls = flowslatest.ClientTLS{
 				Enable: true,
