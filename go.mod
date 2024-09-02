@@ -6,7 +6,7 @@ toolchain go1.22.4
 
 require (
 	github.com/go-logr/logr v1.4.2
-	github.com/netobserv/flowlogs-pipeline v1.6.1-crc0
+	github.com/netobserv/flowlogs-pipeline v1.6.2-community.0.20240902140418-72029f57586d
 	github.com/onsi/ginkgo/v2 v2.20.0
 	github.com/onsi/gomega v1.34.1
 	github.com/openshift/api v0.0.0-20240722135205-ae4f370f361f
@@ -83,5 +83,3 @@ require (
 )
 
 replace github.com/prometheus/common v0.55.0 => github.com/netobserv/prometheus-common v0.55.0-netobserv
-
-replace github.com/netobserv/flowlogs-pipeline => ../flowlogs-pipeline
