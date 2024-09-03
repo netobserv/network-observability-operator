@@ -482,27 +482,18 @@ func (c *AgentController) configureFlowFilter(filter *flowslatest.EBPFFlowFilter
 			Value: strconv.Itoa(filter.Ports.IntValue()),
 		})
 	}
-	if *filter.ICMPType != 0 {
+	if filter.ICMPType != nil && *filter.ICMPType != 0 {
 		config = append(config, corev1.EnvVar{Name: envFilterICMPType,
 			Value: strconv.Itoa(*filter.ICMPType),
 		})
 	}
-	if *filter.ICMPCode != 0 {
+	if filter.ICMPCode != nil && *filter.ICMPCode != 0 {
 		config = append(config, corev1.EnvVar{Name: envFilterICMPCode,
 			Value: strconv.Itoa(*filter.ICMPCode)})
 	}
 	if filter.PeerIP != "" {
 		config = append(config, corev1.EnvVar{Name: envFilterPeerIPAddress,
 			Value: filter.PeerIP})
-	}
-	if *filter.ICMPType != 0 {
-		config = append(config, corev1.EnvVar{Name: envFilterICMPType,
-			Value: strconv.Itoa(*filter.ICMPType),
-		})
-	}
-	if *filter.ICMPCode != 0 {
-		config = append(config, corev1.EnvVar{Name: envFilterICMPCode,
-			Value: strconv.Itoa(*filter.ICMPCode)})
 	}
 	return config
 }
