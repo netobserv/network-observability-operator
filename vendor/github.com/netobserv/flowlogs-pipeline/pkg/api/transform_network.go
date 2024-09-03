@@ -18,12 +18,12 @@
 package api
 
 type TransformNetwork struct {
-	Rules          NetworkTransformRules         `yaml:"rules" json:"rules" doc:"list of transform rules, each includes:"`
-	KubeConfigPath string                        `yaml:"kubeConfigPath,omitempty" json:"kubeConfigPath,omitempty" doc:"path to kubeconfig file (optional)"`
-	ServicesFile   string                        `yaml:"servicesFile,omitempty" json:"servicesFile,omitempty" doc:"path to services file (optional, default: /etc/services)"`
-	ProtocolsFile  string                        `yaml:"protocolsFile,omitempty" json:"protocolsFile,omitempty" doc:"path to protocols file (optional, default: /etc/protocols)"`
-	SubnetLabels   []NetworkTransformSubnetLabel `yaml:"subnetLabels,omitempty" json:"subnetLabels,omitempty" doc:"configure subnet and IPs custom labels"`
-	DirectionInfo  NetworkTransformDirectionInfo `yaml:"directionInfo,omitempty" json:"directionInfo,omitempty" doc:"information to reinterpret flow direction (optional, to use with reinterpret_direction rule)"`
+	Rules         NetworkTransformRules         `yaml:"rules" json:"rules" doc:"list of transform rules, each includes:"`
+	KubeConfig    NetworkTransformKubeConfig    `yaml:"kubeConfig,omitempty" json:"kubeConfig,omitempty" doc:"global configuration related to Kubernetes (optional)"`
+	ServicesFile  string                        `yaml:"servicesFile,omitempty" json:"servicesFile,omitempty" doc:"path to services file (optional, default: /etc/services)"`
+	ProtocolsFile string                        `yaml:"protocolsFile,omitempty" json:"protocolsFile,omitempty" doc:"path to protocols file (optional, default: /etc/protocols)"`
+	SubnetLabels  []NetworkTransformSubnetLabel `yaml:"subnetLabels,omitempty" json:"subnetLabels,omitempty" doc:"configure subnet and IPs custom labels"`
+	DirectionInfo NetworkTransformDirectionInfo `yaml:"directionInfo,omitempty" json:"directionInfo,omitempty" doc:"information to reinterpret flow direction (optional, to use with reinterpret_direction rule)"`
 }
 
 func (tn *TransformNetwork) GetServiceFiles() (string, string) {
@@ -36,6 +36,16 @@ func (tn *TransformNetwork) GetServiceFiles() (string, string) {
 		s = "/etc/services"
 	}
 	return p, s
+}
+
+const (
+	OVN    = "ovn"
+	Multus = "multus"
+)
+
+type NetworkTransformKubeConfig struct {
+	ConfigPath string   `yaml:"configPath,omitempty" json:"configPath,omitempty" doc:"path to kubeconfig file (optional)"`
+	ManagedCNI []string `yaml:"managedCNI,omitempty" json:"managedCNI,omitempty" doc:"a list of CNI (network plugins) to manage, for detecting additional interfaces. Currently supported: ovn, multus"`
 }
 
 type TransformNetworkOperationEnum string
@@ -62,10 +72,10 @@ type NetworkTransformRule struct {
 }
 
 type K8sInfraRule struct {
-	Inputs        []string       `yaml:"inputs,omitempty" json:"inputs,omitempty" doc:"entry inputs fields"`
-	Output        string         `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
-	InfraPrefixes []string       `yaml:"infra_prefixes,omitempty" json:"infra_prefixes,omitempty" doc:"Namespace prefixes that will be tagged as infra"`
-	InfraRefs     []K8sReference `yaml:"infra_refs,omitempty" json:"infra_refs,omitempty" doc:"Additional object references to be tagged as infra"`
+	NamespaceNameFields []K8sReference `yaml:"namespaceNameFields,omitempty" json:"namespaceNameFields,omitempty" doc:"entries for namespace and name input fields"`
+	Output              string         `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
+	InfraPrefixes       []string       `yaml:"infra_prefixes,omitempty" json:"infra_prefixes,omitempty" doc:"Namespace prefixes that will be tagged as infra"`
+	InfraRefs           []K8sReference `yaml:"infra_refs,omitempty" json:"infra_refs,omitempty" doc:"Additional object references to be tagged as infra"`
 }
 
 type K8sReference struct {
@@ -74,11 +84,12 @@ type K8sReference struct {
 }
 
 type K8sRule struct {
-	Input        string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
+	Input        string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry IP input field"`
+	MacInput     string `yaml:"mac-input,omitempty" json:"mac-input,omitempty" doc:"Optional entry MAC input field"`
 	Output       string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
 	Assignee     string `yaml:"assignee,omitempty" json:"assignee,omitempty" doc:"value needs to assign to output field"`
 	LabelsPrefix string `yaml:"labels_prefix,omitempty" json:"labels_prefix,omitempty" doc:"labels prefix to use to copy input lables, if empty labels will not be copied"`
-	AddZone      bool   `yaml:"add_zone,omitempty" json:"add_zone,omitempty" doc:"If true the rule will add the zone"`
+	AddZone      bool   `yaml:"add_zone,omitempty" json:"add_zone,omitempty" doc:"if true the rule will add the zone"`
 }
 
 type NetworkGenericRule struct {
