@@ -482,12 +482,12 @@ func (c *AgentController) configureFlowFilter(filter *flowslatest.EBPFFlowFilter
 			}
 
 		case "ICMP", "ICMPv6":
-			if *filter.ICMPType != 0 {
+			if filter.ICMPType != nil && *filter.ICMPType != 0 {
 				config = append(config, corev1.EnvVar{Name: envFilterICMPType,
 					Value: strconv.Itoa(*filter.ICMPType),
 				})
 			}
-			if *filter.ICMPCode != 0 {
+			if filter.ICMPCode != nil && *filter.ICMPCode != 0 {
 				config = append(config, corev1.EnvVar{Name: envFilterICMPCode,
 					Value: strconv.Itoa(*filter.ICMPCode)})
 			}
