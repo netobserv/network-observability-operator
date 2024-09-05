@@ -369,6 +369,16 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 		outputFields = append(outputFields, outDNSTrackingFields...)
 	}
 
+	if helper.IsNetworkEventsEnabled(&b.desired.Agent.EBPF) {
+		outNetworkEventsFlowFields := []api.OutputField{
+			{
+				Name:      "NetworkEvents",
+				Operation: "last",
+			},
+		}
+		outputFields = append(outputFields, outNetworkEventsFlowFields...)
+	}
+
 	if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
 		outputFields = append(outputFields, api.OutputField{
 			Name:      "MaxTimeFlowRttNs",

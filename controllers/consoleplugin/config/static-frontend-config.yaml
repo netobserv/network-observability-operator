@@ -517,6 +517,14 @@ columns:
     default: true
     width: 5
     feature: flowRTT
+  - id: NetworkEvents
+    name: Network Events
+    tooltip: Network events flow monitor
+    field: NetworkEvents
+    filter: network_events
+    default: true
+    width: 15
+    feature: networkEvents
 filters:
   - id: cluster_name
     name: Cluster
@@ -892,7 +900,10 @@ filters:
     name: Flow RTT
     component: number
     hint: Specify a TCP smoothed Round Trip Time in nanoseconds.
-
+  - id: network_events
+    name: Network events flow monitoring
+    component: text
+    hint: Specify a single network event.
 # Fields definition, used to generate documentation
 # The "cardinalityWarn" property relates to how the field is suitable for usage as a metric label wrt cardinality; it may have 3 values: fine, careful, avoid
 fields:
@@ -1118,6 +1129,10 @@ fields:
   - name: TimeFlowRttNs
     type: number
     description: TCP Smoothed Round Trip Time (SRTT), in nanoseconds
+    cardinalityWarn: avoid
+  - name: NetworkEvents
+    type: string
+    description: Network events flow monitoring
     cardinalityWarn: avoid
   - name: K8S_ClusterName
     type: string
