@@ -8,7 +8,7 @@ echo "Updating container file"
 : "${BUNDLE_CONTAINER_FILE:=./bundle.Dockerfile}"
 : "${CATALOG_CONTAINER_FILE:=./catalog.Dockerfile}"
 : "${TARGET_VERSION:=1.7.0}"
-: "${REPLACE_VERSION:=1.6.0}"
+: "${REPLACE_VERSION:=1.6.1}"
 
 
 supported_ocp_versions="v4.13"
