@@ -180,12 +180,29 @@ spec:
         workspace: workspace
       - name: basic-auth
         workspace: git-auth
+    - name: update-downstream
+      taskSpec:
+        steps:
+          - image: ubuntu
+            script: |
+              #!/usr/bin/env bash
+              echo "Starting update-downstream task"
+              cd workspace/source/source
+              COMMIT={{revision}} ./hack/update-build.sh
+      runAfter:
+      - clone-repository
+      workspaces:
+      - name: source
+        workspace: workspace
+      - name: git-basic-auth
+        workspace: git-auth
     - name: prefetch-dependencies
       params:
       - name: input
         value: $(params.prefetch-input)
       runAfter:
       - clone-repository
+      - update-downstream
       taskRef:
         params:
         - name: name
