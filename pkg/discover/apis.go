@@ -1,21 +1,17 @@
 package discover
 
 import (
-	"strings"
-
-	configv1 "github.com/openshift/api/config/v1"
 	osv1alpha1 "github.com/openshift/api/console/v1alpha1"
 	operatorv1 "github.com/openshift/api/operator/v1"
-	monitoring "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"
+	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"k8s.io/client-go/discovery"
 )
 
 var (
-	consolePlugin = "consoleplugins." + osv1alpha1.GroupName
-	consoleConfig = "consoles." + configv1.GroupName
-	cno           = "networks." + operatorv1.GroupName
-	svcMonitor    = "servicemonitors." + monitoring.GroupName
-	promRule      = "prometheusrules." + monitoring.GroupName
+	consolePlugin = "consoleplugins." + osv1alpha1.GroupVersion.String()
+	cno           = "networks." + operatorv1.GroupVersion.String()
+	svcMonitor    = "servicemonitors." + monv1.SchemeGroupVersion.String()
+	promRule      = "prometheusrules." + monv1.SchemeGroupVersion.String()
 )
 
 // AvailableAPIs discovers the available APIs in the running cluster
@@ -26,7 +22,6 @@ type AvailableAPIs struct {
 func NewAvailableAPIs(client *discovery.DiscoveryClient) (*AvailableAPIs, error) {
 	apiMap := map[string]bool{
 		consolePlugin: false,
-		consoleConfig: false,
 		cno:           false,
 		svcMonitor:    false,
 		promRule:      false,
@@ -39,8 +34,8 @@ func NewAvailableAPIs(client *discovery.DiscoveryClient) (*AvailableAPIs, error)
 	out:
 		for i := range resources {
 			for j := range resources[i].APIResources {
-				fullName := resources[i].APIResources[j].Name + "." + resources[i].GroupVersion
-				if strings.HasPrefix(fullName, apiName) {
+				gvk := resources[i].APIResources[j].Name + "." + resources[i].GroupVersion
+				if apiName == gvk {
 					apiMap[apiName] = true
 					break out
 				}
@@ -53,11 +48,6 @@ func NewAvailableAPIs(client *discovery.DiscoveryClient) (*AvailableAPIs, error)
 // HasConsolePlugin returns true if "consoleplugins.console.openshift.io" API was found
 func (c *AvailableAPIs) HasConsolePlugin() bool {
 	return c.apisMap[consolePlugin]
-}
-
-// HasConsoleConfig returns true if "consoles.config.openshift.io" API was found
-func (c *AvailableAPIs) HasConsoleConfig() bool {
-	return c.apisMap[consoleConfig]
 }
 
 // HasCNO returns true if "networks.operator.openshift.io" API was found
