@@ -18,6 +18,7 @@ crd_name="flows.netobserv.io_flowcollectors.yaml"
 crd_file="${manifests_dir}/${crd_name}"
 csv_name="netobserv-operator.clusterserviceversion.yaml"
 csv_file="${manifests_dir}/${csv_name}"
+index_file="./catalog/index.yaml"
 
 cat <<EOF >>"${CONTAINER_FILE}"
 LABEL com.redhat.component="network-observability-operator-container"
@@ -69,6 +70,7 @@ export EPOC_TIMESTAMP=$(date +%s)
 export IN_CSV_DESC="./config/descriptions/ocp.md"
 
 REPLACES="${REPLACE_VERSION}" VERSION="${TARGET_VERSION}" TARGET_CSV_FILE="${csv_file}" python3 ./hack/patch_csv.py
+REPLACES="${REPLACE_VERSION}" VERSION="${TARGET_VERSION}" TARGET_INDEX_FILE="${index_file}" python3 ./hack/patch_catalog.py
 
 sed -i 's/operators.operatorframework.io.bundle.channels.v1: latest,community/operators.operatorframework.io.bundle.channels.v1: stable/g' ./bundle/metadata/annotations.yaml
 sed -i 's/operators.operatorframework.io.bundle.channel.default.v1: community/operators.operatorframework.io.bundle.channel.default.v1: stable/g' ./bundle/metadata/annotations.yaml
