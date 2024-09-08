@@ -183,11 +183,12 @@ spec:
     - name: update-downstream
       taskSpec:
         steps:
-          - image: ubuntu
+          - image: fedora
             script: |
               #!/usr/bin/env bash
               echo "Starting update-downstream task"
               cd workspace/source/source
+              dnf install -y python3-ruamel-yaml-clib
               COMMIT={{revision}} ./hack/update-build.sh
       runAfter:
       - clone-repository
