@@ -857,7 +857,7 @@ type FlowCollectorLoki struct {
 	WriteBatchWait *metav1.Duration `json:"writeBatchWait,omitempty"` // Warning: keep as pointer, else default is ignored
 
 	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:default:=102400
+	//+kubebuilder:default:=10485760
 	// `writeBatchSize` is the maximum batch size (in bytes) of Loki logs to accumulate before sending.
 	WriteBatchSize int64 `json:"writeBatchSize,omitempty"`
 
