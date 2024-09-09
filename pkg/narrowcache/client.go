@@ -18,6 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
@@ -36,7 +37,7 @@ type watchedObject struct {
 
 type handlerOnQueue struct {
 	handler handler.EventHandler
-	queue   workqueue.RateLimitingInterface
+	queue   workqueue.TypedRateLimitingInterface[reconcile.Request]
 }
 
 func (c *Client) Get(ctx context.Context, key client.ObjectKey, out client.Object, opts ...client.GetOption) error {
@@ -224,7 +225,7 @@ func (c *Client) GetSource(ctx context.Context, obj client.Object, h handler.Eve
 
 	return &NarrowSource{
 		handler: h,
-		onStart: func(ctx context.Context, q workqueue.RateLimitingInterface) {
+		onStart: func(ctx context.Context, q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 			c.addHandler(key, handlerOnQueue{handler: h, queue: q})
 		},
 	}, nil

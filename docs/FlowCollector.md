@@ -633,6 +633,19 @@ TLS configuration.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Select the type of TLS configuration:<br>
+- `DISABLED` (default) to not configure TLS for the endpoint.
+- `PROVIDED` to manually provide cert file and a key file. [Unsupported (*)].
+- `AUTO` to use OpenShift auto generated certificate using annotations.<br/>
+          <br/>
+            <i>Enum</i>: DISABLED, PROVIDED, AUTO<br/>
+            <i>Default</i>: DISABLED<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
@@ -654,19 +667,6 @@ If set to `true`, the `providedCaFile` field is ignored.<br/>
         <td>object</td>
         <td>
           Reference to the CA file when `type` is set to `PROVIDED`.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          Select the type of TLS configuration:<br>
-- `DISABLED` (default) to not configure TLS for the endpoint.
-- `PROVIDED` to manually provide cert file and a key file. [Unsupported (*)].
-- `AUTO` to use OpenShift auto generated certificate using annotations.<br/>
-          <br/>
-            <i>Enum</i>: DISABLED, PROVIDED, AUTO<br/>
-            <i>Default</i>: DISABLED<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -810,10 +810,8 @@ More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-co
           Claims lists the names of resources, defined in spec.resourceClaims,
 that are used by this container.
 
-
 This is an alpha field and requires enabling the
 DynamicResourceAllocation feature gate.
-
 
 This field is immutable. It can only be set for containers.<br/>
         </td>
@@ -865,6 +863,15 @@ the Pod where this field is used. It makes that resource available
 inside a container.<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>request</b></td>
+        <td>string</td>
+        <td>
+          Request is the name chosen for a request in the referenced claim.
+If empty, everything from the claim is made available, otherwise
+only the result of this request.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -2174,10 +2181,8 @@ More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-co
           Claims lists the names of resources, defined in spec.resourceClaims,
 that are used by this container.
 
-
 This is an alpha field and requires enabling the
 DynamicResourceAllocation feature gate.
-
 
 This field is immutable. It can only be set for containers.<br/>
         </td>
@@ -2229,6 +2234,15 @@ the Pod where this field is used. It makes that resource available
 inside a container.<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>request</b></td>
+        <td>string</td>
+        <td>
+          Request is the name chosen for a request in the referenced claim.
+If empty, everything from the claim is made available, otherwise
+only the result of this request.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -4913,6 +4927,19 @@ TLS configuration.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Select the type of TLS configuration:<br>
+- `DISABLED` (default) to not configure TLS for the endpoint.
+- `PROVIDED` to manually provide cert file and a key file. [Unsupported (*)].
+- `AUTO` to use OpenShift auto generated certificate using annotations.<br/>
+          <br/>
+            <i>Enum</i>: DISABLED, PROVIDED, AUTO<br/>
+            <i>Default</i>: DISABLED<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
@@ -4934,19 +4961,6 @@ If set to `true`, the `providedCaFile` field is ignored.<br/>
         <td>object</td>
         <td>
           Reference to the CA file when `type` is set to `PROVIDED`.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          Select the type of TLS configuration:<br>
-- `DISABLED` (default) to not configure TLS for the endpoint.
-- `PROVIDED` to manually provide cert file and a key file. [Unsupported (*)].
-- `AUTO` to use OpenShift auto generated certificate using annotations.<br/>
-          <br/>
-            <i>Enum</i>: DISABLED, PROVIDED, AUTO<br/>
-            <i>Default</i>: DISABLED<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5090,10 +5104,8 @@ More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-co
           Claims lists the names of resources, defined in spec.resourceClaims,
 that are used by this container.
 
-
 This is an alpha field and requires enabling the
 DynamicResourceAllocation feature gate.
-
 
 This field is immutable. It can only be set for containers.<br/>
         </td>
@@ -5145,6 +5157,15 @@ the Pod where this field is used. It makes that resource available
 inside a container.<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>request</b></td>
+        <td>string</td>
+        <td>
+          Request is the name chosen for a request in the referenced claim.
+If empty, everything from the claim is made available, otherwise
+only the result of this request.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -5209,14 +5230,14 @@ SubnetLabel allows to label subnets and IPs, such as to identify cluster-externa
         <td>
           List of CIDRs, such as `["1.2.3.4/32"]`.<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
           Label name, used to flag matching flows.<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -5265,6 +5286,18 @@ Prometheus querying configuration, such as client settings, used in the Console 
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
+- Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
+- Use `Manual` for a manual setup<br><br/>
+          <br/>
+            <i>Enum</i>: Manual, Auto<br/>
+            <i>Default</i>: Auto<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
@@ -5283,18 +5316,6 @@ If they are both disabled, the Console plugin is not deployed.<br/>
         <td>object</td>
         <td>
           Prometheus configuration for `Manual` mode.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>mode</b></td>
-        <td>enum</td>
-        <td>
-          `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
-- Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
-- Use `Manual` for a manual setup<br><br/>
-          <br/>
-            <i>Enum</i>: Manual, Auto<br/>
-            <i>Default</i>: Auto<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5567,22 +5588,6 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 Condition contains details for one aspect of the current state of this API Resource.
----
-This struct is intended for direct use as an array at the field path .status.conditions.  For example,
-
-
-	type FooStatus struct{
-	    // Represents the observations of a foo's current state.
-	    // Known .status.conditions.type are: "Available", "Progressing", and "Degraded"
-	    // +patchMergeKey=type
-	    // +patchStrategy=merge
-	    // +listType=map
-	    // +listMapKey=type
-	    Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
-
-
-	    // other fields
-	}
 
 <table>
     <thead>
@@ -5635,11 +5640,7 @@ This field may not be empty.<br/>
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type of condition in CamelCase or in foo.example.com/CamelCase.
----
-Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
-useful (see .node.status.conditions), the ability to deconflict is important.
-The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)<br/>
+          type of condition in CamelCase or in foo.example.com/CamelCase.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -6675,7 +6676,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both matchLabelKeys and labelSelector.
 Also, matchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6690,7 +6691,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
 Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6939,7 +6940,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both matchLabelKeys and labelSelector.
 Also, matchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6954,7 +6955,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
 Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7283,7 +7284,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both matchLabelKeys and labelSelector.
 Also, matchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7298,7 +7299,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
 Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7547,7 +7548,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both matchLabelKeys and labelSelector.
 Also, matchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7562,7 +7563,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
 Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8044,6 +8045,19 @@ TLS configuration.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Select the type of TLS configuration:<br>
+- `Disabled` (default) to not configure TLS for the endpoint.
+- `Provided` to manually provide cert file and a key file. [Unsupported (*)].
+- `Auto` to use OpenShift auto generated certificate using annotations.<br/>
+          <br/>
+            <i>Enum</i>: Disabled, Provided, Auto<br/>
+            <i>Default</i>: Disabled<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
@@ -8065,19 +8079,6 @@ If set to `true`, the `providedCaFile` field is ignored.<br/>
         <td>object</td>
         <td>
           Reference to the CA file when `type` is set to `Provided`.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          Select the type of TLS configuration:<br>
-- `Disabled` (default) to not configure TLS for the endpoint.
-- `Provided` to manually provide cert file and a key file. [Unsupported (*)].
-- `Auto` to use OpenShift auto generated certificate using annotations.<br/>
-          <br/>
-            <i>Enum</i>: Disabled, Provided, Auto<br/>
-            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8221,10 +8222,8 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
           Claims lists the names of resources, defined in spec.resourceClaims,
 that are used by this container.
 
-
 This is an alpha field and requires enabling the
 DynamicResourceAllocation feature gate.
-
 
 This field is immutable. It can only be set for containers.<br/>
         </td>
@@ -8276,6 +8275,15 @@ the Pod where this field is used. It makes that resource available
 inside a container.<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>request</b></td>
+        <td>string</td>
+        <td>
+          Request is the name chosen for a request in the referenced claim.
+If empty, everything from the claim is made available, otherwise
+only the result of this request.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -9209,7 +9217,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both matchLabelKeys and labelSelector.
 Also, matchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9224,7 +9232,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
 Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9473,7 +9481,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both matchLabelKeys and labelSelector.
 Also, matchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9488,7 +9496,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
 Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9817,7 +9825,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both matchLabelKeys and labelSelector.
 Also, matchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9832,7 +9840,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
 Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10081,7 +10089,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both matchLabelKeys and labelSelector.
 Also, matchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10096,7 +10104,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
 Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11389,10 +11397,8 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
           Claims lists the names of resources, defined in spec.resourceClaims,
 that are used by this container.
 
-
 This is an alpha field and requires enabling the
 DynamicResourceAllocation feature gate.
-
 
 This field is immutable. It can only be set for containers.<br/>
         </td>
@@ -11444,6 +11450,15 @@ the Pod where this field is used. It makes that resource available
 inside a container.<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>request</b></td>
+        <td>string</td>
+        <td>
+          Request is the name chosen for a request in the referenced claim.
+If empty, everything from the claim is made available, otherwise
+only the result of this request.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -12673,6 +12688,20 @@ If the namespace is different, the config map or the secret is copied so that it
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          `mode` must be set according to the installation mode of Loki:<br>
+- Use `LokiStack` when Loki is managed using the Loki Operator<br>
+- Use `Monolithic` when Loki is installed as a monolithic workload<br>
+- Use `Microservices` when Loki is installed as microservices, but without Loki Operator<br>
+- Use `Manual` if none of the options above match your setup<br><br/>
+          <br/>
+            <i>Enum</i>: Manual, LokiStack, Monolithic, Microservices<br/>
+            <i>Default</i>: Monolithic<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspeclokiadvanced">advanced</a></b></td>
         <td>object</td>
         <td>
@@ -12717,20 +12746,6 @@ It is ignored for other modes.<br/>
           Loki configuration for `Microservices` mode.
 Use this option when Loki is installed using the microservices deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#microservices-mode).
 It is ignored for other modes.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>mode</b></td>
-        <td>enum</td>
-        <td>
-          `mode` must be set according to the installation mode of Loki:<br>
-- Use `LokiStack` when Loki is managed using the Loki Operator<br>
-- Use `Monolithic` when Loki is installed as a monolithic workload<br>
-- Use `Microservices` when Loki is installed as microservices, but without Loki Operator<br>
-- Use `Manual` if none of the options above match your setup<br><br/>
-          <br/>
-            <i>Enum</i>: Manual, LokiStack, Monolithic, Microservices<br/>
-            <i>Default</i>: Monolithic<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12870,7 +12885,7 @@ It is ignored for other modes.
           <br/>
             <i>Default</i>: loki<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b>namespace</b></td>
         <td>string</td>
@@ -14682,7 +14697,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both matchLabelKeys and labelSelector.
 Also, matchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14697,7 +14712,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
 Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14946,7 +14961,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both matchLabelKeys and labelSelector.
 Also, matchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14961,7 +14976,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
 Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -15290,7 +15305,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both matchLabelKeys and labelSelector.
 Also, matchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -15305,7 +15320,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
 Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -15554,7 +15569,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both matchLabelKeys and labelSelector.
 Also, matchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -15569,7 +15584,7 @@ for the incoming pod's pod (anti) affinity. Keys that don't exist in the incomin
 pod labels will be ignored. The default value is empty.
 The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
 Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.<br/>
+This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -16866,6 +16881,19 @@ TLS configuration.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Select the type of TLS configuration:<br>
+- `Disabled` (default) to not configure TLS for the endpoint.
+- `Provided` to manually provide cert file and a key file. [Unsupported (*)].
+- `Auto` to use OpenShift auto generated certificate using annotations.<br/>
+          <br/>
+            <i>Enum</i>: Disabled, Provided, Auto<br/>
+            <i>Default</i>: Disabled<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b>insecureSkipVerify</b></td>
         <td>boolean</td>
         <td>
@@ -16887,19 +16915,6 @@ If set to `true`, the `providedCaFile` field is ignored.<br/>
         <td>object</td>
         <td>
           Reference to the CA file when `type` is set to `Provided`.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          Select the type of TLS configuration:<br>
-- `Disabled` (default) to not configure TLS for the endpoint.
-- `Provided` to manually provide cert file and a key file. [Unsupported (*)].
-- `Auto` to use OpenShift auto generated certificate using annotations.<br/>
-          <br/>
-            <i>Enum</i>: Disabled, Provided, Auto<br/>
-            <i>Default</i>: Disabled<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -17043,10 +17058,8 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
           Claims lists the names of resources, defined in spec.resourceClaims,
 that are used by this container.
 
-
 This is an alpha field and requires enabling the
 DynamicResourceAllocation feature gate.
-
 
 This field is immutable. It can only be set for containers.<br/>
         </td>
@@ -17098,6 +17111,15 @@ the Pod where this field is used. It makes that resource available
 inside a container.<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>request</b></td>
+        <td>string</td>
+        <td>
+          Request is the name chosen for a request in the referenced claim.
+If empty, everything from the claim is made available, otherwise
+only the result of this request.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -17162,14 +17184,14 @@ SubnetLabel allows to label subnets and IPs, such as to identify cluster-externa
         <td>
           List of CIDRs, such as `["1.2.3.4/32"]`.<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr><tr>
         <td><b>name</b></td>
         <td>string</td>
         <td>
           Label name, used to flag matching flows.<br/>
         </td>
-        <td>false</td>
+        <td>true</td>
       </tr></tbody>
 </table>
 
@@ -17218,6 +17240,18 @@ Prometheus querying configuration, such as client settings, used in the Console 
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
+- Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
+- Use `Manual` for a manual setup<br><br/>
+          <br/>
+            <i>Enum</i>: Manual, Auto<br/>
+            <i>Default</i>: Auto<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
@@ -17235,18 +17269,6 @@ If they are both disabled, the Console plugin is not deployed.<br/>
         <td>object</td>
         <td>
           Prometheus configuration for `Manual` mode.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>mode</b></td>
-        <td>enum</td>
-        <td>
-          `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
-- Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
-- Use `Manual` for a manual setup<br><br/>
-          <br/>
-            <i>Enum</i>: Manual, Auto<br/>
-            <i>Default</i>: Auto<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -17520,22 +17542,6 @@ Deprecated: annotations are used instead<br/>
 
 
 Condition contains details for one aspect of the current state of this API Resource.
----
-This struct is intended for direct use as an array at the field path .status.conditions.  For example,
-
-
-	type FooStatus struct{
-	    // Represents the observations of a foo's current state.
-	    // Known .status.conditions.type are: "Available", "Progressing", and "Degraded"
-	    // +patchMergeKey=type
-	    // +patchStrategy=merge
-	    // +listType=map
-	    // +listMapKey=type
-	    Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
-
-
-	    // other fields
-	}
 
 <table>
     <thead>
@@ -17588,11 +17594,7 @@ This field may not be empty.<br/>
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type of condition in CamelCase or in foo.example.com/CamelCase.
----
-Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
-useful (see .node.status.conditions), the ability to deconflict is important.
-The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)<br/>
+          type of condition in CamelCase or in foo.example.com/CamelCase.<br/>
         </td>
         <td>true</td>
       </tr><tr>
