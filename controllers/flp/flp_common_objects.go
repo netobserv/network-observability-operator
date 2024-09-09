@@ -447,12 +447,12 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 					Scheme:      scheme,
 					TLSConfig:   smTLS,
 					HonorLabels: true,
-					MetricRelabelConfigs: []*monitoringv1.RelabelConfig{
+					MetricRelabelConfigs: []monitoringv1.RelabelConfig{
 						{
 							SourceLabels: []monitoringv1.LabelName{"__name__", "DstK8S_Namespace"},
 							Separator:    ptr.To("@"),
 							Regex:        "netobserv_(workload|namespace)_ingress_.*@(.*)",
-							Replacement:  "${2}",
+							Replacement:  ptr.To("${2}"),
 							TargetLabel:  "namespace",
 							Action:       "replace",
 						},
@@ -460,7 +460,7 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 							SourceLabels: []monitoringv1.LabelName{"__name__", "SrcK8S_Namespace"},
 							Separator:    ptr.To("@"),
 							Regex:        "netobserv_(workload|namespace)_(egress|flows|drop|rtt|dns)_.*@(.*)",
-							Replacement:  "${3}",
+							Replacement:  ptr.To("${3}"),
 							TargetLabel:  "namespace",
 							Action:       "replace",
 						},

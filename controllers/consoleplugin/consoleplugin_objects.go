@@ -18,6 +18,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
@@ -120,7 +121,7 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 					Scheme:   "https",
 					TLSConfig: &monitoringv1.TLSConfig{
 						SafeTLSConfig: monitoringv1.SafeTLSConfig{
-							ServerName: serverName,
+							ServerName: ptr.To(serverName),
 							CA: monitoringv1.SecretOrConfigMap{
 								ConfigMap: &corev1.ConfigMapKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{

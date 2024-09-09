@@ -372,22 +372,6 @@ FlowMetricStatus defines the observed state of FlowMetric
 
 
 Condition contains details for one aspect of the current state of this API Resource.
----
-This struct is intended for direct use as an array at the field path .status.conditions.  For example,
-
-
-	type FooStatus struct{
-	    // Represents the observations of a foo's current state.
-	    // Known .status.conditions.type are: "Available", "Progressing", and "Degraded"
-	    // +patchMergeKey=type
-	    // +patchStrategy=merge
-	    // +listType=map
-	    // +listMapKey=type
-	    Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
-
-
-	    // other fields
-	}
 
 <table>
     <thead>
@@ -440,11 +424,7 @@ This field may not be empty.<br/>
         <td><b>type</b></td>
         <td>string</td>
         <td>
-          type of condition in CamelCase or in foo.example.com/CamelCase.
----
-Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
-useful (see .node.status.conditions), the ability to deconflict is important.
-The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)<br/>
+          type of condition in CamelCase or in foo.example.com/CamelCase.<br/>
         </td>
         <td>true</td>
       </tr><tr>

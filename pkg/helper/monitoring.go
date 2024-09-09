@@ -4,6 +4,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 )
 
 func GetSecretOrConfigMap(file *flowslatest.FileReference) monitoringv1.SecretOrConfigMap {
@@ -32,7 +33,7 @@ func GetServiceMonitorTLSConfig(tls *flowslatest.ServerTLS, serverName string, i
 		if isDownstream {
 			return "https", &monitoringv1.TLSConfig{
 				SafeTLSConfig: monitoringv1.SafeTLSConfig{
-					ServerName: serverName,
+					ServerName: ptr.To(serverName),
 				},
 				CAFile: "/etc/prometheus/configmaps/serving-certs-ca-bundle/service-ca.crt",
 			}
@@ -40,7 +41,7 @@ func GetServiceMonitorTLSConfig(tls *flowslatest.ServerTLS, serverName string, i
 		// Upstream prometheus disallows CAFile
 		return "https", &monitoringv1.TLSConfig{
 			SafeTLSConfig: monitoringv1.SafeTLSConfig{
-				ServerName: serverName,
+				ServerName: ptr.To(serverName),
 				CA: monitoringv1.SecretOrConfigMap{
 					ConfigMap: &corev1.ConfigMapKeySelector{
 						Key: "service-ca.crt",
@@ -56,8 +57,8 @@ func GetServiceMonitorTLSConfig(tls *flowslatest.ServerTLS, serverName string, i
 	if tls.Type == flowslatest.ServerTLSProvided {
 		tlsOut := monitoringv1.TLSConfig{
 			SafeTLSConfig: monitoringv1.SafeTLSConfig{
-				ServerName:         serverName,
-				InsecureSkipVerify: tls.InsecureSkipVerify,
+				ServerName:         ptr.To(serverName),
+				InsecureSkipVerify: &tls.InsecureSkipVerify,
 			},
 		}
 		if !tls.InsecureSkipVerify && tls.ProvidedCaFile != nil && tls.ProvidedCaFile.File != "" {
