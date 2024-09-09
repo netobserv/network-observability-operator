@@ -26,10 +26,10 @@ replaces = os.getenv('REPLACES')
 desc_file_name = os.getenv('IN_CSV_DESC')
 csv = load_manifest(os.getenv('TARGET_CSV_FILE'))
 created_at = datetime_time.strftime('%Y-%m-%dT%H:%M:%S')
-operator_image = 'registry.redhat.io/network-observability/network-observability-rhel9-operator@v{}'.format(version)
-ebpf_image = 'registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@v{}'.format(version)
-flp_image ='registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@v{}'.format(version)
-console_image = 'registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@v{}'.format(version)
+operator_image = 'registry.redhat.io/network-observability/network-observability-rhel9-operator:v{}'.format(version)
+ebpf_image = 'registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9:v{}'.format(version)
+flp_image ='registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9:v{}'.format(version)
+console_image = 'registry.redhat.io/network-observability/network-observability-console-plugin-rhel9:v{}'.format(version)
 
 csv['metadata']['annotations']['operators.openshift.io/valid-subscription'] = '["OpenShift Kubernetes Engine", "OpenShift Container Platform", "OpenShift Platform Plus"]'
 csv['metadata']['annotations']['operatorframework.io/cluster-monitoring'] = 'true'

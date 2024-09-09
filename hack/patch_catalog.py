@@ -6,7 +6,7 @@ yaml = YAML()
 yaml.explicit_start = True
 
 version = os.getenv('VERSION')
-bundle_image = 'registry.redhat.io/network-observability/network-observability-operator-bundle@v{}'.format(version)
+bundle_image = 'registry.redhat.io/network-observability/network-observability-operator-bundle:v{}'.format(version)
 
 def load_index(pathn):
    if not pathn.endswith(".yaml"):
