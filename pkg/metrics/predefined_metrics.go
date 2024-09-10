@@ -36,7 +36,9 @@ var (
 	// Note that we set default in-code rather than in CRD, in order to keep track of value being unset or set intentionnally in FlowCollector
 	DefaultIncludeList = []string{
 		"node_ingress_bytes_total",
+		"node_egress_bytes_total",
 		"workload_ingress_bytes_total",
+		"workload_egress_bytes_total",
 		"namespace_flows_total",
 		"namespace_drop_packets_total",
 		"namespace_rtt_seconds",
@@ -45,8 +47,11 @@ var (
 	// More metrics enabled when Loki is disabled, to avoid loss of information
 	DefaultIncludeListLokiDisabled = []string{
 		"node_ingress_bytes_total",
+		"node_egress_bytes_total",
 		"workload_ingress_bytes_total",
+		"workload_egress_bytes_total",
 		"workload_ingress_packets_total",
+		"workload_egress_packets_total",
 		"workload_flows_total",
 		"workload_drop_bytes_total",
 		"workload_drop_packets_total",
