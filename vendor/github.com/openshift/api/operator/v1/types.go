@@ -10,7 +10,10 @@ import (
 // Compatibility level 4: No compatibility is provided, the API can change at any point for any reason. These capabilities should not be used by applications needing long term support.
 // +openshift:compatibility-gen:internal
 type MyOperatorResource struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
 	// +kubebuilder:validation:Required
@@ -70,11 +73,11 @@ type OperatorSpec struct {
 	// +kubebuilder:default=Normal
 	OperatorLogLevel LogLevel `json:"operatorLogLevel,omitempty"`
 
-	// unsupportedConfigOverrides holds a sparse config that will override any previously set options.  It only needs to be the fields to override
-	// it will end up overlaying in the following order:
-	// 1. hardcoded defaults
-	// 2. observedConfig
-	// 3. unsupportedConfigOverrides
+	// unsupportedConfigOverrides overrides the final configuration that was computed by the operator.
+	// Red Hat does not support the use of this field.
+	// Misuse of this field could lead to unexpected behavior or conflict with other configuration options.
+	// Seek guidance from the Red Hat support before using this field.
+	// Use of this property blocks cluster upgrades, it must be removed before upgrading your cluster.
 	// +optional
 	// +nullable
 	// +kubebuilder:pruning:PreserveUnknownFields
@@ -112,6 +115,8 @@ type OperatorStatus struct {
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
 	// conditions is a list of conditions and their status
+	// +listType=map
+	// +listMapKey=type
 	// +optional
 	Conditions []OperatorCondition `json:"conditions,omitempty"`
 
@@ -123,6 +128,7 @@ type OperatorStatus struct {
 	ReadyReplicas int32 `json:"readyReplicas"`
 
 	// generations are used to determine when an item needs to be reconciled or has changed in a way that needs a reaction.
+	// +listType=atomic
 	// +optional
 	Generations []GenerationStatus `json:"generations,omitempty"`
 }
@@ -159,6 +165,7 @@ var (
 
 // OperatorCondition is just the standard condition fields.
 type OperatorCondition struct {
+	// +kubebuilder:validation:Required
 	Type               string          `json:"type"`
 	Status             ConditionStatus `json:"status"`
 	LastTransitionTime metav1.Time     `json:"lastTransitionTime,omitempty"`
@@ -198,13 +205,15 @@ type StaticPodOperatorStatus struct {
 
 	// latestAvailableRevision is the deploymentID of the most recent deployment
 	// +optional
-	LatestAvailableRevision int32 `json:"latestAvailableRevision,omitEmpty"`
+	LatestAvailableRevision int32 `json:"latestAvailableRevision,omitempty"`
 
 	// latestAvailableRevisionReason describe the detailed reason for the most recent deployment
 	// +optional
-	LatestAvailableRevisionReason string `json:"latestAvailableRevisionReason,omitEmpty"`
+	LatestAvailableRevisionReason string `json:"latestAvailableRevisionReason,omitempty"`
 
 	// nodeStatuses track the deployment values and errors across individual nodes
+	// +listType=map
+	// +listMapKey=nodeName
 	// +optional
 	NodeStatuses []NodeStatus `json:"nodeStatuses,omitempty"`
 }
@@ -212,6 +221,7 @@ type StaticPodOperatorStatus struct {
 // NodeStatus provides information about the current state of a particular node managed by this operator.
 type NodeStatus struct {
 	// nodeName is the name of the node
+	// +kubebuilder:validation:Required
 	NodeName string `json:"nodeName"`
 
 	// currentRevision is the generation of the most recently successful deployment
@@ -230,5 +240,6 @@ type NodeStatus struct {
 	// lastFallbackCount is how often a fallback to a previous revision happened.
 	LastFallbackCount int `json:"lastFallbackCount,omitempty"`
 	// lastFailedRevisionErrors is a list of human readable errors during the failed deployment referenced in lastFailedRevision.
+	// +listType=atomic
 	LastFailedRevisionErrors []string `json:"lastFailedRevisionErrors,omitempty"`
 }

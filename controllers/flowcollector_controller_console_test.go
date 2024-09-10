@@ -3,6 +3,7 @@ package controllers
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	configv1 "github.com/openshift/api/config/v1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -59,6 +60,14 @@ func flowCollectorConsolePluginSpecs() {
 				Spec: operatorsv1.ConsoleSpec{
 					OperatorSpec: operatorsv1.OperatorSpec{
 						ManagementState: operatorsv1.Unmanaged,
+						LogLevel:        operatorsv1.Normal,
+					},
+					Providers: operatorsv1.ConsoleProviders{},
+					Route: operatorsv1.ConsoleConfigRoute{
+						Hostname: "",
+						Secret: configv1.SecretNameReference{
+							Name: "",
+						},
 					},
 				},
 			}
