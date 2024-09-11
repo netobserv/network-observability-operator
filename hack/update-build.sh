@@ -20,6 +20,8 @@ csv_name="netobserv-operator.clusterserviceversion.yaml"
 csv_file="${manifests_dir}/${csv_name}"
 index_file="./catalog/index.yaml"
 
+source ./hack/container_digest.sh
+
 cat <<EOF >>"${CONTAINER_FILE}"
 LABEL com.redhat.component="network-observability-operator-container"
 LABEL name="network-observability-operator"
