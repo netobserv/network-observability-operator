@@ -1061,6 +1061,12 @@ spec:
           - create
           - get
         - apiGroups:
+          - metrics.k8s.io
+          resources:
+          - pods
+          verbs:
+          - create
+        - apiGroups:
           - monitoring.coreos.com
           resources:
           - prometheusrules
