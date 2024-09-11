@@ -1,4 +1,4 @@
-package loki
+package storage
 
 import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"

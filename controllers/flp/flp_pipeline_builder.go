@@ -17,8 +17,8 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/flp/fmstatus"
 	"github.com/netobserv/network-observability-operator/pkg/conversion"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/netobserv/network-observability-operator/pkg/loki"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
+	"github.com/netobserv/network-observability-operator/pkg/storage"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
 
@@ -152,7 +152,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	advancedConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
 	if helper.UseLoki(b.desired) {
 		lokiWrite := api.WriteLoki{
-			Labels:         loki.GetLokiLabels(b.desired),
+			Labels:         storage.GetLokiLabels(b.desired),
 			BatchSize:      int(b.desired.Loki.WriteBatchSize),
 			BatchWait:      helper.UnstructuredDuration(b.desired.Loki.WriteBatchWait),
 			MaxBackoff:     helper.UnstructuredDuration(advancedConfig.WriteMaxBackoff),

@@ -10,9 +10,9 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/flp/fmstatus"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/netobserv/network-observability-operator/pkg/loki"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
+	"github.com/netobserv/network-observability-operator/pkg/storage"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 	configv1 "github.com/openshift/api/config/v1"
 	"gopkg.in/yaml.v2"
@@ -252,17 +252,19 @@ func reconcileMonitoringCerts(ctx context.Context, info *reconcilers.Common, tls
 	return nil
 }
 
-func reconcileLokiRoles(ctx context.Context, r *reconcilers.Common, b *builder) error {
-	if helper.UseLoki(b.desired) {
-		roles := loki.ClusterRoles(b.desired.Loki.Mode)
-		if len(roles) > 0 {
-			for i := range roles {
-				if err := r.ReconcileClusterRole(ctx, &roles[i]); err != nil {
-					return err
-				}
+func reconcileStorageRoles(ctx context.Context, r *reconcilers.Common, b *builder) error {
+	useLoki := helper.UseLoki(b.desired)
+
+	roles := storage.ClusterRoles(useLoki && b.desired.Loki.Mode == flowslatest.LokiModeLokiStack, helper.UsePrometheus(b.desired))
+	if len(roles) > 0 {
+		for i := range roles {
+			if err := r.ReconcileClusterRole(ctx, &roles[i]); err != nil {
+				return err
 			}
-			// Binding
-			crb := loki.ClusterRoleBinding(b.name(), b.name(), b.info.Namespace)
+		}
+		// Bind service account to write CR
+		if useLoki {
+			crb := storage.ClusterRoleWriterBinding(b.name(), b.name(), b.info.Namespace)
 			if err := r.ReconcileClusterRoleBinding(ctx, crb); err != nil {
 				return err
 			}

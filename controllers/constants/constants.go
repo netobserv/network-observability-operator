@@ -44,9 +44,9 @@ const (
 	ConsoleNamespace         = "openshift-console"
 
 	// Loki roles
-	LokiCRWriter  = "netobserv-writer"
-	LokiCRBWriter = "netobserv-writer-flp"
-	LokiCRReader  = "netobserv-reader"
+	CRWriter  = "netobserv-writer"
+	CRBWriter = "netobserv-writer-flp"
+	CRReader  = "netobserv-reader"
 
 	EnvTestConsole = "TEST_CONSOLE"
 )

@@ -210,5 +210,5 @@ func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *
 		}
 	}
 
-	return reconcileLokiRoles(ctx, r.Common, &builder.generic)
+	return reconcileStorageRoles(ctx, r.Common, &builder.generic)
 }

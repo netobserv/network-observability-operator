@@ -228,5 +228,5 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 		return err
 	}
 
-	return reconcileLokiRoles(ctx, r.Common, &builder.generic)
+	return reconcileStorageRoles(ctx, r.Common, &builder.generic)
 }

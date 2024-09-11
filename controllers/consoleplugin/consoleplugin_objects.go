@@ -28,8 +28,8 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/netobserv/network-observability-operator/pkg/loki"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
+	"github.com/netobserv/network-observability-operator/pkg/storage"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
 
@@ -323,7 +323,7 @@ func (b *builder) getLokiConfig() cfg.LokiConfig {
 	lk := b.info.Loki
 	lconf := cfg.LokiConfig{
 		URL:              lk.QuerierURL,
-		Labels:           loki.GetLokiLabels(b.desired),
+		Labels:           storage.GetLokiLabels(b.desired),
 		Timeout:          api.Duration{Duration: 30 * time.Second},
 		TenantID:         lk.TenantID,
 		ForwardUserToken: lk.UseForwardToken(),
