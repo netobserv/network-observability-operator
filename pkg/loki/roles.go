@@ -6,42 +6,20 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/resources"
 )
 
 func ClusterRoles(mode flowslatest.LokiMode) []rbacv1.ClusterRole {
 	if mode == flowslatest.LokiModeLokiStack {
-		return []rbacv1.ClusterRole{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: constants.LokiCRWriter,
-				},
-				Rules: []rbacv1.PolicyRule{{
-					APIGroups:     []string{"loki.grafana.com"},
-					Resources:     []string{"network"},
-					ResourceNames: []string{"logs"},
-					Verbs:         []string{"create"},
-				}},
-			},
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: constants.LokiCRReader,
-				},
-				Rules: []rbacv1.PolicyRule{{
-					APIGroups:     []string{"loki.grafana.com"},
-					Resources:     []string{"network"},
-					ResourceNames: []string{"logs"},
-					Verbs:         []string{"get"},
-				}},
-			},
-		}
+		return []rbacv1.ClusterRole{resources.NetObservWriterCR, resources.NetObservReaderCR}
 	}
-	return []rbacv1.ClusterRole{}
+	return []rbacv1.ClusterRole{resources.NetObservReaderCR}
 }
 
 func ClusterRoleBinding(appName, saName, namespace string) *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: constants.LokiCRBWriter,
+			Name: constants.CRBWriter,
 			Labels: map[string]string{
 				"app": appName,
 			},
@@ -49,7 +27,7 @@ func ClusterRoleBinding(appName, saName, namespace string) *rbacv1.ClusterRoleBi
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     constants.LokiCRWriter,
+			Name:     constants.CRWriter,
 		},
 		Subjects: []rbacv1.Subject{{
 			Kind:      "ServiceAccount",
