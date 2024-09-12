@@ -268,11 +268,9 @@ func reconcileDataAccessRoles(ctx context.Context, r *reconcilers.Common, b *bui
 				}
 			}
 		}
-	} else {
-		// No Loki: just install roles for allowing users to bind metrics readers
-		return r.ReconcileClusterRole(ctx, &resources.NetObservReaderCR)
 	}
-	return nil
+	// Install netobserv-metrics-reader role
+	return r.ReconcileClusterRole(ctx, &resources.PromReaderCR)
 }
 
 func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.SubnetLabel, error) {

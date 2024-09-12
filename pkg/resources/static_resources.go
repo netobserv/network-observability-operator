@@ -7,9 +7,9 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 )
 
-var NetObservWriterCR = rbacv1.ClusterRole{
+var LokiWriterCR = rbacv1.ClusterRole{
 	ObjectMeta: metav1.ObjectMeta{
-		Name: constants.CRWriter,
+		Name: constants.LokiCRWriter,
 	},
 	Rules: []rbacv1.PolicyRule{{
 		APIGroups:     []string{"loki.grafana.com"},
@@ -19,18 +19,25 @@ var NetObservWriterCR = rbacv1.ClusterRole{
 	}},
 }
 
-var NetObservReaderCR = rbacv1.ClusterRole{
+var LokiReaderCR = rbacv1.ClusterRole{
 	ObjectMeta: metav1.ObjectMeta{
-		Name: constants.CRReader,
+		Name: constants.LokiCRReader,
+	},
+	Rules: []rbacv1.PolicyRule{{
+		APIGroups:     []string{"loki.grafana.com"},
+		Resources:     []string{"network"},
+		ResourceNames: []string{"logs"},
+		Verbs:         []string{"get"},
+	}},
+}
+
+var PromReaderCR = rbacv1.ClusterRole{
+	ObjectMeta: metav1.ObjectMeta{
+		Name: constants.PromCRReader,
 	},
 	Rules: []rbacv1.PolicyRule{{
 		APIGroups: []string{"metrics.k8s.io"},
 		Resources: []string{"pods"},
 		Verbs:     []string{"create"},
-	}, {
-		APIGroups:     []string{"loki.grafana.com"},
-		Resources:     []string{"network"},
-		ResourceNames: []string{"logs"},
-		Verbs:         []string{"get"},
 	}},
 }

@@ -10,13 +10,13 @@ import (
 
 func ClusterRoles(appName, saName, namespace string) ([]rbacv1.ClusterRole, []rbacv1.ClusterRoleBinding) {
 	crb := writerBinding(appName, saName, namespace)
-	return []rbacv1.ClusterRole{resources.NetObservWriterCR, resources.NetObservReaderCR}, []rbacv1.ClusterRoleBinding{*crb}
+	return []rbacv1.ClusterRole{resources.LokiWriterCR, resources.LokiReaderCR}, []rbacv1.ClusterRoleBinding{*crb}
 }
 
 func writerBinding(appName, saName, namespace string) *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: constants.CRBWriter,
+			Name: constants.LokiCRBWriter,
 			Labels: map[string]string{
 				"app": appName,
 			},
@@ -24,7 +24,7 @@ func writerBinding(appName, saName, namespace string) *rbacv1.ClusterRoleBinding
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     constants.CRWriter,
+			Name:     constants.LokiCRWriter,
 		},
 		Subjects: []rbacv1.Subject{{
 			Kind:      "ServiceAccount",
