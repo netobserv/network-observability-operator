@@ -66,29 +66,25 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	allLabels = append(allLabels, b.detectedSubnets...)
 	flpLabels := subnetLabelsToFLP(allLabels)
 
-	var srcMacInput, dstMacInput string
-	if b.desired.Processor.Advanced != nil && b.desired.Processor.Advanced.Env["EnrichFromMac"] == "true" {
-		srcMacInput = "SrcMac"
-		dstMacInput = "DstMac"
-	}
-
 	rules := api.NetworkTransformRules{
 		{
 			Type: api.NetworkAddKubernetes,
 			Kubernetes: &api.K8sRule{
-				Input:    "SrcAddr",
-				MacInput: srcMacInput,
-				Output:   "SrcK8S",
-				AddZone:  addZone,
+				IPField:         "SrcAddr",
+				MACField:        "SrcMac",
+				InterfacesField: "Interfaces",
+				Output:          "SrcK8S",
+				AddZone:         addZone,
 			},
 		},
 		{
 			Type: api.NetworkAddKubernetes,
 			Kubernetes: &api.K8sRule{
-				Input:    "DstAddr",
-				MacInput: dstMacInput,
-				Output:   "DstK8S",
-				AddZone:  addZone,
+				IPField:         "DstAddr",
+				MACField:        "DstMac",
+				InterfacesField: "Interfaces",
+				Output:          "DstK8S",
+				AddZone:         addZone,
 			},
 		},
 		{
@@ -136,6 +132,21 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		}...)
 	}
 
+	// Propagate 2dary networks config
+	var secondaryNetworks []api.SecondaryNetwork
+	if b.desired.Processor.Advanced != nil && len(b.desired.Processor.Advanced.SecondaryNetworks) > 0 {
+		for _, sn := range b.desired.Processor.Advanced.SecondaryNetworks {
+			flpSN := api.SecondaryNetwork{
+				Name:  sn.Name,
+				Index: map[string]any{},
+			}
+			for _, index := range sn.Index {
+				flpSN.Index[strings.ToLower(string(index))] = nil
+			}
+			secondaryNetworks = append(secondaryNetworks, flpSN)
+		}
+	}
+
 	// enrich stage (transform) configuration
 	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
 		Rules: rules,
@@ -146,6 +157,9 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			FlowDirectionField: "FlowDirection",
 		},
 		SubnetLabels: flpLabels,
+		KubeConfig: api.NetworkTransformKubeConfig{
+			SecondaryNetworks: secondaryNetworks,
+		},
 	})
 
 	// loki stage (write) configuration

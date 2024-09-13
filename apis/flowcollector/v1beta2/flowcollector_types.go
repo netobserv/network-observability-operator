@@ -1218,6 +1218,31 @@ type AdvancedProcessorConfig struct {
 	// scheduling controls how the pods are scheduled on nodes.
 	// +optional
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
+
+	// Define secondary networks to be checked for enrichment.
+	// +optional
+	SecondaryNetworks []SecondaryNetwork `json:"secondaryNetwork,omitempty"`
+}
+
+// Field to index for secondary network pod identification, can be any of: MAC, IP, Interface
+// +kubebuilder:validation:Enum:="MAC";"IP";"Interface"
+type SecondaryNetworkIndex string
+
+const (
+	SecondaryNetworkIndexByMAC       SecondaryNetworkIndex = "MAC"
+	SecondaryNetworkIndexByIP        SecondaryNetworkIndex = "IP"
+	SecondaryNetworkIndexByInterface SecondaryNetworkIndex = "Interface"
+)
+
+type SecondaryNetwork struct {
+	// `name` should match the network name as visible in the pods annotation 'k8s.v1.cni.cncf.io/network-status'.
+	// +kubebuilder:validation:Required
+	Name string `json:"name,omitempty"`
+
+	// `index` is a list of fields to use for indexing the pods. They should form a unique Pod identifier across the cluster.
+	// Can be any of: MAC, IP, Interface
+	// +kubebuilder:validation:Required
+	Index []SecondaryNetworkIndex `json:"index,omitempty"`
 }
 
 // `AdvancedLokiConfig` allows tweaking some aspects of the Loki clients.

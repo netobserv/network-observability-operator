@@ -14103,6 +14103,13 @@ By convention, some values are forbidden. It must be greater than 1024 and diffe
           scheduling controls how the pods are scheduled on nodes.<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessoradvancedsecondarynetworkindex">secondaryNetwork</a></b></td>
+        <td>[]object</td>
+        <td>
+          Define secondary networks to be checked for enrichment.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -15850,6 +15857,41 @@ negative values will be treated as 0 (evict immediately) by the system.<br/>
 If the operator is Exists, the value should be empty, otherwise just a regular string.<br/>
         </td>
         <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.advanced.secondaryNetwork[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessoradvanced)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>index</b></td>
+        <td>[]enum</td>
+        <td>
+          `index` is a list of fields to use for indexing the pods. They should form a unique Pod identifier across the cluster.
+Can be any of: MAC, IP, Interface<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          `name` should match the network name as visible in the pods annotation 'k8s.v1.cni.cncf.io/network-status'.<br/>
+        </td>
+        <td>true</td>
       </tr></tbody>
 </table>
 

@@ -7773,6 +7773,32 @@ spec:
                               type: object
                             type: array
                         type: object
+                      secondaryNetwork:
+                        description: Define secondary networks to be checked for enrichment.
+                        items:
+                          properties:
+                            index:
+                              description: |-
+                                `index` is a list of fields to use for indexing the pods. They should form a unique Pod identifier across the cluster.
+                                Can be any of: MAC, IP, Interface
+                              items:
+                                description: 'Field to index for secondary network
+                                  pod identification, can be any of: MAC, IP, Interface'
+                                enum:
+                                - MAC
+                                - IP
+                                - Interface
+                                type: string
+                              type: array
+                            name:
+                              description: '`name` should match the network name as
+                                visible in the pods annotation ''k8s.v1.cni.cncf.io/network-status''.'
+                              type: string
+                          required:
+                          - index
+                          - name
+                          type: object
+                        type: array
                     type: object
                   clusterName:
                     default: ""

@@ -39,13 +39,13 @@ func (tn *TransformNetwork) GetServiceFiles() (string, string) {
 }
 
 const (
-	OVN    = "ovn"
-	Multus = "multus"
+	OVN = "ovn"
 )
 
 type NetworkTransformKubeConfig struct {
-	ConfigPath string   `yaml:"configPath,omitempty" json:"configPath,omitempty" doc:"path to kubeconfig file (optional)"`
-	ManagedCNI []string `yaml:"managedCNI,omitempty" json:"managedCNI,omitempty" doc:"a list of CNI (network plugins) to manage, for detecting additional interfaces. Currently supported: ovn, multus"`
+	ConfigPath        string             `yaml:"configPath,omitempty" json:"configPath,omitempty" doc:"path to kubeconfig file (optional)"`
+	SecondaryNetworks []SecondaryNetwork `yaml:"secondaryNetworks,omitempty" json:"secondaryNetworks,omitempty" doc:"configuration for secondary networks"`
+	ManagedCNI        []string           `yaml:"managedCNI,omitempty" json:"managedCNI,omitempty" doc:"a list of CNI (network plugins) to manage, for detecting additional interfaces. Currently supported: ovn"`
 }
 
 type TransformNetworkOperationEnum string
@@ -84,12 +84,18 @@ type K8sReference struct {
 }
 
 type K8sRule struct {
-	Input        string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry IP input field"`
-	MacInput     string `yaml:"mac-input,omitempty" json:"mac-input,omitempty" doc:"Optional entry MAC input field"`
-	Output       string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
-	Assignee     string `yaml:"assignee,omitempty" json:"assignee,omitempty" doc:"value needs to assign to output field"`
-	LabelsPrefix string `yaml:"labels_prefix,omitempty" json:"labels_prefix,omitempty" doc:"labels prefix to use to copy input lables, if empty labels will not be copied"`
-	AddZone      bool   `yaml:"add_zone,omitempty" json:"add_zone,omitempty" doc:"if true the rule will add the zone"`
+	IPField         string `yaml:"ipField,omitempty" json:"ipField,omitempty" doc:"entry IP input field"`
+	InterfacesField string `yaml:"interfacesField,omitempty" json:"interfacesField,omitempty" doc:"entry Interfaces input field"`
+	MACField        string `yaml:"macField,omitempty" json:"macField,omitempty" doc:"entry MAC input field"`
+	Output          string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
+	Assignee        string `yaml:"assignee,omitempty" json:"assignee,omitempty" doc:"value needs to assign to output field"`
+	LabelsPrefix    string `yaml:"labels_prefix,omitempty" json:"labels_prefix,omitempty" doc:"labels prefix to use to copy input lables, if empty labels will not be copied"`
+	AddZone         bool   `yaml:"add_zone,omitempty" json:"add_zone,omitempty" doc:"if true the rule will add the zone"`
+}
+
+type SecondaryNetwork struct {
+	Name  string         `yaml:"name,omitempty" json:"name,omitempty" doc:"name of the secondary network, as mentioned in the annotation 'k8s.v1.cni.cncf.io/network-status'"`
+	Index map[string]any `yaml:"index,omitempty" json:"index,omitempty" doc:"fields to use for indexing, must be any combination of 'mac', 'ip', 'interface'"`
 }
 
 type NetworkGenericRule struct {
