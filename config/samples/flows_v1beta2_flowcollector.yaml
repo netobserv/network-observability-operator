@@ -92,6 +92,11 @@ spec:
         cpu: 100m
       limits:
         memory: 800Mi
+    advanced:
+      secondaryNetworks:
+        - name: "my-vms/custom-nad"
+          # Any of: MAC, IP, Interface
+          index: [MAC]
   loki:
     enable: true
     # Change mode to "LokiStack" to use with the loki operator

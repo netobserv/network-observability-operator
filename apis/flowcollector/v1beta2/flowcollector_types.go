@@ -1221,7 +1221,7 @@ type AdvancedProcessorConfig struct {
 
 	// Define secondary networks to be checked for enrichment.
 	// +optional
-	SecondaryNetworks []SecondaryNetwork `json:"secondaryNetwork,omitempty"`
+	SecondaryNetworks []SecondaryNetwork `json:"secondaryNetworks,omitempty"`
 }
 
 // Field to index for secondary network pod identification, can be any of: MAC, IP, Interface

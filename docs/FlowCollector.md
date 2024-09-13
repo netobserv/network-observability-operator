@@ -14104,7 +14104,7 @@ By convention, some values are forbidden. It must be greater than 1024 and diffe
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessoradvancedsecondarynetworkindex">secondaryNetwork</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessoradvancedsecondarynetworksindex">secondaryNetworks</a></b></td>
         <td>[]object</td>
         <td>
           Define secondary networks to be checked for enrichment.<br/>
@@ -15861,7 +15861,7 @@ If the operator is Exists, the value should be empty, otherwise just a regular s
 </table>
 
 
-### FlowCollector.spec.processor.advanced.secondaryNetwork[index]
+### FlowCollector.spec.processor.advanced.secondaryNetworks[index]
 <sup><sup>[↩ Parent](#flowcollectorspecprocessoradvanced)</sup></sup>
 
 

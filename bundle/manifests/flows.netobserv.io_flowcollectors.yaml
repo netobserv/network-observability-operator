@@ -7773,7 +7773,7 @@ spec:
                               type: object
                             type: array
                         type: object
-                      secondaryNetwork:
+                      secondaryNetworks:
                         description: Define secondary networks to be checked for enrichment.
                         items:
                           properties:
