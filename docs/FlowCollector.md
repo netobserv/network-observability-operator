@@ -14107,7 +14107,9 @@ By convention, some values are forbidden. It must be greater than 1024 and diffe
         <td><b><a href="#flowcollectorspecprocessoradvancedsecondarynetworksindex">secondaryNetworks</a></b></td>
         <td>[]object</td>
         <td>
-          Define secondary networks to be checked for enrichment.<br/>
+          Define secondary networks to be checked for resources identification.
+In order to guarantee a correct identification, it is important that the indexed values form an unique identifier across the cluster.
+If there are collisions in the indexes (same index used by several resources), those resources might be wrongly labelled.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

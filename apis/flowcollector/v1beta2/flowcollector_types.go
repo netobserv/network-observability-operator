@@ -1219,7 +1219,9 @@ type AdvancedProcessorConfig struct {
 	// +optional
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 
-	// Define secondary networks to be checked for enrichment.
+	// Define secondary networks to be checked for resources identification.
+	// In order to guarantee a correct identification, it is important that the indexed values form an unique identifier across the cluster.
+	// If there are collisions in the indexes (same index used by several resources), those resources might be wrongly labelled.
 	// +optional
 	SecondaryNetworks []SecondaryNetwork `json:"secondaryNetworks,omitempty"`
 }
