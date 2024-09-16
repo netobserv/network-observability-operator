@@ -398,16 +398,6 @@ metadata:
               "enable": false
             },
             "processor": {
-              "advanced": {
-                "secondaryNetworks": [
-                  {
-                    "index": [
-                      "MAC"
-                    ],
-                    "name": "my-vms/custom-nad"
-                  }
-                ]
-              },
               "imagePullPolicy": "IfNotPresent",
               "kafkaConsumerAutoscaler": null,
               "kafkaConsumerBatchSize": 10485760,
