@@ -21,6 +21,7 @@ csv_file="${manifests_dir}/${csv_name}"
 index_file="./catalog/index.yaml"
 
 source ./hack/container_digest.sh
+source ./hack/bundle_digest.sh
 
 cat <<EOF >>"${CONTAINER_FILE}"
 LABEL com.redhat.component="network-observability-operator-container"
@@ -76,3 +77,6 @@ REPLACES="${REPLACE_VERSION}" VERSION="${TARGET_VERSION}" TARGET_INDEX_FILE="${i
 
 sed -i 's/operators.operatorframework.io.bundle.channels.v1: latest,community/operators.operatorframework.io.bundle.channels.v1: stable/g' ./bundle/metadata/annotations.yaml
 sed -i 's/operators.operatorframework.io.bundle.channel.default.v1: community/operators.operatorframework.io.bundle.channel.default.v1: stable/g' ./bundle/metadata/annotations.yaml
+
+#Using downstream base image
+sed -i 's/\(FROM.*\)docker.io\/library\/golang:1.22\(.*\)/\1brew.registry.redhat.io\/rh-osbs\/openshift-golang-builder:v1.22.5-202407301806.g4c8b32d.el9\2/g' ./Dockerfile
