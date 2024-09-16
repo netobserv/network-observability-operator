@@ -41,7 +41,7 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-var resources = corev1.ResourceRequirements{
+var rs = corev1.ResourceRequirements{
 	Limits: map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceCPU:    resource.MustParse("1"),
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
@@ -63,7 +63,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 		Processor: flowslatest.FlowCollectorFLP{
 			ImagePullPolicy: string(pullPolicy),
 			LogLevel:        "trace",
-			Resources:       resources,
+			Resources:       rs,
 			Metrics: flowslatest.FLPMetrics{
 				Server: flowslatest.MetricsServerConfig{
 					Port: ptr.To(int32(9090)),

@@ -43,10 +43,11 @@ const (
 	UWMonitoringNamespace    = "openshift-user-workload-monitoring"
 	ConsoleNamespace         = "openshift-console"
 
-	// Loki roles
+	// Roles
 	LokiCRWriter  = "netobserv-writer"
 	LokiCRBWriter = "netobserv-writer-flp"
 	LokiCRReader  = "netobserv-reader"
+	PromCRReader  = "netobserv-metrics-reader"
 
 	EnvTestConsole = "TEST_CONSOLE"
 )

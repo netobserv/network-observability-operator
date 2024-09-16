@@ -13,6 +13,7 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/loki"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
+	"github.com/netobserv/network-observability-operator/pkg/resources"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 	configv1 "github.com/openshift/api/config/v1"
 	"gopkg.in/yaml.v2"
@@ -252,23 +253,24 @@ func reconcileMonitoringCerts(ctx context.Context, info *reconcilers.Common, tls
 	return nil
 }
 
-func reconcileLokiRoles(ctx context.Context, r *reconcilers.Common, b *builder) error {
-	if helper.UseLoki(b.desired) {
-		roles := loki.ClusterRoles(b.desired.Loki.Mode)
+func reconcileDataAccessRoles(ctx context.Context, r *reconcilers.Common, b *builder) error {
+	if helper.UseLoki(b.desired) && b.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
+		roles, bindings := loki.ClusterRoles(b.name(), b.name(), b.info.Namespace)
 		if len(roles) > 0 {
 			for i := range roles {
 				if err := r.ReconcileClusterRole(ctx, &roles[i]); err != nil {
 					return err
 				}
 			}
-			// Binding
-			crb := loki.ClusterRoleBinding(b.name(), b.name(), b.info.Namespace)
-			if err := r.ReconcileClusterRoleBinding(ctx, crb); err != nil {
-				return err
+			for i := range bindings {
+				if err := r.ReconcileClusterRoleBinding(ctx, &bindings[i]); err != nil {
+					return err
+				}
 			}
 		}
 	}
-	return nil
+	// Install netobserv-metrics-reader role
+	return r.ReconcileClusterRole(ctx, &resources.PromReaderCR)
 }
 
 func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.SubnetLabel, error) {

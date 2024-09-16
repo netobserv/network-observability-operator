@@ -4,41 +4,16 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/resources"
 )
 
-func ClusterRoles(mode flowslatest.LokiMode) []rbacv1.ClusterRole {
-	if mode == flowslatest.LokiModeLokiStack {
-		return []rbacv1.ClusterRole{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: constants.LokiCRWriter,
-				},
-				Rules: []rbacv1.PolicyRule{{
-					APIGroups:     []string{"loki.grafana.com"},
-					Resources:     []string{"network"},
-					ResourceNames: []string{"logs"},
-					Verbs:         []string{"create"},
-				}},
-			},
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: constants.LokiCRReader,
-				},
-				Rules: []rbacv1.PolicyRule{{
-					APIGroups:     []string{"loki.grafana.com"},
-					Resources:     []string{"network"},
-					ResourceNames: []string{"logs"},
-					Verbs:         []string{"get"},
-				}},
-			},
-		}
-	}
-	return []rbacv1.ClusterRole{}
+func ClusterRoles(appName, saName, namespace string) ([]rbacv1.ClusterRole, []rbacv1.ClusterRoleBinding) {
+	crb := writerBinding(appName, saName, namespace)
+	return []rbacv1.ClusterRole{resources.LokiWriterCR, resources.LokiReaderCR}, []rbacv1.ClusterRoleBinding{*crb}
 }
 
-func ClusterRoleBinding(appName, saName, namespace string) *rbacv1.ClusterRoleBinding {
+func writerBinding(appName, saName, namespace string) *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: constants.LokiCRBWriter,
