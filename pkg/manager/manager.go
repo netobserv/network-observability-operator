@@ -6,6 +6,7 @@ import (
 
 	"github.com/netobserv/network-observability-operator/pkg/discover"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
+	"github.com/netobserv/network-observability-operator/pkg/migrator"
 	"github.com/netobserv/network-observability-operator/pkg/narrowcache"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
@@ -33,6 +34,8 @@ import (
 //+kubebuilder:rbac:groups=metrics.k8s.io,resources=pods,verbs=create
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:urls="/metrics",verbs=get
+//+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
+//+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions/status,verbs=update;patch
 
 type Registerer func(context.Context, *Manager) error
 
@@ -94,6 +97,16 @@ func NewManager(
 		if err := f(ctx, this); err != nil {
 			return nil, fmt.Errorf("unable to create controller: %w", err)
 		}
+	}
+
+	// On every startup, make sure stored CRs are up to date with the defined storage version.
+	// This is simply going to run dummy patches to make the API server keep etcd consistent.
+	mig := migrator.New(kcfg, []string{
+		"flowcollectors.flows.netobserv.io",
+		"flowmetrics.flows.netobserv.io",
+	})
+	if err = internalManager.Add(mig); err != nil {
+		return nil, fmt.Errorf("unable to register migrator: %w", err)
 	}
 
 	return this, nil
