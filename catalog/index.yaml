@@ -6,7 +6,7 @@ icon:
 name: netobserv-operator
 schema: olm.package
 ---
-image: quay.io/ocazade0/network-observability-operator-bundle:v1.6.1-community
+image: quay.io/netobserv/network-observability-operator-bundle:v1.6.1-community
 name: netobserv-operator.v1.6.1-community
 package: netobserv-operator
 properties:
