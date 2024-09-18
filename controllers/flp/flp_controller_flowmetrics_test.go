@@ -111,7 +111,7 @@ func ControllerFlowMetricsSpecs() {
 
 			metrics, err := getConfiguredMetrics(&dcm)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(metrics).To(HaveLen(3)) // only default metrics
+			Expect(metrics).To(HaveLen(5)) // only default metrics
 		})
 	})
 

@@ -114,22 +114,30 @@ func TestCreateFlowMetricsDashboard_DefaultList(t *testing.T) {
 	assert.NoError(err)
 
 	assert.Equal("NetObserv / Main", d.Title)
-	assert.Equal([]string{"", "Traffic rates", "TCP latencies", "Byte and packet drops", "DNS"}, d.Titles())
+	assert.Equal([]string{"Overview", "Traffic rates", "TCP latencies", "Byte and packet drops", "DNS"}, d.Titles())
 
 	topRow := d.FindRow("")
 	assert.Equal([]string{
+		"Total egress traffic",
 		"Total ingress traffic",
 		"TCP latency, p99",
 		"Drops",
 		"DNS latency, p99",
 		"DNS error rate",
+		"Infra egress traffic",
+		"Apps egress traffic",
 		"Infra ingress traffic",
 		"Apps ingress traffic",
 	}, topRow.Titles())
 
 	trafficRow := d.FindRow("Traffic rates")
 	assert.Equal([]string{
+		"Top egress traffic per node (Bps)",
 		"Top ingress traffic per node (Bps)",
+		"Top egress traffic per infra namespace (Bps)",
+		"Top egress traffic per app namespace (Bps)",
+		"Top egress traffic per infra workload (Bps)",
+		"Top egress traffic per app workload (Bps)",
 		"Top ingress traffic per infra namespace (Bps)",
 		"Top ingress traffic per app namespace (Bps)",
 		"Top ingress traffic per infra workload (Bps)",
