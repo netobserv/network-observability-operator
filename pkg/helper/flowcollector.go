@@ -12,6 +12,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	netobservManagedLabel = "netobserv-managed"
+)
+
 func GetSampling(spec *flowslatest.FlowCollectorSpec) int {
 	if spec.Agent.EBPF.Sampling == nil {
 		return 50
@@ -173,7 +177,26 @@ func PtrInt32(i *int32) int32 {
 	return *i
 }
 
+func AddOwnedLabel(obj client.Object) {
+	// set netobserv-managed label to true so users can easily switch to false if they want to skip ownership
+	labels := obj.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labels[netobservManagedLabel] = "true"
+	obj.SetLabels(labels)
+}
+
+func SkipOwnership(obj client.Object) bool {
+	// ownership is ignored if netobserv-managed label is explicitly set to false
+	labels := obj.GetLabels()
+	return labels != nil && labels[netobservManagedLabel] == "false"
+}
+
 func IsOwned(obj client.Object) bool {
+	if SkipOwnership(obj) {
+		return false
+	}
 	refs := obj.GetOwnerReferences()
 	return len(refs) > 0 && strings.HasPrefix(refs[0].APIVersion, flowslatest.GroupVersion.Group)
 }

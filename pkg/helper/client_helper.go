@@ -47,6 +47,7 @@ func (c *Client) CreateOwned(ctx context.Context, obj client.Object) error {
 		log.Error(err, "Failed to set controller reference")
 		return err
 	}
+	AddOwnedLabel(obj)
 	kind := reflect.TypeOf(obj).String()
 	log.Info("CREATING a new "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 	err = c.Create(ctx, obj)
@@ -86,7 +87,7 @@ func (c *Client) UpdateOwned(ctx context.Context, old, obj client.Object) error 
 	return nil
 }
 
-// UpdateIfOwned is an helper function that updates an object if currently owned by the operator
+// UpdateIfOwned is an helper function that updates an object if currently owned and managed by the operator
 func (c *Client) UpdateIfOwned(ctx context.Context, old, obj client.Object) error {
 	log := log.FromContext(ctx)
 
