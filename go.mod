@@ -1,12 +1,12 @@
 module github.com/netobserv/network-observability-operator
 
-go 1.22.0
+go 1.22.3
 
 toolchain go1.22.4
 
 require (
 	github.com/go-logr/logr v1.4.2
-	github.com/netobserv/flowlogs-pipeline v1.6.2-community.0.20240902140418-72029f57586d
+	github.com/netobserv/flowlogs-pipeline v1.6.1-crc0.0.20240910083052-f8f7471f1ea6
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.1
 	github.com/openshift/api v0.0.0-20240722135205-ae4f370f361f
@@ -68,7 +68,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/net v0.28.0 // indirect
-	golang.org/x/oauth2 v0.21.0 // indirect
+	golang.org/x/oauth2 v0.22.0 // indirect
 	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/term v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect

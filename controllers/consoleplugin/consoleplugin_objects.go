@@ -513,7 +513,7 @@ func (b *builder) configMap(ctx context.Context) (*corev1.ConfigMap, string, err
 
 	// configure frontend from embedded static file
 	var err error
-	config.Frontend, err = cfg.LoadStaticFrontendConfig()
+	config.Frontend, err = cfg.GetStaticFrontendConfig()
 	if err != nil {
 		return nil, "", err
 	}

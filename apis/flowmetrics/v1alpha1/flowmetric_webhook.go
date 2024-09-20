@@ -82,21 +82,39 @@ func validateFlowMetric(_ context.Context, fMetric *FlowMetric) error {
 	}
 
 	if len(str) != 0 {
-		if !helper.FindFilter(str, false) {
+		if !helper.FindFields(str, false) {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "filters"), str,
 				fmt.Sprintf("invalid filter field: %s", str)))
 		}
 	}
 
 	if len(fMetric.Spec.Labels) != 0 {
-		if !helper.FindFilter(fMetric.Spec.Labels, false) {
+		if !helper.FindFields(fMetric.Spec.Labels, false) {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "labels"), fMetric.Spec.Labels,
 				fmt.Sprintf("invalid label name: %s", fMetric.Spec.Labels)))
+		}
+
+		// Only fields defined as Labels are valid for remapping
+		if len(fMetric.Spec.Remap) != 0 {
+			labelsMap := make(map[string]any, len(fMetric.Spec.Labels))
+			for _, label := range fMetric.Spec.Labels {
+				labelsMap[label] = nil
+			}
+			var invalidMapping []string
+			for toRemap := range fMetric.Spec.Remap {
+				if _, ok := labelsMap[toRemap]; !ok {
+					invalidMapping = append(invalidMapping, toRemap)
+				}
+			}
+			if len(invalidMapping) > 0 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "remap"), fMetric.Spec.Remap,
+					fmt.Sprintf("some fields defined for remapping are not defined as labels: %v", invalidMapping)))
+			}
 		}
 	}
 
 	if fMetric.Spec.ValueField != "" {
-		if !helper.FindFilter([]string{fMetric.Spec.ValueField}, true) {
+		if !helper.FindFields([]string{fMetric.Spec.ValueField}, true) {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "valueField"), fMetric.Spec.ValueField,
 				fmt.Sprintf("invalid value field: %s", fMetric.Spec.ValueField)))
 		}

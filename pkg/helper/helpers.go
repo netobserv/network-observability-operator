@@ -93,13 +93,13 @@ func UnstructuredDuration(in *metav1.Duration) string {
 	return in.ToUnstructured().(string)
 }
 
-func FindFilter(labels []string, isNumber bool) bool {
+func FindFields(labels []string, isNumber bool) bool {
 	type filter struct {
 		exists bool
 		isNum  bool
 	}
 
-	cfg, err := config.LoadStaticFrontendConfig()
+	cfg, err := config.GetStaticFrontendConfig()
 	if err != nil {
 		return false
 	}
