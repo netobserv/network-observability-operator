@@ -497,6 +497,13 @@ Example: 10.10.10.10<br/>
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>pktDrops</b></td>
+        <td>boolean</td>
+        <td>
+          `pktDrops`, to filter flows with packet drops<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>ports</b></td>
         <td>int or string</td>
         <td>
@@ -7909,6 +7916,13 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td>
           `peerIP` defines the IP address to filter flows by.
 Example: `10.10.10.10`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>pktDrops</b></td>
+        <td>boolean</td>
+        <td>
+          `pktDrops`, to filter flows with packet drops<br/>
         </td>
         <td>false</td>
       </tr><tr>

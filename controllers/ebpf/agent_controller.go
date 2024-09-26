@@ -81,6 +81,7 @@ const (
 	envFilterICMPCode             = "FILTER_ICMP_CODE"
 	envFilterPeerIPAddress        = "FILTER_PEER_IP"
 	envFilterTCPFlags             = "FILTER_TCP_FLAGS"
+	envFilterPktDrops             = "FILTER_DROPS"
 	envListSeparator              = ","
 )
 
@@ -573,6 +574,9 @@ func (c *AgentController) configureFlowFilter(filter *flowslatest.EBPFFlowFilter
 		})
 	}
 
+	if filter.PktDrops != nil && *filter.PktDrops {
+		config = append(config, corev1.EnvVar{Name: envFilterPktDrops, Value: "true"})
+	}
 	return config
 }
 
