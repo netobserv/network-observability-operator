@@ -39,7 +39,6 @@ const (
 // https://github.com/kubernetes-sigs/controller-tools/issues/622
 
 // Defines the desired state of the FlowCollector resource.
-// <br><br>
 // *: the mention of "unsupported", or "deprecated" for a feature throughout this document means that this feature
 // is not officially supported by Red Hat. It might have been, for example, contributed by the community
 // and accepted without a formal agreement for maintenance. The product maintainers might provide some support
@@ -67,9 +66,9 @@ type FlowCollectorSpec struct {
 	// `consolePlugin` defines the settings related to the OpenShift Console plugin, when available.
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
-	// `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br>
-	// - `DIRECT` (default) to make the flow processor listening directly from the agents.<br>
-	// - `KAFKA` to make flows sent to a Kafka pipeline before consumption by the processor.<br>
+	// `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:
+	// - `DIRECT` (default) to make the flow processor listening directly from the agents.
+	// - `KAFKA` to make flows sent to a Kafka pipeline before consumption by the processor.
 	// Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="DIRECT";"KAFKA"
@@ -90,8 +89,8 @@ type FlowCollectorSpec struct {
 // allow defining both fields.
 // +union
 type FlowCollectorAgent struct {
-	// `type` [deprecated (*)] selects the flows tracing agent. The only possible value is `EBPF` (default), to use NetObserv eBPF agent.<br>
-	// Previously, using an IPFIX collector was allowed, but was deprecated and it is now removed.<br>
+	// `type` [deprecated (*)] selects the flows tracing agent. The only possible value is `EBPF` (default), to use NetObserv eBPF agent.
+	// Previously, using an IPFIX collector was allowed, but was deprecated and it is now removed.
 	// Setting `IPFIX` is ignored and still use the eBPF Agent.
 	// Since there is only a single option here, this field will be remove in a future API version.
 	// +unionDiscriminator
@@ -147,11 +146,11 @@ type FlowCollectorIPFIX struct {
 	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty" mapstructure:"-"`
 }
 
-// Agent feature, can be one of:<br>
-// - `PacketDrop`, to track packet drops.<br>
-// - `DNSTracking`, to track specific information on DNS traffic.<br>
-// - `FlowRTT`, to track TCP latency [Unsupported (*)].<br>
-// - `NetworkEvents`, to track Network events.<br>
+// Agent feature, can be one of:
+// - `PacketDrop`, to track packet drops.
+// - `DNSTracking`, to track specific information on DNS traffic.
+// - `FlowRTT`, to track TCP latency [Unsupported (*)].
+// - `NetworkEvents`, to track Network events.
 // +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents"
 type AgentFeature string
 
@@ -163,8 +162,8 @@ const (
 )
 
 // Name of an eBPF agent alert.
-// Possible values are:<br>
-// `NetObservDroppedFlows`, which is triggered when the eBPF agent is missing packets or flows, such as when the BPF hashmap is busy or full, or the capacity limiter being triggered.<br>
+// Possible values are:
+// `NetObservDroppedFlows`, which is triggered when the eBPF agent is missing packets or flows, such as when the BPF hashmap is busy or full, or the capacity limiter being triggered.
 // +kubebuilder:validation:Enum:="NetObservDroppedFlows"
 type EBPFAgentAlert string
 
@@ -183,8 +182,8 @@ type EBPFMetrics struct {
 	Enable *bool `json:"enable,omitempty"`
 
 	// `disableAlerts` is a list of alerts that should be disabled.
-	// Possible values are:<br>
-	// `NetObservDroppedFlows`, which is triggered when the eBPF agent is missing packets or flows, such as when the BPF hashmap is busy or full, or the capacity limiter being triggered.<br>
+	// Possible values are:
+	// `NetObservDroppedFlows`, which is triggered when the eBPF agent is missing packets or flows, such as when the BPF hashmap is busy or full, or the capacity limiter being triggered.
 	// +optional
 	DisableAlerts []EBPFAgentAlert `json:"disableAlerts"`
 }
@@ -324,12 +323,12 @@ type FlowCollectorEBPF struct {
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
 
-	// List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
+	// List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:
 	// - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
-	// If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
-	// - `DNSTracking`: enable the DNS tracking feature.<br>
-	// - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
+	// If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.
+	// - `DNSTracking`: enable the DNS tracking feature.
+	// - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.
 	// - `NetworkEvents`: enable the Network events monitoring feature. This feature requires mounting
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
 	// +optional
@@ -390,7 +389,7 @@ type ServerTLSConfigType string
 
 // `ServerTLS` define the TLS configuration, server side
 type ServerTLS struct {
-	// Select the type of TLS configuration:<br>
+	// Select the type of TLS configuration:
 	// - `DISABLED` (default) to not configure TLS for the endpoint.
 	// - `PROVIDED` to manually provide cert file and a key file. [Unsupported (*)].
 	// - `AUTO` to use OpenShift auto generated certificate using annotations.
@@ -433,9 +432,9 @@ const (
 )
 
 // Name of a processor alert.
-// Possible values are:<br>
-// - `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
-// - `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br>
+// Possible values are:
+// - `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.
+// - `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.
 // +kubebuilder:validation:Enum:="NetObservNoFlows";"NetObservLokiError"
 type FLPAlert string
 
@@ -451,7 +450,7 @@ type FLPMetrics struct {
 
 	// `ignoreTags` [deprecated (*)] is a list of tags to specify which metrics to ignore. Each metric is associated with a list of tags. More details in https://github.com/netobserv/network-observability-operator/tree/main/controllers/flowlogspipeline/metrics_definitions .
 	// Available tags are: `egress`, `ingress`, `flows`, `bytes`, `packets`, `namespaces`, `nodes`, `workloads`, `nodes-flows`, `namespaces-flows`, `workloads-flows`.
-	// Namespace-based metrics are covered by both `workloads` and `namespaces` tags, hence it is recommended to always ignore one of them (`workloads` offering a finer granularity).<br>
+	// Namespace-based metrics are covered by both `workloads` and `namespaces` tags, hence it is recommended to always ignore one of them (`workloads` offering a finer granularity).
 	// Deprecation notice: use `includeList` instead.
 	// +kubebuilder:default:={"egress","packets","nodes-flows","namespaces-flows","workloads-flows","namespaces"}
 	// +optional
@@ -469,9 +468,9 @@ type FLPMetrics struct {
 	IncludeList *[]FLPMetric `json:"includeList,omitempty"`
 
 	// `disableAlerts` is a list of alerts that should be disabled.
-	// Possible values are:<br>
-	// `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
-	// `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br>
+	// Possible values are:
+	// `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.
+	// `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.
 	// +optional
 	DisableAlerts []FLPAlert `json:"disableAlerts"`
 }
@@ -555,11 +554,11 @@ type FlowCollectorFLP struct {
 	// `kafkaConsumerBatchSize` indicates to the broker the maximum batch size, in bytes, that the consumer accepts. Ignored when not using Kafka. Default: 10MB.
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
 
-	// `logTypes` defines the desired record types to generate. Possible values are:<br>
-	// - `FLOWS` (default) to export regular network flows<br>
-	// - `CONVERSATIONS` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br>
-	// - `ENDED_CONVERSATIONS` to generate only ended conversations events<br>
-	// - `ALL` to generate both network flows and all conversations events<br>
+	// `logTypes` defines the desired record types to generate. Possible values are:
+	// - `FLOWS` (default) to export regular network flows
+	// - `CONVERSATIONS` to generate events for started conversations, ended conversations as well as periodic "tick" updates
+	// - `ENDED_CONVERSATIONS` to generate only ended conversations events
+	// - `ALL` to generate both network flows and all conversations events
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum:="FLOWS";"CONVERSATIONS";"ENDED_CONVERSATIONS";"ALL"
 	// +kubebuilder:default:=FLOWS
@@ -615,9 +614,9 @@ const (
 type FlowCollectorHPA struct {
 	// +kubebuilder:validation:Enum:=DISABLED;ENABLED
 	// +kubebuilder:default:=DISABLED
-	// `status` describes the desired status regarding deploying an horizontal pod autoscaler.<br>
-	// - `DISABLED` does not deploy an horizontal pod autoscaler.<br>
-	// - `ENABLED` deploys an horizontal pod autoscaler.<br>
+	// `status` describes the desired status regarding deploying an horizontal pod autoscaler.
+	// - `DISABLED` does not deploy an horizontal pod autoscaler.
+	// - `ENABLED` deploys an horizontal pod autoscaler.
 	Status string `json:"status,omitempty"`
 
 	// `minReplicas` is the lower limit for the number of replicas to which the autoscaler
@@ -684,10 +683,10 @@ type FlowCollectorLoki struct {
 
 	// +kubebuilder:validation:Enum:="DISABLED";"HOST";"FORWARD"
 	//+kubebuilder:default:="DISABLED"
-	// `authToken` describes the way to get a token to authenticate to Loki.<br>
-	// - `DISABLED` does not send any token with the request.<br>
-	// - `FORWARD` forwards the user token for authorization.<br>
-	// - `HOST` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br>
+	// `authToken` describes the way to get a token to authenticate to Loki.
+	// - `DISABLED` does not send any token with the request.
+	// - `FORWARD` forwards the user token for authorization.
+	// - `HOST` [deprecated (*)] - uses the local pod service account to authenticate to Loki.
 	// When using the Loki Operator, this must be set to `FORWARD`.
 	AuthToken string `json:"authToken,omitempty"`
 
@@ -776,9 +775,9 @@ type PrometheusQuerier struct {
 	//+kubebuilder:default:=true
 	Enable *bool `json:"enable,omitempty"`
 
-	// `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
-	// - Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
-	// - Use `Manual` for a manual setup<br>
+	// `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:
+	// - Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring
+	// - Use `Manual` for a manual setup
 	//+unionDiscriminator
 	//+kubebuilder:validation:Enum=Manual;Auto
 	//+kubebuilder:default:="Auto"

@@ -56,9 +56,9 @@ type MetricFilter struct {
 }
 
 // FlowMetricSpec defines the desired state of FlowMetric
-// The provided API allows you to customize these metrics according to your needs.<br>
+// The provided API allows you to customize these metrics according to your needs.
 // When adding new metrics or modifying existing labels, you must carefully monitor the memory
-// usage of Prometheus workloads as this could potentially have a high impact. Cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric<br>
+// usage of Prometheus workloads as this could potentially have a high impact. Cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric
 // To check the cardinality of all NetObserv metrics, run as `promql`: `count({__name__=~"netobserv.*"}) by (__name__)`.
 type FlowMetricSpec struct {
 	// Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_".
