@@ -269,8 +269,9 @@ func reconcileDataAccessRoles(ctx context.Context, r *reconcilers.Common, b *bui
 			}
 		}
 	}
-	// Install netobserv-metrics-reader role
-	return r.ReconcileClusterRole(ctx, &resources.PromReaderCR)
+	// Install netobserv-metrics-reader role; copy to avoid any undesired mutation
+	cr := resources.PromReaderCR
+	return r.ReconcileClusterRole(ctx, &cr)
 }
 
 func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.SubnetLabel, error) {
