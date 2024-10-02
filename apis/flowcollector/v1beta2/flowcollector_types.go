@@ -98,7 +98,7 @@ type NetworkPolicy struct {
 	Enable *bool `json:"enable,omitempty"`
 
 	// `additionalNamespaces` contains additional namespaces allowed to connect to the NetObserv namespace.
-	// It gives some flexibility in the network policy configuration, however should you need a more specific
+	// It provides flexibility in the network policy configuration, but if you need a more specific
 	// configuration, you can disable it and install your own instead.
 	//+optional
 	AdditionalNamespaces []string `json:"additionalNamespaces"`
@@ -174,7 +174,7 @@ type FlowCollectorIPFIX struct {
 // - `PacketDrop`, to track packet drops.<br>
 // - `DNSTracking`, to track specific information on DNS traffic.<br>
 // - `FlowRTT`, to track TCP latency.<br>
-// - `NetworkEvents`, to track Network events [Developer Preview].<br>
+// - `NetworkEvents`, to track network events [Developer Preview].<br>
 // +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents"
 type AgentFeature string
 
@@ -273,7 +273,7 @@ type EBPFFlowFilter struct {
 	// +optional
 	ICMPType *int `json:"icmpType,omitempty"`
 
-	// `pktDrops`, to filter flows with packet drops
+	// `pktDrops` filters flows with packet drops
 	// +optional
 	PktDrops *bool `json:"pktDrops,omitempty"`
 }
@@ -357,10 +357,10 @@ type FlowCollectorEBPF struct {
 	// If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 	// - `DNSTracking`: enable the DNS tracking feature.<br>
 	// - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
-	// - `NetworkEvents`: enable the Network events monitoring feature, such as correlating flows and network policies.
+	// - `NetworkEvents`: enable the network events monitoring feature, such as correlating flows and network policies.
 	// This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 	// It requires using the OVN-Kubernetes network plugin with the Observability feature.
-	// IMPORTANT: this feature is available as a Developer Preview.<br>
+	// IMPORTANT: This feature is available as a Developer Preview.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 
@@ -396,10 +396,10 @@ type FlowCollectorKafka struct {
 
 type FlowCollectorIPFIXReceiver struct {
 	//+kubebuilder:default:=""
-	// Address of the IPFIX external receiver
+	// Address of the IPFIX external receiver.
 	TargetHost string `json:"targetHost"`
 
-	// Port for the IPFIX external receiver
+	// Port for the IPFIX external receiver.
 	TargetPort int `json:"targetPort"`
 
 	// Transport protocol (`TCP` or `UDP`) to be used for the IPFIX connection, defaults to `TCP`.
@@ -420,7 +420,7 @@ type FlowCollectorOpenTelemetryMetrics struct {
 	//+kubebuilder:default:=true
 	Enable *bool `json:"enable,omitempty"`
 
-	// How often should metrics be sent to collector
+	// Specify how often metrics are sent to a collector.
 	// +kubebuilder:default:="20s"
 	PushTimeInterval *metav1.Duration `json:"pushTimeInterval,omitempty"`
 }
@@ -434,11 +434,11 @@ type GenericTransformRule struct {
 type GenericTransform []GenericTransformRule
 
 type FlowCollectorOpenTelemetry struct {
-	// Address of the OpenTelemetry receiver
+	// Address of the OpenTelemetry receiver.
 	// +kubebuilder:default:=""
 	TargetHost string `json:"targetHost"`
 
-	// Port for the OpenTelemetry receiver
+	// Port for the OpenTelemetry receiver.
 	TargetPort int `json:"targetPort"`
 
 	// Protocol of the OpenTelemetry connection. The available options are `http` and `grpc`.
@@ -1078,10 +1078,10 @@ type ClientTLS struct {
 	// If set to `true`, the `caCert` field is ignored.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
-	// `caCert` defines the reference of the certificate for the Certificate Authority
+	// `caCert` defines the reference of the certificate for the Certificate Authority.
 	CACert CertificateReference `json:"caCert,omitempty"`
 
-	// `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+	// `userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.
 	// +optional
 	UserCert CertificateReference `json:"userCert,omitempty"`
 }
@@ -1210,8 +1210,8 @@ type AdvancedProcessorConfig struct {
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 
 	// Define secondary networks to be checked for resources identification.
-	// In order to guarantee a correct identification, it is important that the indexed values form an unique identifier across the cluster.
-	// If there are collisions in the indexes (same index used by several resources), those resources might be wrongly labeled.
+	// To guarantee a correct identification, indexed values must form an unique identifier across the cluster.
+	// If the same index is used by several resources, those resources might be incorrectly labeled.
 	// +optional
 	SecondaryNetworks []SecondaryNetwork `json:"secondaryNetworks,omitempty"`
 }

@@ -5958,10 +5958,10 @@ the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 - `DNSTracking`: enable the DNS tracking feature.<br>
 - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
-- `NetworkEvents`: enable the Network events monitoring feature, such as correlating flows and network policies.
+- `NetworkEvents`: enable the network events monitoring feature, such as correlating flows and network policies.
 This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
-IMPORTANT: this feature is available as a Developer Preview.<br><br/>
+IMPORTANT: This feature is available as a Developer Preview.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7924,7 +7924,7 @@ Example: `10.10.10.10`.<br/>
         <td><b>pktDrops</b></td>
         <td>boolean</td>
         <td>
-          `pktDrops`, to filter flows with packet drops<br/>
+          `pktDrops` filters flows with packet drops<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11555,7 +11555,7 @@ IPFIX configuration, such as the IP address and port to send enriched IPFIX flow
         <td><b>targetHost</b></td>
         <td>string</td>
         <td>
-          Address of the IPFIX external receiver<br/>
+          Address of the IPFIX external receiver.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -11564,7 +11564,7 @@ IPFIX configuration, such as the IP address and port to send enriched IPFIX flow
         <td><b>targetPort</b></td>
         <td>integer</td>
         <td>
-          Port for the IPFIX external receiver<br/>
+          Port for the IPFIX external receiver.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -11802,7 +11802,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b><a href="#flowcollectorspecexportersindexkafkatlscacert-1">caCert</a></b></td>
         <td>object</td>
         <td>
-          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+          `caCert` defines the reference of the certificate for the Certificate Authority.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11828,7 +11828,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
         <td><b><a href="#flowcollectorspecexportersindexkafkatlsusercert-1">userCert</a></b></td>
         <td>object</td>
         <td>
-          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+          `userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11840,7 +11840,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
 
 
 
-`caCert` defines the reference of the certificate for the Certificate Authority
+`caCert` defines the reference of the certificate for the Certificate Authority.
 
 <table>
     <thead>
@@ -11900,7 +11900,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.
 
 <table>
     <thead>
@@ -11975,7 +11975,7 @@ OpenTelemetry configuration, such as the IP address and port to send enriched lo
         <td><b>targetHost</b></td>
         <td>string</td>
         <td>
-          Address of the OpenTelemetry receiver<br/>
+          Address of the OpenTelemetry receiver.<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -11984,7 +11984,7 @@ OpenTelemetry configuration, such as the IP address and port to send enriched lo
         <td><b>targetPort</b></td>
         <td>integer</td>
         <td>
-          Port for the OpenTelemetry receiver<br/>
+          Port for the OpenTelemetry receiver.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -12136,7 +12136,7 @@ OpenTelemetry configuration for metrics.
         <td><b>pushTimeInterval</b></td>
         <td>string</td>
         <td>
-          How often should metrics be sent to collector<br/>
+          Specify how often metrics are sent to a collector.<br/>
           <br/>
             <i>Default</i>: 20s<br/>
         </td>
@@ -12165,7 +12165,7 @@ TLS client configuration.
         <td><b><a href="#flowcollectorspecexportersindexopentelemetrytlscacert">caCert</a></b></td>
         <td>object</td>
         <td>
-          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+          `caCert` defines the reference of the certificate for the Certificate Authority.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12191,7 +12191,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
         <td><b><a href="#flowcollectorspecexportersindexopentelemetrytlsusercert">userCert</a></b></td>
         <td>object</td>
         <td>
-          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+          `userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12203,7 +12203,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
 
 
 
-`caCert` defines the reference of the certificate for the Certificate Authority
+`caCert` defines the reference of the certificate for the Certificate Authority.
 
 <table>
     <thead>
@@ -12263,7 +12263,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.
 
 <table>
     <thead>
@@ -12540,7 +12540,7 @@ TLS client configuration. When using TLS, verify that the address matches the Ka
         <td><b><a href="#flowcollectorspeckafkatlscacert-1">caCert</a></b></td>
         <td>object</td>
         <td>
-          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+          `caCert` defines the reference of the certificate for the Certificate Authority.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12566,7 +12566,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
         <td><b><a href="#flowcollectorspeckafkatlsusercert-1">userCert</a></b></td>
         <td>object</td>
         <td>
-          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+          `userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12578,7 +12578,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
 
 
 
-`caCert` defines the reference of the certificate for the Certificate Authority
+`caCert` defines the reference of the certificate for the Certificate Authority.
 
 <table>
     <thead>
@@ -12638,7 +12638,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.
 
 <table>
     <thead>
@@ -13032,7 +13032,7 @@ TLS client configuration for Loki status URL.
         <td><b><a href="#flowcollectorspeclokimanualstatustlscacert">caCert</a></b></td>
         <td>object</td>
         <td>
-          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+          `caCert` defines the reference of the certificate for the Certificate Authority.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -13058,7 +13058,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
         <td><b><a href="#flowcollectorspeclokimanualstatustlsusercert">userCert</a></b></td>
         <td>object</td>
         <td>
-          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+          `userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13070,7 +13070,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
 
 
 
-`caCert` defines the reference of the certificate for the Certificate Authority
+`caCert` defines the reference of the certificate for the Certificate Authority.
 
 <table>
     <thead>
@@ -13130,7 +13130,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.
 
 <table>
     <thead>
@@ -13205,7 +13205,7 @@ TLS client configuration for Loki URL.
         <td><b><a href="#flowcollectorspeclokimanualtlscacert">caCert</a></b></td>
         <td>object</td>
         <td>
-          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+          `caCert` defines the reference of the certificate for the Certificate Authority.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -13231,7 +13231,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
         <td><b><a href="#flowcollectorspeclokimanualtlsusercert">userCert</a></b></td>
         <td>object</td>
         <td>
-          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+          `userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13243,7 +13243,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
 
 
 
-`caCert` defines the reference of the certificate for the Certificate Authority
+`caCert` defines the reference of the certificate for the Certificate Authority.
 
 <table>
     <thead>
@@ -13303,7 +13303,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.
 
 <table>
     <thead>
@@ -13434,7 +13434,7 @@ TLS client configuration for Loki URL.
         <td><b><a href="#flowcollectorspeclokimicroservicestlscacert">caCert</a></b></td>
         <td>object</td>
         <td>
-          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+          `caCert` defines the reference of the certificate for the Certificate Authority.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -13460,7 +13460,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
         <td><b><a href="#flowcollectorspeclokimicroservicestlsusercert">userCert</a></b></td>
         <td>object</td>
         <td>
-          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+          `userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13472,7 +13472,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
 
 
 
-`caCert` defines the reference of the certificate for the Certificate Authority
+`caCert` defines the reference of the certificate for the Certificate Authority.
 
 <table>
     <thead>
@@ -13532,7 +13532,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.
 
 <table>
     <thead>
@@ -13654,7 +13654,7 @@ TLS client configuration for Loki URL.
         <td><b><a href="#flowcollectorspeclokimonolithictlscacert">caCert</a></b></td>
         <td>object</td>
         <td>
-          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+          `caCert` defines the reference of the certificate for the Certificate Authority.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -13680,7 +13680,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
         <td><b><a href="#flowcollectorspeclokimonolithictlsusercert">userCert</a></b></td>
         <td>object</td>
         <td>
-          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+          `userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13692,7 +13692,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
 
 
 
-`caCert` defines the reference of the certificate for the Certificate Authority
+`caCert` defines the reference of the certificate for the Certificate Authority.
 
 <table>
     <thead>
@@ -13752,7 +13752,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.
 
 <table>
     <thead>
@@ -13828,7 +13828,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td>[]string</td>
         <td>
           `additionalNamespaces` contains additional namespaces allowed to connect to the NetObserv namespace.
-It gives some flexibility in the network policy configuration, however should you need a more specific
+It provides flexibility in the network policy configuration, but if you need a more specific
 configuration, you can disable it and install your own instead.<br/>
         </td>
         <td>false</td>
@@ -14122,8 +14122,8 @@ By convention, some values are forbidden. It must be greater than 1024 and diffe
         <td>[]object</td>
         <td>
           Define secondary networks to be checked for resources identification.
-In order to guarantee a correct identification, it is important that the indexed values form an unique identifier across the cluster.
-If there are collisions in the indexes (same index used by several resources), those resources might be wrongly labeled.<br/>
+To guarantee a correct identification, indexed values must form an unique identifier across the cluster.
+If the same index is used by several resources, those resources might be incorrectly labeled.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -17414,7 +17414,7 @@ TLS client configuration for Prometheus URL.
         <td><b><a href="#flowcollectorspecprometheusqueriermanualtlscacert-1">caCert</a></b></td>
         <td>object</td>
         <td>
-          `caCert` defines the reference of the certificate for the Certificate Authority<br/>
+          `caCert` defines the reference of the certificate for the Certificate Authority.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -17440,7 +17440,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
         <td><b><a href="#flowcollectorspecprometheusqueriermanualtlsusercert-1">userCert</a></b></td>
         <td>object</td>
         <td>
-          `userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)<br/>
+          `userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -17452,7 +17452,7 @@ If set to `true`, the `caCert` field is ignored.<br/>
 
 
 
-`caCert` defines the reference of the certificate for the Certificate Authority
+`caCert` defines the reference of the certificate for the Certificate Authority.
 
 <table>
     <thead>
@@ -17512,7 +17512,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-`userCert` defines the user certificate reference and is used for mTLS (you can ignore it when using one-way TLS)
+`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.
 
 <table>
     <thead>
