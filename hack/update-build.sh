@@ -33,6 +33,7 @@ LABEL maintainer="support@redhat.com"
 LABEL io.openshift.tags="network-observability-operator"
 LABEL upstream-vcs-ref="${COMMIT}"
 LABEL upstream-vcs-type="git"
+LABEL description="NetObserv Operator is a Kubernetes / OpenShift operator for network observability."
 EOF
 
 echo "Updating fbc bundle file"
@@ -48,6 +49,7 @@ LABEL maintainer="support@redhat.com"
 LABEL io.openshift.tags="network-observability-operator-bundle"
 LABEL upstream-vcs-ref="${COMMIT}"
 LABEL upstream-vcs-type="git"
+LABEL description="NetObserv Operator is a Kubernetes / OpenShift operator for network observability."
 EOF
 
 echo "Updating catalog container file"
@@ -62,6 +64,7 @@ LABEL maintainer="support@redhat.com"
 LABEL io.openshift.tags="network-observability-operator-catalog"
 LABEL upstream-vcs-ref="${COMMIT}"
 LABEL upstream-vcs-type="git"
+LABEL description="NetObserv Operator is a Kubernetes / OpenShift operator for network observability."
 EOF
 
 
