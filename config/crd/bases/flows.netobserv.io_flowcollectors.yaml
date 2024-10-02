@@ -3438,7 +3438,7 @@ spec:
                           description: |-
                             List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
                             - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
-                            the kernel debug filesystem, so the eBPF pod has to run as privileged.
+                            the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
                             If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
                             - `DNSTracking`: enable the DNS tracking feature.<br>
                             - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
@@ -5441,13 +5441,13 @@ spec:
                           - topic
                         type: object
                       openTelemetry:
-                        description: Open telemetry configuration, such as the IP address and port to send enriched logs, metrics and or traces to.
+                        description: OpenTelemetry configuration, such as the IP address and port to send enriched logs or metrics to.
                         properties:
                           fieldsMapping:
                             description: |-
                               Custom fields mapping to an OpenTelemetry conformant format.
                               By default, NetObserv format proposal is used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal .
-                              As there is currently no accepted otlp standard for L3/4 network logs, you can freely override it with your own.
+                              As there is currently no accepted standard for L3/4 enriched network logs, you can freely override it with your own.
                             items:
                               properties:
                                 input:
@@ -5464,19 +5464,19 @@ spec:
                             description: Headers to add to messages (optional)
                             type: object
                           logs:
-                            description: Open telemetry configuration for logs.
+                            description: OpenTelemetry configuration for logs.
                             properties:
                               enable:
                                 default: true
-                                description: Set `enable` to `true` to send logs to Open Telemetry receiver.
+                                description: Set `enable` to `true` to send logs to an OpenTelemetry receiver.
                                 type: boolean
                             type: object
                           metrics:
-                            description: Open telemetry configuration for metrics.
+                            description: OpenTelemetry configuration for metrics.
                             properties:
                               enable:
                                 default: true
-                                description: Set `enable` to `true` to send metrics to Open Telemetry receiver.
+                                description: Set `enable` to `true` to send metrics to an OpenTelemetry receiver.
                                 type: boolean
                               pushTimeInterval:
                                 default: 20s
@@ -5484,17 +5484,17 @@ spec:
                                 type: string
                             type: object
                           protocol:
-                            description: Protocol of Open Telemetry connection. The available options are `http` and `grpc`.
+                            description: Protocol of the OpenTelemetry connection. The available options are `http` and `grpc`.
                             enum:
                               - http
                               - grpc
                             type: string
                           targetHost:
                             default: ""
-                            description: Address of the Open Telemetry receiver
+                            description: Address of the OpenTelemetry receiver
                             type: string
                           targetPort:
-                            description: Port for the Open Telemetry receiver
+                            description: Port for the OpenTelemetry receiver
                             type: integer
                           tls:
                             description: TLS client configuration.
@@ -7187,9 +7187,10 @@ spec:
                               index:
                                 description: |-
                                   `index` is a list of fields to use for indexing the pods. They should form a unique Pod identifier across the cluster.
-                                  Can be any of: MAC, IP, Interface
+                                  Can be any of: `MAC`, `IP`, `Interface`.
+                                  Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not be added to the index.
                                 items:
-                                  description: 'Field to index for secondary network pod identification, can be any of: MAC, IP, Interface'
+                                  description: 'Field to index for secondary network pod identification, can be any of: `MAC`, `IP`, `Interface`.'
                                   enum:
                                     - MAC
                                     - IP
