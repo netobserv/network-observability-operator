@@ -269,8 +269,8 @@ func reconcileDataAccessRoles(ctx context.Context, r *reconcilers.Common, b *bui
 			}
 		}
 	}
-	// Install netobserv-metrics-reader role; copy to avoid any undesired mutation
-	cr := resources.PromReaderCR
+	// Install netobserv-metrics-reader role
+	cr := resources.PromReaderCR()
 	return r.ReconcileClusterRole(ctx, &cr)
 }
 

@@ -10,7 +10,7 @@ import (
 
 func ClusterRoles(appName, saName, namespace string) ([]rbacv1.ClusterRole, []rbacv1.ClusterRoleBinding) {
 	crb := writerBinding(appName, saName, namespace)
-	return []rbacv1.ClusterRole{resources.LokiWriterCR, resources.LokiReaderCR}, []rbacv1.ClusterRoleBinding{*crb}
+	return []rbacv1.ClusterRole{resources.LokiWriterCR(), resources.LokiReaderCR()}, []rbacv1.ClusterRoleBinding{*crb}
 }
 
 func writerBinding(appName, saName, namespace string) *rbacv1.ClusterRoleBinding {
