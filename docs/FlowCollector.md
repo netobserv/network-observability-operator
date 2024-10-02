@@ -5947,12 +5947,12 @@ Otherwise it is matched as a case-sensitive string.<br/>
         <td>
           List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
 - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
-the kernel debug filesystem, so the eBPF pod has to run as privileged.
+the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 - `DNSTracking`: enable the DNS tracking feature.<br>
 - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
-- `NetworkEvents`: enable the Network events monitoring feature.  This feature requires mounting
-the kernel debug filesystem, so the eBPF pod has to run as privileged.<br/>
+- `NetworkEvents`: enable the network events monitoring feature, such as correlating flows and network policies. This feature requires mounting
+the kernel debug filesystem, so the eBPF agent pods have to run as privileged.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11512,7 +11512,7 @@ only the result of this request.<br/>
         <td><b><a href="#flowcollectorspecexportersindexopentelemetry">openTelemetry</a></b></td>
         <td>object</td>
         <td>
-          Open telemetry configuration, such as the IP address and port to send enriched logs, metrics and or traces to.<br/>
+          OpenTelemetry configuration, such as the IP address and port to send enriched logs or metrics to.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11944,7 +11944,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-Open telemetry configuration, such as the IP address and port to send enriched logs, metrics and or traces to.
+OpenTelemetry configuration, such as the IP address and port to send enriched logs or metrics to.
 
 <table>
     <thead>
@@ -11959,7 +11959,7 @@ Open telemetry configuration, such as the IP address and port to send enriched l
         <td><b>targetHost</b></td>
         <td>string</td>
         <td>
-          Address of the Open Telemetry receiver<br/>
+          Address of the OpenTelemetry receiver<br/>
           <br/>
             <i>Default</i>: <br/>
         </td>
@@ -11968,7 +11968,7 @@ Open telemetry configuration, such as the IP address and port to send enriched l
         <td><b>targetPort</b></td>
         <td>integer</td>
         <td>
-          Port for the Open Telemetry receiver<br/>
+          Port for the OpenTelemetry receiver<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -11977,7 +11977,7 @@ Open telemetry configuration, such as the IP address and port to send enriched l
         <td>
           Custom fields mapping to an OpenTelemetry conformant format.
 By default, NetObserv format proposal is used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal .
-As there is currently no accepted otlp standard for L3/4 network logs, you can freely override it with your own.<br/>
+As there is currently no accepted standard for L3/4 enriched network logs, you can freely override it with your own.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11991,21 +11991,21 @@ As there is currently no accepted otlp standard for L3/4 network logs, you can f
         <td><b><a href="#flowcollectorspecexportersindexopentelemetrylogs">logs</a></b></td>
         <td>object</td>
         <td>
-          Open telemetry configuration for logs.<br/>
+          OpenTelemetry configuration for logs.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindexopentelemetrymetrics">metrics</a></b></td>
         <td>object</td>
         <td>
-          Open telemetry configuration for metrics.<br/>
+          OpenTelemetry configuration for metrics.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>protocol</b></td>
         <td>enum</td>
         <td>
-          Protocol of Open Telemetry connection. The available options are `http` and `grpc`.<br/>
+          Protocol of the OpenTelemetry connection. The available options are `http` and `grpc`.<br/>
           <br/>
             <i>Enum</i>: http, grpc<br/>
         </td>
@@ -12067,7 +12067,7 @@ As there is currently no accepted otlp standard for L3/4 network logs, you can f
 
 
 
-Open telemetry configuration for logs.
+OpenTelemetry configuration for logs.
 
 <table>
     <thead>
@@ -12082,7 +12082,7 @@ Open telemetry configuration for logs.
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `true` to send logs to Open Telemetry receiver.<br/>
+          Set `enable` to `true` to send logs to an OpenTelemetry receiver.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -12096,7 +12096,7 @@ Open telemetry configuration for logs.
 
 
 
-Open telemetry configuration for metrics.
+OpenTelemetry configuration for metrics.
 
 <table>
     <thead>
@@ -12111,7 +12111,7 @@ Open telemetry configuration for metrics.
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `true` to send metrics to Open Telemetry receiver.<br/>
+          Set `enable` to `true` to send metrics to an OpenTelemetry receiver.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -15884,7 +15884,8 @@ If the operator is Exists, the value should be empty, otherwise just a regular s
         <td>[]enum</td>
         <td>
           `index` is a list of fields to use for indexing the pods. They should form a unique Pod identifier across the cluster.
-Can be any of: MAC, IP, Interface<br/>
+Can be any of: `MAC`, `IP`, `Interface`.
+Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not be added to the index.<br/>
         </td>
         <td>true</td>
       </tr><tr>
