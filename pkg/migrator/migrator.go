@@ -42,6 +42,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+var (
+	retryBackoff = wait.Backoff{
+		Steps:    10,
+		Duration: 10 * time.Second,
+		Factor:   5.0,
+		Jitter:   0.1,
+	}
+)
+
 // Migrator will read custom resource definitions and upgrade
 // the associated resources to the latest storage version
 type Migrator struct {
@@ -96,13 +105,7 @@ func (m *Migrator) Start(ctx context.Context) error {
 func (m *Migrator) migrateWithRetry(ctx context.Context, gr schema.GroupResource) error {
 	// Retrying to allow time for the conversion webhooks to be ready
 	// There's no hurry to get this done, start with a duration > second
-	backoff := wait.Backoff{
-		Steps:    10,
-		Duration: 10 * time.Second,
-		Factor:   5.0,
-		Jitter:   0.1,
-	}
-	return retry.OnError(backoff, func(error) bool { return true }, func() error {
+	return retry.OnError(retryBackoff, func(error) bool { return true }, func() error {
 		return m.Migrate(ctx, gr)
 	})
 }

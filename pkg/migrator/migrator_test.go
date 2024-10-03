@@ -25,6 +25,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	apix "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -79,6 +80,47 @@ func TestMigrate(t *testing.T) {
 
 	if err := m.Migrate(context.Background(), fakeGR); err != nil {
 		t.Fatal("Migrate() =", err)
+	}
+
+	assertPatches(t, dclient.Actions(),
+		// patch resource definition dropping non-storage version
+		emptyResourcePatch("first", "v1"),
+		emptyResourcePatch("second", "v1"),
+	)
+
+	assertPatches(t, cclient.Actions(),
+		// patch resource definition dropping non-storage version
+		crdStorageVersionPatch(fakeCRD.Name, "v1"),
+	)
+}
+
+func TestMigrateWithRetry(t *testing.T) {
+	// setup
+	resources := []runtime.Object{fake("first"), fake("second")}
+	dclient := dynamicFake.NewSimpleDynamicClient(runtime.NewScheme(), resources...)
+	cclient := apixFake.NewSimpleClientset(fakeCRD)
+	m := newForClients(dclient, cclient)
+
+	// Change retry backoff to make it more test-friendly
+	retryBackoff.Duration = 1 * time.Second
+
+	start := time.Now()
+	// Return an error during the first 500 milliseconds
+	dclient.PrependReactor("list", "*",
+		func(act k8stesting.Action) (bool, runtime.Object, error) {
+			if time.Since(start) < 500*time.Millisecond {
+				return true, nil, errors.New("failed to list resources")
+			}
+			return false, nil, nil
+		})
+
+	if err := m.migrateWithRetry(context.Background(), fakeGR); err != nil {
+		t.Fatal("Migrate() =", err)
+	}
+
+	// Assert 1 second at least have past
+	if time.Since(start) < time.Second {
+		t.Fatal("No retry occured?")
 	}
 
 	assertPatches(t, dclient.Actions(),
