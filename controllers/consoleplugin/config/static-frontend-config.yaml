@@ -905,149 +905,115 @@ filters:
     component: text
     hint: Specify a single network event.
 # Fields definition, used to generate documentation
-# The "cardinalityWarn" property relates to how the field is suitable for usage as a metric label wrt cardinality; it may have 3 values: fine, careful, avoid
 fields:
   - name: TimeFlowStartMs
     type: number
     description: Start timestamp of this flow, in milliseconds
-    cardinalityWarn: avoid
   - name: TimeFlowEndMs
     type: number
     description: End timestamp of this flow, in milliseconds
-    cardinalityWarn: avoid
   - name: TimeReceived
     type: number
     description: Timestamp when this flow was received and processed by the flow collector, in seconds
-    cardinalityWarn: avoid
   - name: SrcK8S_Name
     type: string
     description: Name of the source Kubernetes object, such as Pod name, Service name or Node name.
-    cardinalityWarn: careful
   - name: SrcK8S_Type
     type: string
     description: Kind of the source Kubernetes object, such as Pod, Service or Node.
     lokiLabel: true
-    cardinalityWarn: fine
   - name: SrcK8S_OwnerName
     type: string
     description: Name of the source owner, such as Deployment name, StatefulSet name, etc.
     lokiLabel: true
-    cardinalityWarn: fine
   - name: SrcK8S_OwnerType
     type: string
     description: Kind of the source owner, such as Deployment, StatefulSet, etc.
-    cardinalityWarn: fine
   - name: SrcK8S_Namespace
     type: string
     description: Source namespace
     lokiLabel: true
-    cardinalityWarn: fine
   - name: SrcAddr
     type: string
     description: Source IP address (ipv4 or ipv6)
-    cardinalityWarn: avoid
   - name: SrcPort
     type: number
     description: Source port
-    cardinalityWarn: careful
   - name: SrcMac
     type: string
     description: Source MAC address
-    cardinalityWarn: avoid
   - name: SrcK8S_HostIP
     type: string
     description: Source node IP
-    cardinalityWarn: fine
   - name: SrcK8S_HostName
     type: string
     description: Source node name
-    cardinalityWarn: fine
   - name: SrcK8S_Zone
     type: string
     description: Source availability zone
     lokiLabel: true
-    cardinalityWarn: fine
   - name: SrcSubnetLabel
     type: string
     description: Source subnet label
-    cardinalityWarn: fine
   - name: DstK8S_Name
     type: string
     description: Name of the destination Kubernetes object, such as Pod name, Service name or Node name.
-    cardinalityWarn: careful
   - name: DstK8S_Type
     type: string
     description: Kind of the destination Kubernetes object, such as Pod, Service or Node.
     lokiLabel: true
-    cardinalityWarn: fine
   - name: DstK8S_OwnerName
     type: string
     description: Name of the destination owner, such as Deployment name, StatefulSet name, etc.
     lokiLabel: true
-    cardinalityWarn: fine
   - name: DstK8S_OwnerType
     type: string
     description: Kind of the destination owner, such as Deployment, StatefulSet, etc.
-    cardinalityWarn: fine
   - name: DstK8S_Namespace
     type: string
     description: Destination namespace
     lokiLabel: true
-    cardinalityWarn: fine
   - name: DstAddr
     type: string
     description: Destination IP address (ipv4 or ipv6)
-    cardinalityWarn: avoid
   - name: DstPort
     type: number
     description: Destination port
-    cardinalityWarn: careful
   - name: DstMac
     type: string
     description: Destination MAC address
-    cardinalityWarn: avoid
   - name: DstK8S_HostIP
     type: string
     description: Destination node IP
-    cardinalityWarn: fine
   - name: DstK8S_HostName
     type: string
     description: Destination node name
-    cardinalityWarn: fine
   - name: DstK8S_Zone
     type: string
     description: Destination availability zone
     lokiLabel: true
-    cardinalityWarn: fine
   - name: DstSubnetLabel
     type: string
     description: Destination subnet label
-    cardinalityWarn: fine
   - name: K8S_FlowLayer
     type: string
     description: "Flow layer: 'app' or 'infra'"
-    cardinalityWarn: fine
   - name: Proto
     type: number
     description: L4 protocol
-    cardinalityWarn: fine
   - name: Dscp
     type: number
     description: Differentiated Services Code Point (DSCP) value
-    cardinalityWarn: fine
   - name: IcmpType
     type: number
     description: ICMP type
-    cardinalityWarn: fine
   - name: IcmpCode
     type: number
     description: ICMP code
-    cardinalityWarn: fine
   - name: Duplicate
     type: boolean
     description: Indicates if this flow was also captured from another interface on the same host
     lokiLabel: true
-    cardinalityWarn: fine
   - name: FlowDirection
     type: number
     description: |
@@ -1056,18 +1022,15 @@ fields:
       - 1: Egress (outgoing traffic, from the node observation point) +
       - 2: Inner (with the same source and destination node)
     lokiLabel: true
-    cardinalityWarn: fine
   - name: IfDirections
     type: number
     description: |
       Flow directions from the network interface observation point. Can be one of: +
       - 0: Ingress (interface incoming traffic) +
       - 1: Egress (interface outgoing traffic)
-    cardinalityWarn: fine
   - name: Interfaces
     type: string
     description: Network interfaces
-    cardinalityWarn: careful
   - name: Flags
     type: number
     description: |
@@ -1075,76 +1038,58 @@ fields:
       - SYN+ACK (0x100) +
       - FIN+ACK (0x200) +
       - RST+ACK (0x400)
-    cardinalityWarn: fine
   - name: Bytes
     type: number
     description: Number of bytes
-    cardinalityWarn: avoid
   - name: Packets
     type: number
     description: Number of packets
-    cardinalityWarn: avoid
   - name: PktDropBytes
     type: number
     description: Number of bytes dropped by the kernel
-    cardinalityWarn: avoid
   - name: PktDropPackets
     type: number
     description: Number of packets dropped by the kernel
-    cardinalityWarn: avoid
   - name: PktDropLatestState
     type: string
     description: TCP state on last dropped packet
     filter: pkt_drop_state # couldn't guess from config
-    cardinalityWarn: fine
   - name: PktDropLatestDropCause
     type: string
     description: Latest drop cause
     filter: pkt_drop_cause # couldn't guess from config
-    cardinalityWarn: fine
   - name: PktDropLatestFlags
     type: number
     description: TCP flags on last dropped packet
-    cardinalityWarn: fine
   - name: DnsId
     type: number
     description: DNS record id
-    cardinalityWarn: avoid
   - name: DnsLatencyMs
     type: number
     description: Time between a DNS request and response, in milliseconds
-    cardinalityWarn: avoid
   - name: DnsFlags
     type: number
     description: DNS flags for DNS record
-    cardinalityWarn: fine
   - name: DnsFlagsResponseCode
     type: string
     description: Parsed DNS header RCODEs name
-    cardinalityWarn: fine
   - name: DnsErrno
     type: number
     description: Error number returned from DNS tracker ebpf hook function
-    cardinalityWarn: fine
   - name: TimeFlowRttNs
     type: number
     description: TCP Smoothed Round Trip Time (SRTT), in nanoseconds
-    cardinalityWarn: avoid
   - name: NetworkEvents
     type: string
     description: Network events flow monitoring
-    cardinalityWarn: avoid
   - name: K8S_ClusterName
     type: string
     description: Cluster name or identifier
     lokiLabel: true
-    cardinalityWarn: fine
   - name: _RecordType
     type: string
     description: "Type of record: 'flowLog' for regular flow logs, or 'newConnection', 'heartbeat', 'endConnection' for conversation tracking"
     lokiLabel: true
-    cardinalityWarn: fine
   - name: _HashId
     type: string
     description: In conversation tracking, the conversation identifier
-    cardinalityWarn: avoid
