@@ -97,6 +97,8 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 		return err
 	}
 	desiredNs := buildNamespace(ns, r.mgr.Config.DownstreamDeployment)
+	// always add owned label to desired namespace as we expect it to be created
+	helper.AddOwnedLabel(desiredNs)
 	if nsExist == nil {
 		err = r.Create(ctx, desiredNs)
 		if err != nil {
