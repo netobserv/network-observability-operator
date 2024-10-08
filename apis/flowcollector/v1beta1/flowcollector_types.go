@@ -249,6 +249,10 @@ type EBPFFlowFilter struct {
 	// ICMPCode defines the ICMP code to filter flows by.
 	// +optional
 	ICMPCode *int `json:"icmpCode,omitempty"`
+
+	// `pktDrops`, to filter flows with packet drops
+	// +optional
+	PktDrops *bool `json:"pktDrops,omitempty"`
 }
 
 // `FlowCollectorEBPF` defines a FlowCollector that uses eBPF to collect the flows information

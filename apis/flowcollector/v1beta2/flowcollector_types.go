@@ -273,6 +273,10 @@ type EBPFFlowFilter struct {
 	// `icmpType`, for ICMP traffic, defines the ICMP type to filter flows by.
 	// +optional
 	ICMPType *int `json:"icmpType,omitempty"`
+
+	// `pktDrops`, to filter flows with packet drops
+	// +optional
+	PktDrops *bool `json:"pktDrops,omitempty"`
 }
 
 // `FlowCollectorEBPF` defines a FlowCollector that uses eBPF to collect the flows information
