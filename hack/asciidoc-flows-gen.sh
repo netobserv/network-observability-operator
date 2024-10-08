@@ -2,6 +2,7 @@
 
 ADOC=docs/flows-format.adoc
 FE_SOURCE=controllers/consoleplugin/config/static-frontend-config.yaml
+LOKI_LABEL_SOURCE=pkg/helper/loki/loki-labels.json
 CARDINALITY_SOURCE=pkg/helper/cardinality/cardinality.json
 OTEL_SOURCE=pkg/helper/otel/otel-config.json
 
@@ -15,6 +16,7 @@ echo -e '|===' >> $ADOC
 echo -e '| Name | Type | Description | Filter ID | Loki label | Cardinality | Otel' >> $ADOC
 
 nbfields=$(yq '.fields | length' $FE_SOURCE)
+lokiLabels=$(cat $LOKI_LABEL_SOURCE)
 cardinalityMap=$(cat $CARDINALITY_SOURCE)
 otelMap=$(cat $OTEL_SOURCE)
 
@@ -34,11 +36,11 @@ for i in $(seq 0 $(( $nbfields-1 )) ); do
   else 
     filter="\`$filter\`"
   fi
-  isLabel=$(printf "$frontEntry" | yq ".lokiLabel")
-  if [[ $isLabel == "true" ]]; then
-    isLabel="yes"
-  else
+  isLabel=$(printf "$lokiLabels" | jq "map(select(any(match(\"^$name$\"))))")
+  if [[ $isLabel == "[]" ]]; then
     isLabel="no"
+  else
+    isLabel="yes"
   fi
   cardWarn=$(printf "$cardinalityMap" | jq -r ".$name")
   if [[ "$cardWarn" == "null" ]]; then

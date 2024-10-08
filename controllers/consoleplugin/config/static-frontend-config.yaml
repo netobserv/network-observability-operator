@@ -921,18 +921,15 @@ fields:
   - name: SrcK8S_Type
     type: string
     description: Kind of the source Kubernetes object, such as Pod, Service or Node.
-    lokiLabel: true
   - name: SrcK8S_OwnerName
     type: string
     description: Name of the source owner, such as Deployment name, StatefulSet name, etc.
-    lokiLabel: true
   - name: SrcK8S_OwnerType
     type: string
     description: Kind of the source owner, such as Deployment, StatefulSet, etc.
   - name: SrcK8S_Namespace
     type: string
     description: Source namespace
-    lokiLabel: true
   - name: SrcAddr
     type: string
     description: Source IP address (ipv4 or ipv6)
@@ -951,7 +948,6 @@ fields:
   - name: SrcK8S_Zone
     type: string
     description: Source availability zone
-    lokiLabel: true
   - name: SrcSubnetLabel
     type: string
     description: Source subnet label
@@ -961,18 +957,15 @@ fields:
   - name: DstK8S_Type
     type: string
     description: Kind of the destination Kubernetes object, such as Pod, Service or Node.
-    lokiLabel: true
   - name: DstK8S_OwnerName
     type: string
     description: Name of the destination owner, such as Deployment name, StatefulSet name, etc.
-    lokiLabel: true
   - name: DstK8S_OwnerType
     type: string
     description: Kind of the destination owner, such as Deployment, StatefulSet, etc.
   - name: DstK8S_Namespace
     type: string
     description: Destination namespace
-    lokiLabel: true
   - name: DstAddr
     type: string
     description: Destination IP address (ipv4 or ipv6)
@@ -991,7 +984,6 @@ fields:
   - name: DstK8S_Zone
     type: string
     description: Destination availability zone
-    lokiLabel: true
   - name: DstSubnetLabel
     type: string
     description: Destination subnet label
@@ -1013,7 +1005,6 @@ fields:
   - name: Duplicate
     type: boolean
     description: Indicates if this flow was also captured from another interface on the same host
-    lokiLabel: true
   - name: FlowDirection
     type: number
     description: |
@@ -1021,7 +1012,6 @@ fields:
       - 0: Ingress (incoming traffic, from the node observation point) +
       - 1: Egress (outgoing traffic, from the node observation point) +
       - 2: Inner (with the same source and destination node)
-    lokiLabel: true
   - name: IfDirections
     type: number
     description: |
@@ -1085,11 +1075,9 @@ fields:
   - name: K8S_ClusterName
     type: string
     description: Cluster name or identifier
-    lokiLabel: true
   - name: _RecordType
     type: string
     description: "Type of record: 'flowLog' for regular flow logs, or 'newConnection', 'heartbeat', 'endConnection' for conversation tracking"
-    lokiLabel: true
   - name: _HashId
     type: string
     description: In conversation tracking, the conversation identifier

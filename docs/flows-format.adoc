@@ -152,7 +152,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | boolean
 | Indicates if this flow was also captured from another interface on the same host
 | n/a
-| yes
+| no
 | fine
 | n/a
 | `Flags`
@@ -216,7 +216,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | string
 | Flow layer: 'app' or 'infra'
 | `flow_layer`
-| no
+| yes
 | fine
 | k8s.layer
 | `NetworkEvents`

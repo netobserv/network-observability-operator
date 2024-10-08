@@ -17,8 +17,8 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/flp/fmstatus"
 	"github.com/netobserv/network-observability-operator/pkg/conversion"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/helper/loki"
 	otelConfig "github.com/netobserv/network-observability-operator/pkg/helper/otel"
-	"github.com/netobserv/network-observability-operator/pkg/loki"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
@@ -166,8 +166,12 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	// loki stage (write) configuration
 	advancedConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
 	if helper.UseLoki(b.desired) {
+		lokiLabels, err := loki.GetLabels(&b.desired.Processor)
+		if err != nil {
+			return err
+		}
 		lokiWrite := api.WriteLoki{
-			Labels:         loki.GetLokiLabels(b.desired),
+			Labels:         lokiLabels,
 			BatchSize:      int(b.desired.Loki.WriteBatchSize),
 			BatchWait:      helper.UnstructuredDuration(b.desired.Loki.WriteBatchWait),
 			MaxBackoff:     helper.UnstructuredDuration(advancedConfig.WriteMaxBackoff),
@@ -404,7 +408,7 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 	}
 
 	// Connection tracking stage (only if LogTypes is not FLOWS)
-	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
+	if helper.IsConntrack(&b.desired.Processor) {
 		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
 		advancedConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{
