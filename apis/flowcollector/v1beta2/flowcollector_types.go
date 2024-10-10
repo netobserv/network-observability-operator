@@ -175,7 +175,7 @@ type FlowCollectorIPFIX struct {
 // - `PacketDrop`, to track packet drops.<br>
 // - `DNSTracking`, to track specific information on DNS traffic.<br>
 // - `FlowRTT`, to track TCP latency.<br>
-// - `NetworkEvents`, to track Network events.<br>
+// - `NetworkEvents`, to track Network events. Requires OpenShift 4.18 / OVN x.y.<br>
 // +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents"
 type AgentFeature string
 
@@ -358,8 +358,8 @@ type FlowCollectorEBPF struct {
 	// If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 	// - `DNSTracking`: enable the DNS tracking feature.<br>
 	// - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
-	// - `NetworkEvents`: enable the Network events monitoring feature.  This feature requires mounting
-	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
+	// - `NetworkEvents`: enable the Network events monitoring feature. This feature requires mounting
+	// the kernel debug filesystem, so the eBPF pod has to run as privileged. Requires OpenShift 4.18 / OVN x.y.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 
