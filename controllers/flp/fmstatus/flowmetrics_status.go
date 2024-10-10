@@ -4,8 +4,7 @@ import (
 	"context"
 
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/helper/cardinality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,20 +48,20 @@ func SetFailure(fm *metricslatest.FlowMetric, msg string) {
 }
 
 func CheckCardinality(fm *metricslatest.FlowMetric) {
-	report, err := helper.CheckCardinality(fm.Spec.Labels...)
+	report, err := cardinality.CheckCardinality(fm.Spec.Labels...)
 	if err != nil {
 		SetFailure(fm, err.Error())
 		return
 	}
-	cardinality := report.GetOverall()
+	overall := report.GetOverall()
 	status := metav1.ConditionTrue
-	if cardinality == config.CardinalityWarnAvoid || cardinality == config.CardinalityWarnUnknown {
+	if overall == cardinality.WarnAvoid || overall == cardinality.WarnUnknown {
 		status = metav1.ConditionFalse
 	}
 	nsname := types.NamespacedName{Name: fm.Name, Namespace: fm.Namespace}
 	mapCards[nsname] = &metav1.Condition{
 		Type:    ConditionCardinalityOK,
-		Reason:  string(cardinality),
+		Reason:  string(overall),
 		Message: report.GetDetails(),
 		Status:  status,
 	}

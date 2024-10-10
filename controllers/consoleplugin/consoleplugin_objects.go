@@ -28,7 +28,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/netobserv/network-observability-operator/pkg/loki"
+	"github.com/netobserv/network-observability-operator/pkg/helper/loki"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
@@ -315,15 +315,19 @@ func (b *builder) metricsService() *corev1.Service {
 	}
 }
 
-func (b *builder) getLokiConfig() cfg.LokiConfig {
+func (b *builder) getLokiConfig() (cfg.LokiConfig, error) {
 	if !helper.UseLoki(b.desired) {
 		// Empty config/URL will disable Loki in the console plugin
-		return cfg.LokiConfig{}
+		return cfg.LokiConfig{}, nil
 	}
 	lk := b.info.Loki
+	lokiLabels, err := loki.GetLabels(&b.desired.Processor)
+	if err != nil {
+		return cfg.LokiConfig{}, err
+	}
 	lconf := cfg.LokiConfig{
 		URL:              lk.QuerierURL,
-		Labels:           loki.GetLokiLabels(b.desired),
+		Labels:           lokiLabels,
 		Timeout:          api.Duration{Duration: 30 * time.Second},
 		TenantID:         lk.TenantID,
 		ForwardUserToken: lk.UseForwardToken(),
@@ -361,7 +365,7 @@ func (b *builder) getLokiConfig() cfg.LokiConfig {
 	if lk.UseHostToken() {
 		lconf.TokenPath = b.volumes.AddToken(constants.PluginName)
 	}
-	return lconf
+	return lconf, nil
 }
 
 func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
@@ -506,13 +510,16 @@ func (b *builder) configMap(ctx context.Context) (*corev1.ConfigMap, string, err
 	}
 
 	// configure loki
-	config.Loki = b.getLokiConfig()
+	var err error
+	config.Loki, err = b.getLokiConfig()
+	if err != nil {
+		return nil, "", err
+	}
 
 	// configure prometheus
 	config.Prometheus = b.getPromConfig(ctx)
 
 	// configure frontend from embedded static file
-	var err error
 	config.Frontend, err = cfg.GetStaticFrontendConfig()
 	if err != nil {
 		return nil, "", err

@@ -17,7 +17,8 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/flp/fmstatus"
 	"github.com/netobserv/network-observability-operator/pkg/conversion"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/netobserv/network-observability-operator/pkg/loki"
+	"github.com/netobserv/network-observability-operator/pkg/helper/loki"
+	otelConfig "github.com/netobserv/network-observability-operator/pkg/helper/otel"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
@@ -165,8 +166,12 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	// loki stage (write) configuration
 	advancedConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
 	if helper.UseLoki(b.desired) {
+		lokiLabels, err := loki.GetLabels(&b.desired.Processor)
+		if err != nil {
+			return err
+		}
 		lokiWrite := api.WriteLoki{
-			Labels:         loki.GetLokiLabels(b.desired),
+			Labels:         lokiLabels,
 			BatchSize:      int(b.desired.Loki.WriteBatchSize),
 			BatchWait:      helper.UnstructuredDuration(b.desired.Loki.WriteBatchWait),
 			MaxBackoff:     helper.UnstructuredDuration(advancedConfig.WriteMaxBackoff),
@@ -254,8 +259,8 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		enrichedStage.EncodePrometheus("prometheus", promEncode)
 	}
 
-	b.addCustomExportStages(&enrichedStage, flpMetrics)
-	return nil
+	err := b.addCustomExportStages(&enrichedStage, flpMetrics)
+	return err
 }
 
 func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem, error) {
@@ -403,7 +408,7 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 	}
 
 	// Connection tracking stage (only if LogTypes is not FLOWS)
-	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
+	if helper.IsConntrack(&b.desired.Processor) {
 		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
 		advancedConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{
@@ -473,7 +478,7 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 	return lastStage
 }
 
-func (b *PipelineBuilder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage, flpMetrics []api.MetricsItem) {
+func (b *PipelineBuilder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage, flpMetrics []api.MetricsItem) error {
 	for i, exporter := range b.desired.Exporters {
 		if exporter.Type == flowslatest.KafkaExporter {
 			b.createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), &exporter.Kafka, enrichedStage)
@@ -482,9 +487,13 @@ func (b *PipelineBuilder) addCustomExportStages(enrichedStage *config.PipelineBu
 			createIPFIXWriteStage(fmt.Sprintf("IPFIX-export-%d", i), &exporter.IPFIX, enrichedStage)
 		}
 		if exporter.Type == flowslatest.OpenTelemetryExporter {
-			b.createOpenTelemetryStage(fmt.Sprintf("Otel-export-%d", i), &exporter.OpenTelemetry, enrichedStage, flpMetrics)
+			err := b.createOpenTelemetryStage(fmt.Sprintf("Otel-export-%d", i), &exporter.OpenTelemetry, enrichedStage, flpMetrics)
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func (b *PipelineBuilder) createKafkaWriteStage(name string, spec *flowslatest.FlowCollectorKafka, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
@@ -518,7 +527,7 @@ func getIPFIXTransport(transport string) string {
 	}
 }
 
-func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslatest.FlowCollectorOpenTelemetry, fromStage *config.PipelineBuilderStage, flpMetrics []api.MetricsItem) {
+func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslatest.FlowCollectorOpenTelemetry, fromStage *config.PipelineBuilderStage, flpMetrics []api.MetricsItem) error {
 	conn := api.OtlpConnectionInfo{
 		Address:        spec.TargetHost,
 		Port:           spec.TargetPort,
@@ -532,7 +541,11 @@ func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslates
 
 	if logsEnabled || metricsEnabled {
 		// add transform stage
-		transformStage := fromStage.TransformGeneric(fmt.Sprintf("%s-transform", name), helper.GetOtelTransformConfig(spec.FieldsMapping))
+		transformCfg, err := otelConfig.GetOtelTransformConfig(spec.FieldsMapping)
+		if err != nil {
+			return err
+		}
+		transformStage := fromStage.TransformGeneric(fmt.Sprintf("%s-transform", name), *transformCfg)
 
 		// otel logs config
 		if logsEnabled {
@@ -544,10 +557,14 @@ func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslates
 
 		// otel metrics config
 		if metricsEnabled {
+			metricsCfg, err := otelConfig.GetOtelMetrics(flpMetrics)
+			if err != nil {
+				return err
+			}
 			transformStage.EncodeOtelMetrics(fmt.Sprintf("%s-metrics", name), api.EncodeOtlpMetrics{
 				OtlpConnectionInfo: &conn,
 				Prefix:             "netobserv_",
-				Metrics:            helper.GetOtelMetrics(flpMetrics),
+				Metrics:            metricsCfg,
 				PushTimeInterval:   api.Duration{Duration: spec.Metrics.PushTimeInterval.Duration},
 				ExpiryTime:         api.Duration{Duration: 2 * time.Minute},
 			})
@@ -555,6 +572,7 @@ func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslates
 
 		// TODO: implement api.EncodeOtlpTraces
 	}
+	return nil
 }
 
 func getOtelConnType(connType string) string {

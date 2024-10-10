@@ -13,10 +13,10 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
-	"github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/flp/fmstatus"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/helper/cardinality"
 )
 
 // nolint:cyclop
@@ -153,7 +153,7 @@ func ControllerFlowMetricsSpecs() {
 				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
 				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
 				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionTrue &&
-					ready.Reason == "Ready" && card.Reason == string(config.CardinalityWarnFine)
+					ready.Reason == "Ready" && card.Reason == string(cardinality.WarnFine)
 			}))
 
 			Eventually(func() interface{} {
@@ -166,7 +166,7 @@ func ControllerFlowMetricsSpecs() {
 				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
 				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
 				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionFalse &&
-					ready.Reason == "Ready" && card.Reason == string(config.CardinalityWarnAvoid)
+					ready.Reason == "Ready" && card.Reason == string(cardinality.WarnAvoid)
 			}))
 		})
 	})

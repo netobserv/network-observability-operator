@@ -3,7 +3,6 @@ package consoleplugin
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"testing"
 
 	promConfig "github.com/prometheus/common/config"
@@ -543,25 +542,4 @@ func TestNoMissingFields(t *testing.T) {
 		}
 	}
 	assert.Empty(t, missing, "Missing fields should be added in static config file, under 'fields'")
-}
-
-func TestFieldsCardinalityWarns(t *testing.T) {
-	cfg, err := config.GetStaticFrontendConfig()
-	assert.NoError(t, err)
-
-	allowed := []config.CardinalityWarn{config.CardinalityWarnAvoid, config.CardinalityWarnCareful, config.CardinalityWarnFine}
-	mapCardinality := map[string]config.CardinalityWarn{}
-	for _, field := range cfg.Fields {
-		assert.Containsf(t, allowed, field.CardinalityWarn, "Field %s: cardinalityWarn '%s' is invalid", field.Name, field.CardinalityWarn)
-		mapCardinality[field.Name] = field.CardinalityWarn
-	}
-
-	for name, card := range mapCardinality {
-		if strings.HasPrefix(name, "Src") {
-			base := strings.TrimPrefix(name, "Src")
-			dst, ok := mapCardinality["Dst"+base]
-			assert.True(t, ok)
-			assert.Equalf(t, card, dst, "Cardinality for %s and %s differs", name, "Dst"+base)
-		}
-	}
 }
