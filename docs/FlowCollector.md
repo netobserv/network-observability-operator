@@ -5951,8 +5951,8 @@ the kernel debug filesystem, so the eBPF pod has to run as privileged.
 If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 - `DNSTracking`: enable the DNS tracking feature.<br>
 - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
-- `NetworkEvents`: enable the Network events monitoring feature.  This feature requires mounting
-the kernel debug filesystem, so the eBPF pod has to run as privileged.<br/>
+- `NetworkEvents`: enable the Network events monitoring feature. This feature requires mounting
+the kernel debug filesystem, so the eBPF pod has to run as privileged. It is currently a Developer Preview.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>
