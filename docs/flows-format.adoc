@@ -141,7 +141,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 - SYN+ACK (0x100) +
 - FIN+ACK (0x200) +
 - RST+ACK (0x400)
-| n/a
+| `tcp_flags`
 | no
 | fine
 | `FlowDirection`
@@ -191,6 +191,12 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | `flow_layer`
 | no
 | fine
+| `NetworkEvents`
+| string
+| Network events flow monitoring
+| `network_events`
+| no
+| avoid
 | `Packets`
 | number
 | Number of packets
