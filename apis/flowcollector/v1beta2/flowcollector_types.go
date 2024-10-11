@@ -167,7 +167,7 @@ type FlowCollectorIPFIX struct {
 	// `clusterNetworkOperator` defines the settings related to the OpenShift Cluster Network Operator, when available.
 	ClusterNetworkOperator ClusterNetworkOperatorConfig `json:"clusterNetworkOperator,omitempty" mapstructure:"-"`
 
-	// `ovnKubernetes` defines the settings of the OVN-Kubernetes CNI, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
+	// `ovnKubernetes` defines the settings of the OVN-Kubernetes network plugin, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
 	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty" mapstructure:"-"`
 }
 
@@ -175,7 +175,7 @@ type FlowCollectorIPFIX struct {
 // - `PacketDrop`, to track packet drops.<br>
 // - `DNSTracking`, to track specific information on DNS traffic.<br>
 // - `FlowRTT`, to track TCP latency.<br>
-// - `NetworkEvents`, to track Network events. Developer Preview.<br>
+// - `NetworkEvents`, to track Network events [Developer Preview].<br>
 // +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents"
 type AgentFeature string
 
@@ -359,7 +359,9 @@ type FlowCollectorEBPF struct {
 	// - `DNSTracking`: enable the DNS tracking feature.<br>
 	// - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
 	// - `NetworkEvents`: enable the Network events monitoring feature. This feature requires mounting
-	// the kernel debug filesystem, so the eBPF pod has to run as privileged. It is currently a Developer Preview.<br>
+	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
+	// It requires using the OVN-Kubernetes network plugin with the Observability feature.
+	// IMPORTANT: this feature is available as a Developer Preview.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 
@@ -1017,7 +1019,7 @@ type ClusterNetworkOperatorConfig struct {
 	Namespace string `json:"namespace,omitempty"`
 }
 
-// `OVNKubernetesConfig` defines the desired configuration related to the OVN-Kubernetes network provider, when Cluster Network Operator isn't installed.
+// `OVNKubernetesConfig` defines the desired configuration related to the OVN-Kubernetes network plugin, when Cluster Network Operator isn't installed.
 type OVNKubernetesConfig struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
