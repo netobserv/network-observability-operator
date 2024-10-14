@@ -19,7 +19,7 @@ const (
 
 //go:embed cardinality.json
 var rawCardinality []byte
-var cardinality *map[string]Warn
+var cardinality map[string]Warn
 
 func GetCardinalities() (map[string]Warn, error) {
 	if cardinality == nil {
@@ -28,9 +28,9 @@ func GetCardinalities() (map[string]Warn, error) {
 		if err != nil {
 			return cfg, err
 		}
-		cardinality = &cfg
+		cardinality = cfg
 	}
-	return *cardinality, nil
+	return cardinality, nil
 }
 
 func CheckCardinality(labels ...string) (*Report, error) {

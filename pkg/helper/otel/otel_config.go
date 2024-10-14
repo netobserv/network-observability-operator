@@ -14,8 +14,8 @@ import (
 
 //go:embed otel-config.json
 var rawOtelConfig []byte
-var otelConfig *map[string]string
-var otelRules *[]api.GenericTransformRule
+var otelConfig map[string]string
+var otelRules []api.GenericTransformRule
 
 func GetOtelConfig() (map[string]string, error) {
 	if otelConfig == nil {
@@ -24,9 +24,9 @@ func GetOtelConfig() (map[string]string, error) {
 		if err != nil {
 			return cfg, err
 		}
-		otelConfig = &cfg
+		otelConfig = cfg
 	}
-	return *otelConfig, nil
+	return otelConfig, nil
 }
 
 func GetOtelTransformRules() ([]api.GenericTransformRule, error) {
@@ -45,10 +45,10 @@ func GetOtelTransformRules() ([]api.GenericTransformRule, error) {
 		sort.Slice(rules, func(i, j int) bool {
 			return rules[i].Input < rules[j].Input
 		})
-		otelRules = &rules
+		otelRules = rules
 	}
 
-	return *otelRules, nil
+	return otelRules, nil
 }
 
 func GetOtelTransformConfig(rules *[]flowslatest.GenericTransformRule) (*api.TransformGeneric, error) {

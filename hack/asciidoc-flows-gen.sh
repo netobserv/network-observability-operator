@@ -13,7 +13,7 @@ echo -e "\n" >> $ADOC
 
 echo -e '[cols="1,1,3,1,1,1,1",options="header"]' >> $ADOC
 echo -e '|===' >> $ADOC
-echo -e '| Name | Type | Description | Filter ID | Loki label | Cardinality | Otel' >> $ADOC
+echo -e '| Name | Type | Description | Filter ID | Loki label | Cardinality | OpenTelemetry' >> $ADOC
 
 nbfields=$(yq '.fields | length' $FE_SOURCE)
 lokiLabels=$(cat $LOKI_LABEL_SOURCE)
