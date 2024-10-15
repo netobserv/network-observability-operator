@@ -646,6 +646,10 @@ type FlowCollectorFLP struct {
 	// `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
 	Deduper *FLPDeduper `json:"deduper,omitempty"`
 
+	// `filters` let you define custom filters to limit the amount of generated flows.
+	// +optional
+	Filters []FLPFilterSet `json:"filters"`
+
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
@@ -675,6 +679,51 @@ type FLPDeduper struct {
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=50
 	Sampling int32 `json:"sampling,omitempty"`
+}
+
+type FLPFilterMatch string
+type FLPFilterTarget string
+
+const (
+	FLPFilterEqual           FLPFilterMatch  = "Equal"
+	FLPFilterNotEqual        FLPFilterMatch  = "NotEqual"
+	FLPFilterPresence        FLPFilterMatch  = "Presence"
+	FLPFilterAbsence         FLPFilterMatch  = "Absence"
+	FLPFilterRegex           FLPFilterMatch  = "MatchRegex"
+	FLPFilterNotRegex        FLPFilterMatch  = "NotMatchRegex"
+	FLPFilterTargetAll       FLPFilterTarget = ""
+	FLPFilterTargetLoki      FLPFilterTarget = "Loki"
+	FLPFilterTargetMetrics   FLPFilterTarget = "Metrics"
+	FLPFilterTargetExporters FLPFilterTarget = "Exporters"
+)
+
+// `FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions
+type FLPFilterSet struct {
+	// `filters` is a list of matches that must be all satisfied in order to remove a flow.
+	// +optional
+	AllOf []FLPSingleFilter `json:"allOf"`
+
+	// If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.
+	// +optional
+	// +kubebuilder:validation:Enum:="";"Loki";"Metrics";"Exporters"
+	OutputTarget FLPFilterTarget `json:"outputTarget,omitempty"`
+}
+
+// `FLPSingleFilter` defines the desired configuration for a single FLP-based filter
+type FLPSingleFilter struct {
+	// Type of matching to apply
+	// +kubebuilder:validation:Enum:="Equal";"NotEqual";"Presence";"Absence";"MatchRegex";"NotMatchRegex"
+	// +kubebuilder:default:="Equal"
+	MatchType FLPFilterMatch `json:"matchType"`
+
+	// Name of the field to filter on
+	// Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.
+	// +required
+	Field string `json:"field"`
+
+	// Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.
+	// +optional
+	Value string `json:"value"`
 }
 
 type HPAStatus string

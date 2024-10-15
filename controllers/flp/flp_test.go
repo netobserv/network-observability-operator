@@ -1111,3 +1111,42 @@ func TestPipelineWithSubnetLabels(t *testing.T) {
 		cfs.Parameters[1].Transform.Network.SubnetLabels,
 	)
 }
+
+func TestPipelineWithFilters(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := flowslatest.FlowCollectorSpec{
+		Processor: flowslatest.FlowCollectorFLP{
+			Filters: []flowslatest.FLPFilterSet{
+				{
+					AllOf: []flowslatest.FLPSingleFilter{
+						{
+							MatchType: flowslatest.FLPFilterEqual,
+							Field:     "SrcK8S_Namespace",
+							Value:     "netobserv",
+						},
+					},
+					OutputTarget: flowslatest.FLPFilterTargetAll,
+				},
+			},
+		},
+		Loki: flowslatest.FlowCollectorLoki{Enable: ptr.To(false)},
+	}
+
+	b := monoBuilder("namespace", &cfg)
+	scm, _, err := b.staticConfigMap()
+	assert.NoError(err)
+	dcm, err := b.dynamicConfigMap()
+	assert.NoError(err)
+	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
+	assert.Equal(
+		`[{"name":"grpc"},{"name":"enrich","follows":"grpc"},{"name":"filters","follows":"enrich"},{"name":"prometheus","follows":"filters"}]`,
+		pipeline,
+	)
+	assert.Equal(
+		[]api.TransformFilterRule{
+			{Type: api.RemoveEntryIfEqual, RemoveEntry: &api.TransformFilterGenericRule{Input: "SrcK8S_Namespace", Value: "netobserv"}},
+		},
+		cfs.Parameters[2].Transform.Filter.Rules,
+	)
+}
