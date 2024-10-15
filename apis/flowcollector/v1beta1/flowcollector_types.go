@@ -604,11 +604,39 @@ type FlowCollectorFLP struct {
 	// When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
 	SubnetLabels SubnetLabels `json:"subnetLabels,omitempty"`
 
+	//+optional
+	// `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
+	Deduper *FLPDeduper `json:"deduper,omitempty"`
+
 	// `debug` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
+}
+
+type FLPDeduperMode string
+
+const (
+	FLPDeduperDisabled FLPDeduperMode = "Disabled"
+	FLPDeduperDrop     FLPDeduperMode = "Drop"
+	FLPDeduperSample   FLPDeduperMode = "Sample"
+)
+
+// `FLPDeduper` defines the desired configuration for FLP-based deduper
+type FLPDeduper struct {
+	// Set the Processor deduper mode (de-duplication). It comes in addition to the Agent deduper because the Agent cannot de-duplicate same flows reported from different nodes.<br>
+	// - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer.<br>
+	// - Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br>
+	// - Use `Disabled` to turn off Processor-based de-duplication.<br>
+	// +kubebuilder:validation:Enum:="Disabled";"Drop";"Sample"
+	// +kubebuilder:default:=Disabled
+	Mode FLPDeduperMode `json:"mode,omitempty"`
+
+	// `sampling` is the sampling rate when deduper `mode` is `Sample`.
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=50
+	Sampling int32 `json:"sampling,omitempty"`
 }
 
 const (

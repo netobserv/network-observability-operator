@@ -148,7 +148,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	}
 
 	// enrich stage (transform) configuration
-	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
+	nextStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
 		Rules: rules,
 		DirectionInfo: api.NetworkTransformDirectionInfo{
 			ReporterIPField:    "AgentIP",
@@ -161,6 +161,52 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			SecondaryNetworks: secondaryNetworks,
 		},
 	})
+
+	// Dedup stage
+	if helper.HasFLPDeduper(b.desired) {
+		dedupRules := []*api.RemoveEntryRule{
+			{
+				Type: api.RemoveEntryIfEqualD,
+				RemoveEntry: &api.TransformFilterGenericRule{
+					Input:   "FlowDirection",
+					Value:   1,
+					CastInt: true,
+				},
+			},
+			{
+				Type: api.RemoveEntryIfExistsD,
+				RemoveEntry: &api.TransformFilterGenericRule{
+					Input: "DstK8S_OwnerName",
+				},
+			},
+		}
+		var transformFilter api.TransformFilter
+		if b.desired.Processor.Deduper.Mode == flowslatest.FLPDeduperDrop {
+			transformFilter = api.TransformFilter{
+				Rules: []api.TransformFilterRule{
+					{
+						Type:                    api.RemoveEntryAllSatisfied,
+						RemoveEntryAllSatisfied: dedupRules,
+					},
+				},
+			}
+		} else {
+			transformFilter = api.TransformFilter{
+				Rules: []api.TransformFilterRule{
+					{
+						Type: api.ConditionalSampling,
+						ConditionalSampling: []*api.SamplingCondition{
+							{
+								Rules: dedupRules,
+								Value: uint16(b.desired.Processor.Deduper.Sampling),
+							},
+						},
+					},
+				},
+			}
+		}
+		nextStage = nextStage.TransformFilter("dedup", transformFilter)
+	}
 
 	// loki stage (write) configuration
 	advancedConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
@@ -215,12 +261,12 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 				Authorization: authorization,
 			}
 		}
-		enrichedStage.WriteLoki("loki", lokiWrite)
+		nextStage.WriteLoki("loki", lokiWrite)
 	}
 
 	// write on Stdout if logging trace enabled
 	if b.desired.Processor.LogLevel == "trace" {
-		enrichedStage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
+		nextStage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
 	}
 
 	// obtain encode_prometheus stage from metrics_definitions
@@ -251,10 +297,10 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			Prefix:  "netobserv_",
 			Metrics: flpMetrics,
 		}
-		enrichedStage.EncodePrometheus("prometheus", promEncode)
+		nextStage.EncodePrometheus("prometheus", promEncode)
 	}
 
-	b.addCustomExportStages(&enrichedStage, flpMetrics)
+	b.addCustomExportStages(&nextStage, flpMetrics)
 	return nil
 }
 
