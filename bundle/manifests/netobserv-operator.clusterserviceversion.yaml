@@ -796,6 +796,8 @@ spec:
         path: processor.deduper.mode
       - displayName: Sampling
         path: processor.deduper.sampling
+      - displayName: Filters
+        path: processor.filters
       - displayName: Log types
         path: processor.logTypes
       - displayName: Disable alerts
