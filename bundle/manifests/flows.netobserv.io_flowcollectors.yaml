@@ -1739,6 +1739,30 @@ spec:
                           in edge debug or support scenarios.
                         type: object
                     type: object
+                  deduper:
+                    description: '`deduper` allows to sample or drop flows identified
+                      as duplicates, in order to save on resource usage.'
+                    properties:
+                      mode:
+                        default: Disabled
+                        description: |-
+                          Set the Processor deduper mode (de-duplication). It comes in addition to the Agent deduper because the Agent cannot de-duplicate same flows reported from different nodes.<br>
+                          - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer.<br>
+                          - Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br>
+                          - Use `Disabled` to turn off Processor-based de-duplication.<br>
+                        enum:
+                        - Disabled
+                        - Drop
+                        - Sample
+                        type: string
+                      sampling:
+                        default: 50
+                        description: '`sampling` is the sampling rate when deduper
+                          `mode` is `Sample`.'
+                        format: int32
+                        minimum: 0
+                        type: integer
+                    type: object
                   dropUnusedFields:
                     default: true
                     description: '`dropUnusedFields` [deprecated (*)] this setting
@@ -7823,6 +7847,30 @@ spec:
                       in the flows data. This is useful in a multi-cluster context.
                       When using OpenShift, leave empty to make it automatically determined.'
                     type: string
+                  deduper:
+                    description: '`deduper` allows to sample or drop flows identified
+                      as duplicates, in order to save on resource usage.'
+                    properties:
+                      mode:
+                        default: Disabled
+                        description: |-
+                          Set the Processor deduper mode (de-duplication). It comes in addition to the Agent deduper because the Agent cannot de-duplicate same flows reported from different nodes.<br>
+                          - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer.<br>
+                          - Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br>
+                          - Use `Disabled` to turn off Processor-based de-duplication.<br>
+                        enum:
+                        - Disabled
+                        - Drop
+                        - Sample
+                        type: string
+                      sampling:
+                        default: 50
+                        description: '`sampling` is the sampling rate when deduper
+                          `mode` is `Sample`.'
+                        format: int32
+                        minimum: 0
+                        type: integer
+                    type: object
                   imagePullPolicy:
                     default: IfNotPresent
                     description: '`imagePullPolicy` is the Kubernetes pull policy
