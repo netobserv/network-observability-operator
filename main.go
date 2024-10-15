@@ -152,7 +152,7 @@ func main() {
 			TLSOpts:     []func(*tls.Config){disableHTTP2},
 		},
 		WebhookServer: webhook.NewServer(webhook.Options{
-			Port:    9443,
+			Port:    constants.WebhookPort,
 			TLSOpts: []func(*tls.Config){disableHTTP2},
 		}),
 		PprofBindAddress:       pprofAddr,
