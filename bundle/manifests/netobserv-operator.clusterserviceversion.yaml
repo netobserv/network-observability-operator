@@ -790,6 +790,14 @@ spec:
         path: networkPolicy.additionalNamespaces
       - displayName: Enable
         path: networkPolicy.enable
+      - displayName: Deduper
+        path: processor.deduper
+      - displayName: Mode
+        path: processor.deduper.mode
+      - displayName: Sampling
+        path: processor.deduper.sampling
+      - displayName: Filters
+        path: processor.filters
       - displayName: Log types
         path: processor.logTypes
       - displayName: Disable alerts

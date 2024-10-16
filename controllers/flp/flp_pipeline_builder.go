@@ -54,6 +54,7 @@ func newPipelineBuilder(
 
 const openshiftNamespacesPrefixes = "openshift"
 
+// nolint:cyclop
 func (b *PipelineBuilder) AddProcessorStages() error {
 	lastStage := *b.PipelineBuilderStage
 	lastStage = b.addTransformFilter(lastStage)
@@ -148,7 +149,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	}
 
 	// enrich stage (transform) configuration
-	enrichedStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
+	nextStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
 		Rules: rules,
 		DirectionInfo: api.NetworkTransformDirectionInfo{
 			ReporterIPField:    "AgentIP",
@@ -162,9 +163,68 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		},
 	})
 
+	// Custom filters
+	filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetAll)
+	if len(filters) > 0 {
+		nextStage = nextStage.TransformFilter("filters", api.TransformFilter{Rules: filters})
+	}
+
+	// Dedup stage
+	if helper.HasFLPDeduper(b.desired) {
+		dedupRules := []*api.RemoveEntryRule{
+			{
+				Type: api.RemoveEntryIfEqualD,
+				RemoveEntry: &api.TransformFilterGenericRule{
+					Input:   "FlowDirection",
+					Value:   1,
+					CastInt: true,
+				},
+			},
+			{
+				Type: api.RemoveEntryIfExistsD,
+				RemoveEntry: &api.TransformFilterGenericRule{
+					Input: "DstK8S_OwnerName",
+				},
+			},
+		}
+		var transformFilter api.TransformFilter
+		if b.desired.Processor.Deduper.Mode == flowslatest.FLPDeduperDrop {
+			transformFilter = api.TransformFilter{
+				Rules: []api.TransformFilterRule{
+					{
+						Type:                    api.RemoveEntryAllSatisfied,
+						RemoveEntryAllSatisfied: dedupRules,
+					},
+				},
+			}
+		} else {
+			transformFilter = api.TransformFilter{
+				Rules: []api.TransformFilterRule{
+					{
+						Type: api.ConditionalSampling,
+						ConditionalSampling: []*api.SamplingCondition{
+							{
+								Rules: dedupRules,
+								Value: uint16(b.desired.Processor.Deduper.Sampling),
+							},
+						},
+					},
+				},
+			}
+		}
+		nextStage = nextStage.TransformFilter("dedup", transformFilter)
+	}
+
 	// loki stage (write) configuration
 	advancedConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
 	if helper.UseLoki(b.desired) {
+		lokiStage := nextStage
+		// Custom filters: Loki only
+		filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetLoki)
+		if len(filters) > 0 {
+			lokiStage = lokiStage.TransformFilter("filters-loki", api.TransformFilter{Rules: filters})
+		}
+
 		lokiWrite := api.WriteLoki{
 			Labels:         loki.GetLokiLabels(b.desired),
 			BatchSize:      int(b.desired.Loki.WriteBatchSize),
@@ -215,12 +275,12 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 				Authorization: authorization,
 			}
 		}
-		enrichedStage.WriteLoki("loki", lokiWrite)
+		lokiStage.WriteLoki("loki", lokiWrite)
 	}
 
 	// write on Stdout if logging trace enabled
 	if b.desired.Processor.LogLevel == "trace" {
-		enrichedStage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
+		nextStage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
 	}
 
 	// obtain encode_prometheus stage from metrics_definitions
@@ -246,16 +306,78 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	}
 
 	if len(flpMetrics) > 0 {
+		promStage := nextStage
+		// Custom filters: Loki only
+		filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetMetrics)
+		if len(filters) > 0 {
+			promStage = promStage.TransformFilter("filters-prom", api.TransformFilter{Rules: filters})
+		}
+
 		// prometheus stage (encode) configuration
 		promEncode := api.PromEncode{
 			Prefix:  "netobserv_",
 			Metrics: flpMetrics,
 		}
-		enrichedStage.EncodePrometheus("prometheus", promEncode)
+		promStage.EncodePrometheus("prometheus", promEncode)
 	}
 
-	b.addCustomExportStages(&enrichedStage, flpMetrics)
+	expStage := nextStage
+	// Custom filters: Exporters only
+	filters = filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetExporters)
+	if len(filters) > 0 {
+		expStage = expStage.TransformFilter("filters-exp", api.TransformFilter{Rules: filters})
+	}
+	b.addCustomExportStages(&expStage, flpMetrics)
 	return nil
+}
+
+func filtersToFLP(in []flowslatest.FLPFilterSet, target flowslatest.FLPFilterTarget) []api.TransformFilterRule {
+	var rules []api.TransformFilterRule
+	for _, f := range in {
+		if f.OutputTarget == target {
+			var allOf []*api.KeepEntryRule
+			for _, inner := range f.AllOf {
+				rule := singleFilterToFLP(inner)
+				allOf = append(allOf, &rule)
+			}
+			rules = append(rules, api.TransformFilterRule{
+				Type:                  api.KeepEntry,
+				KeepEntryAllSatisfied: allOf,
+				KeepEntrySampling:     uint16(f.Sampling),
+			})
+		}
+	}
+	return rules
+}
+
+func singleFilterToFLP(in flowslatest.FLPSingleFilter) api.KeepEntryRule {
+	var t api.TransformFilterKeepEntryEnum
+	switch in.MatchType {
+	case flowslatest.FLPFilterEqual:
+		t = api.KeepEntryIfEqual
+	case flowslatest.FLPFilterNotEqual:
+		t = api.KeepEntryIfNotEqual
+	case flowslatest.FLPFilterPresence:
+		t = api.KeepEntryIfExists
+	case flowslatest.FLPFilterAbsence:
+		t = api.KeepEntryIfDoesntExist
+	case flowslatest.FLPFilterRegex:
+		t = api.KeepEntryIfRegexMatch
+	case flowslatest.FLPFilterNotRegex:
+		t = api.KeepEntryIfNotRegexMatch
+	}
+	// For now we don't handle numeric fields except for a few specific cases.
+	// Since we don't do any arithmetic in matchers (e.g. no "x > y" kind of match), it doesn't sound necessary to add more recognized fields here.
+	// That's open for a follow-up
+	isNumeric := in.Field == "FlowDirection" || in.Field == "Flags"
+	return api.KeepEntryRule{
+		Type: t,
+		KeepEntry: &api.TransformFilterGenericRule{
+			Input:   in.Field,
+			Value:   in.Value,
+			CastInt: isNumeric,
+		},
+	}
 }
 
 func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem, error) {

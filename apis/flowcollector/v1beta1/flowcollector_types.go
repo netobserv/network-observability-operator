@@ -604,11 +604,93 @@ type FlowCollectorFLP struct {
 	// When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
 	SubnetLabels SubnetLabels `json:"subnetLabels,omitempty"`
 
+	//+optional
+	// `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
+	Deduper *FLPDeduper `json:"deduper,omitempty"`
+
+	// `filters` let you define custom filters to limit the amount of generated flows.
+	// +optional
+	Filters []FLPFilterSet `json:"filters"`
+
 	// `debug` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 	// +optional
 	Debug DebugConfig `json:"debug,omitempty"`
+}
+
+type FLPDeduperMode string
+
+const (
+	FLPDeduperDisabled FLPDeduperMode = "Disabled"
+	FLPDeduperDrop     FLPDeduperMode = "Drop"
+	FLPDeduperSample   FLPDeduperMode = "Sample"
+)
+
+// `FLPDeduper` defines the desired configuration for FLP-based deduper
+type FLPDeduper struct {
+	// Set the Processor deduper mode (de-duplication). It comes in addition to the Agent deduper because the Agent cannot de-duplicate same flows reported from different nodes.<br>
+	// - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer.<br>
+	// - Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br>
+	// - Use `Disabled` to turn off Processor-based de-duplication.<br>
+	// +kubebuilder:validation:Enum:="Disabled";"Drop";"Sample"
+	// +kubebuilder:default:=Disabled
+	Mode FLPDeduperMode `json:"mode,omitempty"`
+
+	// `sampling` is the sampling rate when deduper `mode` is `Sample`.
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=50
+	Sampling int32 `json:"sampling,omitempty"`
+}
+
+type FLPFilterMatch string
+type FLPFilterTarget string
+
+const (
+	FLPFilterEqual           FLPFilterMatch  = "Equal"
+	FLPFilterNotEqual        FLPFilterMatch  = "NotEqual"
+	FLPFilterPresence        FLPFilterMatch  = "Presence"
+	FLPFilterAbsence         FLPFilterMatch  = "Absence"
+	FLPFilterRegex           FLPFilterMatch  = "MatchRegex"
+	FLPFilterNotRegex        FLPFilterMatch  = "NotMatchRegex"
+	FLPFilterTargetAll       FLPFilterTarget = ""
+	FLPFilterTargetLoki      FLPFilterTarget = "Loki"
+	FLPFilterTargetMetrics   FLPFilterTarget = "Metrics"
+	FLPFilterTargetExporters FLPFilterTarget = "Exporters"
+)
+
+// `FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions
+type FLPFilterSet struct {
+	// `filters` is a list of matches that must be all satisfied in order to remove a flow.
+	// +optional
+	AllOf []FLPSingleFilter `json:"allOf"`
+
+	// If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.
+	// +optional
+	// +kubebuilder:validation:Enum:="";"Loki";"Metrics";"Exporters"
+	OutputTarget FLPFilterTarget `json:"outputTarget,omitempty"`
+
+	// `sampling` is an optional sampling rate to apply to this filter.
+	//+kubebuilder:validation:Minimum=0
+	// +optional
+	Sampling int32 `json:"sampling,omitempty"`
+}
+
+// `FLPSingleFilter` defines the desired configuration for a single FLP-based filter
+type FLPSingleFilter struct {
+	// Type of matching to apply
+	// +kubebuilder:validation:Enum:="Equal";"NotEqual";"Presence";"Absence";"MatchRegex";"NotMatchRegex"
+	// +kubebuilder:default:="Equal"
+	MatchType FLPFilterMatch `json:"matchType"`
+
+	// Name of the field to filter on
+	// Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.
+	// +required
+	Field string `json:"field"`
+
+	// Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.
+	// +optional
+	Value string `json:"value"`
 }
 
 const (
