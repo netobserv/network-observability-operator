@@ -20,6 +20,7 @@ resources:
   version: v1beta2
   webhooks:
     conversion: true
+    validation: true
     webhookVersion: v1
 - controller: true
   group: core

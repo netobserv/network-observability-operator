@@ -122,7 +122,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 	}
 
 	// Dashboards
-	if r.mgr.IsOpenShift() && r.mgr.HasSvcMonitor() {
+	if r.mgr.ClusterInfo.IsOpenShift() && r.mgr.ClusterInfo.HasSvcMonitor() {
 		// List custom metrics
 		fm := metricslatest.FlowMetricList{}
 		if err := r.Client.List(ctx, &fm, &client.ListOptions{Namespace: ns}); err != nil {

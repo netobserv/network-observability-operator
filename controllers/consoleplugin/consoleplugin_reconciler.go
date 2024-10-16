@@ -45,7 +45,7 @@ func NewReconciler(cmn *reconcilers.Instance) CPReconciler {
 		serviceAccount: cmn.Managed.NewServiceAccount(constants.PluginName),
 		configMap:      cmn.Managed.NewConfigMap(configMapName),
 	}
-	if cmn.AvailableAPIs.HasSvcMonitor() {
+	if cmn.ClusterInfo.HasSvcMonitor() {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(constants.PluginName)
 	}
 	return rec
@@ -67,13 +67,13 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 		return err
 	}
 
-	if r.AvailableAPIs.HasConsolePlugin() {
+	if r.ClusterInfo.HasConsolePlugin() {
 		if err = r.checkAutoPatch(ctx, desired); err != nil {
 			return err
 		}
 	}
 
-	if helper.UseConsolePlugin(&desired.Spec) && (r.AvailableAPIs.HasConsolePlugin() || helper.UseTestConsolePlugin(&desired.Spec)) {
+	if helper.UseConsolePlugin(&desired.Spec) && (r.ClusterInfo.HasConsolePlugin() || helper.UseTestConsolePlugin(&desired.Spec)) {
 		// Create object builder
 		builder := newBuilder(r.Instance, &desired.Spec)
 
@@ -81,7 +81,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 			return err
 		}
 
-		if r.AvailableAPIs.HasConsolePlugin() {
+		if r.ClusterInfo.HasConsolePlugin() {
 			if err = r.reconcilePlugin(ctx, &builder, &desired.Spec); err != nil {
 				return err
 			}
@@ -225,7 +225,7 @@ func (r *CPReconciler) reconcileServices(ctx context.Context, builder *builder) 
 	if err := r.ReconcileService(ctx, r.metricsService, builder.metricsService(), &report); err != nil {
 		return err
 	}
-	if r.AvailableAPIs.HasSvcMonitor() {
+	if r.ClusterInfo.HasSvcMonitor() {
 		serviceMonitor := builder.serviceMonitor()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err

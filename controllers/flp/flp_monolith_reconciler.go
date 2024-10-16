@@ -43,10 +43,10 @@ func newMonolithReconciler(cmn *reconcilers.Instance) *monolithReconciler {
 		roleBindingIn:    cmn.Managed.NewCRB(RoleBindingMonoName(ConfKafkaIngester)),
 		roleBindingTr:    cmn.Managed.NewCRB(RoleBindingMonoName(ConfKafkaTransformer)),
 	}
-	if cmn.AvailableAPIs.HasSvcMonitor() {
+	if cmn.ClusterInfo.HasSvcMonitor() {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(serviceMonitorName(ConfMonolith))
 	}
-	if cmn.AvailableAPIs.HasPromRule() {
+	if cmn.ClusterInfo.HasPromRule() {
 		rec.prometheusRule = cmn.Managed.NewPrometheusRule(prometheusRuleName(ConfMonolith))
 	}
 	return &rec
@@ -160,13 +160,13 @@ func (r *monolithReconciler) reconcilePrometheusService(ctx context.Context, bui
 	if err := r.ReconcileService(ctx, r.promService, builder.promService(), &report); err != nil {
 		return err
 	}
-	if r.AvailableAPIs.HasSvcMonitor() {
+	if r.ClusterInfo.HasSvcMonitor() {
 		serviceMonitor := builder.generic.serviceMonitor()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}
-	if r.AvailableAPIs.HasPromRule() {
+	if r.ClusterInfo.HasPromRule() {
 		promRules := builder.generic.prometheusRule()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
@@ -194,7 +194,7 @@ func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 
-	cr := buildClusterRoleIngester(r.UseOpenShiftSCC)
+	cr := buildClusterRoleIngester(r.ClusterInfo.IsOpenShift())
 	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
 		return err
 	}

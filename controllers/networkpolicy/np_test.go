@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	"github.com/netobserv/network-observability-operator/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
 	"github.com/stretchr/testify/assert"
 
@@ -70,7 +71,7 @@ func TestNpBuilder(t *testing.T) {
 	assert := assert.New(t)
 
 	desired := getConfig()
-	mgr := &manager.Manager{}
+	mgr := &manager.Manager{ClusterInfo: &cluster.Info{}}
 
 	desired.Spec.NetworkPolicy.Enable = nil
 	name, np := buildMainNetworkPolicy(&desired, mgr)

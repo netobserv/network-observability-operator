@@ -19,6 +19,7 @@ import (
 	config "github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 )
@@ -109,7 +110,7 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 }
 
 func getBuilder(spec *flowslatest.FlowCollectorSpec, lk *helper.LokiConfig) builder {
-	info := reconcilers.Common{Namespace: testNamespace, Loki: lk}
+	info := reconcilers.Common{Namespace: testNamespace, Loki: lk, ClusterInfo: &cluster.Info{}}
 	b := newBuilder(info.NewInstance(testImage, status.Instance{}), spec)
 	_, _, _ = b.configMap(context.Background()) // build configmap to update builder's volumes
 	return b

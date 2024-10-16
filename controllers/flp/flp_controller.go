@@ -34,7 +34,6 @@ type Reconciler struct {
 	mgr              *manager.Manager
 	watcher          *watchers.Watcher
 	status           status.Instance
-	clusterID        string
 	currentNamespace string
 }
 
@@ -126,19 +125,13 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	r.watcher.Reset(ns)
 
 	// obtain default cluster ID - api is specific to openshift
-	if r.mgr.IsOpenShift() && r.clusterID == "" {
-		cversion := &configv1.ClusterVersion{}
-		key := client.ObjectKey{Name: "version"}
-		if err := r.Client.Get(ctx, key, cversion); err != nil {
-			log.Error(err, "unable to obtain cluster ID")
-		} else {
-			r.clusterID = string(cversion.Spec.ClusterID)
-		}
+	if err := r.mgr.ClusterInfo.CheckClusterInfo(ctx, r.Client); err != nil {
+		log.Error(err, "unable to obtain cluster ID")
 	}
 
 	// Auto-detect subnets
 	var subnetLabels []flowslatest.SubnetLabel
-	if r.mgr.IsOpenShift() && helper.AutoDetectOpenShiftNetworks(&fc.Spec.Processor) {
+	if r.mgr.ClusterInfo.IsOpenShift() && helper.AutoDetectOpenShiftNetworks(&fc.Spec.Processor) {
 		var err error
 		subnetLabels, err = r.getOpenShiftSubnets(ctx)
 		if err != nil {
@@ -190,11 +183,9 @@ func (r *Reconciler) newCommonInfo(clh *helper.Client, ns, prevNs string, loki *
 		Client:            *clh,
 		Namespace:         ns,
 		PreviousNamespace: prevNs,
-		UseOpenShiftSCC:   r.mgr.IsOpenShift(),
-		AvailableAPIs:     &r.mgr.AvailableAPIs,
+		ClusterInfo:       r.mgr.ClusterInfo,
 		Watcher:           r.watcher,
 		Loki:              loki,
-		ClusterID:         r.clusterID,
 		IsDownstream:      r.mgr.Config.DownstreamDeployment,
 	}
 }
@@ -278,7 +269,7 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 	var subnets []flowslatest.SubnetLabel
 
 	// Pods and Services subnets are found in CNO config
-	if r.mgr.HasCNO() {
+	if r.mgr.ClusterInfo.HasCNO() {
 		network := &configv1.Network{}
 		err := r.Get(ctx, types.NamespacedName{Name: "cluster"}, network)
 		if err != nil {

@@ -143,7 +143,7 @@ func (b *builder) NewKafkaPipeline() PipelineBuilder {
 }
 
 func (b *builder) initPipeline(ingest config.PipelineBuilderStage) PipelineBuilder {
-	pipeline := newPipelineBuilder(b.desired, b.flowMetrics, b.detectedSubnets, b.info.Loki, b.info.ClusterID, &b.volumes, &ingest)
+	pipeline := newPipelineBuilder(b.desired, b.flowMetrics, b.detectedSubnets, b.info.Loki, b.info.ClusterInfo.ID, &b.volumes, &ingest)
 	b.pipeline = &pipeline
 	return pipeline
 }

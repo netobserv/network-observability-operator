@@ -56,15 +56,15 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ServiceAccount{})
 
-	if mgr.IsOpenShift() {
+	if mgr.ClusterInfo.IsOpenShift() {
 		builder.Owns(&securityv1.SecurityContextConstraints{})
 	}
-	if mgr.HasConsolePlugin() {
+	if mgr.ClusterInfo.HasConsolePlugin() {
 		builder.Owns(&osv1.ConsolePlugin{})
 	} else {
 		log.Info("Console not detected: the console plugin is not available")
 	}
-	if !mgr.HasCNO() {
+	if !mgr.ClusterInfo.HasCNO() {
 		log.Info("CNO not detected: using ovnKubernetes config and reconciler")
 	}
 
@@ -181,8 +181,7 @@ func (r *FlowCollectorReconciler) newCommonInfo(clh *helper.Client, ns, prevNs s
 		Client:            *clh,
 		Namespace:         ns,
 		PreviousNamespace: prevNs,
-		UseOpenShiftSCC:   r.mgr.IsOpenShift(),
-		AvailableAPIs:     &r.mgr.AvailableAPIs,
+		ClusterInfo:       r.mgr.ClusterInfo,
 		Watcher:           r.watcher,
 		Loki:              loki,
 		IsDownstream:      r.mgr.Config.DownstreamDeployment,

@@ -21,10 +21,10 @@ func (c *AgentController) reconcileMetricsService(ctx context.Context, target *f
 
 	if !helper.IsEBPFMetricsEnabled(target) {
 		c.Managed.TryDelete(ctx, c.promSvc)
-		if c.AvailableAPIs.HasSvcMonitor() {
+		if c.ClusterInfo.HasSvcMonitor() {
 			c.Managed.TryDelete(ctx, c.serviceMonitor)
 		}
-		if c.AvailableAPIs.HasPromRule() {
+		if c.ClusterInfo.HasPromRule() {
 			c.Managed.TryDelete(ctx, c.prometheusRule)
 		}
 		return nil
@@ -33,7 +33,7 @@ func (c *AgentController) reconcileMetricsService(ctx context.Context, target *f
 	if err := c.ReconcileService(ctx, c.promSvc, c.promService(target), &report); err != nil {
 		return err
 	}
-	if c.AvailableAPIs.HasSvcMonitor() {
+	if c.ClusterInfo.HasSvcMonitor() {
 		serviceMonitor := c.promServiceMonitoring(target)
 		if err := reconcilers.GenericReconcile(ctx, c.Managed, &c.Client, c.serviceMonitor,
 			serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
@@ -41,7 +41,7 @@ func (c *AgentController) reconcileMetricsService(ctx context.Context, target *f
 		}
 	}
 
-	if c.AvailableAPIs.HasPromRule() {
+	if c.ClusterInfo.HasPromRule() {
 		promRules := c.agentPrometheusRule(target)
 		if err := reconcilers.GenericReconcile(ctx, c.Managed, &c.Client, c.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
