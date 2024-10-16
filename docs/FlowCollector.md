@@ -3982,6 +3982,16 @@ in edge debug or support scenarios.<br/>
             <i>Enum</i>: , Loki, Metrics, Exporters<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          `sampling` is an optional sampling rate to apply to this filter.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -16141,6 +16151,16 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
           If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.<br/>
           <br/>
             <i>Enum</i>: , Loki, Metrics, Exporters<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          `sampling` is an optional sampling rate to apply to this filter.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Minimum</i>: 0<br/>
         </td>
         <td>false</td>
       </tr></tbody>

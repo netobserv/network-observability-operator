@@ -612,6 +612,7 @@ func Convert_v1beta2_FLPDeduper_To_v1beta1_FLPDeduper(in *v1beta2.FLPDeduper, ou
 func autoConvert_v1beta1_FLPFilterSet_To_v1beta2_FLPFilterSet(in *FLPFilterSet, out *v1beta2.FLPFilterSet, s conversion.Scope) error {
 	out.AllOf = *(*[]v1beta2.FLPSingleFilter)(unsafe.Pointer(&in.AllOf))
 	out.OutputTarget = v1beta2.FLPFilterTarget(in.OutputTarget)
+	out.Sampling = in.Sampling
 	return nil
 }
 
@@ -623,6 +624,7 @@ func Convert_v1beta1_FLPFilterSet_To_v1beta2_FLPFilterSet(in *FLPFilterSet, out 
 func autoConvert_v1beta2_FLPFilterSet_To_v1beta1_FLPFilterSet(in *v1beta2.FLPFilterSet, out *FLPFilterSet, s conversion.Scope) error {
 	out.AllOf = *(*[]FLPSingleFilter)(unsafe.Pointer(&in.AllOf))
 	out.OutputTarget = FLPFilterTarget(in.OutputTarget)
+	out.Sampling = in.Sampling
 	return nil
 }
 

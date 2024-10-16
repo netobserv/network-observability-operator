@@ -1824,6 +1824,12 @@ spec:
                           - Metrics
                           - Exporters
                           type: string
+                        sampling:
+                          description: '`sampling` is an optional sampling rate to
+                            apply to this filter.'
+                          format: int32
+                          minimum: 0
+                          type: integer
                       type: object
                     type: array
                   healthPort:
@@ -7975,6 +7981,12 @@ spec:
                           - Metrics
                           - Exporters
                           type: string
+                        sampling:
+                          description: '`sampling` is an optional sampling rate to
+                            apply to this filter.'
+                          format: int32
+                          minimum: 0
+                          type: integer
                       type: object
                     type: array
                   imagePullPolicy:

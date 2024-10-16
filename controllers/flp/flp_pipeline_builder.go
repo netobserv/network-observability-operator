@@ -340,47 +340,48 @@ func filtersToFLP(in []flowslatest.FLPFilterSet, target flowslatest.FLPFilterTar
 	var rules []api.TransformFilterRule
 	for _, f := range in {
 		if f.OutputTarget == target {
-			if len(f.AllOf) > 1 {
-				var remRules []*api.RemoveEntryRule
-				for _, inner := range f.AllOf {
-					t, r := singleFilterToFLP(inner)
-					remRules = append(remRules, &api.RemoveEntryRule{Type: t, RemoveEntry: r})
-				}
-				rule := api.TransformFilterRule{
-					Type:                    api.RemoveEntryAllSatisfied,
-					RemoveEntryAllSatisfied: remRules,
-				}
-				rules = append(rules, rule)
-			} else if len(f.AllOf) == 1 {
-				t, r := singleFilterToFLP(f.AllOf[0])
-				rules = append(rules, api.TransformFilterRule{Type: api.TransformFilterEnum(string(t)), RemoveEntry: r})
+			var allOf []*api.KeepEntryRule
+			for _, inner := range f.AllOf {
+				rule := singleFilterToFLP(inner)
+				allOf = append(allOf, &rule)
 			}
+			rules = append(rules, api.TransformFilterRule{
+				Type:                  api.KeepEntry,
+				KeepEntryAllSatisfied: allOf,
+				KeepEntrySampling:     uint16(f.Sampling),
+			})
 		}
 	}
 	return rules
 }
 
-func singleFilterToFLP(in flowslatest.FLPSingleFilter) (api.TransformFilterRemoveEntryEnum, *api.TransformFilterGenericRule) {
-	var t api.TransformFilterRemoveEntryEnum
+func singleFilterToFLP(in flowslatest.FLPSingleFilter) api.KeepEntryRule {
+	var t api.TransformFilterKeepEntryEnum
 	switch in.MatchType {
 	case flowslatest.FLPFilterEqual:
-		t = api.RemoveEntryIfEqualD
+		t = api.KeepEntryIfEqual
 	case flowslatest.FLPFilterNotEqual:
-		t = api.RemoveEntryIfNotEqualD
+		t = api.KeepEntryIfNotEqual
 	case flowslatest.FLPFilterPresence:
-		t = api.RemoveEntryIfExistsD
+		t = api.KeepEntryIfExists
 	case flowslatest.FLPFilterAbsence:
-		t = api.RemoveEntryIfDoesntExistD
+		t = api.KeepEntryIfDoesntExist
 	case flowslatest.FLPFilterRegex:
-		// TODO
+		t = api.KeepEntryIfRegexMatch
 	case flowslatest.FLPFilterNotRegex:
-		// TODO
+		t = api.KeepEntryIfNotRegexMatch
 	}
-	isNumeric := false // TODO
-	return t, &api.TransformFilterGenericRule{
-		Input:   in.Field,
-		Value:   in.Value,
-		CastInt: isNumeric,
+	// For now we don't handle numeric fields except for a few specific cases.
+	// Since we don't do any arithmetic in matchers (e.g. no "x > y" kind of match), it doesn't sound necessary to add more recognized fields here.
+	// That's open for a follow-up
+	isNumeric := in.Field == "FlowDirection" || in.Field == "Flags"
+	return api.KeepEntryRule{
+		Type: t,
+		KeepEntry: &api.TransformFilterGenericRule{
+			Input:   in.Field,
+			Value:   in.Value,
+			CastInt: isNumeric,
+		},
 	}
 }
 

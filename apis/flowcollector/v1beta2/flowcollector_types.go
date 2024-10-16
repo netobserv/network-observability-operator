@@ -707,6 +707,11 @@ type FLPFilterSet struct {
 	// +optional
 	// +kubebuilder:validation:Enum:="";"Loki";"Metrics";"Exporters"
 	OutputTarget FLPFilterTarget `json:"outputTarget,omitempty"`
+
+	// `sampling` is an optional sampling rate to apply to this filter.
+	//+kubebuilder:validation:Minimum=0
+	// +optional
+	Sampling int32 `json:"sampling,omitempty"`
 }
 
 // `FLPSingleFilter` defines the desired configuration for a single FLP-based filter
