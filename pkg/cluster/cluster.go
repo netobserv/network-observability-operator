@@ -93,9 +93,19 @@ func (c *Info) fetchOpenShiftClusterVersion(ctx context.Context, cl client.Clien
 	return nil
 }
 
-// SetOpenShiftVersion shouldn't be used except for testing
-func (c *Info) SetOpenShiftVersion(v string) {
-	c.openShiftVersion = semver.New(v)
+// MockOpenShiftVersion shouldn't be used except for testing
+func (c *Info) MockOpenShiftVersion(v string) {
+	if c.apisMap == nil {
+		c.apisMap = make(map[string]bool)
+	}
+	if v == "" {
+		// No OpenShift
+		c.apisMap[ocpSecurity] = false
+		c.openShiftVersion = nil
+	} else {
+		c.apisMap[ocpSecurity] = true
+		c.openShiftVersion = semver.New(v)
+	}
 }
 
 func (c *Info) GetOpenShiftVersion() string {
