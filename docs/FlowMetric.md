@@ -167,7 +167,7 @@ Refer to the documentation for the list of available fields: https://docs.opensh
         <td><b>remap</b></td>
         <td>map[string]string</td>
         <td>
-          `remap` allows to use different names for the generated metric labels than the flow fields. Use the origin flow fields as keys, and the desired label names as values.<br/>
+          Set the `remap` property to use different names for the generated metric labels than the flow fields. Use the origin flow fields as keys, and the desired label names as values.<br/>
         </td>
         <td>false</td>
       </tr><tr>

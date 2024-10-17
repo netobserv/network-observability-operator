@@ -68,7 +68,7 @@ Currently, `FlowMetric` resources need to be created in the namespace defined in
 
 ### Counter example
 
-Here is an example of a FlowMetric resource that generates a metric tracking ingress bytes received from cluster external sources, labelled by destination host and workload:
+Here is an example of a FlowMetric resource that generates a metric tracking ingress bytes received from cluster external sources, labeled by destination host and workload:
 
 ```yaml
 apiVersion: flows.netobserv.io/v1alpha1

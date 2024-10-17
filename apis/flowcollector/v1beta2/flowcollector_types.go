@@ -353,12 +353,12 @@ type FlowCollectorEBPF struct {
 
 	// List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
 	// - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
-	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
+	// the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 	// If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 	// - `DNSTracking`: enable the DNS tracking feature.<br>
 	// - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
-	// - `NetworkEvents`: enable the Network events monitoring feature. This feature requires mounting
-	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
+	// - `NetworkEvents`: enable the Network events monitoring feature, such as correlating flows and network policies.
+	// This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 	// It requires using the OVN-Kubernetes network plugin with the Observability feature.
 	// IMPORTANT: this feature is available as a Developer Preview.<br>
 	// +optional
@@ -410,29 +410,19 @@ type FlowCollectorIPFIXReceiver struct {
 }
 
 type FlowCollectorOpenTelemetryLogs struct {
-	// Set `enable` to `true` to send logs to Open Telemetry receiver.
+	// Set `enable` to `true` to send logs to an OpenTelemetry receiver.
 	//+kubebuilder:default:=true
 	Enable *bool `json:"enable,omitempty"`
 }
 
 type FlowCollectorOpenTelemetryMetrics struct {
-	// Set `enable` to `true` to send metrics to Open Telemetry receiver.
+	// Set `enable` to `true` to send metrics to an OpenTelemetry receiver.
 	//+kubebuilder:default:=true
 	Enable *bool `json:"enable,omitempty"`
 
 	// How often should metrics be sent to collector
 	// +kubebuilder:default:="20s"
 	PushTimeInterval *metav1.Duration `json:"pushTimeInterval,omitempty"`
-}
-
-type FlowCollectorOpenTelemetryTraces struct {
-	// Set `enable` to `true` to send traces to Open Telemetry receiver.
-	//+kubebuilder:default:=true
-	Enable *bool `json:"enable,omitempty"`
-
-	// Separate span for each prefix listed
-	//+optional
-	SpanSplitter []string `json:"spanSplitter,omitempty"`
 }
 
 type GenericTransformRule struct {
@@ -444,14 +434,14 @@ type GenericTransformRule struct {
 type GenericTransform []GenericTransformRule
 
 type FlowCollectorOpenTelemetry struct {
-	// Address of the Open Telemetry receiver
+	// Address of the OpenTelemetry receiver
 	// +kubebuilder:default:=""
 	TargetHost string `json:"targetHost"`
 
-	// Port for the Open Telemetry receiver
+	// Port for the OpenTelemetry receiver
 	TargetPort int `json:"targetPort"`
 
-	// Protocol of Open Telemetry connection. The available options are `http` and `grpc`.
+	// Protocol of the OpenTelemetry connection. The available options are `http` and `grpc`.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="http";"grpc"
 	// +optional
@@ -467,22 +457,17 @@ type FlowCollectorOpenTelemetry struct {
 
 	// Custom fields mapping to an OpenTelemetry conformant format.
 	// By default, NetObserv format proposal is used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal .
-	// As there is currently no accepted otlp standard for L3/4 network logs, you can freely override it with your own.
+	// As there is currently no accepted standard for L3 or L4 enriched network logs, you can freely override it with your own.
 	// +optional
 	FieldsMapping *[]GenericTransformRule `json:"fieldsMapping,omitempty"`
 
-	// Open telemetry configuration for logs.
+	// OpenTelemetry configuration for logs.
 	// +optional
 	Logs FlowCollectorOpenTelemetryLogs `json:"logs"`
 
-	// Open telemetry configuration for metrics.
+	// OpenTelemetry configuration for metrics.
 	// +optional
 	Metrics FlowCollectorOpenTelemetryMetrics `json:"metrics"`
-
-	// TODO: add traces in future
-	// Open telemetry configuration for traces.
-	// +optional
-	//Traces FlowCollectorOpenTelemetryTraces `json:"traces"`
 }
 
 type ServerTLSConfigType string
@@ -1226,12 +1211,12 @@ type AdvancedProcessorConfig struct {
 
 	// Define secondary networks to be checked for resources identification.
 	// In order to guarantee a correct identification, it is important that the indexed values form an unique identifier across the cluster.
-	// If there are collisions in the indexes (same index used by several resources), those resources might be wrongly labelled.
+	// If there are collisions in the indexes (same index used by several resources), those resources might be wrongly labeled.
 	// +optional
 	SecondaryNetworks []SecondaryNetwork `json:"secondaryNetworks,omitempty"`
 }
 
-// Field to index for secondary network pod identification, can be any of: MAC, IP, Interface
+// Field to index for secondary network pod identification, can be any of: `MAC`, `IP`, `Interface`.
 // +kubebuilder:validation:Enum:="MAC";"IP";"Interface"
 type SecondaryNetworkIndex string
 
@@ -1247,7 +1232,8 @@ type SecondaryNetwork struct {
 	Name string `json:"name,omitempty"`
 
 	// `index` is a list of fields to use for indexing the pods. They should form a unique Pod identifier across the cluster.
-	// Can be any of: MAC, IP, Interface
+	// Can be any of: `MAC`, `IP`, `Interface`.
+	// Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not be added to the index.
 	// +kubebuilder:validation:Required
 	Index []SecondaryNetworkIndex `json:"index,omitempty"`
 }
@@ -1362,7 +1348,7 @@ type FlowCollectorExporter struct {
 	// +optional
 	IPFIX FlowCollectorIPFIXReceiver `json:"ipfix,omitempty"`
 
-	// Open telemetry configuration, such as the IP address and port to send enriched logs, metrics and or traces to.
+	// OpenTelemetry configuration, such as the IP address and port to send enriched logs or metrics to.
 	// +optional
 	OpenTelemetry FlowCollectorOpenTelemetry `json:"openTelemetry,omitempty"`
 }
