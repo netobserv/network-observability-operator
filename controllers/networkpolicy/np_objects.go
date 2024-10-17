@@ -55,8 +55,8 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 		},
 	}
 
-	if mgr.IsOpenShift() {
-		if helper.UseConsolePlugin(&desired.Spec) && mgr.AvailableAPIs.HasConsolePlugin() {
+	if mgr.ClusterInfo.IsOpenShift() {
+		if helper.UseConsolePlugin(&desired.Spec) && mgr.ClusterInfo.HasConsolePlugin() {
 			advanced := helper.GetAdvancedPluginConfig(desired.Spec.ConsolePlugin.Advanced)
 			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
 				From: []networkingv1.NetworkPolicyPeer{
@@ -131,7 +131,7 @@ func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manag
 		},
 	}
 
-	if mgr.IsOpenShift() {
+	if mgr.ClusterInfo.IsOpenShift() {
 		if mgr.Config.DownstreamDeployment {
 			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
 				From: []networkingv1.NetworkPolicyPeer{

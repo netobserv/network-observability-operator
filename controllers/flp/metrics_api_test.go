@@ -12,6 +12,7 @@ import (
 
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 )
@@ -33,7 +34,7 @@ func getConfiguredMetrics(cm *corev1.ConfigMap) (api.MetricsItems, error) {
 func defaultBuilderWithMetrics(metrics *metricslatest.FlowMetricList) (monolithBuilder, error) {
 	cfg := getConfig()
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
-	info := reconcilers.Common{Namespace: "namespace", Loki: &loki}
+	info := reconcilers.Common{Namespace: "namespace", Loki: &loki, ClusterInfo: &cluster.Info{}}
 	return newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, metrics, nil)
 }
 

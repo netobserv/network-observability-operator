@@ -43,7 +43,7 @@ func (r *FlowMetricWebhook) ValidateCreate(ctx context.Context, newObj runtime.O
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an FlowMetric but got a %T", newObj))
 	}
-	return nil, validateFlowMetric(ctx, newFlowMetric)
+	return validateFlowMetric(ctx, newFlowMetric)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
@@ -53,7 +53,7 @@ func (r *FlowMetricWebhook) ValidateUpdate(ctx context.Context, _, newObj runtim
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an FlowMetric but got a %T", newObj))
 	}
-	return nil, validateFlowMetric(ctx, newFlowMetric)
+	return validateFlowMetric(ctx, newFlowMetric)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
@@ -62,18 +62,24 @@ func (r *FlowMetricWebhook) ValidateDelete(_ context.Context, _ runtime.Object) 
 	return nil, nil
 }
 
-func checkFlowMetricCartinality(fMetric *FlowMetric) {
+func checkFlowMetricCartinality(fMetric *FlowMetric) admission.Warnings {
+	w := admission.Warnings{}
 	r, err := cardinality.CheckCardinality(fMetric.Spec.Labels...)
 	if err != nil {
 		flowmetriclog.WithValues("FlowMetric name", fMetric.Name).Error(err, "Could not check metrics cardinality")
+		w = append(w, "Could not check metrics cardinality")
 	}
 	overallCardinality := r.GetOverall()
 	if overallCardinality == cardinality.WarnAvoid || overallCardinality == cardinality.WarnUnknown {
 		flowmetriclog.WithValues("FlowMetric name", fMetric.Name).Info("Warning: unsafe metric detected with potentially very high cardinality, please check its definition.", "Details", r.GetDetails())
+		w = append(w, "This metric looks unsafe, with a potentially very high cardinality: "+r.GetDetails())
+	} else if overallCardinality == cardinality.WarnCareful {
+		w = append(w, "This metric has a potentially high cardinality: "+r.GetDetails())
 	}
+	return w
 }
 
-func validateFlowMetric(_ context.Context, fMetric *FlowMetric) error {
+func validateFlowMetric(_ context.Context, fMetric *FlowMetric) (admission.Warnings, error) {
 	var str []string
 	var allErrs field.ErrorList
 
@@ -121,10 +127,10 @@ func validateFlowMetric(_ context.Context, fMetric *FlowMetric) error {
 	}
 
 	if len(allErrs) != 0 {
-		return apierrors.NewInvalid(
+		return nil, apierrors.NewInvalid(
 			schema.GroupKind{Group: GroupVersion.Group, Kind: FlowMetric{}.Kind},
 			fMetric.Name, allErrs)
 	}
-	checkFlowMetricCartinality(fMetric)
-	return nil
+	w := checkFlowMetricCartinality(fMetric)
+	return w, nil
 }

@@ -108,7 +108,7 @@ func TestFlowMetric(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := validateFlowMetric(context.TODO(), test.m)
+		_, err := validateFlowMetric(context.TODO(), test.m)
 		if err == nil {
 			if test.expectedError != "" {
 				t.Errorf("%s: ValidateFlowMetric failed, no error found while expected: \"%s\"", test.desc, test.expectedError)

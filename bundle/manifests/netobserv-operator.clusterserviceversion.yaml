@@ -1373,7 +1373,7 @@ spec:
     generateName: flowcollectorconversionwebhook.netobserv.io
     rules:
     - apiGroups:
-      - netobserv.io
+      - flows.netobserv.io
       apiVersions:
       - v1beta2
       operations:
@@ -1384,7 +1384,7 @@ spec:
     sideEffects: None
     targetPort: 9443
     type: ValidatingAdmissionWebhook
-    webhookPath: /validate-netobserv-io-v1beta2-flowcollector
+    webhookPath: /validate-flows-netobserv-io-v1beta2-flowcollector
   - admissionReviewVersions:
     - v1
     containerPort: 443

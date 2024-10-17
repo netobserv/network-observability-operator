@@ -384,7 +384,7 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 		config.Timeout = api.Duration{Duration: b.desired.Prometheus.Querier.Timeout.Duration}
 	}
 	if b.desired.Prometheus.Querier.Mode == "" || b.desired.Prometheus.Querier.Mode == flowslatest.PromModeAuto {
-		if b.info.UseOpenShiftSCC /* aka IsOpenShift */ {
+		if b.info.ClusterInfo.IsOpenShift() {
 			config.URL = "https://thanos-querier.openshift-monitoring.svc:9091/"    // requires cluster-monitoringv-view cluster role
 			config.DevURL = "https://thanos-querier.openshift-monitoring.svc:9092/" // restricted to a particular namespace
 			config.ForwardUserToken = true

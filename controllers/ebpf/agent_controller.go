@@ -132,10 +132,10 @@ func NewAgentController(common *reconcilers.Instance) *AgentController {
 		permissions: permissions.NewReconciler(common),
 		promSvc:     common.Managed.NewService(constants.EBPFAgentMetricsSvcName),
 	}
-	if common.AvailableAPIs.HasSvcMonitor() {
+	if common.ClusterInfo.HasSvcMonitor() {
 		agent.serviceMonitor = common.Managed.NewServiceMonitor(constants.EBPFAgentMetricsSvcMonitoringName)
 	}
-	if common.AvailableAPIs.HasPromRule() {
+	if common.ClusterInfo.HasPromRule() {
 		agent.prometheusRule = common.Managed.NewPrometheusRule(constants.EBPFAgentPromoAlertRule)
 	}
 	return &agent

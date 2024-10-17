@@ -28,6 +28,7 @@ import (
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 
@@ -170,14 +171,14 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 
 func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
-	info := reconcilers.Common{Namespace: ns, Loki: &loki}
+	info := reconcilers.Common{Namespace: ns, Loki: &loki, ClusterInfo: &cluster.Info{}}
 	b, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{}, nil)
 	return b
 }
 
 func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) transfoBuilder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
-	info := reconcilers.Common{Namespace: ns, Loki: &loki}
+	info := reconcilers.Common{Namespace: ns, Loki: &loki, ClusterInfo: &cluster.Info{}}
 	b, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{}, nil)
 	return b
 }
@@ -552,7 +553,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 	assert.Contains(report.String(), "ServiceMonitor spec changed")
 
 	// Check labels change
-	info := reconcilers.Common{Namespace: "namespace2"}
+	info := reconcilers.Common{Namespace: "namespace2", ClusterInfo: &cluster.Info{}}
 	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics, nil)
 	third := b.generic.serviceMonitor()
 
@@ -605,7 +606,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	assert.Contains(report.String(), "PrometheusRule spec changed")
 
 	// Check labels change
-	info := reconcilers.Common{Namespace: "namespace2"}
+	info := reconcilers.Common{Namespace: "namespace2", ClusterInfo: &cluster.Info{}}
 	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.generic.flowMetrics, nil)
 	third := b.generic.prometheusRule()
 
@@ -754,7 +755,7 @@ func TestLabels(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := getConfig()
-	info := reconcilers.Common{Namespace: "ns"}
+	info := reconcilers.Common{Namespace: "ns", ClusterInfo: &cluster.Info{}}
 	builder, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil)
 	tBuilder, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil)
 

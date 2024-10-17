@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/pkg/discover"
+	"github.com/netobserv/network-observability-operator/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
@@ -17,10 +17,8 @@ type Common struct {
 	Watcher           *watchers.Watcher
 	Namespace         string
 	PreviousNamespace string
-	UseOpenShiftSCC   bool
-	AvailableAPIs     *discover.AvailableAPIs
+	ClusterInfo       *cluster.Info
 	Loki              *helper.LokiConfig
-	ClusterID         string
 	IsDownstream      bool
 }
 

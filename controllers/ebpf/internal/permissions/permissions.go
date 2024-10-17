@@ -128,7 +128,7 @@ func (c *Reconciler) reconcileServiceAccount(ctx context.Context) error {
 func (c *Reconciler) reconcileVendorPermissions(
 	ctx context.Context, desired *flowslatest.FlowCollectorEBPF,
 ) error {
-	if c.UseOpenShiftSCC {
+	if c.ClusterInfo.IsOpenShift() {
 		return c.reconcileOpenshiftPermissions(ctx, desired)
 	}
 	return nil

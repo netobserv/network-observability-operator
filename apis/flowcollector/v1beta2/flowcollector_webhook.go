@@ -16,12 +16,15 @@ limitations under the License.
 
 package v1beta2
 
-import ctrl "sigs.k8s.io/controller-runtime"
+import (
+	ctrl "sigs.k8s.io/controller-runtime"
+)
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-netobserv-io-v1beta2-flowcollector,mutating=false,failurePolicy=fail,groups=netobserv.io,resources=flowcollectors,versions=v1beta2,name=flowcollectorconversionwebhook.netobserv.io,sideEffects=None,admissionReviewVersions=v1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-flows-netobserv-io-v1beta2-flowcollector,mutating=false,failurePolicy=fail,sideEffects=None,groups=flows.netobserv.io,resources=flowcollectors,versions=v1beta2,name=flowcollectorconversionwebhook.netobserv.io,admissionReviewVersions=v1
 func (r *FlowCollector) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(r).
 		Complete()
 }
 

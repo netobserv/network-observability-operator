@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/netobserv/network-observability-operator/pkg/discover"
+	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	"github.com/netobserv/network-observability-operator/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 	"github.com/netobserv/network-observability-operator/pkg/narrowcache"
 	"k8s.io/client-go/discovery"
@@ -38,11 +39,10 @@ type Registerer func(context.Context, *Manager) error
 
 type Manager struct {
 	manager.Manager
-	discover.AvailableAPIs
-	Client client.Client
-	Status *status.Manager
-	Config *Config
-	vendor discover.Vendor
+	ClusterInfo *cluster.Info
+	Client      client.Client
+	Status      *status.Manager
+	Config      *Config
 }
 
 func NewManager(
@@ -73,20 +73,18 @@ func NewManager(
 	if err != nil {
 		return nil, fmt.Errorf("can't instantiate discovery client: %w", err)
 	}
-	permissions := discover.Permissions{Client: dc}
-	vendor := permissions.Vendor(ctx)
-	apis, err := discover.NewAvailableAPIs(dc)
+	info, err := cluster.NewInfo(dc)
 	if err != nil {
-		return nil, fmt.Errorf("can't discover available APIs: %w", err)
+		return nil, fmt.Errorf("can't collect cluster info: %w", err)
 	}
+	flowslatest.CurrentClusterInfo = &info
 
 	this := &Manager{
-		Manager:       internalManager,
-		AvailableAPIs: *apis,
-		Status:        status.NewManager(),
-		Client:        client,
-		Config:        opcfg,
-		vendor:        vendor,
+		Manager:     internalManager,
+		ClusterInfo: &info,
+		Status:      status.NewManager(),
+		Client:      client,
+		Config:      opcfg,
 	}
 
 	log.Info("Building controllers")
@@ -96,13 +94,15 @@ func NewManager(
 		}
 	}
 
+	if err := internalManager.Add(manager.RunnableFunc(func(ctx context.Context) error {
+		return info.CheckClusterInfo(ctx, internalManager.GetClient())
+	})); err != nil {
+		return nil, fmt.Errorf("can't collect more cluster info: %w", err)
+	}
+
 	return this, nil
 }
 
 func (m *Manager) GetClient() client.Client {
 	return m.Client
-}
-
-func (m *Manager) IsOpenShift() bool {
-	return m.vendor == discover.VendorOpenShift
 }
