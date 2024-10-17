@@ -127,12 +127,16 @@ func IsNetworkEventsEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 	return IsAgentFeatureEnabled(spec, flowslatest.NetworkEvents)
 }
 
+func IsConntrack(spec *flowslatest.FlowCollectorFLP) bool {
+	return spec != nil && spec.LogTypes != nil && *spec.LogTypes != flowslatest.LogTypeFlows
+}
+
 func IsMultiClusterEnabled(spec *flowslatest.FlowCollectorFLP) bool {
-	return spec.MultiClusterDeployment != nil && *spec.MultiClusterDeployment
+	return spec != nil && spec.MultiClusterDeployment != nil && *spec.MultiClusterDeployment
 }
 
 func IsZoneEnabled(spec *flowslatest.FlowCollectorFLP) bool {
-	return spec.AddZone != nil && *spec.AddZone
+	return spec != nil && spec.AddZone != nil && *spec.AddZone
 }
 
 func IsEBPFMetricsEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
