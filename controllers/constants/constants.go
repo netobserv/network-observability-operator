@@ -9,6 +9,7 @@ import (
 const (
 	DefaultOperatorNamespace = "netobserv"
 	OperatorName             = "netobserv-operator"
+	WebhookPort              = 9443
 	FLPName                  = "flowlogs-pipeline"
 	FLPPortName              = "flp" // must be <15 chars
 	FLPMetricsPort           = 9401

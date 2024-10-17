@@ -81,6 +81,20 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 				},
 			})
 		}
+		// Allow apiserver/host
+		np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
+			From: []networkingv1.NetworkPolicyPeer{
+				{
+					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"policy-group.network.openshift.io/host-network": "",
+					}},
+				},
+			},
+			Ports: []networkingv1.NetworkPolicyPort{{
+				Protocol: ptr.To(corev1.ProtocolTCP),
+				Port:     ptr.To(intstr.FromInt32(constants.WebhookPort)),
+			}},
+		})
 	}
 
 	for _, aNs := range desired.Spec.NetworkPolicy.AdditionalNamespaces {
