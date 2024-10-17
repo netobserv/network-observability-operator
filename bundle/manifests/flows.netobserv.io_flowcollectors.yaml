@@ -6692,9 +6692,6 @@ spec:
                   for NetObserv components isolation.'
                 properties:
                   additionalNamespaces:
-                    default:
-                    - openshift-console
-                    - openshift-monitoring
                     description: |-
                       `additionalNamespaces` contains additional namespaces allowed to connect to the NetObserv namespace.
                       It gives some flexibility in the network policy configuration, however should you need a more specific

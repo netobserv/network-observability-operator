@@ -100,7 +100,6 @@ type NetworkPolicy struct {
 	// `additionalNamespaces` contains additional namespaces allowed to connect to the NetObserv namespace.
 	// It gives some flexibility in the network policy configuration, however should you need a more specific
 	// configuration, you can disable it and install your own instead.
-	//+kubebuilder:default:={"openshift-console", "openshift-monitoring"}
 	//+optional
 	AdditionalNamespaces []string `json:"additionalNamespaces"`
 }

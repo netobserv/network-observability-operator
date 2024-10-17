@@ -13830,8 +13830,6 @@ If the namespace is different, the config map or the secret is copied so that it
           `additionalNamespaces` contains additional namespaces allowed to connect to the NetObserv namespace.
 It gives some flexibility in the network policy configuration, however should you need a more specific
 configuration, you can disable it and install your own instead.<br/>
-          <br/>
-            <i>Default</i>: [openshift-console openshift-monitoring]<br/>
         </td>
         <td>false</td>
       </tr><tr>
