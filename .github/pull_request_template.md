@@ -13,7 +13,7 @@ If you are not familiar with our processes or don't know what to answer in the l
 
 * [ ] Is this PR backed with a JIRA ticket? If so, make sure it is written as a title prefix _(in general, PRs affecting the NetObserv/Network Observability product should be backed with a JIRA ticket - especially if they bring user facing changes)._
 * [ ] Does this PR require product documentation?
-  * [ ] If so, make sure the JIRA epic is labelled with "documentation" and provides a description relevant for doc writers, such as use cases or scenarios. Any required step to activate or configure the feature should be documented there, such as new CRD knobs.
+  * [ ] If so, make sure the JIRA epic is labeled with "documentation" and provides a description relevant for doc writers, such as use cases or scenarios. Any required step to activate or configure the feature should be documented there, such as new CRD knobs.
 * [ ] Does this PR require a product release notes entry?
   * [ ] If so, fill in "Release Note Text" in the JIRA.
 * [ ] Is there anything else the QE team should know before testing? E.g: configuration changes, environment setup, etc.

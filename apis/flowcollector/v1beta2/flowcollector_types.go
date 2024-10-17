@@ -458,7 +458,7 @@ type FlowCollectorOpenTelemetry struct {
 
 	// Custom fields mapping to an OpenTelemetry conformant format.
 	// By default, NetObserv format proposal is used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal .
-	// As there is currently no accepted standard for L3/4 enriched network logs, you can freely override it with your own.
+	// As there is currently no accepted standard for L3 or L4 enriched network logs, you can freely override it with your own.
 	// +optional
 	FieldsMapping *[]GenericTransformRule `json:"fieldsMapping,omitempty"`
 
@@ -1212,7 +1212,7 @@ type AdvancedProcessorConfig struct {
 
 	// Define secondary networks to be checked for resources identification.
 	// In order to guarantee a correct identification, it is important that the indexed values form an unique identifier across the cluster.
-	// If there are collisions in the indexes (same index used by several resources), those resources might be wrongly labelled.
+	// If there are collisions in the indexes (same index used by several resources), those resources might be wrongly labeled.
 	// +optional
 	SecondaryNetworks []SecondaryNetwork `json:"secondaryNetworks,omitempty"`
 }

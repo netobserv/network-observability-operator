@@ -5958,8 +5958,8 @@ the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
 - `DNSTracking`: enable the DNS tracking feature.<br>
 - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
-- `NetworkEvents`: enable the Network events monitoring feature. This feature requires mounting
-the kernel debug filesystem, so the eBPF pod has to run as privileged.
+- `NetworkEvents`: enable the Network events monitoring feature, such as correlating flows and network policies.
+This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
 IMPORTANT: this feature is available as a Developer Preview.<br><br/>
         </td>
@@ -11993,7 +11993,7 @@ OpenTelemetry configuration, such as the IP address and port to send enriched lo
         <td>
           Custom fields mapping to an OpenTelemetry conformant format.
 By default, NetObserv format proposal is used: https://github.com/rhobs/observability-data-model/blob/main/network-observability.md#format-proposal .
-As there is currently no accepted standard for L3/4 enriched network logs, you can freely override it with your own.<br/>
+As there is currently no accepted standard for L3 or L4 enriched network logs, you can freely override it with your own.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14125,7 +14125,7 @@ By convention, some values are forbidden. It must be greater than 1024 and diffe
         <td>
           Define secondary networks to be checked for resources identification.
 In order to guarantee a correct identification, it is important that the indexed values form an unique identifier across the cluster.
-If there are collisions in the indexes (same index used by several resources), those resources might be wrongly labelled.<br/>
+If there are collisions in the indexes (same index used by several resources), those resources might be wrongly labeled.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

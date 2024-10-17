@@ -93,7 +93,7 @@ type FlowMetricSpec struct {
 	// +optional
 	Labels []string `json:"labels"`
 
-	// `remap` allows to use different names for the generated metric labels than the flow fields. Use the origin flow fields as keys, and the desired label names as values.
+	// Set the `remap` property to use different names for the generated metric labels than the flow fields. Use the origin flow fields as keys, and the desired label names as values.
 	// +optional
 	Remap map[string]string `json:"remap"`
 
