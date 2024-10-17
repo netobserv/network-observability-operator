@@ -7,7 +7,7 @@ toolchain go1.22.4
 require (
 	github.com/coreos/go-semver v0.3.1
 	github.com/go-logr/logr v1.4.2
-	github.com/netobserv/flowlogs-pipeline v1.6.1-crc0.0.20240920063618-2ea1a7ce77b8
+	github.com/netobserv/flowlogs-pipeline v1.6.2-community
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.1
 	github.com/openshift/api v0.0.0-20240722135205-ae4f370f361f
