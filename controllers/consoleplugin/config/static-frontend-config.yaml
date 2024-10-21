@@ -658,26 +658,24 @@ filters:
     name: Resource
     component: autocomplete
     category: source
-    placeholder: 'E.g: Pod.default.my-pod'
+    placeholder: 'E.g: Deployment.example.my-dep or Pod.default.my-pod'
     hint: Specify an existing resource from its kind, namespace and name.
     examples: |-
       Specify a kind, namespace and name from existing:
               - Select kind first from suggestions
-              - Then Select namespace from suggestions
+              - Then select namespace from suggestions
               - Finally select name from suggestions
-              You can also directly specify a kind, namespace and name like pod.openshift.apiserver
   - id: dst_resource
     name: Resource
     component: autocomplete
     category: destination
-    placeholder: 'E.g: Pod.default.my-pod'
+    placeholder: 'E.g: Deployment.example.my-dep or Pod.default.my-pod'
     hint: Specify an existing resource from its kind, namespace and name.
     examples: |-
       Specify a kind, namespace and name from existing:
               - Select kind first from suggestions
-              - Then Select namespace from suggestions
+              - Then select namespace from suggestions
               - Finally select name from suggestions
-              You can also directly specify a kind, namespace and name like pod.openshift.apiserver
   - id: src_address
     name: IP
     component: text
