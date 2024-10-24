@@ -174,15 +174,17 @@ type FlowCollectorIPFIX struct {
 // - `PacketDrop`, to track packet drops.<br>
 // - `DNSTracking`, to track specific information on DNS traffic.<br>
 // - `FlowRTT`, to track TCP latency.<br>
-// - `NetworkEvents`, to track network events [Developer Preview].<br>
-// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents"
+// - `NetworkEvents`, to track Network events [Developer Preview].<br>
+// - `PacketTranslation`, to enrich flows with packets translation information. <br>
+// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation"
 type AgentFeature string
 
 const (
-	PacketDrop    AgentFeature = "PacketDrop"
-	DNSTracking   AgentFeature = "DNSTracking"
-	FlowRTT       AgentFeature = "FlowRTT"
-	NetworkEvents AgentFeature = "NetworkEvents"
+	PacketDrop        AgentFeature = "PacketDrop"
+	DNSTracking       AgentFeature = "DNSTracking"
+	FlowRTT           AgentFeature = "FlowRTT"
+	NetworkEvents     AgentFeature = "NetworkEvents"
+	PacketTranslation AgentFeature = "PacketTranslation"
 )
 
 // Name of an eBPF agent alert.
@@ -362,6 +364,7 @@ type FlowCollectorEBPF struct {
 	// This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 	// It requires using the OVN-Kubernetes network plugin with the Observability feature.
 	// IMPORTANT: This feature is available as a Developer Preview.<br>
+	// - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 

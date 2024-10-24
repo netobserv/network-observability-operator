@@ -82,6 +82,7 @@ const (
 	envFilterPeerIPAddress        = "FILTER_PEER_IP"
 	envFilterTCPFlags             = "FILTER_TCP_FLAGS"
 	envFilterPktDrops             = "FILTER_DROPS"
+	envEnablePacketTranslation    = "ENABLE_PKT_TRANSLATION"
 	envListSeparator              = ","
 )
 
@@ -316,7 +317,8 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 
 	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.NetworkEvents) {
 		if !coll.Spec.Agent.EBPF.Privileged {
-			rlog.Error(fmt.Errorf("invalid configuration"), "To use Network Events Monitor feature privileged mode needs to be enabled")
+			rlog.Error(fmt.Errorf("invalid configuration"), "To use Network Events Monitor"+
+				"features privileged mode needs to be enabled")
 		} else {
 			volume := corev1.Volume{
 				Name: ovnObservMountName,
@@ -352,7 +354,6 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 			}
 			volumeMounts = append(volumeMounts, volumeMount)
 		}
-
 	}
 
 	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
@@ -651,6 +652,13 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	if helper.IsNetworkEventsEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableNetworkEvents,
+			Value: "true",
+		})
+	}
+
+	if helper.IsPacketTranslationEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnablePacketTranslation,
 			Value: "true",
 		})
 	}
