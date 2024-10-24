@@ -82,6 +82,7 @@ const (
 	envFilterPeerIPAddress        = "FILTER_PEER_IP"
 	envFilterTCPFlags             = "FILTER_TCP_FLAGS"
 	envFilterPktDrops             = "FILTER_DROPS"
+	envEnablePacketTranslation    = "ENABLE_PKT_TRANSFORMATION"
 	envListSeparator              = ","
 )
 
@@ -651,6 +652,13 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	if helper.IsNetworkEventsEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableNetworkEvents,
+			Value: "true",
+		})
+	}
+
+	if helper.IsPacketTranslationEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnablePacketTranslation,
 			Value: "true",
 		})
 	}
