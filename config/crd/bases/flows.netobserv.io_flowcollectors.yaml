@@ -3464,7 +3464,7 @@ spec:
                           description: '`flowFilter` defines the eBPF agent configuration regarding flow filtering.'
                           properties:
                             action:
-                              description: '`action` defines the action to perform on the flows that match the filter.'
+                              description: '`action` defines the action to perform on the flows that match the filter. The available options are `Accept` and `Reject`.'
                               enum:
                                 - Accept
                                 - Reject
@@ -3479,13 +3479,13 @@ spec:
                                 - type: integer
                                 - type: string
                               description: |-
-                                `destPorts` defines the destination ports to filter flows by.
+                                `destPorts` optionally defines the destination ports to filter flows by.
                                 To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
                                 To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
                                 To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
                               x-kubernetes-int-or-string: true
                             direction:
-                              description: '`direction` defines the direction to filter flows by.'
+                              description: '`direction` optionally defines a direction to filter flows by. The available options are `Ingress` and `Egress`.'
                               enum:
                                 - Ingress
                                 - Egress
@@ -3494,31 +3494,31 @@ spec:
                               description: Set `enable` to `true` to enable the eBPF flow filtering feature.
                               type: boolean
                             icmpCode:
-                              description: '`icmpCode`, for Internet Control Message Protocol (ICMP) traffic, defines the ICMP code to filter flows by.'
+                              description: '`icmpCode`, for Internet Control Message Protocol (ICMP) traffic, optionally defines the ICMP code to filter flows by.'
                               type: integer
                             icmpType:
-                              description: '`icmpType`, for ICMP traffic, defines the ICMP type to filter flows by.'
+                              description: '`icmpType`, for ICMP traffic, optionally defines the ICMP type to filter flows by.'
                               type: integer
                             peerIP:
                               description: |-
-                                `peerIP` defines the IP address to filter flows by.
+                                `peerIP` optionally defines the remote IP address to filter flows by.
                                 Example: `10.10.10.10`.
                               type: string
                             pktDrops:
-                              description: '`pktDrops` filters flows with packet drops'
+                              description: '`pktDrops` optionally filters only flows containing packet drops.'
                               type: boolean
                             ports:
                               anyOf:
                                 - type: integer
                                 - type: string
                               description: |-
-                                `ports` defines the ports to filter flows by. It is used both for source and destination ports.
+                                `ports` optionally defines the ports to filter flows by. It is used both for source and destination ports.
                                 To filter a single port, set a single port as an integer value. For example, `ports: 80`.
                                 To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
                                 To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
                               x-kubernetes-int-or-string: true
                             protocol:
-                              description: '`protocol` defines the protocol to filter flows by.'
+                              description: '`protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6` and `SCTP`.'
                               enum:
                                 - TCP
                                 - UDP
@@ -3531,13 +3531,15 @@ spec:
                                 - type: integer
                                 - type: string
                               description: |-
-                                `sourcePorts` defines the source ports to filter flows by.
+                                `sourcePorts` optionally defines the source ports to filter flows by.
                                 To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
                                 To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
                                 To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
                               x-kubernetes-int-or-string: true
                             tcpFlags:
-                              description: '`tcpFlags` defines the TCP flags to filter flows by.'
+                              description: |-
+                                `tcpFlags` optionally defines TCP flags to filter flows by.
+                                In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK` and `RST-ACK`.
                               enum:
                                 - SYN
                                 - SYN-ACK
@@ -3663,7 +3665,7 @@ spec:
                                             If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                           type: string
                                         type:
-                                          description: 'Type for the file reference: "configmap" or "secret".'
+                                          description: 'Type for the file reference: `configmap` or `secret`.'
                                           enum:
                                             - configmap
                                             - secret
@@ -5331,7 +5333,7 @@ spec:
                                       If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                     type: string
                                   type:
-                                    description: 'Type for the file reference: "configmap" or "secret".'
+                                    description: 'Type for the file reference: `configmap` or `secret`.'
                                     enum:
                                       - configmap
                                       - secret
@@ -5353,7 +5355,7 @@ spec:
                                       If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                     type: string
                                   type:
-                                    description: 'Type for the file reference: "configmap" or "secret".'
+                                    description: 'Type for the file reference: `configmap` or `secret`.'
                                     enum:
                                       - configmap
                                       - secret
@@ -5565,7 +5567,7 @@ spec:
                           - targetPort
                         type: object
                       type:
-                        description: '`type` selects the type of exporters. The available options are `Kafka` and `IPFIX`.'
+                        description: '`type` selects the type of exporters. The available options are `Kafka`, `IPFIX` and `OpenTelemetry`.'
                         enum:
                           - Kafka
                           - IPFIX
@@ -5601,7 +5603,7 @@ spec:
                                 If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                               type: string
                             type:
-                              description: 'Type for the file reference: "configmap" or "secret".'
+                              description: 'Type for the file reference: `configmap` or `secret`.'
                               enum:
                                 - configmap
                                 - secret
@@ -5623,7 +5625,7 @@ spec:
                                 If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                               type: string
                             type:
-                              description: 'Type for the file reference: "configmap" or "secret".'
+                              description: 'Type for the file reference: `configmap` or `secret`.'
                               enum:
                                 - configmap
                                 - secret
@@ -7678,7 +7680,7 @@ spec:
                                         If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
                                       type: string
                                     type:
-                                      description: 'Type for the file reference: "configmap" or "secret".'
+                                      description: 'Type for the file reference: `configmap` or `secret`.'
                                       enum:
                                         - configmap
                                         - secret

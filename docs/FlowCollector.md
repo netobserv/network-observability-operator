@@ -7859,7 +7859,7 @@ If the operator is Exists, the value should be empty, otherwise just a regular s
         <td><b>action</b></td>
         <td>enum</td>
         <td>
-          `action` defines the action to perform on the flows that match the filter.<br/>
+          `action` defines the action to perform on the flows that match the filter. The available options are `Accept` and `Reject`.<br/>
           <br/>
             <i>Enum</i>: Accept, Reject<br/>
         </td>
@@ -7876,7 +7876,7 @@ Examples: `10.10.10.0/24` or `100:100:100:100::/64`<br/>
         <td><b>destPorts</b></td>
         <td>int or string</td>
         <td>
-          `destPorts` defines the destination ports to filter flows by.
+          `destPorts` optionally defines the destination ports to filter flows by.
 To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
 To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
 To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
@@ -7886,7 +7886,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>direction</b></td>
         <td>enum</td>
         <td>
-          `direction` defines the direction to filter flows by.<br/>
+          `direction` optionally defines a direction to filter flows by. The available options are `Ingress` and `Egress`.<br/>
           <br/>
             <i>Enum</i>: Ingress, Egress<br/>
         </td>
@@ -7902,21 +7902,21 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>icmpCode</b></td>
         <td>integer</td>
         <td>
-          `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, defines the ICMP code to filter flows by.<br/>
+          `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, optionally defines the ICMP code to filter flows by.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>icmpType</b></td>
         <td>integer</td>
         <td>
-          `icmpType`, for ICMP traffic, defines the ICMP type to filter flows by.<br/>
+          `icmpType`, for ICMP traffic, optionally defines the ICMP type to filter flows by.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>peerIP</b></td>
         <td>string</td>
         <td>
-          `peerIP` defines the IP address to filter flows by.
+          `peerIP` optionally defines the remote IP address to filter flows by.
 Example: `10.10.10.10`.<br/>
         </td>
         <td>false</td>
@@ -7924,14 +7924,14 @@ Example: `10.10.10.10`.<br/>
         <td><b>pktDrops</b></td>
         <td>boolean</td>
         <td>
-          `pktDrops` filters flows with packet drops<br/>
+          `pktDrops` optionally filters only flows containing packet drops.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>ports</b></td>
         <td>int or string</td>
         <td>
-          `ports` defines the ports to filter flows by. It is used both for source and destination ports.
+          `ports` optionally defines the ports to filter flows by. It is used both for source and destination ports.
 To filter a single port, set a single port as an integer value. For example, `ports: 80`.
 To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
 To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
@@ -7941,7 +7941,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>protocol</b></td>
         <td>enum</td>
         <td>
-          `protocol` defines the protocol to filter flows by.<br/>
+          `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6` and `SCTP`.<br/>
           <br/>
             <i>Enum</i>: TCP, UDP, ICMP, ICMPv6, SCTP<br/>
         </td>
@@ -7950,7 +7950,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>sourcePorts</b></td>
         <td>int or string</td>
         <td>
-          `sourcePorts` defines the source ports to filter flows by.
+          `sourcePorts` optionally defines the source ports to filter flows by.
 To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
 To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
 To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
@@ -7960,7 +7960,8 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>tcpFlags</b></td>
         <td>enum</td>
         <td>
-          `tcpFlags` defines the TCP flags to filter flows by.<br/>
+          `tcpFlags` optionally defines TCP flags to filter flows by.
+In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK` and `RST-ACK`.<br/>
           <br/>
             <i>Enum</i>: SYN, SYN-ACK, ACK, FIN, RST, URG, ECE, CWR, FIN-ACK, RST-ACK<br/>
         </td>
@@ -8211,7 +8212,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the file reference: "configmap" or "secret".<br/>
+          Type for the file reference: `configmap` or `secret`.<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -11505,7 +11506,7 @@ only the result of this request.<br/>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the type of exporters. The available options are `Kafka` and `IPFIX`.<br/>
+          `type` selects the type of exporters. The available options are `Kafka`, `IPFIX` and `OpenTelemetry`.<br/>
           <br/>
             <i>Enum</i>: Kafka, IPFIX, OpenTelemetry<br/>
         </td>
@@ -11720,7 +11721,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the file reference: "configmap" or "secret".<br/>
+          Type for the file reference: `configmap` or `secret`.<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -11773,7 +11774,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the file reference: "configmap" or "secret".<br/>
+          Type for the file reference: `configmap` or `secret`.<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -12458,7 +12459,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the file reference: "configmap" or "secret".<br/>
+          Type for the file reference: `configmap` or `secret`.<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -12511,7 +12512,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the file reference: "configmap" or "secret".<br/>
+          Type for the file reference: `configmap` or `secret`.<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
@@ -17091,7 +17092,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Type for the file reference: "configmap" or "secret".<br/>
+          Type for the file reference: `configmap` or `secret`.<br/>
           <br/>
             <i>Enum</i>: configmap, secret<br/>
         </td>
