@@ -130,6 +130,9 @@ func IsNetworkEventsEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 func IsPacketTranslationEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 	return IsAgentFeatureEnabled(spec, flowslatest.PacketTranslation)
 }
+func IsEbpfManagerEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+	return IsAgentFeatureEnabled(spec, flowslatest.EbpfManager)
+}
 
 func IsConntrack(spec *flowslatest.FlowCollectorFLP) bool {
 	return spec != nil && spec.LogTypes != nil && *spec.LogTypes != flowslatest.LogTypeFlows

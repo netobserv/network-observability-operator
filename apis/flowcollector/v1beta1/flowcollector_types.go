@@ -153,7 +153,8 @@ type FlowCollectorIPFIX struct {
 // - `FlowRTT`, to track TCP latency [Unsupported (*)].<br>
 // - `NetworkEvents`, to track Network events.<br>
 // - `PacketTranslation`, to enrich flows with packets translation information. <br>
-// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation"
+// - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
+// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation";"EbpfManager"
 type AgentFeature string
 
 const (
@@ -162,6 +163,7 @@ const (
 	FlowRTT           AgentFeature = "FlowRTT"
 	NetworkEvents     AgentFeature = "NetworkEvents"
 	PacketTranslation AgentFeature = "PacketTranslation"
+	EbpfManager       AgentFeature = "EbpfManager"
 )
 
 // Name of an eBPF agent alert.
@@ -339,6 +341,7 @@ type FlowCollectorEBPF struct {
 	// - `NetworkEvents`: enable the Network events monitoring feature. This feature requires mounting
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
 	// - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
+	// - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 

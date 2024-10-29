@@ -292,7 +292,8 @@ If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<
 - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
 - `NetworkEvents`: enable the Network events monitoring feature. This feature requires mounting
 the kernel debug filesystem, so the eBPF pod has to run as privileged.
-- `PacketTranslation`: enable enriching flows with packet's translation information. <br><br/>
+- `PacketTranslation`: enable enriching flows with packet's translation information. <br>
+- `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6112,7 +6113,9 @@ If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<
 This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
 IMPORTANT: This feature is available as a Developer Preview.<br>
-- `PacketTranslation`: enable enriching flows with packet's translation information. <br><br/>
+- `PacketTranslation`: enable enriching flows with packet's translation information. <br>
+- `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
+IMPORTANT: This feature is available as a Developer Preview.<br><br/>
         </td>
         <td>false</td>
       </tr><tr>

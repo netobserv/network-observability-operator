@@ -24,6 +24,7 @@ spec:
       # - "FlowRTT"
       # - "NetworkEvents"
       # - "PacketTranslation"
+      # - "EbpfManager"
       interfaces: []
       excludeInterfaces: ["lo"]
       kafkaBatchSize: 1048576
