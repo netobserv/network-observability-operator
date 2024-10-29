@@ -2,9 +2,10 @@ ARG TARGETARCH
 
 # Build the manager binary
 FROM docker.io/library/golang:1.22 as builder
-ARG BUILD_VERSION="unknown"
 
 ARG TARGETARCH=amd64
+ARG LDFLAGS
+
 WORKDIR /opt/app-root
 
 # Copy the go manifests and source
@@ -15,10 +16,10 @@ COPY main.go main.go
 COPY apis/ apis/
 COPY controllers/ controllers/
 COPY pkg/ pkg/
-COPY config/ config/
+COPY config/crd/bases config/crd/bases
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH GO111MODULE=on go build -ldflags "-X 'main.buildVersion=$BUILD_VERSION' -X 'main.buildDate=`date +%Y-%m-%d\ %H:%M`'" -mod vendor -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH GO111MODULE=on go build -ldflags "$LDFLAGS" -mod vendor -a -o manager main.go
 
 # Create final image from minimal + built binary
 FROM --platform=linux/$TARGETARCH registry.access.redhat.com/ubi9/ubi-minimal:9.4
