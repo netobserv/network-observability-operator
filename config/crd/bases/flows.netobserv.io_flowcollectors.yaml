@@ -3446,6 +3446,7 @@ spec:
                             This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
                             It requires using the OVN-Kubernetes network plugin with the Observability feature.
                             IMPORTANT: This feature is available as a Developer Preview.<br>
+                            - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
                           items:
                             description: |-
                               Agent feature, can be one of:<br>
@@ -3458,6 +3459,7 @@ spec:
                               - DNSTracking
                               - FlowRTT
                               - NetworkEvents
+                              - EbpfManager
                             type: string
                           type: array
                         flowFilter:
