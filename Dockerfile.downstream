@@ -1,0 +1,41 @@
+ARG TARGETARCH
+ARG COMMIT
+
+# Build the manager binary
+FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:v1.22.5-202407301806.g4c8b32d.el9 as builder
+ARG BUILD_VERSION="unknown"
+
+ARG TARGETARCH=amd64
+WORKDIR /opt/app-root
+
+# Copy the go manifests and source
+COPY go.mod go.mod
+COPY go.sum go.sum
+COPY vendor/ vendor/
+COPY main.go main.go
+COPY apis/ apis/
+COPY controllers/ controllers/
+COPY pkg/ pkg/
+COPY config/ config/
+
+# Build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH GO111MODULE=on go build -ldflags "-X 'main.buildVersion=$BUILD_VERSION' -X 'main.buildDate=`date +%Y-%m-%d\ %H:%M`'" -mod vendor -a -o manager main.go
+
+# Create final image from minimal + built binary
+FROM --platform=linux/$TARGETARCH registry.access.redhat.com/ubi9/ubi-minimal:9.4
+WORKDIR /
+COPY --from=builder /opt/app-root/manager .
+USER 65532:65532
+
+ENTRYPOINT ["/manager"]
+
+LABEL com.redhat.component="network-observability-operator-container"
+LABEL name="network-observability-operator"
+LABEL io.k8s.display-name="Network Observability Operator"
+LABEL io.k8s.description="Network Observability Operator"
+LABEL summary="Network Observability Operator"
+LABEL maintainer="support@redhat.com"
+LABEL io.openshift.tags="network-observability-operator"
+LABEL upstream-vcs-ref="$COMMIT"
+LABEL upstream-vcs-type="git"
+LABEL description="NetObserv Operator is a Kubernetes / OpenShift operator for network observability."
