@@ -38,7 +38,7 @@ jobs:
       - name: get short sha
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: build image
-        run: OCI_BUILD_OPTS="--label quay.expires-after=2w" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make image-build
+        run: OCI_BUILD_OPTS="--label quay.expires-after=2w" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} CLEAN_BUILD=1 make image-build
       - name: push image
         run: IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make image-push
       - name: build and push manifest

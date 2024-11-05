@@ -1,16 +1,5 @@
 # VERSION defines the project version for the deploy scripts, not for bundles
 VERSION ?= main
-BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
-TAG_COMMIT := $(shell git rev-list --abbrev-commit --tags --max-count=1)
-TAG := $(shell git describe --abbrev=0 --tags ${TAG_COMMIT} 2>/dev/null || true)
-BUILD_SHA := $(shell git rev-parse --short HEAD)
-BUILD_VERSION := $(TAG:v%=%)
-ifneq ($(COMMIT), $(TAG_COMMIT))
-	BUILD_VERSION := $(BUILD_VERSION)-$(BUILD_SHA)
-endif
-ifneq ($(shell git status --porcelain),)
-	BUILD_VERSION := $(BUILD_VERSION)-dirty
-endif
 
 # Go architecture and targets images to build
 GOARCH ?= amd64
@@ -87,7 +76,6 @@ BUNDLE_CONFIG ?= config/openshift-olm
 
 # Image URL to use all building/pushing image targets
 IMAGE ?= $(IMAGE_TAG_BASE):$(VERSION)
-OCI_BUILD_OPTS ?=
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.23
 GOLANGCI_LINT_VERSION = v1.53.3
@@ -102,6 +90,13 @@ endif
 # Image building tool (docker / podman) - docker is preferred in CI
 OCI_BIN_PATH := $(shell which docker 2>/dev/null || which podman)
 OCI_BIN ?= $(shell basename ${OCI_BIN_PATH})
+OCI_BUILD_OPTS ?=
+
+ifneq ($(CLEAN_BUILD),)
+	BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
+	BUILD_SHA := $(shell git rev-parse --short HEAD)
+	LDFLAGS ?= -X 'main.buildVersion=${VERSION}-${BUILD_SHA}' -X 'main.buildDate=${BUILD_DATE}'
+endif
 
 DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
@@ -127,7 +122,7 @@ include .bingo/Variables.mk
 # build a single arch target provided as argument
 define build_target
 	echo 'building image for arch $(1)'; \
-	DOCKER_BUILDKIT=1 $(OCI_BIN) buildx build --load --build-arg TARGETARCH=$(1) ${OCI_BUILD_OPTS} -t ${IMAGE}-$(1) -f Dockerfile .;
+	DOCKER_BUILDKIT=1 $(OCI_BIN) buildx build --load --build-arg LDFLAGS="${LDFLAGS}" --build-arg TARGETARCH=$(1) ${OCI_BUILD_OPTS} -t ${IMAGE}-$(1) -f Dockerfile .;
 endef
 
 # push a single arch target image
@@ -336,7 +331,7 @@ coverage-report-html: ## Generate HTML coverage report
 	go tool cover --html=./cover.out
 
 build: fmt lint ## Build manager binary.
-	GOARCH=${GOARCH} go build -ldflags "-X 'main.buildVersion=${BUILD_VERSION}' -X 'main.buildDate=${BUILD_DATE}'" -mod vendor -o bin/manager main.go
+	GOARCH=${GOARCH} go build -mod vendor -o bin/manager main.go
 
 ##@ Images
 
