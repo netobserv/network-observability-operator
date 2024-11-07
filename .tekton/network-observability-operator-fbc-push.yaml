@@ -8,7 +8,7 @@ metadata:
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch == "main" &&
       (".tekton/***".pathChanged() ||
-      "catalog.Dockerfile".pathChanged() ||
+      "catalog.Dockerfile.downstream".pathChanged() ||
       "catalog/***".pathChanged() ||
       "hack/update-build.sh".pathChanged() ||
       "hack/bundle_digest.sh".pathChanged() ||
@@ -30,7 +30,7 @@ spec:
   - name: output-image
     value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc:{{revision}}
   - name: dockerfile
-    value: ./catalog.Dockerfile
+    value: ./catalog.Dockerfile.downstream
   pipelineSpec:
     finally:
     - name: show-sbom
@@ -97,11 +97,11 @@ spec:
       description: Skip checks against built image
       name: skip-checks
       type: string
-    - default: "false"
+    - default: "true"
       description: Execute the build with network isolation
       name: hermetic
       type: string
-    - default: ""
+    - default: "{\"type\":\"gomod\", \"path\":\".\"}"
       description: Build dependencies to be prefetched by Cachi2
       name: prefetch-input
       type: string
@@ -175,23 +175,6 @@ spec:
         workspace: workspace
       - name: basic-auth
         workspace: git-auth
-    - name: update-downstream
-      taskSpec:
-        steps:
-          - image: fedora
-            script: |
-              #!/usr/bin/env bash
-              echo "Starting update-downstream task"
-              cd workspace/source/source
-              dnf install -y python3-ruamel-yaml-clib
-              COMMIT={{revision}} ./hack/update-build.sh
-      runAfter:
-      - clone-repository
-      workspaces:
-      - name: source
-        workspace: workspace
-      - name: git-basic-auth
-        workspace: git-auth
     - name: build-container
       params:
       - name: IMAGE
@@ -208,7 +191,6 @@ spec:
         value: $(tasks.clone-repository.results.commit)
       runAfter:
       - clone-repository
-      - update-downstream
       taskRef:
         params:
         - name: name
