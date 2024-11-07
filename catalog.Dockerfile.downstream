@@ -1,0 +1,33 @@
+ARG COMMIT
+
+FROM registry.access.redhat.com/ubi9/python-312 as builder
+
+COPY --chown=default . .
+RUN pip install -r requirements.txt
+
+RUN COMMIT=$COMMIT ./hack/update-build.sh
+
+FROM brew.registry.redhat.io/rh-osbs/openshift-ose-operator-registry-rhel9:v4.17
+
+# Configure the entrypoint and command
+ENTRYPOINT ["opm"]
+CMD ["serve", "/configs", "--cache-dir=/tmp/cache"]
+
+# Copy declarative config root into image at /configs and pre-populate serve cache
+COPY --from=builder /opt/app-root/src/catalog /configs
+RUN opm serve /configs --cache-dir=/tmp/cache --cache-only
+
+# Set DC-specific label for the location of the DC root directory
+# in the image
+LABEL operators.operatorframework.io.index.configs.v1=/configs
+
+LABEL com.redhat.component="network-observability-operator-catalog-container"
+LABEL name="network-observability-operator-catalog"
+LABEL io.k8s.display-name="Network Observability Operator Catalog"
+LABEL io.k8s.description="Network Observability Operator Catalog"
+LABEL summary="Network Observability Operator Catalog"
+LABEL maintainer="support@redhat.com"
+LABEL io.openshift.tags="network-observability-operator-catalog"
+LABEL upstream-vcs-ref="$COMMIT"
+LABEL upstream-vcs-type="git"
+LABEL description="NetObserv Operator is a Kubernetes / OpenShift operator for network observability."
