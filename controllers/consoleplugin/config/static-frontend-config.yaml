@@ -928,6 +928,7 @@ scopes:
       - dst_zone
   - id: host
     name: Node
+    shortName: Node
     description: Node on which the resources are running
     labels: 
       - SrcK8S_HostName
