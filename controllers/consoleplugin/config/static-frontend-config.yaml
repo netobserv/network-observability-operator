@@ -44,6 +44,7 @@ columns:
     docURL: http://kubernetes.io/docs/user-guide/identifiers#names
     field: SrcK8S_Name
     filter: src_name
+    calculated: kubeObject(SrcK8S_Type,SrcK8S_Namespace,SrcK8S_Name,0)
     default: true
     width: 15
   - id: SrcK8S_Type
@@ -65,6 +66,7 @@ columns:
     docURL: https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/
     field: SrcK8S_OwnerName
     filter: src_owner_name
+    calculated: kubeObject(SrcK8S_OwnerType,SrcK8S_Namespace,SrcK8S_OwnerName,0)
     default: false
     width: 15
   - id: SrcK8S_OwnerType
@@ -88,6 +90,7 @@ columns:
     docURL: http://kubernetes.io/docs/user-guide/identifiers#namespaces
     field: SrcK8S_Namespace
     filter: src_namespace
+    calculated: kubeObject('Namespace','',SrcK8S_Namespace,0)
     default: true
     width: 15
   - id: SrcAddr
@@ -129,24 +132,25 @@ columns:
     docURL: https://kubernetes.io/docs/concepts/architecture/nodes/
     field: SrcK8S_HostName
     filter: src_host_name
+    calculated: kubeObject('Node','',SrcK8S_HostName,0)
     default: false
     width: 15
   - id: SrcK8S_Object
     group: Source
     name: Kubernetes Object
-    calculated: getConcatenatedValue(SrcAddr,SrcPort,SrcK8S_Type,SrcK8S_Namespace,SrcK8S_Name)
+    calculated: kubeObject(SrcK8S_Type,SrcK8S_Namespace,SrcK8S_Name,1) or concat(SrcAddr,':',SrcPort)
     default: false
     width: 15
   - id: SrcK8S_OwnerObject
     group: Source
     name: Owner Kubernetes Object
-    calculated: getConcatenatedValue(SrcAddr,SrcPort,SrcK8S_OwnerType,SrcK8S_Namespace,SrcK8S_OwnerName)
+    calculated: kubeObject(SrcK8S_OwnerType,SrcK8S_Namespace,SrcK8S_OwnerName,1)
     default: false
     width: 15
   - id: SrcAddrPort
     group: Source
     name: IP & Port
-    calculated: getConcatenatedValue(SrcAddr,SrcPort)
+    calculated: concat(SrcAddr,':',SrcPort)
     default: false
     width: 15
   - id: SrcZone
@@ -172,6 +176,7 @@ columns:
     docURL: http://kubernetes.io/docs/user-guide/identifiers#names
     field: DstK8S_Name
     filter: dst_name
+    calculated: kubeObject(DstK8S_Type,DstK8S_Namespace,DstK8S_Name,0)
     default: true
     width: 15
   - id: DstK8S_Type
@@ -193,6 +198,7 @@ columns:
     docURL: https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/
     field: DstK8S_OwnerName
     filter: dst_owner_name
+    calculated: kubeObject(DstK8S_OwnerType,DstK8S_Namespace,DstK8S_OwnerName,0)
     default: false
     width: 15
   - id: DstK8S_OwnerType
@@ -216,6 +222,7 @@ columns:
     docURL: http://kubernetes.io/docs/user-guide/identifiers#namespaces
     field: DstK8S_Namespace
     filter: dst_namespace
+    calculated: kubeObject('Namespace','',DstK8S_Namespace,0)
     default: true
     width: 15
   - id: DstAddr
@@ -257,24 +264,25 @@ columns:
     docURL: https://kubernetes.io/docs/concepts/architecture/nodes/
     field: DstK8S_HostName
     filter: dst_host_name
+    calculated: kubeObject('Node','',DstK8S_HostName,0)
     default: false
     width: 15
   - id: DstK8S_Object
     group: Destination
     name: Kubernetes Object
-    calculated: getConcatenatedValue(DstAddr,DstPort,DstK8S_Type,DstK8S_Namespace,DstK8S_Name)
+    calculated: kubeObject(DstK8S_Type,DstK8S_Namespace,DstK8S_Name,1) or concat(DstAddr,':',DstPort)
     default: false
     width: 15
   - id: DstK8S_OwnerObject
     group: Destination
     name: Owner Kubernetes Object
-    calculated: getConcatenatedValue(DstAddr,DstPort,DstK8S_OwnerType,DstK8S_Namespace,DstK8S_OwnerName)
+    calculated: kubeObject(DstK8S_OwnerType,DstK8S_Namespace,DstK8S_OwnerName,1)
     default: false
     width: 15
   - id: DstAddrPort
     group: Destination
     name: IP & Port
-    calculated: getConcatenatedValue(DstAddr,DstPort)
+    calculated: concat(DstAddr,':',DstPort)
     default: false
     width: 15
   - id: DstZone
@@ -295,52 +303,52 @@ columns:
     feature: subnetLabels
   - id: K8S_Name
     name: Names
-    calculated: getSrcOrDstValue(SrcK8S_Name,DstK8S_Name)
+    calculated: '[SrcK8S_Name,DstK8S_Name]'
     default: false
     width: 15
   - id: K8S_Type
     name: Kinds
-    calculated: getSrcOrDstValue(SrcK8S_Type,DstK8S_Type)
+    calculated: '[SrcK8S_Type,DstK8S_Type]'
     default: false
     width: 10
   - id: K8S_OwnerName
     name: Owners
-    calculated: getSrcOrDstValue(SrcK8S_OwnerName,DstK8S_OwnerName)
+    calculated: '[SrcK8S_OwnerName,DstK8S_OwnerName]'
     default: false
     width: 15
   - id: K8S_OwnerType
     name: Owner Kinds
-    calculated: getSrcOrDstValue(SrcK8S_OwnerType,DstK8S_OwnerType)
+    calculated: '[SrcK8S_OwnerType,DstK8S_OwnerType]'
     default: false
     width: 10
   - id: K8S_Namespace
     name: Namespaces
-    calculated: getSrcOrDstValue(SrcK8S_Namespace,DstK8S_Namespace)
+    calculated: '[SrcK8S_Namespace,DstK8S_Namespace]'
     default: false
     width: 15
   - id: Addr
     name: IP
-    calculated: getSrcOrDstValue(SrcAddr,DstAddr)
+    calculated: '[SrcAddr,DstAddr]'
     default: false
     width: 10
   - id: Port
     name: Ports
-    calculated: getSrcOrDstValue(SrcPort,DstPort)
+    calculated: '[SrcPort,DstPort]'
     default: false
     width: 10
   - id: Mac
     name: MAC
-    calculated: getSrcOrDstValue(SrcMac,DstMac)
+    calculated: '[SrcMac,DstMac]'
     default: false
     width: 10
   - id: K8S_HostIP
     name: Node IP
-    calculated: getSrcOrDstValue(SrcK8S_HostIP,DstK8S_HostIP)
+    calculated: '[SrcK8S_HostIP,DstK8S_HostIP]'
     default: false
     width: 10
   - id: K8S_HostName
     name: Node Name
-    calculated: getSrcOrDstValue(SrcK8S_HostName,DstK8S_HostName)
+    calculated: '[SrcK8S_HostName,DstK8S_HostName]'
     default: false
     width: 15
   - id: K8S_Object
