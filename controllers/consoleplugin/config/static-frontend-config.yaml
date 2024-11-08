@@ -471,7 +471,7 @@ columns:
   - id: CollectionTime
     name: Collection Time
     tooltip: Reception time of the record by the collector.
-    calculated: multiply(TimeReceived,1000),
+    calculated: multiply(TimeReceived,1000)
     field: TimeReceived
     default: false
     width: 15
