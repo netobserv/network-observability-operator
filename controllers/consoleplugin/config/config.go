@@ -87,6 +87,18 @@ type FilterConfig struct {
 	Placeholder            string `yaml:"placeholder,omitempty" json:"placeholder,omitempty"`
 }
 
+type ScopeConfig struct {
+	ID          string   `yaml:"id" json:"id"`
+	Name        string   `yaml:"name" json:"name"`
+	ShortName   string   `yaml:"shortName" json:"shortName"`
+	Description string   `yaml:"description" json:"description"`
+	Labels      []string `yaml:"labels" json:"labels"`
+	Feature     string   `yaml:"feature,omitempty" json:"feature,omitempty"`
+	Groups      []string `yaml:"groups,omitempty" json:"groups,omitempty"`
+	Filter      string   `yaml:"filter,omitempty" json:"filter,omitempty"`
+	Filters     []string `yaml:"filters,omitempty" json:"filters,omitempty"`
+}
+
 type FieldConfig struct {
 	Name        string `yaml:"name" json:"name"`
 	Type        string `yaml:"type" json:"type"`
@@ -101,17 +113,17 @@ type Deduper struct {
 }
 
 type FrontendConfig struct {
-	RecordTypes []api.ConnTrackOutputRecordTypeEnum `yaml:"recordTypes" json:"recordTypes"`
-	Columns     []ColumnConfig                      `yaml:"columns" json:"columns"`
-	Sampling    int                                 `yaml:"sampling" json:"sampling"`
-	Features    []string                            `yaml:"features" json:"features"`
-	Deduper     Deduper                             `yaml:"deduper" json:"deduper"`
-	Fields      []FieldConfig                       `yaml:"fields" json:"fields"`
-
+	RecordTypes     []api.ConnTrackOutputRecordTypeEnum `yaml:"recordTypes" json:"recordTypes"`
 	PortNaming      flowslatest.ConsolePluginPortConfig `yaml:"portNaming,omitempty" json:"portNaming,omitempty"`
+	Columns         []ColumnConfig                      `yaml:"columns" json:"columns"`
 	Filters         []FilterConfig                      `yaml:"filters,omitempty" json:"filters,omitempty"`
+	Scopes          []ScopeConfig                       `yaml:"scopes" json:"scopes"`
 	QuickFilters    []flowslatest.QuickFilter           `yaml:"quickFilters,omitempty" json:"quickFilters,omitempty"`
 	AlertNamespaces []string                            `yaml:"alertNamespaces,omitempty" json:"alertNamespaces,omitempty"`
+	Sampling        int                                 `yaml:"sampling" json:"sampling"`
+	Features        []string                            `yaml:"features" json:"features"`
+	Deduper         Deduper                             `yaml:"deduper" json:"deduper"`
+	Fields          []FieldConfig                       `yaml:"fields" json:"fields"`
 }
 
 type PluginConfig struct {
