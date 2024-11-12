@@ -64,6 +64,10 @@ for env in csv['spec']['install']['spec']['deployments'][0]['spec']['template'][
    if env['name'] == 'RELATED_IMAGE_CONSOLE_PLUGIN':
       env['value'] = console_image
 
+for container in csv['spec']['install']['spec']['deployments'][0]['spec']['template']['spec']['containers']:
+   if container['name'] == "kube-rbac-proxy":
+      container["image"] = "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:c39fd7bf90c92d2062b2e3b264ad146c345debaa8453302c481b4900a058811d"
+
 csv['spec']['install']['spec']['deployments'][0]['spec']['template']['spec']['containers'][0]['image'] = operator_image
 
 # replaces upstream description by something more OpenShift'ish
