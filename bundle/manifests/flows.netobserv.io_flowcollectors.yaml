@@ -3817,7 +3817,7 @@ spec:
                           protocol:
                             description: '`protocol` optionally defines a protocol
                               to filter flows by. The available options are `TCP`,
-                              `UDP`, `ICMP`, `ICMPv6` and `SCTP`.'
+                              `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.'
                             enum:
                             - TCP
                             - UDP
@@ -3838,7 +3838,7 @@ spec:
                           tcpFlags:
                             description: |-
                               `tcpFlags` optionally defines TCP flags to filter flows by.
-                              In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK` and `RST-ACK`.
+                              In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.
                             enum:
                             - SYN
                             - SYN-ACK
@@ -6022,7 +6022,7 @@ spec:
                       type: object
                     type:
                       description: '`type` selects the type of exporters. The available
-                        options are `Kafka`, `IPFIX` and `OpenTelemetry`.'
+                        options are `Kafka`, `IPFIX`, and `OpenTelemetry`.'
                       enum:
                       - Kafka
                       - IPFIX
@@ -6708,7 +6708,7 @@ spec:
                     description: |-
                       Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
                       These network policies better isolate the NetObserv components to prevent undesired connections to them.
-                      We recommend you either enable it, or create your own network policy for NetObserv.
+                      To increase the security of connections, enable this option or create your own network policy.
                     type: boolean
                 type: object
               processor:

@@ -18,6 +18,12 @@ make install
 hack/asciidoc-gen.sh
 ```
 
+Once you're done:
+
+```bash
+kind delete cluster
+```
+
 # Generate AsciiDoc for flows JSON format reference
 
 ## Run the script

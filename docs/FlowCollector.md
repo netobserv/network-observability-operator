@@ -7941,7 +7941,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>protocol</b></td>
         <td>enum</td>
         <td>
-          `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6` and `SCTP`.<br/>
+          `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.<br/>
           <br/>
             <i>Enum</i>: TCP, UDP, ICMP, ICMPv6, SCTP<br/>
         </td>
@@ -7961,7 +7961,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td>enum</td>
         <td>
           `tcpFlags` optionally defines TCP flags to filter flows by.
-In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK` and `RST-ACK`.<br/>
+In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.<br/>
           <br/>
             <i>Enum</i>: SYN, SYN-ACK, ACK, FIN, RST, URG, ECE, CWR, FIN-ACK, RST-ACK<br/>
         </td>
@@ -11506,7 +11506,7 @@ only the result of this request.<br/>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the type of exporters. The available options are `Kafka`, `IPFIX` and `OpenTelemetry`.<br/>
+          `type` selects the type of exporters. The available options are `Kafka`, `IPFIX`, and `OpenTelemetry`.<br/>
           <br/>
             <i>Enum</i>: Kafka, IPFIX, OpenTelemetry<br/>
         </td>
@@ -13839,7 +13839,7 @@ configuration, you can disable it and install your own instead.<br/>
         <td>
           Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
 These network policies better isolate the NetObserv components to prevent undesired connections to them.
-We recommend you either enable it, or create your own network policy for NetObserv.<br/>
+To increase the security of connections, enable this option or create your own network policy.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

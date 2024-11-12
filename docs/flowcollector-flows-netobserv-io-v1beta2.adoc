@@ -425,7 +425,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
 
 | `protocol`
 | `string`
-| `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6` and `SCTP`.
+| `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.
 
 | `sourcePorts`
 | `integer-or-string`
@@ -437,7 +437,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
 | `tcpFlags`
 | `string`
 | `tcpFlags` optionally defines TCP flags to filter flows by.
-In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK` and `RST-ACK`.
+In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.
 
 |===
 == .spec.agent.ebpf.metrics
@@ -979,7 +979,7 @@ Required::
 
 | `type`
 | `string`
-| `type` selects the type of exporters. The available options are `Kafka`, `IPFIX` and `OpenTelemetry`.
+| `type` selects the type of exporters. The available options are `Kafka`, `IPFIX`, and `OpenTelemetry`.
 
 |===
 == .spec.exporters[].ipfix
@@ -2539,7 +2539,7 @@ configuration, you can disable it and install your own instead.
 | `boolean`
 | Set `enable` to `true` to deploy network policies on the namespaces used by Network Observability (main and privileged). It is disabled by default.
 These network policies better isolate the Network Observability components to prevent undesired connections to them.
-We recommend you either enable it, or create your own network policy for Network Observability.
+To increase the security of connections, enable this option or create your own network policy.
 
 |===
 == .spec.processor

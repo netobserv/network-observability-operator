@@ -93,7 +93,7 @@ type FlowCollectorSpec struct {
 type NetworkPolicy struct {
 	// Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
 	// These network policies better isolate the NetObserv components to prevent undesired connections to them.
-	// We recommend you either enable it, or create your own network policy for NetObserv.
+	// To increase the security of connections, enable this option or create your own network policy.
 	// +optional
 	Enable *bool `json:"enable,omitempty"`
 
@@ -225,7 +225,7 @@ type EBPFFlowFilter struct {
 	// +kubebuilder:validation:Enum:="Accept";"Reject"
 	Action string `json:"action,omitempty"`
 
-	// `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6` and `SCTP`.
+	// `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.
 	// +kubebuilder:validation:Enum:="TCP";"UDP";"ICMP";"ICMPv6";"SCTP"
 	// +optional
 	Protocol string `json:"protocol,omitempty"`
@@ -236,7 +236,7 @@ type EBPFFlowFilter struct {
 	Direction string `json:"direction,omitempty"`
 
 	// `tcpFlags` optionally defines TCP flags to filter flows by.
-	// In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK` and `RST-ACK`.
+	// In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.
 	// +kubebuilder:validation:Enum:="SYN";"SYN-ACK";"ACK";"FIN";"RST";"URG";"ECE";"CWR";"FIN-ACK";"RST-ACK"
 	// +optional
 	TCPFlags string `json:"tcpFlags,omitempty"`
@@ -1335,7 +1335,7 @@ const (
 
 // `FlowCollectorExporter` defines an additional exporter to send enriched flows to.
 type FlowCollectorExporter struct {
-	// `type` selects the type of exporters. The available options are `Kafka`, `IPFIX` and `OpenTelemetry`.
+	// `type` selects the type of exporters. The available options are `Kafka`, `IPFIX`, and `OpenTelemetry`.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Kafka";"IPFIX";"OpenTelemetry"
 	// +kubebuilder:validation:Required
