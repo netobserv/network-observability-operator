@@ -97,6 +97,7 @@ type ScopeConfig struct {
 	Groups      []string `yaml:"groups,omitempty" json:"groups,omitempty"`
 	Filter      string   `yaml:"filter,omitempty" json:"filter,omitempty"`
 	Filters     []string `yaml:"filters,omitempty" json:"filters,omitempty"`
+	StepInto    string   `yaml:"stepInto,omitempty" json:"stepInto,omitempty"`
 }
 
 type FieldConfig struct {

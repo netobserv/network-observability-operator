@@ -913,6 +913,7 @@ scopes:
       - K8S_ClusterName
     feature: multiCluster
     filter: cluster_name
+    stepInto: zone
   - id: zone
     name: Zone
     shortName: AZ
@@ -926,6 +927,7 @@ scopes:
     filters:
       - src_zone
       - dst_zone
+    stepInto: host
   - id: host
     name: Node
     shortName: Node
@@ -940,6 +942,7 @@ scopes:
     filters:
       - src_host_name
       - dst_host_name
+    stepInto: resource
   - id: namespace
     name: Namespace
     shortName: NS
@@ -957,6 +960,7 @@ scopes:
     filters:
       - src_namespace
       - dst_namespace
+    stepInto: owner
   - id: owner
     name: Owner
     shortName: Own
@@ -982,6 +986,7 @@ scopes:
     filters:
       - src_owner_name
       - dst_owner_name
+    stepInto: resource
   - id: resource
     name: Resource
     shortName: Res
