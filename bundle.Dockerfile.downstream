@@ -7,7 +7,7 @@ RUN pip install -r requirements.txt
 
 RUN COMMIT=$COMMIT ./hack/update-build.sh
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5
 
 # Core bundle labels.
 LABEL operators.operatorframework.io.bundle.mediatype.v1=registry+v1
