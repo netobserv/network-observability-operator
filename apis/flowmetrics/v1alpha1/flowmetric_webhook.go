@@ -100,12 +100,13 @@ func validateFlowMetric(_ context.Context, fMetric *FlowMetric) (admission.Warni
 				fmt.Sprintf("invalid label name: %s", fMetric.Spec.Labels)))
 		}
 
+		labelsMap := make(map[string]any, len(fMetric.Spec.Labels))
+		for _, label := range fMetric.Spec.Labels {
+			labelsMap[label] = nil
+		}
+
 		// Only fields defined as Labels are valid for remapping
 		if len(fMetric.Spec.Remap) != 0 {
-			labelsMap := make(map[string]any, len(fMetric.Spec.Labels))
-			for _, label := range fMetric.Spec.Labels {
-				labelsMap[label] = nil
-			}
 			var invalidMapping []string
 			for toRemap := range fMetric.Spec.Remap {
 				if _, ok := labelsMap[toRemap]; !ok {
@@ -115,6 +116,20 @@ func validateFlowMetric(_ context.Context, fMetric *FlowMetric) (admission.Warni
 			if len(invalidMapping) > 0 {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "remap"), fMetric.Spec.Remap,
 					fmt.Sprintf("some fields defined for remapping are not defined as labels: %v", invalidMapping)))
+			}
+		}
+
+		// Only fields defined as Labels are valid for flattening
+		if len(fMetric.Spec.Flatten) != 0 {
+			var invalidFlatten []string
+			for _, toFlatten := range fMetric.Spec.Flatten {
+				if _, ok := labelsMap[toFlatten]; !ok {
+					invalidFlatten = append(invalidFlatten, toFlatten)
+				}
+			}
+			if len(invalidFlatten) > 0 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "flatten"), fMetric.Spec.Flatten,
+					fmt.Sprintf("some fields defined for flattening are not defined as labels: %v", invalidFlatten)))
 			}
 		}
 	}
