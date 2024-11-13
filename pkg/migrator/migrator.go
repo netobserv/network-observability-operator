@@ -1,5 +1,5 @@
 /*
-Copyright 2023 The Tekton Authors
+Copyright 2023 The Tekton Authors, NetObserv
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -105,8 +105,16 @@ func (m *Migrator) Start(ctx context.Context) error {
 func (m *Migrator) migrateWithRetry(ctx context.Context, gr schema.GroupResource) error {
 	// Retrying to allow time for the conversion webhooks to be ready
 	// There's no hurry to get this done, start with a duration > second
+	attempt := 0
 	return retry.OnError(retryBackoff, func(error) bool { return true }, func() error {
-		return m.Migrate(ctx, gr)
+		log := log.FromContext(ctx)
+		log.WithValues("attempt", attempt).Info("try migrate")
+		attempt++
+		err := m.Migrate(ctx, gr)
+		if err != nil {
+			log.Error(err, "migration failed")
+		}
+		return err
 	})
 }
 
