@@ -126,7 +126,7 @@ func (r *fakeReconcile) Reconcile(context.Context, reconcile.Request) (ctrl.Resu
 
 func initWatcher(t *testing.T) *Watcher {
 	m, err := manager.New(&rest.Config{}, manager.Options{
-		NewCache: func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
+		NewCache: func(_ *rest.Config, _ cache.Options) (cache.Cache, error) {
 			return &informertest.FakeInformers{}, nil
 		},
 	})
@@ -139,7 +139,7 @@ func initWatcher(t *testing.T) *Watcher {
 
 func setupClients(t *testing.T, clientMock client.Client, liveClient kubernetes.Interface) helper.Client {
 	// 1. narrow-cache client
-	narrowcache.NewLiveClient = func(c *rest.Config) (kubernetes.Interface, error) {
+	narrowcache.NewLiveClient = func(_ *rest.Config) (kubernetes.Interface, error) {
 		return liveClient, nil
 	}
 	narrowCache := narrowcache.NewConfig(&rest.Config{}, narrowcache.ConfigMaps, narrowcache.Secrets)

@@ -225,7 +225,7 @@ func (c *Client) GetSource(ctx context.Context, obj client.Object, h handler.Eve
 
 	return &NarrowSource{
 		handler: h,
-		onStart: func(ctx context.Context, q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
+		onStart: func(_ context.Context, q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 			c.addHandler(key, handlerOnQueue{handler: h, queue: q})
 		},
 	}, nil
