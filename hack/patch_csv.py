@@ -70,6 +70,13 @@ for container in csv['spec']['install']['spec']['deployments'][0]['spec']['templ
 
 csv['spec']['install']['spec']['deployments'][0]['spec']['template']['spec']['containers'][0]['image'] = operator_image
 
+csv['spec']['relatedImages'] = [{'name': 'ebpf-agent', 'image': ebpf_image},
+                                {'name': 'flowlogs-pipeline', 'image': flp_image},
+                                {'name': 'console-plugin', 'image': console_image},
+                                {'name': 'operator', 'image': operator_image}
+                                ]
+
+
 # replaces upstream description by something more OpenShift'ish
 file = open(desc_file_name,mode='r')
 csv['spec']['description'] = file.read()
