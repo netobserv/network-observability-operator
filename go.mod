@@ -88,5 +88,3 @@ require (
 )
 
 replace github.com/prometheus/common v0.55.0 => github.com/netobserv/prometheus-common v0.55.0-netobserv
-
-replace github.com/netobserv/flowlogs-pipeline => github.com/jotak/flowlogs-pipeline v0.0.0-20241113134338-68583d85dd5e
