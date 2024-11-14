@@ -1,20 +1,18 @@
+//nolint:revive
 package networkpolicy
 
 import (
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
-
 	. "github.com/onsi/gomega"
-
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	networkingv1 "k8s.io/api/networking/v1"
-
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 )

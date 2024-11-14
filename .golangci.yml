@@ -5,7 +5,7 @@ linters:
     - cyclop
     - errname
     - exhaustive
-    - exportloopref
+    - copyloopvar
     - gocritic
     - gofmt
     - gosimple
@@ -16,16 +16,17 @@ linters:
     - stylecheck
     - typecheck
     - unused
+run:
+  go: "1.22"
 linters-settings:
-  stylecheck:
-    go: "1.22"
   gocritic:
     enabled-checks:
       - hugeParam
       - rangeExprCopy
       - rangeValCopy
       - indexAlloc
-      - deprecatedComment
+    settings:
+      ifElseChain:
+        minThreshold: 3
   cyclop:
     max-complexity: 20
-

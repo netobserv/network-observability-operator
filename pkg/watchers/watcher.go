@@ -82,7 +82,7 @@ func (w *Watcher) watch(ctx context.Context, cl *narrowcache.Client, kind flowsl
 	s, err := cl.GetSource(
 		ctx,
 		obj,
-		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+		handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
 			// The watch might be registered, but inactive
 			k := key(kind, o.GetName(), o.GetNamespace())
 			w.wmut.RLock()

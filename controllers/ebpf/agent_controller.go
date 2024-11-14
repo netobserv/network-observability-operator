@@ -705,17 +705,18 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
 	for _, pair := range helper.KeySorted(advancedConfig.Env) {
 		k, v := pair[0], pair[1]
-		if k == envDedupe {
+		switch k {
+		case envDedupe:
 			dedup = v
-		} else if k == EnvDedupeJustMark {
+		case EnvDedupeJustMark:
 			dedupJustMark = v
-		} else if k == EnvDedupeMerge {
+		case EnvDedupeMerge:
 			dedupMerge = v
-		} else if k == envDNSTrackingPort {
+		case envDNSTrackingPort:
 			dnsTrackingPort = v
-		} else if k == envNetworkEventsGroupID {
+		case envNetworkEventsGroupID:
 			networkEventsGroupID = v
-		} else {
+		default:
 			config = append(config, corev1.EnvVar{Name: k, Value: v})
 		}
 	}
