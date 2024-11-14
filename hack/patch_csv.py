@@ -66,7 +66,7 @@ for env in csv['spec']['install']['spec']['deployments'][0]['spec']['template'][
 
 for container in csv['spec']['install']['spec']['deployments'][0]['spec']['template']['spec']['containers']:
    if container['name'] == "kube-rbac-proxy":
-      container["image"] = "registry.redhat.io/rhacm2/kube-rbac-proxy-rhel8@sha256:c39fd7bf90c92d2062b2e3b264ad146c345debaa8453302c481b4900a058811d"
+      container["image"] = "registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9@sha256:3fa22124916523b958c67af8ad652e73a2c3d68bb5579da1cba1ade537f3b7ae"
 
 csv['spec']['install']['spec']['deployments'][0]['spec']['template']['spec']['containers'][0]['image'] = operator_image
 
