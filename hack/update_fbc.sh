@@ -59,7 +59,7 @@ cat <<EOF >>"${CATALOG_FILE}"
 ---
 schema: olm.channel
 package: netobserv-operator
-name: latest
+name: stable
 entries:
   - name: netobserv-operator.${BUNDLE_TAG}
 EOF
