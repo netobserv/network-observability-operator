@@ -338,6 +338,7 @@ func TestConfigMapContent(t *testing.T) {
 	assert.Empty(config.Frontend.Features)
 	assert.NotEmpty(config.Frontend.Columns)
 	assert.NotEmpty(config.Frontend.Filters)
+	assert.NotEmpty(config.Frontend.Scopes)
 	assert.Equal(config.Frontend.Sampling, 1)
 	assert.Equal(config.Frontend.Deduper.Mark, false)
 	assert.Equal(config.Frontend.Deduper.Merge, true)
