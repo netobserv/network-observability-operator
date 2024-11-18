@@ -80,17 +80,17 @@ func checkFlowMetricCartinality(fMetric *FlowMetric) admission.Warnings {
 }
 
 func validateFlowMetric(_ context.Context, fMetric *FlowMetric) (admission.Warnings, error) {
-	var str []string
+	var fields []string
 	var allErrs field.ErrorList
 
 	for _, f := range fMetric.Spec.Filters {
-		str = append(str, f.Field)
+		fields = append(fields, f.Field)
 	}
 
-	if len(str) != 0 {
-		if !helper.FindFields(str, false) {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "filters"), str,
-				fmt.Sprintf("invalid filter field: %s", str)))
+	if len(fields) != 0 {
+		if !helper.FindFields(fields, false) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "filters"), fields,
+				fmt.Sprintf("invalid filter field: %s", fields)))
 		}
 	}
 
@@ -119,17 +119,11 @@ func validateFlowMetric(_ context.Context, fMetric *FlowMetric) (admission.Warni
 			}
 		}
 
-		// Only fields defined as Labels are valid for flattening
+		// Check for valid fields
 		if len(fMetric.Spec.Flatten) != 0 {
-			var invalidFlatten []string
-			for _, toFlatten := range fMetric.Spec.Flatten {
-				if _, ok := labelsMap[toFlatten]; !ok {
-					invalidFlatten = append(invalidFlatten, toFlatten)
-				}
-			}
-			if len(invalidFlatten) > 0 {
+			if !helper.FindFields(fMetric.Spec.Flatten, false) {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "flatten"), fMetric.Spec.Flatten,
-					fmt.Sprintf("some fields defined for flattening are not defined as labels: %v", invalidFlatten)))
+					fmt.Sprintf("invalid fields to flatten: %s", fMetric.Spec.Flatten)))
 			}
 		}
 	}

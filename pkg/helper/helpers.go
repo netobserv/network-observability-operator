@@ -114,6 +114,9 @@ func FindFields(labels []string, isNumber bool) bool {
 	}
 
 	for _, l := range labels {
+		// Split field for nesting, e.g. "NetworkEvents>Name" (and we don't verify the nested part)
+		parts := strings.Split(l, ">")
+		l = parts[0]
 		if ok := labelMap[l].exists; !ok {
 			return false
 		}

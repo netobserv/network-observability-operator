@@ -105,6 +105,27 @@ func TestFlowMetric(t *testing.T) {
 			},
 			expectedError: "invalid value field",
 		},
+		{
+			desc: "Valid nested fields",
+			m: &FlowMetric{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test1",
+					Namespace: "test-namespace",
+				},
+				Spec: FlowMetricSpec{
+					Labels:  []string{"NetworkEvents>Name"},
+					Flatten: []string{"NetworkEvents"},
+					Filters: []MetricFilter{
+						{
+							Field: "NetworkEvents>Type",
+							Value: "acl",
+						},
+					},
+					Remap: map[string]string{"NetworkEvents>Name": "name"},
+				},
+			},
+			expectedError: "",
+		},
 	}
 
 	for _, test := range tests {
