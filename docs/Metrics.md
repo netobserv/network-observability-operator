@@ -51,6 +51,11 @@ When the `DNSTracking` feature is enabled in `spec.agent.ebpf.features`, additio
 - `node_dns_latency_seconds`
 - `workload_dns_latency_seconds` `**`
 
+When the `NetworkEvents` feature is enabled in `spec.agent.ebpf.features`, 
+- `namespace_network_policy_events_total` `*`
+- `node_network_policy_events_total`
+- `workload_network_policy_events_total`
+
 ## Custom metrics using the FlowMetrics API
 
 The FlowMetrics API ([spec reference](./FlowMetric.md)) has been designed to give you full control on the metrics generation out of the NetObserv' enriched NetFlow data.
