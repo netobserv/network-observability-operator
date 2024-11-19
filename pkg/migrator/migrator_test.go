@@ -107,7 +107,7 @@ func TestMigrateWithRetry(t *testing.T) {
 	start := time.Now()
 	// Return an error during the first 500 milliseconds
 	dclient.PrependReactor("list", "*",
-		func(act k8stesting.Action) (bool, runtime.Object, error) {
+		func(_ k8stesting.Action) (bool, runtime.Object, error) {
 			if time.Since(start) < 500*time.Millisecond {
 				return true, nil, errors.New("failed to list resources")
 			}
