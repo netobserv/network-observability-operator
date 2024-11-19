@@ -3464,7 +3464,7 @@ spec:
                           description: '`flowFilter` defines the eBPF agent configuration regarding flow filtering.'
                           properties:
                             action:
-                              description: '`action` defines the action to perform on the flows that match the filter. The available options are `Accept` and `Reject`.'
+                              description: '`action` defines the action to perform on the flows that match the filter. The available options are `Accept` (default) and `Reject`.'
                               enum:
                                 - Accept
                                 - Reject

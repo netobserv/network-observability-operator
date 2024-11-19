@@ -221,7 +221,7 @@ type EBPFFlowFilter struct {
 	// Examples: `10.10.10.0/24` or `100:100:100:100::/64`
 	CIDR string `json:"cidr,omitempty"`
 
-	// `action` defines the action to perform on the flows that match the filter. The available options are `Accept` and `Reject`.
+	// `action` defines the action to perform on the flows that match the filter. The available options are `Accept` (default) and `Reject`.
 	// +kubebuilder:validation:Enum:="Accept";"Reject"
 	Action string `json:"action,omitempty"`
 

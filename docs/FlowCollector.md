@@ -7859,7 +7859,7 @@ If the operator is Exists, the value should be empty, otherwise just a regular s
         <td><b>action</b></td>
         <td>enum</td>
         <td>
-          `action` defines the action to perform on the flows that match the filter. The available options are `Accept` and `Reject`.<br/>
+          `action` defines the action to perform on the flows that match the filter. The available options are `Accept` (default) and `Reject`.<br/>
           <br/>
             <i>Enum</i>: Accept, Reject<br/>
         </td>
