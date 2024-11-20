@@ -3754,7 +3754,7 @@ spec:
                           action:
                             description: '`action` defines the action to perform on
                               the flows that match the filter. The available options
-                              are `Accept` (default) and `Reject`.'
+                              are `Accept`, which is the default, and `Reject`.'
                             enum:
                             - Accept
                             - Reject

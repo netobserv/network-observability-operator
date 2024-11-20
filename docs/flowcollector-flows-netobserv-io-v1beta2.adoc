@@ -377,7 +377,7 @@ Type::
 
 | `action`
 | `string`
-| `action` defines the action to perform on the flows that match the filter. The available options are `Accept` (default) and `Reject`.
+| `action` defines the action to perform on the flows that match the filter. The available options are `Accept`, which is the default, and `Reject`.
 
 | `cidr`
 | `string`
