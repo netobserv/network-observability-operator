@@ -888,7 +888,7 @@ filters:
     component: number
     hint: Specify a TCP smoothed Round Trip Time in nanoseconds.
   - id: network_events
-    name: Network events flow monitoring
+    name: Network Events
     component: text
     hint: Specify a single network event.
 scopes:
