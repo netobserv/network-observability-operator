@@ -93,7 +93,7 @@ type FlowCollectorSpec struct {
 type NetworkPolicy struct {
 	// Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
 	// These network policies better isolate the NetObserv components to prevent undesired connections to them.
-	// We recommend you either enable it, or create your own network policy for NetObserv.
+	// To increase the security of connections, enable this option or create your own network policy.
 	// +optional
 	Enable *bool `json:"enable,omitempty"`
 
@@ -221,59 +221,60 @@ type EBPFFlowFilter struct {
 	// Examples: `10.10.10.0/24` or `100:100:100:100::/64`
 	CIDR string `json:"cidr,omitempty"`
 
-	// `action` defines the action to perform on the flows that match the filter.
+	// `action` defines the action to perform on the flows that match the filter. The available options are `Accept`, which is the default, and `Reject`.
 	// +kubebuilder:validation:Enum:="Accept";"Reject"
 	Action string `json:"action,omitempty"`
 
-	// `protocol` defines the protocol to filter flows by.
+	// `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.
 	// +kubebuilder:validation:Enum:="TCP";"UDP";"ICMP";"ICMPv6";"SCTP"
 	// +optional
 	Protocol string `json:"protocol,omitempty"`
 
-	// `direction` defines the direction to filter flows by.
+	// `direction` optionally defines a direction to filter flows by. The available options are `Ingress` and `Egress`.
 	// +kubebuilder:validation:Enum:="Ingress";"Egress"
 	// +optional
 	Direction string `json:"direction,omitempty"`
 
-	// `tcpFlags` defines the TCP flags to filter flows by.
+	// `tcpFlags` optionally defines TCP flags to filter flows by.
+	// In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.
 	// +kubebuilder:validation:Enum:="SYN";"SYN-ACK";"ACK";"FIN";"RST";"URG";"ECE";"CWR";"FIN-ACK";"RST-ACK"
 	// +optional
 	TCPFlags string `json:"tcpFlags,omitempty"`
 
-	// `sourcePorts` defines the source ports to filter flows by.
+	// `sourcePorts` optionally defines the source ports to filter flows by.
 	// To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
 	// To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
 	// To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
 	// +optional
 	SourcePorts intstr.IntOrString `json:"sourcePorts,omitempty"`
 
-	// `destPorts` defines the destination ports to filter flows by.
+	// `destPorts` optionally defines the destination ports to filter flows by.
 	// To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
 	// To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
 	// To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
 	// +optional
 	DestPorts intstr.IntOrString `json:"destPorts,omitempty"`
 
-	// `ports` defines the ports to filter flows by. It is used both for source and destination ports.
+	// `ports` optionally defines the ports to filter flows by. It is used both for source and destination ports.
 	// To filter a single port, set a single port as an integer value. For example, `ports: 80`.
 	// To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
 	// To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
 	Ports intstr.IntOrString `json:"ports,omitempty"`
 
-	// `peerIP` defines the IP address to filter flows by.
+	// `peerIP` optionally defines the remote IP address to filter flows by.
 	// Example: `10.10.10.10`.
 	// +optional
 	PeerIP string `json:"peerIP,omitempty"`
 
-	// `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, defines the ICMP code to filter flows by.
+	// `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, optionally defines the ICMP code to filter flows by.
 	// +optional
 	ICMPCode *int `json:"icmpCode,omitempty"`
 
-	// `icmpType`, for ICMP traffic, defines the ICMP type to filter flows by.
+	// `icmpType`, for ICMP traffic, optionally defines the ICMP type to filter flows by.
 	// +optional
 	ICMPType *int `json:"icmpType,omitempty"`
 
-	// `pktDrops` filters flows with packet drops
+	// `pktDrops` optionally filters only flows containing packet drops.
 	// +optional
 	PktDrops *bool `json:"pktDrops,omitempty"`
 }
@@ -1029,7 +1030,7 @@ const (
 
 type FileReference struct {
 	//+kubebuilder:validation:Enum=configmap;secret
-	// Type for the file reference: "configmap" or "secret".
+	// Type for the file reference: `configmap` or `secret`.
 	Type MountableType `json:"type,omitempty"`
 
 	// Name of the config map or secret containing the file.
@@ -1334,7 +1335,7 @@ const (
 
 // `FlowCollectorExporter` defines an additional exporter to send enriched flows to.
 type FlowCollectorExporter struct {
-	// `type` selects the type of exporters. The available options are `Kafka` and `IPFIX`.
+	// `type` selects the type of exporters. The available options are `Kafka`, `IPFIX`, and `OpenTelemetry`.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Kafka";"IPFIX";"OpenTelemetry"
 	// +kubebuilder:validation:Required
