@@ -28,20 +28,10 @@ def dump_index(pathn, index):
 
 index = load_index(os.getenv('TARGET_INDEX_FILE'))
 
-index[1]["image"] = bundle_image
+index[0]["image"] = bundle_image
 
-# Changing package name
-index[1]["name"] = package_full_name
-index[2]["entries"][0]["name"] = package_full_name
-for prop in index[1]["properties"]:
-   if prop["type"] == "olm.package":
-      prop["value"]["version"] = version
-
-for relatedImage in index[1]["relatedImages"]:
-   if relatedImage["image"][0:95] == "quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle":
+for relatedImage in index[0]["relatedImages"]:
+   if relatedImage["image"][0:95] == "registry.redhat.io/network-observability/network-observability-operator-bundle":
       relatedImage["image"] = bundle_image
 
-# Setting channel to stable
-index[0]["defaultChannel"] = "stable"
-index[2]["name"] = "stable"
 dump_index(os.getenv('TARGET_INDEX_FILE'), index)
