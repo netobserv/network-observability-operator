@@ -1,7 +1,7 @@
 ARG TARGETARCH
 
 # Build the manager binary
-FROM docker.io/library/golang:1.22 as builder
+FROM docker.io/library/golang:1.23 as builder
 ARG BUILD_VERSION="unknown"
 
 ARG TARGETARCH=amd64
