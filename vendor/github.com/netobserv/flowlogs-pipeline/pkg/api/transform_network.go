@@ -59,6 +59,7 @@ const (
 	NetworkAddKubernetesInfra   TransformNetworkOperationEnum = "add_kubernetes_infra"  // add output kubernetes isInfra field from input
 	NetworkReinterpretDirection TransformNetworkOperationEnum = "reinterpret_direction" // reinterpret flow direction at the node level (instead of net interface), to ease the deduplication process
 	NetworkAddSubnetLabel       TransformNetworkOperationEnum = "add_subnet_label"      // categorize IPs based on known subnets configuration
+	NetworkDecodeTCPFlags       TransformNetworkOperationEnum = "decode_tcp_flags"      // decode bitwise TCP flags into a string
 )
 
 type NetworkTransformRule struct {
@@ -69,6 +70,7 @@ type NetworkTransformRule struct {
 	AddLocation     *NetworkGenericRule           `yaml:"add_location,omitempty" json:"add_location,omitempty" doc:"Add location rule configuration"`
 	AddSubnetLabel  *NetworkAddSubnetLabelRule    `yaml:"add_subnet_label,omitempty" json:"add_subnet_label,omitempty" doc:"Add subnet label rule configuration"`
 	AddService      *NetworkAddServiceRule        `yaml:"add_service,omitempty" json:"add_service,omitempty" doc:"Add service rule configuration"`
+	DecodeTCPFlags  *NetworkGenericRule           `yaml:"decode_tcp_flags,omitempty" json:"decode_tcp_flags,omitempty" doc:"Decode bitwise TCP flags into a string"`
 }
 
 type K8sInfraRule struct {

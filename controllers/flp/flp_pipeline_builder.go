@@ -93,6 +93,13 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			Type: api.NetworkReinterpretDirection,
 		},
 		{
+			Type: api.NetworkDecodeTCPFlags,
+			DecodeTCPFlags: &api.NetworkGenericRule{
+				Input:  "Flags",
+				Output: "Flags",
+			},
+		},
+		{
 			Type: api.NetworkAddKubernetesInfra,
 			KubernetesInfra: &api.K8sInfraRule{
 				NamespaceNameFields: []api.K8sReference{
