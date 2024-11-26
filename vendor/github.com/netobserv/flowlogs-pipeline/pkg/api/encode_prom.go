@@ -53,6 +53,7 @@ type MetricsItem struct {
 	ValueKey   string                    `yaml:"valueKey" json:"valueKey" doc:"entry key from which to resolve metric value"`
 	Labels     []string                  `yaml:"labels" json:"labels" doc:"labels to be associated with the metric"`
 	Remap      map[string]string         `yaml:"remap" json:"remap" doc:"optional remapping of labels"`
+	Flatten    []string                  `yaml:"flatten" json:"flatten" doc:"list fields to be flattened"`
 	Buckets    []float64                 `yaml:"buckets" json:"buckets" doc:"histogram buckets"`
 	ValueScale float64                   `yaml:"valueScale,omitempty" json:"valueScale,omitempty" doc:"scale factor of the value (MetricVal := FlowVal / Scale)"`
 }

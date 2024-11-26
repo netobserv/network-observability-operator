@@ -644,10 +644,12 @@ type FlowCollectorFLP struct {
 
 	//+optional
 	// `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
+	// IMPORTANT: This feature is available as a Developer Preview.
 	Deduper *FLPDeduper `json:"deduper,omitempty"`
 
-	// `filters` let you define custom filters to limit the amount of generated flows.
 	// +optional
+	// `filters` let you define custom filters to limit the amount of generated flows.
+	// IMPORTANT: This feature is available as a Developer Preview.
 	Filters []FLPFilterSet `json:"filters"`
 
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
@@ -667,8 +669,8 @@ const (
 
 // `FLPDeduper` defines the desired configuration for FLP-based deduper
 type FLPDeduper struct {
-	// Set the Processor deduper mode (de-duplication). It comes in addition to the Agent deduper because the Agent cannot de-duplicate same flows reported from different nodes.<br>
-	// - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer.<br>
+	// Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication because the Agent cannot de-duplicate same flows reported from different nodes.<br>
+	// - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer, or network events.<br>
 	// - Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br>
 	// - Use `Disabled` to turn off Processor-based de-duplication.<br>
 	// +kubebuilder:validation:Enum:="Disabled";"Drop";"Sample"

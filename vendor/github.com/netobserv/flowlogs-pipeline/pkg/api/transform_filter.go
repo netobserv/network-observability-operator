@@ -17,23 +17,14 @@
 
 package api
 
-import (
-	"errors"
-	"regexp"
-)
-
 type TransformFilter struct {
 	Rules []TransformFilterRule `yaml:"rules,omitempty" json:"rules,omitempty" doc:"list of filter rules, each includes:"`
 }
 
-func (tf *TransformFilter) Preprocess() error {
-	var errs []error
+func (tf *TransformFilter) Preprocess() {
 	for i := range tf.Rules {
-		if err := tf.Rules[i].preprocess(); err != nil {
-			errs = append(errs, err)
-		}
+		tf.Rules[i].preprocess()
 	}
-	return errors.Join(errs...)
 }
 
 type TransformFilterEnum string
@@ -46,7 +37,7 @@ const (
 	RemoveEntryIfEqual       TransformFilterEnum = "remove_entry_if_equal"        // removes the entry if the field value equals specified value
 	RemoveEntryIfNotEqual    TransformFilterEnum = "remove_entry_if_not_equal"    // removes the entry if the field value does not equal specified value
 	RemoveEntryAllSatisfied  TransformFilterEnum = "remove_entry_all_satisfied"   // removes the entry if all of the defined rules are satisfied
-	KeepEntry                TransformFilterEnum = "keep_entry"                   // keeps the entry if the set of rules are all satisfied
+	KeepEntryAllSatisfied    TransformFilterEnum = "keep_entry_all_satisfied"     // keeps the entry if the set of rules are all satisfied
 	AddField                 TransformFilterEnum = "add_field"                    // adds (input) field to the entry; overrides previous value if present (key=input, value=value)
 	AddFieldIfDoesntExist    TransformFilterEnum = "add_field_if_doesnt_exist"    // adds a field to the entry if the field does not exist
 	AddFieldIf               TransformFilterEnum = "add_field_if"                 // add output field set to assignee if input field satisfies criteria from parameters field
@@ -92,35 +83,22 @@ type TransformFilterRule struct {
 	ConditionalSampling     []*SamplingCondition             `yaml:"conditionalSampling,omitempty" json:"conditionalSampling,omitempty" doc:"sampling configuration rules"`
 }
 
-func (r *TransformFilterRule) preprocess() error {
-	var errs []error
+func (r *TransformFilterRule) preprocess() {
 	if r.RemoveField != nil {
-		if err := r.RemoveField.preprocess(false); err != nil {
-			errs = append(errs, err)
-		}
+		r.RemoveField.preprocess()
 	}
 	if r.RemoveEntry != nil {
-		if err := r.RemoveEntry.preprocess(false); err != nil {
-			errs = append(errs, err)
-		}
+		r.RemoveEntry.preprocess()
 	}
 	for i := range r.RemoveEntryAllSatisfied {
-		if err := r.RemoveEntryAllSatisfied[i].RemoveEntry.preprocess(false); err != nil {
-			errs = append(errs, err)
-		}
+		r.RemoveEntryAllSatisfied[i].RemoveEntry.preprocess()
 	}
 	for i := range r.KeepEntryAllSatisfied {
-		err := r.KeepEntryAllSatisfied[i].KeepEntry.preprocess(r.KeepEntryAllSatisfied[i].Type == KeepEntryIfRegexMatch || r.KeepEntryAllSatisfied[i].Type == KeepEntryIfNotRegexMatch)
-		if err != nil {
-			errs = append(errs, err)
-		}
+		r.KeepEntryAllSatisfied[i].KeepEntry.preprocess()
 	}
 	for i := range r.ConditionalSampling {
-		if err := r.ConditionalSampling[i].preprocess(); err != nil {
-			errs = append(errs, err)
-		}
+		r.ConditionalSampling[i].preprocess()
 	}
-	return errors.Join(errs...)
 }
 
 type TransformFilterGenericRule struct {
@@ -129,25 +107,12 @@ type TransformFilterGenericRule struct {
 	CastInt bool        `yaml:"castInt,omitempty" json:"castInt,omitempty" doc:"set true to cast the value field as an int (numeric values are float64 otherwise)"`
 }
 
-func (r *TransformFilterGenericRule) preprocess(isRegex bool) error {
-	if isRegex {
-		if s, ok := r.Value.(string); ok {
-			v, err := regexp.Compile(s)
-			if err != nil {
-				r.Value = nil
-				return err
-			}
-			r.Value = v
-		} else {
-			r.Value = nil
-			return errors.New("regex filter expects string value")
-		}
-	} else if r.CastInt {
+func (r *TransformFilterGenericRule) preprocess() {
+	if r.CastInt {
 		if f, ok := r.Value.(float64); ok {
 			r.Value = int(f)
 		}
 	}
-	return nil
 }
 
 type TransformFilterRuleWithAssignee struct {
@@ -172,12 +137,8 @@ type SamplingCondition struct {
 	Rules []*RemoveEntryRule `yaml:"rules,omitempty" json:"rules,omitempty" doc:"rules to be satisfied for this sampling configuration"`
 }
 
-func (s *SamplingCondition) preprocess() error {
-	var errs []error
+func (s *SamplingCondition) preprocess() {
 	for i := range s.Rules {
-		if err := s.Rules[i].RemoveEntry.preprocess(false); err != nil {
-			errs = append(errs, err)
-		}
+		s.Rules[i].RemoveEntry.preprocess()
 	}
-	return errors.Join(errs...)
 }
