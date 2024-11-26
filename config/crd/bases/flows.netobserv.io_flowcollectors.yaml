@@ -1574,6 +1574,28 @@ spec:
                             in edge debug or support scenarios.
                           type: object
                       type: object
+                    deduper:
+                      description: '`deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.'
+                      properties:
+                        mode:
+                          default: Disabled
+                          description: |-
+                            Set the Processor deduper mode (de-duplication). It comes in addition to the Agent deduper because the Agent cannot de-duplicate same flows reported from different nodes.<br>
+                            - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer.<br>
+                            - Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br>
+                            - Use `Disabled` to turn off Processor-based de-duplication.<br>
+                          enum:
+                            - Disabled
+                            - Drop
+                            - Sample
+                          type: string
+                        sampling:
+                          default: 50
+                          description: '`sampling` is the sampling rate when deduper `mode` is `Sample`.'
+                          format: int32
+                          minimum: 0
+                          type: integer
+                      type: object
                     dropUnusedFields:
                       default: true
                       description: '`dropUnusedFields` [deprecated (*)] this setting is not used anymore.'
@@ -1582,6 +1604,55 @@ spec:
                       default: true
                       description: '`enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes'
                       type: boolean
+                    filters:
+                      description: '`filters` let you define custom filters to limit the amount of generated flows.'
+                      items:
+                        description: '`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions'
+                        properties:
+                          allOf:
+                            description: '`filters` is a list of matches that must be all satisfied in order to remove a flow.'
+                            items:
+                              description: '`FLPSingleFilter` defines the desired configuration for a single FLP-based filter'
+                              properties:
+                                field:
+                                  description: |-
+                                    Name of the field to filter on
+                                    Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.
+                                  type: string
+                                matchType:
+                                  default: Equal
+                                  description: Type of matching to apply
+                                  enum:
+                                    - Equal
+                                    - NotEqual
+                                    - Presence
+                                    - Absence
+                                    - MatchRegex
+                                    - NotMatchRegex
+                                  type: string
+                                value:
+                                  description: Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.
+                                  type: string
+                              required:
+                                - field
+                                - matchType
+                              type: object
+                            type: array
+                          outputTarget:
+                            description: 'If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.'
+                            enum:
+                              - ""
+                              - Loki
+                              - Metrics
+                              - Exporters
+                            type: string
+                          sampling:
+                            description: '`sampling` is an optional sampling rate to apply to this filter.'
+                            format: int32
+                            minimum: 0
+                            type: integer
+                        type: object
+                      type: array
                     healthPort:
                       default: 8080
                       description: '`healthPort` is a collector HTTP port in the Pod that exposes the health check API'
@@ -7209,6 +7280,81 @@ spec:
                       default: ""
                       description: '`clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.'
                       type: string
+                    deduper:
+                      description: |-
+                        `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
+                        IMPORTANT: This feature is available as a Developer Preview.
+                      properties:
+                        mode:
+                          default: Disabled
+                          description: |-
+                            Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication because the Agent cannot de-duplicate same flows reported from different nodes.<br>
+                            - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer, or network events.<br>
+                            - Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br>
+                            - Use `Disabled` to turn off Processor-based de-duplication.<br>
+                          enum:
+                            - Disabled
+                            - Drop
+                            - Sample
+                          type: string
+                        sampling:
+                          default: 50
+                          description: '`sampling` is the sampling rate when deduper `mode` is `Sample`.'
+                          format: int32
+                          minimum: 0
+                          type: integer
+                      type: object
+                    filters:
+                      description: |-
+                        `filters` let you define custom filters to limit the amount of generated flows.
+                        IMPORTANT: This feature is available as a Developer Preview.
+                      items:
+                        description: '`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions'
+                        properties:
+                          allOf:
+                            description: '`filters` is a list of matches that must be all satisfied in order to remove a flow.'
+                            items:
+                              description: '`FLPSingleFilter` defines the desired configuration for a single FLP-based filter'
+                              properties:
+                                field:
+                                  description: |-
+                                    Name of the field to filter on
+                                    Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.
+                                  type: string
+                                matchType:
+                                  default: Equal
+                                  description: Type of matching to apply
+                                  enum:
+                                    - Equal
+                                    - NotEqual
+                                    - Presence
+                                    - Absence
+                                    - MatchRegex
+                                    - NotMatchRegex
+                                  type: string
+                                value:
+                                  description: Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.
+                                  type: string
+                              required:
+                                - field
+                                - matchType
+                              type: object
+                            type: array
+                          outputTarget:
+                            description: 'If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.'
+                            enum:
+                              - ""
+                              - Loki
+                              - Metrics
+                              - Exporters
+                            type: string
+                          sampling:
+                            description: '`sampling` is an optional sampling rate to apply to this filter.'
+                            format: int32
+                            minimum: 0
+                            type: integer
+                        type: object
+                      type: array
                     imagePullPolicy:
                       default: IfNotPresent
                       description: '`imagePullPolicy` is the Kubernetes pull policy for the image defined above'

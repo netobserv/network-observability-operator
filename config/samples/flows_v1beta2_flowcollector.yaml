@@ -92,6 +92,16 @@ spec:
         cpu: 100m
       limits:
         memory: 800Mi
+    # deduper:
+    #   mode: Sample
+    #   sampling: 100
+    # filters:
+    #   - allOf:
+    #       - matchType: Equal
+    #         field: SrcK8S_Namespace
+    #         value: netobserv
+    #     outputTarget: Loki
+    #     sampling: 10
     # advanced:
     #   secondaryNetworks:
     #     - name: "my-vms/custom-nad"

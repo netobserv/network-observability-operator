@@ -3696,6 +3696,13 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessordeduper">deduper</a></b></td>
+        <td>object</td>
+        <td>
+          `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>dropUnusedFields</b></td>
         <td>boolean</td>
         <td>
@@ -3711,6 +3718,13 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/
           `enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes<br/>
           <br/>
             <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorfiltersindex">filters</a></b></td>
+        <td>[]object</td>
+        <td>
+          `filters` let you define custom filters to limit the amount of generated flows.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3886,6 +3900,141 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 some very concrete performance-tuning options, such as `GOGC` and `GOMAXPROCS`, that should not be
 publicly exposed as part of the FlowCollector descriptor, as they are only useful
 in edge debug or support scenarios.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.deduper
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
+
+
+
+`deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          Set the Processor deduper mode (de-duplication). It comes in addition to the Agent deduper because the Agent cannot de-duplicate same flows reported from different nodes.<br>
+- Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer.<br>
+- Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br>
+- Use `Disabled` to turn off Processor-based de-duplication.<br><br/>
+          <br/>
+            <i>Enum</i>: Disabled, Drop, Sample<br/>
+            <i>Default</i>: Disabled<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          `sampling` is the sampling rate when deduper `mode` is `Sample`.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 50<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.filters[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
+
+
+
+`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessorfiltersindexallofindex">allOf</a></b></td>
+        <td>[]object</td>
+        <td>
+          `filters` is a list of matches that must be all satisfied in order to remove a flow.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>outputTarget</b></td>
+        <td>enum</td>
+        <td>
+          If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.<br/>
+          <br/>
+            <i>Enum</i>: , Loki, Metrics, Exporters<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          `sampling` is an optional sampling rate to apply to this filter.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.filters[index].allOf[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorfiltersindex)</sup></sup>
+
+
+
+`FLPSingleFilter` defines the desired configuration for a single FLP-based filter
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>field</b></td>
+        <td>string</td>
+        <td>
+          Name of the field to filter on
+Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>matchType</b></td>
+        <td>enum</td>
+        <td>
+          Type of matching to apply<br/>
+          <br/>
+            <i>Enum</i>: Equal, NotEqual, Presence, Absence, MatchRegex, NotMatchRegex<br/>
+            <i>Default</i>: Equal<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13890,6 +14039,22 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessordeduper-1">deduper</a></b></td>
+        <td>object</td>
+        <td>
+          `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
+IMPORTANT: This feature is available as a Developer Preview.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorfiltersindex-1">filters</a></b></td>
+        <td>[]object</td>
+        <td>
+          `filters` let you define custom filters to limit the amount of generated flows.
+IMPORTANT: This feature is available as a Developer Preview.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
@@ -15910,6 +16075,142 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
           `name` should match the network name as visible in the pods annotation 'k8s.v1.cni.cncf.io/network-status'.<br/>
         </td>
         <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.deduper
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor-1)</sup></sup>
+
+
+
+`deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
+IMPORTANT: This feature is available as a Developer Preview.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication because the Agent cannot de-duplicate same flows reported from different nodes.<br>
+- Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer, or network events.<br>
+- Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br>
+- Use `Disabled` to turn off Processor-based de-duplication.<br><br/>
+          <br/>
+            <i>Enum</i>: Disabled, Drop, Sample<br/>
+            <i>Default</i>: Disabled<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          `sampling` is the sampling rate when deduper `mode` is `Sample`.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 50<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.filters[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor-1)</sup></sup>
+
+
+
+`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessorfiltersindexallofindex-1">allOf</a></b></td>
+        <td>[]object</td>
+        <td>
+          `filters` is a list of matches that must be all satisfied in order to remove a flow.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>outputTarget</b></td>
+        <td>enum</td>
+        <td>
+          If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.<br/>
+          <br/>
+            <i>Enum</i>: , Loki, Metrics, Exporters<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          `sampling` is an optional sampling rate to apply to this filter.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.filters[index].allOf[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorfiltersindex-1)</sup></sup>
+
+
+
+`FLPSingleFilter` defines the desired configuration for a single FLP-based filter
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>field</b></td>
+        <td>string</td>
+        <td>
+          Name of the field to filter on
+Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>matchType</b></td>
+        <td>enum</td>
+        <td>
+          Type of matching to apply<br/>
+          <br/>
+            <i>Enum</i>: Equal, NotEqual, Presence, Absence, MatchRegex, NotMatchRegex<br/>
+            <i>Default</i>: Equal<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>value</b></td>
+        <td>string</td>
+        <td>
+          Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 

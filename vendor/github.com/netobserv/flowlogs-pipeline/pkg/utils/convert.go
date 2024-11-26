@@ -246,9 +246,9 @@ func ConvertToBool(unk interface{}) (bool, error) {
 func ConvertToString(unk interface{}) string {
 	switch i := unk.(type) {
 	case float64:
-		return strconv.FormatFloat(i, 'E', -1, 64)
+		return strconv.FormatFloat(i, 'f', -1, 64)
 	case float32:
-		return strconv.FormatFloat(float64(i), 'E', -1, 32)
+		return strconv.FormatFloat(float64(i), 'f', -1, 32)
 	case int64:
 		return strconv.FormatInt(i, 10)
 	case int32:

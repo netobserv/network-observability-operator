@@ -123,7 +123,7 @@ github.com/munnerz/goautoneg
 # github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 ## explicit
 github.com/mwitkow/go-conntrack
-# github.com/netobserv/flowlogs-pipeline v1.6.1-crc0.0.20240920063618-2ea1a7ce77b8
+# github.com/netobserv/flowlogs-pipeline v1.7.0-community.0.20241126083919-0fa789ce0e58
 ## explicit; go 1.22.3
 github.com/netobserv/flowlogs-pipeline/pkg/api
 github.com/netobserv/flowlogs-pipeline/pkg/config

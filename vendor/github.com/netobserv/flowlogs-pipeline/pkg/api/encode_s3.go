@@ -28,5 +28,5 @@ type EncodeS3 struct {
 	Secure                 bool                   `yaml:"secure,omitempty" json:"secure,omitempty" doc:"true for https, false for http (default: false)"`
 	ObjectHeaderParameters map[string]interface{} `yaml:"objectHeaderParameters,omitempty" json:"objectHeaderParameters,omitempty" doc:"parameters to include in object header (key/value pairs)"`
 	// TBD: (TLS?) security parameters
-	//TLS                    *ClientTLS             `yaml:"tls" json:"tls" doc:"TLS client configuration (optional)"`
+	// TLS                    *ClientTLS             `yaml:"tls" json:"tls" doc:"TLS client configuration (optional)"`
 }

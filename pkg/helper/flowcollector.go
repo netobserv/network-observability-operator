@@ -387,3 +387,7 @@ func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flows
 func AutoDetectOpenShiftNetworks(spec *flowslatest.FlowCollectorFLP) bool {
 	return spec.SubnetLabels.OpenShiftAutoDetect == nil || *spec.SubnetLabels.OpenShiftAutoDetect
 }
+
+func HasFLPDeduper(spec *flowslatest.FlowCollectorSpec) bool {
+	return spec.Processor.Deduper != nil && spec.Processor.Deduper.Mode != "" && spec.Processor.Deduper.Mode != flowslatest.FLPDeduperDisabled
+}

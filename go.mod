@@ -8,7 +8,7 @@ require (
 	github.com/coreos/go-semver v0.3.1
 	github.com/go-logr/logr v1.4.2
 	github.com/google/go-cmp v0.6.0
-	github.com/netobserv/flowlogs-pipeline v1.6.1-crc0.0.20240920063618-2ea1a7ce77b8
+	github.com/netobserv/flowlogs-pipeline v1.7.0-community.0.20241126083919-0fa789ce0e58
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.35.1
 	github.com/openshift/api v0.0.0-20240722135205-ae4f370f361f
