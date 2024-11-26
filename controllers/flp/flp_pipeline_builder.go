@@ -346,7 +346,7 @@ func filtersToFLP(in []flowslatest.FLPFilterSet, target flowslatest.FLPFilterTar
 				allOf = append(allOf, &rule)
 			}
 			rules = append(rules, api.TransformFilterRule{
-				Type:                  api.KeepEntry,
+				Type:                  api.KeepEntryAllSatisfied,
 				KeepEntryAllSatisfied: allOf,
 				KeepEntrySampling:     uint16(f.Sampling),
 			})

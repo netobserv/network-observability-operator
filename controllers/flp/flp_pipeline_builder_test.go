@@ -390,7 +390,7 @@ func TestPipelineWithFilters_WantNamespacesABC(t *testing.T) {
 	assert.Equal(
 		[]api.TransformFilterRule{
 			{
-				Type: api.KeepEntry,
+				Type: api.KeepEntryAllSatisfied,
 				KeepEntryAllSatisfied: []*api.KeepEntryRule{
 					{
 						Type:      api.KeepEntryIfEqual,
@@ -399,7 +399,7 @@ func TestPipelineWithFilters_WantNamespacesABC(t *testing.T) {
 				},
 			},
 			{
-				Type: api.KeepEntry,
+				Type: api.KeepEntryAllSatisfied,
 				KeepEntryAllSatisfied: []*api.KeepEntryRule{
 					{
 						Type:      api.KeepEntryIfEqual,
@@ -408,7 +408,7 @@ func TestPipelineWithFilters_WantNamespacesABC(t *testing.T) {
 				},
 			},
 			{
-				Type: api.KeepEntry,
+				Type: api.KeepEntryAllSatisfied,
 				KeepEntryAllSatisfied: []*api.KeepEntryRule{
 					{
 						Type:      api.KeepEntryIfEqual,
@@ -464,7 +464,7 @@ func TestPipelineWithFilters_DontWantNamespacesABC_LokiOnly(t *testing.T) {
 	assert.Equal(
 		[]api.TransformFilterRule{
 			{
-				Type: api.KeepEntry,
+				Type: api.KeepEntryAllSatisfied,
 				KeepEntryAllSatisfied: []*api.KeepEntryRule{
 					{
 						Type:      api.KeepEntryIfNotEqual,
@@ -561,7 +561,7 @@ func TestPipelineWithFilters_ComplexFilter(t *testing.T) {
 	assert.Equal(
 		[]api.TransformFilterRule{
 			{
-				Type: api.KeepEntry,
+				Type: api.KeepEntryAllSatisfied,
 				KeepEntryAllSatisfied: []*api.KeepEntryRule{
 					{
 						Type:      api.KeepEntryIfNotEqual,
@@ -574,7 +574,7 @@ func TestPipelineWithFilters_ComplexFilter(t *testing.T) {
 				},
 			},
 			{
-				Type: api.KeepEntry,
+				Type: api.KeepEntryAllSatisfied,
 				KeepEntryAllSatisfied: []*api.KeepEntryRule{
 					{
 						Type:      api.KeepEntryIfExists,
@@ -584,7 +584,7 @@ func TestPipelineWithFilters_ComplexFilter(t *testing.T) {
 				KeepEntrySampling: 50,
 			},
 			{
-				Type: api.KeepEntry,
+				Type: api.KeepEntryAllSatisfied,
 				KeepEntryAllSatisfied: []*api.KeepEntryRule{
 					{
 						Type:      api.KeepEntryIfDoesntExist,
@@ -598,7 +598,7 @@ func TestPipelineWithFilters_ComplexFilter(t *testing.T) {
 	assert.Equal(
 		[]api.TransformFilterRule{
 			{
-				Type: api.KeepEntry,
+				Type: api.KeepEntryAllSatisfied,
 				KeepEntryAllSatisfied: []*api.KeepEntryRule{
 					{
 						Type:      api.KeepEntryIfEqual,
