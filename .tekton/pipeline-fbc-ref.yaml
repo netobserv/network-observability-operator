@@ -46,6 +46,10 @@ spec:
     description: Skip checks against built image
     name: skip-checks
     type: string
+  - default: brew.registry.redhat.io/rh-osbs/openshift-ose-operator-registry-rhel9:v4.17
+    description: Base image to use to build the File Based Catalog
+    name: opm-image
+    type: string
   - default: "true"
     description: Execute the build with network isolation
     name: hermetic
@@ -194,6 +198,7 @@ spec:
       value:
       - $(params.build-args[*])
       - "COMMIT=tasks.clone-repository.results.commit"
+      - "OPM_IMAGE=$(params.opm-image)"
     - name: BUILD_ARGS_FILE
       value: $(params.build-args-file)
     - name: SOURCE_ARTIFACT

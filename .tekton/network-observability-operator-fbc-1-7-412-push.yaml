@@ -32,6 +32,8 @@ spec:
     value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-fbc-1-7-412:latest
   - name: dockerfile
     value: catalog.Dockerfile.downstream
+  - name: opm-image
+    value: registry.redhat.io/openshift4/ose-operator-registry:v4.12
   pipelineRef:
     name: build-fbc-pipeline
   workspaces:
