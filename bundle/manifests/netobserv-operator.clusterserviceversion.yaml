@@ -469,7 +469,7 @@ spec:
       name: flowcollectors.flows.netobserv.io
       specDescriptors:
       - description: defines the desired type of deployment for flow processing.
-        displayName: Deployment model
+        displayName: udeployment LModel
         path: deploymentModel
       - description: for flows extraction.
         displayName: Agent configuration
@@ -489,24 +489,24 @@ spec:
         path: agent.ebpf.privileged
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
-      - displayName: Cache active timeout
+      - displayName: ucache LActive LTimeout
         path: agent.ebpf.cacheActiveTimeout
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Cache max flows
+      - displayName: ucache LMax LFlows
         path: agent.ebpf.cacheMaxFlows
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Kafka batch size
+      - displayName: ukafka LBatch LSize
         path: agent.ebpf.kafkaBatchSize
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Log level
+      - displayName: ulog LLevel
         path: agent.ebpf.logLevel
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Image pull policy
+      - displayName: uimage LPull LPolicy
         path: agent.ebpf.imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
@@ -560,7 +560,7 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
-      - displayName: Cluster name
+      - displayName: ucluster LName
         path: processor.clusterName
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
@@ -590,7 +590,7 @@ spec:
         path: processor.metrics.server.tls.providedCaFile
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:processor.metrics.server.tls.type:Provided
-      - displayName: Kafka consumer replicas
+      - displayName: ukafka LConsumer LReplicas
         path: processor.kafkaConsumerReplicas
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
@@ -600,12 +600,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Kafka consumer queue capacity
+      - displayName: ukafka LConsumer LQueue LCapacity
         path: processor.kafkaConsumerQueueCapacity
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Kafka consumer batch size
+      - displayName: ukafka LConsumer LBatch LSize
         path: processor.kafkaConsumerBatchSize
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:deploymentModel:Kafka
@@ -613,11 +613,11 @@ spec:
       - path: processor.subnetLabels.openShiftAutoDetect
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
-      - displayName: Log level
+      - displayName: ulog LLevel
         path: processor.logLevel
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Image pull policy
+      - displayName: uimage LPull LPolicy
         path: processor.imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
@@ -629,41 +629,41 @@ spec:
       - description: for the flow store.
         displayName: Loki client settings
         path: loki
-      - displayName: Enable
+      - displayName: uenable
         path: loki.enable
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
-      - displayName: Mode
+      - displayName: umode
         path: loki.mode
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
-      - displayName: Loki stack
+      - displayName: uloki LStack
         path: loki.lokiStack
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:LokiStack
-      - displayName: Monolithic
+      - displayName: umonolithic
         path: loki.monolithic
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:Monolithic
-      - displayName: Microservices
+      - displayName: umicroservices
         path: loki.microservices
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:Microservices
-      - displayName: Manual
+      - displayName: umanual
         path: loki.manual
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.mode:Manual
-      - displayName: Write batch wait
+      - displayName: uwrite LBatch LWait
         path: loki.writeBatchWait
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Write batch size
+      - displayName: uwrite LBatch LSize
         path: loki.writeBatchSize
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Write timeout
+      - displayName: uwrite LTimeout
         path: loki.writeTimeout
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
@@ -676,19 +676,19 @@ spec:
         path: consolePlugin
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
-      - displayName: Enable
+      - displayName: uenable
         path: consolePlugin.enable
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
-      - displayName: Port naming
+      - displayName: uport LNaming
         path: consolePlugin.portNaming
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
-      - displayName: Quick filters
+      - displayName: uquick LFilters
         path: consolePlugin.quickFilters
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
-      - displayName: Replicas
+      - displayName: ureplicas
         path: consolePlugin.replicas
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
@@ -698,12 +698,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Log level
+      - displayName: ulog LLevel
         path: consolePlugin.logLevel
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Image pull policy
+      - displayName: uimage LPull LPolicy
         path: consolePlugin.imagePullPolicy
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"
@@ -718,113 +718,105 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: additional optional exporters for custom consumption or storage.
-        displayName: Exporters
+        displayName: uexporters
         path: exporters
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Type
         path: exporters[0].type
-      - displayName: IPFIX configuration
-        path: exporters[0].ipfix
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:exporters.type:IPFIX
-      - displayName: Kafka configuration
-        path: exporters[0].kafka
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:exporters.type:Kafka
-      - displayName: Exclude interfaces
+      - displayName: uexclude LInterfaces
         path: agent.ebpf.excludeInterfaces
-      - displayName: Features
+      - displayName: ufeatures
         path: agent.ebpf.features
-      - displayName: Interfaces
+      - displayName: uinterfaces
         path: agent.ebpf.interfaces
-      - displayName: Metrics
+      - displayName: umetrics
         path: agent.ebpf.metrics
-      - displayName: Disable alerts
+      - displayName: udisable LAlerts
         path: agent.ebpf.metrics.disableAlerts
-      - displayName: Server
+      - displayName: userver
         path: agent.ebpf.metrics.server
-      - displayName: Port
+      - displayName: uport
         path: agent.ebpf.metrics.server.port
-      - displayName: Sampling
+      - displayName: usampling
         path: agent.ebpf.sampling
-      - displayName: Enable
+      - displayName: uenable
         path: consolePlugin.portNaming.enable
-      - displayName: Port names
+      - displayName: uport LNames
         path: consolePlugin.portNaming.portNames
-      - displayName: Address
+      - displayName: uaddress
         path: kafka.address
-      - displayName: Topic
+      - displayName: utopic
         path: kafka.topic
-      - displayName: Name
+      - displayName: uname
         path: loki.lokiStack.name
-      - displayName: Namespace
+      - displayName: unamespace
         path: loki.lokiStack.namespace
-      - displayName: Auth token
+      - displayName: uauth LToken
         path: loki.manual.authToken
-      - displayName: Ingester url
+      - displayName: uingester LUrl
         path: loki.manual.ingesterUrl
-      - displayName: Querier url
+      - displayName: uquerier LUrl
         path: loki.manual.querierUrl
-      - displayName: Status url
+      - displayName: ustatus LUrl
         path: loki.manual.statusUrl
-      - displayName: TenantID
+      - displayName: utenantID
         path: loki.manual.tenantID
-      - displayName: Ingester url
+      - displayName: uingester LUrl
         path: loki.microservices.ingesterUrl
-      - displayName: Querier url
+      - displayName: uquerier LUrl
         path: loki.microservices.querierUrl
-      - displayName: TenantID
+      - displayName: utenantID
         path: loki.microservices.tenantID
-      - displayName: TenantID
+      - displayName: utenantID
         path: loki.monolithic.tenantID
-      - displayName: Url
+      - displayName: uurl
         path: loki.monolithic.url
-      - displayName: Read timeout
+      - displayName: uread LTimeout
         path: loki.readTimeout
-      - displayName: Namespace
+      - displayName: unamespace
         path: namespace
-      - displayName: Network policy
+      - displayName: unetwork LPolicy
         path: networkPolicy
-      - displayName: Additional namespaces
+      - displayName: uadditional LNamespaces
         path: networkPolicy.additionalNamespaces
-      - displayName: Enable
+      - displayName: uenable
         path: networkPolicy.enable
-      - displayName: Deduper
+      - displayName: udeduper
         path: processor.deduper
-      - displayName: Mode
+      - displayName: umode
         path: processor.deduper.mode
-      - displayName: Sampling
+      - displayName: usampling
         path: processor.deduper.sampling
-      - displayName: Filters
+      - displayName: ufilters
         path: processor.filters
-      - displayName: Log types
+      - displayName: ulog LTypes
         path: processor.logTypes
-      - displayName: Disable alerts
+      - displayName: udisable LAlerts
         path: processor.metrics.disableAlerts
-      - displayName: Include list
+      - displayName: uinclude LList
         path: processor.metrics.includeList
-      - displayName: Port
+      - displayName: uport
         path: processor.metrics.server.port
-      - displayName: Subnet labels
+      - displayName: usubnet LLabels
         path: processor.subnetLabels
-      - displayName: Custom labels
+      - displayName: ucustom LLabels
         path: processor.subnetLabels.customLabels
-      - displayName: Prometheus
+      - displayName: uprometheus
         path: prometheus
-      - displayName: Querier
+      - displayName: uquerier
         path: prometheus.querier
-      - displayName: Enable
+      - displayName: uenable
         path: prometheus.querier.enable
-      - displayName: Manual
+      - displayName: umanual
         path: prometheus.querier.manual
-      - displayName: Forward user token
+      - displayName: uforward LUser LToken
         path: prometheus.querier.manual.forwardUserToken
-      - displayName: Url
+      - displayName: uurl
         path: prometheus.querier.manual.url
-      - displayName: Mode
+      - displayName: umode
         path: prometheus.querier.mode
-      - displayName: Timeout
+      - displayName: utimeout
         path: prometheus.querier.timeout
       statusDescriptors:
       - description: Namespace where console plugin and flowlogs-pipeline have been

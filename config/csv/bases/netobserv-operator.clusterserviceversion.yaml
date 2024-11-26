@@ -273,14 +273,6 @@ spec:
             - urn:alm:descriptor:com.tectonic.ui:advanced
         - displayName: Type
           path: exporters[0].type
-        - displayName: IPFIX configuration
-          path: exporters[0].ipfix
-          x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:exporters.type:IPFIX"
-        - displayName: Kafka configuration
-          path: exporters[0].kafka
-          x-descriptors:
-            - "urn:alm:descriptor:com.tectonic.ui:fieldDependency:exporters.type:Kafka"
       statusDescriptors:
         - displayName: Namespace
           description: Namespace where console plugin and flowlogs-pipeline have been deployed.
