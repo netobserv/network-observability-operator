@@ -814,21 +814,9 @@ filters:
   - id: tcp_flags
     name: TCP flags
     component: autocomplete
-    hint: Specify a TCP flags value as integer number.
+    hint: Specify a TCP flags value.
     examples: |-
-      Logical OR combination of unique TCP flags comprised in the flow, as per RFC-9293, with additional custom flags
-      users can specify either numeric value or string representation of the flags as follows :
-      - FIN or 1,
-      - SYN or 2,
-      - RST or 4,
-      - PSH or 8,
-      - ACK or 16,
-      - URG or 32,
-      - ECE or 64,
-      - CWR or 128,
-      - SYN_ACK or 256,
-      - FIN_ACK or 512,
-      - RST_ACK or 1024,
+      Logical OR combination of unique TCP flags comprised in the flow, as per RFC-9293, with additional custom flags (SYN_ACK, FIN_ACK and RST_ACK).
   - id: node_direction
     name: Node Direction
     component: autocomplete
@@ -1142,7 +1130,7 @@ fields:
     type: string
     description: Network interfaces
   - name: Flags
-    type: number
+    type: string
     description: |
       Logical OR combination of unique TCP flags comprised in the flow, as per RFC-9293, with additional custom flags to represent the following per-packet combinations: +
       - SYN+ACK (0x100) +

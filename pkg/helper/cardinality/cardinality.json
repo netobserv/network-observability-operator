@@ -35,7 +35,7 @@
   "FlowDirection": "fine",
   "IfDirections": "fine",
   "Interfaces": "careful",
-  "Flags": "fine",
+  "Flags": "careful",
   "Bytes": "avoid",
   "Packets": "avoid",
   "PktDropBytes": "avoid",

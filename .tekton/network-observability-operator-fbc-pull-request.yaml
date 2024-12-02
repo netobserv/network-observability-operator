@@ -11,6 +11,7 @@ metadata:
       (".tekton/***".pathChanged() ||
       "catalog.Dockerfile.downstream".pathChanged() ||
       "catalog/***".pathChanged() ||
+      "./requirements.txt".pathChanged() ||
       "hack/update-build.sh".pathChanged() ||
       "hack/bundle_digest.sh".pathChanged() ||
       "hack/patch_catalog.py".pathChanged() ||
