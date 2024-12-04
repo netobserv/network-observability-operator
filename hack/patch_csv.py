@@ -30,6 +30,7 @@ operator_image = os.getenv('OPERATOR_IMAGE_PULLSPEC')
 ebpf_image = os.getenv('EBPF_IMAGE_PULLSPEC')
 flp_image = os.getenv('FLP_IMAGE_PULLSPEC')
 console_image = os.getenv('CONSOLE_IMAGE_PULLSPEC')
+console_pf4_image = os.getenv('CONSOLE_PF4_IMAGE_PULLSPEC')
 
 csv['metadata']['annotations']['operators.openshift.io/valid-subscription'] = '["OpenShift Kubernetes Engine", "OpenShift Container Platform", "OpenShift Platform Plus"]'
 csv['metadata']['annotations']['operatorframework.io/cluster-monitoring'] = 'true'
@@ -63,6 +64,8 @@ for env in csv['spec']['install']['spec']['deployments'][0]['spec']['template'][
       env['value'] = flp_image
    if env['name'] == 'RELATED_IMAGE_CONSOLE_PLUGIN':
       env['value'] = console_image
+   if env['name'] == 'RELATED_IMAGE_CONSOLE_PLUGIN_PF4_SUPPORT':
+      env['value'] = console_pf4_image
 
 csv['spec']['install']['spec']['deployments'][0]['spec']['template']['spec']['containers'][0]['image'] = operator_image
 

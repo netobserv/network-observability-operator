@@ -18,3 +18,7 @@ spec:
     from:
       kind: DockerImage
       name: quay.io/netobserv/network-observability-console-plugin:main
+  - name: network-observability-console-plugin-patternfly4-support
+    from:
+      kind: DockerImage
+      name: quay.io/netobserv/network-observability-console-plugin:main

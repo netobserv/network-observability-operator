@@ -190,6 +190,8 @@ following the environment variables with your custom operand image with `kubectl
 * `RELATED_IMAGE_EBPF_AGENT`
 * `RELATED_IMAGE_FLOWLOGS_PIPELINE`
 * `RELATED_IMAGE_CONSOLE_PLUGIN`
+* `RELATED_IMAGE_CONSOLE_PLUGIN_PF4_SUPPORT` for OCP versions < 4.15.0
+
 
 Examples:
 
@@ -197,6 +199,7 @@ Examples:
 oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_EBPF_AGENT="quay.io/netobserv/netobserv-ebpf-agent:main"
 oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_FLOWLOGS_PIPELINE="quay.io/netobserv/flowlogs-pipeline:main"
 oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN="quay.io/netobserv/network-observability-console-plugin:main"
+oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN_PF4_SUPPORT="quay.io/netobserv/network-observability-console-plugin:main"
 ```
 
 Alternatively you can use helper make targets for the same purpose:
@@ -215,7 +218,7 @@ E.g:
 CSV=network-observability-operator.v1.2.0 USER=myself VERSION=test make set-agent-image set-flp-image set-plugin-image
 ```
 
-You can also do this by editing the CSV via the console by changing the image defined under `RELATED_IMAGE_EBPF_AGENT`, `RELATED_IMAGE_FLOWLOGS_PIPELINE`, and/or `RELATED_IMAGE_CONSOLE_PLUGIN`. If you are using this method, ensure that you are in the `openshift-netobserv-operator` namespace before updating the image value. If you are in a different namespace, then it reverts it back.
+You can also do this by editing the CSV via the console by changing the image defined under `RELATED_IMAGE_EBPF_AGENT`, `RELATED_IMAGE_FLOWLOGS_PIPELINE`, `RELATED_IMAGE_CONSOLE_PLUGIN` and/or `RELATED_IMAGE_CONSOLE_PLUGIN_PF4_SUPPORT`. If you are using this method, ensure that you are in the `openshift-netobserv-operator` namespace before updating the image value. If you are in a different namespace, then it reverts it back.
 
 ![Alt text](./docs/assets/console-csv.png)
 

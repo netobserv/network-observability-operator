@@ -132,8 +132,17 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 	}
 	r.watcher.Reset(ns)
 
+	// Select Console Plugin Image according to OCP compatibility
+	pluginImage := r.mgr.Config.ConsolePluginImage
+	b, err := r.mgr.ClusterInfo.OpenShiftVersionIsAtLeast("4.15.0")
+	if err != nil {
+		return r.status.Error("OpenShiftVersionIsAtLeast", err)
+	} else if !b {
+		pluginImage = r.mgr.Config.ConsolePluginPF4SupportImage
+	}
+
 	// Create reconcilers
-	cpReconciler := consoleplugin.NewReconciler(reconcilersInfo.NewInstance(r.mgr.Config.ConsolePluginImage, r.status))
+	cpReconciler := consoleplugin.NewReconciler(reconcilersInfo.NewInstance(pluginImage, r.status))
 
 	// Check namespace changed
 	if ns != previousNamespace {
@@ -157,7 +166,7 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 	}
 
 	// Console plugin
-	err := cpReconciler.Reconcile(ctx, desired)
+	err = cpReconciler.Reconcile(ctx, desired)
 	if err != nil {
 		return r.status.Error("ReconcileConsolePluginFailed", err)
 	}
