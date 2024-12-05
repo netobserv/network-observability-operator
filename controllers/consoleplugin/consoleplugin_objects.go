@@ -458,6 +458,10 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
 		fconf.Features = append(fconf.Features, "networkEvents")
 	}
 
+	if helper.IsPacketTranslationEnabled(&b.desired.Agent.EBPF) {
+		fconf.Features = append(fconf.Features, "packetTranslation")
+	}
+
 	if b.desired.Agent.EBPF.Advanced != nil {
 		if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeJustMark]; ok {
 			dedupJustMark, err = strconv.ParseBool(v)

@@ -135,6 +135,7 @@ spec:
                           - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
                           - `NetworkEvents`: enable the Network events monitoring feature. This feature requires mounting
                           the kernel debug filesystem, so the eBPF pod has to run as privileged.
+                          - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
                         items:
                           description: |-
                             Agent feature, can be one of:<br>
@@ -142,11 +143,13 @@ spec:
                             - `DNSTracking`, to track specific information on DNS traffic.<br>
                             - `FlowRTT`, to track TCP latency [Unsupported (*)].<br>
                             - `NetworkEvents`, to track Network events.<br>
+                            - `PacketTranslation`, to enrich flows with packets translation information. <br>
                           enum:
                           - PacketDrop
                           - DNSTracking
                           - FlowRTT
                           - NetworkEvents
+                          - PacketTranslation
                           type: string
                         type: array
                       flowFilter:
@@ -3816,18 +3819,21 @@ spec:
                           This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
                           It requires using the OVN-Kubernetes network plugin with the Observability feature.
                           IMPORTANT: This feature is available as a Developer Preview.<br>
+                          - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
                         items:
                           description: |-
                             Agent feature, can be one of:<br>
                             - `PacketDrop`, to track packet drops.<br>
                             - `DNSTracking`, to track specific information on DNS traffic.<br>
                             - `FlowRTT`, to track TCP latency.<br>
-                            - `NetworkEvents`, to track network events [Developer Preview].<br>
+                            - `NetworkEvents`, to track Network events [Developer Preview].<br>
+                            - `PacketTranslation`, to enrich flows with packets translation information. <br>
                           enum:
                           - PacketDrop
                           - DNSTracking
                           - FlowRTT
                           - NetworkEvents
+                          - PacketTranslation
                           type: string
                         type: array
                       flowFilter:
