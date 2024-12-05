@@ -35,6 +35,8 @@ spec:
     value: 5d
   - name: dockerfile
     value: catalog.Dockerfile.downstream
+  - name: opm-image
+    value: registry.redhat.io/openshift4/ose-operator-registry-rhel9:v4.16
   pipelineRef:
     name: build-fbc-pipeline
   workspaces:
