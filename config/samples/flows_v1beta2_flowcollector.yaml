@@ -29,9 +29,23 @@ spec:
       excludeInterfaces: ["lo"]
       kafkaBatchSize: 1048576
       #flowFilter:
+      #  rules:
+      #  - action: Accept
+      #    cidr: 1.1.1.1/24
+      #    protocol: TCP
+      #    sourcePorts: 53
+      #    tcpFlags: SYN
+      #  - action: Accept
+      #    cidr: 2.2.2.2/24
+      #    protocol: UDP
+      #    sourcePorts: 80
+      #    tcpFlags: SYN
+      #  - action: Accept
+      #    cidr: 3.3.3.3/24
+      #    protocol: ICMP
       #  tcpFlags: "SYN"
       #  action: Accept
-      #  cidr: 0.0.0.0/0
+      #  cidr: 2.2.2.2/24
       #  protocol: TCP
       #  sourcePorts: 53
       #  enable: true

@@ -437,7 +437,7 @@ in edge debug or support scenarios.<br/>
         <td><b>action</b></td>
         <td>enum</td>
         <td>
-          Action defines the action to perform on the flows that match the filter.<br/>
+          `action` defines the action to perform on the flows that match the filter. The available options are `Accept`, which is the default, and `Reject`.<br/>
           <br/>
             <i>Enum</i>: Accept, Reject<br/>
         </td>
@@ -446,17 +446,17 @@ in edge debug or support scenarios.<br/>
         <td><b>cidr</b></td>
         <td>string</td>
         <td>
-          CIDR defines the IP CIDR to filter flows by.
-Example: 10.10.10.0/24 or 100:100:100:100::/64<br/>
+          `cidr` defines the IP CIDR to filter flows by.
+Examples: `10.10.10.0/24` or `100:100:100:100::/64`<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>destPorts</b></td>
         <td>int or string</td>
         <td>
-          DestPorts defines the destination ports to filter flows by.
-To filter a single port, set a single port as an integer value. For example, destPorts: 80.
-To filter a range of ports, use a "start-end" range in string format. For example, destPorts: "80-100".
+          `destPorts` optionally defines the destination ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
 To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
         </td>
         <td>false</td>
@@ -464,7 +464,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>direction</b></td>
         <td>enum</td>
         <td>
-          Direction defines the direction to filter flows by.<br/>
+          `direction` optionally defines a direction to filter flows by. The available options are `Ingress` and `Egress`.<br/>
           <br/>
             <i>Enum</i>: Ingress, Egress<br/>
         </td>
@@ -473,45 +473,45 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `true` to enable eBPF flow filtering feature.<br/>
+          Set `enable` to `true` to enable the eBPF flow filtering feature.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>icmpCode</b></td>
         <td>integer</td>
         <td>
-          ICMPCode defines the ICMP code to filter flows by.<br/>
+          `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, optionally defines the ICMP code to filter flows by.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>icmpType</b></td>
         <td>integer</td>
         <td>
-          ICMPType defines the ICMP type to filter flows by.<br/>
+          `icmpType`, for ICMP traffic, optionally defines the ICMP type to filter flows by.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>peerIP</b></td>
         <td>string</td>
         <td>
-          PeerIP defines the IP address to filter flows by.
-Example: 10.10.10.10<br/>
+          `peerIP` optionally defines the remote IP address to filter flows by.
+Example: `10.10.10.10`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>pktDrops</b></td>
         <td>boolean</td>
         <td>
-          `pktDrops`, to filter flows with packet drops<br/>
+          `pktDrops` optionally filters only flows containing packet drops.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>ports</b></td>
         <td>int or string</td>
         <td>
-          Ports defines the ports to filter flows by. it can be user for either source or destination ports.
-To filter a single port, set a single port as an integer value. For example, ports: 80.
-To filter a range of ports, use a "start-end" range in string format. For example, ports: "80-100".
+          `ports` optionally defines the ports to filter flows by. It is used both for source and destination ports.
+To filter a single port, set a single port as an integer value. For example, `ports: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
 To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
         </td>
         <td>false</td>
@@ -519,7 +519,138 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>protocol</b></td>
         <td>enum</td>
         <td>
-          Protocol defines the protocol to filter flows by.<br/>
+          `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.<br/>
+          <br/>
+            <i>Enum</i>: TCP, UDP, ICMP, ICMPv6, SCTP<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfflowfilterrulesindex">rules</a></b></td>
+        <td>[]object</td>
+        <td>
+          `flowFilterRules` defines a list of ebpf agent flow filtering rules<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sourcePorts</b></td>
+        <td>int or string</td>
+        <td>
+          `sourcePorts` optionally defines the source ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tcpFlags</b></td>
+        <td>enum</td>
+        <td>
+          `tcpFlags` optionally defines TCP flags to filter flows by.
+In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.<br/>
+          <br/>
+            <i>Enum</i>: SYN, SYN-ACK, ACK, FIN, RST, URG, ECE, CWR, FIN-ACK, RST-ACK<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.flowFilter.rules[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfflowfilter)</sup></sup>
+
+
+
+`EBPFFlowFilterRule` defines the desired eBPF agent configuration regarding flow filtering rule.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>action</b></td>
+        <td>enum</td>
+        <td>
+          `action` defines the action to perform on the flows that match the filter. The available options are `Accept`, which is the default, and `Reject`.<br/>
+          <br/>
+            <i>Enum</i>: Accept, Reject<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>cidr</b></td>
+        <td>string</td>
+        <td>
+          `cidr` defines the IP CIDR to filter flows by.
+Examples: `10.10.10.0/24` or `100:100:100:100::/64`<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>destPorts</b></td>
+        <td>int or string</td>
+        <td>
+          `destPorts` optionally defines the destination ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>direction</b></td>
+        <td>enum</td>
+        <td>
+          `direction` optionally defines a direction to filter flows by. The available options are `Ingress` and `Egress`.<br/>
+          <br/>
+            <i>Enum</i>: Ingress, Egress<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>icmpCode</b></td>
+        <td>integer</td>
+        <td>
+          `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, optionally defines the ICMP code to filter flows by.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>icmpType</b></td>
+        <td>integer</td>
+        <td>
+          `icmpType`, for ICMP traffic, optionally defines the ICMP type to filter flows by.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>peerIP</b></td>
+        <td>string</td>
+        <td>
+          `peerIP` optionally defines the remote IP address to filter flows by.
+Example: `10.10.10.10`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>pktDrops</b></td>
+        <td>boolean</td>
+        <td>
+          `pktDrops` optionally filters only flows containing packet drops.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>ports</b></td>
+        <td>int or string</td>
+        <td>
+          `ports` optionally defines the ports to filter flows by. It is used both for source and destination ports.
+To filter a single port, set a single port as an integer value. For example, `ports: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
+        <td>enum</td>
+        <td>
+          `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.<br/>
           <br/>
             <i>Enum</i>: TCP, UDP, ICMP, ICMPv6, SCTP<br/>
         </td>
@@ -528,9 +659,9 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>sourcePorts</b></td>
         <td>int or string</td>
         <td>
-          SourcePorts defines the source ports to filter flows by.
-To filter a single port, set a single port as an integer value. For example, sourcePorts: 80.
-To filter a range of ports, use a "start-end" range in string format. For example, sourcePorts: "80-100".
+          `sourcePorts` optionally defines the source ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
 To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
         </td>
         <td>false</td>
@@ -538,7 +669,8 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>tcpFlags</b></td>
         <td>enum</td>
         <td>
-          `tcpFlags` defines the TCP flags to filter flows by.<br/>
+          `tcpFlags` optionally defines TCP flags to filter flows by.
+In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.<br/>
           <br/>
             <i>Enum</i>: SYN, SYN-ACK, ACK, FIN, RST, URG, ECE, CWR, FIN-ACK, RST-ACK<br/>
         </td>
@@ -8050,6 +8182,137 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td>boolean</td>
         <td>
           Set `enable` to `true` to enable the eBPF flow filtering feature.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>icmpCode</b></td>
+        <td>integer</td>
+        <td>
+          `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, optionally defines the ICMP code to filter flows by.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>icmpType</b></td>
+        <td>integer</td>
+        <td>
+          `icmpType`, for ICMP traffic, optionally defines the ICMP type to filter flows by.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>peerIP</b></td>
+        <td>string</td>
+        <td>
+          `peerIP` optionally defines the remote IP address to filter flows by.
+Example: `10.10.10.10`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>pktDrops</b></td>
+        <td>boolean</td>
+        <td>
+          `pktDrops` optionally filters only flows containing packet drops.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>ports</b></td>
+        <td>int or string</td>
+        <td>
+          `ports` optionally defines the ports to filter flows by. It is used both for source and destination ports.
+To filter a single port, set a single port as an integer value. For example, `ports: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>protocol</b></td>
+        <td>enum</td>
+        <td>
+          `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.<br/>
+          <br/>
+            <i>Enum</i>: TCP, UDP, ICMP, ICMPv6, SCTP<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecagentebpfflowfilterrulesindex-1">rules</a></b></td>
+        <td>[]object</td>
+        <td>
+          `flowFilterRules` defines a list of ebpf agent flow filtering rules<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sourcePorts</b></td>
+        <td>int or string</td>
+        <td>
+          `sourcePorts` optionally defines the source ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>tcpFlags</b></td>
+        <td>enum</td>
+        <td>
+          `tcpFlags` optionally defines TCP flags to filter flows by.
+In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.<br/>
+          <br/>
+            <i>Enum</i>: SYN, SYN-ACK, ACK, FIN, RST, URG, ECE, CWR, FIN-ACK, RST-ACK<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.agent.ebpf.flowFilter.rules[index]
+<sup><sup>[↩ Parent](#flowcollectorspecagentebpfflowfilter-1)</sup></sup>
+
+
+
+`EBPFFlowFilterRule` defines the desired eBPF agent configuration regarding flow filtering rule.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>action</b></td>
+        <td>enum</td>
+        <td>
+          `action` defines the action to perform on the flows that match the filter. The available options are `Accept`, which is the default, and `Reject`.<br/>
+          <br/>
+            <i>Enum</i>: Accept, Reject<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>cidr</b></td>
+        <td>string</td>
+        <td>
+          `cidr` defines the IP CIDR to filter flows by.
+Examples: `10.10.10.0/24` or `100:100:100:100::/64`<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>destPorts</b></td>
+        <td>int or string</td>
+        <td>
+          `destPorts` optionally defines the destination ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>direction</b></td>
+        <td>enum</td>
+        <td>
+          `direction` optionally defines a direction to filter flows by. The available options are `Ingress` and `Egress`.<br/>
+          <br/>
+            <i>Enum</i>: Ingress, Egress<br/>
         </td>
         <td>false</td>
       </tr><tr>

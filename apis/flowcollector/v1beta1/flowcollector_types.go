@@ -193,70 +193,82 @@ type EBPFMetrics struct {
 	DisableAlerts []EBPFAgentAlert `json:"disableAlerts"`
 }
 
-// `EBPFFlowFilter` defines the desired eBPF agent configuration regarding flow filtering
-type EBPFFlowFilter struct {
-	// Set `enable` to `true` to enable eBPF flow filtering feature.
-	Enable *bool `json:"enable,omitempty"`
-
-	// CIDR defines the IP CIDR to filter flows by.
-	// Example: 10.10.10.0/24 or 100:100:100:100::/64
+// `EBPFFlowFilterRule` defines the desired eBPF agent configuration regarding flow filtering rule.
+type EBPFFlowFilterRule struct {
+	// `cidr` defines the IP CIDR to filter flows by.
+	// Examples: `10.10.10.0/24` or `100:100:100:100::/64`
 	CIDR string `json:"cidr,omitempty"`
 
-	// Action defines the action to perform on the flows that match the filter.
+	// `action` defines the action to perform on the flows that match the filter. The available options are `Accept`, which is the default, and `Reject`.
 	// +kubebuilder:validation:Enum:="Accept";"Reject"
 	Action string `json:"action,omitempty"`
 
-	// Protocol defines the protocol to filter flows by.
+	// `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.
 	// +kubebuilder:validation:Enum:="TCP";"UDP";"ICMP";"ICMPv6";"SCTP"
 	// +optional
 	Protocol string `json:"protocol,omitempty"`
 
-	// Direction defines the direction to filter flows by.
+	// `direction` optionally defines a direction to filter flows by. The available options are `Ingress` and `Egress`.
 	// +kubebuilder:validation:Enum:="Ingress";"Egress"
 	// +optional
 	Direction string `json:"direction,omitempty"`
 
-	// `tcpFlags` defines the TCP flags to filter flows by.
+	// `tcpFlags` optionally defines TCP flags to filter flows by.
+	// In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.
 	// +kubebuilder:validation:Enum:="SYN";"SYN-ACK";"ACK";"FIN";"RST";"URG";"ECE";"CWR";"FIN-ACK";"RST-ACK"
 	// +optional
 	TCPFlags string `json:"tcpFlags,omitempty"`
 
-	// SourcePorts defines the source ports to filter flows by.
-	// To filter a single port, set a single port as an integer value. For example, sourcePorts: 80.
-	// To filter a range of ports, use a "start-end" range in string format. For example, sourcePorts: "80-100".
+	// `sourcePorts` optionally defines the source ports to filter flows by.
+	// To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
+	// To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
 	// To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
 	// +optional
 	SourcePorts intstr.IntOrString `json:"sourcePorts,omitempty"`
 
-	// DestPorts defines the destination ports to filter flows by.
-	// To filter a single port, set a single port as an integer value. For example, destPorts: 80.
-	// To filter a range of ports, use a "start-end" range in string format. For example, destPorts: "80-100".
+	// `destPorts` optionally defines the destination ports to filter flows by.
+	// To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
+	// To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
 	// To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
 	// +optional
 	DestPorts intstr.IntOrString `json:"destPorts,omitempty"`
 
-	// Ports defines the ports to filter flows by. it can be user for either source or destination ports.
-	// To filter a single port, set a single port as an integer value. For example, ports: 80.
-	// To filter a range of ports, use a "start-end" range in string format. For example, ports: "80-100".
+	// `ports` optionally defines the ports to filter flows by. It is used both for source and destination ports.
+	// To filter a single port, set a single port as an integer value. For example, `ports: 80`.
+	// To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
 	// To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
 	Ports intstr.IntOrString `json:"ports,omitempty"`
 
-	// PeerIP defines the IP address to filter flows by.
-	// Example: 10.10.10.10
+	// `peerIP` optionally defines the remote IP address to filter flows by.
+	// Example: `10.10.10.10`.
 	// +optional
 	PeerIP string `json:"peerIP,omitempty"`
 
-	// ICMPType defines the ICMP type to filter flows by.
-	// +optional
-	ICMPType *int `json:"icmpType,omitempty"`
-
-	// ICMPCode defines the ICMP code to filter flows by.
+	// `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, optionally defines the ICMP code to filter flows by.
 	// +optional
 	ICMPCode *int `json:"icmpCode,omitempty"`
 
-	// `pktDrops`, to filter flows with packet drops
+	// `icmpType`, for ICMP traffic, optionally defines the ICMP type to filter flows by.
+	// +optional
+	ICMPType *int `json:"icmpType,omitempty"`
+
+	// `pktDrops` optionally filters only flows containing packet drops.
 	// +optional
 	PktDrops *bool `json:"pktDrops,omitempty"`
+}
+
+// `EBPFFlowFilter` defines the desired eBPF agent configuration regarding flow filtering.
+type EBPFFlowFilter struct {
+	// Set `enable` to `true` to enable the eBPF flow filtering feature.
+	Enable *bool `json:"enable,omitempty"`
+
+	// [deprecated (*)] this setting is not used anymore.
+	EBPFFlowFilterRule `json:",inline"`
+
+	// `flowFilterRules` defines a list of ebpf agent flow filtering rules
+	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:MaxItems:=16
+	FlowFilterRules []EBPFFlowFilterRule `json:"rules,omitempty"`
 }
 
 // `FlowCollectorEBPF` defines a FlowCollector that uses eBPF to collect the flows information

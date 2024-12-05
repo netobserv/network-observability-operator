@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"slices"
 	"strconv"
 	"strings"
@@ -106,32 +107,91 @@ func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollector) (adm
 	}
 	var errs []error
 	if fc.Spec.Agent.EBPF.FlowFilter != nil && fc.Spec.Agent.EBPF.FlowFilter.Enable != nil && *fc.Spec.Agent.EBPF.FlowFilter.Enable {
-		hasPorts := fc.Spec.Agent.EBPF.FlowFilter.Ports.IntVal > 0 || fc.Spec.Agent.EBPF.FlowFilter.Ports.StrVal != ""
-		if hasPorts {
-			if err := validateFilterPortConfig(fc.Spec.Agent.EBPF.FlowFilter.Ports); err != nil {
-				errs = append(errs, err)
-			}
+		for i := range fc.Spec.Agent.EBPF.FlowFilter.FlowFilterRules {
+			errs = append(errs, validateFilter(&fc.Spec.Agent.EBPF.FlowFilter.FlowFilterRules[i])...)
 		}
-		hasSrcPorts := fc.Spec.Agent.EBPF.FlowFilter.SourcePorts.IntVal > 0 || fc.Spec.Agent.EBPF.FlowFilter.SourcePorts.StrVal != ""
-		if hasSrcPorts {
-			if err := validateFilterPortConfig(fc.Spec.Agent.EBPF.FlowFilter.SourcePorts); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		hasDstPorts := fc.Spec.Agent.EBPF.FlowFilter.DestPorts.IntVal > 0 || fc.Spec.Agent.EBPF.FlowFilter.DestPorts.StrVal != ""
-		if hasDstPorts {
-			if err := validateFilterPortConfig(fc.Spec.Agent.EBPF.FlowFilter.DestPorts); err != nil {
-				errs = append(errs, err)
-			}
-		}
-		if hasPorts && hasSrcPorts {
-			errs = append(errs, errors.New("cannot configure agent filter with ports and sourcePorts, they are mutually exclusive"))
-		}
-		if hasPorts && hasDstPorts {
-			errs = append(errs, errors.New("cannot configure agent filter with ports and destPorts, they are mutually exclusive"))
+		errs = append(errs, validateFilter(fc.Spec.Agent.EBPF.FlowFilter)...)
+	}
+
+	return warnings, errs
+}
+
+type filter interface {
+	getCIDR() string
+	getPorts() intstr.IntOrString
+	getSrcPorts() intstr.IntOrString
+	getDstPorts() intstr.IntOrString
+}
+
+func (f *EBPFFlowFilter) getCIDR() string {
+	return f.CIDR
+}
+
+func (f *EBPFFlowFilter) getPorts() intstr.IntOrString {
+	return f.Ports
+}
+
+func (f *EBPFFlowFilter) getSrcPorts() intstr.IntOrString {
+	return f.SourcePorts
+}
+
+func (f *EBPFFlowFilter) getDstPorts() intstr.IntOrString {
+	return f.DestPorts
+}
+
+func (f *EBPFFlowFilterRule) getCIDR() string {
+	return f.CIDR
+}
+
+func (f *EBPFFlowFilterRule) getPorts() intstr.IntOrString {
+	return f.Ports
+}
+
+func (f *EBPFFlowFilterRule) getSrcPorts() intstr.IntOrString {
+	return f.SourcePorts
+}
+
+func (f *EBPFFlowFilterRule) getDstPorts() intstr.IntOrString {
+	return f.DestPorts
+}
+
+func validateFilter[T filter](f T) []error {
+	var errs []error
+
+	cidr := f.getCIDR()
+	if cidr != "" {
+		if _, _, err := net.ParseCIDR(cidr); err != nil {
+			errs = append(errs, err)
 		}
 	}
-	return warnings, errs
+	ports := f.getPorts()
+	hasPorts := ports.IntVal > 0 || ports.StrVal != ""
+	if hasPorts {
+		if err := validateFilterPortConfig(ports); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	srcPorts := f.getSrcPorts()
+	hasSrcPorts := srcPorts.IntVal > 0 || srcPorts.StrVal != ""
+	if hasSrcPorts {
+		if err := validateFilterPortConfig(srcPorts); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	dstPorts := f.getDstPorts()
+	hasDstPorts := dstPorts.IntVal > 0 || dstPorts.StrVal != ""
+	if hasDstPorts {
+		if err := validateFilterPortConfig(dstPorts); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if hasPorts && hasSrcPorts {
+		errs = append(errs, errors.New("cannot configure agent filter with ports and sourcePorts, they are mutually exclusive"))
+	}
+	if hasPorts && hasDstPorts {
+		errs = append(errs, errors.New("cannot configure agent filter with ports and destPorts, they are mutually exclusive"))
+	}
+	return errs
 }
 
 func validateFilterPortConfig(value intstr.IntOrString) error {
