@@ -990,6 +990,8 @@ relatedImages:
   name: ebpf-agent
 - image: quay.io/netobserv/network-observability-console-plugin:v1.6.1-community
   name: console-plugin
+- image: quay.io/netobserv/network-observability-console-plugin:v1.6.1-community
+  name: console-plugin-pf4-support-image
 - image: quay.io/netobserv/network-observability-operator:1.6.1-community
   name: ""
 - image: quay.io/ocazade0/network-observability-operator-bundle:v1.6.1-community

@@ -17,6 +17,7 @@ spec:
         - "--ebpf-agent-image=$(RELATED_IMAGE_EBPF_AGENT)"
         - "--flowlogs-pipeline-image=$(RELATED_IMAGE_FLOWLOGS_PIPELINE)"
         - "--console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)"
+        - "--console-plugin-pf4-support-image=$(RELATED_IMAGE_CONSOLE_PLUGIN_PF4_SUPPORT)"
       - name: kube-rbac-proxy
         image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
         args:

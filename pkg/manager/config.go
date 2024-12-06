@@ -12,6 +12,8 @@ type Config struct {
 	FlowlogsPipelineImage string
 	// ConsolePluginImage is the image of the Console Plugin that is managed by the operator
 	ConsolePluginImage string
+	// ConsolePluginImage is the image of the Console Plugin for Patternfly 4 support (OCP < 4.15.0) that is managed by the operator
+	ConsolePluginPF4SupportImage string
 	// Release kind is either upstream or downstream
 	DownstreamDeployment bool
 }
@@ -25,6 +27,9 @@ func (cfg *Config) Validate() error {
 	}
 	if cfg.ConsolePluginImage == "" {
 		return errors.New("console plugin image argument can't be empty")
+	}
+	if cfg.ConsolePluginPF4SupportImage == "" {
+		return errors.New("console plugin PF4 support image argument can't be empty")
 	}
 	return nil
 }
