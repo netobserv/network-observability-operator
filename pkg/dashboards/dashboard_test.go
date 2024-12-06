@@ -21,9 +21,9 @@ func TestCreateFlowMetricsDashboard_All(t *testing.T) {
 
 	assert.Equal("NetObserv / Main", d.Title)
 
-	assert.Equal([]string{"Overview", "Traffic rates", "TCP latencies", "Byte and packet drops", "DNS"}, d.Titles())
+	assert.Equal([]string{"Overview", "Traffic rates", "TCP latencies", "Byte and packet drops", "DNS", "Network Policy"}, d.Titles())
 
-	assert.Len(d.Rows[0].Panels, 16)
+	assert.Len(d.Rows[0].Panels, 18)
 	assert.Len(d.Rows[1].Panels, 20)
 
 	p := d.FindPanel("Top egress traffic per node")

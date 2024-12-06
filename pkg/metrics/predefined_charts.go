@@ -203,6 +203,49 @@ func dnsCharts(group string) []metricslatest.Chart {
 	}, group, "")...)
 }
 
+func netpolCharts(group string) []metricslatest.Chart {
+	sectionName := "Network Policy"
+	charts := []metricslatest.Chart{
+		{
+			Type:          metricslatest.ChartTypeSingleStat,
+			SectionName:   "",
+			DashboardName: mainDashboard,
+			Title:         "Policy drop rate",
+			Queries:       []metricslatest.Query{{PromQL: `sum(rate($METRIC{action="drop"}[2m]))`}},
+		},
+		{
+			Type:          metricslatest.ChartTypeSingleStat,
+			SectionName:   "",
+			DashboardName: mainDashboard,
+			Title:         "Policy allow rate",
+			Queries:       []metricslatest.Query{{PromQL: `sum(rate($METRIC{action=~"allow.*"}[2m]))`}},
+		},
+	}
+
+	charts = append(charts,
+		chartVariantsFor(&metricslatest.Chart{
+			Type:          metricslatest.ChartTypeStackArea,
+			SectionName:   sectionName,
+			DashboardName: mainDashboard,
+			Title:         "Drop rate",
+			Queries: []metricslatest.Query{{
+				PromQL: `sum(rate($METRIC{action="drop",$FILTERS}[2m])) by (type,direction,$LABELS)`,
+				Legend: "$LEGEND, {{ type }}, {{ direction }}",
+			}},
+		}, group, "")...)
+	return append(charts,
+		chartVariantsFor(&metricslatest.Chart{
+			Type:          metricslatest.ChartTypeStackArea,
+			SectionName:   sectionName,
+			DashboardName: mainDashboard,
+			Title:         "Allow rate",
+			Queries: []metricslatest.Query{{
+				PromQL: `sum(rate($METRIC{action=~"allow.*",$FILTERS}[2m])) by (type,direction,$LABELS)`,
+				Legend: "$LEGEND, {{ type }}, {{ direction }}",
+			}},
+		}, group, "")...)
+}
+
 func chartVariantsFor(chart *metricslatest.Chart, group, unit string) []metricslatest.Chart {
 	switch group {
 	case tagNodes:
