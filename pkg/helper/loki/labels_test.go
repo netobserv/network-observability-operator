@@ -20,6 +20,7 @@ func TestDefaultLokiLabels(t *testing.T) {
 		"DstK8S_Type",
 		"K8S_FlowLayer",
 		"FlowDirection",
+		"UdnId",
 	})
 }
 
@@ -40,6 +41,7 @@ func TestAllLokiLabels(t *testing.T) {
 		"DstK8S_Type",
 		"K8S_FlowLayer",
 		"FlowDirection",
+		"UdnId",
 		"_RecordType",
 		"K8S_ClusterName",
 		"SrcK8S_Zone",
