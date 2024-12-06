@@ -29,7 +29,7 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc:{{revision}}
+    value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc:latest
   - name: dockerfile
     value: ./catalog.Dockerfile.downstream
   pipelineRef:
