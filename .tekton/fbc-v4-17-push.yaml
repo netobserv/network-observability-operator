@@ -29,7 +29,7 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/fbc-v4-17:{{revision}}
+    value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/fbc-v4-17:latest
   - name: build-platforms
     value:
     - linux/x86_64
