@@ -90,6 +90,22 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			},
 		},
 		{
+			Type: api.NetworkAddKubernetes,
+			Kubernetes: &api.K8sRule{
+				IPField: "XlatSrcAddr",
+				Output:  "XlatSrcK8S",
+				AddZone: addZone,
+			},
+		},
+		{
+			Type: api.NetworkAddKubernetes,
+			Kubernetes: &api.K8sRule{
+				IPField: "XlatDstAddr",
+				Output:  "XlatDstK8S",
+				AddZone: addZone,
+			},
+		},
+		{
 			Type: api.NetworkReinterpretDirection,
 		},
 		{
