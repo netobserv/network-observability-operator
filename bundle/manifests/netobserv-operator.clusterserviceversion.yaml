@@ -768,15 +768,15 @@ spec:
         path: loki.manual.querierUrl
       - displayName: Status url
         path: loki.manual.statusUrl
-      - displayName: TenantID
+      - displayName: Tenant id
         path: loki.manual.tenantID
       - displayName: Ingester url
         path: loki.microservices.ingesterUrl
       - displayName: Querier url
         path: loki.microservices.querierUrl
-      - displayName: TenantID
+      - displayName: Tenant id
         path: loki.microservices.tenantID
-      - displayName: TenantID
+      - displayName: Tenant id
         path: loki.monolithic.tenantID
       - displayName: Url
         path: loki.monolithic.url
