@@ -29,7 +29,9 @@ process_property() {
     false
     return
   fi
-  local displayName=$(echo $logicPath | sed 's/.*\.//' | sed 's/\([A-Z]\)\([a-z]\)/ \L\1\2/g' | sed 's/.*/\u&/' )
+  local displayName=$(echo $logicPath | sed 's/.*\.//' | sed 's/\([a-z]\)\([A-Z]\)/\1 \2/g' )
+  displayName=${displayName,,} # lower case
+  displayName=${displayName^} # first letter capital
 #  local description=$(cat $crd | yq "$yamlPath.description" | sed 's/`/"/g' | sed 's/<br>//g')
   if [[ $(cat $csv | yq "$csvRoot[] | select(.path==\"$logicPath\")") != "" ]]; then
     if [[ $(cat $csv | yq "$csvRoot[] | select(.path==\"$logicPath\") | has(\"displayName\")") == false ]]; then
