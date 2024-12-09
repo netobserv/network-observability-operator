@@ -1,3 +1,4 @@
+ARG OPM_IMAGE=brew.registry.redhat.io/rh-osbs/openshift-ose-operator-registry-rhel9:v4.17
 ARG COMMIT
 
 FROM registry.access.redhat.com/ubi9/python-312 as builder
@@ -7,7 +8,7 @@ RUN pip install -r requirements.txt
 
 RUN COMMIT=$COMMIT ./hack/update-build.sh
 
-FROM brew.registry.redhat.io/rh-osbs/openshift-ose-operator-registry-rhel9:v4.17
+FROM $OPM_IMAGE
 
 # Configure the entrypoint and command
 ENTRYPOINT ["opm"]
