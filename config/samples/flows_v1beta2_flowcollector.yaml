@@ -31,18 +31,20 @@ spec:
       #flowFilter:
       #  rules:
       #  - action: Accept
-      #    cidr: 1.1.1.1/24
+      #    cidr: 10.128.0.1/24
+      #    ports: 6443
       #    protocol: TCP
-      #    sourcePorts: 53
-      #    tcpFlags: SYN
+      #    sampling: 10
       #  - action: Accept
-      #    cidr: 2.2.2.2/24
+      #    cidr: 10.129.0.1/24
+      #    ports: 53
       #    protocol: UDP
-      #    sourcePorts: 80
-      #    tcpFlags: SYN
+      #    sampling: 20
       #  - action: Accept
-      #    cidr: 3.3.3.3/24
-      #    protocol: ICMP
+      #    cidr: 172.30.0.0/16
+      #    protocol: TCP
+      #    sampling: 30
+      #    sourcePorts: 443
       #  tcpFlags: "SYN"
       #  action: Accept
       #  cidr: 2.2.2.2/24

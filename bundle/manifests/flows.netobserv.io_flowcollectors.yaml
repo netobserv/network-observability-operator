@@ -312,6 +312,11 @@ spec:
                                   - ICMPv6
                                   - SCTP
                                   type: string
+                                sampling:
+                                  description: '`sampling` sampling rate for the matched
+                                    flow'
+                                  format: int32
+                                  type: integer
                                 sourcePorts:
                                   anyOf:
                                   - type: integer
@@ -342,6 +347,11 @@ spec:
                             maxItems: 16
                             minItems: 1
                             type: array
+                          sampling:
+                            description: '`sampling` sampling rate for the matched
+                              flow'
+                            format: int32
+                            type: integer
                           sourcePorts:
                             anyOf:
                             - type: integer
@@ -4114,6 +4124,11 @@ spec:
                                   - ICMPv6
                                   - SCTP
                                   type: string
+                                sampling:
+                                  description: '`sampling` sampling rate for the matched
+                                    flow'
+                                  format: int32
+                                  type: integer
                                 sourcePorts:
                                   anyOf:
                                   - type: integer
@@ -4144,6 +4159,11 @@ spec:
                             maxItems: 16
                             minItems: 1
                             type: array
+                          sampling:
+                            description: '`sampling` sampling rate for the matched
+                              flow'
+                            format: int32
+                            type: integer
                           sourcePorts:
                             anyOf:
                             - type: integer

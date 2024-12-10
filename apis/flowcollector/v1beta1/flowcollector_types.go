@@ -255,6 +255,10 @@ type EBPFFlowFilterRule struct {
 	// `pktDrops` optionally filters only flows containing packet drops.
 	// +optional
 	PktDrops *bool `json:"pktDrops,omitempty"`
+
+	// `sampling` sampling rate for the matched flow
+	// +optional
+	Sampling *uint32 `json:"sampling,omitempty"`
 }
 
 // `EBPFFlowFilter` defines the desired eBPF agent configuration regarding flow filtering.

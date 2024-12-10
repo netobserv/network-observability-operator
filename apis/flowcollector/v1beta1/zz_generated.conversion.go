@@ -566,6 +566,7 @@ func autoConvert_v1beta1_EBPFFlowFilterRule_To_v1beta2_EBPFFlowFilterRule(in *EB
 	out.ICMPCode = (*int)(unsafe.Pointer(in.ICMPCode))
 	out.ICMPType = (*int)(unsafe.Pointer(in.ICMPType))
 	out.PktDrops = (*bool)(unsafe.Pointer(in.PktDrops))
+	out.Sampling = (*uint32)(unsafe.Pointer(in.Sampling))
 	return nil
 }
 
@@ -587,6 +588,7 @@ func autoConvert_v1beta2_EBPFFlowFilterRule_To_v1beta1_EBPFFlowFilterRule(in *v1
 	out.ICMPCode = (*int)(unsafe.Pointer(in.ICMPCode))
 	out.ICMPType = (*int)(unsafe.Pointer(in.ICMPType))
 	out.PktDrops = (*bool)(unsafe.Pointer(in.PktDrops))
+	out.Sampling = (*uint32)(unsafe.Pointer(in.Sampling))
 	return nil
 }
 

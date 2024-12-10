@@ -544,6 +544,9 @@ func mapFlowFilterRuleToFilter(rule *flowslatest.EBPFFlowFilterRule) ebpfconfig.
 	if rule.PktDrops != nil && *rule.PktDrops {
 		f.FilterDrops = *rule.PktDrops
 	}
+	if rule.Sampling != nil && *rule.Sampling != 0 {
+		f.FilterSample = *rule.Sampling
+	}
 
 	return f
 }
@@ -575,6 +578,9 @@ func mapFlowFilterToFilter(filter *flowslatest.EBPFFlowFilter) ebpfconfig.FlowFi
 	}
 	if filter.PktDrops != nil && *filter.PktDrops {
 		f.FilterDrops = *filter.PktDrops
+	}
+	if filter.Sampling != nil && *filter.Sampling != 0 {
+		f.FilterSample = *filter.Sampling
 	}
 
 	return f

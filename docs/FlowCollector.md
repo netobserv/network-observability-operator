@@ -532,6 +532,15 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          `sampling` sampling rate for the matched flow<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>sourcePorts</b></td>
         <td>int or string</td>
         <td>
@@ -653,6 +662,15 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
           `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.<br/>
           <br/>
             <i>Enum</i>: TCP, UDP, ICMP, ICMPv6, SCTP<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          `sampling` sampling rate for the matched flow<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8240,6 +8258,15 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          `sampling` sampling rate for the matched flow<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>sourcePorts</b></td>
         <td>int or string</td>
         <td>
@@ -8361,6 +8388,15 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
           `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.<br/>
           <br/>
             <i>Enum</i>: TCP, UDP, ICMP, ICMPv6, SCTP<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sampling</b></td>
+        <td>integer</td>
+        <td>
+          `sampling` sampling rate for the matched flow<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
         </td>
         <td>false</td>
       </tr><tr>
