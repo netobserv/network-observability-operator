@@ -6110,7 +6110,8 @@ If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<
 - `NetworkEvents`: enable the network events monitoring feature, such as correlating flows and network policies.
 This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
-IMPORTANT: This feature is available as a Developer Preview.<br><br/>
+IMPORTANT: This feature is available as a Developer Preview.<br>
+- `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br><br/>
         </td>
         <td>false</td>
       </tr><tr>
