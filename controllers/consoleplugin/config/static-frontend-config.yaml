@@ -438,6 +438,13 @@ columns:
     field: Interfaces
     default: false
     width: 15
+  - id: UDN
+    name: User Defined Network
+    tooltip: The user defined network identifier.
+    field: UdnId
+    filter: udn
+    default: false
+    width: 15
   - id: Bytes
     name: Bytes
     tooltip: The total aggregated number of bytes.
@@ -837,6 +844,10 @@ filters:
     component: autocomplete
     placeholder: 'E.g: Ingress, Egress'
     hint: Specify the direction of the Flow observed at the network interface observation point.
+  - id: udn
+    name: User Defined Network
+    component: autocomplete
+    hint: Specify a user defined network name.
   - id: id
     name: Conversation Id
     component: text
@@ -901,6 +912,14 @@ scopes:
     feature: multiCluster
     filter: cluster_name
     stepInto: zone
+  - id: udn
+    name: UDN
+    shortName: UDN
+    description: User Defined Network
+    labels:
+      - UdnId
+    filter: udn
+    stepInto: host
   - id: zone
     name: Zone
     shortName: AZ
@@ -923,9 +942,12 @@ scopes:
       - SrcK8S_HostName
       - DstK8S_HostName
     groups:
-      - clusters
+      - udns
       - zones
+      - clusters
       - clusters+zones
+      - clusters+udns
+      - udns+zones
     filters:
       - src_host_name
       - dst_host_name
@@ -944,6 +966,9 @@ scopes:
       - zones
       - zones+hosts
       - hosts
+      - udns
+      - udns+zones
+      - udns+hosts
     filters:
       - src_namespace
       - dst_namespace
@@ -970,6 +995,10 @@ scopes:
       - hosts
       - hosts+namespaces
       - namespaces
+      - udns
+      - udns+zones
+      - udns+hosts
+      - udns+namespaces
     filters:
       - src_owner_name
       - dst_owner_name
@@ -1009,6 +1038,11 @@ scopes:
       - namespaces
       - namespaces+owners
       - owners
+      - udns
+      - udns+zones
+      - udns+hosts
+      - udns+namespaces
+      - udns+owners
     filters:
       - src_resource
       - dst_resource
@@ -1183,6 +1217,10 @@ fields:
   - name: K8S_ClusterName
     type: string
     description: Cluster name or identifier
+  - name: UdnId
+    type: string
+    description: User Defined Network
+    lokiLabel: true
   - name: _RecordType
     type: string
     description: "Type of record: 'flowLog' for regular flow logs, or 'newConnection', 'heartbeat', 'endConnection' for conversation tracking"
