@@ -6,21 +6,21 @@ metadata:
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch == "main" &&
+    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
+      == "main" &&
       (".tekton/***".pathChanged() ||
       "catalog.Dockerfile.downstream".pathChanged() ||
       "catalog/***".pathChanged() ||
-      "./requirements.txt".pathChanged() ||
       "hack/update-build.sh".pathChanged() ||
       "hack/bundle_digest.sh".pathChanged() ||
       "hack/patch_catalog.py".pathChanged() ||
       "hack/patch_csv.py".pathChanged())
   creationTimestamp: null
   labels:
-    appstudio.openshift.io/application: netobserv-operator
-    appstudio.openshift.io/component: network-observability-operator-fbc
+    appstudio.openshift.io/application: fbc-v4-12
+    appstudio.openshift.io/component: fbc-v-4-12
     pipelines.appstudio.openshift.io/type: build
-  name: network-observability-operator-fbc-on-push
+  name: fbc-v-4-12-on-push
   namespace: ocp-network-observab-tenant
 spec:
   params:
@@ -29,9 +29,9 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc:latest
+    value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/fbc-v-4-12:latest
   - name: dockerfile
-    value: ./catalog.Dockerfile.downstream
+    value: catalog.Dockerfile.downstream
   pipelineRef:
     name: build-fbc-pipeline
   workspaces:
@@ -49,3 +49,4 @@ spec:
   - name: git-auth
     secret:
       secretName: '{{ git_auth_secret }}'
+status: {}
