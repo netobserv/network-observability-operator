@@ -23,8 +23,9 @@ type FilterConfig struct {
 	FilterIcmpCode        int
 	FilterPeerIP          string
 	FilterAction          string
-	FilterTCPFLags        string
+	FilterTCPFlags        string
 	FilterDrops           bool
+	FilterSample          uint32
 }
 
 type Filter struct {
@@ -137,7 +138,7 @@ func (f *Filter) getFilterValue(config *FilterConfig) (ebpf.BpfFilterValueT, err
 		}
 	}
 
-	switch config.FilterTCPFLags {
+	switch config.FilterTCPFlags {
 	case "SYN":
 		val.TcpFlags = ebpf.BpfTcpFlagsTSYN_FLAG
 	case "SYN-ACK":
@@ -164,6 +165,10 @@ func (f *Filter) getFilterValue(config *FilterConfig) (ebpf.BpfFilterValueT, err
 
 	if config.FilterDrops {
 		val.FilterDrops = 1
+	}
+
+	if config.FilterSample != 0 {
+		val.Sample = config.FilterSample
 	}
 	return val, nil
 }

@@ -670,8 +670,8 @@ github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjY
 github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe/go.mod h1:wL8QJuTMNUDYhXwkmfOly8iTdp5TEcJFWZD2D7SIkUc=
 github.com/morikuni/aec v1.0.0/go.mod h1:BbKIizmSmc5MMPqRYbxO4ZU0S0+P200+tUnFx7PXmsc=
 github.com/mschoch/smat v0.0.0-20160514031455-90eadee771ae/go.mod h1:qAyveg+e4CE+eKJXWVjKXM4ck2QobLqTDytGJbLLhJg=
-github.com/msherif1234/netobserv-ebpf-agent v0.0.0-20241205151827-d95862cfc573 h1:xO8UKJJ8OcQs0PIKc2+pVZp4MUulLrEHkH+XZdWoZ6c=
-github.com/msherif1234/netobserv-ebpf-agent v0.0.0-20241205151827-d95862cfc573/go.mod h1:20e1OPAs7h3k9PvNZWS9D6BnXEtkTk2LlfzD66uhvxY=
+github.com/msherif1234/netobserv-ebpf-agent v0.0.0-20241210185213-2ed36dce5058 h1:ah22T/bdCMKVpJE7Y/LPHrh8jKMw34p3yXLX+XdkCF0=
+github.com/msherif1234/netobserv-ebpf-agent v0.0.0-20241210185213-2ed36dce5058/go.mod h1:20e1OPAs7h3k9PvNZWS9D6BnXEtkTk2LlfzD66uhvxY=
 github.com/munnerz/goautoneg v0.0.0-20120707110453-a547fc61f48d/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=

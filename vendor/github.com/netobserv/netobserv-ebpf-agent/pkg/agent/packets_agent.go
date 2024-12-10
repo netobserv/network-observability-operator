@@ -94,8 +94,9 @@ func PacketsAgent(cfg *Config) (*Packets, error) {
 				FilterDestinationPort: tracer.ConvertFilterPortsToInstr(r.FilterDestinationPort, r.FilterDestinationPortRange, r.FilterDestinationPorts),
 				FilterSourcePort:      tracer.ConvertFilterPortsToInstr(r.FilterSourcePort, r.FilterSourcePortRange, r.FilterSourcePorts),
 				FilterPort:            tracer.ConvertFilterPortsToInstr(r.FilterPort, r.FilterPortRange, r.FilterPorts),
-				FilterTCPFLags:        r.FilterTCPFlags,
+				FilterTCPFlags:        r.FilterTCPFlags,
 				FilterDrops:           r.FilterDrops,
+				FilterSample:          r.FilterSample,
 			})
 		}
 	}

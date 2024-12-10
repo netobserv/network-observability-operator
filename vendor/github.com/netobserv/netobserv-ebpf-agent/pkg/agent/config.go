@@ -34,7 +34,7 @@ type FlowFilter struct {
 	// Example: 10.10.10.0/24 or 100:100:100:100::/64, default is 0.0.0.0/0
 	FilterIPCIDR string `json:"ip_cidr,omitempty"`
 	// FilterProtocol is the protocol to filter flows.
-	// Example: TCP, UDP, SCTP, ICMP, ICMPv6
+	// supported protocols: TCP, UDP, SCTP, ICMP, ICMPv6
 	FilterProtocol string `json:"protocol,omitempty"`
 	// FilterSourcePort is the source port to filter flows.
 	FilterSourcePort int32 `json:"source_port,omitempty"`
@@ -75,6 +75,8 @@ type FlowFilter struct {
 	FilterTCPFlags string `json:"tcp_flags,omitempty"`
 	// FilterDrops allow filtering flows with packet drops, default is false.
 	FilterDrops bool `json:"drops,omitempty"`
+	// FilterSample is the sample rate this matching flow will use
+	FilterSample uint32 `json:"sample,omitempty"`
 }
 
 type Config struct {

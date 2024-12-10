@@ -163,4 +163,4 @@ require (
 
 replace github.com/prometheus/common v0.55.0 => github.com/netobserv/prometheus-common v0.55.0-netobserv
 
-replace github.com/netobserv/netobserv-ebpf-agent => github.com/msherif1234/netobserv-ebpf-agent v0.0.0-20241205151827-d95862cfc573
+replace github.com/netobserv/netobserv-ebpf-agent => github.com/msherif1234/netobserv-ebpf-agent v0.0.0-20241210185213-2ed36dce5058

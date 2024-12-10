@@ -327,7 +327,7 @@ github.com/netobserv/loki-client-go/pkg/labelutil
 github.com/netobserv/loki-client-go/pkg/logproto
 github.com/netobserv/loki-client-go/pkg/metric
 github.com/netobserv/loki-client-go/pkg/urlutil
-# github.com/netobserv/netobserv-ebpf-agent v1.6.1-crc2.0.20241008130234-a20397fb8f88 => github.com/msherif1234/netobserv-ebpf-agent v0.0.0-20241205151827-d95862cfc573
+# github.com/netobserv/netobserv-ebpf-agent v1.6.1-crc2.0.20241008130234-a20397fb8f88 => github.com/msherif1234/netobserv-ebpf-agent v0.0.0-20241210185213-2ed36dce5058
 ## explicit; go 1.22.3
 github.com/netobserv/netobserv-ebpf-agent/pkg/agent
 github.com/netobserv/netobserv-ebpf-agent/pkg/decode
@@ -1498,4 +1498,4 @@ sigs.k8s.io/structured-merge-diff/v4/value
 ## explicit; go 1.12
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v2
-# github.com/netobserv/netobserv-ebpf-agent => github.com/msherif1234/netobserv-ebpf-agent v0.0.0-20241205151827-d95862cfc573
+# github.com/netobserv/netobserv-ebpf-agent => github.com/msherif1234/netobserv-ebpf-agent v0.0.0-20241210185213-2ed36dce5058
