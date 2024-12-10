@@ -1,0 +1,21 @@
+# Count network policy events
+# More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: network-policy-events
+  namespace: netobserv
+spec:
+  metricName: network_policy_events_total
+  type: Counter
+  labels: [NetworkEvents>Type, NetworkEvents>Namespace, NetworkEvents>Name, NetworkEvents>Action, NetworkEvents>Direction]
+  filters:
+  - field: NetworkEvents>Feature
+    value: acl
+  flatten: [NetworkEvents]
+  remap:
+    "NetworkEvents>Type": type
+    "NetworkEvents>Namespace": namespace
+    "NetworkEvents>Name": name
+    "NetworkEvents>Action": action
+    "NetworkEvents>Direction": direction

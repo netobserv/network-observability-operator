@@ -17179,7 +17179,8 @@ Note that the more metrics you add, the bigger is the impact on Prometheus workl
 Metrics enabled by default are:
 `namespace_flows_total`, `node_ingress_bytes_total`, `node_egress_bytes_total`, `workload_ingress_bytes_total`,
 `workload_egress_bytes_total`, `namespace_drop_packets_total` (when `PacketDrop` feature is enabled),
-`namespace_rtt_seconds` (when `FlowRTT` feature is enabled), `namespace_dns_latency_seconds` (when `DNSTracking` feature is enabled).
+`namespace_rtt_seconds` (when `FlowRTT` feature is enabled), `namespace_dns_latency_seconds` (when `DNSTracking` feature is enabled),
+`namespace_network_policy_events_total` (when `NetworkEvents` feature is enabled).
 More information, with full list of available metrics: https://github.com/netobserv/network-observability-operator/blob/main/docs/Metrics.md<br/>
         </td>
         <td>false</td>

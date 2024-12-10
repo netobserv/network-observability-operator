@@ -80,17 +80,17 @@ func checkFlowMetricCartinality(fMetric *FlowMetric) admission.Warnings {
 }
 
 func validateFlowMetric(_ context.Context, fMetric *FlowMetric) (admission.Warnings, error) {
-	var str []string
+	var fields []string
 	var allErrs field.ErrorList
 
 	for _, f := range fMetric.Spec.Filters {
-		str = append(str, f.Field)
+		fields = append(fields, f.Field)
 	}
 
-	if len(str) != 0 {
-		if !helper.FindFields(str, false) {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "filters"), str,
-				fmt.Sprintf("invalid filter field: %s", str)))
+	if len(fields) != 0 {
+		if !helper.FindFields(fields, false) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "filters"), fields,
+				fmt.Sprintf("invalid filter field: %s", fields)))
 		}
 	}
 
@@ -100,12 +100,13 @@ func validateFlowMetric(_ context.Context, fMetric *FlowMetric) (admission.Warni
 				fmt.Sprintf("invalid label name: %s", fMetric.Spec.Labels)))
 		}
 
+		labelsMap := make(map[string]any, len(fMetric.Spec.Labels))
+		for _, label := range fMetric.Spec.Labels {
+			labelsMap[label] = nil
+		}
+
 		// Only fields defined as Labels are valid for remapping
 		if len(fMetric.Spec.Remap) != 0 {
-			labelsMap := make(map[string]any, len(fMetric.Spec.Labels))
-			for _, label := range fMetric.Spec.Labels {
-				labelsMap[label] = nil
-			}
 			var invalidMapping []string
 			for toRemap := range fMetric.Spec.Remap {
 				if _, ok := labelsMap[toRemap]; !ok {
@@ -115,6 +116,14 @@ func validateFlowMetric(_ context.Context, fMetric *FlowMetric) (admission.Warni
 			if len(invalidMapping) > 0 {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "remap"), fMetric.Spec.Remap,
 					fmt.Sprintf("some fields defined for remapping are not defined as labels: %v", invalidMapping)))
+			}
+		}
+
+		// Check for valid fields
+		if len(fMetric.Spec.Flatten) != 0 {
+			if !helper.FindFields(fMetric.Spec.Flatten, false) {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "flatten"), fMetric.Spec.Flatten,
+					fmt.Sprintf("invalid fields to flatten: %s", fMetric.Spec.Flatten)))
 			}
 		}
 	}
