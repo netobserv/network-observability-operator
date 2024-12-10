@@ -11715,6 +11715,8 @@ IPFIX configuration, such as the IP address and port to send enriched IPFIX flow
         <td>integer</td>
         <td>
           Port for the IPFIX external receiver.<br/>
+          <br/>
+            <i>Default</i>: 4739<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -12135,6 +12137,8 @@ OpenTelemetry configuration, such as the IP address and port to send enriched lo
         <td>integer</td>
         <td>
           Port for the OpenTelemetry receiver.<br/>
+          <br/>
+            <i>Default</i>: 4317<br/>
         </td>
         <td>true</td>
       </tr><tr>
