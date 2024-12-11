@@ -33,16 +33,16 @@ func (c *Common) PreviousPrivilegedNamespace() string {
 type Instance struct {
 	*Common
 	Managed *NamespacedObjectManager
-	Image   string
+	Images  []string
 	Status  status.Instance
 }
 
-func (c *Common) NewInstance(image string, st status.Instance) *Instance {
+func (c *Common) NewInstance(images []string, st status.Instance) *Instance {
 	managed := NewNamespacedObjectManager(c)
 	return &Instance{
 		Common:  c,
 		Managed: managed,
-		Image:   image,
+		Images:  images,
 		Status:  st,
 	}
 }

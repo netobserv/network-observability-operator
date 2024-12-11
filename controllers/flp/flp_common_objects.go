@@ -68,7 +68,7 @@ type Builder struct {
 type builder = Builder
 
 func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel, ck ConfKind) (Builder, error) {
-	version := helper.ExtractVersion(info.Image)
+	version := helper.ExtractVersion(info.Images[constants.ControllerBaseImageIndex])
 	name := name(ck)
 	var promTLS *flowslatest.CertificateReference
 	switch desired.Processor.Metrics.Server.TLS.Type {
@@ -203,7 +203,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 
 	container := corev1.Container{
 		Name:            constants.FLPName,
-		Image:           b.info.Image,
+		Image:           b.info.Images[constants.ControllerBaseImageIndex],
 		ImagePullPolicy: corev1.PullPolicy(b.desired.Processor.ImagePullPolicy),
 		Args:            []string{fmt.Sprintf(`--config=%s/%s`, configPath, configFile)},
 		Resources:       *b.desired.Processor.Resources.DeepCopy(),

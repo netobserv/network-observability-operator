@@ -50,7 +50,9 @@ const (
 	LokiCRReader  = "netobserv-reader"
 	PromCRReader  = "netobserv-metrics-reader"
 
-	EnvTestConsole = "TEST_CONSOLE"
+	ControllerBaseImageIndex    = 0
+	EBPFAgentByteCodeImageIndex = 1
+	EnvTestConsole              = "TEST_CONSOLE"
 )
 
 var FlowCollectorName = types.NamespacedName{Name: "cluster"}

@@ -55,7 +55,7 @@ type builder struct {
 }
 
 func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) builder {
-	version := helper.ExtractVersion(info.Image)
+	version := helper.ExtractVersion(info.Images[constants.ControllerBaseImageIndex])
 	advanced := helper.GetAdvancedPluginConfig(desired.ConsolePlugin.Advanced)
 	return builder{
 		info: info,
@@ -227,7 +227,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
 				Name:            constants.PluginName,
-				Image:           b.info.Image,
+				Image:           b.info.Images[constants.ControllerBaseImageIndex],
 				ImagePullPolicy: corev1.PullPolicy(b.desired.ConsolePlugin.ImagePullPolicy),
 				Resources:       *b.desired.ConsolePlugin.Resources.DeepCopy(),
 				VolumeMounts:    b.volumes.AppendMounts(volumeMounts),

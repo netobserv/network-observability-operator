@@ -115,8 +115,6 @@ const (
 	defaultDNSTrackingPort = "53"
 	bpfmanMapsVolumeName   = "bpfman-maps"
 	bpfManBpfFSPath        = "/run/netobserv/maps"
-	mapsVolumeName         = "bpf-maps"
-	bpfFsPath              = "/sys/fs/bpf"
 )
 
 // AgentController reconciles the status of the eBPF agent Daemonset, as well as the
@@ -254,7 +252,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	if coll == nil {
 		return nil, nil
 	}
-	version := helper.ExtractVersion(c.Image)
+	version := helper.ExtractVersion(c.Images[constants.ControllerBaseImageIndex])
 	annotations := make(map[string]string)
 	env, err := c.envConfig(ctx, coll, annotations)
 	if err != nil {
@@ -378,29 +376,25 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	}
 
 	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.EbpfManager) {
-		if !coll.Spec.Agent.EBPF.Privileged {
-			rlog.Error(fmt.Errorf("invalid configuration"), "To enable BPF Manager feature privileged mode needs to be enabled")
-		} else {
-			volume := corev1.Volume{
-				Name: bpfmanMapsVolumeName,
-				VolumeSource: corev1.VolumeSource{
-					CSI: &corev1.CSIVolumeSource{
-						Driver: "csi.bpfman.io",
-						VolumeAttributes: map[string]string{
-							"csi.bpfman.io/program": "netobserv",
-							"csi.bpfman.io/maps":    "aggregated_flows,direct_flows,dns_flows,filter_map,global_counters,packet_record",
-						},
+		volume := corev1.Volume{
+			Name: bpfmanMapsVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				CSI: &corev1.CSIVolumeSource{
+					Driver: "csi.bpfman.io",
+					VolumeAttributes: map[string]string{
+						"csi.bpfman.io/program": "netobserv",
+						"csi.bpfman.io/maps":    "aggregated_flows,direct_flows,dns_flows,filter_map,global_counters,packet_record",
 					},
 				},
-			}
-			volumes = append(volumes, volume)
-			volumeMount := corev1.VolumeMount{
-				Name:             bpfmanMapsVolumeName,
-				MountPath:        bpfManBpfFSPath,
-				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
-			}
-			volumeMounts = append(volumeMounts, volumeMount)
+			},
 		}
+		volumes = append(volumes, volume)
+		volumeMount := corev1.VolumeMount{
+			Name:             bpfmanMapsVolumeName,
+			MountPath:        bpfManBpfFSPath,
+			MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+		}
+		volumeMounts = append(volumeMounts, volumeMount)
 	}
 
 	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
@@ -431,7 +425,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 					Volumes:            volumes,
 					Containers: []corev1.Container{{
 						Name:            constants.EBPFAgentName,
-						Image:           c.Image,
+						Image:           c.Images[constants.ControllerBaseImageIndex],
 						ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.ImagePullPolicy),
 						Resources:       coll.Spec.Agent.EBPF.Resources,
 						SecurityContext: c.securityContext(coll),

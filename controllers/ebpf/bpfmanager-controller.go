@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/sirupsen/logrus"
 
@@ -17,8 +18,7 @@ import (
 )
 
 const (
-	netobservApp     = "netobserv"
-	netobservBCImage = "quay.io/netobserv/ebpf-bytecode:latest"
+	netobservApp = "netobserv"
 )
 
 // bpfmanDetachNetobserv find BpfmanApplication object with all required ebpf hooks and detaches them using bpfman manager
@@ -63,7 +63,7 @@ func (c *AgentController) bpfmanAttachNetobserv(ctx context.Context, fc *flowsla
 	err = c.Get(ctx, key, &bpfApp)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			prepareBpfApplication(&bpfApp, fc)
+			prepareBpfApplication(&bpfApp, fc, c.Images[constants.EBPFAgentByteCodeImageIndex])
 			err = c.createBpfApplication(ctx, &bpfApp)
 			if err != nil {
 				return fmt.Errorf("failed to create BpfApplication: %w for obj: %s", err, fc.Name)
@@ -73,7 +73,7 @@ func (c *AgentController) bpfmanAttachNetobserv(ctx context.Context, fc *flowsla
 		}
 	} else {
 		// object exists repopulate it with the new configuration and update it
-		prepareBpfApplication(&bpfApp, fc)
+		prepareBpfApplication(&bpfApp, fc, c.Images[constants.EBPFAgentByteCodeImageIndex])
 		err = c.updateBpfApplication(ctx, &bpfApp)
 		if err != nil {
 			return fmt.Errorf("failed to update BpfApplication: %w for obj: %s", err, fc.Name)
@@ -83,7 +83,7 @@ func (c *AgentController) bpfmanAttachNetobserv(ctx context.Context, fc *flowsla
 	return err
 }
 
-func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.BpfApplication, fc *flowslatest.FlowCollector) {
+func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.BpfApplication, fc *flowslatest.FlowCollector, netobservBCImage string) {
 	interfaces := fc.Spec.Agent.EBPF.Interfaces
 
 	samplingValue := make([]byte, 4)

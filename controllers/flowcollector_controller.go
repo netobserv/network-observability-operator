@@ -133,7 +133,7 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 	r.watcher.Reset(ns)
 
 	// Create reconcilers
-	cpReconciler := consoleplugin.NewReconciler(reconcilersInfo.NewInstance(r.mgr.Config.ConsolePluginImage, r.status))
+	cpReconciler := consoleplugin.NewReconciler(reconcilersInfo.NewInstance([]string{r.mgr.Config.ConsolePluginImage}, r.status))
 
 	// Check namespace changed
 	if ns != previousNamespace {
@@ -151,7 +151,7 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 	}
 
 	// eBPF agent
-	ebpfAgentController := ebpf.NewAgentController(reconcilersInfo.NewInstance(r.mgr.Config.EBPFAgentImage, r.status))
+	ebpfAgentController := ebpf.NewAgentController(reconcilersInfo.NewInstance([]string{r.mgr.Config.EBPFAgentImage, r.mgr.Config.EBPFByteCodeImage}, r.status))
 	if err := ebpfAgentController.Reconcile(ctx, desired); err != nil {
 		return r.status.Error("ReconcileAgentFailed", err)
 	}
