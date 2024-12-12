@@ -8,4 +8,5 @@ metadata:
 spec:
   metricName: flows_with_flags_per_source_total
   type: Counter
+  flatten: [Flags]
   labels: [DstSubnetLabel,SrcSubnetLabel,SrcK8S_Name,SrcK8S_Type,SrcK8S_HostName,SrcK8S_Namespace,Flags]
