@@ -152,6 +152,14 @@ Refer to the documentation for the list of available fields: https://docs.opensh
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>flatten</b></td>
+        <td>[]string</td>
+        <td>
+          `flatten` is a list of list-type fields that must be flattened, such as Interfaces and NetworkEvents. Flattened fields generate one metric per item in that field.
+For instance, when flattening `Interfaces` on a bytes counter, a flow having Interfaces [br-ex, ens5] increases one counter for `br-ex` and another for `ens5`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>labels</b></td>
         <td>[]string</td>
         <td>

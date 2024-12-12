@@ -399,6 +399,7 @@ func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem
 		Filters:  []api.MetricsFilter{},
 		Labels:   flowMetric.Labels,
 		Remap:    flowMetric.Remap,
+		Flatten:  flowMetric.Flatten,
 		ValueKey: flowMetric.ValueField,
 	}
 	for _, f := range metrics.GetFilters(flowMetric) {

@@ -1,0 +1,14 @@
+# Count flows per network interface
+# More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: per-interface
+  namespace: netobserv
+spec:
+  metricName: per_interface
+  type: Counter
+  labels: [Interfaces]
+  flatten: [Interfaces]
+  remap:
+    Interfaces: interface

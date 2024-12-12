@@ -123,7 +123,14 @@ func TestBeta1ConversionRoundtrip_Metrics(t *testing.T) {
 	err := initial.ConvertTo(&converted)
 	assert.NoError(err)
 
-	expectedDefaultMetrics := []v1beta2.FLPMetric{"namespace_egress_packets_total", "namespace_flows_total", "namespace_rtt_seconds", "namespace_drop_packets_total", "namespace_dns_latency_seconds"}
+	expectedDefaultMetrics := []v1beta2.FLPMetric{
+		"namespace_egress_packets_total",
+		"namespace_flows_total",
+		"namespace_rtt_seconds",
+		"namespace_drop_packets_total",
+		"namespace_dns_latency_seconds",
+		"namespace_network_policy_events_total",
+	}
 	assert.Equal([]v1beta2.FLPAlert{v1beta2.AlertLokiError}, converted.Spec.Processor.Metrics.DisableAlerts)
 	assert.NotNil(converted.Spec.Processor.Metrics.IncludeList)
 	assert.Equal(expectedDefaultMetrics, *converted.Spec.Processor.Metrics.IncludeList)

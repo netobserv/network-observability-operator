@@ -43,6 +43,7 @@ var (
 		"namespace_drop_packets_total",
 		"namespace_rtt_seconds",
 		"namespace_dns_latency_seconds",
+		"namespace_network_policy_events_total",
 	}
 	// More metrics enabled when Loki is disabled, to avoid loss of information
 	DefaultIncludeListLokiDisabled = []string{
@@ -57,6 +58,7 @@ var (
 		"workload_drop_packets_total",
 		"workload_rtt_seconds",
 		"workload_dns_latency_seconds",
+		"namespace_network_policy_events_total",
 	}
 	// Pre-deprecation default IgnoreTags list (1.4) - used before switching to whitelist approach,
 	// to make sure there is no unintended new metrics being collected
@@ -163,6 +165,28 @@ func init() {
 			},
 			tags: []string{group, "dns"},
 		})
+
+		// Netpol metrics
+		netpolLabels := labels
+		netpolLabels = append(netpolLabels, "NetworkEvents>Type", "NetworkEvents>Namespace", "NetworkEvents>Name", "NetworkEvents>Action", "NetworkEvents>Direction")
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			FlowMetricSpec: metricslatest.FlowMetricSpec{
+				MetricName: fmt.Sprintf("%s_network_policy_events_total", groupTrimmed),
+				Type:       "counter",
+				Labels:     netpolLabels,
+				Filters:    []metricslatest.MetricFilter{{Field: "NetworkEvents>Feature", Value: "acl"}},
+				Flatten:    []string{"NetworkEvents"},
+				Remap: map[string]string{
+					"NetworkEvents>Type":      "type",
+					"NetworkEvents>Namespace": "namespace",
+					"NetworkEvents>Name":      "name",
+					"NetworkEvents>Action":    "action",
+					"NetworkEvents>Direction": "direction",
+				},
+				Charts: netpolCharts(group),
+			},
+			tags: []string{group, "network-policy"},
+		})
 	}
 }
 
@@ -252,6 +276,9 @@ func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
 	}
 	if !helper.IsDNSTrackingEnabled(&spec.Agent.EBPF) {
 		list = removeMetricsByPattern(list, "_dns_")
+	}
+	if !helper.IsNetworkEventsEnabled(&spec.Agent.EBPF) {
+		list = removeMetricsByPattern(list, "_network_policy_")
 	}
 	return list
 }
