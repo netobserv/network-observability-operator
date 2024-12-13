@@ -563,6 +563,78 @@ columns:
     default: true
     width: 15
     feature: networkEvents
+  - id: XlatZoneId
+    group: Xlat
+    name: Xlat zone id
+    field: ZoneId
+    filter: xlat_zone_id
+    default: true
+    width: 5
+  - id: XlatIcmpId
+    group: Xlat
+    name: Xlat icmp code
+    field: XlatIcmpId
+    filter: xlat_icmp_id
+    default: false
+    width: 5
+    feature: packetTranslation
+  - id: XlatSrcAddr
+    group: Xlat
+    name: Xlat source IP
+    tooltip: The packet translation source IP address. Can be either in IPv4 or IPv6 format.
+    field: XlatSrcAddr
+    filter: xlat_src_address
+    default: false
+    width: 10
+    feature: packetTranslation
+  - id: XlatSrcPort
+    group: Xlat
+    name: Xlat source port
+    tooltip: The packet translation source port number.
+    field: XlatSrcPort
+    filter: xlat_src_port
+    default: false
+    width: 10
+    feature: packetTranslation
+  - id: XlatSrcK8S_Object
+    group: Xlat
+    name: Xlat Src Kubernetes Object
+    calculated: kubeObject(XlatSrcK8S_Type,XlatSrcK8S_Namespace,XlatSrcK8S_Name,1) or concat(XlatSrcAddr,':',XlatSrcPort)
+    default: false
+    width: 15
+    feature: packetTranslation
+  - id: XlatDstAddr
+    group: Xlat
+    name: Xlat destination IP
+    tooltip: The packet translation destination IP address. Can be either in IPv4 or IPv6 format.
+    field: XlatDstAddr
+    filter: xlat_dst_address
+    default: false
+    width: 10
+    feature: packetTranslation
+  - id: XlatDstPort
+    group: Xlat
+    name: Xlat destination port
+    tooltip: The packet translation destination port number.
+    field: XlatDstPort
+    filter: xlat_dst_port
+    default: false
+    width: 10
+    feature: packetTranslation
+  - id: XlatDstK8S_Object
+    group: Xlat
+    name: Xlat Dst Kubernetes Object
+    calculated: kubeObject(XlatDstK8S_Type,XlatDstK8S_Namespace,XlatDstK8S_Name,1) or concat(XlatDstAddr,':',XlatDstPort)
+    default: false
+    width: 15
+    feature: packetTranslation
+  - id: XlatK8S_Object
+    group: Xlat
+    name: Xlat Kubernetes Objects
+    calculated: '[column.XlatSrcK8S_Object,column.XlatDstK8S_Object]'
+    default: false
+    width: 15
+    feature: packetTranslation
 filters:
   - id: cluster_name
     name: Cluster
@@ -928,6 +1000,32 @@ filters:
     name: Network Events
     component: text
     hint: Specify a single network event.
+  - id: xlat_zone_id
+    name: Xlat Zone Id
+    component: number
+  - id: xlat_icmp_id
+    name: Xlat Icmp Id
+    component: number
+  - id: xlat_src_address
+    name: Xlat src address
+    component: text
+    category: source
+    hint: Specify a single IP or range.
+  - id: xlat_dst_address
+    name: Xlat dst address
+    component: text
+    category: destination
+    hint: Specify a single IP or range.
+  - id: xlat_src_port
+    name: Xlat src port
+    component: autocomplete
+    category: source
+    hint: Specify a single port number or name.
+  - id: xlat_dst_port
+    name: Xlat dst port
+    component: autocomplete
+    category: destination
+    hint: Specify a single port number or name.
 scopes:
   - id: cluster
     name: Cluster
@@ -1217,6 +1315,24 @@ fields:
   - name: NetworkEvents
     type: string
     description: Network events flow monitoring
+  - name: ZoneId
+    type: number
+    description: packet translation zone id
+  - name: XlatIcmpId
+    type: number
+    description: packet translation icmp code
+  - name: XlatSrcPort
+    type: number
+    description: packet translation src port
+  - name: XlatDstPort
+    type: number
+    description: packet translation dst port
+  - name: XlatSrcAddr
+    type: string
+    description: packet translation src address
+  - name: XlatDstAddr
+    type: string
+    description: packet translation dst address
   - name: K8S_ClusterName
     type: string
     description: Cluster name or identifier
