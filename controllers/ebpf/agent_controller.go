@@ -2,10 +2,13 @@ package ebpf
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/go-logr/logr"
+	ebpfconfig "github.com/netobserv/netobserv-ebpf-agent/pkg/agent"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
@@ -14,7 +17,6 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 
-	"github.com/go-logr/logr"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -64,24 +66,7 @@ const (
 	envMetricsTLSCertPath         = "METRICS_TLS_CERT_PATH"
 	envMetricsTLSKeyPath          = "METRICS_TLS_KEY_PATH"
 	envEnableFlowFilter           = "ENABLE_FLOW_FILTER"
-	envFilterIPCIDR               = "FILTER_IP_CIDR"
-	envFilterAction               = "FILTER_ACTION"
-	envFilterDirection            = "FILTER_DIRECTION"
-	envFilterProtocol             = "FILTER_PROTOCOL"
-	envFilterSourcePort           = "FILTER_SOURCE_PORT"
-	envFilterDestPort             = "FILTER_DESTINATION_PORT"
-	envFilterPort                 = "FILTER_PORT"
-	envFilterSourcePortRange      = "FILTER_SOURCE_PORT_RANGE"
-	envFilterDestPortRange        = "FILTER_DESTINATION_PORT_RANGE"
-	envFilterPortRange            = "FILTER_PORT_RANGE"
-	envFilterSourcePorts          = "FILTER_SOURCE_PORTS"
-	envFilterDestPorts            = "FILTER_DESTINATION_PORTS"
-	envFilterPorts                = "FILTER_PORTS"
-	envFilterICMPType             = "FILTER_ICMP_TYPE"
-	envFilterICMPCode             = "FILTER_ICMP_CODE"
-	envFilterPeerIPAddress        = "FILTER_PEER_IP"
-	envFilterTCPFlags             = "FILTER_TCP_FLAGS"
-	envFilterPktDrops             = "FILTER_DROPS"
+	envFilterRules                = "FLOW_FILTER_RULES"
 	envEnablePacketTranslation    = "ENABLE_PKT_TRANSLATION"
 	envEnableEbpfMgr              = "EBPF_PROGRAM_MANAGER_MODE"
 	envListSeparator              = ","
@@ -517,109 +502,126 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 
 	if helper.IsEBFPFlowFilterEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{Name: envEnableFlowFilter, Value: "true"})
-
-		config = append(config, c.configureFlowFilter(coll.Spec.Agent.EBPF.FlowFilter, config)...)
+		if len(coll.Spec.Agent.EBPF.FlowFilter.FlowFilterRules) != 0 {
+			if filterRules := c.configureFlowFiltersRules(coll.Spec.Agent.EBPF.FlowFilter.FlowFilterRules); filterRules != nil {
+				config = append(config, filterRules...)
+			}
+		} else {
+			if filter := c.configureFlowFilter(coll.Spec.Agent.EBPF.FlowFilter); filter != nil {
+				config = append(config, filter...)
+			}
+		}
 	}
 
 	return config, nil
 }
 
-// nolint:cyclop
-func (c *AgentController) configureFlowFilter(filter *flowslatest.EBPFFlowFilter, config []corev1.EnvVar) []corev1.EnvVar {
-	if filter.CIDR != "" {
-		config = append(config, corev1.EnvVar{Name: envFilterIPCIDR,
-			Value: filter.CIDR,
-		})
-	}
-	if filter.Action != "" {
-		config = append(config, corev1.EnvVar{Name: envFilterAction,
-			Value: filter.Action,
-		})
-	}
-	if filter.Direction != "" {
-		config = append(config, corev1.EnvVar{Name: envFilterDirection,
-			Value: filter.Direction,
-		})
-	}
-	if filter.Protocol != "" {
-		config = append(config, corev1.EnvVar{Name: envFilterProtocol,
-			Value: filter.Protocol,
-		})
-	}
-	if filter.ICMPType != nil && *filter.ICMPType != 0 {
-		config = append(config, corev1.EnvVar{Name: envFilterICMPType,
-			Value: strconv.Itoa(*filter.ICMPType),
-		})
-	}
-	if filter.ICMPCode != nil && *filter.ICMPCode != 0 {
-		config = append(config, corev1.EnvVar{Name: envFilterICMPCode,
-			Value: strconv.Itoa(*filter.ICMPCode)})
-	}
-	if filter.SourcePorts.Type == intstr.String {
-		if strings.Contains(filter.SourcePorts.String(), "-") {
-			config = append(config, corev1.EnvVar{Name: envFilterSourcePortRange,
-				Value: filter.SourcePorts.String(),
-			})
-		}
-		if strings.Contains(filter.SourcePorts.String(), ",") {
-			config = append(config, corev1.EnvVar{Name: envFilterSourcePorts,
-				Value: filter.SourcePorts.String(),
-			})
-		}
-	}
-	if filter.SourcePorts.Type == intstr.Int {
-		config = append(config, corev1.EnvVar{Name: envFilterSourcePort,
-			Value: strconv.Itoa(filter.SourcePorts.IntValue()),
-		})
-	}
-	if filter.DestPorts.Type == intstr.String {
-		if strings.Contains(filter.DestPorts.String(), "-") {
-			config = append(config, corev1.EnvVar{Name: envFilterDestPortRange,
-				Value: filter.DestPorts.String(),
-			})
-		}
-		if strings.Contains(filter.DestPorts.String(), ",") {
-			config = append(config, corev1.EnvVar{Name: envFilterDestPorts,
-				Value: filter.DestPorts.String(),
-			})
-		}
-	}
-	if filter.DestPorts.Type == intstr.Int {
-		config = append(config, corev1.EnvVar{Name: envFilterDestPort,
-			Value: strconv.Itoa(filter.DestPorts.IntValue()),
-		})
-	}
-	if filter.Ports.Type == intstr.String {
-		if strings.Contains(filter.Ports.String(), "-") {
-			config = append(config, corev1.EnvVar{Name: envFilterPortRange,
-				Value: filter.Ports.String(),
-			})
-		}
-		if strings.Contains(filter.Ports.String(), ",") {
-			config = append(config, corev1.EnvVar{Name: envFilterPorts,
-				Value: filter.Ports.String(),
-			})
-		}
-	}
-	if filter.Ports.Type == intstr.Int {
-		config = append(config, corev1.EnvVar{Name: envFilterPort,
-			Value: strconv.Itoa(filter.Ports.IntValue()),
-		})
-	}
-	if filter.PeerIP != "" {
-		config = append(config, corev1.EnvVar{Name: envFilterPeerIPAddress,
-			Value: filter.PeerIP})
-	}
-	if filter.TCPFlags != "" {
-		config = append(config, corev1.EnvVar{Name: envFilterTCPFlags,
-			Value: filter.TCPFlags,
-		})
+func mapFlowFilterRuleToFilter(rule *flowslatest.EBPFFlowFilterRule) ebpfconfig.FlowFilter {
+	f := ebpfconfig.FlowFilter{
+		FilterIPCIDR:    rule.CIDR,
+		FilterAction:    rule.Action,
+		FilterDirection: rule.Direction,
+		FilterProtocol:  rule.Protocol,
 	}
 
-	if filter.PktDrops != nil && *filter.PktDrops {
-		config = append(config, corev1.EnvVar{Name: envFilterPktDrops, Value: "true"})
+	if rule.ICMPType != nil && *rule.ICMPType != 0 {
+		f.FilterICMPType = *rule.ICMPType
 	}
-	return config
+	if rule.ICMPCode != nil && *rule.ICMPCode != 0 {
+		f.FilterICMPCode = *rule.ICMPCode
+	}
+
+	processPorts(rule.SourcePorts, &f.FilterSourcePort, &f.FilterSourcePorts, &f.FilterSourcePortRange)
+	processPorts(rule.DestPorts, &f.FilterDestinationPort, &f.FilterDestinationPorts, &f.FilterDestinationPortRange)
+	processPorts(rule.Ports, &f.FilterPort, &f.FilterPorts, &f.FilterPortRange)
+
+	if rule.PeerIP != "" {
+		f.FilterPeerIP = rule.PeerIP
+	}
+	if rule.TCPFlags != "" {
+		f.FilterTCPFlags = rule.TCPFlags
+	}
+	if rule.PktDrops != nil && *rule.PktDrops {
+		f.FilterDrops = *rule.PktDrops
+	}
+	if rule.Sampling != nil && *rule.Sampling != 0 {
+		f.FilterSample = *rule.Sampling
+	}
+
+	return f
+}
+
+func mapFlowFilterToFilter(filter *flowslatest.EBPFFlowFilter) ebpfconfig.FlowFilter {
+	f := ebpfconfig.FlowFilter{
+		FilterIPCIDR:    filter.CIDR,
+		FilterAction:    filter.Action,
+		FilterDirection: filter.Direction,
+		FilterProtocol:  filter.Protocol,
+	}
+
+	if filter.ICMPType != nil && *filter.ICMPType != 0 {
+		f.FilterICMPType = *filter.ICMPType
+	}
+	if filter.ICMPCode != nil && *filter.ICMPCode != 0 {
+		f.FilterICMPCode = *filter.ICMPCode
+	}
+
+	processPorts(filter.SourcePorts, &f.FilterSourcePort, &f.FilterSourcePorts, &f.FilterSourcePortRange)
+	processPorts(filter.DestPorts, &f.FilterDestinationPort, &f.FilterDestinationPorts, &f.FilterDestinationPortRange)
+	processPorts(filter.Ports, &f.FilterPort, &f.FilterPorts, &f.FilterPortRange)
+
+	if filter.PeerIP != "" {
+		f.FilterPeerIP = filter.PeerIP
+	}
+	if filter.TCPFlags != "" {
+		f.FilterTCPFlags = filter.TCPFlags
+	}
+	if filter.PktDrops != nil && *filter.PktDrops {
+		f.FilterDrops = *filter.PktDrops
+	}
+	if filter.Sampling != nil && *filter.Sampling != 0 {
+		f.FilterSample = *filter.Sampling
+	}
+
+	return f
+}
+
+func processPorts(ports intstr.IntOrString, single *int32, list *string, rangeField *string) {
+	if ports.Type == intstr.String {
+		portStr := ports.String()
+		if strings.Contains(portStr, "-") {
+			*rangeField = portStr
+		}
+		if strings.Contains(portStr, ",") {
+			*list = portStr
+		}
+	} else if ports.Type == intstr.Int {
+		*single = int32(ports.IntValue())
+	}
+}
+
+func (c *AgentController) configureFlowFiltersRules(rules []flowslatest.EBPFFlowFilterRule) []corev1.EnvVar {
+	filters := make([]ebpfconfig.FlowFilter, 0)
+	for i := range rules {
+		filters = append(filters, mapFlowFilterRuleToFilter(&rules[i]))
+	}
+
+	jsonData, err := json.Marshal(filters)
+	if err != nil {
+		return nil
+	}
+
+	return []corev1.EnvVar{{Name: envFilterRules, Value: string(jsonData)}}
+}
+
+func (c *AgentController) configureFlowFilter(filter *flowslatest.EBPFFlowFilter) []corev1.EnvVar {
+	f := mapFlowFilterToFilter(filter)
+	jsonData, err := json.Marshal([]ebpfconfig.FlowFilter{f})
+	if err != nil {
+		return nil
+	}
+
+	return []corev1.EnvVar{{Name: envFilterRules, Value: string(jsonData)}}
 }
 
 func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *corev1.SecurityContext {

@@ -216,11 +216,8 @@ type EBPFMetrics struct {
 	DisableAlerts []EBPFAgentAlert `json:"disableAlerts"`
 }
 
-// `EBPFFlowFilter` defines the desired eBPF agent configuration regarding flow filtering.
-type EBPFFlowFilter struct {
-	// Set `enable` to `true` to enable the eBPF flow filtering feature.
-	Enable *bool `json:"enable,omitempty"`
-
+// `EBPFFlowFilterRule` defines the desired eBPF agent configuration regarding flow filtering rule.
+type EBPFFlowFilterRule struct {
 	// `cidr` defines the IP CIDR to filter flows by.
 	// Examples: `10.10.10.0/24` or `100:100:100:100::/64`
 	CIDR string `json:"cidr,omitempty"`
@@ -281,6 +278,24 @@ type EBPFFlowFilter struct {
 	// `pktDrops` optionally filters only flows containing packet drops.
 	// +optional
 	PktDrops *bool `json:"pktDrops,omitempty"`
+
+	// `sampling` sampling rate for the matched flow
+	// +optional
+	Sampling *uint32 `json:"sampling,omitempty"`
+}
+
+// `EBPFFlowFilter` defines the desired eBPF agent configuration regarding flow filtering.
+type EBPFFlowFilter struct {
+	// Set `enable` to `true` to enable the eBPF flow filtering feature.
+	Enable *bool `json:"enable,omitempty"`
+
+	// [deprecated (*)] this setting is not used anymore.
+	EBPFFlowFilterRule `json:",inline"`
+
+	// `flowFilterRules` defines a list of ebpf agent flow filtering rules
+	// +kubebuilder:validation:MinItems:=1
+	// +kubebuilder:validation:MaxItems:=16
+	FlowFilterRules []EBPFFlowFilterRule `json:"rules,omitempty"`
 }
 
 // `FlowCollectorEBPF` defines a FlowCollector that uses eBPF to collect the flows information

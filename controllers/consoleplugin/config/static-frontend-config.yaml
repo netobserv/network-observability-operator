@@ -346,6 +346,11 @@ columns:
     calculated: '[SrcK8S_HostIP,DstK8S_HostIP]'
     default: false
     width: 10
+  - id: Sampling
+    name: Sampling
+    field: Sampling
+    default: false
+    width: 10
   - id: K8S_HostName
     name: Node Name
     calculated: '[SrcK8S_HostName,DstK8S_HostName]'
@@ -1239,6 +1244,9 @@ fields:
   - name: Dscp
     type: number
     description: Differentiated Services Code Point (DSCP) value
+  - name: Sampling
+    type: number
+    description: Sampling rate used for this flow
   - name: IcmpType
     type: number
     description: ICMP type

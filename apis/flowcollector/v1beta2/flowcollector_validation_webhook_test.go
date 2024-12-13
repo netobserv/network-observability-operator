@@ -43,10 +43,14 @@ func TestValidateAgent(t *testing.T) {
 							Privileged: true,
 							Sampling:   ptr.To(int32(100)),
 							FlowFilter: &EBPFFlowFilter{
-								Enable:    ptr.To(true),
-								Action:    "Accept",
-								CIDR:      "0.0.0.0/0",
-								Direction: "Egress",
+								Enable: ptr.To(true),
+								FlowFilterRules: []EBPFFlowFilterRule{
+									{
+										Action:    "Accept",
+										CIDR:      "0.0.0.0/0",
+										Direction: "Egress",
+									},
+								},
 							},
 						},
 					},
@@ -118,11 +122,15 @@ func TestValidateAgent(t *testing.T) {
 						Type: AgentEBPF,
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
-								Enable:      ptr.To(true),
-								Action:      "Accept",
-								CIDR:        "0.0.0.0/0",
-								Ports:       intstr.FromInt(80),
-								SourcePorts: intstr.FromInt(443),
+								Enable: ptr.To(true),
+								FlowFilterRules: []EBPFFlowFilterRule{
+									{
+										Action:      "Accept",
+										CIDR:        "0.0.0.0/0",
+										Ports:       intstr.FromInt(80),
+										SourcePorts: intstr.FromInt(443),
+									},
+								},
 							},
 						},
 					},
@@ -142,7 +150,11 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								Ports:  intstr.FromString("abcd"),
+								FlowFilterRules: []EBPFFlowFilterRule{
+									{
+										Ports: intstr.FromString("abcd"),
+									},
+								},
 							},
 						},
 					},
@@ -162,7 +174,11 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								Ports:  intstr.FromString("80-255"),
+								FlowFilterRules: []EBPFFlowFilterRule{
+									{
+										Ports: intstr.FromString("80-255"),
+									},
+								},
 							},
 						},
 					},
@@ -181,7 +197,11 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								Ports:  intstr.FromString("255-80"),
+								FlowFilterRules: []EBPFFlowFilterRule{
+									{
+										Ports: intstr.FromString("255-80"),
+									},
+								},
 							},
 						},
 					},
@@ -201,7 +221,11 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								Ports:  intstr.FromString("80-?"),
+								FlowFilterRules: []EBPFFlowFilterRule{
+									{
+										Ports: intstr.FromString("80-?"),
+									},
+								},
 							},
 						},
 					},
@@ -221,7 +245,11 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								Ports:  intstr.FromString("255,80"),
+								FlowFilterRules: []EBPFFlowFilterRule{
+									{
+										Ports: intstr.FromString("255,80"),
+									},
+								},
 							},
 						},
 					},
@@ -240,13 +268,41 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								Ports:  intstr.FromString("80,100,250"),
+								FlowFilterRules: []EBPFFlowFilterRule{
+									{
+										Ports: intstr.FromString("80,100,250"),
+									},
+								},
 							},
 						},
 					},
 				},
 			},
 			expectedError: "expected two integers",
+		},
+		{
+			name: "FlowFilter expect invalid CIDR",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{
+						Type: AgentEBPF,
+						EBPF: FlowCollectorEBPF{
+							FlowFilter: &EBPFFlowFilter{
+								Enable: ptr.To(true),
+								FlowFilterRules: []EBPFFlowFilterRule{
+									{
+										CIDR: "1.1.1.1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: "invalid CIDR",
 		},
 	}
 

@@ -160,68 +160,72 @@ spec:
                           regarding flow filtering'
                         properties:
                           action:
-                            description: Action defines the action to perform on the
-                              flows that match the filter.
+                            description: '`action` defines the action to perform on
+                              the flows that match the filter. The available options
+                              are `Accept`, which is the default, and `Reject`.'
                             enum:
                             - Accept
                             - Reject
                             type: string
                           cidr:
                             description: |-
-                              CIDR defines the IP CIDR to filter flows by.
-                              Example: 10.10.10.0/24 or 100:100:100:100::/64
+                              `cidr` defines the IP CIDR to filter flows by.
+                              Examples: `10.10.10.0/24` or `100:100:100:100::/64`
                             type: string
                           destPorts:
                             anyOf:
                             - type: integer
                             - type: string
                             description: |-
-                              DestPorts defines the destination ports to filter flows by.
-                              To filter a single port, set a single port as an integer value. For example, destPorts: 80.
-                              To filter a range of ports, use a "start-end" range in string format. For example, destPorts: "80-100".
+                              `destPorts` optionally defines the destination ports to filter flows by.
+                              To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
+                              To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
                               To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
                             x-kubernetes-int-or-string: true
                           direction:
-                            description: Direction defines the direction to filter
-                              flows by.
+                            description: '`direction` optionally defines a direction
+                              to filter flows by. The available options are `Ingress`
+                              and `Egress`.'
                             enum:
                             - Ingress
                             - Egress
                             type: string
                           enable:
-                            description: Set `enable` to `true` to enable eBPF flow
-                              filtering feature.
+                            description: Set `enable` to `true` to enable the eBPF
+                              flow filtering feature.
                             type: boolean
                           icmpCode:
-                            description: ICMPCode defines the ICMP code to filter
-                              flows by.
+                            description: '`icmpCode`, for Internet Control Message
+                              Protocol (ICMP) traffic, optionally defines the ICMP
+                              code to filter flows by.'
                             type: integer
                           icmpType:
-                            description: ICMPType defines the ICMP type to filter
-                              flows by.
+                            description: '`icmpType`, for ICMP traffic, optionally
+                              defines the ICMP type to filter flows by.'
                             type: integer
                           peerIP:
                             description: |-
-                              PeerIP defines the IP address to filter flows by.
-                              Example: 10.10.10.10
+                              `peerIP` optionally defines the remote IP address to filter flows by.
+                              Example: `10.10.10.10`.
                             type: string
                           pktDrops:
-                            description: '`pktDrops`, to filter flows with packet
-                              drops'
+                            description: '`pktDrops` optionally filters only flows
+                              containing packet drops.'
                             type: boolean
                           ports:
                             anyOf:
                             - type: integer
                             - type: string
                             description: |-
-                              Ports defines the ports to filter flows by. it can be user for either source or destination ports.
-                              To filter a single port, set a single port as an integer value. For example, ports: 80.
-                              To filter a range of ports, use a "start-end" range in string format. For example, ports: "80-100".
+                              `ports` optionally defines the ports to filter flows by. It is used both for source and destination ports.
+                              To filter a single port, set a single port as an integer value. For example, `ports: 80`.
+                              To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
                               To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
                             x-kubernetes-int-or-string: true
                           protocol:
-                            description: Protocol defines the protocol to filter flows
-                              by.
+                            description: '`protocol` optionally defines a protocol
+                              to filter flows by. The available options are `TCP`,
+                              `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.'
                             enum:
                             - TCP
                             - UDP
@@ -229,19 +233,139 @@ spec:
                             - ICMPv6
                             - SCTP
                             type: string
+                          rules:
+                            description: '`flowFilterRules` defines a list of ebpf
+                              agent flow filtering rules'
+                            items:
+                              description: '`EBPFFlowFilterRule` defines the desired
+                                eBPF agent configuration regarding flow filtering
+                                rule.'
+                              properties:
+                                action:
+                                  description: '`action` defines the action to perform
+                                    on the flows that match the filter. The available
+                                    options are `Accept`, which is the default, and
+                                    `Reject`.'
+                                  enum:
+                                  - Accept
+                                  - Reject
+                                  type: string
+                                cidr:
+                                  description: |-
+                                    `cidr` defines the IP CIDR to filter flows by.
+                                    Examples: `10.10.10.0/24` or `100:100:100:100::/64`
+                                  type: string
+                                destPorts:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  description: |-
+                                    `destPorts` optionally defines the destination ports to filter flows by.
+                                    To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
+                                    To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
+                                    To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
+                                  x-kubernetes-int-or-string: true
+                                direction:
+                                  description: '`direction` optionally defines a direction
+                                    to filter flows by. The available options are
+                                    `Ingress` and `Egress`.'
+                                  enum:
+                                  - Ingress
+                                  - Egress
+                                  type: string
+                                icmpCode:
+                                  description: '`icmpCode`, for Internet Control Message
+                                    Protocol (ICMP) traffic, optionally defines the
+                                    ICMP code to filter flows by.'
+                                  type: integer
+                                icmpType:
+                                  description: '`icmpType`, for ICMP traffic, optionally
+                                    defines the ICMP type to filter flows by.'
+                                  type: integer
+                                peerIP:
+                                  description: |-
+                                    `peerIP` optionally defines the remote IP address to filter flows by.
+                                    Example: `10.10.10.10`.
+                                  type: string
+                                pktDrops:
+                                  description: '`pktDrops` optionally filters only
+                                    flows containing packet drops.'
+                                  type: boolean
+                                ports:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  description: |-
+                                    `ports` optionally defines the ports to filter flows by. It is used both for source and destination ports.
+                                    To filter a single port, set a single port as an integer value. For example, `ports: 80`.
+                                    To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
+                                    To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
+                                  x-kubernetes-int-or-string: true
+                                protocol:
+                                  description: '`protocol` optionally defines a protocol
+                                    to filter flows by. The available options are
+                                    `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.'
+                                  enum:
+                                  - TCP
+                                  - UDP
+                                  - ICMP
+                                  - ICMPv6
+                                  - SCTP
+                                  type: string
+                                sampling:
+                                  description: '`sampling` sampling rate for the matched
+                                    flow'
+                                  format: int32
+                                  type: integer
+                                sourcePorts:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  description: |-
+                                    `sourcePorts` optionally defines the source ports to filter flows by.
+                                    To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
+                                    To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
+                                    To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
+                                  x-kubernetes-int-or-string: true
+                                tcpFlags:
+                                  description: |-
+                                    `tcpFlags` optionally defines TCP flags to filter flows by.
+                                    In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.
+                                  enum:
+                                  - SYN
+                                  - SYN-ACK
+                                  - ACK
+                                  - FIN
+                                  - RST
+                                  - URG
+                                  - ECE
+                                  - CWR
+                                  - FIN-ACK
+                                  - RST-ACK
+                                  type: string
+                              type: object
+                            maxItems: 16
+                            minItems: 1
+                            type: array
+                          sampling:
+                            description: '`sampling` sampling rate for the matched
+                              flow'
+                            format: int32
+                            type: integer
                           sourcePorts:
                             anyOf:
                             - type: integer
                             - type: string
                             description: |-
-                              SourcePorts defines the source ports to filter flows by.
-                              To filter a single port, set a single port as an integer value. For example, sourcePorts: 80.
-                              To filter a range of ports, use a "start-end" range in string format. For example, sourcePorts: "80-100".
+                              `sourcePorts` optionally defines the source ports to filter flows by.
+                              To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
+                              To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
                               To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
                             x-kubernetes-int-or-string: true
                           tcpFlags:
-                            description: '`tcpFlags` defines the TCP flags to filter
-                              flows by.'
+                            description: |-
+                              `tcpFlags` optionally defines TCP flags to filter flows by.
+                              In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.
                             enum:
                             - SYN
                             - SYN-ACK
@@ -3921,6 +4045,125 @@ spec:
                             - ICMPv6
                             - SCTP
                             type: string
+                          rules:
+                            description: '`flowFilterRules` defines a list of ebpf
+                              agent flow filtering rules'
+                            items:
+                              description: '`EBPFFlowFilterRule` defines the desired
+                                eBPF agent configuration regarding flow filtering
+                                rule.'
+                              properties:
+                                action:
+                                  description: '`action` defines the action to perform
+                                    on the flows that match the filter. The available
+                                    options are `Accept`, which is the default, and
+                                    `Reject`.'
+                                  enum:
+                                  - Accept
+                                  - Reject
+                                  type: string
+                                cidr:
+                                  description: |-
+                                    `cidr` defines the IP CIDR to filter flows by.
+                                    Examples: `10.10.10.0/24` or `100:100:100:100::/64`
+                                  type: string
+                                destPorts:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  description: |-
+                                    `destPorts` optionally defines the destination ports to filter flows by.
+                                    To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
+                                    To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
+                                    To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
+                                  x-kubernetes-int-or-string: true
+                                direction:
+                                  description: '`direction` optionally defines a direction
+                                    to filter flows by. The available options are
+                                    `Ingress` and `Egress`.'
+                                  enum:
+                                  - Ingress
+                                  - Egress
+                                  type: string
+                                icmpCode:
+                                  description: '`icmpCode`, for Internet Control Message
+                                    Protocol (ICMP) traffic, optionally defines the
+                                    ICMP code to filter flows by.'
+                                  type: integer
+                                icmpType:
+                                  description: '`icmpType`, for ICMP traffic, optionally
+                                    defines the ICMP type to filter flows by.'
+                                  type: integer
+                                peerIP:
+                                  description: |-
+                                    `peerIP` optionally defines the remote IP address to filter flows by.
+                                    Example: `10.10.10.10`.
+                                  type: string
+                                pktDrops:
+                                  description: '`pktDrops` optionally filters only
+                                    flows containing packet drops.'
+                                  type: boolean
+                                ports:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  description: |-
+                                    `ports` optionally defines the ports to filter flows by. It is used both for source and destination ports.
+                                    To filter a single port, set a single port as an integer value. For example, `ports: 80`.
+                                    To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
+                                    To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
+                                  x-kubernetes-int-or-string: true
+                                protocol:
+                                  description: '`protocol` optionally defines a protocol
+                                    to filter flows by. The available options are
+                                    `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.'
+                                  enum:
+                                  - TCP
+                                  - UDP
+                                  - ICMP
+                                  - ICMPv6
+                                  - SCTP
+                                  type: string
+                                sampling:
+                                  description: '`sampling` sampling rate for the matched
+                                    flow'
+                                  format: int32
+                                  type: integer
+                                sourcePorts:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  description: |-
+                                    `sourcePorts` optionally defines the source ports to filter flows by.
+                                    To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
+                                    To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
+                                    To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
+                                  x-kubernetes-int-or-string: true
+                                tcpFlags:
+                                  description: |-
+                                    `tcpFlags` optionally defines TCP flags to filter flows by.
+                                    In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.
+                                  enum:
+                                  - SYN
+                                  - SYN-ACK
+                                  - ACK
+                                  - FIN
+                                  - RST
+                                  - URG
+                                  - ECE
+                                  - CWR
+                                  - FIN-ACK
+                                  - RST-ACK
+                                  type: string
+                              type: object
+                            maxItems: 16
+                            minItems: 1
+                            type: array
+                          sampling:
+                            description: '`sampling` sampling rate for the matched
+                              flow'
+                            format: int32
+                            type: integer
                           sourcePorts:
                             anyOf:
                             - type: integer
