@@ -111,7 +111,7 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 
 func getBuilder(spec *flowslatest.FlowCollectorSpec, lk *helper.LokiConfig) builder {
 	info := reconcilers.Common{Namespace: testNamespace, Loki: lk, ClusterInfo: &cluster.Info{}}
-	b := newBuilder(info.NewInstance(testImage, status.Instance{}), spec)
+	b := newBuilder(info.NewInstance([]string{testImage}, status.Instance{}), spec)
 	_, _, _ = b.configMap(context.Background()) // build configmap to update builder's volumes
 	return b
 }
@@ -144,7 +144,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	old = nEw
 
 	// new image
-	builder.info.Image = "quay.io/netobserv/network-observability-console-plugin:latest"
+	builder.info.Images[constants.ControllerBaseImageIndex] = "quay.io/netobserv/network-observability-console-plugin:latest"
 	nEw = builder.deployment("digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))

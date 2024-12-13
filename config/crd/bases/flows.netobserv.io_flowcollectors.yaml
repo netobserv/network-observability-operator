@@ -121,6 +121,7 @@ spec:
                             - `NetworkEvents`: enable the Network events monitoring feature. This feature requires mounting
                             the kernel debug filesystem, so the eBPF pod has to run as privileged.
                             - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
+                            - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
                           items:
                             description: |-
                               Agent feature, can be one of:<br>
@@ -129,12 +130,14 @@ spec:
                               - `FlowRTT`, to track TCP latency [Unsupported (*)].<br>
                               - `NetworkEvents`, to track Network events.<br>
                               - `PacketTranslation`, to enrich flows with packets translation information. <br>
+                              - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
                             enum:
                               - PacketDrop
                               - DNSTracking
                               - FlowRTT
                               - NetworkEvents
                               - PacketTranslation
+                              - EbpfManager
                             type: string
                           type: array
                         flowFilter:
@@ -3521,6 +3524,8 @@ spec:
                             It requires using the OVN-Kubernetes network plugin with the Observability feature.
                             IMPORTANT: This feature is available as a Developer Preview.<br>
                             - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
+                            - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
+                            IMPORTANT: This feature is available as a Developer Preview.<br>
                           items:
                             description: |-
                               Agent feature, can be one of:<br>
@@ -3529,12 +3534,14 @@ spec:
                               - `FlowRTT`, to track TCP latency.<br>
                               - `NetworkEvents`, to track Network events [Developer Preview].<br>
                               - `PacketTranslation`, to enrich flows with packets translation information. <br>
+                              - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
                             enum:
                               - PacketDrop
                               - DNSTracking
                               - FlowRTT
                               - NetworkEvents
                               - PacketTranslation
+                              - EbpfManager
                             type: string
                           type: array
                         flowFilter:

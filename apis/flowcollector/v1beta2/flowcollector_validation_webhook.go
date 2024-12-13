@@ -101,6 +101,9 @@ func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollector) (adm
 	if slices.Contains(fc.Spec.Agent.EBPF.Features, PacketDrop) && !fc.Spec.Agent.EBPF.Privileged {
 		warnings = append(warnings, "The PacketDrop feature requires eBPF Agent to run in privileged mode")
 	}
+	if slices.Contains(fc.Spec.Agent.EBPF.Features, EbpfManager) && !fc.Spec.Agent.EBPF.Privileged {
+		warnings = append(warnings, "The BPF Manager feature requires eBPF Agent to run in privileged mode")
+	}
 	var errs []error
 	if fc.Spec.Agent.EBPF.FlowFilter != nil && fc.Spec.Agent.EBPF.FlowFilter.Enable != nil && *fc.Spec.Agent.EBPF.FlowFilter.Enable {
 		hasPorts := fc.Spec.Agent.EBPF.FlowFilter.Ports.IntVal > 0 || fc.Spec.Agent.EBPF.FlowFilter.Ports.StrVal != ""

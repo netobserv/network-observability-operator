@@ -176,7 +176,8 @@ type FlowCollectorIPFIX struct {
 // - `FlowRTT`, to track TCP latency.<br>
 // - `NetworkEvents`, to track Network events [Developer Preview].<br>
 // - `PacketTranslation`, to enrich flows with packets translation information. <br>
-// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation"
+// - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
+// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation";"EbpfManager"
 type AgentFeature string
 
 const (
@@ -185,6 +186,7 @@ const (
 	FlowRTT           AgentFeature = "FlowRTT"
 	NetworkEvents     AgentFeature = "NetworkEvents"
 	PacketTranslation AgentFeature = "PacketTranslation"
+	EbpfManager       AgentFeature = "EbpfManager"
 )
 
 // Name of an eBPF agent alert.
@@ -365,6 +367,8 @@ type FlowCollectorEBPF struct {
 	// It requires using the OVN-Kubernetes network plugin with the Observability feature.
 	// IMPORTANT: This feature is available as a Developer Preview.<br>
 	// - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
+	// - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
+	// IMPORTANT: This feature is available as a Developer Preview.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 

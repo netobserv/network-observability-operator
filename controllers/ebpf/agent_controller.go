@@ -83,6 +83,7 @@ const (
 	envFilterTCPFlags             = "FILTER_TCP_FLAGS"
 	envFilterPktDrops             = "FILTER_DROPS"
 	envEnablePacketTranslation    = "ENABLE_PKT_TRANSLATION"
+	envEnableEbpfMgr              = "EBPF_PROGRAM_MANAGER_MODE"
 	envListSeparator              = ","
 )
 
@@ -112,6 +113,8 @@ const (
 	DedupeJustMarkDefault  = "false"
 	DedupeMergeDefault     = "true"
 	defaultDNSTrackingPort = "53"
+	bpfmanMapsVolumeName   = "bpfman-maps"
+	bpfManBpfFSPath        = "/run/netobserv/maps"
 )
 
 // AgentController reconciles the status of the eBPF agent Daemonset, as well as the
@@ -164,6 +167,12 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 			return nil
 		}
 		rlog.Info("namespace cleanup: deleting eBPF agent", "currentAgent", target.Spec.Agent)
+		if helper.IsAgentFeatureEnabled(&target.Spec.Agent.EBPF, flowslatest.EbpfManager) {
+			if err := c.bpfmanDetachNetobserv(ctx); err != nil {
+				rlog.Error(err, "failed to delete bpfapplication object")
+				// continue with eBPF agent deletion
+			}
+		}
 		if err := c.Delete(ctx, current); err != nil {
 			if errors.IsNotFound(err) {
 				return nil
@@ -192,15 +201,25 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 	case helper.ActionCreate:
 		rlog.Info("action: create agent")
 		c.Status.SetCreatingDaemonSet(desired)
-		return c.CreateOwned(ctx, desired)
+		err = c.CreateOwned(ctx, desired)
 	case helper.ActionUpdate:
 		rlog.Info("action: update agent")
-		return c.UpdateIfOwned(ctx, current, desired)
+		err = c.UpdateIfOwned(ctx, current, desired)
 	default:
 		rlog.Info("action: nothing to do")
 		c.Status.CheckDaemonSetProgress(current)
-		return nil
 	}
+
+	if err != nil {
+		return err
+	}
+
+	if helper.IsAgentFeatureEnabled(&target.Spec.Agent.EBPF, flowslatest.EbpfManager) {
+		if err := c.bpfmanAttachNetobserv(ctx, target); err != nil {
+			return fmt.Errorf("failed to attach netobserv: %w", err)
+		}
+	}
+	return nil
 }
 
 func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
@@ -233,7 +252,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	if coll == nil {
 		return nil, nil
 	}
-	version := helper.ExtractVersion(c.Image)
+	version := helper.ExtractVersion(c.Images[constants.ControllerBaseImageIndex])
 	annotations := make(map[string]string)
 	env, err := c.envConfig(ctx, coll, annotations)
 	if err != nil {
@@ -356,6 +375,28 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		}
 	}
 
+	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.EbpfManager) {
+		volume := corev1.Volume{
+			Name: bpfmanMapsVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				CSI: &corev1.CSIVolumeSource{
+					Driver: "csi.bpfman.io",
+					VolumeAttributes: map[string]string{
+						"csi.bpfman.io/program": "netobserv",
+						"csi.bpfman.io/maps":    "aggregated_flows,additional_flow_metrics,direct_flows,dns_flows,filter_map,global_counters,packet_record",
+					},
+				},
+			},
+		}
+		volumes = append(volumes, volume)
+		volumeMount := corev1.VolumeMount{
+			Name:             bpfmanMapsVolumeName,
+			MountPath:        bpfManBpfFSPath,
+			MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+		}
+		volumeMounts = append(volumeMounts, volumeMount)
+	}
+
 	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
 
 	return &v1.DaemonSet{
@@ -384,7 +425,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 					Volumes:            volumes,
 					Containers: []corev1.Container{{
 						Name:            constants.EBPFAgentName,
-						Image:           c.Image,
+						Image:           c.Images[constants.ControllerBaseImageIndex],
 						ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.ImagePullPolicy),
 						Resources:       coll.Spec.Agent.EBPF.Resources,
 						SecurityContext: c.securityContext(coll),
@@ -658,7 +699,12 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 
 	if helper.IsPacketTranslationEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
-			Name:  envEnablePacketTranslation,
+			Name: envEnablePacketTranslation,
+		})
+	}
+	if helper.IsEbpfManagerEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableEbpfMgr,
 			Value: "true",
 		})
 	}
