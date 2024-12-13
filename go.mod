@@ -1,8 +1,7 @@
 module github.com/netobserv/network-observability-operator
 
 go 1.22.3
-
-toolchain go1.22.4
+toolchain go1.23.4
 
 require (
 	github.com/bpfman/bpfman-operator v0.5.5-0.20241023163832-0bf84bbd3927
@@ -14,7 +13,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.22.0
 	github.com/onsi/gomega v1.35.1
 	github.com/openshift/api v0.0.0-20240722135205-ae4f370f361f
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.76.1
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.78.2
 	github.com/prometheus/common v0.55.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
@@ -26,7 +25,7 @@ require (
 	k8s.io/client-go v0.31.3
 	k8s.io/klog v1.0.0
 	k8s.io/kube-aggregator v0.31.2
-	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
+	k8s.io/utils v0.0.0-20240902221715-702e33fdd3c3
 	sigs.k8s.io/controller-runtime v0.19.3
 	sigs.k8s.io/yaml v1.4.0
 )
