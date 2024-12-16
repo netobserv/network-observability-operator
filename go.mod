@@ -12,7 +12,7 @@ require (
 	github.com/netobserv/flowlogs-pipeline v1.7.0-community.0.20241126155124-18e017f67001
 	github.com/netobserv/netobserv-ebpf-agent v1.6.1-crc2.0.20241008130234-a20397fb8f88
 	github.com/onsi/ginkgo/v2 v2.22.0
-	github.com/onsi/gomega v1.35.1
+	github.com/onsi/gomega v1.36.1
 	github.com/openshift/api v0.0.0-20240722135205-ae4f370f361f
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.76.1
 	github.com/prometheus/common v0.55.0
