@@ -49,6 +49,7 @@ func TestValidateAgent(t *testing.T) {
 										Action:    "Accept",
 										CIDR:      "0.0.0.0/0",
 										Direction: "Egress",
+										Protocol:  "TCP",
 									},
 								},
 							},
@@ -56,6 +57,42 @@ func TestValidateAgent(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "Invalid filter with duplicate CIDR",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{
+						Type: AgentEBPF,
+						EBPF: FlowCollectorEBPF{
+							Features:   []AgentFeature{DNSTracking, FlowRTT, PacketDrop},
+							Privileged: true,
+							Sampling:   ptr.To(int32(100)),
+							FlowFilter: &EBPFFlowFilter{
+								Enable: ptr.To(true),
+								FlowFilterRules: []EBPFFlowFilterRule{
+									{
+										Action:    "Accept",
+										CIDR:      "0.0.0.0/0",
+										Direction: "Egress",
+										Protocol:  "TCP",
+									},
+									{
+										Action:    "Accept",
+										CIDR:      "0.0.0.0/0",
+										Direction: "Egress",
+										Protocol:  "UDP",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: "flow filter rule CIDR 0.0.0.0/0 already exists",
 		},
 		{
 			name: "PacketDrop without privilege triggers warning",
