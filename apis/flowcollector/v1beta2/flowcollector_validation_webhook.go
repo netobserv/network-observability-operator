@@ -85,7 +85,8 @@ func (r *FlowCollector) warnLogLevels(fc *FlowCollectorSpec) admission.Warnings 
 // nolint:cyclop
 func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
 	var warnings admission.Warnings
-	if slices.Contains(fc.Agent.EBPF.Features, NetworkEvents) {
+	if slices.Contains(fc.Agent.EBPF.Features, NetworkEvents) ||
+		slices.Contains(fc.Agent.EBPF.Features, UDNMapping) {
 		// Make sure required version of ocp is installed
 		if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
 			b, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast("4.18.0")
@@ -106,6 +107,9 @@ func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) 
 	}
 	if slices.Contains(fc.Agent.EBPF.Features, EbpfManager) && !fc.Agent.EBPF.Privileged {
 		warnings = append(warnings, "The BPF Manager feature requires eBPF Agent to run in privileged mode")
+	}
+	if slices.Contains(fc.Agent.EBPF.Features, UDNMapping) && !fc.Agent.EBPF.Privileged {
+		warnings = append(warnings, "The UDNMapping feature requires eBPF Agent to run in privileged mode")
 	}
 	var errs []error
 	if fc.Agent.EBPF.FlowFilter != nil && fc.Agent.EBPF.FlowFilter.Enable != nil && *fc.Agent.EBPF.FlowFilter.Enable {

@@ -137,6 +137,7 @@ spec:
                           the kernel debug filesystem, so the eBPF pod has to run as privileged.
                           - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
                           - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
+                          - `UDNMapping`, to enable interfaces mappind to udn. <br>
                         items:
                           description: |-
                             Agent feature, can be one of:<br>
@@ -146,6 +147,7 @@ spec:
                             - `NetworkEvents`, to track Network events.<br>
                             - `PacketTranslation`, to enrich flows with packets translation information. <br>
                             - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
+                            - `UDNMapping`, to enable interfaces mappind to udn [Developer Preview]. <br>
                           enum:
                           - PacketDrop
                           - DNSTracking
@@ -153,6 +155,7 @@ spec:
                           - NetworkEvents
                           - PacketTranslation
                           - EbpfManager
+                          - UDNMapping
                           type: string
                         type: array
                       flowFilter:
@@ -3949,6 +3952,10 @@ spec:
                           - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
                           - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
                           IMPORTANT: This feature is available as a Developer Preview.<br>
+                          - `UDNMapping`, to enable interfaces mappind to udn. <br>
+                          This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
+                          It requires using the OVN-Kubernetes network plugin with the Observability feature.
+                          IMPORTANT: This feature is available as a Developer Preview.<br>
                         items:
                           description: |-
                             Agent feature, can be one of:<br>
@@ -3958,6 +3965,7 @@ spec:
                             - `NetworkEvents`, to track Network events [Developer Preview].<br>
                             - `PacketTranslation`, to enrich flows with packets translation information. <br>
                             - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
+                            - `UDNMapping`, to enable interfaces mappind to udn [Developer Preview]. <br>
                           enum:
                           - PacketDrop
                           - DNSTracking
@@ -3965,6 +3973,7 @@ spec:
                           - NetworkEvents
                           - PacketTranslation
                           - EbpfManager
+                          - UDNMapping
                           type: string
                         type: array
                       flowFilter:

@@ -437,6 +437,13 @@ columns:
     filter: ifdirections
     default: false
     width: 10
+  - id: Udns
+    name: UDN labels
+    field: Udns
+    filter: udns
+    default: true
+    width: 10
+    feature: udnMapping
   - id: FlowDirInts
     name: Interfaces and Directions
     tooltip: Pairs of network interface and direction of the Flow observed at the network interface observation point.
@@ -955,6 +962,8 @@ filters:
     name: User Defined Network
     component: autocomplete
     hint: Specify a user defined network name.
+  - id: udns
+    name: interface assigned udn label
   - id: id
     name: Conversation Id
     component: text
@@ -1296,6 +1305,9 @@ fields:
   - name: Interfaces
     type: string
     description: Network interfaces
+  - name: Udns
+    type: string
+    description: Network interfaces UDNs mapping
   - name: Flags
     type: string
     description: |
