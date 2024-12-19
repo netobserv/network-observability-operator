@@ -134,6 +134,10 @@ func IsEbpfManagerEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 	return IsAgentFeatureEnabled(spec, flowslatest.EbpfManager)
 }
 
+func IsUDNMappingEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+	return IsAgentFeatureEnabled(spec, flowslatest.UDNMapping)
+}
+
 func IsConntrack(spec *flowslatest.FlowCollectorFLP) bool {
 	return spec != nil && spec.LogTypes != nil && *spec.LogTypes != flowslatest.LogTypeFlows
 }
