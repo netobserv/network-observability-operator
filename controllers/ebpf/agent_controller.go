@@ -69,6 +69,7 @@ const (
 	envFilterRules                = "FLOW_FILTER_RULES"
 	envEnablePacketTranslation    = "ENABLE_PKT_TRANSLATION"
 	envEnableEbpfMgr              = "EBPF_PROGRAM_MANAGER_MODE"
+	envEnableUDNMapping           = "ENABLE_UDN_MAPPING"
 	envListSeparator              = ","
 )
 
@@ -319,7 +320,8 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		}
 	}
 
-	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.NetworkEvents) {
+	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.NetworkEvents) ||
+		helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.UDNMapping) {
 		if !coll.Spec.Agent.EBPF.Privileged {
 			rlog.Error(fmt.Errorf("invalid configuration"), "To use Network Events Monitor"+
 				"features privileged mode needs to be enabled")
@@ -695,6 +697,13 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	if helper.IsNetworkEventsEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableNetworkEvents,
+			Value: "true",
+		})
+	}
+
+	if helper.IsUDNMappingEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableUDNMapping,
 			Value: "true",
 		})
 	}
