@@ -334,20 +334,20 @@ spec:
       - name: kind
         value: task
       resolver: bundles
-  - name: inspect-image
+  - name: validate-fbc
     params:
     - name: IMAGE_URL
       value: $(tasks.build-image-index.results.IMAGE_URL)
     - name: IMAGE_DIGEST
       value: $(tasks.build-image-index.results.IMAGE_DIGEST)
     runAfter:
-    - build-container
+    - build-image-index
     taskRef:
       params:
       - name: name
-        value: inspect-image
+        value: validate-fbc
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-inspect-image:0.2@sha256:8ec039eeaa71e73465ad3a361a81aca1a95d361762e899fde780249948ed8145
+        value: quay.io/konflux-ci/tekton-catalog/task-validate-fbc:0.1
       - name: kind
         value: task
       resolver: bundles
@@ -356,56 +356,6 @@ spec:
       operator: in
       values:
       - "false"
-    workspaces:
-    - name: source
-      workspace: workspace
-  - name: fbc-validate
-    params:
-    - name: IMAGE_URL
-      value: $(tasks.build-image-index.results.IMAGE_URL)
-    - name: IMAGE_DIGEST
-      value: $(tasks.build-image-index.results.IMAGE_DIGEST)
-    - name: BASE_IMAGE
-      value: $(tasks.inspect-image.results.BASE_IMAGE)
-    runAfter:
-    - inspect-image
-    taskRef:
-      params:
-      - name: name
-        value: fbc-validation
-      - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-fbc-validation:0.2@sha256:1f5e199042025b4a7c0f9e49e09c5b62d2e20c5e1b1457dde9ae2ded77774be4
-      - name: kind
-        value: task
-      resolver: bundles
-    when:
-    - input: $(params.skip-checks)
-      operator: in
-      values:
-      - "false"
-    workspaces:
-    - name: workspace
-      workspace: workspace
-  - name: fbc-related-image-check
-    runAfter:
-    - fbc-validate
-    taskRef:
-      params:
-      - name: name
-        value: fbc-related-image-check
-      - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-fbc-related-image-check:0.2@sha256:f97137a14410d49610fa6961d040c7d55fe1e58d8aaa7c935130e3c5608f2275
-      - name: kind
-        value: task
-      resolver: bundles
-    when:
-    - input: $(params.skip-checks)
-      operator: in
-      values:
-      - "false"
-    workspaces:
-    - name: workspace
-      workspace: workspace
   workspaces:
   - name: workspace
   - name: git-auth
