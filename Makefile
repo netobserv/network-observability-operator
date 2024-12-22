@@ -402,6 +402,7 @@ bundle: bundle-prepare ## Generate final bundle files.
 	rm -r bundle/metadata
 	cp ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml tmp-csv
 	hack/crd2csvSpecDesc.sh v1beta2
+	find ./config/crd -type f | xargs sed -i  's/<br>//g'
 	$(SED) -e 's/^/    /' config/descriptions/upstream.md > tmp-desc
 	$(KUSTOMIZE) build $(BUNDLE_CONFIG) \
 		| $(SED) -e 's~:container-image:~$(IMAGE)~' \
