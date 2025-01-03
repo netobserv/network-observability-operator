@@ -701,7 +701,8 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 
 	if helper.IsPacketTranslationEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
-			Name: envEnablePacketTranslation,
+			Name:  envEnablePacketTranslation,
+			Value: "true",
 		})
 	}
 	if helper.IsEbpfManagerEnabled(&coll.Spec.Agent.EBPF) {
