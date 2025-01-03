@@ -25,6 +25,7 @@ spec:
       # - "NetworkEvents"
       # - "PacketTranslation"
       # - "EbpfManager"
+      # - "UDNMapping"
       interfaces: []
       excludeInterfaces: ["lo"]
       kafkaBatchSize: 1048576
