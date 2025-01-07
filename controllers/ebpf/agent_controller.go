@@ -540,6 +540,9 @@ func mapFlowFilterRuleToFilter(rule *flowslatest.EBPFFlowFilterRule) ebpfconfig.
 	if rule.PeerIP != "" {
 		f.FilterPeerIP = rule.PeerIP
 	}
+	if rule.PeerCIDR != "" {
+		f.FilterPeerCIDR = rule.PeerCIDR
+	}
 	if rule.TCPFlags != "" {
 		f.FilterTCPFlags = rule.TCPFlags
 	}
@@ -574,6 +577,9 @@ func mapFlowFilterToFilter(filter *flowslatest.EBPFFlowFilter) ebpfconfig.FlowFi
 
 	if filter.PeerIP != "" {
 		f.FilterPeerIP = filter.PeerIP
+	}
+	if filter.PeerCIDR != "" {
+		f.FilterPeerCIDR = filter.PeerCIDR
 	}
 	if filter.TCPFlags != "" {
 		f.FilterTCPFlags = filter.TCPFlags

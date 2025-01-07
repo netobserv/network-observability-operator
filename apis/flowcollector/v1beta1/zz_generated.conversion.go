@@ -563,6 +563,7 @@ func autoConvert_v1beta1_EBPFFlowFilterRule_To_v1beta2_EBPFFlowFilterRule(in *EB
 	out.DestPorts = in.DestPorts
 	out.Ports = in.Ports
 	out.PeerIP = in.PeerIP
+	out.PeerCIDR = in.PeerCIDR
 	out.ICMPCode = (*int)(unsafe.Pointer(in.ICMPCode))
 	out.ICMPType = (*int)(unsafe.Pointer(in.ICMPType))
 	out.PktDrops = (*bool)(unsafe.Pointer(in.PktDrops))
@@ -585,6 +586,7 @@ func autoConvert_v1beta2_EBPFFlowFilterRule_To_v1beta1_EBPFFlowFilterRule(in *v1
 	out.DestPorts = in.DestPorts
 	out.Ports = in.Ports
 	out.PeerIP = in.PeerIP
+	out.PeerCIDR = in.PeerCIDR
 	out.ICMPCode = (*int)(unsafe.Pointer(in.ICMPCode))
 	out.ICMPType = (*int)(unsafe.Pointer(in.ICMPType))
 	out.PktDrops = (*bool)(unsafe.Pointer(in.PktDrops))

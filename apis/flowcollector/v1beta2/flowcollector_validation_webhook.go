@@ -121,11 +121,13 @@ func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) 
 		m := make(map[string]bool)
 		for i := range fc.Agent.EBPF.FlowFilter.FlowFilterRules {
 			rule := fc.Agent.EBPF.FlowFilter.FlowFilterRules[i]
-			if found := m[rule.CIDR]; found {
-				errs = append(errs, fmt.Errorf("flow filter rule CIDR %s already exists", rule.CIDR))
+			key := rule.CIDR + "-" + rule.PeerCIDR
+			if found := m[key]; found {
+				errs = append(errs, fmt.Errorf("flow filter rule CIDR and PeerCIDR %s already exists",
+					key))
 				break
 			}
-			m[rule.CIDR] = true
+			m[key] = true
 			errs = append(errs, validateFilter(&rule)...)
 		}
 		errs = append(errs, validateFilter(fc.Agent.EBPF.FlowFilter)...)

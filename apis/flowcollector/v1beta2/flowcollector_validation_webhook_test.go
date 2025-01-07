@@ -77,12 +77,14 @@ func TestValidateAgent(t *testing.T) {
 									{
 										Action:    "Accept",
 										CIDR:      "0.0.0.0/0",
+										PeerCIDR:  "1.1.1.1/24",
 										Direction: "Egress",
 										Protocol:  "TCP",
 									},
 									{
 										Action:    "Accept",
 										CIDR:      "0.0.0.0/0",
+										PeerCIDR:  "1.1.1.1/24",
 										Direction: "Egress",
 										Protocol:  "UDP",
 									},
@@ -92,7 +94,7 @@ func TestValidateAgent(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "flow filter rule CIDR 0.0.0.0/0 already exists",
+			expectedError: "flow filter rule CIDR and PeerCIDR 0.0.0.0/0-1.1.1.1/24 already exists",
 		},
 		{
 			name: "PacketDrop without privilege triggers warning",

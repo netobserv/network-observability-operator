@@ -269,6 +269,10 @@ type EBPFFlowFilterRule struct {
 	// +optional
 	PeerIP string `json:"peerIP,omitempty"`
 
+	// `peerCIDR` defines the Peer IP CIDR to filter flows by.
+	// Examples: `10.10.10.0/24` or `100:100:100:100::/64`
+	PeerCIDR string `json:"peerCIDR,omitempty"`
+
 	// `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, optionally defines the ICMP code to filter flows by.
 	// +optional
 	ICMPCode *int `json:"icmpCode,omitempty"`
