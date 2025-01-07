@@ -119,12 +119,7 @@ type Flows struct {
 	rbTracer  *flow.RingBufTracer
 	accounter *flow.Accounter
 	limiter   *flow.CapacityLimiter
-	deduper   node.MiddleFunc[[]*model.Record, []*model.Record]
 	exporter  node.TerminalFunc[[]*model.Record]
-
-	// elements used to decorate flows with extra information
-	interfaceNamer flow.InterfaceNamer
-	agentIP        net.IP
 
 	status        Status
 	promoServer   *http.Server
@@ -178,7 +173,7 @@ func FlowsAgent(cfg *Config) (*Flows, error) {
 	m := metrics.NewMetrics(metricsSettings)
 
 	var s *ovnobserv.SampleDecoder
-	if cfg.EnableNetworkEventsMonitoring {
+	if cfg.EnableNetworkEventsMonitoring || cfg.EnableUDNMapping {
 		if !kernel.IsKernelOlderThan("5.14.0") {
 			if s, err = ovnobserv.NewSampleDecoderWithDefaultCollector(context.Background(), networkEventsDBPath,
 				networkEventsOwnerName, cfg.NetworkEventsMonitoringGroupID); err != nil {
@@ -190,7 +185,7 @@ func FlowsAgent(cfg *Config) (*Flows, error) {
 	}
 
 	// configure selected exporter
-	exportFunc, err := buildFlowExporter(cfg, m, s)
+	exportFunc, err := buildFlowExporter(cfg, m)
 	if err != nil {
 		return nil, err
 	}
@@ -214,6 +209,7 @@ func FlowsAgent(cfg *Config) (*Flows, error) {
 				FilterIPCIDR:          r.FilterIPCIDR,
 				FilterProtocol:        r.FilterProtocol,
 				FilterPeerIP:          r.FilterPeerIP,
+				FilterPeerCIDR:        r.FilterPeerCIDR,
 				FilterDestinationPort: tracer.ConvertFilterPortsToInstr(r.FilterDestinationPort, r.FilterDestinationPortRange, r.FilterDestinationPorts),
 				FilterSourcePort:      tracer.ConvertFilterPortsToInstr(r.FilterSourcePort, r.FilterSourcePortRange, r.FilterSourcePorts),
 				FilterPort:            tracer.ConvertFilterPortsToInstr(r.FilterPort, r.FilterPortRange, r.FilterPorts),
@@ -290,6 +286,8 @@ func flowsAgent(cfg *Config, m *metrics.Metrics,
 		}
 		return iface
 	}
+	model.SetGlobals(agentIP, interfaceNamer)
+
 	var promoServer *http.Server
 	if cfg.MetricsEnable {
 		promoServer = promo.InitializePrometheus(m.Settings)
@@ -298,30 +296,22 @@ func flowsAgent(cfg *Config, m *metrics.Metrics,
 	samplingGauge := m.CreateSamplingRate()
 	samplingGauge.Set(float64(cfg.Sampling))
 
-	mapTracer := flow.NewMapTracer(fetcher, cfg.CacheActiveTimeout, cfg.StaleEntriesEvictTimeout, m)
+	mapTracer := flow.NewMapTracer(fetcher, cfg.CacheActiveTimeout, cfg.StaleEntriesEvictTimeout, m, s)
 	rbTracer := flow.NewRingBufTracer(fetcher, mapTracer, cfg.CacheActiveTimeout, m)
-	accounter := flow.NewAccounter(cfg.CacheMaxFlows, cfg.CacheActiveTimeout, time.Now, monotime.Now, m)
+	accounter := flow.NewAccounter(cfg.CacheMaxFlows, cfg.CacheActiveTimeout, time.Now, monotime.Now, m, s)
 	limiter := flow.NewCapacityLimiter(m)
-	var deduper node.MiddleFunc[[]*model.Record, []*model.Record]
-	if cfg.Deduper == DeduperFirstCome {
-		deduper = flow.Dedupe(cfg.DeduperFCExpiry, cfg.DeduperJustMark, cfg.DeduperMerge, interfaceNamer, m)
-	}
 
 	return &Flows{
-		ebpf:           fetcher,
-		exporter:       exporter,
-		interfaces:     registerer,
-		filter:         filter,
-		cfg:            cfg,
-		mapTracer:      mapTracer,
-		rbTracer:       rbTracer,
-		accounter:      accounter,
-		limiter:        limiter,
-		deduper:        deduper,
-		agentIP:        agentIP,
-		interfaceNamer: interfaceNamer,
-		promoServer:    promoServer,
-		sampleDecoder:  s,
+		ebpf:        fetcher,
+		exporter:    exporter,
+		interfaces:  registerer,
+		filter:      filter,
+		cfg:         cfg,
+		mapTracer:   mapTracer,
+		rbTracer:    rbTracer,
+		accounter:   accounter,
+		limiter:     limiter,
+		promoServer: promoServer,
 	}, nil
 }
 
@@ -339,12 +329,12 @@ func flowDirections(cfg *Config) (ingress, egress bool) {
 	}
 }
 
-func buildFlowExporter(cfg *Config, m *metrics.Metrics, s *ovnobserv.SampleDecoder) (node.TerminalFunc[[]*model.Record], error) {
+func buildFlowExporter(cfg *Config, m *metrics.Metrics) (node.TerminalFunc[[]*model.Record], error) {
 	switch cfg.Export {
 	case "grpc":
-		return buildGRPCExporter(cfg, m, s)
+		return buildGRPCExporter(cfg, m)
 	case "kafka":
-		return buildKafkaExporter(cfg, m, s)
+		return buildKafkaExporter(cfg, m)
 	case "ipfix+udp":
 		return buildIPFIXExporter(cfg, "udp")
 	case "ipfix+tcp":
@@ -356,12 +346,12 @@ func buildFlowExporter(cfg *Config, m *metrics.Metrics, s *ovnobserv.SampleDecod
 	}
 }
 
-func buildGRPCExporter(cfg *Config, m *metrics.Metrics, s *ovnobserv.SampleDecoder) (node.TerminalFunc[[]*model.Record], error) {
+func buildGRPCExporter(cfg *Config, m *metrics.Metrics) (node.TerminalFunc[[]*model.Record], error) {
 	if cfg.TargetHost == "" || cfg.TargetPort == 0 {
 		return nil, fmt.Errorf("missing target host or port: %s:%d",
 			cfg.TargetHost, cfg.TargetPort)
 	}
-	grpcExporter, err := exporter.StartGRPCProto(cfg.TargetHost, cfg.TargetPort, cfg.GRPCMessageMaxFlows, m, s)
+	grpcExporter, err := exporter.StartGRPCProto(cfg.TargetHost, cfg.TargetPort, cfg.GRPCMessageMaxFlows, m)
 	if err != nil {
 		return nil, err
 	}
@@ -376,7 +366,7 @@ func buildFlowDirectFLPExporter(cfg *Config) (node.TerminalFunc[[]*model.Record]
 	return flpExporter.ExportFlows, nil
 }
 
-func buildKafkaExporter(cfg *Config, m *metrics.Metrics, s *ovnobserv.SampleDecoder) (node.TerminalFunc[[]*model.Record], error) {
+func buildKafkaExporter(cfg *Config, m *metrics.Metrics) (node.TerminalFunc[[]*model.Record], error) {
 	if len(cfg.KafkaBrokers) == 0 {
 		return nil, errors.New("at least one Kafka broker is needed")
 	}
@@ -422,8 +412,7 @@ func buildKafkaExporter(cfg *Config, m *metrics.Metrics, s *ovnobserv.SampleDeco
 			Transport:    &transport,
 			Balancer:     &kafkago.Hash{},
 		},
-		Metrics:       m,
-		SampleDecoder: s,
+		Metrics: m,
 	}).ExportFlows, nil
 }
 
@@ -517,9 +506,6 @@ func (f *Flows) buildAndStartPipeline(ctx context.Context) (*node.Terminal[[]*mo
 	limiter := node.AsMiddle(f.limiter.Limit,
 		node.ChannelBufferLen(f.cfg.BuffersLength))
 
-	decorator := node.AsMiddle(flow.Decorate(f.agentIP, f.interfaceNamer),
-		node.ChannelBufferLen(f.cfg.BuffersLength))
-
 	ebl := f.cfg.ExporterBufferLength
 	if ebl == 0 {
 		ebl = f.cfg.BuffersLength
@@ -530,17 +516,9 @@ func (f *Flows) buildAndStartPipeline(ctx context.Context) (*node.Terminal[[]*mo
 
 	rbTracer.SendsTo(accounter)
 
-	if f.deduper != nil {
-		deduper := node.AsMiddle(f.deduper, node.ChannelBufferLen(f.cfg.BuffersLength))
-		mapTracer.SendsTo(deduper)
-		accounter.SendsTo(deduper)
-		deduper.SendsTo(limiter)
-	} else {
-		mapTracer.SendsTo(limiter)
-		accounter.SendsTo(limiter)
-	}
-	limiter.SendsTo(decorator)
-	decorator.SendsTo(export)
+	mapTracer.SendsTo(limiter)
+	accounter.SendsTo(limiter)
+	limiter.SendsTo(export)
 
 	alog.Debug("starting graph")
 	mapTracer.Start()

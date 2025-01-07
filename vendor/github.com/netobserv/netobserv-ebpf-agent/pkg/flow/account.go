@@ -7,6 +7,7 @@ import (
 	"github.com/netobserv/netobserv-ebpf-agent/pkg/metrics"
 	"github.com/netobserv/netobserv-ebpf-agent/pkg/model"
 
+	ovnobserv "github.com/ovn-org/ovn-kubernetes/go-controller/observability-lib/sampledecoder"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,6 +22,7 @@ type Accounter struct {
 	clock        func() time.Time
 	monoClock    func() time.Duration
 	metrics      *metrics.Metrics
+	s            *ovnobserv.SampleDecoder
 }
 
 var alog = logrus.WithField("component", "flow/Accounter")
@@ -32,6 +34,7 @@ func NewAccounter(
 	clock func() time.Time,
 	monoClock func() time.Duration,
 	m *metrics.Metrics,
+	s *ovnobserv.SampleDecoder,
 ) *Accounter {
 	acc := Accounter{
 		maxEntries:   maxEntries,
@@ -40,6 +43,7 @@ func NewAccounter(
 		clock:        clock,
 		monoClock:    monoClock,
 		metrics:      m,
+		s:            s,
 	}
 	return &acc
 }
@@ -96,7 +100,8 @@ func (c *Accounter) evict(entries map[ebpf.BpfFlowId]*ebpf.BpfFlowMetrics, evict
 	monotonicNow := uint64(c.monoClock())
 	records := make([]*model.Record, 0, len(entries))
 	for key, metrics := range entries {
-		records = append(records, model.NewRecord(key, &model.BpfFlowContent{BpfFlowMetrics: metrics}, now, monotonicNow))
+		flowContent := model.NewBpfFlowContent(*metrics)
+		records = append(records, model.NewRecord(key, &flowContent, now, monotonicNow, c.s))
 	}
 	c.metrics.EvictionCounter.WithSourceAndReason("accounter", reason).Inc()
 	c.metrics.EvictedFlowsCounter.WithSourceAndReason("accounter", reason).Add(float64(len(records)))

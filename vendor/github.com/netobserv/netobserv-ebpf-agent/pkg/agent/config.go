@@ -11,8 +11,6 @@ var clog = logrus.WithField("component", "config")
 const (
 	ListenPoll       = "poll"
 	ListenWatch      = "watch"
-	DeduperNone      = "none"
-	DeduperFirstCome = "firstCome"
 	DirectionIngress = "ingress"
 	DirectionEgress  = "egress"
 	DirectionBoth    = "both"
@@ -77,6 +75,9 @@ type FlowFilter struct {
 	FilterDrops bool `json:"drops,omitempty"`
 	// FilterSample is the sample rate this matching flow will use
 	FilterSample uint32 `json:"sample,omitempty"`
+	// FilterPeerCIDR is the PeerIP CIDR to filter flows.
+	// Example: 10.10.10.0/24 or 100:100:100:100::/64, default is 0.0.0.0/0
+	FilterPeerCIDR string `json:"peer_cidr,omitempty"`
 }
 
 type Config struct {
@@ -131,21 +132,6 @@ type Config struct {
 	// CacheActiveTimeout specifies the maximum duration that flows are kept in the accounting
 	// cache before being flushed for its later export
 	CacheActiveTimeout time.Duration `env:"CACHE_ACTIVE_TIMEOUT" envDefault:"5s"`
-	// Deduper specifies the deduper type. Accepted values are "none" (disabled) and "firstCome".
-	// When enabled, it will detect duplicate flows (flows that have been detected e.g. through
-	// both the physical and a virtual interface).
-	// "firstCome" will forward only flows from the first interface the flows are received from.
-	Deduper string `env:"DEDUPER" envDefault:"none"`
-	// DeduperFCExpiry specifies the expiry duration of the flows "firstCome" deduplicator. After
-	// a flow hasn't been received for that expiry time, the deduplicator forgets it. That means
-	// that a flow from a connection that has been inactive during that period could be forwarded
-	// again from a different interface.
-	// If the value is not set, it will default to 2 * CacheActiveTimeout
-	DeduperFCExpiry time.Duration `env:"DEDUPER_FC_EXPIRY"`
-	// DeduperJustMark will just mark duplicates (boolean field) instead of dropping them.
-	DeduperJustMark bool `env:"DEDUPER_JUST_MARK" envDefault:"false"`
-	// DeduperMerge will merge duplicated flows and generate list of interfaces and direction pairs
-	DeduperMerge bool `env:"DEDUPER_MERGE" envDefault:"true"`
 	// Direction allows selecting which flows to trace according to its direction. Accepted values
 	// are "ingress", "egress" or "both" (default).
 	Direction string `env:"DIRECTION" envDefault:"both"`
@@ -248,7 +234,8 @@ type Config struct {
 	EbpfProgramManagerMode bool `env:"EBPF_PROGRAM_MANAGER_MODE" envDefault:"false"`
 	// BpfManBpfFSPath user configurable ebpf manager mount path
 	BpfManBpfFSPath string `env:"BPFMAN_BPF_FS_PATH" envDefault:"/run/netobserv/maps"`
-
+	// EnableUDNMapping to allow mapping pod's interface to udn label
+	EnableUDNMapping bool `env:"ENABLE_UDN_MAPPING" envDefault:"false"`
 	/* Deprecated configs are listed below this line
 	 * See manageDeprecatedConfigs function for details
 	 */

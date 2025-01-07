@@ -287,7 +287,7 @@ func setIERecordValue(record *model.Record, ieValPtr *entities.InfoElementWithVa
 	case "packetDeltaCount":
 		ieVal.SetUnsigned64Value(uint64(record.Metrics.Packets))
 	case "interfaceName":
-		ieVal.SetStringValue(record.Interface)
+		ieVal.SetStringValue(record.Interfaces[0].Interface)
 	}
 }
 func setIEValue(record *model.Record, ieValPtr *entities.InfoElementWithValue) {
@@ -296,7 +296,7 @@ func setIEValue(record *model.Record, ieValPtr *entities.InfoElementWithValue) {
 	case "ethernetType":
 		ieVal.SetUnsigned16Value(record.Metrics.EthProtocol)
 	case "flowDirection":
-		ieVal.SetUnsigned8Value(record.ID.Direction)
+		ieVal.SetUnsigned8Value(uint8(record.Interfaces[0].Direction))
 	case "sourceMacAddress":
 		ieVal.SetMacAddressValue(record.Metrics.SrcMac[:])
 	case "destinationMacAddress":

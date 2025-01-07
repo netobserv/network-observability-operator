@@ -34,7 +34,7 @@ type Packets struct {
 	exporter     node.TerminalFunc[[]*model.PacketRecord]
 
 	// elements used to decorate flows with extra information
-	interfaceNamer flow.InterfaceNamer
+	interfaceNamer model.InterfaceNamer
 	agentIP        net.IP
 
 	status Status
@@ -78,27 +78,26 @@ func PacketsAgent(cfg *Config) (*Packets, error) {
 		debug = true
 	}
 	filterRules := make([]*tracer.FilterConfig, 0)
-	if cfg.EnableFlowFilter {
-		var flowFilters []*FlowFilter
-		if err := json.Unmarshal([]byte(cfg.FlowFilterRules), &flowFilters); err != nil {
-			return nil, err
-		}
+	var flowFilters []*FlowFilter
+	if err := json.Unmarshal([]byte(cfg.FlowFilterRules), &flowFilters); err != nil {
+		return nil, err
+	}
 
-		for _, r := range flowFilters {
-			filterRules = append(filterRules, &tracer.FilterConfig{
-				FilterAction:          r.FilterAction,
-				FilterDirection:       r.FilterDirection,
-				FilterIPCIDR:          r.FilterIPCIDR,
-				FilterProtocol:        r.FilterProtocol,
-				FilterPeerIP:          r.FilterPeerIP,
-				FilterDestinationPort: tracer.ConvertFilterPortsToInstr(r.FilterDestinationPort, r.FilterDestinationPortRange, r.FilterDestinationPorts),
-				FilterSourcePort:      tracer.ConvertFilterPortsToInstr(r.FilterSourcePort, r.FilterSourcePortRange, r.FilterSourcePorts),
-				FilterPort:            tracer.ConvertFilterPortsToInstr(r.FilterPort, r.FilterPortRange, r.FilterPorts),
-				FilterTCPFlags:        r.FilterTCPFlags,
-				FilterDrops:           r.FilterDrops,
-				FilterSample:          r.FilterSample,
-			})
-		}
+	for _, r := range flowFilters {
+		filterRules = append(filterRules, &tracer.FilterConfig{
+			FilterAction:          r.FilterAction,
+			FilterDirection:       r.FilterDirection,
+			FilterIPCIDR:          r.FilterIPCIDR,
+			FilterProtocol:        r.FilterProtocol,
+			FilterPeerIP:          r.FilterPeerIP,
+			FilterPeerCIDR:        r.FilterPeerCIDR,
+			FilterDestinationPort: tracer.ConvertFilterPortsToInstr(r.FilterDestinationPort, r.FilterDestinationPortRange, r.FilterDestinationPorts),
+			FilterSourcePort:      tracer.ConvertFilterPortsToInstr(r.FilterSourcePort, r.FilterSourcePortRange, r.FilterSourcePorts),
+			FilterPort:            tracer.ConvertFilterPortsToInstr(r.FilterPort, r.FilterPortRange, r.FilterPorts),
+			FilterTCPFlags:        r.FilterTCPFlags,
+			FilterDrops:           r.FilterDrops,
+			FilterSample:          r.FilterSample,
+		})
 	}
 	ebpfConfig := &tracer.FlowFetcherConfig{
 		EnableIngress:  ingress,
