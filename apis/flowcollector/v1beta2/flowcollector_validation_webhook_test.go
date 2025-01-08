@@ -346,12 +346,83 @@ func TestValidateAgent(t *testing.T) {
 	CurrentClusterInfo = &cluster.Info{}
 	for _, test := range tests {
 		CurrentClusterInfo.MockOpenShiftVersion(test.ocpVersion)
-		warnings, errs := test.fc.validateAgent(context.TODO(), test.fc)
+		warnings, errs := test.fc.validateAgent(context.TODO(), &test.fc.Spec)
 		if test.expectedError == "" {
 			assert.Empty(t, errs, test.name)
 		} else {
 			assert.Len(t, errs, 1, test.name)
 			assert.ErrorContains(t, errs[0], test.expectedError, test.name)
+		}
+		assert.Equal(t, test.expectedWarnings, warnings, test.name)
+	}
+}
+
+func TestValidateConntrack(t *testing.T) {
+	tests := []struct {
+		name             string
+		fc               *FlowCollector
+		expectedError    string
+		expectedWarnings admission.Warnings
+	}{
+		{
+			name: "Conntrack with Loki is valid",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Processor: FlowCollectorFLP{
+						LogTypes: ptr.To(LogTypeConversations),
+					},
+					Loki: FlowCollectorLoki{
+						Enable: ptr.To(true),
+					},
+				},
+			},
+		},
+		{
+			name: "Conntrack ALL is not recommended",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Processor: FlowCollectorFLP{
+						LogTypes: ptr.To(LogTypeAll),
+					},
+					Loki: FlowCollectorLoki{
+						Enable: ptr.To(true),
+					},
+				},
+			},
+			expectedWarnings: admission.Warnings{"Enabling all log types (in spec.processor.logTypes) has a high impact on resources footprint"},
+		},
+		{
+			name: "Conntrack without Loki is not recommended",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Processor: FlowCollectorFLP{
+						LogTypes: ptr.To(LogTypeConversations),
+					},
+					Loki: FlowCollectorLoki{
+						Enable: ptr.To(false),
+					},
+				},
+			},
+			expectedError: "enabling conversation tracking without Loki is not allowed, as it generates extra processing for no benefit",
+		},
+	}
+
+	CurrentClusterInfo = &cluster.Info{}
+	for _, test := range tests {
+		warnings, err := test.fc.validate(context.TODO(), test.fc)
+		if test.expectedError == "" {
+			assert.Nil(t, err, test.name)
+		} else {
+			assert.ErrorContains(t, err, test.expectedError, test.name)
 		}
 		assert.Equal(t, test.expectedWarnings, warnings, test.name)
 	}

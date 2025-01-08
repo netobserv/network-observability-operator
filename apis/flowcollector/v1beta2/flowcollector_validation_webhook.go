@@ -52,9 +52,11 @@ func (r *FlowCollector) ValidateDelete(_ context.Context, _ runtime.Object) (adm
 func (r *FlowCollector) validate(ctx context.Context, fc *FlowCollector) (admission.Warnings, error) {
 	var allW admission.Warnings
 	var allE []error
-	w, errs := r.validateAgent(ctx, fc)
+	w, errs := r.validateAgent(ctx, &fc.Spec)
 	allW, allE = collect(allW, allE, w, errs)
-	w = r.warnLogLevels(fc)
+	w, errs = r.validateConversationTracking(ctx, &fc.Spec)
+	allW, allE = collect(allW, allE, w, errs)
+	w = r.warnLogLevels(&fc.Spec)
 	allW, allE = collect(allW, allE, w, nil)
 	return allW, errors.Join(allE...)
 }
@@ -69,21 +71,21 @@ func collect(wPool admission.Warnings, errsPool []error, w admission.Warnings, e
 	return wPool, errsPool
 }
 
-func (r *FlowCollector) warnLogLevels(fc *FlowCollector) admission.Warnings {
+func (r *FlowCollector) warnLogLevels(fc *FlowCollectorSpec) admission.Warnings {
 	var w admission.Warnings
-	if fc.Spec.Agent.EBPF.LogLevel == "debug" || fc.Spec.Agent.EBPF.LogLevel == "trace" {
-		w = append(w, fmt.Sprintf("The log level for the eBPF agent is %s, which impacts performance and resource footprint.", fc.Spec.Agent.EBPF.LogLevel))
+	if fc.Agent.EBPF.LogLevel == "debug" || fc.Agent.EBPF.LogLevel == "trace" {
+		w = append(w, fmt.Sprintf("The log level for the eBPF agent is %s, which impacts performance and resource footprint.", fc.Agent.EBPF.LogLevel))
 	}
-	if fc.Spec.Processor.LogLevel == "debug" || fc.Spec.Processor.LogLevel == "trace" {
-		w = append(w, fmt.Sprintf("The log level for the processor (flowlogs-pipeline) is %s, which impacts performance and resource footprint.", fc.Spec.Processor.LogLevel))
+	if fc.Processor.LogLevel == "debug" || fc.Processor.LogLevel == "trace" {
+		w = append(w, fmt.Sprintf("The log level for the processor (flowlogs-pipeline) is %s, which impacts performance and resource footprint.", fc.Processor.LogLevel))
 	}
 	return w
 }
 
 // nolint:cyclop
-func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollector) (admission.Warnings, []error) {
+func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
 	var warnings admission.Warnings
-	if slices.Contains(fc.Spec.Agent.EBPF.Features, NetworkEvents) {
+	if slices.Contains(fc.Agent.EBPF.Features, NetworkEvents) {
 		// Make sure required version of ocp is installed
 		if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
 			b, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast("4.18.0")
@@ -95,21 +97,21 @@ func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollector) (adm
 		} else {
 			warnings = append(warnings, "The NetworkEvents feature is only supported with OpenShift")
 		}
-		if !fc.Spec.Agent.EBPF.Privileged {
+		if !fc.Agent.EBPF.Privileged {
 			warnings = append(warnings, "The NetworkEvents feature requires eBPF Agent to run in privileged mode")
 		}
 	}
-	if slices.Contains(fc.Spec.Agent.EBPF.Features, PacketDrop) && !fc.Spec.Agent.EBPF.Privileged {
+	if slices.Contains(fc.Agent.EBPF.Features, PacketDrop) && !fc.Agent.EBPF.Privileged {
 		warnings = append(warnings, "The PacketDrop feature requires eBPF Agent to run in privileged mode")
 	}
-	if slices.Contains(fc.Spec.Agent.EBPF.Features, EbpfManager) && !fc.Spec.Agent.EBPF.Privileged {
+	if slices.Contains(fc.Agent.EBPF.Features, EbpfManager) && !fc.Agent.EBPF.Privileged {
 		warnings = append(warnings, "The BPF Manager feature requires eBPF Agent to run in privileged mode")
 	}
 	var errs []error
-	if fc.Spec.Agent.EBPF.FlowFilter != nil && fc.Spec.Agent.EBPF.FlowFilter.Enable != nil && *fc.Spec.Agent.EBPF.FlowFilter.Enable {
+	if fc.Agent.EBPF.FlowFilter != nil && fc.Agent.EBPF.FlowFilter.Enable != nil && *fc.Agent.EBPF.FlowFilter.Enable {
 		m := make(map[string]bool)
-		for i := range fc.Spec.Agent.EBPF.FlowFilter.FlowFilterRules {
-			rule := fc.Spec.Agent.EBPF.FlowFilter.FlowFilterRules[i]
+		for i := range fc.Agent.EBPF.FlowFilter.FlowFilterRules {
+			rule := fc.Agent.EBPF.FlowFilter.FlowFilterRules[i]
 			if found := m[rule.CIDR]; found {
 				errs = append(errs, fmt.Errorf("flow filter rule CIDR %s already exists", rule.CIDR))
 				break
@@ -117,7 +119,7 @@ func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollector) (adm
 			m[rule.CIDR] = true
 			errs = append(errs, validateFilter(&rule)...)
 		}
-		errs = append(errs, validateFilter(fc.Spec.Agent.EBPF.FlowFilter)...)
+		errs = append(errs, validateFilter(fc.Agent.EBPF.FlowFilter)...)
 	}
 
 	return warnings, errs
@@ -255,4 +257,16 @@ func validatePortString(s string) (uint16, error) {
 		return 0, fmt.Errorf("invalid port 0")
 	}
 	return uint16(p), nil
+}
+
+func (r *FlowCollector) validateConversationTracking(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
+	var warnings admission.Warnings
+	if fc.Processor.LogTypes != nil && *fc.Processor.LogTypes == LogTypeAll {
+		warnings = append(warnings, "Enabling all log types (in spec.processor.logTypes) has a high impact on resources footprint")
+	}
+	var errs []error
+	if fc.Processor.LogTypes != nil && *fc.Processor.LogTypes != LogTypeFlows && fc.Loki.Enable != nil && !*fc.Loki.Enable {
+		errs = append(errs, errors.New("enabling conversation tracking without Loki is not allowed, as it generates extra processing for no benefit"))
+	}
+	return warnings, errs
 }
