@@ -1,7 +1,7 @@
 # Check that the 0 container is the expected one
 - op: test
-  path: /spec/template/spec/containers/1/name
-  value: kube-rbac-proxy
+  path: /spec/template/spec/containers/0/name
+  value: manager
 
 - op: add
   path: "/spec/template/spec/volumes/-"
@@ -12,16 +12,16 @@
       defaultMode: 420
 
 - op: add
-  path: "/spec/template/spec/containers/1/volumeMounts"
+  path: "/spec/template/spec/containers/0/volumeMounts/-"
   value:
-    - name: manager-metric-tls
-      readOnly: true
-      mountPath: /etc/tls/private
+    name: manager-metric-tls
+    readOnly: true
+    mountPath: /etc/tls/private
 
 - op: add
-  path: "/spec/template/spec/containers/1/args/-"
-  value: '--tls-cert-file=/etc/tls/private/tls.crt'
+  path: "/spec/template/spec/containers/0/args/-"
+  value: '--metrics-cert-file=/etc/tls/private/tls.crt'
 
 - op: add
-  path: "/spec/template/spec/containers/1/args/-"
-  value: '--tls-private-key-file=/etc/tls/private/tls.key'
+  path: "/spec/template/spec/containers/0/args/-"
+  value: '--metrics-cert-key-file=/etc/tls/private/tls.key'
