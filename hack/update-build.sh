@@ -7,7 +7,7 @@ echo "Updating container file"
 : "${CONTAINER_FILE:=./Dockerfile}"
 : "${BUNDLE_CONTAINER_FILE:=./bundle.Dockerfile}"
 : "${CATALOG_CONTAINER_FILE:=./catalog.Dockerfile}"
-: "${TARGET_VERSION:=1.7.1}"
+: "${TARGET_VERSION:=1.8.0}"
 : "${REPLACE_VERSION:=1.7.0}"
 
 
