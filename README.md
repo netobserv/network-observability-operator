@@ -20,6 +20,9 @@ You can install NetObserv Operator using [OLM](https://olm.operatorframework.io/
 
 ### Install with OLM
 
+> [!IMPORTANT]
+> There hasn't been recent releases pushed to the community OperatorHub. This is mostly due to the lack of demand. Unless there is demand, going forward we only release the downstream NetObserv aka [Network Observability operator](https://docs.openshift.com/container-platform/latest/observability/network_observability/network-observability-operator-release-notes.html) for OpenShift. But there's nothing written in stone. [Let us know](https://github.com/netobserv/network-observability-operator/discussions) if you would like that to change.
+
 NetObserv Operator is available in [OperatorHub](https://operatorhub.io/operator/netobserv-operator) with guided steps on how to install this. It is also available in the OperatorHub catalog directly in the OpenShift Console.
 
 ![OpenShift OperatorHub search](./docs/assets/operatorhub-search.png)
