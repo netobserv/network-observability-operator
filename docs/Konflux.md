@@ -40,7 +40,7 @@ When using Konflux to release an operator, it is required to use a File Based Ca
 
 ### Konflux pull requests
 
-Konflux will regulary creates new pull request, there are three categories :
+Konflux will regulary create new pull requests, there are three categories :
 
 - [Nudging pull request](https://github.com/netobserv/network-observability-operator/pull/969) To upgrade the reference to another component
 - [Konflux tasks update](https://github.com/netobserv/network-observability-operator/pull/787) Up to date tasks are required to pass security check during release. Also the migration note sometimes contains instruction to some required actions
