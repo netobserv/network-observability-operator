@@ -575,6 +575,7 @@ columns:
     filter: xlat_zone_id
     default: true
     width: 5
+    feature: packetTranslation
   - id: XlatIcmpId
     group: Xlat
     name: Xlat icmp code
@@ -605,7 +606,7 @@ columns:
     group: Xlat
     name: Xlat Src Kubernetes Object
     calculated: kubeObject(XlatSrcK8S_Type,XlatSrcK8S_Namespace,XlatSrcK8S_Name,1) or concat(XlatSrcAddr,':',XlatSrcPort)
-    default: false
+    default: true
     width: 15
     feature: packetTranslation
   - id: XlatDstAddr
@@ -630,7 +631,7 @@ columns:
     group: Xlat
     name: Xlat Dst Kubernetes Object
     calculated: kubeObject(XlatDstK8S_Type,XlatDstK8S_Namespace,XlatDstK8S_Name,1) or concat(XlatDstAddr,':',XlatDstPort)
-    default: false
+    default: true
     width: 15
     feature: packetTranslation
   - id: XlatK8S_Object
