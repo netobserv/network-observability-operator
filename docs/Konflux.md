@@ -10,7 +10,7 @@ Usefull links
 
 [Netobserv konflux console](https://console.redhat.com/application-pipeline/workspaces/ocp-network-observab/applications)
 
-[Konlfux documentation](https://gitlab.cee.redhat.com/konflux/docs/users)
+[Konflux documentation](https://gitlab.cee.redhat.com/konflux/docs/users)
 
 [Konflux build task reference](https://github.com/konflux-ci/build-definitions/tree/main/task) contains the definitions of tasks that can be used in konflux pipeline
 
