@@ -50,6 +50,11 @@
   "DnsErrno": "fine",
   "TimeFlowRttNs": "avoid",
   "NetworkEvents": "avoid",
+  "NetworkEvents>Type": "fine",
+  "NetworkEvents>Namespace": "fine",
+  "NetworkEvents>Name": "fine",
+  "NetworkEvents>Action": "fine",
+  "NetworkEvents>Direction": "fine",
   "K8S_ClusterName": "fine",
   "_RecordType": "fine",
   "_HashId": "avoid"
