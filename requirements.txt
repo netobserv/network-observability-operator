@@ -4,7 +4,7 @@ flit_core==3.9.0
 packaging==24.1
 pip-tools==7.4.1
 pyproject_hooks==1.2.0
-ruamel.yaml==0.18.6
+ruamel.yaml==0.18.10
 ruamel.yaml.clib==0.2.12
 setuptools==75.3.0
 setuptools-scm==8.1.0
