@@ -13,7 +13,6 @@ metadata:
       "bundle/***".pathChanged() ||
       "./requirements.txt".pathChanged() ||
       "hack/update-build.sh".pathChanged() ||
-      "hack/container_digest.sh".pathChanged() ||
       "hack/patch_csv.py".pathChanged())
   creationTimestamp: null
   labels:

@@ -13,15 +13,12 @@ metadata:
       "controllers/***".pathChanged() ||
       "Dockerfile.downstream".pathChanged() ||
       "docs/***".pathChanged() ||
-      "go.mod".pathChanged() ||
-      "go.sum".pathChanged() ||
       "hack/update-build.sh".pathChanged() ||
       "LICENSE".pathChanged() ||
       "main.go".pathChanged() ||
       "Makefile".pathChanged() ||
       "manifests/***".pathChanged() ||
-      "pkg/***".pathChanged() ||
-      "vendor/***".pathChanged())
+      "pkg/***".pathChanged())
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: netobserv-operator
@@ -41,5 +38,7 @@ spec:
     value: 5d
   - name: dockerfile
     value: ./Dockerfile.downstream
+  - name: build-platforms
+    value: ["linux/x86_64"]
   pipelineRef:
     name: build-pipeline
