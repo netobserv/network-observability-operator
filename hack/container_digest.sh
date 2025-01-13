@@ -1,4 +1,4 @@
 export OPERATOR_IMAGE_PULLSPEC='quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator@sha256:d2973a40f4c58adaac69e6bc6c72fa0219a5e8dc8bc5826cfe44c00e7bd0e352'
-export EBPF_IMAGE_PULLSPEC='quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/netobserv-ebpf-agent@sha256:9e3ff7dd702359dabe0b6952aa2f4fcd500aae0f978011b314c402aec785c62d'
+export EBPF_IMAGE_PULLSPEC='quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/netobserv-ebpf-agent@sha256:cbd9d2f447ee9a77e8562edd2220e0e1357d27e3632c8b215871d06446bba14c'
 export FLP_IMAGE_PULLSPEC='quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline@sha256:ff77c01f51dd0ff2a1677da896525d96e72e8c0e7741054eb00c82aea4fc8d60'
 export CONSOLE_IMAGE_PULLSPEC='quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-console-plugin@sha256:17c58daa0a281cf93f68d948b0723491ffeb1a7f1a9218cd2a3e9a89d97678a6'
