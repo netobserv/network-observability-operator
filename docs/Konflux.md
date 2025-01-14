@@ -70,22 +70,22 @@ An `ImageDigestMirrorSet` is then required
 > spec:
 >   imageDigestMirrors:
 >     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-1-7
+>       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator
 >       source: registry.redhat.io/network-observability/network-observability-rhel9-operator
 >     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/flowlogs-pipeline-1-7
+>       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/flowlogs-pipeline
 >       source: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9
 >     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-ebpf-agent-1-7
+>       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-ebpf-agent
 >       source: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9
 >     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-1-7
+>       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin
 >       source: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9
 >     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-cli-1-7
+>       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-cli
 >       source: registry.redhat.io/network-observability/network-observability-cli-rhel9
 >     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle-1-7
+>       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle
 >       source: registry.redhat.io/network-observability/network-observability-operator-bundle
 
 ## Release
