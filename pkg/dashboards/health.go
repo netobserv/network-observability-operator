@@ -54,7 +54,7 @@ func CreateHealthDashboard(netobsNs, nsFlowsMetric string) (string, error) {
 				NewTarget(`sum(increase(netobserv_encode_prom_errors[1m])) by (error)`, "metrics {{error}}"),
 				NewTarget(`sum(increase(netobserv_loki_batch_retries_total[1m]))`, "loki retries"),
 			),
-			NewPanel("By namespace", metricslatest.ChartTypeLine, "", 6,
+			NewPanel("By namespace", metricslatest.ChartTypeLine, "", 4,
 				NewTarget(
 					fmt.Sprintf(`topk(10,sum(rate(%s{SrcK8S_Namespace!=""}[1m])) by (SrcK8S_Namespace))`, nsFlowsMetric),
 					"From {{SrcK8S_Namespace}}",
@@ -64,10 +64,11 @@ func CreateHealthDashboard(netobsNs, nsFlowsMetric string) (string, error) {
 					"To {{DstK8S_Namespace}}",
 				),
 			),
-			NewPanel("By node", metricslatest.ChartTypeLine, "", 6,
+			NewPanel("By node", metricslatest.ChartTypeLine, "", 4,
 				NewTarget(`topk(10,sum(rate(netobserv_node_flows_total{SrcK8S_HostName!=""}[1m])) by (SrcK8S_HostName))`, "From {{SrcK8S_HostName}}"),
 				NewTarget(`topk(10,sum(rate(netobserv_node_flows_total{DstK8S_HostName!=""}[1m])) by (DstK8S_HostName))`, "To {{DstK8S_HostName}}"),
 			),
+			NewPanel("Metrics cardinality", metricslatest.ChartTypeLine, "", 4, NewTarget(`count({__name__=~"netobserv_.*"}) by (job)`, "{{job}}")),
 		}),
 	)
 
