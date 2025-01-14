@@ -576,14 +576,6 @@ columns:
     default: true
     width: 5
     feature: packetTranslation
-  - id: XlatIcmpId
-    group: Xlat
-    name: Xlat icmp code
-    field: XlatIcmpId
-    filter: xlat_icmp_id
-    default: false
-    width: 5
-    feature: packetTranslation
   - id: XlatSrcAddr
     group: Xlat
     name: Xlat source IP
@@ -1009,9 +1001,6 @@ filters:
   - id: xlat_zone_id
     name: Xlat Zone Id
     component: number
-  - id: xlat_icmp_id
-    name: Xlat Icmp Id
-    component: number
   - id: xlat_src_address
     name: Xlat src address
     component: text
@@ -1327,9 +1316,6 @@ fields:
   - name: ZoneId
     type: number
     description: packet translation zone id
-  - name: XlatIcmpId
-    type: number
-    description: packet translation icmp code
   - name: XlatSrcPort
     type: number
     description: packet translation src port
