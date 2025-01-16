@@ -1,7 +1,7 @@
 # Do not remove empty lines, they are there to reduce conflicts
 export OPERATOR_IMAGE_PULLSPEC='quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator@sha256:d2973a40f4c58adaac69e6bc6c72fa0219a5e8dc8bc5826cfe44c00e7bd0e352'
 #
-export EBPF_IMAGE_PULLSPEC='quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/netobserv-ebpf-agent@sha256:cbd9d2f447ee9a77e8562edd2220e0e1357d27e3632c8b215871d06446bba14c'
+export EBPF_IMAGE_PULLSPEC='quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/netobserv-ebpf-agent@sha256:831a28e7884ebfcec472f98e2bda0b899532bf89d82976237e34b06ba90860cd'
 #
 export FLP_IMAGE_PULLSPEC='quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline@sha256:ff77c01f51dd0ff2a1677da896525d96e72e8c0e7741054eb00c82aea4fc8d60'
 #
