@@ -11,6 +11,7 @@ The components are:
   - Packets are aggregated into logical flows (similar to NetFlows), periodically exported to a collector, generally FLP.
   - Optional features allow to add rich data, such as TCP latency or DNS information.
   - It is able to correlate those flows with other events such as network policy rules and drops (network policy correlation requires the [OVN Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) network plugin).
+  - When used with the CLI or as a standalone, the agent can also do full packet captures instead of generating logical flows.
 - [Flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline) (FLP), a component that collects, enriches and exports these flows.
   - It uses Kubernetes informers to enrich flows with details such as Pod names, namespaces, availability zones, etc.
   - It derives all flows into metric counters, for Prometheus.
@@ -24,9 +25,10 @@ The components are:
   - It provides two APIs (CRD), one called [FlowCollector](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md), which configures and pilots the whole deployment, and another called [FlowMetrics](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowMetric.md) which allows to customize which metrics to generate out of flow logs.
   - As an [OLM operator](https://olm.operatorframework.io/), it is designed with `operator-sdk`, and allows subscriptions for easy updates.
 - [A CLI](https://github.com/netobserv/network-observability-cli) that also manages some of the above components, for on-demand monitoring and packet capture.
-  - It is provided as a `kubectl` or `oc` plugin, allowing to capture flows (similar to what the operator does, except it's on-demand and in the terminal) or full packets (much like a `tcpdump` command).
+  - It is provided as a `kubectl` or `oc` plugin, allowing to capture flows (similar to what the operator does, except it's on-demand and in the terminal), full packets (much like a `tcpdump` command) or metrics.
   - It is also available via [Krew](https://krew.sigs.k8s.io/).
-  - Check out the blog post: [Network observability on demand ](https://developers.redhat.com/articles/2024/09/17/network-observability-demand#what_is_the_network_observability_cli_).
+  - It offers a live visualization via a TUI. For metrics, when used in OpenShift, it provides out-of-the-box dashboards.
+  - Check out the blog post: [Network observability on demand](https://developers.redhat.com/articles/2024/09/17/network-observability-demand#what_is_the_network_observability_cli_).
 
 ## Direct deployment model
 
@@ -80,8 +82,7 @@ flowchart TD
 
 When using the CLI, the operator is not involved, which means you can use it without installing NetObserv as a whole. It uses a special mode of the eBPF agents that embeds FLP.
 
-Flows and Packets captures will deploy both agents and collector.
-Metrics captures will only deploy agents.
+When running flows or packet capture, a collector Pod is deployed in addition to the agents. When capturing only metrics, the collector isn't deployed, and metrics are exposed directly from the agents, pulled by Prometheus.
 
 <!-- You can use https://mermaid.live/ to test it -->
 
@@ -93,4 +94,5 @@ flowchart TD
     A -->|generates flows or packets| C[Collector]
     CL[CLI] -->|manages| A
     CL -->|manages| C
+    A -..->|metrics| P[(Prometheus)]
 ```
