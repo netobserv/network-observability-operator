@@ -90,7 +90,7 @@ flowchart TD
     subgraph "for each node"
         A[eBPF Agent w/ embedded FLP]
     end
-    A -->|generates flows| C[Collector]
+    A -->|generates flows or packets| C[Collector]
     CL[CLI] -->|manages| A
     CL -->|manages| C
 ```
