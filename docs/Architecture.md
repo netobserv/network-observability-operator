@@ -1,49 +1,93 @@
-# Network Observability Architecture
+# NetObserv architecture
 
-The Network Observability solution consists on a [Network Observability Operator (NOO)](https://github.com/netobserv/network-observability-operator)
-that deploys, configures and controls the status of the following components:
+_See also: [architecture in the downstream documentation](https://docs.openshift.com/container-platform/latest/observability/network_observability/understanding-network-observability-operator.html#network-observability-architecture_nw-network-observability-operator)_
 
-* [Network Observability eBPF Agent](https://github.com/netobserv/netobserv-ebpf-agent/)
-  * It is attached to all the interfaces in the host network and listen for each network packet that
-    is submitted or received by their egress/ingress. The agent aggregates all the packets by source
-    and destination addresses, protocol, etc... into network flows that are submitted to the
-    Flowlogs-Pipeline flow processor.
-* [Network Observabiilty Flowlogs-Pipeline (FLP)](https://github.com/netobserv/flowlogs-pipeline)
-  * It receives the raw flows from the agent and decorates them with Kubernetes information (Pod
-    and host names, namespaces, etc.), and stores them as JSON into a [Loki](https://grafana.com/oss/loki/)
-    instance.
-* [Network Observability Console Plugin](https://github.com/netobserv/network-observability-console-plugin)
-  * It is attached to the Openshift console as a plugin (see Figure 1, though it can be also
-    deployed in standalone mode). The Console Plugin queries the flows information stored in Loki
-    and allows filtering flows, showing network topologies, etc.
+NetObserv is a collection of components that can sometimes run independently, or as a whole.
 
-![Netobserv frontend architecture](./assets/frontend.png)
-Figure 1: Console Plugin deployment
+The components are:
 
-There are two existing deployment modes for Network Observability: direct mode and Kafka mode.
+- An [eBPF agent](https://github.com/netobserv/netobserv-ebpf-agent), that generates network flows from captured packets.
+  - It is attached to any/all of the network interfaces in the host, and listens for packets (ingress+egress) with [eBPF](https://ebpf.io/).
+  - Packets are aggregated into logical flows (similar to NetFlows), periodically exported to a collector, generally FLP.
+  - Optional features allow to add rich data, such as TCP latency or DNS information.
+  - It is able to correlate those flows with other events such as network policy rules and drops (network policy correlation requires the [OVN Kubernetes](https://github.com/ovn-org/ovn-kubernetes/) network plugin).
+- [Flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline) (FLP), a component that collects, enriches and exports these flows.
+  - It uses Kubernetes informers to enrich flows with details such as Pod names, namespaces, availability zones, etc.
+  - It derives all flows into metric counters, for Prometheus.
+  - Raw flows can be exported to Loki and/or custom exporters (Kafka, IPFIX, OpenTelemetry).
+  - As a standalone, FLP is very flexible and configurable. It supports more inputs and outputs, allows more arbitrary filters, sampling, aggregations, relabelling, etc. When deployed via the operator, only a subset of its capacities is used.
+- When used in OpenShift, [a Console plugin](https://github.com/netobserv/network-observability-console-plugin) for flows visualization with powerful filtering options, a topology representation and more (outside of OpenShift, [it can be deployed as a standalone](https://github.com/netobserv/network-observability-operator/blob/main/FAQ.md#how-do-i-visualize-flows-and-metrics)).
+  - It provides a polished web UI to visualize and explore the flow logs and metrics stored in Loki and/or Prometheus.
+  - Different views include metrics overview, a network topology and a table listing raw flows logs.
+  - It supports multi-tenant access, making it relevant for various use cases: cluster/network admins, SREs, development teams...
+- [An operator](https://github.com/netobserv/network-observability-operator) that manages all of the above.
+  - It provides two APIs (CRD), one called [FlowCollector](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md), which configures and pilots the whole deployment, and another called [FlowMetrics](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowMetric.md) which allows to customize which metrics to generate out of flow logs.
+  - As an [OLM operator](https://olm.operatorframework.io/), it is designed with `operator-sdk`, and allows subscriptions for easy updates.
+- [A CLI](https://github.com/netobserv/network-observability-cli) that also manages some of the above components, for on-demand monitoring and packet capture.
+  - It is provided as a `kubectl` or `oc` plugin, allowing to capture flows (similar to what the operator does, except it's on-demand and in the terminal) or full packets (much like a `tcpdump` command).
+  - It is also available via [Krew](https://krew.sigs.k8s.io/).
+  - Check out the blog post: [Network observability on demand ](https://developers.redhat.com/articles/2024/09/17/network-observability-demand#what_is_the_network_observability_cli_).
 
-## Direct-mode deployment
+## Direct deployment model
 
-In direct mode (figure 2), the eBPF agent sends the flows information to Flowlogs-Pipeline encoded as Protocol
-Buffers (binary representation) via [gRPC](https://grpc.io/). In this scenario, Flowlogs-Pipeline
-is usually deployed as a DaemonSet so there is a 1:1 communication between the Agent and FLP internal
-to the host, so we minimize cluster network usage.
+When using the operator with `FlowCollector` `spec.deploymentModel` is set to `Direct`, agents and FLP are both deployed per node (as `DaemonSets`). This is perfect for an assessment of the technology, suitable on small clusters, but isn't very memory efficient in large clusters as every instance of FLP ends up caching the same cluster information, which can be huge.
 
-![Netobserv component's architecture (direct mode)](./assets/architecture-direct.png)
-Figure 2: Direct deployment
+Note that Loki isn't managed by the operator and must be installed separately, such as with the Loki operator. Same goes with Prometheus and any custom receiver.
 
-## Kafka-mode deployment
+<!-- You can use https://mermaid.live/ to test it -->
 
-In Kafka mode (figure 3), the communication between the eBFP agent and FLP is done via a Kafka topic.
+```mermaid
+flowchart TD
+    subgraph "for each node"
+        A[eBPF Agent] -->|generates flows| F[FLP]
+    end
+    F -. exports .-> E[(Kafka/Otlp/IPFIX)]
+    F -->|raw logs| L[(Loki)]
+    F -->|metrics| P[(Prometheus)]
+    C[Console plugin] <-->|fetches| L
+    C <-->|fetches| P
+    O[Operator] -->|manages| A
+    O -->|manages| F
+    O -->|manages| C
+```
 
-![Netobserv component's architecture (Kafka mode)](./assets/architecture-kafka.png)
-Figure 3: Kafka deployment
+## Kafka deployment model
 
-This has some advantages over the direct mode:
-1. The flows' are buffered in the Kafka topic, so if there is a peak of flows, we make sure that
-   FLP will receive/process them without any kind of denial of service.
-2. Flows are persisted in the topic, so if FLP is restarted by any reason (an update in the
-   configuration or just a crash), the forwarded flows are persisted in Kafka for its later
-   processing, and we don't lose them.
-3. Deploying FLP as a deployment, you don't have to keep the 1:1 proportion. You can scale up and
-   down FLP pods according to your load.
+When using the operator with `FlowCollector` `spec.deploymentModel` is set to `Kafka`, only the agents are deployed per node as a `DaemonSet`. FLP becomes a Kafka consumer that can be scaled independently. This is the recommended mode for large clusters, and is a more robust/resilient solution.
+
+Like in `Direct` mode, data stores aren't managed by the operator. The same applies to the Kafka brokers and stores. You can check the Strimzi operator for that.
+
+<!-- You can use https://mermaid.live/ to test it -->
+
+```mermaid
+flowchart TD
+    subgraph "for each node"
+        A[eBPF Agent]
+    end
+    A -->|produces flows| K[(Kafka)]
+    F[FLP] <-->|consumes| K
+    F -. exports .-> E[(Kafka/Otlp/IPFIX)]
+    F -->|raw logs| L[(Loki)]
+    F -->|metrics| P[(Prometheus)]
+    C[Console plugin] <-->|fetches| L
+    C <-->|fetches| P
+    O[Operator] -->|manages| A
+    O -->|manages| F
+    O -->|manages| C
+```
+
+## CLI
+
+When using the CLI, the operator is not involved, which means you can use it without installing NetObserv as a whole. It uses a special mode of the eBPF agents that embeds FLP.
+
+<!-- You can use https://mermaid.live/ to test it -->
+
+```mermaid
+flowchart TD
+    subgraph "for each node"
+        A[eBPF Agent w/ embedded FLP]
+    end
+    A -->|generates flows| C[Collector]
+    CL[CLI] -->|manages| A
+    CL -->|manages| C
+```
