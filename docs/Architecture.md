@@ -30,7 +30,7 @@ The components are:
 
 ## Direct deployment model
 
-When using the operator with `FlowCollector` `spec.deploymentModel` is set to `Direct`, agents and FLP are both deployed per node (as `DaemonSets`). This is perfect for an assessment of the technology, suitable on small clusters, but isn't very memory efficient in large clusters as every instance of FLP ends up caching the same cluster information, which can be huge.
+When using the operator with `FlowCollector` `spec.deploymentModel` set to `Direct`, agents and FLP are both deployed per node (as `DaemonSets`). This is perfect for an assessment of the technology, suitable on small clusters, but isn't very memory efficient in large clusters as every instance of FLP ends up caching the same cluster information, which can be huge.
 
 Note that Loki isn't managed by the operator and must be installed separately, such as with the Loki operator. Same goes with Prometheus and any custom receiver.
 
@@ -53,7 +53,7 @@ flowchart TD
 
 ## Kafka deployment model
 
-When using the operator with `FlowCollector` `spec.deploymentModel` is set to `Kafka`, only the agents are deployed per node as a `DaemonSet`. FLP becomes a Kafka consumer that can be scaled independently. This is the recommended mode for large clusters, and is a more robust/resilient solution.
+When using the operator with `FlowCollector` `spec.deploymentModel` set to `Kafka`, only the agents are deployed per node as a `DaemonSet`. FLP becomes a Kafka consumer that can be scaled independently. This is the recommended mode for large clusters, and is a more robust/resilient solution.
 
 Like in `Direct` mode, data stores aren't managed by the operator. The same applies to the Kafka brokers and stores. You can check the Strimzi operator for that.
 
