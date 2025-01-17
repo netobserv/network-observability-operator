@@ -80,6 +80,9 @@ flowchart TD
 
 When using the CLI, the operator is not involved, which means you can use it without installing NetObserv as a whole. It uses a special mode of the eBPF agents that embeds FLP.
 
+Flows and Packets captures will deploy both agents and collector.
+Metrics captures will only deploy agents.
+
 <!-- You can use https://mermaid.live/ to test it -->
 
 ```mermaid
