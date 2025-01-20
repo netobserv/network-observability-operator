@@ -35,7 +35,7 @@ github.com/beorn7/perks/quantile
 # github.com/blang/semver/v4 v4.0.0
 ## explicit; go 1.14
 github.com/blang/semver/v4
-# github.com/bpfman/bpfman-operator v0.5.5-0.20241023163832-0bf84bbd3927
+# github.com/bpfman/bpfman-operator v0.5.5
 ## explicit; go 1.22.0
 github.com/bpfman/bpfman-operator/apis/v1alpha1
 # github.com/cenkalti/backoff/v4 v4.3.0

@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.4
 
 require (
-	github.com/bpfman/bpfman-operator v0.5.5-0.20241023163832-0bf84bbd3927
+	github.com/bpfman/bpfman-operator v0.5.5
 	github.com/coreos/go-semver v0.3.1
 	github.com/go-logr/logr v1.4.2
 	github.com/google/go-cmp v0.6.0

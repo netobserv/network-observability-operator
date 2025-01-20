@@ -59,6 +59,12 @@ type XdpProgramInfo struct {
 	// Selector to determine the network interface (or interfaces)
 	InterfaceSelector InterfaceSelector `json:"interfaceselector"`
 
+	// Containers identifies the set of containers in which to attach the eBPF
+	// program. If Containers is not specified, the BPF program will be attached
+	// in the root network namespace.
+	// +optional
+	Containers *ContainerSelector `json:"containers"`
+
 	// Priority specifies the priority of the bpf program in relation to
 	// other programs of the same type with the same attach point. It is a value
 	// from 0 to 1000 where lower values have higher precedence.
