@@ -931,7 +931,7 @@ scopes:
     labels:
       - UdnId
     filter: udn
-    stepInto: host
+    stepInto: namespace
   - id: zone
     name: Zone
     shortName: AZ
