@@ -1049,7 +1049,7 @@ scopes:
     name: Node
     shortName: Node
     description: Node on which the resources are running
-    labels: 
+    labels:
       - SrcK8S_HostName
       - DstK8S_HostName
     groups:
@@ -1064,7 +1064,7 @@ scopes:
     name: Namespace
     shortName: NS
     description: Resource namespace
-    labels: 
+    labels:
       - SrcK8S_Namespace
       - DstK8S_Namespace
     groups:
@@ -1082,7 +1082,7 @@ scopes:
     name: Owner
     shortName: Own
     description: Controller owner, such as a Deployment
-    labels: 
+    labels:
       - SrcK8S_OwnerName
       - SrcK8S_OwnerType
       - DstK8S_OwnerName
@@ -1108,7 +1108,7 @@ scopes:
     name: Resource
     shortName: Res
     description: Base resource, such as a Pod, a Service or a Node
-    labels: 
+    labels:
       - SrcK8S_Name
       - SrcK8S_Type
       - SrcK8S_OwnerName
@@ -1170,6 +1170,7 @@ fields:
     description: Source namespace
   - name: SrcAddr
     type: string
+    format: IP
     description: Source IP address (ipv4 or ipv6)
   - name: SrcPort
     type: number
@@ -1179,6 +1180,7 @@ fields:
     description: Source MAC address
   - name: SrcK8S_HostIP
     type: string
+    format: IP
     description: Source node IP
   - name: SrcK8S_HostName
     type: string
@@ -1206,6 +1208,7 @@ fields:
     description: Destination namespace
   - name: DstAddr
     type: string
+    format: IP
     description: Destination IP address (ipv4 or ipv6)
   - name: DstPort
     type: number
@@ -1215,6 +1218,7 @@ fields:
     description: Destination MAC address
   - name: DstK8S_HostIP
     type: string
+    format: IP
     description: Destination node IP
   - name: DstK8S_HostName
     type: string
@@ -1254,19 +1258,16 @@ fields:
       - 1: Egress (outgoing traffic, from the node observation point) +
       - 2: Inner (with the same source and destination node)
   - name: IfDirections
-    type: number
-    docType: number[]
+    type: number[]
     description: |
       Flow directions from the network interface observation point. Can be one of: +
       - 0: Ingress (interface incoming traffic) +
       - 1: Egress (interface outgoing traffic)
   - name: Interfaces
-    type: string
-    docType: string[]
+    type: string[]
     description: Network interfaces
   - name: Flags
-    type: string
-    docType: string[]
+    type: string[]
     description: |
       List of TCP flags comprised in the flow, as per RFC-9293, with additional custom flags to represent the following per-packet combinations: +
       - SYN_ACK +
@@ -1314,7 +1315,7 @@ fields:
     type: number
     description: TCP Smoothed Round Trip Time (SRTT), in nanoseconds
   - name: NetworkEvents
-    type: string
+    type: string[]
     docType: object[]
     description: |
       Network events, such as network policy actions, composed of nested fields: +
