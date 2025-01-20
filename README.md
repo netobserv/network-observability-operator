@@ -204,6 +204,10 @@ By default, communications between internal components are not secured. Note tha
 - The metrics server running in the processor (`flowlogs-pipeline`) can listen using TLS, via `spec.processor.metrics.server.tls`.
 - The Console plugin server always uses TLS.
 
+## Architecture
+
+Please refer to [the Architecture page](./docs/Architecture.md).
+
 ## Development & building from sources
 
 Please refer to [this documentation](./DEVELOPMENT.md) for everything related to building, deploying or bundling from sources.
