@@ -29,7 +29,10 @@ spec:
       excludeInterfaces: ["lo"]
       kafkaBatchSize: 1048576
       #flowFilter:
+      #  enable: true
       #  rules:
+      #  - action: Accept
+      #    cidr: 0.0.0.0/0
       #  - action: Accept
       #    cidr: 10.128.0.1/24
       #    ports: 6443
@@ -40,17 +43,12 @@ spec:
       #    ports: 53
       #    protocol: UDP
       #    sampling: 20
-      #  - action: Accept
-      #    cidr: 172.30.0.0/16
-      #    protocol: TCP
-      #    sampling: 30
       #    sourcePorts: 443
-      #  tcpFlags: "SYN"
-      #  action: Accept
-      #  cidr: 2.2.2.2/24
-      #  protocol: TCP
-      #  sourcePorts: 53
-      #  enable: true
+      #  - action: Accept
+      #    tcpFlags: "SYN"
+      #    cidr: 2.2.2.2/24
+      #    protocol: TCP
+      #    sourcePorts: 53
       metrics:
         server:
           port: 9400
@@ -78,7 +76,7 @@ spec:
   processor:
     imagePullPolicy: IfNotPresent
     logLevel: info
-    # Change logTypes to "CONVERSATIONS" or "ALL" to enable conversation tracking
+    # Change logTypes to "Conversations", "EndedConversations" or "All" to enable conversation tracking
     logTypes: Flows
     # Append a unique cluster name to each record
     # clusterName: <CLUSTER NAME>

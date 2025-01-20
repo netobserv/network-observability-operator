@@ -14421,10 +14421,10 @@ This setting is ignored when Kafka is disabled.<br/>
         <td>enum</td>
         <td>
           `logTypes` defines the desired record types to generate. Possible values are:<br>
-- `Flows` (default) to export regular network flows<br>
-- `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br>
-- `EndedConversations` to generate only ended conversations events<br>
-- `All` to generate both network flows and all conversations events<br><br/>
+- `Flows` (default) to export regular network flows.<br>
+- `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates.<br>
+- `EndedConversations` to generate only ended conversations events.<br>
+- `All` to generate both network flows and all conversations events. It is not recommended due to the impact on resources footprint.<br><br/>
           <br/>
             <i>Enum</i>: Flows, Conversations, EndedConversations, All<br/>
             <i>Default</i>: Flows<br/>

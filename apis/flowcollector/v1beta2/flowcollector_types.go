@@ -637,10 +637,10 @@ type FlowCollectorFLP struct {
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
 
 	// `logTypes` defines the desired record types to generate. Possible values are:<br>
-	// - `Flows` (default) to export regular network flows<br>
-	// - `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates<br>
-	// - `EndedConversations` to generate only ended conversations events<br>
-	// - `All` to generate both network flows and all conversations events<br>
+	// - `Flows` (default) to export regular network flows.<br>
+	// - `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates.<br>
+	// - `EndedConversations` to generate only ended conversations events.<br>
+	// - `All` to generate both network flows and all conversations events. It is not recommended due to the impact on resources footprint.<br>
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum:="Flows";"Conversations";"EndedConversations";"All"
 	// +kubebuilder:default:=Flows
