@@ -272,13 +272,16 @@ manifests: YQ controller-gen ## Generate WebhookConfiguration, ClusterRole and C
 	$(YQ) -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.consolePlugin.properties.advanced.properties.affinity.properties | .. | select(has("description")) | .description)' config/crd/bases/flows.netobserv.io_flowcollectors.yaml
 
 gencode: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+ifndef SKIP_CODE_GEN
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+endif
 
 doc: crdoc ## Generate markdown documentation
 	$(CRDOC) --resources config/crd/bases/flows.netobserv.io_flowcollectors.yaml --output docs/FlowCollector.md
 	$(CRDOC) --resources config/crd/bases/flows.netobserv.io_flowmetrics.yaml --output docs/FlowMetric.md
 
 generate-go-conversions: $(CONVERSION_GEN) ## Run all generate-go-conversions
+ifndef SKIP_CODE_GEN
 		$(MAKE) clean-generated-conversions SRC_DIRS="./apis/flowcollector/v1beta1"
 		$(CONVERSION_GEN) \
 		--input-dirs=./apis/flowcollector/v1beta1 \
@@ -286,6 +289,7 @@ generate-go-conversions: $(CONVERSION_GEN) ## Run all generate-go-conversions
 		--output-file-base=zz_generated.conversion \
 		$(CONVERSION_GEN_OUTPUT_BASE) \
 		--go-header-file=./hack/boilerplate/boilerplate.generatego.txt
+endif
 
 # Hack to reintroduce when the API stored version != latest version; see also envtest.go (CRD path config)
 # .PHONY: hack-crd-for-test

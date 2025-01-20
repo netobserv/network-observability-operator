@@ -40,8 +40,10 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
@@ -87,6 +89,8 @@ func init() {
 
 func main() {
 	var metricsAddr string
+	var metricsCertFile string
+	var metricsCertKeyFile string
 	var enableLeaderElection bool
 	var probeAddr string
 	var pprofAddr string
@@ -96,6 +100,8 @@ func main() {
 	config := manager.Config{}
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&metricsCertFile, "metrics-cert-file", "", "The path to the TLS certificate for metrics.")
+	flag.StringVar(&metricsCertKeyFile, "metrics-cert-key-file", "", "The path to the TLS certificate key for metrics.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&pprofAddr, "profiling-bind-address", "", "The address the profiling endpoint binds to, such as ':6060'. Leave unset to disable profiling.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -136,19 +142,41 @@ func main() {
 
 	disableHTTP2 := func(c *tls.Config) {
 		if enableHTTP2 {
+			setupLog.Info("Warning: http/2 is enabled")
 			return
 		}
 		c.NextProtos = []string{"http/1.1"}
 	}
 
+	var metricsCertWatcher *certwatcher.CertWatcher
 	cfg := ctrl.GetConfigOrDie()
+	metricsOptions := server.Options{
+		BindAddress:    metricsAddr,
+		TLSOpts:        []func(*tls.Config){disableHTTP2},
+		FilterProvider: filters.WithAuthenticationAndAuthorization,
+	}
+	if len(metricsCertFile) > 0 && len(metricsCertKeyFile) > 0 {
+		metricsOptions.SecureServing = true
+		setupLog.Info("Initializing metrics certificate watcher using provided certificates",
+			"metrics-cert-file", metricsCertFile, "metrics-cert-key-file", metricsCertKeyFile)
+
+		var err error
+		metricsCertWatcher, err = certwatcher.New(metricsCertFile, metricsCertKeyFile)
+		if err != nil {
+			setupLog.Error(err, "Failed to initialize metrics certificate watcher", "error", err)
+			os.Exit(1)
+		}
+
+		metricsOptions.TLSOpts = append(metricsOptions.TLSOpts, func(config *tls.Config) {
+			config.GetCertificate = metricsCertWatcher.GetCertificate
+		})
+	} else {
+		setupLog.Info("Warning: metrics server does not use TLS")
+	}
 
 	mgr, err := manager.NewManager(context.Background(), cfg, &config, &ctrl.Options{
-		Scheme: scheme,
-		Metrics: server.Options{
-			BindAddress: metricsAddr,
-			TLSOpts:     []func(*tls.Config){disableHTTP2},
-		},
+		Scheme:  scheme,
+		Metrics: metricsOptions,
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Port:    constants.WebhookPort,
 			TLSOpts: []func(*tls.Config){disableHTTP2},
@@ -172,6 +200,13 @@ func main() {
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
+
+	if metricsCertWatcher != nil {
+		if err := mgr.Add(metricsCertWatcher); err != nil {
+			setupLog.Error(err, "unable to add metrics certificate watcher to manager")
+			os.Exit(1)
+		}
+	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
