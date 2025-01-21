@@ -1,1 +1,1 @@
-export BUNDLE_IMAGE_PULLSPEC='quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-bundle@sha256:2a69ea618f7a847098b20f0e54b610ab5f6ad2968b04febdebae92bda73bfe5a'
+export BUNDLE_IMAGE_PULLSPEC='quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-bundle@sha256:73c73492bf1d062ffb55f0b5250531e98a82b255830f43aada6b1f0fb5e7d538'
