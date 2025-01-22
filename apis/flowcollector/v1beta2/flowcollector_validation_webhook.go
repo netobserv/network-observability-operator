@@ -86,30 +86,35 @@ func (r *FlowCollector) warnLogLevels(fc *FlowCollectorSpec) admission.Warnings 
 func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
 	var warnings admission.Warnings
 	if slices.Contains(fc.Agent.EBPF.Features, NetworkEvents) ||
-		slices.Contains(fc.Agent.EBPF.Features, UDNMapping) {
+		slices.Contains(fc.Agent.EBPF.Features, UDNMapping) ||
+		slices.Contains(fc.Agent.EBPF.Features, EbpfManager) {
 		// Make sure required version of ocp is installed
 		if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
 			b, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast("4.18.0")
 			if err != nil {
 				warnings = append(warnings, fmt.Sprintf("Could not detect OpenShift cluster version: %s", err.Error()))
 			} else if !b {
-				warnings = append(warnings, fmt.Sprintf("The NetworkEvents feature requires OpenShift 4.18 or above (version detected: %s)", CurrentClusterInfo.GetOpenShiftVersion()))
+				warnings = append(warnings, fmt.Sprintf("The NetworkEvents/UDNMapping/EbpfManager features require OpenShift 4.18 or above (version detected: %s)", CurrentClusterInfo.GetOpenShiftVersion()))
 			}
 		} else {
-			warnings = append(warnings, "The NetworkEvents feature is only supported with OpenShift")
+			warnings = append(warnings, "The NetworkEvents/UDNMapping/EbpfManager features are only supported with OpenShift")
 		}
 		if !fc.Agent.EBPF.Privileged {
-			warnings = append(warnings, "The NetworkEvents feature requires eBPF Agent to run in privileged mode")
+			warnings = append(warnings, "The NetworkEvents/UDNMapping/EbpfManager features require eBPF Agent to run in privileged mode")
 		}
 	}
-	if slices.Contains(fc.Agent.EBPF.Features, PacketDrop) && !fc.Agent.EBPF.Privileged {
-		warnings = append(warnings, "The PacketDrop feature requires eBPF Agent to run in privileged mode")
-	}
-	if slices.Contains(fc.Agent.EBPF.Features, EbpfManager) && !fc.Agent.EBPF.Privileged {
-		warnings = append(warnings, "The BPF Manager feature requires eBPF Agent to run in privileged mode")
-	}
-	if slices.Contains(fc.Agent.EBPF.Features, UDNMapping) && !fc.Agent.EBPF.Privileged {
-		warnings = append(warnings, "The UDNMapping feature requires eBPF Agent to run in privileged mode")
+	if slices.Contains(fc.Agent.EBPF.Features, PacketDrop) {
+		if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
+			b, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast("4.14.0")
+			if err != nil {
+				warnings = append(warnings, fmt.Sprintf("Could not detect OpenShift cluster version: %s", err.Error()))
+			} else if !b {
+				warnings = append(warnings, fmt.Sprintf("The PacketDrop feature requires OpenShift 4.14 or above (version detected: %s)", CurrentClusterInfo.GetOpenShiftVersion()))
+			}
+		}
+		if !fc.Agent.EBPF.Privileged {
+			warnings = append(warnings, "The PacketDrop feature requires eBPF Agent to run in privileged mode")
+		}
 	}
 	var errs []error
 	if fc.Agent.EBPF.FlowFilter != nil && fc.Agent.EBPF.FlowFilter.Enable != nil && *fc.Agent.EBPF.FlowFilter.Enable {
