@@ -13,14 +13,19 @@ import (
 )
 
 type BpfAdditionalMetrics struct {
+	StartMonoTimeTs  uint64
+	EndMonoTimeTs    uint64
 	DnsRecord        BpfDnsRecordT
 	PktDrops         BpfPktDropsT
 	FlowRtt          uint64
-	NetworkEventsIdx uint8
 	NetworkEvents    [4][8]uint8
-	_                [1]byte
 	TranslatedFlow   BpfTranslatedFlowT
-	_                [6]byte
+	_                [2]byte
+	ObservedIntf     [4]BpfObservedIntfT
+	EthProtocol      uint16
+	NetworkEventsIdx uint8
+	NbObservedIntf   uint8
+	_                [4]byte
 }
 
 type BpfDirectionT uint32
@@ -42,12 +47,11 @@ type BpfDnsFlowId struct {
 }
 
 type BpfDnsRecordT struct {
+	Latency uint64
 	Id      uint16
 	Flags   uint16
-	_       [4]byte
-	Latency uint64
 	Errno   uint8
-	_       [7]byte
+	_       [3]byte
 }
 
 type BpfFilterActionT uint32
@@ -64,61 +68,63 @@ type BpfFilterKeyT struct {
 }
 
 type BpfFilterValueT struct {
-	Protocol     uint8
-	DstPortStart uint16
-	DstPortEnd   uint16
-	DstPort1     uint16
-	DstPort2     uint16
-	SrcPortStart uint16
-	SrcPortEnd   uint16
-	SrcPort1     uint16
-	SrcPort2     uint16
-	PortStart    uint16
-	PortEnd      uint16
-	Port1        uint16
-	Port2        uint16
-	IcmpType     uint8
-	IcmpCode     uint8
-	Direction    BpfDirectionT
-	Action       BpfFilterActionT
-	TcpFlags     BpfTcpFlagsT
-	FilterDrops  uint8
-	Sample       uint32
-	Ip           [16]uint8
+	Protocol          uint8
+	_                 [1]byte
+	DstPortStart      uint16
+	DstPortEnd        uint16
+	DstPort1          uint16
+	DstPort2          uint16
+	SrcPortStart      uint16
+	SrcPortEnd        uint16
+	SrcPort1          uint16
+	SrcPort2          uint16
+	PortStart         uint16
+	PortEnd           uint16
+	Port1             uint16
+	Port2             uint16
+	IcmpType          uint8
+	IcmpCode          uint8
+	Direction         BpfDirectionT
+	Action            BpfFilterActionT
+	TcpFlags          BpfTcpFlagsT
+	FilterDrops       uint8
+	_                 [3]byte
+	Sample            uint32
+	DoPeerCIDR_lookup uint8
+	_                 [3]byte
 }
 
 type BpfFlowId BpfFlowIdT
 
 type BpfFlowIdT struct {
-	Direction         uint8
 	SrcIp             [16]uint8
 	DstIp             [16]uint8
-	_                 [1]byte
 	SrcPort           uint16
 	DstPort           uint16
 	TransportProtocol uint8
 	IcmpType          uint8
 	IcmpCode          uint8
-	_                 [3]byte
-	IfIndex           uint32
+	_                 [1]byte
 }
 
 type BpfFlowMetrics BpfFlowMetricsT
 
 type BpfFlowMetricsT struct {
-	Lock            struct{ Val uint32 }
-	EthProtocol     uint16
-	SrcMac          [6]uint8
-	DstMac          [6]uint8
-	_               [2]byte
-	Packets         uint32
-	Bytes           uint64
-	StartMonoTimeTs uint64
-	EndMonoTimeTs   uint64
-	Flags           uint16
-	Errno           uint8
-	Dscp            uint8
-	Sampling        uint32
+	StartMonoTimeTs    uint64
+	EndMonoTimeTs      uint64
+	Bytes              uint64
+	Packets            uint32
+	EthProtocol        uint16
+	Flags              uint16
+	SrcMac             [6]uint8
+	DstMac             [6]uint8
+	IfIndexFirstSeen   uint32
+	Lock               struct{ Val uint32 }
+	Sampling           uint32
+	DirectionFirstSeen uint8
+	Errno              uint8
+	Dscp               uint8
+	_                  [5]byte
 }
 
 type BpfFlowRecordT struct {
@@ -138,17 +144,23 @@ const (
 	BpfGlobalCountersKeyTNETWORK_EVENTS_ERR_GROUPID_MISMATCH BpfGlobalCountersKeyT = 6
 	BpfGlobalCountersKeyTNETWORK_EVENTS_ERR_UPDATE_MAP_FLOWS BpfGlobalCountersKeyT = 7
 	BpfGlobalCountersKeyTNETWORK_EVENTS_GOOD                 BpfGlobalCountersKeyT = 8
-	BpfGlobalCountersKeyTMAX_COUNTERS                        BpfGlobalCountersKeyT = 9
+	BpfGlobalCountersKeyTOBSERVED_INTF_MISSED                BpfGlobalCountersKeyT = 9
+	BpfGlobalCountersKeyTMAX_COUNTERS                        BpfGlobalCountersKeyT = 10
 )
 
+type BpfObservedIntfT struct {
+	Direction uint8
+	_         [3]byte
+	IfIndex   uint32
+}
+
 type BpfPktDropsT struct {
-	Packets         uint32
-	_               [4]byte
 	Bytes           uint64
+	Packets         uint32
+	LatestDropCause uint32
 	LatestFlags     uint16
 	LatestState     uint8
-	_               [1]byte
-	LatestDropCause uint32
+	_               [5]byte
 }
 
 type BpfTcpFlagsT uint32
@@ -173,8 +185,6 @@ type BpfTranslatedFlowT struct {
 	Sport  uint16
 	Dport  uint16
 	ZoneId uint16
-	IcmpId uint8
-	_      [1]byte
 }
 
 // LoadBpf returns the embedded CollectionSpec for Bpf.
@@ -244,6 +254,7 @@ type BpfMapSpecs struct {
 	FilterMap             *ebpf.MapSpec `ebpf:"filter_map"`
 	GlobalCounters        *ebpf.MapSpec `ebpf:"global_counters"`
 	PacketRecord          *ebpf.MapSpec `ebpf:"packet_record"`
+	PeerFilterMap         *ebpf.MapSpec `ebpf:"peer_filter_map"`
 }
 
 // BpfObjects contains all objects after they have been loaded into the kernel.
@@ -272,6 +283,7 @@ type BpfMaps struct {
 	FilterMap             *ebpf.Map `ebpf:"filter_map"`
 	GlobalCounters        *ebpf.Map `ebpf:"global_counters"`
 	PacketRecord          *ebpf.Map `ebpf:"packet_record"`
+	PeerFilterMap         *ebpf.Map `ebpf:"peer_filter_map"`
 }
 
 func (m *BpfMaps) Close() error {
@@ -283,6 +295,7 @@ func (m *BpfMaps) Close() error {
 		m.FilterMap,
 		m.GlobalCounters,
 		m.PacketRecord,
+		m.PeerFilterMap,
 	)
 }
 

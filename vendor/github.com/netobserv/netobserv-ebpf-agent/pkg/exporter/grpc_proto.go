@@ -9,7 +9,6 @@ import (
 	"github.com/netobserv/netobserv-ebpf-agent/pkg/pbflow"
 	"github.com/netobserv/netobserv-ebpf-agent/pkg/utils"
 
-	ovnobserv "github.com/ovn-org/ovn-kubernetes/go-controller/observability-lib/sampledecoder"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -31,10 +30,9 @@ type GRPCProto struct {
 	maxFlowsPerMessage int
 	metrics            *metrics.Metrics
 	batchCounter       prometheus.Counter
-	sampler            *ovnobserv.SampleDecoder
 }
 
-func StartGRPCProto(hostIP string, hostPort int, maxFlowsPerMessage int, m *metrics.Metrics, s *ovnobserv.SampleDecoder) (*GRPCProto, error) {
+func StartGRPCProto(hostIP string, hostPort int, maxFlowsPerMessage int, m *metrics.Metrics) (*GRPCProto, error) {
 	clientConn, err := grpc.ConnectClient(hostIP, hostPort)
 	if err != nil {
 		return nil, err
@@ -46,7 +44,6 @@ func StartGRPCProto(hostIP string, hostPort int, maxFlowsPerMessage int, m *metr
 		maxFlowsPerMessage: maxFlowsPerMessage,
 		metrics:            m,
 		batchCounter:       m.CreateBatchCounter(componentGRPC),
-		sampler:            s,
 	}, nil
 }
 
@@ -57,7 +54,7 @@ func (g *GRPCProto) ExportFlows(input <-chan []*model.Record) {
 	log := glog.WithField("collector", socket)
 	for inputRecords := range input {
 		g.metrics.EvictionCounter.WithSource(componentGRPC).Inc()
-		for _, pbRecords := range pbflow.FlowsToPB(inputRecords, g.maxFlowsPerMessage, g.sampler) {
+		for _, pbRecords := range pbflow.FlowsToPB(inputRecords, g.maxFlowsPerMessage) {
 			log.Debugf("sending %d records", len(pbRecords.Entries))
 			if _, err := g.clientConn.Client().Send(context.TODO(), pbRecords); err != nil {
 				g.metrics.Errors.WithErrorName(componentGRPC, "CannotWriteMessage").Inc()

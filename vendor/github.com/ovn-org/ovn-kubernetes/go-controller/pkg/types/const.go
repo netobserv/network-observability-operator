@@ -115,7 +115,9 @@ const (
 	EgressSVCReroutePriority              = 101
 	EgressIPReroutePriority               = 100
 	EgressIPRerouteQoSRulePriority        = 103
-	EgressLiveMigrationReroutePiority     = 10
+	// priority of logical router policies on a nodes gateway router
+	EgressIPSNATMarkPriority           = 95
+	EgressLiveMigrationReroutePriority = 10
 
 	// EndpointSliceMirrorControllerName mirror EndpointSlice controller name (used as a value for the "endpointslice.kubernetes.io/managed-by" label)
 	EndpointSliceMirrorControllerName = "endpointslice-mirror-controller.k8s.ovn.org"
@@ -153,9 +155,21 @@ const (
 
 	// OVN-K8S annotation & taint constants
 	OvnK8sPrefix = "k8s.ovn.org"
+
+	// DefaultNetworkLabelSelector is the label that needs to be matched on a
+	// selector to select the default network
+	DefaultNetworkLabelSelector = OvnK8sPrefix + "/default-network"
+	// OvnNetworkNameAnnotation is the name of the network annotated on the NAD
+	// by cluster manager nad controller
+	OvnNetworkNameAnnotation = OvnK8sPrefix + "/network-name"
+	// OvnNetworkIDAnnotation is a unique network identifier annotated on the
+	// NAD by cluster manager nad controller
+	OvnNetworkIDAnnotation = OvnK8sPrefix + "/network-id"
+
 	// Deprecated: we used to set topology version as an annotation on the node. We don't do this anymore.
-	OvnK8sTopoAnno         = OvnK8sPrefix + "/" + "topology-version"
-	OvnK8sSmallMTUTaintKey = OvnK8sPrefix + "/" + "mtu-too-small"
+	OvnK8sTopoAnno            = OvnK8sPrefix + "/" + "topology-version"
+	OvnK8sSmallMTUTaintKey    = OvnK8sPrefix + "/" + "mtu-too-small"
+	OvnRouteAdvertisementsKey = OvnK8sPrefix + "/route-advertisements"
 
 	// name of the configmap used to synchronize status (e.g. watch for topology changes)
 	OvnK8sStatusCMName         = "control-plane-status"

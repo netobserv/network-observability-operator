@@ -492,6 +492,14 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>peerCIDR</b></td>
+        <td>string</td>
+        <td>
+          `peerCIDR` defines the Peer IP CIDR to filter flows by.
+Examples: `10.10.10.0/24` or `100:100:100:100::/64`<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>peerIP</b></td>
         <td>string</td>
         <td>
@@ -629,6 +637,14 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td>integer</td>
         <td>
           `icmpType`, for ICMP traffic, optionally defines the ICMP type to filter flows by.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>peerCIDR</b></td>
+        <td>string</td>
+        <td>
+          `peerCIDR` defines the Peer IP CIDR to filter flows by.
+Examples: `10.10.10.0/24` or `100:100:100:100::/64`<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8222,6 +8238,14 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>peerCIDR</b></td>
+        <td>string</td>
+        <td>
+          `peerCIDR` defines the Peer IP CIDR to filter flows by.
+Examples: `10.10.10.0/24` or `100:100:100:100::/64`<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>peerIP</b></td>
         <td>string</td>
         <td>
@@ -8359,6 +8383,14 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td>integer</td>
         <td>
           `icmpType`, for ICMP traffic, optionally defines the ICMP type to filter flows by.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>peerCIDR</b></td>
+        <td>string</td>
+        <td>
+          `peerCIDR` defines the Peer IP CIDR to filter flows by.
+Examples: `10.10.10.0/24` or `100:100:100:100::/64`<br/>
         </td>
         <td>false</td>
       </tr><tr>

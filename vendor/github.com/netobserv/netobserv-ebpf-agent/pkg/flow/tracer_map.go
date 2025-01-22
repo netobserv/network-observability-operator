@@ -12,6 +12,7 @@ import (
 
 	"github.com/gavv/monotime"
 	"github.com/netobserv/gopipes/pkg/node"
+	ovnobserv "github.com/ovn-org/ovn-kubernetes/go-controller/observability-lib/sampledecoder"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -28,6 +29,7 @@ type MapTracer struct {
 	evictionCond               *sync.Cond
 	metrics                    *metrics.Metrics
 	timeSpentinLookupAndDelete prometheus.Histogram
+	s                          *ovnobserv.SampleDecoder
 }
 
 type mapFetcher interface {
@@ -35,7 +37,8 @@ type mapFetcher interface {
 	DeleteMapsStaleEntries(timeOut time.Duration)
 }
 
-func NewMapTracer(fetcher mapFetcher, evictionTimeout, staleEntriesEvictTimeout time.Duration, m *metrics.Metrics) *MapTracer {
+func NewMapTracer(fetcher mapFetcher, evictionTimeout, staleEntriesEvictTimeout time.Duration, m *metrics.Metrics,
+	s *ovnobserv.SampleDecoder) *MapTracer {
 	return &MapTracer{
 		mapFetcher:                 fetcher,
 		evictionTimeout:            evictionTimeout,
@@ -43,6 +46,7 @@ func NewMapTracer(fetcher mapFetcher, evictionTimeout, staleEntriesEvictTimeout 
 		staleEntriesEvictTimeout:   staleEntriesEvictTimeout,
 		metrics:                    m,
 		timeSpentinLookupAndDelete: m.CreateTimeSpendInLookupAndDelete(),
+		s:                          s,
 	}
 }
 
@@ -107,6 +111,7 @@ func (m *MapTracer) evictFlows(ctx context.Context, forceGC bool, forwardFlows c
 			&flowMetrics,
 			currentTime,
 			uint64(monotonicTimeNow),
+			m.s,
 		))
 	}
 	m.mapFetcher.DeleteMapsStaleEntries(m.staleEntriesEvictTimeout)

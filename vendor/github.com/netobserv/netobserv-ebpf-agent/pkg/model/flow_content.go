@@ -1,21 +1,16 @@
 package model
 
-import "github.com/netobserv/netobserv-ebpf-agent/pkg/ebpf"
+import (
+	"github.com/netobserv/netobserv-ebpf-agent/pkg/ebpf"
+)
 
 type BpfFlowContent struct {
 	*ebpf.BpfFlowMetrics
 	AdditionalMetrics *ebpf.BpfAdditionalMetrics
 }
 
-type BpfFlowContents []BpfFlowContent
-
-func (a *BpfFlowContents) Accumulate() BpfFlowContent {
-	res := BpfFlowContent{}
-	for _, p := range *a {
-		res.AccumulateBase(p.BpfFlowMetrics)
-		res.AccumulateAdditional(p.AdditionalMetrics)
-	}
-	return res
+func NewBpfFlowContent(metrics ebpf.BpfFlowMetrics) BpfFlowContent {
+	return BpfFlowContent{BpfFlowMetrics: &metrics}
 }
 
 func (p *BpfFlowContent) AccumulateBase(other *ebpf.BpfFlowMetrics) {
@@ -57,10 +52,30 @@ func AccumulateBase(p *ebpf.BpfFlowMetrics, other *ebpf.BpfFlowMetrics) *ebpf.Bp
 	return p
 }
 
+func (p *BpfFlowContent) buildBaseFromAdditional(add *ebpf.BpfAdditionalMetrics) {
+	if add == nil {
+		return
+	}
+	// Accumulate time into base metrics if unset
+	if p.BpfFlowMetrics.StartMonoTimeTs == 0 || (p.BpfFlowMetrics.StartMonoTimeTs > add.StartMonoTimeTs && add.StartMonoTimeTs != 0) {
+		p.BpfFlowMetrics.StartMonoTimeTs = add.StartMonoTimeTs
+	}
+	if p.BpfFlowMetrics.EndMonoTimeTs == 0 || p.BpfFlowMetrics.EndMonoTimeTs < add.EndMonoTimeTs {
+		p.BpfFlowMetrics.EndMonoTimeTs = add.EndMonoTimeTs
+	}
+	if p.BpfFlowMetrics.EthProtocol == 0 {
+		p.BpfFlowMetrics.EthProtocol = add.EthProtocol
+	}
+	if p.BpfFlowMetrics.Flags == 0 && add.PktDrops.LatestFlags != 0 {
+		p.BpfFlowMetrics.Flags = add.PktDrops.LatestFlags
+	}
+}
+
 func (p *BpfFlowContent) AccumulateAdditional(other *ebpf.BpfAdditionalMetrics) {
 	if other == nil {
 		return
 	}
+	p.buildBaseFromAdditional(other)
 	if p.AdditionalMetrics == nil {
 		p.AdditionalMetrics = other
 		return
@@ -83,6 +98,9 @@ func (p *BpfFlowContent) AccumulateAdditional(other *ebpf.BpfAdditionalMetrics) 
 	if other.PktDrops.LatestDropCause != 0 {
 		p.AdditionalMetrics.PktDrops.LatestDropCause = other.PktDrops.LatestDropCause
 	}
+	if other.PktDrops.LatestState != 0 {
+		p.AdditionalMetrics.PktDrops.LatestState = other.PktDrops.LatestState
+	}
 	// RTT
 	if p.AdditionalMetrics.FlowRtt < other.FlowRtt {
 		p.AdditionalMetrics.FlowRtt = other.FlowRtt
@@ -97,6 +115,26 @@ func (p *BpfFlowContent) AccumulateAdditional(other *ebpf.BpfAdditionalMetrics) 
 	// Packet Translations
 	if !AllZeroIP(IP(other.TranslatedFlow.Saddr)) && !AllZeroIP(IP(other.TranslatedFlow.Daddr)) {
 		p.AdditionalMetrics.TranslatedFlow = other.TranslatedFlow
+	}
+	// Accumulate interfaces + directions
+	accumulateInterfaces(&p.AdditionalMetrics.NbObservedIntf, &p.AdditionalMetrics.ObservedIntf, other.NbObservedIntf, other.ObservedIntf)
+}
+
+func accumulateInterfaces(dstSize *uint8, dstIntf *[MaxObservedInterfaces]ebpf.BpfObservedIntfT, srcSize uint8, srcIntf [MaxObservedInterfaces]ebpf.BpfObservedIntfT) {
+	iObs := uint8(0)
+outer:
+	for *dstSize < uint8(len(dstIntf)) && iObs < srcSize {
+		for u := uint8(0); u < *dstSize; u++ {
+			if dstIntf[u].Direction == srcIntf[iObs].Direction &&
+				dstIntf[u].IfIndex == srcIntf[iObs].IfIndex {
+				// Ignore if already exists
+				iObs++
+				continue outer
+			}
+		}
+		dstIntf[*dstSize] = srcIntf[iObs]
+		*dstSize++
+		iObs++
 	}
 }
 

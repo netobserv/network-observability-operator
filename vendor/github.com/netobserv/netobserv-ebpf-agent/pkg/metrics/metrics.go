@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -118,10 +119,20 @@ var (
 	)
 	errorsCounter = defineMetric(
 		"errors_total",
-		"errors counter",
+		"Errors counter",
 		TypeCounter,
 		"component",
 		"error",
+	)
+	flowEnrichmentCounterCounter = defineMetric(
+		"flows_enrichment_total",
+		"Statistics on flows enrichment",
+		TypeCounter,
+		"hasDNS",
+		"hasRTT",
+		"hasDrops",
+		"hasNetEvents",
+		"hasXlat",
 	)
 )
 
@@ -154,6 +165,7 @@ type Metrics struct {
 	NetworkEventsCounter  *EvictionCounter
 	BufferSizeGauge       *BufferSizeGauge
 	Errors                *ErrorCounter
+	FlowEnrichmentCounter *FlowEnrichmentCounter
 }
 
 func NewMetrics(settings *Settings) *Metrics {
@@ -168,6 +180,7 @@ func NewMetrics(settings *Settings) *Metrics {
 	m.NetworkEventsCounter = &EvictionCounter{vec: m.NewCounterVec(&networkEvents)}
 	m.BufferSizeGauge = &BufferSizeGauge{vec: m.NewGaugeVec(&bufferSize)}
 	m.Errors = &ErrorCounter{vec: m.NewCounterVec(&errorsCounter)}
+	m.FlowEnrichmentCounter = &FlowEnrichmentCounter{vec: m.NewCounterVec(&flowEnrichmentCounterCounter)}
 	return m
 }
 
@@ -253,6 +266,20 @@ func (c *EvictionCounter) WithSourceAndReason(source, reason string) prometheus.
 
 func (c *EvictionCounter) WithSource(source string) prometheus.Counter {
 	return c.vec.WithLabelValues(source, "")
+}
+
+type FlowEnrichmentCounter struct {
+	vec *prometheus.CounterVec
+}
+
+func (c *FlowEnrichmentCounter) Increase(hasDNS, hasRTT, hasDrops, hasNetEvents, hasXlat bool) {
+	c.vec.WithLabelValues(
+		strconv.FormatBool(hasDNS),
+		strconv.FormatBool(hasRTT),
+		strconv.FormatBool(hasDrops),
+		strconv.FormatBool(hasNetEvents),
+		strconv.FormatBool(hasXlat),
+	).Inc()
 }
 
 func (m *Metrics) CreateTimeSpendInLookupAndDelete() prometheus.Histogram {

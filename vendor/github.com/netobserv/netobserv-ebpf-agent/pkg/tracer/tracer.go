@@ -36,8 +36,11 @@ const (
 	aggregatedFlowsMap    = "aggregated_flows"
 	additionalFlowMetrics = "additional_flow_metrics"
 	dnsLatencyMap         = "dns_flows"
+	flowFilterMap         = "filter_map"
+	flowPeerFilterMap     = "peer_filter_map"
 	// constants defined in flows.c as "volatile const"
 	constSampling                       = "sampling"
+	constHasFilterSampling              = "has_filter_sampling"
 	constTraceMessages                  = "trace_messages"
 	constEnableRtt                      = "enable_rtt"
 	constEnableDNSTracking              = "enable_dns_tracking"
@@ -114,6 +117,10 @@ func NewFlowFetcher(cfg *FlowFetcherConfig) (*FlowFetcher, error) {
 	var err error
 	objects := ebpf.BpfObjects{}
 	var pinDir string
+	var filter *Filter
+	if cfg.EnableFlowFilter {
+		filter = NewFilter(cfg.FilterConfig)
+	}
 
 	if !cfg.UseEbpfManager {
 		if err := rlimit.RemoveMemlock(); err != nil {
@@ -127,13 +134,10 @@ func NewFlowFetcher(cfg *FlowFetcherConfig) (*FlowFetcher, error) {
 
 		// Resize maps according to user-provided configuration
 		spec.Maps[aggregatedFlowsMap].MaxEntries = uint32(cfg.CacheMaxSize)
-		if isEBPFFeaturesEnabled(cfg) {
-			spec.Maps[additionalFlowMetrics].MaxEntries = uint32(cfg.CacheMaxSize)
-		} else {
-			spec.Maps[additionalFlowMetrics].MaxEntries = 1
-		}
+		spec.Maps[additionalFlowMetrics].MaxEntries = uint32(cfg.CacheMaxSize)
+
 		// remove pinning from all maps
-		maps2Name := []string{"aggregated_flows", "additional_flow_metrics", "direct_flows", "dns_flows", "filter_map", "global_counters", "packet_record"}
+		maps2Name := []string{"aggregated_flows", "additional_flow_metrics", "direct_flows", "dns_flows", "filter_map", "peer_filter_map", "global_counters", "packet_record"}
 		for _, m := range maps2Name {
 			spec.Maps[m].Pinning = 0
 		}
@@ -162,8 +166,13 @@ func NewFlowFetcher(cfg *FlowFetcherConfig) (*FlowFetcher, error) {
 		}
 
 		enableFlowFiltering := 0
-		if cfg.EnableFlowFilter {
+		hasFilterSampling := uint8(0)
+		if filter != nil {
 			enableFlowFiltering = 1
+			hasFilterSampling = filter.hasSampling()
+		} else {
+			spec.Maps[flowFilterMap].MaxEntries = 1
+			spec.Maps[flowPeerFilterMap].MaxEntries = 1
 		}
 		enableNetworkEventsMonitoring := 0
 		if cfg.EnableNetworkEventsMonitoring {
@@ -178,7 +187,9 @@ func NewFlowFetcher(cfg *FlowFetcherConfig) (*FlowFetcher, error) {
 			enablePktTranslation = 1
 		}
 		if err := spec.RewriteConstants(map[string]interface{}{
+			// When adding constants here, remember to delete them in NewPacketFetcher
 			constSampling:                       uint32(cfg.Sampling),
+			constHasFilterSampling:              hasFilterSampling,
 			constTraceMessages:                  uint8(traceMsgs),
 			constEnableRtt:                      uint8(enableRtt),
 			constEnableDNSTracking:              uint8(enableDNSTracking),
@@ -312,6 +323,10 @@ func NewFlowFetcher(cfg *FlowFetcherConfig) (*FlowFetcher, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to load %s: %w", mPath, err)
 		}
+		objects.BpfMaps.PeerFilterMap, err = cilium.LoadPinnedMap(mPath, opts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load %s: %w", mPath, err)
+		}
 		log.Infof("BPFManager mode: loading global counters pinned maps")
 		mPath = path.Join(pinDir, "global_counters")
 		objects.BpfMaps.GlobalCounters, err = cilium.LoadPinnedMap(mPath, opts)
@@ -326,9 +341,8 @@ func NewFlowFetcher(cfg *FlowFetcherConfig) (*FlowFetcher, error) {
 		}
 	}
 
-	if cfg.EnableFlowFilter {
-		f := NewFilter(&objects, cfg.FilterConfig)
-		if err := f.ProgramFilter(); err != nil {
+	if filter != nil {
+		if err := filter.ProgramFilter(&objects); err != nil {
 			return nil, fmt.Errorf("programming flow filter: %w", err)
 		}
 	}
@@ -358,13 +372,6 @@ func NewFlowFetcher(cfg *FlowFetcherConfig) (*FlowFetcher, error) {
 		useEbpfManager:              cfg.UseEbpfManager,
 		pinDir:                      pinDir,
 	}, nil
-}
-
-func isEBPFFeaturesEnabled(cfg *FlowFetcherConfig) bool {
-	if cfg.EnableNetworkEventsMonitoring || cfg.EnableRTT || cfg.EnablePktDrops || cfg.EnableDNSTracker || cfg.EnablePktTranslation {
-		return true
-	}
-	return false
 }
 
 func (m *FlowFetcher) AttachTCX(iface ifaces.Interface) error {
@@ -724,6 +731,9 @@ func (m *FlowFetcher) Close() error {
 		if err := m.objects.AggregatedFlows.Close(); err != nil {
 			errs = append(errs, err)
 		}
+		if err := m.objects.AdditionalFlowMetrics.Close(); err != nil {
+			errs = append(errs, err)
+		}
 		if err := m.objects.DirectFlows.Close(); err != nil {
 			errs = append(errs, err)
 		}
@@ -734,6 +744,9 @@ func (m *FlowFetcher) Close() error {
 			errs = append(errs, err)
 		}
 		if err := m.objects.FilterMap.Close(); err != nil {
+			errs = append(errs, err)
+		}
+		if err := m.objects.PeerFilterMap.Close(); err != nil {
 			errs = append(errs, err)
 		}
 		if len(errs) == 0 {
@@ -852,23 +865,21 @@ func (m *FlowFetcher) LookupAndDeleteMap(met *metrics.Metrics) map[ebpf.BpfFlowI
 	}
 
 	flowMap := m.objects.AggregatedFlows
-
-	iterator := flowMap.Iterate()
 	var flows = make(map[ebpf.BpfFlowId]model.BpfFlowContent, m.cacheMaxSize)
 	var ids []ebpf.BpfFlowId
 	var id ebpf.BpfFlowId
 	var baseMetrics ebpf.BpfFlowMetrics
-	var additionalMetrics []ebpf.BpfAdditionalMetrics
 
 	// First, get all ids and don't care about metrics (we need lookup+delete to be atomic)
+	iterator := flowMap.Iterate()
 	for iterator.Next(&id, &baseMetrics) {
 		ids = append(ids, id)
 	}
 
-	count := 0
+	countMain := 0
 	// Run the atomic Lookup+Delete; if new ids have been inserted in the meantime, they'll be fetched next time
 	for i, id := range ids {
-		count++
+		countMain++
 		if err := flowMap.LookupAndDelete(&id, &baseMetrics); err != nil {
 			if i == 0 && errors.Is(err, cilium.ErrNotSupported) {
 				log.WithError(err).Warnf("switching to legacy mode")
@@ -879,30 +890,60 @@ func (m *FlowFetcher) LookupAndDeleteMap(met *metrics.Metrics) map[ebpf.BpfFlowI
 			met.Errors.WithErrorName("flow-fetcher", "CannotDeleteFlows").Inc()
 			continue
 		}
-		flowPayload := model.BpfFlowContent{BpfFlowMetrics: &ebpf.BpfFlowMetrics{}}
-		flowPayload.AccumulateBase(&baseMetrics)
-
-		// Fetch additional metrics; ids are without direction and interface
-		shorterID := id
-		shorterID.Direction = 0
-		shorterID.IfIndex = 0
-		if err := m.objects.AdditionalFlowMetrics.LookupAndDelete(&shorterID, &additionalMetrics); err != nil {
-			if !errors.Is(err, cilium.ErrKeyNotExist) {
-				log.WithError(err).WithField("flowId", id).Warnf("couldn't lookup/delete additional metrics entry")
-				met.Errors.WithErrorName("flow-fetcher", "CannotDeleteAdditionalMetric").Inc()
-			}
-		} else {
-			for i := range additionalMetrics {
-				flowPayload.AccumulateAdditional(&additionalMetrics[i])
-			}
-		}
-		flows[id] = flowPayload
+		flows[id] = model.NewBpfFlowContent(baseMetrics)
 	}
-	met.BufferSizeGauge.WithBufferName("hashmap-total").Set(float64(count))
-	met.BufferSizeGauge.WithBufferName("hashmap-unique").Set(float64(len(flows)))
+
+	// Reiterate on additional metrics
+	var additionalMetrics []ebpf.BpfAdditionalMetrics
+	ids = []ebpf.BpfFlowId{}
+	addtlIterator := m.objects.AdditionalFlowMetrics.Iterate()
+	for addtlIterator.Next(&id, &additionalMetrics) {
+		ids = append(ids, id)
+	}
+
+	countAdditional := 0
+	for i, id := range ids {
+		countAdditional++
+		if err := m.objects.AdditionalFlowMetrics.LookupAndDelete(&id, &additionalMetrics); err != nil {
+			if i == 0 && errors.Is(err, cilium.ErrNotSupported) {
+				log.WithError(err).Warnf("switching to legacy mode")
+				m.lookupAndDeleteSupported = false
+				return m.legacyLookupAndDeleteMap(met)
+			}
+			log.WithError(err).WithField("flowId", id).Warnf("couldn't lookup/delete additional metrics entry")
+			met.Errors.WithErrorName("flow-fetcher", "CannotDeleteAdditionalMetric").Inc()
+			continue
+		}
+		flow, found := flows[id]
+		if !found {
+			flow = model.BpfFlowContent{BpfFlowMetrics: &ebpf.BpfFlowMetrics{}}
+		}
+		for iMet := range additionalMetrics {
+			flow.AccumulateAdditional(&additionalMetrics[iMet])
+		}
+		m.increaseEnrichmentStats(met, &flow)
+		flows[id] = flow
+	}
+	met.BufferSizeGauge.WithBufferName("additionalmap").Set(float64(countAdditional))
+	met.BufferSizeGauge.WithBufferName("flowmap").Set(float64(countMain))
+	met.BufferSizeGauge.WithBufferName("merged-maps").Set(float64(len(flows)))
 
 	m.ReadGlobalCounter(met)
 	return flows
+}
+
+func (m *FlowFetcher) increaseEnrichmentStats(met *metrics.Metrics, flow *model.BpfFlowContent) {
+	if flow.AdditionalMetrics != nil {
+		met.FlowEnrichmentCounter.Increase(
+			flow.AdditionalMetrics.DnsRecord.Id != 0,
+			flow.AdditionalMetrics.FlowRtt != 0,
+			flow.AdditionalMetrics.PktDrops.Packets != 0,
+			!model.AllZerosMetaData(flow.AdditionalMetrics.NetworkEvents[0]),
+			!model.AllZeroIP(model.IP(flow.AdditionalMetrics.TranslatedFlow.Daddr)),
+		)
+	} else {
+		met.FlowEnrichmentCounter.Increase(false, false, false, false, false)
+	}
 }
 
 // ReadGlobalCounter reads the global counter and updates drop flows counter metrics
@@ -918,6 +959,7 @@ func (m *FlowFetcher) ReadGlobalCounter(met *metrics.Metrics) {
 		ebpf.BpfGlobalCountersKeyTNETWORK_EVENTS_ERR_GROUPID_MISMATCH: met.NetworkEventsCounter.WithSourceAndReason("network-events", "NetworkEventsErrorsGroupIDMismatch"),
 		ebpf.BpfGlobalCountersKeyTNETWORK_EVENTS_ERR_UPDATE_MAP_FLOWS: met.NetworkEventsCounter.WithSourceAndReason("network-events", "NetworkEventsErrorsFlowMapUpdate"),
 		ebpf.BpfGlobalCountersKeyTNETWORK_EVENTS_GOOD:                 met.NetworkEventsCounter.WithSourceAndReason("network-events", "NetworkEventsGoodEvent"),
+		ebpf.BpfGlobalCountersKeyTOBSERVED_INTF_MISSED:                met.Errors.WithErrorName("flow-fetcher", "MaxObservedInterfacesReached"),
 	}
 	zeroCounters := make([]uint32, cilium.MustPossibleCPU())
 	for key := ebpf.BpfGlobalCountersKeyT(0); key < ebpf.BpfGlobalCountersKeyTMAX_COUNTERS; key++ {
@@ -1037,11 +1079,13 @@ func kernelSpecificLoadAndAssign(oldKernel, rtKernel, supportNetworkEvents bool,
 				RhNetworkEventsMonitoring: nil,
 			},
 			BpfMaps: ebpf.BpfMaps{
-				DirectFlows:     newObjects.DirectFlows,
-				AggregatedFlows: newObjects.AggregatedFlows,
-				DnsFlows:        newObjects.DnsFlows,
-				FilterMap:       newObjects.FilterMap,
-				GlobalCounters:  newObjects.GlobalCounters,
+				DirectFlows:           newObjects.DirectFlows,
+				AggregatedFlows:       newObjects.AggregatedFlows,
+				AdditionalFlowMetrics: newObjects.AdditionalFlowMetrics,
+				DnsFlows:              newObjects.DnsFlows,
+				FilterMap:             newObjects.FilterMap,
+				PeerFilterMap:         newObjects.PeerFilterMap,
+				GlobalCounters:        newObjects.GlobalCounters,
 			},
 		}
 
@@ -1087,11 +1131,13 @@ func kernelSpecificLoadAndAssign(oldKernel, rtKernel, supportNetworkEvents bool,
 				RhNetworkEventsMonitoring: nil,
 			},
 			BpfMaps: ebpf.BpfMaps{
-				DirectFlows:     newObjects.DirectFlows,
-				AggregatedFlows: newObjects.AggregatedFlows,
-				DnsFlows:        newObjects.DnsFlows,
-				FilterMap:       newObjects.FilterMap,
-				GlobalCounters:  newObjects.GlobalCounters,
+				DirectFlows:           newObjects.DirectFlows,
+				AggregatedFlows:       newObjects.AggregatedFlows,
+				AdditionalFlowMetrics: newObjects.AdditionalFlowMetrics,
+				DnsFlows:              newObjects.DnsFlows,
+				FilterMap:             newObjects.FilterMap,
+				PeerFilterMap:         newObjects.PeerFilterMap,
+				GlobalCounters:        newObjects.GlobalCounters,
 			},
 		}
 
@@ -1137,11 +1183,13 @@ func kernelSpecificLoadAndAssign(oldKernel, rtKernel, supportNetworkEvents bool,
 				RhNetworkEventsMonitoring: nil,
 			},
 			BpfMaps: ebpf.BpfMaps{
-				DirectFlows:     newObjects.DirectFlows,
-				AggregatedFlows: newObjects.AggregatedFlows,
-				DnsFlows:        newObjects.DnsFlows,
-				FilterMap:       newObjects.FilterMap,
-				GlobalCounters:  newObjects.GlobalCounters,
+				DirectFlows:           newObjects.DirectFlows,
+				AggregatedFlows:       newObjects.AggregatedFlows,
+				AdditionalFlowMetrics: newObjects.AdditionalFlowMetrics,
+				DnsFlows:              newObjects.DnsFlows,
+				FilterMap:             newObjects.FilterMap,
+				PeerFilterMap:         newObjects.PeerFilterMap,
+				GlobalCounters:        newObjects.GlobalCounters,
 			},
 		}
 
@@ -1188,11 +1236,13 @@ func kernelSpecificLoadAndAssign(oldKernel, rtKernel, supportNetworkEvents bool,
 				RhNetworkEventsMonitoring: nil,
 			},
 			BpfMaps: ebpf.BpfMaps{
-				DirectFlows:     newObjects.DirectFlows,
-				AggregatedFlows: newObjects.AggregatedFlows,
-				DnsFlows:        newObjects.DnsFlows,
-				FilterMap:       newObjects.FilterMap,
-				GlobalCounters:  newObjects.GlobalCounters,
+				DirectFlows:           newObjects.DirectFlows,
+				AggregatedFlows:       newObjects.AggregatedFlows,
+				AdditionalFlowMetrics: newObjects.AdditionalFlowMetrics,
+				DnsFlows:              newObjects.DnsFlows,
+				FilterMap:             newObjects.FilterMap,
+				PeerFilterMap:         newObjects.PeerFilterMap,
+				GlobalCounters:        newObjects.GlobalCounters,
 			},
 		}
 
@@ -1246,6 +1296,12 @@ func NewPacketFetcher(cfg *FlowFetcherConfig) (*PacketFetcher, error) {
 		return nil, fmt.Errorf("rewriting BPF constants definition: %w", err)
 	}
 
+	// remove pinning from all maps
+	maps2Name := []string{"aggregated_flows", "additional_flow_metrics", "direct_flows", "dns_flows", "filter_map", "global_counters", "packet_record"}
+	for _, m := range maps2Name {
+		spec.Maps[m].Pinning = 0
+	}
+
 	type pcaBpfPrograms struct {
 		TcEgressPcaParse   *cilium.Program `ebpf:"tc_egress_pca_parse"`
 		TcIngressPcaParse  *cilium.Program `ebpf:"tc_ingress_pca_parse"`
@@ -1264,6 +1320,7 @@ func NewPacketFetcher(cfg *FlowFetcherConfig) (*PacketFetcher, error) {
 	delete(spec.Programs, aggregatedFlowsMap)
 	delete(spec.Programs, additionalFlowMetrics)
 	delete(spec.Programs, constSampling)
+	delete(spec.Programs, constHasFilterSampling)
 	delete(spec.Programs, constTraceMessages)
 	delete(spec.Programs, constEnableDNSTracking)
 	delete(spec.Programs, constDNSTrackingPort)
@@ -1272,7 +1329,7 @@ func NewPacketFetcher(cfg *FlowFetcherConfig) (*PacketFetcher, error) {
 	delete(spec.Programs, constEnableNetworkEventsMonitoring)
 	delete(spec.Programs, constNetworkEventsMonitoringGroupID)
 
-	if err := spec.LoadAndAssign(&newObjects, nil); err != nil {
+	if err := spec.LoadAndAssign(&newObjects, &cilium.CollectionOptions{Maps: cilium.MapOptions{PinPath: ""}}); err != nil {
 		var ve *cilium.VerifierError
 		if errors.As(err, &ve) {
 			// Using %+v will print the whole verifier error, not just the last
@@ -1298,13 +1355,14 @@ func NewPacketFetcher(cfg *FlowFetcherConfig) (*PacketFetcher, error) {
 			RhNetworkEventsMonitoring: nil,
 		},
 		BpfMaps: ebpf.BpfMaps{
-			PacketRecord: newObjects.PacketRecord,
-			FilterMap:    newObjects.FilterMap,
+			PacketRecord:  newObjects.PacketRecord,
+			FilterMap:     newObjects.FilterMap,
+			PeerFilterMap: newObjects.PeerFilterMap,
 		},
 	}
 
-	f := NewFilter(&objects, cfg.FilterConfig)
-	if err := f.ProgramFilter(); err != nil {
+	f := NewFilter(cfg.FilterConfig)
+	if err := f.ProgramFilter(&objects); err != nil {
 		return nil, fmt.Errorf("programming flow filter: %w", err)
 	}
 

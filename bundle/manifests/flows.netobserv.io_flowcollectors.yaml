@@ -206,6 +206,11 @@ spec:
                             description: '`icmpType`, for ICMP traffic, optionally
                               defines the ICMP type to filter flows by.'
                             type: integer
+                          peerCIDR:
+                            description: |-
+                              `peerCIDR` defines the Peer IP CIDR to filter flows by.
+                              Examples: `10.10.10.0/24` or `100:100:100:100::/64`
+                            type: string
                           peerIP:
                             description: |-
                               `peerIP` optionally defines the remote IP address to filter flows by.
@@ -285,6 +290,11 @@ spec:
                                   description: '`icmpType`, for ICMP traffic, optionally
                                     defines the ICMP type to filter flows by.'
                                   type: integer
+                                peerCIDR:
+                                  description: |-
+                                    `peerCIDR` defines the Peer IP CIDR to filter flows by.
+                                    Examples: `10.10.10.0/24` or `100:100:100:100::/64`
+                                  type: string
                                 peerIP:
                                   description: |-
                                     `peerIP` optionally defines the remote IP address to filter flows by.
@@ -4024,6 +4034,11 @@ spec:
                             description: '`icmpType`, for ICMP traffic, optionally
                               defines the ICMP type to filter flows by.'
                             type: integer
+                          peerCIDR:
+                            description: |-
+                              `peerCIDR` defines the Peer IP CIDR to filter flows by.
+                              Examples: `10.10.10.0/24` or `100:100:100:100::/64`
+                            type: string
                           peerIP:
                             description: |-
                               `peerIP` optionally defines the remote IP address to filter flows by.
@@ -4103,6 +4118,11 @@ spec:
                                   description: '`icmpType`, for ICMP traffic, optionally
                                     defines the ICMP type to filter flows by.'
                                   type: integer
+                                peerCIDR:
+                                  description: |-
+                                    `peerCIDR` defines the Peer IP CIDR to filter flows by.
+                                    Examples: `10.10.10.0/24` or `100:100:100:100::/64`
+                                  type: string
                                 peerIP:
                                   description: |-
                                     `peerIP` optionally defines the remote IP address to filter flows by.

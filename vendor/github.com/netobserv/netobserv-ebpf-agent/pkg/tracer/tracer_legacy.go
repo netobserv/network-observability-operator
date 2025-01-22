@@ -14,24 +14,18 @@ func (m *FlowFetcher) legacyLookupAndDeleteMap(met *metrics.Metrics) map[ebpf.Bp
 	iterator := flowMap.Iterate()
 	var flows = make(map[ebpf.BpfFlowId]model.BpfFlowContent, m.cacheMaxSize)
 	var id ebpf.BpfFlowId
-	var metrics []ebpf.BpfFlowMetrics
+	var baseMetrics ebpf.BpfFlowMetrics
 	count := 0
 
 	// Deleting while iterating is really bad for performance (like, really!) as it causes seeing multiple times the same key
 	// This is solved in >=4.20 kernels with LookupAndDelete
-	for iterator.Next(&id, &metrics) {
+	for iterator.Next(&id, &baseMetrics) {
 		count++
 		if err := flowMap.Delete(id); err != nil {
 			log.WithError(err).WithField("flowId", id).Warnf("couldn't delete flow entry")
 			met.Errors.WithErrorName("flow-fetcher-legacy", "CannotDeleteFlows").Inc()
 		}
-		// We observed that eBFP PerCPU map might insert multiple times the same key in the map
-		// (probably due to race conditions) so we need to re-join metrics again at userspace
-		aggr := model.BpfFlowContent{}
-		for i := range metrics {
-			aggr.AccumulateBase(&metrics[i])
-		}
-		flows[id] = aggr
+		flows[id] = model.NewBpfFlowContent(baseMetrics)
 	}
 	met.BufferSizeGauge.WithBufferName("hashmap-legacy-total").Set(float64(count))
 	met.BufferSizeGauge.WithBufferName("hashmap-legacy-unique").Set(float64(len(flows)))

@@ -67,8 +67,18 @@ func RecordToMap(fr *model.Record) config.GenericMap {
 		"AgentIP":         fr.AgentIP.String(),
 	}
 
-	if fr.Duplicate {
-		out["Duplicate"] = true
+	var directions []int
+	var interfaces []string
+	var udns []string
+	for _, intf := range fr.Interfaces {
+		directions = append(directions, intf.Direction)
+		interfaces = append(interfaces, intf.Interface)
+		udns = append(udns, intf.Udn)
+	}
+	out["IfDirections"] = directions
+	out["Interfaces"] = interfaces
+	if len(udns) != 0 {
+		out["Udns"] = udns
 	}
 
 	if fr.Metrics.Bytes != 0 {
@@ -82,21 +92,6 @@ func RecordToMap(fr *model.Record) config.GenericMap {
 	if fr.Metrics.Sampling != 0 {
 		out["Sampling"] = fr.Metrics.Sampling
 	}
-	var interfaces []string
-	var directions []int
-	if len(fr.DupList) != 0 {
-		for _, m := range fr.DupList {
-			for key, value := range m {
-				interfaces = append(interfaces, key)
-				directions = append(directions, int(model.Direction(value)))
-			}
-		}
-	} else {
-		interfaces = append(interfaces, fr.Interface)
-		directions = append(directions, int(fr.ID.Direction))
-	}
-	out["Interfaces"] = interfaces
-	out["IfDirections"] = directions
 
 	if fr.Metrics.EthProtocol == uint16(ethernet.EtherTypeIPv4) || fr.Metrics.EthProtocol == uint16(ethernet.EtherTypeIPv6) {
 		out["SrcAddr"] = model.IP(fr.ID.SrcIp).String()
@@ -137,11 +132,14 @@ func RecordToMap(fr *model.Record) config.GenericMap {
 		if !model.AllZeroIP(model.IP(fr.Metrics.AdditionalMetrics.TranslatedFlow.Daddr)) &&
 			!model.AllZeroIP(model.IP(fr.Metrics.AdditionalMetrics.TranslatedFlow.Saddr)) {
 			out["ZoneId"] = fr.Metrics.AdditionalMetrics.TranslatedFlow.ZoneId
-			out["XlatSrcPort"] = fr.Metrics.AdditionalMetrics.TranslatedFlow.Sport
-			out["XlatDstPort"] = fr.Metrics.AdditionalMetrics.TranslatedFlow.Dport
+			if fr.Metrics.AdditionalMetrics.TranslatedFlow.Sport != 0 {
+				out["XlatSrcPort"] = fr.Metrics.AdditionalMetrics.TranslatedFlow.Sport
+			}
+			if fr.Metrics.AdditionalMetrics.TranslatedFlow.Dport != 0 {
+				out["XlatDstPort"] = fr.Metrics.AdditionalMetrics.TranslatedFlow.Dport
+			}
 			out["XlatSrcAddr"] = model.IP(fr.Metrics.AdditionalMetrics.TranslatedFlow.Saddr).String()
 			out["XlatDstAddr"] = model.IP(fr.Metrics.AdditionalMetrics.TranslatedFlow.Daddr).String()
-			out["XlatIcmpId"] = fr.Metrics.AdditionalMetrics.TranslatedFlow.IcmpId
 		}
 	}
 

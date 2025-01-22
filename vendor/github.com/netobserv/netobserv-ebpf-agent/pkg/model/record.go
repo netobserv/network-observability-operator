@@ -8,22 +8,22 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	"github.com/netobserv/netobserv-ebpf-agent/pkg/ebpf"
+
+	ovnmodel "github.com/ovn-org/ovn-kubernetes/go-controller/observability-lib/model"
+	ovnobserv "github.com/ovn-org/ovn-kubernetes/go-controller/observability-lib/sampledecoder"
 )
 
 // Values according to field 61 in https://www.iana.org/assignments/ipfix/ipfix.xhtml
 const (
-	DirectionIngress = uint8(0)
-	DirectionEgress  = uint8(1)
-)
-const MacLen = 6
-
-// IPv4Type / IPv6Type value as defined in IEEE 802: https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
-const (
+	DirectionIngress = 0
+	DirectionEgress  = 1
+	MacLen           = 6
+	// IPv4Type / IPv6Type value as defined in IEEE 802: https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
 	IPv6Type                 = 0x86DD
 	NetworkEventsMaxEventsMD = 8
 	MaxNetworkEvents         = 4
+	MaxObservedInterfaces    = 4
 )
 
 type HumanBytes uint64
@@ -35,6 +35,18 @@ type Direction uint8
 // as described in https://datatracker.ietf.org/doc/html/rfc4038#section-4.2
 // (same behavior as Go's net.IP type)
 type IPAddr [net.IPv6len]uint8
+
+type InterfaceNamer func(ifIndex int) string
+
+var (
+	agentIP        net.IP
+	interfaceNamer InterfaceNamer = func(ifIndex int) string { return fmt.Sprintf("[namer unset] %d", ifIndex) }
+)
+
+func SetGlobals(ip net.IP, ifaceNamer InterfaceNamer) {
+	agentIP = ip
+	interfaceNamer = ifaceNamer
+}
 
 // record structure as parsed from eBPF
 type RawRecord ebpf.BpfFlowRecordT
@@ -48,29 +60,24 @@ type Record struct {
 	TimeFlowStart time.Time
 	TimeFlowEnd   time.Time
 	DNSLatency    time.Duration
-	Interface     string
-	// Duplicate tells whether this flow has another duplicate so it has to be excluded from
-	// any metrics' aggregation (e.g. bytes/second rates between two pods).
-	// The reason for this field is that the same flow can be observed from multiple interfaces,
-	// so the agent needs to choose only a view of the same flow and mark the others as
-	// "exclude from aggregation". Otherwise rates, sums, etc... values would be multiplied by the
-	// number of interfaces this flow is observed from.
-	Duplicate bool
-
+	Interfaces    []IntfDirUdn
 	// AgentIP provides information about the source of the flow (the Agent that traced it)
 	AgentIP net.IP
 	// Calculated RTT which is set when record is created by calling NewRecord
 	TimeFlowRtt            time.Duration
-	DupList                []map[string]uint8
-	NetworkMonitorEventsMD []config.GenericMap
+	NetworkMonitorEventsMD []map[string]string
 }
+
+var udnsCache map[string]string
 
 func NewRecord(
 	key ebpf.BpfFlowId,
 	metrics *BpfFlowContent,
 	currentTime time.Time,
 	monotonicCurrentTime uint64,
+	s *ovnobserv.SampleDecoder,
 ) *Record {
+	udnsCache = make(map[string]string)
 	startDelta := time.Duration(monotonicCurrentTime - metrics.StartMonoTimeTs)
 	endDelta := time.Duration(monotonicCurrentTime - metrics.EndMonoTimeTs)
 
@@ -79,8 +86,20 @@ func NewRecord(
 		Metrics:       *metrics,
 		TimeFlowStart: currentTime.Add(-startDelta),
 		TimeFlowEnd:   currentTime.Add(-endDelta),
+		AgentIP:       agentIP,
+		Interfaces: []IntfDirUdn{NewIntfDirUdn(
+			interfaceNamer(int(metrics.IfIndexFirstSeen)),
+			int(metrics.DirectionFirstSeen),
+			s)},
 	}
 	if metrics.AdditionalMetrics != nil {
+		for i := uint8(0); i < record.Metrics.AdditionalMetrics.NbObservedIntf; i++ {
+			record.Interfaces = append(record.Interfaces, NewIntfDirUdn(
+				interfaceNamer(int(metrics.AdditionalMetrics.ObservedIntf[i].IfIndex)),
+				int(metrics.AdditionalMetrics.ObservedIntf[i].Direction),
+				s,
+			))
+		}
 		if metrics.AdditionalMetrics.FlowRtt != 0 {
 			record.TimeFlowRtt = time.Duration(metrics.AdditionalMetrics.FlowRtt)
 		}
@@ -88,9 +107,71 @@ func NewRecord(
 			record.DNSLatency = time.Duration(metrics.AdditionalMetrics.DnsRecord.Latency)
 		}
 	}
-	record.DupList = make([]map[string]uint8, 0)
-	record.NetworkMonitorEventsMD = make([]config.GenericMap, 0)
+	if s != nil && metrics.AdditionalMetrics != nil {
+		seen := make(map[string]bool)
+		record.NetworkMonitorEventsMD = make([]map[string]string, 0)
+		for _, metadata := range metrics.AdditionalMetrics.NetworkEvents {
+			if !AllZerosMetaData(metadata) {
+				var cm map[string]string
+				if md, err := s.DecodeCookie8Bytes(metadata); err == nil {
+					acl, ok := md.(*ovnmodel.ACLEvent)
+					mdStr := md.String()
+					if !seen[mdStr] {
+						if ok {
+							cm = map[string]string{
+								"Action":    acl.Action,
+								"Type":      acl.Actor,
+								"Feature":   "acl",
+								"Name":      acl.Name,
+								"Namespace": acl.Namespace,
+								"Direction": acl.Direction,
+							}
+						} else {
+							cm = map[string]string{
+								"Message": mdStr,
+							}
+						}
+						record.NetworkMonitorEventsMD = append(record.NetworkMonitorEventsMD, cm)
+						seen[mdStr] = true
+					}
+				}
+			}
+		}
+	}
 	return &record
+}
+
+type IntfDirUdn struct {
+	Interface string
+	Direction int
+	Udn       string
+}
+
+func NewIntfDirUdn(intf string, dir int, s *ovnobserv.SampleDecoder) IntfDirUdn {
+	var udn string
+	if s == nil {
+		return IntfDirUdn{Interface: intf, Direction: dir, Udn: ""}
+	}
+
+	// Load UDN cache if empty
+	if len(udnsCache) == 0 {
+		m, err := s.GetInterfaceUDNs()
+		if err != nil {
+			return IntfDirUdn{Interface: intf, Direction: dir, Udn: ""}
+		}
+		udnsCache = m
+	}
+
+	// Look up the interface in the cache
+	if v, ok := udnsCache[intf]; ok {
+		if v != "" {
+			udn = v
+		} else {
+			udn = "default"
+		}
+	}
+
+	return IntfDirUdn{Interface: intf, Direction: dir, Udn: udn}
 }
 
 func networkEventsMDExist(events [MaxNetworkEvents][NetworkEventsMaxEventsMD]uint8, md [NetworkEventsMaxEventsMD]uint8) bool {
