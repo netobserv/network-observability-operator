@@ -112,6 +112,25 @@ func TestValidateAgent(t *testing.T) {
 			expectedWarnings: admission.Warnings{"The PacketDrop feature requires eBPF Agent to run in privileged mode"},
 		},
 		{
+			name:       "PacketDrop on ocp 4.12 triggers warning",
+			ocpVersion: "4.12.5",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{
+						Type: AgentEBPF,
+						EBPF: FlowCollectorEBPF{
+							Features:   []AgentFeature{PacketDrop},
+							Privileged: true,
+						},
+					},
+				},
+			},
+			expectedWarnings: admission.Warnings{"The PacketDrop feature requires OpenShift 4.14 or above (version detected: 4.12.5)"},
+		},
+		{
 			name:       "NetworkEvents on ocp 4.16 triggers warning",
 			ocpVersion: "4.16.5",
 			fc: &FlowCollector{
@@ -128,7 +147,7 @@ func TestValidateAgent(t *testing.T) {
 					},
 				},
 			},
-			expectedWarnings: admission.Warnings{"The NetworkEvents feature requires OpenShift 4.18 or above (version detected: 4.16.5)"},
+			expectedWarnings: admission.Warnings{"The NetworkEvents/UDNMapping/EbpfManager features require OpenShift 4.18 or above (version detected: 4.16.5)"},
 		},
 		{
 			name:       "NetworkEvents without privilege triggers warning",
@@ -146,7 +165,7 @@ func TestValidateAgent(t *testing.T) {
 					},
 				},
 			},
-			expectedWarnings: admission.Warnings{"The NetworkEvents feature requires eBPF Agent to run in privileged mode"},
+			expectedWarnings: admission.Warnings{"The NetworkEvents/UDNMapping/EbpfManager features require eBPF Agent to run in privileged mode"},
 		},
 		{
 			name: "FlowFilter different ports configs are mutually exclusive",
