@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wnetobserv-controller-manager
+  name: netobserv-controller-manager
   labels:
     app: netobserv-operator
     control-plane: controller-manager
