@@ -212,4 +212,3 @@ rules:
   - subjectaccessreviews
   verbs:
   - create
-serviceAccountName: netobserv-controller-manager
