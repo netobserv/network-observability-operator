@@ -1310,7 +1310,7 @@ fields:
     type: string[]
     description: Network interfaces
   - name: Udns
-    type: string
+    type: string[]
     description: Network interfaces UDNs mapping
   - name: Flags
     type: string[]
