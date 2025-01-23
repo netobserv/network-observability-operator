@@ -95,8 +95,9 @@ spec:
                           legend:
                             description: |-
                               The query legend that applies to each timeseries represented in this chart. When multiple timeseries are displayed, you should set a legend
-                              that distinguishes each of them. It can be done with the following format: `{{ Label }}`. For example, if the `promQL` groups timeseries per
-                              label such as: `sum(rate($METRIC[2m])) by (Label1, Label2)`, you may write as the legend: `Label1={{ Label1 }}, Label2={{ Label2 }}`.
+                              that distinguishes each of them. It can be done with the following format: {{`{{ Label }}`}}. For example, if the `promQL` groups timeseries per
+                              label such as: `sum(rate($METRIC[2m])) by (Label1, Label2)`, you may write as the legend: {{`Label1={{ Label1 }}, Label2={{ Label2 }}`}}.
+
                             type: string
                           promQL:
                             description: |-
