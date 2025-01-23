@@ -169,6 +169,14 @@ columns:
     default: false
     width: 10
     feature: subnetLabels
+  - id: SrcNetworkName
+    group: Source
+    name: Network Name
+    tooltip: Network name, such as Secondary network or UDN.
+    field: SrcK8S_NetworkName
+    filter: src_network
+    default: false
+    width: 15
   - id: DstK8S_Name
     group: Destination
     name: Name
@@ -301,6 +309,14 @@ columns:
     default: false
     width: 10
     feature: subnetLabels
+  - id: DstNetworkName
+    group: Destination
+    name: Network Name
+    tooltip: Network name, such as Secondary network or UDN.
+    field: DstK8S_NetworkName
+    filter: dst_network
+    default: false
+    width: 15
   - id: K8S_Name
     name: Names
     calculated: '[SrcK8S_Name,DstK8S_Name]'
@@ -439,6 +455,7 @@ columns:
     width: 10
   - id: Udns
     name: UDN labels
+    tooltip: The list of User Defined Networks.
     field: Udns
     filter: udns
     default: true
@@ -448,13 +465,6 @@ columns:
     name: Interfaces and Directions
     tooltip: Pairs of network interface and direction of the Flow observed at the network interface observation point.
     field: Interfaces
-    default: false
-    width: 15
-  - id: UDN
-    name: User Defined Network
-    tooltip: The user defined network identifier.
-    field: UdnId
-    filter: udn
     default: false
     width: 15
   - id: Bytes
@@ -906,6 +916,14 @@ filters:
           - Starting text like cluster, "cluster-*"
           - Ending text like "*-registry"
           - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
+  - id: src_network
+    name: Network Name
+    component: text
+    category: source
+  - id: dst_network
+    name: Network Name
+    component: text
+    category: destination
   - id: protocol
     name: Protocol
     component: autocomplete
@@ -958,12 +976,10 @@ filters:
     component: autocomplete
     placeholder: 'E.g: Ingress, Egress'
     hint: Specify the direction of the Flow observed at the network interface observation point.
-  - id: udn
+  - id: udns
     name: User Defined Network
     component: autocomplete
     hint: Specify a user defined network name.
-  - id: udns
-    name: interface assigned udn label
   - id: id
     name: Conversation Id
     component: text
@@ -1051,13 +1067,17 @@ scopes:
     feature: multiCluster
     filter: cluster_name
     stepInto: zone
-  - id: udn
-    name: UDN
-    shortName: UDN
-    description: User Defined Network
+  - id: network
+    name: Network
+    shortName: Net
+    description: Network name, such as User Defined Network
     labels:
-      - UdnId
-    filter: udn
+      - SrcK8S_NetworkName
+      - DstK8S_NetworkName
+    feature: udnMapping
+    filters:
+      - src_network
+      - dst_network
     stepInto: namespace
   - id: zone
     name: Zone
@@ -1081,12 +1101,12 @@ scopes:
       - SrcK8S_HostName
       - DstK8S_HostName
     groups:
-      - udns
+      - networks
       - zones
       - clusters
       - clusters+zones
-      - clusters+udns
-      - udns+zones
+      - clusters+networks
+      - networks+zones
     filters:
       - src_host_name
       - dst_host_name
@@ -1105,9 +1125,9 @@ scopes:
       - zones
       - zones+hosts
       - hosts
-      - udns
-      - udns+zones
-      - udns+hosts
+      - networks
+      - networks+zones
+      - networks+hosts
     filters:
       - src_namespace
       - dst_namespace
@@ -1134,10 +1154,10 @@ scopes:
       - hosts
       - hosts+namespaces
       - namespaces
-      - udns
-      - udns+zones
-      - udns+hosts
-      - udns+namespaces
+      - networks
+      - networks+zones
+      - networks+hosts
+      - networks+namespaces
     filters:
       - src_owner_name
       - dst_owner_name
@@ -1177,11 +1197,11 @@ scopes:
       - namespaces
       - namespaces+owners
       - owners
-      - udns
-      - udns+zones
-      - udns+hosts
-      - udns+namespaces
-      - udns+owners
+      - networks
+      - networks+zones
+      - networks+hosts
+      - networks+namespaces
+      - networks+owners
     filters:
       - src_resource
       - dst_resource
@@ -1234,6 +1254,9 @@ fields:
   - name: SrcSubnetLabel
     type: string
     description: Source subnet label
+  - name: SrcK8S_NetworkName
+    type: string
+    description: Source network name
   - name: DstK8S_Name
     type: string
     description: Name of the destination Kubernetes object, such as Pod name, Service name or Node name.
@@ -1272,6 +1295,9 @@ fields:
   - name: DstSubnetLabel
     type: string
     description: Destination subnet label
+  - name: DstK8S_NetworkName
+    type: string
+    description: Destination network name
   - name: K8S_FlowLayer
     type: string
     description: "Flow layer: 'app' or 'infra'"
@@ -1311,7 +1337,7 @@ fields:
     description: Network interfaces
   - name: Udns
     type: string[]
-    description: Network interfaces UDNs mapping
+    description: List of User Defined Networks
   - name: Flags
     type: string[]
     description: |
@@ -1389,10 +1415,6 @@ fields:
   - name: K8S_ClusterName
     type: string
     description: Cluster name or identifier
-  - name: UdnId
-    type: string
-    description: User Defined Network
-    lokiLabel: true
   - name: _RecordType
     type: string
     description: "Type of record: 'flowLog' for regular flow logs, or 'newConnection', 'heartbeat', 'endConnection' for conversation tracking"
