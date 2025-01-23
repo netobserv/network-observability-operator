@@ -34,4 +34,3 @@ rules:
   verbs:
   - create
   - patch
-serviceAccountName: netobserv-controller-manager
