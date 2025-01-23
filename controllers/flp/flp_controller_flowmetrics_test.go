@@ -60,13 +60,24 @@ func ControllerFlowMetricsSpecs() {
 			Labels:     []string{"DstAddr"},
 		},
 	}
+	metric3 := metricslatest.FlowMetric{ // With nested labels
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "metric-3",
+			Namespace: operatorNamespace,
+		},
+		Spec: metricslatest.FlowMetricSpec{
+			MetricName: "m_3",
+			Type:       metricslatest.CounterMetric,
+			Labels:     []string{"NetworkEvents>Type", "NetworkEvents>Name"},
+		},
+	}
 	metricUnwatched := metricslatest.FlowMetric{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "metric-unwatched",
 			Namespace: otherNamespace,
 		},
 		Spec: metricslatest.FlowMetricSpec{
-			MetricName: "m_3",
+			MetricName: "m_unwatched",
 			Type:       metricslatest.CounterMetric,
 		},
 	}
@@ -121,6 +132,7 @@ func ControllerFlowMetricsSpecs() {
 			Expect(k8sClient.Create(ctx, &metric1)).Should(Succeed())
 			Expect(k8sClient.Create(ctx, &metricUnwatched)).Should(Succeed())
 			Expect(k8sClient.Create(ctx, &metric2)).Should(Succeed())
+			Expect(k8sClient.Create(ctx, &metric3)).Should(Succeed())
 		})
 
 		It("Should update configmap with custom metrics", func() {
@@ -139,6 +151,7 @@ func ControllerFlowMetricsSpecs() {
 				names := getSortedMetricsNames(metrics)
 				return slices.Contains(names, metric1.Spec.MetricName) &&
 					slices.Contains(names, metric2.Spec.MetricName) &&
+					slices.Contains(names, metric3.Spec.MetricName) &&
 					!slices.Contains(names, metricUnwatched.Spec.MetricName)
 			}))
 		})
@@ -153,6 +166,7 @@ func ControllerFlowMetricsSpecs() {
 			}, timeout, interval).Should(Satisfy(func(conds []metav1.Condition) bool {
 				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
 				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
+				// Metrics 1 has cardinality FINE (no label)
 				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionTrue &&
 					ready.Reason == "Ready" && card.Reason == string(cardinality.WarnFine)
 			}))
@@ -164,10 +178,25 @@ func ControllerFlowMetricsSpecs() {
 				}
 				return metric2.Status.Conditions
 			}, timeout, interval).Should(Satisfy(func(conds []metav1.Condition) bool {
+				// Metrics 2 has cardinality AVOID (Addr label)
 				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
 				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
 				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionFalse &&
 					ready.Reason == "Ready" && card.Reason == string(cardinality.WarnAvoid)
+			}))
+
+			Eventually(func() interface{} {
+				err := k8sClient.Get(ctx, helper.NamespacedName(&metric3), &metric3)
+				if err != nil {
+					return err
+				}
+				return metric3.Status.Conditions
+			}, timeout, interval).Should(Satisfy(func(conds []metav1.Condition) bool {
+				// Metrics 3 has cardinality FINE (NetworkEvents nested labels)
+				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
+				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
+				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionTrue &&
+					ready.Reason == "Ready" && card.Reason == string(cardinality.WarnFine)
 			}))
 		})
 	})
