@@ -79,6 +79,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 				IPField:         "SrcAddr",
 				MACField:        "SrcMac",
 				InterfacesField: "Interfaces",
+				UDNsField:       "Udns",
 				Output:          "SrcK8S",
 				AddZone:         addZone,
 			},
@@ -89,6 +90,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 				IPField:         "DstAddr",
 				MACField:        "DstMac",
 				InterfacesField: "Interfaces",
+				UDNsField:       "Udns",
 				Output:          "DstK8S",
 				AddZone:         addZone,
 			},
@@ -161,15 +163,11 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 
 	// Propagate 2dary networks config
 	var secondaryNetworks []api.SecondaryNetwork
-	hasOvnk := false
 	if b.desired.Processor.Advanced != nil && len(b.desired.Processor.Advanced.SecondaryNetworks) > 0 {
 		for _, sn := range b.desired.Processor.Advanced.SecondaryNetworks {
 			flpSN := api.SecondaryNetwork{
 				Name:  sn.Name,
 				Index: map[string]any{},
-			}
-			if sn.Name == ovnkSecondary {
-				hasOvnk = true
 			}
 			for _, index := range sn.Index {
 				flpSN.Index[strings.ToLower(string(index))] = nil
@@ -177,13 +175,10 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			secondaryNetworks = append(secondaryNetworks, flpSN)
 		}
 	}
-	if !hasOvnk && helper.IsUDNMappingEnabled(&b.desired.Agent.EBPF) {
+	if helper.IsUDNMappingEnabled(&b.desired.Agent.EBPF) {
 		secondaryNetworks = append(secondaryNetworks, api.SecondaryNetwork{
-			Name: ovnkSecondary,
-			Index: map[string]any{
-				"ip":        nil,
-				"interface": nil,
-			},
+			Name:  ovnkSecondary,
+			Index: map[string]any{"udn": nil},
 		})
 	}
 
