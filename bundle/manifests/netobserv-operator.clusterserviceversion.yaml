@@ -1040,6 +1040,18 @@ spec:
         - apiGroups:
           - config.openshift.io
           resources:
+          - clusteroperators
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - config.openshift.io
+          resources:
           - clusterversions
           - networks
           verbs:

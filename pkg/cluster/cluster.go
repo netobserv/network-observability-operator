@@ -11,6 +11,8 @@ import (
 	operatorv1 "github.com/openshift/api/operator/v1"
 	securityv1 "github.com/openshift/api/security/v1"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"k8s.io/apimachinery/pkg/types"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -39,10 +41,18 @@ func NewInfo(dcl *discovery.DiscoveryClient) (Info, error) {
 }
 
 func (c *Info) CheckClusterInfo(ctx context.Context, cl client.Client) error {
+	var errs []error
 	if c.IsOpenShift() && !c.fetchedClusterVersion {
 		if err := c.fetchOpenShiftClusterVersion(ctx, cl); err != nil {
-			return err
+			errs = append(errs, err)
 		}
+		if err := c.fetchOpenShiftClusterID(ctx, cl); err != nil {
+			errs = append(errs, err)
+		}
+		if len(errs) != 0 {
+			return kerrors.NewAggregate(errs)
+		}
+		c.fetchedClusterVersion = true
 	}
 	return nil
 }
@@ -75,21 +85,31 @@ func (c *Info) fetchAvailableAPIs(client *discovery.DiscoveryClient) error {
 }
 
 func (c *Info) fetchOpenShiftClusterVersion(ctx context.Context, cl client.Client) error {
-	key := client.ObjectKey{Name: "version"}
-	cversion := &configv1.ClusterVersion{}
-	if err := cl.Get(ctx, key, cversion); err != nil {
-		return fmt.Errorf("could not fetch ClusterVersion: %w", err)
+	cno := &configv1.ClusterOperator{}
+	err := cl.Get(ctx, types.NamespacedName{Name: "network"}, cno)
+	if err != nil {
+		return fmt.Errorf("error fetching OpenShift Cluster Network Operator: %w", err)
 	}
-	c.ID = string(cversion.Spec.ClusterID)
-	// Get version; use the same method as via `oc get clusterversion`, where printed column uses jsonPath:
-	// .status.history[?(@.state=="Completed")].version
-	for _, history := range cversion.Status.History {
-		if history.State == "Completed" {
-			c.openShiftVersion = semver.New(history.Version)
+	for _, v := range cno.Status.Versions {
+		if v.Name == "operator" {
+			ver, err := semver.NewVersion(v.Version)
+			if err != nil {
+				return fmt.Errorf("error parsing OpenShift Cluster Network Operator version: %w", err)
+			}
+			c.openShiftVersion = ver
 			break
 		}
 	}
-	c.fetchedClusterVersion = true
+	return nil
+}
+
+func (c *Info) fetchOpenShiftClusterID(ctx context.Context, cl client.Client) error {
+	key := client.ObjectKey{Name: "version"}
+	version := &configv1.ClusterVersion{}
+	if err := cl.Get(ctx, key, version); err != nil {
+		return fmt.Errorf("could not fetch ClusterVersion: %w", err)
+	}
+	c.ID = string(version.Spec.ClusterID)
 	return nil
 }
 

@@ -38,6 +38,7 @@ import (
 //+kubebuilder:rbac:urls="/metrics",verbs=get
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions/status,verbs=update;patch
+//+kubebuilder:rbac:groups=config.openshift.io,resources=clusteroperators,verbs=get;create;delete;update;patch;list;watch
 
 type Registerer func(context.Context, *Manager) error
 
