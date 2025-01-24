@@ -56,6 +56,7 @@ var (
 		api.OVN: &cni.OVNPlugin{},
 	}
 	multus = cni.MultusHandler{}
+	udn    = cni.UDNHandler{}
 )
 
 //nolint:revive
@@ -78,6 +79,8 @@ type Informers struct {
 	mdStopChan        chan struct{}
 	managedCNI        []string
 	secondaryNetworks []api.SecondaryNetwork
+	hasMultus         bool
+	hasUDN            bool
 	indexerHitMetric  *prometheus.CounterVec
 }
 
@@ -113,7 +116,18 @@ var (
 )
 
 func (k *Informers) BuildSecondaryNetworkKeys(flow config.GenericMap, rule *api.K8sRule) []cni.SecondaryNetKey {
-	return multus.BuildKeys(flow, rule, k.secondaryNetworks)
+	return buildSecondaryNetworkKeys(flow, rule, k.secondaryNetworks, k.hasMultus, k.hasUDN)
+}
+
+func buildSecondaryNetworkKeys(flow config.GenericMap, rule *api.K8sRule, secNet []api.SecondaryNetwork, hasMultus, hasUDN bool) []cni.SecondaryNetKey {
+	var keys []cni.SecondaryNetKey
+	if hasMultus {
+		keys = append(keys, multus.BuildKeys(flow, rule, secNet)...)
+	}
+	if hasUDN {
+		keys = append(keys, udn.BuildKeys(flow, rule)...)
+	}
+	return keys
 }
 
 func (k *Informers) GetInfo(potentialKeys []cni.SecondaryNetKey, ip string) (*Info, error) {
@@ -328,10 +342,22 @@ func (k *Informers) initPodInformer(informerFactory inf.SharedInformerFactory) e
 			}
 		}
 		// Index from secondary network info
-		keys, err := multus.GetPodUniqueKeys(pod, k.secondaryNetworks)
-		if err != nil {
-			// Log the error as Info, do not block other ips indexing
-			log.WithError(err).Infof("Secondary network cannot be identified")
+		var keys []string
+		var err error
+		if k.hasMultus {
+			keys, err = multus.GetPodUniqueKeys(pod, k.secondaryNetworks)
+			if err != nil {
+				// Log the error as Info, do not block other ips indexing
+				log.WithError(err).Infof("Secondary network cannot be identified")
+			}
+		}
+		if k.hasUDN {
+			if udnKeys, err := udn.GetPodUniqueKeys(pod); err != nil {
+				// Log the error as Info, do not block other ips indexing
+				log.WithError(err).Infof("UDNs cannot be identified")
+			} else {
+				keys = append(keys, udnKeys...)
+			}
 		}
 
 		return &Info{
@@ -449,6 +475,16 @@ func (k *Informers) InitFromConfig(cfg api.NetworkTransformKubeConfig, opMetrics
 		k.managedCNI = []string{api.OVN}
 	}
 	k.secondaryNetworks = cfg.SecondaryNetworks
+	for _, netConfig := range cfg.SecondaryNetworks {
+		for index := range netConfig.Index {
+			if multus.Manages(index) {
+				k.hasMultus = true
+			}
+			if udn.Manages(index) {
+				k.hasUDN = true
+			}
+		}
+	}
 	k.indexerHitMetric = opMetrics.CreateIndexerHitCounter()
 	err = k.initInformers(kubeClient, metaKubeClient)
 	if err != nil {

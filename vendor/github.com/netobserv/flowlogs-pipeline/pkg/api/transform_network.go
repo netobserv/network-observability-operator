@@ -88,6 +88,7 @@ type K8sReference struct {
 type K8sRule struct {
 	IPField         string `yaml:"ipField,omitempty" json:"ipField,omitempty" doc:"entry IP input field"`
 	InterfacesField string `yaml:"interfacesField,omitempty" json:"interfacesField,omitempty" doc:"entry Interfaces input field"`
+	UDNsField       string `yaml:"udnsField,omitempty" json:"udnsField,omitempty" doc:"entry UDNs input field"`
 	MACField        string `yaml:"macField,omitempty" json:"macField,omitempty" doc:"entry MAC input field"`
 	Output          string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
 	Assignee        string `yaml:"assignee,omitempty" json:"assignee,omitempty" doc:"value needs to assign to output field"`
@@ -97,7 +98,7 @@ type K8sRule struct {
 
 type SecondaryNetwork struct {
 	Name  string         `yaml:"name,omitempty" json:"name,omitempty" doc:"name of the secondary network, as mentioned in the annotation 'k8s.v1.cni.cncf.io/network-status'"`
-	Index map[string]any `yaml:"index,omitempty" json:"index,omitempty" doc:"fields to use for indexing, must be any combination of 'mac', 'ip', 'interface'"`
+	Index map[string]any `yaml:"index,omitempty" json:"index,omitempty" doc:"fields to use for indexing, must be any combination of 'mac', 'ip', 'interface', or 'udn'"`
 }
 
 type NetworkGenericRule struct {

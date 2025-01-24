@@ -26,6 +26,10 @@ type SecondaryNetKey struct {
 	Key         string
 }
 
+func (m *MultusHandler) Manages(indexKey string) bool {
+	return indexKey == indexIP || indexKey == indexMAC || indexKey == indexInterface
+}
+
 func (m *MultusHandler) BuildKeys(flow config.GenericMap, rule *api.K8sRule, secNets []api.SecondaryNetwork) []SecondaryNetKey {
 	if len(secNets) == 0 {
 		return nil
@@ -66,6 +70,9 @@ func (m *MultusHandler) buildSNKeys(flow config.GenericMap, rule *api.K8sRule, s
 		if !ok {
 			return nil
 		}
+	}
+	if mac == "" && ip == "" && len(interfaces) == 0 {
+		return nil
 	}
 
 	macIP := "~" + ip + "~" + mac
