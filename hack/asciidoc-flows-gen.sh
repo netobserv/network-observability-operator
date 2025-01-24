@@ -19,11 +19,15 @@ nbfields=$(yq '.fields | length' $FE_SOURCE)
 lokiLabels=$(cat $LOKI_LABEL_SOURCE)
 cardinalityMap=$(cat $CARDINALITY_SOURCE)
 otelMap=$(cat $OTEL_SOURCE)
+errors=""
 
 for i in $(seq 0 $(( $nbfields-1 )) ); do
   frontEntry=$(yq ".fields | sort_by(.name) | .[$i]" $FE_SOURCE)
   name=$(printf "$frontEntry" | yq ".name")
-  type=$(printf "$frontEntry" | yq ".type")
+  type=$(printf "$frontEntry" | yq ".docType")
+  if [[ "$type" == "null" ]]; then
+    type=$(printf "$frontEntry" | yq ".type")
+  fi
   desc=$(printf "$frontEntry" | yq ".description")
   filter=$(printf "$frontEntry" | yq ".filter")
   if [[ "$filter" == "null" ]]; then
@@ -44,8 +48,7 @@ for i in $(seq 0 $(( $nbfields-1 )) ); do
   fi
   cardWarn=$(printf "$cardinalityMap" | jq -r ".$name")
   if [[ "$cardWarn" == "null" ]]; then
-      echo "missing cardinality for field $name"
-      exit 1
+      errors="$errors\nmissing cardinality for field $name"
   fi
   otel=$(printf "$otelMap" | jq -r ".$name")
   if [[ "$otel" == "null" ]]; then
@@ -59,5 +62,10 @@ for i in $(seq 0 $(( $nbfields-1 )) ); do
   echo -e "| $cardWarn" >> $ADOC
   echo -e "| $otel" >> $ADOC
 done
+
+if [[ $errors != "" ]]; then
+  echo -e $errors
+  exit 1
+fi
 
 echo -e '|===' >> $ADOC

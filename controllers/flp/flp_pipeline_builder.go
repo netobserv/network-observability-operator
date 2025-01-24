@@ -23,6 +23,10 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
 
+const (
+	ovnkSecondary = "ovn-kubernetes"
+)
+
 type PipelineBuilder struct {
 	*config.PipelineBuilderStage
 	desired         *flowslatest.FlowCollectorSpec
@@ -157,17 +161,30 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 
 	// Propagate 2dary networks config
 	var secondaryNetworks []api.SecondaryNetwork
+	hasOvnk := false
 	if b.desired.Processor.Advanced != nil && len(b.desired.Processor.Advanced.SecondaryNetworks) > 0 {
 		for _, sn := range b.desired.Processor.Advanced.SecondaryNetworks {
 			flpSN := api.SecondaryNetwork{
 				Name:  sn.Name,
 				Index: map[string]any{},
 			}
+			if sn.Name == ovnkSecondary {
+				hasOvnk = true
+			}
 			for _, index := range sn.Index {
 				flpSN.Index[strings.ToLower(string(index))] = nil
 			}
 			secondaryNetworks = append(secondaryNetworks, flpSN)
 		}
+	}
+	if !hasOvnk && helper.IsUDNMappingEnabled(&b.desired.Agent.EBPF) {
+		secondaryNetworks = append(secondaryNetworks, api.SecondaryNetwork{
+			Name: ovnkSecondary,
+			Index: map[string]any{
+				"ip":        nil,
+				"interface": nil,
+			},
+		})
 	}
 
 	// enrich stage (transform) configuration
