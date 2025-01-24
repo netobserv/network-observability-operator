@@ -459,7 +459,7 @@ columns:
     field: Udns
     filter: udns
     default: true
-    width: 10
+    width: 15
     feature: udnMapping
   - id: FlowDirInts
     name: Interfaces and Directions
