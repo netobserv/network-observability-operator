@@ -2,13 +2,6 @@ apiVersion: v1
 kind: Service
 metadata:
   creationTimestamp: null
-  labels:
-    app.kubernetes.io/component: webhook
-    app.kubernetes.io/created-by: netobserv-operator
-    app.kubernetes.io/instance: webhook-service
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: service
-    app.kubernetes.io/part-of: netobserv-operator
   name: netobserv-webhook-service
 spec:
   ports:
