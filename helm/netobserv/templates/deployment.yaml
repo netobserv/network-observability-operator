@@ -77,6 +77,7 @@ spec:
           readOnly: true
       securityContext:
         runAsNonRoot: true
+      serviceAccountName: netobserv-controller-manager
       terminationGracePeriodSeconds: 10
       volumes:
       - name: cert
