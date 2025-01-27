@@ -117,8 +117,6 @@ endif
 
 all: help
 
-include .bingo/Variables.mk
-
 # build a single arch target provided as argument
 define build_target
 	echo 'building image for arch $(1)'; \

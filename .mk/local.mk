@@ -1,6 +1,12 @@
 ##@ Local (Kind)
-CERT_MANAGER_VERSION=v1.9.1
+KIND_VERSION=v0.22.0
+CERT_MANAGER_VERSION=v1.16.3
 CERT_MANAGER_URL ?= "https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MANAGER_VERSION)/cert-manager.yaml"
+
+.PHONY: prereqs-kind
+prereqs-kind: ## Check if prerequisites are met for running kind, and install missing dependencies
+	@echo "### Checking if KIND prerequisites are met, and installing missing dependencies"
+	GOFLAGS="" go install sigs.k8s.io/kind@$(KIND_VERSION)
 
 .PHONY: install-cert-manager
 install-cert-manager: ## Install cert manager onto the target kubernetes cluster
@@ -13,13 +19,13 @@ uninstall-cert-manager: ## Uninstall cert manager from the target kubernetes clu
 	kubectl delete -f $(CERT_MANAGER_URL)
 
 .PHONY: create-kind-cluster
-create-kind-cluster: $(KIND) ## Create kind cluster
-	-$(KIND) create cluster --config config/kind/kind.config.yaml
+create-kind-cluster: prereqs-kind ## Create kind cluster
+	kind create cluster --config config/kind/kind.config.yaml
 	kubectl cluster-info --context kind-kind
 
 .PHONY: delete-kind-cluster
-delete-kind-cluster: $(KIND) ## Delete kind cluster
-	$(KIND) delete cluster
+delete-kind-cluster: prereqs-kind ## Delete kind cluster
+	kind delete cluster
 
 .PHONY: local-deploy
 local-deploy: create-kind-cluster install-cert-manager deploy-all  ## Local deploy (kind, loki, grafana, example-cr and sample-workload excluding the operator)
