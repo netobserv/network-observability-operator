@@ -1,0 +1,21 @@
+# The following manifests contain a self-signed issuer CR and a certificate CR.
+# More document can be found at https://docs.cert-manager.io
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: serving-cert
+spec:
+  dnsNames:
+  - netobserv-webhook-service.{{ .Release.Namespace }}.svc
+  - netobserv-webhook-service.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: selfsigned-issuer
+  secretName: webhook-server-cert
