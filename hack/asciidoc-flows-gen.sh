@@ -63,9 +63,9 @@ for i in $(seq 0 $(( $nbfields-1 )) ); do
   echo -e "| $otel" >> $ADOC
 done
 
+echo -e '|===' >> $ADOC
+
 if [[ $errors != "" ]]; then
   echo -e $errors
   exit 1
 fi
-
-echo -e '|===' >> $ADOC

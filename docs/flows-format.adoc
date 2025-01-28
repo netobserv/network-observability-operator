@@ -99,6 +99,13 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | yes
 | fine
 | destination.k8s.namespace.name
+| `DstK8S_NetworkName`
+| string
+| Destination network name
+| `dst_network`
+| no
+| null
+| n/a
 | `DstK8S_OwnerName`
 | string
 | Name of the destination owner, such as Deployment name, StatefulSet name, etc.
@@ -156,14 +163,14 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | fine
 | n/a
 | `Flags`
-| number
-| Logical OR combination of unique TCP flags comprised in the flow, as per RFC-9293, with additional custom flags to represent the following per-packet combinations: +
-- SYN+ACK (0x100) +
-- FIN+ACK (0x200) +
-- RST+ACK (0x400)
+| string[]
+| List of TCP flags comprised in the flow, as per RFC-9293, with additional custom flags to represent the following per-packet combinations: +
+- SYN_ACK +
+- FIN_ACK +
+- RST_ACK
 | `tcp_flags`
 | no
-| fine
+| careful
 | tcp.flags
 | `FlowDirection`
 | number
@@ -190,7 +197,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | fine
 | icmp.type
 | `IfDirections`
-| number
+| number[]
 | Flow directions from the network interface observation point. Can be one of: +
 - 0: Ingress (interface incoming traffic) +
 - 1: Egress (interface outgoing traffic)
@@ -199,7 +206,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | fine
 | interface.directions
 | `Interfaces`
-| string
+| string[]
 | Network interfaces
 | `interfaces`
 | no
@@ -220,8 +227,14 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | fine
 | k8s.layer
 | `NetworkEvents`
-| string
-| Network events flow monitoring
+| object[]
+| Network events, such as network policy actions, composed of nested fields: +
+- Feature (such as "acl" for network policies) +
+- Type (such as an "AdminNetworkPolicy") +
+- Namespace (namespace where the event applies, if any) +
+- Name (name of the resource that triggered the event) +
+- Action (such as "allow" or "drop") +
+- Direction (Ingress or Egress)
 | `network_events`
 | no
 | avoid
@@ -229,7 +242,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | `Packets`
 | number
 | Number of packets
-| n/a
+| `pkt_drop_cause`
 | no
 | avoid
 | packets
@@ -275,6 +288,13 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | no
 | fine
 | protocol
+| `Sampling`
+| number
+| Sampling rate used for this flow
+| n/a
+| no
+| fine
+| n/a
 | `SrcAddr`
 | string
 | Source IP address (ipv4 or ipv6)
@@ -310,6 +330,13 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | yes
 | fine
 | source.k8s.namespace.name
+| `SrcK8S_NetworkName`
+| string
+| Source network name
+| `src_network`
+| no
+| null
+| n/a
 | `SrcK8S_OwnerName`
 | string
 | Name of the source owner, such as Deployment name, StatefulSet name, etc.
@@ -387,6 +414,48 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | no
 | avoid
 | timereceived
+| `Udns`
+| string[]
+| List of User Defined Networks
+| `udns`
+| no
+| null
+| n/a
+| `XlatDstAddr`
+| string
+| packet translation dst address
+| `xlat_dst_address`
+| no
+| avoid
+| n/a
+| `XlatDstPort`
+| number
+| packet translation dst port
+| `xlat_dst_port`
+| no
+| careful
+| n/a
+| `XlatSrcAddr`
+| string
+| packet translation src address
+| `xlat_src_address`
+| no
+| avoid
+| n/a
+| `XlatSrcPort`
+| number
+| packet translation src port
+| `xlat_src_port`
+| no
+| careful
+| n/a
+| `ZoneId`
+| number
+| packet translation zone id
+| `xlat_zone_id`
+| no
+| avoid
+| n/a
 | `_HashId`
 | string
 | In conversation tracking, the conversation identifier
