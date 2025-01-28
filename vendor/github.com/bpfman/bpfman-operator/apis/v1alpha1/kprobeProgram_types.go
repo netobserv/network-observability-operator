@@ -71,10 +71,6 @@ type KprobeProgramInfo struct {
 	// +optional
 	// +kubebuilder:default:=false
 	RetProbe bool `json:"retprobe"`
-
-	// // Host PID of container to attach the uprobe in. (Not supported yet by bpfman.)
-	// // +optional
-	// ContainerPid string `json:"containerpid"`
 }
 
 // KprobeProgramStatus defines the observed state of KprobeProgram

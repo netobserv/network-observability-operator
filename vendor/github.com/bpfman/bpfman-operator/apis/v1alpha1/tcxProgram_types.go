@@ -58,6 +58,12 @@ type TcxProgramInfo struct {
 	// Selector to determine the network interface (or interfaces)
 	InterfaceSelector InterfaceSelector `json:"interfaceselector"`
 
+	// Containers identifies the set of containers in which to attach the eBPF
+	// program. If Containers is not specified, the BPF program will be attached
+	// in the root network namespace.
+	// +optional
+	Containers *ContainerSelector `json:"containers"`
+
 	// Direction specifies the direction of traffic the tcx program should
 	// attach to for a given network device.
 	// +kubebuilder:validation:Enum=ingress;egress
@@ -71,7 +77,7 @@ type TcxProgramInfo struct {
 	Priority int32 `json:"priority"`
 }
 
-// TcxProgramStatus defines the observed state of TcProgram
+// TcxProgramStatus defines the observed state of TcxProgram
 type TcxProgramStatus struct {
 	BpfProgramStatusCommon `json:",inline"`
 }

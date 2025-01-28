@@ -17,7 +17,7 @@ func CreateHealthDashboard(netobsNs, nsFlowsMetric string) (string, error) {
 		NewPanel("Sampling", metricslatest.ChartTypeSingleStat, "", 3, NewTarget(
 			"avg(netobserv_agent_sampling_rate)", "")),
 		NewPanel("Errors last minute", metricslatest.ChartTypeSingleStat, "", 3, NewTarget(
-			`(sum(increase(netobserv_agent_errors_total[1m])) OR on() vector(0))
+			`(sum(increase(netobserv_agent_errors_total{severity!="low"}[1m])) OR on() vector(0))
 			+ (sum(increase(netobserv_ingest_errors[1m])) OR on() vector(0))
 			+ (sum(increase(netobserv_encode_prom_errors[1m])) OR on() vector(0))
 			+ (sum(increase(netobserv_loki_batch_retries_total[1m])) OR on() vector(0))
@@ -90,7 +90,7 @@ func CreateHealthDashboard(netobsNs, nsFlowsMetric string) (string, error) {
 			NewTarget(`sum(netobserv_agent_buffer_size) by (name)`, "{{name}}"),
 		),
 		NewPanel("Errors per minute", metricslatest.ChartTypeStackArea, "", 4,
-			NewTarget(`sum(increase(netobserv_agent_errors_total[1m])) by (component, error)`, "{{component}} {{error}}"),
+			NewTarget(`sum(increase(netobserv_agent_errors_total[1m])) by (component, error, severity)`, "{{component}} {{error}} (sev: {{severity}})"),
 		),
 		NewPanel("Filtered flows rate", metricslatest.ChartTypeStackArea, "", 4,
 			NewTarget("sum(rate(netobserv_agent_filtered_flows_total[1m])) by (source, reason)", "{{source}} {{reason}}"),
