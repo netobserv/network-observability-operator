@@ -217,6 +217,18 @@ This feature requires mounting the kernel debug filesystem, so the eBPF agent po
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
 IMPORTANT: This feature is available as a Developer Preview. +
 
+- `PacketTranslation`: enable enriching flows with packet's translation information.  +
+
+- `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs.  +
+
+IMPORTANT: This feature is available as a Developer Preview. +
+
+- `UDNMapping`, to enable interfaces mappind to udn.  +
+
+This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
+It requires using the OVN-Kubernetes network plugin with the Observability feature.
+IMPORTANT: This feature is available as a Developer Preview. +
+
 
 | `flowFilter`
 | `object`
@@ -407,6 +419,11 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
 | `integer`
 | `icmpType`, for ICMP traffic, optionally defines the ICMP type to filter flows by.
 
+| `peerCIDR`
+| `string`
+| `peerCIDR` defines the Peer IP CIDR to filter flows by.
+Examples: `10.10.10.0/24` or `100:100:100:100::/64`
+
 | `peerIP`
 | `string`
 | `peerIP` optionally defines the remote IP address to filter flows by.
@@ -426,6 +443,114 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
 | `protocol`
 | `string`
 | `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.
+
+| `rules`
+| `array`
+| `flowFilterRules` defines a list of ebpf agent flow filtering rules
+
+| `sampling`
+| `integer`
+| `sampling` sampling rate for the matched flow
+
+| `sourcePorts`
+| `integer-or-string`
+| `sourcePorts` optionally defines the source ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example, `sourcePorts: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `sourcePorts: "80-100"`.
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
+
+| `tcpFlags`
+| `string`
+| `tcpFlags` optionally defines TCP flags to filter flows by.
+In addition to the standard flags (RFC-9293), you can also filter by one of the three following combinations: `SYN-ACK`, `FIN-ACK`, and `RST-ACK`.
+
+|===
+== .spec.agent.ebpf.flowFilter.rules
+Description::
++
+--
+`flowFilterRules` defines a list of ebpf agent flow filtering rules
+--
+
+Type::
+  `array`
+
+
+
+
+== .spec.agent.ebpf.flowFilter.rules[]
+Description::
++
+--
+`EBPFFlowFilterRule` defines the desired eBPF agent configuration regarding flow filtering rule.
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `action`
+| `string`
+| `action` defines the action to perform on the flows that match the filter. The available options are `Accept`, which is the default, and `Reject`.
+
+| `cidr`
+| `string`
+| `cidr` defines the IP CIDR to filter flows by.
+Examples: `10.10.10.0/24` or `100:100:100:100::/64`
+
+| `destPorts`
+| `integer-or-string`
+| `destPorts` optionally defines the destination ports to filter flows by.
+To filter a single port, set a single port as an integer value. For example, `destPorts: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `destPorts: "80-100"`.
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
+
+| `direction`
+| `string`
+| `direction` optionally defines a direction to filter flows by. The available options are `Ingress` and `Egress`.
+
+| `icmpCode`
+| `integer`
+| `icmpCode`, for Internet Control Message Protocol (ICMP) traffic, optionally defines the ICMP code to filter flows by.
+
+| `icmpType`
+| `integer`
+| `icmpType`, for ICMP traffic, optionally defines the ICMP type to filter flows by.
+
+| `peerCIDR`
+| `string`
+| `peerCIDR` defines the Peer IP CIDR to filter flows by.
+Examples: `10.10.10.0/24` or `100:100:100:100::/64`
+
+| `peerIP`
+| `string`
+| `peerIP` optionally defines the remote IP address to filter flows by.
+Example: `10.10.10.10`.
+
+| `pktDrops`
+| `boolean`
+| `pktDrops` optionally filters only flows containing packet drops.
+
+| `ports`
+| `integer-or-string`
+| `ports` optionally defines the ports to filter flows by. It is used both for source and destination ports.
+To filter a single port, set a single port as an integer value. For example, `ports: 80`.
+To filter a range of ports, use a "start-end" range in string format. For example, `ports: "80-100"`.
+To filter two ports, use a "port1,port2" in string format. For example, `ports: "80,100"`.
+
+| `protocol`
+| `string`
+| `protocol` optionally defines a protocol to filter flows by. The available options are `TCP`, `UDP`, `ICMP`, `ICMPv6`, and `SCTP`.
+
+| `sampling`
+| `integer`
+| `sampling` sampling rate for the matched flow
 
 | `sourcePorts`
 | `integer-or-string`
@@ -2575,6 +2700,16 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 | `string`
 | `clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using {product-title}, leave empty to make it automatically determined.
 
+| `deduper`
+| `object`
+| `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
+IMPORTANT: This feature is available as a Developer Preview.
+
+| `filters`
+| `array`
+| `filters` let you define custom filters to limit the amount of generated flows.
+IMPORTANT: This feature is available as a Developer Preview.
+
 | `imagePullPolicy`
 | `string`
 | `imagePullPolicy` is the Kubernetes pull policy for the image defined above
@@ -2605,13 +2740,13 @@ This setting is ignored when Kafka is disabled.
 | `string`
 | `logTypes` defines the desired record types to generate. Possible values are: +
 
-- `Flows` (default) to export regular network flows +
+- `Flows` (default) to export regular network flows. +
 
-- `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates +
+- `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates. +
 
-- `EndedConversations` to generate only ended conversations events +
+- `EndedConversations` to generate only ended conversations events. +
 
-- `All` to generate both network flows and all conversations events +
+- `All` to generate both network flows and all conversations events. It is not recommended due to the impact on resources footprint. +
 
 
 | `metrics`
@@ -2815,6 +2950,131 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
 | `name` should match the network name as visible in the pods annotation 'k8s.v1.cni.cncf.io/network-status'.
 
 |===
+== .spec.processor.deduper
+Description::
++
+--
+`deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
+IMPORTANT: This feature is available as a Developer Preview.
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `mode`
+| `string`
+| Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication because the Agent cannot de-duplicate same flows reported from different nodes. +
+
+- Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer, or network events. +
+
+- Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500. +
+
+- Use `Disabled` to turn off Processor-based de-duplication. +
+
+
+| `sampling`
+| `integer`
+| `sampling` is the sampling rate when deduper `mode` is `Sample`.
+
+|===
+== .spec.processor.filters
+Description::
++
+--
+`filters` let you define custom filters to limit the amount of generated flows.
+IMPORTANT: This feature is available as a Developer Preview.
+--
+
+Type::
+  `array`
+
+
+
+
+== .spec.processor.filters[]
+Description::
++
+--
+`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions
+--
+
+Type::
+  `object`
+
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `allOf`
+| `array`
+| `filters` is a list of matches that must be all satisfied in order to remove a flow.
+
+| `outputTarget`
+| `string`
+| If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.
+
+| `sampling`
+| `integer`
+| `sampling` is an optional sampling rate to apply to this filter.
+
+|===
+== .spec.processor.filters[].allOf
+Description::
++
+--
+`filters` is a list of matches that must be all satisfied in order to remove a flow.
+--
+
+Type::
+  `array`
+
+
+
+
+== .spec.processor.filters[].allOf[]
+Description::
++
+--
+`FLPSingleFilter` defines the desired configuration for a single FLP-based filter
+--
+
+Type::
+  `object`
+
+Required::
+  - `field`
+  - `matchType`
+
+
+
+[cols="1,1,1",options="header"]
+|===
+| Property | Type | Description
+
+| `field`
+| `string`
+| Name of the field to filter on
+Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.
+
+| `matchType`
+| `string`
+| Type of matching to apply
+
+| `value`
+| `string`
+| Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.
+
+|===
 == .spec.processor.kafkaConsumerAutoscaler
 Description::
 +
@@ -2865,7 +3125,8 @@ Note that the more metrics you add, the bigger is the impact on Prometheus workl
 Metrics enabled by default are:
 `namespace_flows_total`, `node_ingress_bytes_total`, `node_egress_bytes_total`, `workload_ingress_bytes_total`,
 `workload_egress_bytes_total`, `namespace_drop_packets_total` (when `PacketDrop` feature is enabled),
-`namespace_rtt_seconds` (when `FlowRTT` feature is enabled), `namespace_dns_latency_seconds` (when `DNSTracking` feature is enabled).
+`namespace_rtt_seconds` (when `FlowRTT` feature is enabled), `namespace_dns_latency_seconds` (when `DNSTracking` feature is enabled),
+`namespace_network_policy_events_total` (when `NetworkEvents` feature is enabled).
 More information, with full list of available metrics: https://github.com/netobserv/network-observability-operator/blob/main/docs/Metrics.md
 
 | `server`
