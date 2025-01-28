@@ -410,11 +410,11 @@ type FlowCollectorEBPF struct {
 type FlowCollectorKafka struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
-	//+kubebuilder:default:=""
+	// +kubebuilder:default:=""
 	// Address of the Kafka server
 	Address string `json:"address"`
 
-	//+kubebuilder:default:=""
+	// +kubebuilder:default:=""
 	// Kafka topic to use. It must exist. NetObserv does not create it.
 	Topic string `json:"topic"`
 
@@ -428,11 +428,12 @@ type FlowCollectorKafka struct {
 }
 
 type FlowCollectorIPFIXReceiver struct {
-	//+kubebuilder:default:=""
+	// +kubebuilder:default:=""
 	// Address of the IPFIX external receiver.
 	TargetHost string `json:"targetHost"`
 
 	// Port for the IPFIX external receiver.
+	// +kubebuilder:default:=4739
 	TargetPort int `json:"targetPort"`
 
 	// Transport protocol (`TCP` or `UDP`) to be used for the IPFIX connection, defaults to `TCP`.
@@ -444,13 +445,13 @@ type FlowCollectorIPFIXReceiver struct {
 
 type FlowCollectorOpenTelemetryLogs struct {
 	// Set `enable` to `true` to send logs to an OpenTelemetry receiver.
-	//+kubebuilder:default:=true
+	// +kubebuilder:default:=true
 	Enable *bool `json:"enable,omitempty"`
 }
 
 type FlowCollectorOpenTelemetryMetrics struct {
 	// Set `enable` to `true` to send metrics to an OpenTelemetry receiver.
-	//+kubebuilder:default:=true
+	// +kubebuilder:default:=true
 	Enable *bool `json:"enable,omitempty"`
 
 	// Specify how often metrics are sent to a collector.
@@ -472,6 +473,7 @@ type FlowCollectorOpenTelemetry struct {
 	TargetHost string `json:"targetHost"`
 
 	// Port for the OpenTelemetry receiver.
+	// +kubebuilder:default:=4317
 	TargetPort int `json:"targetPort"`
 
 	// Protocol of the OpenTelemetry connection. The available options are `http` and `grpc`.

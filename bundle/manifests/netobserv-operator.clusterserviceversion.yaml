@@ -732,6 +732,10 @@ spec:
         path: exporters[0].kafka
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:exporters.type:Kafka
+      - displayName: OpenTelemetry configuration
+        path: exporters[0].openTelemetry
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:fieldDependency:exporters.type:OpenTelemetry
       - displayName: Exclude interfaces
         path: agent.ebpf.excludeInterfaces
       - displayName: Features
