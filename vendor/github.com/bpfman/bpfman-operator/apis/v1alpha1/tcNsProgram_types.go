@@ -1,5 +1,5 @@
 /*
-Copyright 2022.
+Copyright 2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,12 +23,11 @@ import (
 )
 
 // +genclient
-// +genclient:nonNamespaced
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster
+//+kubebuilder:resource:scope=Namespaced
 
-// TcProgram is the Schema for the TcProgram API
+// TcNsProgram is the Schema for the TcNsProgram API
 // +kubebuilder:printcolumn:name="BpfFunctionName",type=string,JSONPath=`.spec.bpffunctionname`
 // +kubebuilder:printcolumn:name="NodeSelector",type=string,JSONPath=`.spec.nodeselector`
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.conditions[0].reason`
@@ -36,36 +35,31 @@ import (
 // +kubebuilder:printcolumn:name="Direction",type=string,JSONPath=`.spec.direction`,priority=1
 // +kubebuilder:printcolumn:name="InterfaceSelector",type=string,JSONPath=`.spec.interfaceselector`,priority=1
 // +kubebuilder:printcolumn:name="ProceedOn",type=string,JSONPath=`.spec.proceedon`,priority=1
-type TcProgram struct {
+type TcNsProgram struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec TcProgramSpec `json:"spec"`
+	Spec TcNsProgramSpec `json:"spec"`
 	// +optional
 	Status TcProgramStatus `json:"status,omitempty"`
 }
 
-// +kubebuilder:validation:Enum=unspec;ok;reclassify;shot;pipe;stolen;queued;repeat;redirect;trap;dispatcher_return
-type TcProceedOnValue string
-
-// TcProgramSpec defines the desired state of TcProgram
-type TcProgramSpec struct {
-	TcProgramInfo `json:",inline"`
-	BpfAppCommon  `json:",inline"`
+// TcNsProgramSpec defines the desired state of TcNsProgram
+type TcNsProgramSpec struct {
+	TcNsProgramInfo `json:",inline"`
+	BpfAppCommon    `json:",inline"`
 }
 
-// TcProgramInfo defines the tc program details
-type TcProgramInfo struct {
+// TcNsProgramInfo defines the tc program details
+type TcNsProgramInfo struct {
 	BpfProgramCommon `json:",inline"`
 
 	// Selector to determine the network interface (or interfaces)
 	InterfaceSelector InterfaceSelector `json:"interfaceselector"`
 
 	// Containers identifies the set of containers in which to attach the eBPF
-	// program. If Containers is not specified, the BPF program will be attached
-	// in the root network namespace.
-	// +optional
-	Containers *ContainerSelector `json:"containers"`
+	// program.
+	Containers ContainerNsSelector `json:"containers"`
 
 	// Priority specifies the priority of the tc program in relation to
 	// other programs of the same type with the same attach point. It is a value
@@ -87,15 +81,10 @@ type TcProgramInfo struct {
 	ProceedOn []TcProceedOnValue `json:"proceedon"`
 }
 
-// TcProgramStatus defines the observed state of TcProgram
-type TcProgramStatus struct {
-	BpfProgramStatusCommon `json:",inline"`
-}
-
 // +kubebuilder:object:root=true
-// TcProgramList contains a list of TcPrograms
-type TcProgramList struct {
+// TcNsProgramList contains a list of TcNsPrograms
+type TcNsProgramList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []TcProgram `json:"items"`
+	Items           []TcNsProgram `json:"items"`
 }

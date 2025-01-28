@@ -53,6 +53,20 @@ type ContainerSelector struct {
 	ContainerNames *[]string `json:"containernames,omitempty"`
 }
 
+// ContainerNsSelector identifies a set of containers. It is different from ContainerSelector
+// in that "Namespace" was removed. Namespace scoped programs can only attach to the namespace
+// they are created in, so namespace at this level doesn't apply.
+type ContainerNsSelector struct {
+	// Target pods. This field must be specified, to select all pods use
+	// standard metav1.LabelSelector semantics and make it empty.
+	Pods metav1.LabelSelector `json:"pods"`
+
+	// Name(s) of container(s).  If none are specified, all containers in the
+	// pod are selected.
+	// +optional
+	ContainerNames *[]string `json:"containernames,omitempty"`
+}
+
 // BpfProgramCommon defines the common attributes for all BPF programs
 type BpfProgramCommon struct {
 	// BpfFunctionName is the name of the function that is the entry point for the BPF
