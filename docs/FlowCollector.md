@@ -294,7 +294,8 @@ If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<
 the kernel debug filesystem, so the eBPF pod has to run as privileged.
 - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
 - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
-- `UDNMapping`, to enable interfaces mappind to udn. <br><br/>
+- `UDNMapping`, to enable interfaces mappind to udn. <br>
+- `IPSEC`, to track flows with IPsec encryption. <br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6284,6 +6285,7 @@ IMPORTANT: This feature is available as a Developer Preview.<br>
 - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
 IMPORTANT: This feature is available as a Developer Preview.<br>
 - `UDNMapping`, to enable interfaces mappind to udn. <br>
+- `IPSEC`, to track flows with IPsec encryption. <br>
 This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
 IMPORTANT: This feature is available as a Developer Preview.<br><br/>

@@ -123,6 +123,7 @@ spec:
                             - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
                             - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
                             - `UDNMapping`, to enable interfaces mappind to udn. <br>
+                            - `IPSEC`, to track flows with IPsec encryption. <br>
                           items:
                             description: |-
                               Agent feature, can be one of:<br>
@@ -133,6 +134,7 @@ spec:
                               - `PacketTranslation`, to enrich flows with packets translation information. <br>
                               - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
                               - `UDNMapping`, to enable interfaces mappind to udn [Developer Preview]. <br>
+                              - `IPSEC`, to track flows with IPsec encryption. <br>
                             enum:
                               - PacketDrop
                               - DNSTracking
@@ -141,6 +143,7 @@ spec:
                               - PacketTranslation
                               - EbpfManager
                               - UDNMapping
+                              - IPSEC
                             type: string
                           type: array
                         flowFilter:
@@ -3645,6 +3648,7 @@ spec:
                             - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
                             IMPORTANT: This feature is available as a Developer Preview.<br>
                             - `UDNMapping`, to enable interfaces mappind to udn. <br>
+                            - `IPSEC`, to track flows with IPsec encryption. <br>
                             This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
                             It requires using the OVN-Kubernetes network plugin with the Observability feature.
                             IMPORTANT: This feature is available as a Developer Preview.<br>
@@ -3658,6 +3662,7 @@ spec:
                               - `PacketTranslation`, to enrich flows with packets translation information. <br>
                               - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
                               - `UDNMapping`, to enable interfaces mappind to udn [Developer Preview]. <br>
+                              - `IPSEC`, to track flows with IPsec encryption. <br>
                             enum:
                               - PacketDrop
                               - DNSTracking
@@ -3666,6 +3671,7 @@ spec:
                               - PacketTranslation
                               - EbpfManager
                               - UDNMapping
+                              - IPSEC
                             type: string
                           type: array
                         flowFilter:

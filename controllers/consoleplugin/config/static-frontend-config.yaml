@@ -657,6 +657,13 @@ columns:
     default: false
     width: 15
     feature: packetTranslation
+  - id: IPsec
+    name: Encrypted
+    field: EncryptedFlow
+    filter: encrypted
+    default: true
+    width: 10
+    feature: ipsec
 filters:
   - id: cluster_name
     name: Cluster
@@ -1057,6 +1064,9 @@ filters:
     component: autocomplete
     category: destination
     hint: Specify a single port number or name.
+  - id: encrypted
+    name: encrypted flow
+    component: number
 scopes:
   - id: cluster
     name: Cluster
@@ -1415,6 +1425,9 @@ fields:
   - name: K8S_ClusterName
     type: string
     description: Cluster name or identifier
+  - name: EncryptedFlow
+    type: boolean
+    description: encrypted flow
   - name: _RecordType
     type: string
     description: "Type of record: 'flowLog' for regular flow logs, or 'newConnection', 'heartbeat', 'endConnection' for conversation tracking"

@@ -70,6 +70,7 @@ const (
 	envEnablePacketTranslation    = "ENABLE_PKT_TRANSLATION"
 	envEnableEbpfMgr              = "EBPF_PROGRAM_MANAGER_MODE"
 	envEnableUDNMapping           = "ENABLE_UDN_MAPPING"
+	envEnableIPsec                = "ENABLE_IPSEC_TRACKING"
 	envListSeparator              = ","
 )
 
@@ -748,6 +749,13 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	if helper.IsDNSTrackingEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableDNSTracking,
+			Value: "true",
+		})
+	}
+
+	if helper.IsIPSecEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableIPsec,
 			Value: "true",
 		})
 	}
