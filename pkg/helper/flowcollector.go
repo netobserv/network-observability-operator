@@ -138,6 +138,10 @@ func IsUDNMappingEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 	return IsAgentFeatureEnabled(spec, flowslatest.UDNMapping)
 }
 
+func IsIPSecEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+	return IsAgentFeatureEnabled(spec, flowslatest.IPSec)
+}
+
 func IsConntrack(spec *flowslatest.FlowCollectorFLP) bool {
 	return spec != nil && spec.LogTypes != nil && *spec.LogTypes != flowslatest.LogTypeFlows
 }
