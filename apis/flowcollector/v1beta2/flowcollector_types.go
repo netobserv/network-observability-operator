@@ -178,7 +178,8 @@ type FlowCollectorIPFIX struct {
 // - `PacketTranslation`, to enrich flows with packets translation information. <br>
 // - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
 // - `UDNMapping`, to enable interfaces mappind to udn [Developer Preview]. <br>
-// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation";"EbpfManager";"UDNMapping"
+// - `IPSEC`, to track flows with IPsec encryption. <br>
+// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation";"EbpfManager";"UDNMapping";"IPSEC"
 type AgentFeature string
 
 const (
@@ -189,6 +190,7 @@ const (
 	PacketTranslation AgentFeature = "PacketTranslation"
 	EbpfManager       AgentFeature = "EbpfManager"
 	UDNMapping        AgentFeature = "UDNMapping"
+	IPSEC             AgentFeature = "IPSEC"
 )
 
 // Name of an eBPF agent alert.
@@ -391,6 +393,7 @@ type FlowCollectorEBPF struct {
 	// - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
 	// IMPORTANT: This feature is available as a Developer Preview.<br>
 	// - `UDNMapping`, to enable interfaces mappind to udn. <br>
+	// - `IPSEC`, to track flows with IPsec encryption. <br>
 	// This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 	// It requires using the OVN-Kubernetes network plugin with the Observability feature.
 	// IMPORTANT: This feature is available as a Developer Preview.<br>
