@@ -1,7 +1,7 @@
 build==1.2.2.post1
 click==8.1.7
 flit_core==3.9.0
-packaging==24.1
+packaging==24.2
 pip-tools==7.4.1
 pyproject_hooks==1.2.0
 ruamel.yaml==0.18.6
