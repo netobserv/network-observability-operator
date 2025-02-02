@@ -6067,6 +6067,7 @@ spec:
                           description: Address of the IPFIX external receiver.
                           type: string
                         targetPort:
+                          default: 4739
                           description: Port for the IPFIX external receiver.
                           type: integer
                         transport:
@@ -6303,6 +6304,7 @@ spec:
                           description: Address of the OpenTelemetry receiver.
                           type: string
                         targetPort:
+                          default: 4317
                           description: Port for the OpenTelemetry receiver.
                           type: integer
                         tls:
