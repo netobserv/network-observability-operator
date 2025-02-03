@@ -294,7 +294,7 @@ If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<
 the kernel debug filesystem, so the eBPF pod has to run as privileged.
 - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
 - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
-- `UDNMapping`, to enable interfaces mappind to udn. <br><br/>
+- `UDNMapping`, to enable interfaces mapping to udn. <br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -537,7 +537,9 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b><a href="#flowcollectorspecagentebpfflowfilterrulesindex">rules</a></b></td>
         <td>[]object</td>
         <td>
-          `flowFilterRules` defines a list of ebpf agent flow filtering rules<br/>
+          `rules` defines a list of filtering rules on the eBPF Agents.
+When filtering is enabled, by default, flows that don't match any rule are rejected.
+To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6106,7 +6108,7 @@ Kafka can provide better scalability, resiliency, and high availability (for mor
         <td><b><a href="#flowcollectorspecexportersindex-1">exporters</a></b></td>
         <td>[]object</td>
         <td>
-          `exporters` define additional optional exporters for custom consumption or storage.<br/>
+          `exporters` defines additional optional exporters for custom consumption or storage.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6280,10 +6282,10 @@ If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<
 This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
 IMPORTANT: This feature is available as a Developer Preview.<br>
-- `PacketTranslation`: enable enriching flows with packet's translation information. <br>
-- `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
+- `PacketTranslation`: enable enriching flows with packet translation information, such as Service NAT.<br>
+- `EbpfManager`: use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
 IMPORTANT: This feature is available as a Developer Preview.<br>
-- `UDNMapping`, to enable interfaces mappind to udn. <br>
+- `UDNMapping`, to enable interfaces mapping to User Defined Networks (UDN). <br>
 This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
 IMPORTANT: This feature is available as a Developer Preview.<br><br/>
@@ -8283,14 +8285,16 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b><a href="#flowcollectorspecagentebpfflowfilterrulesindex-1">rules</a></b></td>
         <td>[]object</td>
         <td>
-          `flowFilterRules` defines a list of ebpf agent flow filtering rules<br/>
+          `rules` defines a list of filtering rules on the eBPF Agents.
+When filtering is enabled, by default, flows that don't match any rule are rejected.
+To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          `sampling` sampling rate for the matched flow<br/>
+          `sampling` sampling rate for the matched flows, overriding the global sampling defined at `spec.agent.ebpf.sampling`.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -8431,7 +8435,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          `sampling` sampling rate for the matched flow<br/>
+          `sampling` sampling rate for the matched flows, overriding the global sampling defined at `spec.agent.ebpf.sampling`.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -14395,7 +14399,9 @@ IMPORTANT: This feature is available as a Developer Preview.<br/>
         <td><b><a href="#flowcollectorspecprocessorfiltersindex-1">filters</a></b></td>
         <td>[]object</td>
         <td>
-          `filters` let you define custom filters to limit the amount of generated flows.
+          `filters` lets you define custom filters to limit the amount of generated flows.
+These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
+but with a lesser improvement in performance.
 IMPORTANT: This feature is available as a Developer Preview.<br/>
         </td>
         <td>false</td>
@@ -14632,7 +14638,7 @@ By convention, some values are forbidden. It must be greater than 1024 and diffe
         <td><b><a href="#flowcollectorspecprocessoradvancedsecondarynetworksindex">secondaryNetworks</a></b></td>
         <td>[]object</td>
         <td>
-          Define secondary networks to be checked for resources identification.
+          Defines secondary networks to be checked for resources identification.
 To guarantee a correct identification, indexed values must form an unique identifier across the cluster.
 If the same index is used by several resources, those resources might be incorrectly labeled.<br/>
         </td>
@@ -18235,7 +18241,7 @@ If the namespace is different, the config map or the secret is copied so that it
         <td><b><a href="#flowcollectorstatusconditionsindex-1">conditions</a></b></td>
         <td>[]object</td>
         <td>
-          `conditions` represent the latest available observations of an object's state<br/>
+          `conditions` represents the latest available observations of an object's state<br/>
         </td>
         <td>true</td>
       </tr><tr>

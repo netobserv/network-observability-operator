@@ -122,7 +122,7 @@ spec:
                             the kernel debug filesystem, so the eBPF pod has to run as privileged.
                             - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
                             - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
-                            - `UDNMapping`, to enable interfaces mappind to udn. <br>
+                            - `UDNMapping`, to enable interfaces mapping to udn. <br>
                           items:
                             description: |-
                               Agent feature, can be one of:<br>
@@ -132,7 +132,7 @@ spec:
                               - `NetworkEvents`, to track Network events.<br>
                               - `PacketTranslation`, to enrich flows with packets translation information. <br>
                               - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
-                              - `UDNMapping`, to enable interfaces mappind to udn [Developer Preview]. <br>
+                              - `UDNMapping`, to enable interfaces mapping to udn [Developer Preview]. <br>
                             enum:
                               - PacketDrop
                               - DNSTracking
@@ -215,7 +215,10 @@ spec:
                                 - SCTP
                               type: string
                             rules:
-                              description: '`flowFilterRules` defines a list of ebpf agent flow filtering rules'
+                              description: |-
+                                `rules` defines a list of filtering rules on the eBPF Agents.
+                                When filtering is enabled, by default, flows that don't match any rule are rejected.
+                                To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.
                               items:
                                 description: '`EBPFFlowFilterRule` defines the desired eBPF agent configuration regarding flow filtering rule.'
                                 properties:
@@ -3641,10 +3644,10 @@ spec:
                             This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
                             It requires using the OVN-Kubernetes network plugin with the Observability feature.
                             IMPORTANT: This feature is available as a Developer Preview.<br>
-                            - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
-                            - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
+                            - `PacketTranslation`: enable enriching flows with packet translation information, such as Service NAT.<br>
+                            - `EbpfManager`: use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
                             IMPORTANT: This feature is available as a Developer Preview.<br>
-                            - `UDNMapping`, to enable interfaces mappind to udn. <br>
+                            - `UDNMapping`, to enable interfaces mapping to User Defined Networks (UDN). <br>
                             This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
                             It requires using the OVN-Kubernetes network plugin with the Observability feature.
                             IMPORTANT: This feature is available as a Developer Preview.<br>
@@ -3655,9 +3658,9 @@ spec:
                               - `DNSTracking`, to track specific information on DNS traffic.<br>
                               - `FlowRTT`, to track TCP latency.<br>
                               - `NetworkEvents`, to track Network events [Developer Preview].<br>
-                              - `PacketTranslation`, to enrich flows with packets translation information. <br>
-                              - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
-                              - `UDNMapping`, to enable interfaces mappind to udn [Developer Preview]. <br>
+                              - `PacketTranslation`, to enrich flows with packets translation information, such as Service NAT.<br>
+                              - `EbpfManager`, to enable using eBPF Manager to manage NetObserv eBPF programs [Developer Preview].<br>
+                              - `UDNMapping`, to enable interfaces mapping to UDN [Developer Preview]. <br>
                             enum:
                               - PacketDrop
                               - DNSTracking
@@ -3740,7 +3743,10 @@ spec:
                                 - SCTP
                               type: string
                             rules:
-                              description: '`flowFilterRules` defines a list of ebpf agent flow filtering rules'
+                              description: |-
+                                `rules` defines a list of filtering rules on the eBPF Agents.
+                                When filtering is enabled, by default, flows that don't match any rule are rejected.
+                                To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.
                               items:
                                 description: '`EBPFFlowFilterRule` defines the desired eBPF agent configuration regarding flow filtering rule.'
                                 properties:
@@ -3810,7 +3816,7 @@ spec:
                                       - SCTP
                                     type: string
                                   sampling:
-                                    description: '`sampling` sampling rate for the matched flow'
+                                    description: '`sampling` sampling rate for the matched flows, overriding the global sampling defined at `spec.agent.ebpf.sampling`.'
                                     format: int32
                                     type: integer
                                   sourcePorts:
@@ -3844,7 +3850,7 @@ spec:
                               minItems: 1
                               type: array
                             sampling:
-                              description: '`sampling` sampling rate for the matched flow'
+                              description: '`sampling` sampling rate for the matched flows, overriding the global sampling defined at `spec.agent.ebpf.sampling`.'
                               format: int32
                               type: integer
                             sourcePorts:
@@ -5604,7 +5610,7 @@ spec:
                     - Kafka
                   type: string
                 exporters:
-                  description: '`exporters` define additional optional exporters for custom consumption or storage.'
+                  description: '`exporters` defines additional optional exporters for custom consumption or storage.'
                   items:
                     description: '`FlowCollectorExporter` defines an additional exporter to send enriched flows to.'
                     properties:
@@ -7501,7 +7507,7 @@ spec:
                           type: object
                         secondaryNetworks:
                           description: |-
-                            Define secondary networks to be checked for resources identification.
+                            Defines secondary networks to be checked for resources identification.
                             To guarantee a correct identification, indexed values must form an unique identifier across the cluster.
                             If the same index is used by several resources, those resources might be incorrectly labeled.
                           items:
@@ -7558,7 +7564,9 @@ spec:
                       type: object
                     filters:
                       description: |-
-                        `filters` let you define custom filters to limit the amount of generated flows.
+                        `filters` lets you define custom filters to limit the amount of generated flows.
+                        These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
+                        but with a lesser improvement in performance.
                         IMPORTANT: This feature is available as a Developer Preview.
                       items:
                         description: '`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions'
@@ -8325,7 +8333,7 @@ spec:
               description: '`FlowCollectorStatus` defines the observed state of FlowCollector'
               properties:
                 conditions:
-                  description: '`conditions` represent the latest available observations of an object''s state'
+                  description: '`conditions` represents the latest available observations of an object''s state'
                   items:
                     description: Condition contains details for one aspect of the current state of this API Resource.
                     properties:
