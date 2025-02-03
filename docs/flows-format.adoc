@@ -104,7 +104,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | Destination network name
 | `dst_network`
 | no
-| null
+| fine
 | n/a
 | `DstK8S_OwnerName`
 | string
@@ -335,7 +335,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | Source network name
 | `src_network`
 | no
-| null
+| fine
 | n/a
 | `SrcK8S_OwnerName`
 | string
@@ -419,7 +419,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | List of User Defined Networks
 | `udns`
 | no
-| null
+| careful
 | n/a
 | `XlatDstAddr`
 | string
