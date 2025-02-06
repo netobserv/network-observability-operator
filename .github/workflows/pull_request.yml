@@ -50,15 +50,24 @@ jobs:
 
   helm-check:
     runs-on: ubuntu-latest
-    name: Checking helm up-to-date
+    name: Checking helm up-to-date and valid
     steps:
     - name: install make
       run: sudo apt-get install make
+
     - name: checkout
       uses: actions/checkout@v3
+
+    - name: generate helm
+      run: make helm-update
+
     - name: check helm clean state
-      run: |
-        mkdir _tmp || true
-        yq '.spec.install.spec.deployments[0].spec' bundle/manifests/netobserv-operator.clusterserviceversion.yaml > _tmp/bundle_deployment.yaml
-        yq '.spec' helm/templates/deployment.yaml > _tmp/helm_deployment.yaml
-        diff <(yq -P _tmp/bundle_deployment.yaml) <(yq -P _tmp/helm_deployment.yaml)
+      run: git add -A && git diff HEAD --exit-code
+
+    - name: set up Helm
+      uses: azure/setup-helm@v4.2.0
+      with:
+        version: v3.17.0
+
+    - name: run helm lint
+      run: helm lint helm/

@@ -16,24 +16,31 @@ Flow data is then available in multiple ways, each optional:
 
 ## Getting Started
 
-You can install NetObserv Operator using [OLM](https://olm.operatorframework.io/) if it is available in your cluster, or directly from its repository.
+You can install the NetObserv Operator using [Helm](https://helm.sh/), or directly from sources.
 
-### Install with OLM
+In OpenShift, NetObserv is renamed as the Network Observability operator and can be found in OperatorHub as an OLM operator. This section does not apply to it: please refer to the [OpenShift documentation](https://docs.openshift.com/container-platform/latest/observability/network_observability/installing-operators.html) in that case.
 
 > [!IMPORTANT]
-> There hasn't been recent releases pushed to the community OperatorHub. This is mostly due to the lack of demand. Unless there is demand, going forward we only release the downstream NetObserv aka [Network Observability operator](https://docs.openshift.com/container-platform/latest/observability/network_observability/network-observability-operator-release-notes.html) for OpenShift. But there's nothing written in stone. [Let us know](https://github.com/netobserv/network-observability-operator/discussions) if you would like that to change.
+> NetObserv community was previously distributed via [OperatorHub](https://operatorhub.io/operator/netobserv-operator). This installation method is replaced with a helm chart. If you previously installed NetObserv community from OperatorHub, we recommend that you uninstall it, and re-install using the helm chart. The operation should not cause any data loss.
 
-NetObserv Operator is available in [OperatorHub](https://operatorhub.io/operator/netobserv-operator) with guided steps on how to install this. It is also available in the OperatorHub catalog directly in the OpenShift Console.
+### Install with Helm
 
-![OpenShift OperatorHub search](./docs/assets/operatorhub-search.png)
+_Integration with ArtifactHub coming soon._
 
-Please read the [operator description in OLM](./config/descriptions/upstream.md).
+In the meantime, you can install the Helm chart from this repository:
 
-After the operator is installed, create a `FlowCollector` resource:
+```bash
+git clone https://github.com/netobserv/network-observability-operator.git && cd network-observability-operator
 
-![OpenShift OperatorHub FlowCollector](./docs/assets/operatorhub-flowcollector.png)
+# If you don't already have cert-manager, you'll need it:
+make install-cert-manager
 
-Refer to the [Configuration section](#configuration) of this document.
+helm install netobserv --namespace netobserv --create-namespace -f helm/values.yaml ./helm
+```
+
+More information can be found [here](./config/descriptions/upstream.md).
+
+After the operator is installed, create a `FlowCollector` resource: refer to the [Configuration section](#configuration) of this document.
 
 ### Install from repository
 
