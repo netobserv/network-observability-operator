@@ -50,15 +50,49 @@ jobs:
 
   helm-check:
     runs-on: ubuntu-latest
-    name: Checking helm up-to-date
+    name: Checking helm up-to-date and valid
     steps:
     - name: install make
       run: sudo apt-get install make
+
     - name: checkout
       uses: actions/checkout@v3
+
+    - name: generate helm
+      run: make helm-update
+
     - name: check helm clean state
+      run: git add -A && git diff HEAD --exit-code
+
+    - name: set up Helm
+      uses: azure/setup-helm@v4.2.0
+      with:
+        version: v3.17.0
+
+    - uses: actions/setup-python@v5.3.0
+      with:
+        python-version: '3.x'
+        check-latest: true
+
+    - name: set up chart-testing
+      uses: helm/chart-testing-action@v2.7.0
+
+    - name: run chart-testing (list-changed)
+      id: list-changed
       run: |
-        mkdir _tmp || true
-        yq '.spec.install.spec.deployments[0].spec' bundle/manifests/netobserv-operator.clusterserviceversion.yaml > _tmp/bundle_deployment.yaml
-        yq '.spec' helm/templates/deployment.yaml > _tmp/helm_deployment.yaml
-        diff <(yq -P _tmp/bundle_deployment.yaml) <(yq -P _tmp/helm_deployment.yaml)
+        changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
+        if [[ -n "$changed" ]]; then
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: run chart-testing (lint)
+      if: steps.list-changed.outputs.changed == 'true'
+      run: ct lint --target-branch ${{ github.event.repository.default_branch }}
+
+    - name: create kind cluster
+      if: steps.list-changed.outputs.changed == 'true'
+      uses: helm/kind-action@v1.12.0
+
+    - name: run chart-testing (install)
+      if: steps.list-changed.outputs.changed == 'true'
+      run: ct install --target-branch ${{ github.event.repository.default_branch }}

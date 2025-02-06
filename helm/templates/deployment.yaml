@@ -19,68 +19,77 @@ spec:
         control-plane: controller-manager
     spec:
       containers:
-      - args:
-        - --health-probe-bind-address=:8081
-        - --metrics-bind-address=127.0.0.1:8080
-        - --leader-elect
-        - --ebpf-agent-image=$(RELATED_IMAGE_EBPF_AGENT)
-        - --flowlogs-pipeline-image=$(RELATED_IMAGE_FLOWLOGS_PIPELINE)
-        - --console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)
-        - --downstream-deployment=$(DOWNSTREAM_DEPLOYMENT)
-        - --profiling-bind-address=$(PROFILING_BIND_ADDRESS)
-        command:
-        - /manager
-        env:
-        - name: RELATED_IMAGE_EBPF_AGENT
-          value: quay.io/netobserv/netobserv-ebpf-agent:v1.6.2-community
-        - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
-          value: quay.io/netobserv/flowlogs-pipeline:v1.6.2-community
-        - name: RELATED_IMAGE_CONSOLE_PLUGIN
-          value: quay.io/netobserv/network-observability-console-plugin:v1.6.2-community
-        - name: DOWNSTREAM_DEPLOYMENT
-          value: "false"
-        - name: PROFILING_BIND_ADDRESS
-        image: quay.io/netobserv/network-observability-operator:1.6.2-community
-        imagePullPolicy: Always
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        name: manager
-        ports:
-        - containerPort: 9443
-          name: webhook-server
-          protocol: TCP
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        resources:
-          limits:
-            memory: 400Mi
-          requests:
-            cpu: 100m
-            memory: 100Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          readOnlyRootFilesystem: true
-        volumeMounts:
-        - mountPath: /tmp/k8s-webhook-server/serving-certs
-          name: cert
-          readOnly: true
+        - args:
+            - --health-probe-bind-address=:8081
+            - --metrics-bind-address=:8443
+            - --leader-elect
+            - --ebpf-agent-image=$(RELATED_IMAGE_EBPF_AGENT)
+            - --flowlogs-pipeline-image=$(RELATED_IMAGE_FLOWLOGS_PIPELINE)
+            - --console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)
+            - --downstream-deployment=$(DOWNSTREAM_DEPLOYMENT)
+            - --profiling-bind-address=$(PROFILING_BIND_ADDRESS)
+            - --metrics-cert-file=/etc/tls/private/tls.crt
+            - --metrics-cert-key-file=/etc/tls/private/tls.key
+          command:
+            - /manager
+          env:
+            - name: RELATED_IMAGE_EBPF_AGENT
+              value: quay.io/netobserv/netobserv-ebpf-agent:v1.8.0-community
+            - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
+              value: quay.io/netobserv/flowlogs-pipeline:v1.8.0-community
+            - name: RELATED_IMAGE_CONSOLE_PLUGIN
+              value: quay.io/netobserv/network-observability-console-plugin:v1.8.0-community
+            - name: DOWNSTREAM_DEPLOYMENT
+              value: "false"
+            - name: PROFILING_BIND_ADDRESS
+          image: quay.io/netobserv/network-observability-operator:1.8.0-community
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          name: manager
+          ports:
+            - containerPort: 9443
+              name: webhook-server
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits:
+              memory: 400Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - mountPath: /tmp/k8s-webhook-server/serving-certs
+              name: cert
+              readOnly: true
+            - mountPath: /etc/tls/private
+              name: manager-metric-tls
+              readOnly: true
       securityContext:
         runAsNonRoot: true
       serviceAccountName: netobserv-controller-manager
       terminationGracePeriodSeconds: 10
       volumes:
-      - name: cert
-        secret:
-          defaultMode: 420
-          secretName: webhook-server-cert
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: webhook-server-cert
+        - name: manager-metric-tls
+          secret:
+            defaultMode: 420
+            secretName: manager-metrics-tls
