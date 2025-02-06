@@ -2,17 +2,20 @@
 
 mkdir -p _tmp
 
+# Copy and edit CRDs
 for crd in "flows.netobserv.io_flowcollectors.yaml" "flows.netobserv.io_flowmetrics.yaml"; do
   cp "bundle/manifests/$crd" helm/templates
   sed -i -r 's/(`[^`]*\{\{[^`]*`)/{{\1}}/g' helm/templates/$crd # escape "{{" for helm
   yq -i '.spec.conversion.webhook.clientConfig.service.namespace="{{ .Release.Namespace }}"' helm/templates/$crd
 done
 
-for file in "netobserv-manager-config_v1_configmap.yaml" "netobserv-metrics-service_v1_service.yaml"; do
+# Copy unchanged files
+for file in "netobserv-manager-config_v1_configmap.yaml" "netobserv-metrics-service_v1_service.yaml" "netobserv-webhook-service_v1_service.yaml" ; do
   cp "bundle/manifests/$file" helm/templates
 done
 
-cp "bundle/manifests/netobserv-webhook-service_v1_service.yaml" helm/templates
+# Services: remove openshift annotations for certificates (and some kubeconfig labels)
+yq -i 'del(.metadata.annotations)' helm/templates/netobserv-metrics-service_v1_service.yaml
 yq -i 'del(.metadata.annotations)' helm/templates/netobserv-webhook-service_v1_service.yaml
 yq -i 'del(.metadata.labels)' helm/templates/netobserv-webhook-service_v1_service.yaml
 
