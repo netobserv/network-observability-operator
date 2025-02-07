@@ -230,13 +230,16 @@ func GetAllNames() []string {
 	return names
 }
 
-func getUpdatedDefsFromNames(names []string, labelsToRemove []string) []metricslatest.FlowMetric {
+func getUpdatedDefsFromNames(names []string, labelsToRemove []string, filterRecordType *metricslatest.MetricFilter) []metricslatest.FlowMetric {
 	ret := []metricslatest.FlowMetric{}
 	for i := range predefinedMetrics {
 		for _, name := range names {
 			if predefinedMetrics[i].MetricName == name {
 				spec := predefinedMetrics[i].FlowMetricSpec
 				spec.Labels = removeLabels(spec.Labels, labelsToRemove)
+				if filterRecordType != nil {
+					spec.Filters = append(spec.Filters, *filterRecordType)
+				}
 				ret = append(ret, metricslatest.FlowMetric{Spec: spec})
 			}
 		}
@@ -309,7 +312,27 @@ func GetDefinitions(fc *flowslatest.FlowCollectorSpec, allMetrics bool) []metric
 		labelsToRemove = append(labelsToRemove, "K8S_ClusterName")
 	}
 
-	return getUpdatedDefsFromNames(names, labelsToRemove)
+	var filterRecordType *metricslatest.MetricFilter
+	if fc.Processor.LogTypes != nil {
+		switch *fc.Processor.LogTypes {
+		case flowslatest.LogTypeFlows, flowslatest.LogTypeEndedConversations:
+			// no special filter needed here, since only one kind of record is ever emitted
+		case flowslatest.LogTypeConversations:
+			// Records can be 'newConnection', 'heartbeat' or 'endConnection'. Only 'endConnection' gives a somewhat accurate count.
+			filterRecordType = &metricslatest.MetricFilter{
+				Field: "_RecordType",
+				Value: "endConnection",
+			}
+		case flowslatest.LogTypeAll:
+			// Records can be 'flowLog', 'newConnection', 'heartbeat' or 'endConnection'. 'flowLog' is the most accurate one.
+			filterRecordType = &metricslatest.MetricFilter{
+				Field: "_RecordType",
+				Value: "flowLog",
+			}
+		}
+	}
+
+	return getUpdatedDefsFromNames(names, labelsToRemove, filterRecordType)
 }
 
 func MergePredefined(fm []metricslatest.FlowMetric, fc *flowslatest.FlowCollectorSpec) []metricslatest.FlowMetric {
