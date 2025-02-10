@@ -423,28 +423,28 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | n/a
 | `XlatDstAddr`
 | string
-| packet translation dst address
+| packet translation destination address
 | `xlat_dst_address`
 | no
 | avoid
 | n/a
 | `XlatDstPort`
 | number
-| packet translation dst port
+| packet translation destination port
 | `xlat_dst_port`
 | no
 | careful
 | n/a
 | `XlatSrcAddr`
 | string
-| packet translation src address
+| packet translation source address
 | `xlat_src_address`
 | no
 | avoid
 | n/a
 | `XlatSrcPort`
 | number
-| packet translation src port
+| packet translation source port
 | `xlat_src_port`
 | no
 | careful
@@ -465,7 +465,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | n/a
 | `_RecordType`
 | string
-| Type of record: 'flowLog' for regular flow logs, or 'newConnection', 'heartbeat', 'endConnection' for conversation tracking
+| Type of record: `flowLog` for regular flow logs, or `newConnection`, `heartbeat`, `endConnection` for conversation tracking
 | `type`
 | yes
 | fine

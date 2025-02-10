@@ -6281,7 +6281,7 @@ If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<
 - `NetworkEvents`: Enable the network events monitoring feature, such as correlating flows and network policies.
 This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
-IMPORTANT: This feature is available as a Developer Preview.<br>
+IMPORTANT: This feature is available as a Technology Preview.<br>
 - `PacketTranslation`: Enable enriching flows with packet translation information, such as Service NAT.<br>
 - `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
 - `UDNMapping`: [Unsupported (*)]. Enable interfaces mapping to User Defined Networks (UDN). <br>
@@ -16452,7 +16452,7 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
         <td>
           Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication because the Agent cannot de-duplicate same flows reported from different nodes.<br>
 - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially losing some information such as the network interfaces used from peer, or network events.<br>
-- Use `Sample` to randomly keep only one flow on 50, by default, among the ones considered as duplicates. This is a compromise between dropping every duplicate or keeping every duplicate. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are `50`, the combined sampling is 1:2500.<br>
+- Use `Sample` to randomly keep only one flow on 50, which is the default, among the ones considered as duplicates. This is a compromise between dropping every duplicate or keeping every duplicate. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling values are `50`, the combined sampling is 1:2500.<br>
 - Use `Disabled` to turn off Processor-based de-duplication.<br><br/>
           <br/>
             <i>Enum</i>: Disabled, Drop, Sample<br/>

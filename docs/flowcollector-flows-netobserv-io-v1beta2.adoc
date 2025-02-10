@@ -204,31 +204,27 @@ Otherwise it is matched as a case-sensitive string.
 | `array (string)`
 | List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are: +
 
-- `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
-the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
+- `PacketDrop`: Enable the packets drop flows logging feature. This feature requires mounting
+the kernel debug filesystem, so the eBPF agent pods must run as privileged.
 If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported. +
 
-- `DNSTracking`: enable the DNS tracking feature. +
+- `DNSTracking`: Enable the DNS tracking feature. +
 
-- `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic. +
+- `FlowRTT`: Enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic. +
 
-- `NetworkEvents`: enable the network events monitoring feature, such as correlating flows and network policies.
-This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
+- `NetworkEvents`: Enable the network events monitoring feature, such as correlating flows and network policies.
+This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
-IMPORTANT: This feature is available as a Developer Preview. +
+IMPORTANT: This feature is available as a Technology Preview. +
 
-- `PacketTranslation`: enable enriching flows with packet translation information, such as Service NAT. +
+- `PacketTranslation`: Enable enriching flows with packet translation information, such as Service NAT. +
 
-- `EbpfManager`: use eBPF Manager to manage Network Observability eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed. +
+- `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage Network Observability eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed. +
 
-IMPORTANT: This feature is available as a Developer Preview. +
+- `UDNMapping`: [Unsupported (*)]. Enable interfaces mapping to User Defined Networks (UDN).  +
 
-- `UDNMapping`, to enable interfaces mapping to User Defined Networks (UDN).  +
-
-This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
+This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
-IMPORTANT: This feature is available as a Developer Preview. +
-
 
 | `flowFilter`
 | `object`
@@ -449,6 +445,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
 | `rules` defines a list of filtering rules on the eBPF Agents.
 When filtering is enabled, by default, flows that don't match any rule are rejected.
 To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.
+[Unsupported (*)].
 
 | `sampling`
 | `integer`
@@ -474,6 +471,7 @@ Description::
 `rules` defines a list of filtering rules on the eBPF Agents.
 When filtering is enabled, by default, flows that don't match any rule are rejected.
 To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.
+[Unsupported (*)].
 --
 
 Type::
@@ -2706,15 +2704,15 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 
 | `deduper`
 | `object`
-| `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
-IMPORTANT: This feature is available as a Developer Preview.
+| `deduper` allows you to sample or drop flows identified as duplicates, in order to save on resource usage.
+[Unsupported (*)].
 
 | `filters`
 | `array`
 | `filters` lets you define custom filters to limit the amount of generated flows.
 These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
 but with a lesser improvement in performance.
-IMPORTANT: This feature is available as a Developer Preview.
+[Unsupported (*)].
 
 | `imagePullPolicy`
 | `string`
@@ -2746,7 +2744,7 @@ This setting is ignored when Kafka is disabled.
 | `string`
 | `logTypes` defines the desired record types to generate. Possible values are: +
 
-- `Flows` (default) to export regular network flows. +
+- `Flows` to export regular network flows. This is the default. +
 
 - `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates. +
 
@@ -2960,8 +2958,8 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
 Description::
 +
 --
-`deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
-IMPORTANT: This feature is available as a Developer Preview.
+`deduper` allows you to sample or drop flows identified as duplicates, in order to save on resource usage.
+[Unsupported (*)].
 --
 
 Type::
@@ -2978,9 +2976,9 @@ Type::
 | `string`
 | Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication because the Agent cannot de-duplicate same flows reported from different nodes. +
 
-- Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer, or network events. +
+- Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially losing some information such as the network interfaces used from peer, or network events. +
 
-- Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500. +
+- Use `Sample` to randomly keep only one flow on 50, which is the default, among the ones considered as duplicates. This is a compromise between dropping every duplicate or keeping every duplicate. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling values are `50`, the combined sampling is 1:2500. +
 
 - Use `Disabled` to turn off Processor-based de-duplication. +
 
@@ -2997,7 +2995,7 @@ Description::
 `filters` lets you define custom filters to limit the amount of generated flows.
 These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
 but with a lesser improvement in performance.
-IMPORTANT: This feature is available as a Developer Preview.
+[Unsupported (*)].
 --
 
 Type::
@@ -3010,7 +3008,7 @@ Type::
 Description::
 +
 --
-`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions
+`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions.
 --
 
 Type::
@@ -3029,7 +3027,7 @@ Type::
 
 | `outputTarget`
 | `string`
-| If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.
+| If specified, these filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.
 
 | `sampling`
 | `integer`
@@ -3053,7 +3051,7 @@ Type::
 Description::
 +
 --
-`FLPSingleFilter` defines the desired configuration for a single FLP-based filter
+`FLPSingleFilter` defines the desired configuration for a single FLP-based filter.
 --
 
 Type::
@@ -3071,12 +3069,12 @@ Required::
 
 | `field`
 | `string`
-| Name of the field to filter on
-Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.
+| Name of the field to filter on.
+Refer to the documentation for the list of available fields: https://github.com/netobserv/network-observability-operator/blob/main/docs/flows-format.adoc.
 
 | `matchType`
 | `string`
-| Type of matching to apply
+| Type of matching to apply.
 
 | `value`
 | `string`
