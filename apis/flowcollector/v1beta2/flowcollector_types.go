@@ -176,8 +176,8 @@ type FlowCollectorIPFIX struct {
 // - `FlowRTT`, to track TCP latency.<br>
 // - `NetworkEvents`, to track Network events [Developer Preview].<br>
 // - `PacketTranslation`, to enrich flows with packets translation information, such as Service NAT.<br>
-// - `EbpfManager`, to enable using eBPF Manager to manage NetObserv eBPF programs [Developer Preview].<br>
-// - `UDNMapping`, to enable interfaces mapping to UDN [Developer Preview]. <br>
+// - `EbpfManager`, to enable using eBPF Manager to manage NetObserv eBPF programs. [Unsupported (*)].<br>
+// - `UDNMapping`, to enable interfaces mapping to UDN. [Unsupported (*)].<br>
 // +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation";"EbpfManager";"UDNMapping"
 type AgentFeature string
 
@@ -295,12 +295,13 @@ type EBPFFlowFilter struct {
 	// Set `enable` to `true` to enable the eBPF flow filtering feature.
 	Enable *bool `json:"enable,omitempty"`
 
-	// [deprecated (*)] this setting is not used anymore. It is replaced with the `rules` list.
+	// [Deprecated (*)]. This setting is not used anymore. It is replaced with the `rules` list.
 	EBPFFlowFilterRule `json:",inline"`
 
 	// `rules` defines a list of filtering rules on the eBPF Agents.
 	// When filtering is enabled, by default, flows that don't match any rule are rejected.
 	// To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.
+	// [Unsupported (*)].
 	// +kubebuilder:validation:MinItems:=1
 	// +kubebuilder:validation:MaxItems:=16
 	Rules []EBPFFlowFilterRule `json:"rules,omitempty"`
@@ -380,22 +381,20 @@ type FlowCollectorEBPF struct {
 	Advanced *AdvancedAgentConfig `json:"advanced,omitempty"`
 
 	// List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
-	// - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
-	// the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
+	// - `PacketDrop`: Enable the packets drop flows logging feature. This feature requires mounting
+	// the kernel debug filesystem, so the eBPF agent pods must run as privileged.
 	// If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
-	// - `DNSTracking`: enable the DNS tracking feature.<br>
-	// - `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
-	// - `NetworkEvents`: enable the network events monitoring feature, such as correlating flows and network policies.
-	// This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
+	// - `DNSTracking`: Enable the DNS tracking feature.<br>
+	// - `FlowRTT`: Enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
+	// - `NetworkEvents`: Enable the network events monitoring feature, such as correlating flows and network policies.
+	// This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
 	// It requires using the OVN-Kubernetes network plugin with the Observability feature.
 	// IMPORTANT: This feature is available as a Developer Preview.<br>
-	// - `PacketTranslation`: enable enriching flows with packet translation information, such as Service NAT.<br>
-	// - `EbpfManager`: use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
-	// IMPORTANT: This feature is available as a Developer Preview.<br>
-	// - `UDNMapping`, to enable interfaces mapping to User Defined Networks (UDN). <br>
-	// This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
+	// - `PacketTranslation`: Enable enriching flows with packet translation information, such as Service NAT.<br>
+	// - `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
+	// - `UDNMapping`: [Unsupported (*)]. Enable interfaces mapping to User Defined Networks (UDN). <br>
+	// This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
 	// It requires using the OVN-Kubernetes network plugin with the Observability feature.
-	// IMPORTANT: This feature is available as a Developer Preview.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 
@@ -651,7 +650,7 @@ type FlowCollectorFLP struct {
 	KafkaConsumerBatchSize int `json:"kafkaConsumerBatchSize"`
 
 	// `logTypes` defines the desired record types to generate. Possible values are:<br>
-	// - `Flows` (default) to export regular network flows.<br>
+	// - `Flows` to export regular network flows. This is the default.<br>
 	// - `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates.<br>
 	// - `EndedConversations` to generate only ended conversations events.<br>
 	// - `All` to generate both network flows and all conversations events. It is not recommended due to the impact on resources footprint.<br>
@@ -680,15 +679,15 @@ type FlowCollectorFLP struct {
 	SubnetLabels SubnetLabels `json:"subnetLabels,omitempty"`
 
 	//+optional
-	// `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
-	// IMPORTANT: This feature is available as a Developer Preview.
+	// `deduper` allows you to sample or drop flows identified as duplicates, in order to save on resource usage.
+	// [Unsupported (*)].
 	Deduper *FLPDeduper `json:"deduper,omitempty"`
 
 	// +optional
 	// `filters` lets you define custom filters to limit the amount of generated flows.
 	// These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
 	// but with a lesser improvement in performance.
-	// IMPORTANT: This feature is available as a Developer Preview.
+	// [Unsupported (*)].
 	Filters []FLPFilterSet `json:"filters"`
 
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
@@ -706,11 +705,11 @@ const (
 	FLPDeduperSample   FLPDeduperMode = "Sample"
 )
 
-// `FLPDeduper` defines the desired configuration for FLP-based deduper
+// `FLPDeduper` defines the desired configuration for FLP-based deduper.
 type FLPDeduper struct {
 	// Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication because the Agent cannot de-duplicate same flows reported from different nodes.<br>
-	// - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer, or network events.<br>
-	// - Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br>
+	// - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially losing some information such as the network interfaces used from peer, or network events.<br>
+	// - Use `Sample` to randomly keep only one flow on 50, by default, among the ones considered as duplicates. This is a compromise between dropping every duplicate or keeping every duplicate. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are `50`, the combined sampling is 1:2500.<br>
 	// - Use `Disabled` to turn off Processor-based de-duplication.<br>
 	// +kubebuilder:validation:Enum:="Disabled";"Drop";"Sample"
 	// +kubebuilder:default:=Disabled
@@ -738,13 +737,13 @@ const (
 	FLPFilterTargetExporters FLPFilterTarget = "Exporters"
 )
 
-// `FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions
+// `FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions.
 type FLPFilterSet struct {
 	// `filters` is a list of matches that must be all satisfied in order to remove a flow.
 	// +optional
 	AllOf []FLPSingleFilter `json:"allOf"`
 
-	// If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.
+	// If specified, these filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.
 	// +optional
 	// +kubebuilder:validation:Enum:="";"Loki";"Metrics";"Exporters"
 	OutputTarget FLPFilterTarget `json:"outputTarget,omitempty"`
@@ -755,15 +754,15 @@ type FLPFilterSet struct {
 	Sampling int32 `json:"sampling,omitempty"`
 }
 
-// `FLPSingleFilter` defines the desired configuration for a single FLP-based filter
+// `FLPSingleFilter` defines the desired configuration for a single FLP-based filter.
 type FLPSingleFilter struct {
-	// Type of matching to apply
+	// Type of matching to apply.
 	// +kubebuilder:validation:Enum:="Equal";"NotEqual";"Presence";"Absence";"MatchRegex";"NotMatchRegex"
 	// +kubebuilder:default:="Equal"
 	MatchType FLPFilterMatch `json:"matchType"`
 
-	// Name of the field to filter on
-	// Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.
+	// Name of the field to filter on.
+	// Refer to the documentation for the list of available fields: https://github.com/netobserv/network-observability-operator/blob/main/docs/flows-format.adoc.
 	// +required
 	Field string `json:"field"`
 
@@ -1423,7 +1422,7 @@ type AdvancedPluginConfig struct {
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 }
 
-// `SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+// `SubnetLabels` allows you to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
 type SubnetLabels struct {
 	// `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
 	// OpenShift install configuration and the Cluster Network Operator configuration. Indirectly, this is a way to accurately detect

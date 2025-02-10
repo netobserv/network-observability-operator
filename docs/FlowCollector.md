@@ -6273,22 +6273,20 @@ Otherwise it is matched as a case-sensitive string.<br/>
         <td>[]enum</td>
         <td>
           List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
-- `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
-the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
+- `PacketDrop`: Enable the packets drop flows logging feature. This feature requires mounting
+the kernel debug filesystem, so the eBPF agent pods must run as privileged.
 If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
-- `DNSTracking`: enable the DNS tracking feature.<br>
-- `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
-- `NetworkEvents`: enable the network events monitoring feature, such as correlating flows and network policies.
-This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
+- `DNSTracking`: Enable the DNS tracking feature.<br>
+- `FlowRTT`: Enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
+- `NetworkEvents`: Enable the network events monitoring feature, such as correlating flows and network policies.
+This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
 IMPORTANT: This feature is available as a Developer Preview.<br>
-- `PacketTranslation`: enable enriching flows with packet translation information, such as Service NAT.<br>
-- `EbpfManager`: use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
-IMPORTANT: This feature is available as a Developer Preview.<br>
-- `UDNMapping`, to enable interfaces mapping to User Defined Networks (UDN). <br>
-This feature requires mounting the kernel debug filesystem, so the eBPF agent pods have to run as privileged.
-It requires using the OVN-Kubernetes network plugin with the Observability feature.
-IMPORTANT: This feature is available as a Developer Preview.<br><br/>
+- `PacketTranslation`: Enable enriching flows with packet translation information, such as Service NAT.<br>
+- `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
+- `UDNMapping`: [Unsupported (*)]. Enable interfaces mapping to User Defined Networks (UDN). <br>
+This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
+It requires using the OVN-Kubernetes network plugin with the Observability feature.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8287,7 +8285,8 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td>
           `rules` defines a list of filtering rules on the eBPF Agents.
 When filtering is enabled, by default, flows that don't match any rule are rejected.
-To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.<br/>
+To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.
+[Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14391,8 +14390,8 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/
         <td><b><a href="#flowcollectorspecprocessordeduper-1">deduper</a></b></td>
         <td>object</td>
         <td>
-          `deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
-IMPORTANT: This feature is available as a Developer Preview.<br/>
+          `deduper` allows you to sample or drop flows identified as duplicates, in order to save on resource usage.
+[Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14402,7 +14401,7 @@ IMPORTANT: This feature is available as a Developer Preview.<br/>
           `filters` lets you define custom filters to limit the amount of generated flows.
 These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
 but with a lesser improvement in performance.
-IMPORTANT: This feature is available as a Developer Preview.<br/>
+[Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14468,7 +14467,7 @@ This setting is ignored when Kafka is disabled.<br/>
         <td>enum</td>
         <td>
           `logTypes` defines the desired record types to generate. Possible values are:<br>
-- `Flows` (default) to export regular network flows.<br>
+- `Flows` to export regular network flows. This is the default.<br>
 - `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates.<br>
 - `EndedConversations` to generate only ended conversations events.<br>
 - `All` to generate both network flows and all conversations events. It is not recommended due to the impact on resources footprint.<br><br/>
@@ -16435,8 +16434,8 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
 
 
 
-`deduper` allows to sample or drop flows identified as duplicates, in order to save on resource usage.
-IMPORTANT: This feature is available as a Developer Preview.
+`deduper` allows you to sample or drop flows identified as duplicates, in order to save on resource usage.
+[Unsupported (*)].
 
 <table>
     <thead>
@@ -16452,8 +16451,8 @@ IMPORTANT: This feature is available as a Developer Preview.
         <td>enum</td>
         <td>
           Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication because the Agent cannot de-duplicate same flows reported from different nodes.<br>
-- Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially loosing some information such as the network interfaces used from peer, or network events.<br>
-- Use `Sample` to randomly keep only 1 flow on 50 (by default) among the ones considered as duplicates. This is a compromise between dropping every duplicates or keeping every duplicates. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are 50, the combined sampling is 1:2500.<br>
+- Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially losing some information such as the network interfaces used from peer, or network events.<br>
+- Use `Sample` to randomly keep only one flow on 50, by default, among the ones considered as duplicates. This is a compromise between dropping every duplicate or keeping every duplicate. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling are `50`, the combined sampling is 1:2500.<br>
 - Use `Disabled` to turn off Processor-based de-duplication.<br><br/>
           <br/>
             <i>Enum</i>: Disabled, Drop, Sample<br/>
@@ -16480,7 +16479,7 @@ IMPORTANT: This feature is available as a Developer Preview.
 
 
 
-`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions
+`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions.
 
 <table>
     <thead>
@@ -16502,7 +16501,7 @@ IMPORTANT: This feature is available as a Developer Preview.
         <td><b>outputTarget</b></td>
         <td>enum</td>
         <td>
-          If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.<br/>
+          If specified, these filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.<br/>
           <br/>
             <i>Enum</i>: , Loki, Metrics, Exporters<br/>
         </td>
@@ -16526,7 +16525,7 @@ IMPORTANT: This feature is available as a Developer Preview.
 
 
 
-`FLPSingleFilter` defines the desired configuration for a single FLP-based filter
+`FLPSingleFilter` defines the desired configuration for a single FLP-based filter.
 
 <table>
     <thead>
@@ -16541,15 +16540,15 @@ IMPORTANT: This feature is available as a Developer Preview.
         <td><b>field</b></td>
         <td>string</td>
         <td>
-          Name of the field to filter on
-Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.<br/>
+          Name of the field to filter on.
+Refer to the documentation for the list of available fields: https://github.com/netobserv/network-observability-operator/blob/main/docs/flows-format.adoc.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>matchType</b></td>
         <td>enum</td>
         <td>
-          Type of matching to apply<br/>
+          Type of matching to apply.<br/>
           <br/>
             <i>Enum</i>: Equal, NotEqual, Presence, Absence, MatchRegex, NotMatchRegex<br/>
             <i>Default</i>: Equal<br/>
