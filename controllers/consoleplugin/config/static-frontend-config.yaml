@@ -1038,22 +1038,22 @@ filters:
     name: Xlat Zone Id
     component: number
   - id: xlat_src_address
-    name: Xlat src address
+    name: Xlat source address
     component: text
     category: source
     hint: Specify a single IP or range.
   - id: xlat_dst_address
-    name: Xlat dst address
+    name: Xlat destination address
     component: text
     category: destination
     hint: Specify a single IP or range.
   - id: xlat_src_port
-    name: Xlat src port
+    name: Xlat source port
     component: autocomplete
     category: source
     hint: Specify a single port number or name.
   - id: xlat_dst_port
-    name: Xlat dst port
+    name: Xlat destination port
     component: autocomplete
     category: destination
     hint: Specify a single port number or name.
@@ -1402,22 +1402,22 @@ fields:
     description: packet translation zone id
   - name: XlatSrcPort
     type: number
-    description: packet translation src port
+    description: packet translation source port
   - name: XlatDstPort
     type: number
-    description: packet translation dst port
+    description: packet translation destination port
   - name: XlatSrcAddr
     type: string
-    description: packet translation src address
+    description: packet translation source address
   - name: XlatDstAddr
     type: string
-    description: packet translation dst address
+    description: packet translation destination address
   - name: K8S_ClusterName
     type: string
     description: Cluster name or identifier
   - name: _RecordType
     type: string
-    description: "Type of record: 'flowLog' for regular flow logs, or 'newConnection', 'heartbeat', 'endConnection' for conversation tracking"
+    description: "Type of record: `flowLog` for regular flow logs, or `newConnection`, `heartbeat`, `endConnection` for conversation tracking"
   - name: _HashId
     type: string
     description: In conversation tracking, the conversation identifier
