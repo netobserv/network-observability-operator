@@ -1,6 +1,7 @@
 name: Pull request labels
 on:
-  - pull_request_target:
+  pull_request_target:
+    types: [opened]
 
 jobs:
   pr-labels:
