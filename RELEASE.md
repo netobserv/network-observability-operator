@@ -36,7 +36,7 @@ Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, 
 make update-bundle
 
 # Set desired operator version - CAREFUL, no leading "v" here
-version="1.8.0-community"
+version="1.8.0-crc1"
 vv=v$version
 test_branch=test-$vv
 
@@ -53,6 +53,12 @@ At this point, you can test the bundle / catalog on your cluster:
 
 ```bash
 BUNDLE_VERSION="$version" USER=netobserv make catalog-deploy
+```
+
+Wait that the catalog pod is ready. It's named `noo-dev-catalog-<something>`. For some reason, it might take some time before eventually running fine.
+
+```bash
+oc get pods -n openshift-marketplace -w
 ```
 
 When everything is ok, push to main and delete the test branch
