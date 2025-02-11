@@ -504,8 +504,8 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 
 	if helper.IsEBFPFlowFilterEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{Name: envEnableFlowFilter, Value: "true"})
-		if len(coll.Spec.Agent.EBPF.FlowFilter.FlowFilterRules) != 0 {
-			if filterRules := c.configureFlowFiltersRules(coll.Spec.Agent.EBPF.FlowFilter.FlowFilterRules); filterRules != nil {
+		if len(coll.Spec.Agent.EBPF.FlowFilter.Rules) != 0 {
+			if filterRules := c.configureFlowFiltersRules(coll.Spec.Agent.EBPF.FlowFilter.Rules); filterRules != nil {
 				config = append(config, filterRules...)
 			}
 		} else {

@@ -530,7 +530,7 @@ func autoConvert_v1beta1_EBPFFlowFilter_To_v1beta2_EBPFFlowFilter(in *EBPFFlowFi
 	if err := Convert_v1beta1_EBPFFlowFilterRule_To_v1beta2_EBPFFlowFilterRule(&in.EBPFFlowFilterRule, &out.EBPFFlowFilterRule, s); err != nil {
 		return err
 	}
-	out.FlowFilterRules = *(*[]v1beta2.EBPFFlowFilterRule)(unsafe.Pointer(&in.FlowFilterRules))
+	out.Rules = *(*[]v1beta2.EBPFFlowFilterRule)(unsafe.Pointer(&in.Rules))
 	return nil
 }
 
@@ -544,7 +544,7 @@ func autoConvert_v1beta2_EBPFFlowFilter_To_v1beta1_EBPFFlowFilter(in *v1beta2.EB
 	if err := Convert_v1beta2_EBPFFlowFilterRule_To_v1beta1_EBPFFlowFilterRule(&in.EBPFFlowFilterRule, &out.EBPFFlowFilterRule, s); err != nil {
 		return err
 	}
-	out.FlowFilterRules = *(*[]EBPFFlowFilterRule)(unsafe.Pointer(&in.FlowFilterRules))
+	out.Rules = *(*[]EBPFFlowFilterRule)(unsafe.Pointer(&in.Rules))
 	return nil
 }
 
