@@ -1,0 +1,12 @@
+name: Pull request labels
+on:
+  - pull_request_target:
+
+jobs:
+  pr-labels:
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+    - name: View PR author
+      run: echo "This PR is opened by ${{ github.event.pull_request.user.login }} ."
