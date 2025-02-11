@@ -47,3 +47,10 @@ jobs:
       run: make update-bundle
     - name: check bundle clean state
       run: git add -A && git diff HEAD -I "operator-sdk-v" --exit-code
+
+  label:
+    runs-on: ubuntu-latest
+    name: Apply labels
+    steps:
+    - name: View PR author
+      run: echo "This PR is opened by ${{ github.event.pull_request.user.login }} ."
