@@ -11,7 +11,7 @@ To release them, a tag in the format "v1.6.0-community" or "v1.6.0-crc0" must be
 E.g:
 
 ```bash
-version="v1.8.0-community"
+version="v1.8.0-crc0"
 git tag -a "$version" -m "$version"
 git push upstream --tags
 ```
