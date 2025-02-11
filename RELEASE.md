@@ -11,7 +11,7 @@ To release them, a tag in the format "v1.6.0-community" or "v1.6.0-crc0" must be
 E.g:
 
 ```bash
-version="v1.6.1-community"
+version="v1.8.0-community"
 git tag -a "$version" -m "$version"
 git push upstream --tags
 ```
@@ -36,7 +36,7 @@ Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, 
 make update-bundle
 
 # Set desired operator version - CAREFUL, no leading "v" here
-version="1.6.1-community"
+version="1.8.0-community"
 vv=v$version
 test_branch=test-$vv
 
@@ -84,7 +84,7 @@ Click on "Publish release".
 Before publishing, we should check that upgrading the operator from a previous version isn't broken. We can use `operator-sdk` for that:
 
 ```bash
-previous=v1.6.0-community
+previous=v1.6.1-community
 bin/operator-sdk run bundle quay.io/netobserv/network-observability-operator-bundle:$previous --timeout 5m
 PORT_FWD=false make deploy-loki deploy-sample-cr
 bin/operator-sdk run bundle-upgrade quay.io/netobserv/network-observability-operator-bundle:$vv --timeout 5m
