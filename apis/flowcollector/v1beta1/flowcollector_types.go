@@ -154,7 +154,7 @@ type FlowCollectorIPFIX struct {
 // - `NetworkEvents`, to track Network events.<br>
 // - `PacketTranslation`, to enrich flows with packets translation information. <br>
 // - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
-// - `UDNMapping`, to enable interfaces mappind to udn [Developer Preview]. <br>
+// - `UDNMapping`, to enable interfaces mapping to udn [Developer Preview]. <br>
 // +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation";"EbpfManager";"UDNMapping"
 type AgentFeature string
 
@@ -272,13 +272,15 @@ type EBPFFlowFilter struct {
 	// Set `enable` to `true` to enable the eBPF flow filtering feature.
 	Enable *bool `json:"enable,omitempty"`
 
-	// [deprecated (*)] this setting is not used anymore.
+	// [deprecated (*)] this setting is not used anymore. It is replaced with the `rules` list.
 	EBPFFlowFilterRule `json:",inline"`
 
-	// `flowFilterRules` defines a list of ebpf agent flow filtering rules
+	// `rules` defines a list of filtering rules on the eBPF Agents.
+	// When filtering is enabled, by default, flows that don't match any rule are rejected.
+	// To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.
 	// +kubebuilder:validation:MinItems:=1
 	// +kubebuilder:validation:MaxItems:=16
-	FlowFilterRules []EBPFFlowFilterRule `json:"rules,omitempty"`
+	Rules []EBPFFlowFilterRule `json:"rules,omitempty"`
 }
 
 // `FlowCollectorEBPF` defines a FlowCollector that uses eBPF to collect the flows information
@@ -364,7 +366,7 @@ type FlowCollectorEBPF struct {
 	// the kernel debug filesystem, so the eBPF pod has to run as privileged.
 	// - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
 	// - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
-	// - `UDNMapping`, to enable interfaces mappind to udn. <br>
+	// - `UDNMapping`, to enable interfaces mapping to udn. <br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 

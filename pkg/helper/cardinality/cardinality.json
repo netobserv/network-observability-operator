@@ -13,6 +13,7 @@
   "SrcK8S_HostIP": "fine",
   "SrcK8S_HostName": "fine",
   "SrcK8S_Zone": "fine",
+  "SrcK8S_NetworkName": "fine",
   "SrcSubnetLabel": "fine",
   "DstK8S_Name": "careful",
   "DstK8S_Type": "fine",
@@ -25,6 +26,7 @@
   "DstK8S_HostIP": "fine",
   "DstK8S_HostName": "fine",
   "DstK8S_Zone": "fine",
+  "DstK8S_NetworkName": "fine",
   "DstSubnetLabel": "fine",
   "K8S_FlowLayer": "fine",
   "Proto": "fine",
@@ -64,6 +66,7 @@
   "XlatIcmpId": "avoid",
   "XlatDstPort": "careful",
   "XlatDstAddr": "avoid",
+  "Udns": "careful",
   "_RecordType": "fine",
   "_HashId": "avoid"
 }

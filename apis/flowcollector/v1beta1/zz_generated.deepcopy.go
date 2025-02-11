@@ -131,8 +131,8 @@ func (in *EBPFFlowFilter) DeepCopyInto(out *EBPFFlowFilter) {
 		**out = **in
 	}
 	in.EBPFFlowFilterRule.DeepCopyInto(&out.EBPFFlowFilterRule)
-	if in.FlowFilterRules != nil {
-		in, out := &in.FlowFilterRules, &out.FlowFilterRules
+	if in.Rules != nil {
+		in, out := &in.Rules, &out.Rules
 		*out = make([]EBPFFlowFilterRule, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
