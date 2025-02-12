@@ -5,7 +5,7 @@ on:
 
 jobs:
   pr-labels:
-    if: ${{ github.event.pull_request.user.login == 'red-hat-konflux' }}
+    if: ${{ github.event.pull_request.user.login == 'red-hat-konflux[bot]' }}
     permissions:
       pull-requests: write
     runs-on: ubuntu-latest
