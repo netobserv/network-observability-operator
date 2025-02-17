@@ -1,0 +1,10 @@
+---
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageDigestMirrorSet
+metadata:
+  name: example-mirror-set
+spec:
+  imageDigestMirrors:
+    - mirrors:
+        - quay.io/my-namespace/valid-repo
+      source: registry.redhat.io/unreleased-image/or-inaccessible-image
