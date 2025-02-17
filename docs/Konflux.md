@@ -6,7 +6,7 @@
 
 ## Links
 
-Usefull links
+Useful links
 
 [Netobserv konflux console](https://console.redhat.com/application-pipeline/workspaces/ocp-network-observab/applications)
 
@@ -50,43 +50,47 @@ Konflux will regulary create new pull requests, there are three categories :
 
 The FBC image can be added as a CatalogSource
 
-> apiVersion: operators.coreos.com/v1alpha1
-> kind: CatalogSource
-> metadata:
->   name: netobserv-konflux
->   namespace: openshift-marketplace
-> spec:
->   displayName: netobserv-konflux
->   image: 'quay.io/repository/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-fbc:latest'
->   publisher: Netobserv team
->   sourceType: grpc
+```yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: netobserv-konflux
+  namespace: openshift-marketplace
+spec:
+  displayName: netobserv-konflux
+  image: 'quay.io/repository/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-fbc:latest'
+  publisher: Netobserv team
+  sourceType: grpc
+```
 
 An `ImageDigestMirrorSet` is then required
 
-> apiVersion: config.openshift.io/v1
-> kind: ImageDigestMirrorSet
-> metadata:
->   name: netobserv
-> spec:
->   imageDigestMirrors:
->     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator
->       source: registry.redhat.io/network-observability/network-observability-rhel9-operator
->     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/flowlogs-pipeline
->       source: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9
->     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-ebpf-agent
->       source: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9
->     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin
->       source: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9
->     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-cli
->       source: registry.redhat.io/network-observability/network-observability-cli-rhel9
->     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle
->       source: registry.redhat.io/network-observability/network-observability-operator-bundle
+```yaml
+apiVersion: config.openshift.io/v1
+kind: ImageDigestMirrorSet
+metadata:
+  name: netobserv
+spec:
+  imageDigestMirrors:
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator
+      source: registry.redhat.io/network-observability/network-observability-rhel9-operator
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/flowlogs-pipeline
+      source: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-ebpf-agent
+      source: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin
+      source: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-cli
+      source: registry.redhat.io/network-observability/network-observability-cli-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle
+      source: registry.redhat.io/network-observability/network-observability-operator-bundle
+```
 
 ## Release
 
