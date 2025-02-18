@@ -25,6 +25,18 @@ When the last release candidate is accepted and the final release tag is pushed 
 
 Click the "Auto-generate release note" button.
 
+If you think the "Dependencies" section is too long, you can surround it in a `<details>` block, to make it collapsed. E.g:
+
+```yaml
+<details>
+<summary><b>Dependencies</b></summary>
+
+* Bump [...] from [...] by @dependabot in...
+* ...
+</details>
+```
+
+
 ### Operator
 
 Once all sub-components are released (or have a release candidate), we can proceed with the operator.
@@ -73,7 +85,18 @@ Grab related components release notes by running:
 make related-release-notes
 ```
 
-Then paste content following the auto-generated release note in GitHub.
+The script should fetch and copy the content in the clipboard. Paste it at the end of the auto-generated release note in GitHub.
+
+If you think the "Dependencies" section is too long, you can surround it in a `<details>` block, to make it collapsed. E.g:
+
+```yaml
+<details>
+<summary><b>Dependencies</b></summary>
+
+* Bump github.com/netobserv/flowlogs-pipeline from [...] by @dependabot in...
+* ...
+</details>
+```
 
 Check the "Create a discussion for this release" option, in category "Announcements".
 
