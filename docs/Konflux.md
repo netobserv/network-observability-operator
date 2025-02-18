@@ -58,7 +58,7 @@ metadata:
   namespace: openshift-marketplace
 spec:
   displayName: netobserv-konflux
-  image: 'quay.io/repository/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc:latest'
+  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc:latest'
   publisher: Netobserv team
   sourceType: grpc
 ```
