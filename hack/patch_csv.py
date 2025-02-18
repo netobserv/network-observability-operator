@@ -77,6 +77,14 @@ csv['spec']['maturity'] = 'stable'
 # remove relatedImages from spec as it is picked up from ENV instead (having them in both places generates a build error)
 # csv['spec'].pop('relatedImages', None)
 
+for relatedImage in csv['spec']['relatedImages']:
+   if relatedImage["name"] == "ebpf-agent":
+      relatedImage["image"] = ebpf_image
+   elif relatedImage["name"] == "flowlogs-pipeline":
+      relatedImage["image"] = flp_image
+   elif relatedImage["name"] == "console-plugin":
+      relatedImage["image"] = console_image
+
 csv['spec']['version'] = version
 csv['spec']['replaces'] = 'network-observability-operator.v{}'.format(replaces)
 
