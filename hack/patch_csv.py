@@ -75,7 +75,7 @@ csv['spec']['displayName'] = 'Network Observability'
 csv['spec']['maturity'] = 'stable'
 
 # remove relatedImages from spec as it is picked up from ENV instead (having them in both places generates a build error)
-csv['spec'].pop('relatedImages', None)
+# csv['spec'].pop('relatedImages', None)
 
 csv['spec']['version'] = version
 csv['spec']['replaces'] = 'network-observability-operator.v{}'.format(replaces)

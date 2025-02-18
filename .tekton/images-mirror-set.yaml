@@ -1,0 +1,25 @@
+---
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageDigestMirrorSet
+metadata:
+  name: example-mirror-set
+spec:
+  imageDigestMirrors:
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator
+      source: registry.redhat.io/network-observability/network-observability-rhel9-operator
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline
+      source: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/netobserv-ebpf-agent
+      source: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-console-plugin
+      source: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-cli-container
+      source: registry.redhat.io/network-observability/network-observability-cli-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-bundle
+      source: registry.redhat.io/network-observability/network-observability-operator-bundle
