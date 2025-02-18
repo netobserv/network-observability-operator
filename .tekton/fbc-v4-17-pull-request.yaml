@@ -32,9 +32,6 @@ spec:
     value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/fbc-v4-17:on-pr-{{revision}}
   - name: image-expires-after
     value: 5d
-  - name: build-platforms
-    value:
-    - linux/x86_64
   - name: dockerfile
     value: catalog.Dockerfile.downstream
   - name: opm-image
