@@ -1,8 +1,8 @@
 # Do not remove empty lines, they are there to reduce conflicts
-export OPERATOR_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:d1afa09d5f98bfc5053c9e691c5627738ce4b6a6369f3459d34f5d055e67af4f'
+export OPERATOR_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:6aaf7341693b1c7be7189fd33dd042aa954c3db4c1f693c3c90f8039eb6d4abd'
 #
-export EBPF_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:26cde68ab14d7801defb0ff664e21e6eecb0036cbe0d1a145568a12b2e915c32'
+export EBPF_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:d91c6c7adf32e56da9233bcb8f8a20d040e4bc980ac14242029ee585bf03eff0'
 #
-export FLP_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:df416b77ce2e24110e23c0d0478e916fcf249a889f4be855e1834d0dd5d51af1'
+export FLP_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:f19d15add3c310aa807a28a2d1ff34f5ee1dd50ade98aa81446e5dbb717874aa'
 #
-export CONSOLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:625c61b35f6da4c363e97560562ea0483abbc9d656439a2a1a5e459f7c787d0c'
+export CONSOLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:3f286d805c1f4ef75b24e358d5e0b7a177d969830014863147b824e01fab2a8b'
