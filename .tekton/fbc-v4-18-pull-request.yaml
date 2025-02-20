@@ -35,7 +35,7 @@ spec:
   - name: dockerfile
     value: catalog.Dockerfile.downstream
   - name: opm-image
-    value: registry.redhat.io/openshift4/ose-operator-registry-rhel9:v4.18
+    value: brew.registry.redhat.io/rh-osbs/openshift-ose-operator-registry-rhel9:v4.18
   - name: build-platforms
     value: ["linux/x86_64"]
   pipelineRef:
