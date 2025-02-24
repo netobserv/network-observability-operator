@@ -135,11 +135,11 @@ Once it is ready to be released, a new `Release` object needs to be created to t
 apiVersion: appstudio.redhat.com/v1alpha1
 kind: Release
 metadata:
- name: release-name-019383
+ name: release-netobserv-1-8
  namespace: ocp-network-observab
 spec:
- releasePlan: <release-plan-name> 
- snapshot: <application-snapshot-name> 
+ releasePlan: netobserv-1-8
+ snapshot: netobserv-operator-1-8-9ms9w
  data: <key> 
 ```
 
