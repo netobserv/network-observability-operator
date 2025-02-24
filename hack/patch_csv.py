@@ -74,9 +74,6 @@ file.close()
 csv['spec']['displayName'] = 'Network Observability'
 csv['spec']['maturity'] = 'stable'
 
-# remove relatedImages from spec as it is picked up from ENV instead (having them in both places generates a build error)
-# csv['spec'].pop('relatedImages', None)
-
 for relatedImage in csv['spec']['relatedImages']:
    if relatedImage["name"] == "ebpf-agent":
       relatedImage["image"] = ebpf_image
