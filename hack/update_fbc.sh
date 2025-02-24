@@ -55,6 +55,8 @@ ${OPM} render "${BUNDLE_IMAGE}" --output=yaml >"${TEMP_BUNDLE_FILE}"
 
 cat ${TEMP_BUNDLE_FILE} >>${CATALOG_FILE}
 
+echo "Adding latest..."
+
 cat <<EOF >>"${CATALOG_FILE}"
 ---
 schema: olm.channel
@@ -63,6 +65,8 @@ name: latest
 entries:
   - name: netobserv-operator.${BUNDLE_TAG}
 EOF
+
+echo "Validating..."
 
 ${OPM} validate $(dirname "${CATALOG_FILE}")
 if [ $? -ne 0 ]; then
