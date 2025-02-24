@@ -71,6 +71,9 @@ func (w *Watcher) sendUpdates(ctx context.Context, ns string, out chan Event) {
 	defer func() {
 		close(doneChan)
 		delete(w.nsDone, ns)
+		if netnsHandle.IsOpen() {
+			netnsHandle.Close()
+		}
 	}()
 	// subscribe for interface events
 	links := make(chan netlink.LinkUpdate)
@@ -82,7 +85,6 @@ func (w *Watcher) sendUpdates(ctx context.Context, ns string, out chan Event) {
 				return false, nil
 			}
 		}
-
 		if err = w.linkSubscriberAt(netnsHandle, links, doneChan); err != nil {
 			log.WithFields(logrus.Fields{
 				"netns":       ns,
@@ -163,7 +165,6 @@ func getNetNS() ([]string, error) {
 		log.Warningf("can't detect any network-namespaces err: %v [Ignore if the agent privileged flag is not set]", err)
 		return nil, fmt.Errorf("failed to list network-namespaces: %w", err)
 	}
-
 	netns := []string{""}
 	if len(files) == 0 {
 		log.WithField("netns", files).Debug("empty network-namespaces list")
