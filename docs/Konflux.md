@@ -48,22 +48,7 @@ Konflux will regulary create new pull requests, there are three categories :
 
 ## Deploying
 
-The FBC image can be added as a CatalogSource
-
-```yaml
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-  name: netobserv-konflux
-  namespace: openshift-marketplace
-spec:
-  displayName: netobserv-konflux
-  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc:latest'
-  publisher: Netobserv team
-  sourceType: grpc
-```
-
-An `ImageDigestMirrorSet` is then required
+An `ImageDigestMirrorSet` is required:
 
 ```yaml
 apiVersion: config.openshift.io/v1
@@ -90,6 +75,36 @@ spec:
     - mirrors:
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-bundle
       source: registry.redhat.io/network-observability/network-observability-operator-bundle
+```
+
+The testing FBC image can be added as a CatalogSource:
+
+```yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: netobserv-konflux
+  namespace: openshift-marketplace
+spec:
+  displayName: netobserv-konflux
+  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc:latest'
+  publisher: Netobserv team
+  sourceType: grpc
+```
+
+or, using a pinned FBC candidate bound to a specific release of OCP (here an example for 4.14) :
+
+```yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: netobserv-candidate-konflux
+  namespace: openshift-marketplace
+spec:
+  displayName: netobserv-candidate-konflux
+  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/fbc-v4-14:on-pr-e4100cd49d5794f0fe76f00546e23dd2559b387f'
+  publisher: Netobserv team
+  sourceType: grpc
 ```
 
 ## Release
