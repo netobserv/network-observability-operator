@@ -107,7 +107,7 @@ spec:
   sourceType: grpc
 ```
 
-## Release
+## Release pipeline setup
 
 [Konflux release configuration](https://gitlab.cee.redhat.com/releng/konflux-release-data) define the release process for konflux built projects.
 
@@ -118,7 +118,7 @@ For new releases two differents directory are important :
 
 To be able to see release pipeline, a read access to the `rhtap-releng` namespace is required, this access must be requested in the konflux-user slack channel.
 
-## Branching
+### Branching
 
 After creating a new release branch, the following steps need to be done:
 - create a new konflux component
@@ -127,7 +127,21 @@ After creating a new release branch, the following steps need to be done:
 - creating the new `ReleasePlanAdmission` objects, one for staging one for production
 - creating the new `ReleasePlan` objects, one for staging, one for production, note that the `auto-release` label in the production file must be false
 
-Once it is ready to be released, a new `Release` objects needs to be created to trigger the production release pipeline.
+## Release
+
+Once it is ready to be released, a new `Release` object needs to be created to trigger the production release pipeline:
+
+```yaml
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+ name: release-name-019383
+ namespace: ocp-network-observab
+spec:
+ releasePlan: <release-plan-name> 
+ snapshot: <application-snapshot-name> 
+ data: <key> 
+```
 
 ## After release
 
