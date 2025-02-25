@@ -8,18 +8,12 @@
 
 Useful links
 
-[Netobserv konflux console](https://console.redhat.com/application-pipeline/workspaces/ocp-network-observab/applications)
-
-[Konflux documentation](https://gitlab.cee.redhat.com/konflux/docs/users)
-
-[Konflux build task reference](https://github.com/konflux-ci/build-definitions/tree/main/task) contains the definitions of tasks that can be used in konflux pipeline
-
-[Konflux release configuration](https://gitlab.cee.redhat.com/releng/konflux-release-data) contains release configuration
-
-[Konflux sample project](https://github.com/konflux-ci/olm-operator-konflux-sample) is a sample project built as an example on how to use konflux
-
-[Lightspeed operator](https://github.com/openshift/lightspeed-operator/blob/main/.tekton/fbc-v4-15-pull-request.yaml) probably one of the first project to release with konflux
-
+- [NetObserv konflux console](https://console.redhat.com/application-pipeline/workspaces/ocp-network-observab/applications)
+- [Konflux documentation](https://gitlab.cee.redhat.com/konflux/docs/users)
+- [Konflux build task reference](https://github.com/konflux-ci/build-definitions/tree/main/task) contains the definitions of tasks that can be used in konflux pipeline
+- [Konflux release configuration](https://gitlab.cee.redhat.com/releng/konflux-release-data) contains release configuration
+- [Konflux sample project](https://github.com/konflux-ci/olm-operator-konflux-sample) is a sample project built as an example on how to use konflux
+- [Lightspeed operator](https://github.com/openshift/lightspeed-operator/blob/main/.tekton/fbc-v4-15-pull-request.yaml) probably one of the first project to release with konflux
 
 ## Builds
 
@@ -143,6 +137,10 @@ spec:
   releasePlan: netobserv-1-8
   snapshot: netobserv-operator-1-8-9ms9w               # the validated snapshot
 ```
+
+It must be created on the OCP instance that runs Konflux (ask for the address if you don't have it).
+
+For the record, store the created Release in the `releases` directory of this repo.
 
 ## After release
 
