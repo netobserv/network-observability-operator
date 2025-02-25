@@ -135,12 +135,13 @@ Once it is ready to be released, a new `Release` object needs to be created to t
 apiVersion: appstudio.redhat.com/v1alpha1
 kind: Release
 metadata:
- name: release-netobserv-1-8
- namespace: ocp-network-observab
+  name: release-netobserv-1-8-0-0                      # name+version - last digit is the attempt number, in case you need to retry
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'  # your konflux / redhat user
 spec:
- releasePlan: netobserv-1-8
- snapshot: netobserv-operator-1-8-9ms9w
- data: <key> 
+  releasePlan: netobserv-1-8
+  snapshot: netobserv-operator-1-8-9ms9w               # the validated snapshot
 ```
 
 ## After release
