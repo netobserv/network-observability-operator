@@ -34,7 +34,7 @@ index = load_index(os.getenv('TARGET_INDEX_FILE'))
 index[0]["image"] = bundle_image
 
 for relatedImage in index[0]["relatedImages"]:
-   if relatedImage["image"][0:95] == "registry.redhat.io/network-observability/network-observability-operator-bundle":
+   if relatedImage["name"] == "bundle":
       relatedImage["image"] = bundle_image
    elif relatedImage["name"] == "manager":
       relatedImage["image"] = operator_image
