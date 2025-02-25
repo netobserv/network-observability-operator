@@ -529,6 +529,11 @@ endif
 	@echo ""
 	@echo "Everything is ready to be pushed. Before that, you should compare the content of $(BUNDLE_VERSION) with $(PREVIOUS_VERSION) to make sure it looks correct."
 
+# Update helm templates
+.PHONY: helm-update
+helm-update: YQ ## Update helm template
+	hack/helm-update.sh
+
 include .mk/sample.mk
 include .mk/development.mk
 include .mk/local.mk
