@@ -1,0 +1,10 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: release-netobserv-1-8-0-0
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'
+spec:
+  releasePlan: netobserv-1-8
+  snapshot: netobserv-operator-1-8-9ms9w
