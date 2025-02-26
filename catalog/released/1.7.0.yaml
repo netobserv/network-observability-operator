@@ -1,6 +1,5 @@
-image:
-  registry.redhat.io/network-observability/network-observability-operator-bundle@sha256:652c4315efe070dd4e3b91af036e9baa7bdeb9c6f1864b94b99f7795cfc5db88
-name: network-observability-operator.v1.8.0
+image: registry.redhat.io/network-observability/network-observability-operator-bundle@sha256:3a3c70c990bd3a012453857698433d674b98445e55cc9c5c4ed38eea29eb82b1
+name: network-observability-operator.v1.7.0
 package: netobserv-operator
 properties:
 - type: olm.gvk
@@ -21,7 +20,7 @@ properties:
 - type: olm.package
   value:
     packageName: netobserv-operator
-    version: 1.8.0
+    version: 1.7.0
 - type: olm.csv.metadata
   value:
     annotations:
@@ -457,20 +456,21 @@ properties:
       capabilities: Seamless Upgrades
       categories: Monitoring, Networking
       console.openshift.io/plugins: '["netobserv-plugin"]'
-      containerImage: ''
-      createdAt: 2024-11-15T09:48:09
+      containerImage: registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:93328e2f6e95c9cce31e096c6591c91d419471ef13f441b3f20b16984f3f2f9d
+      createdAt: 2024-10-14T22:34:29
       description: Network flows collector and monitoring solution
-      features.operators.openshift.io/cnf: 'false'
-      features.operators.openshift.io/cni: 'false'
-      features.operators.openshift.io/csi: 'false'
-      features.operators.openshift.io/disconnected: 'true'
-      features.operators.openshift.io/fips-compliant: 'true'
-      features.operators.openshift.io/proxy-aware: 'false'
-      features.operators.openshift.io/tls-profiles: 'false'
-      features.operators.openshift.io/token-auth-aws: 'false'
-      features.operators.openshift.io/token-auth-azure: 'false'
-      features.operators.openshift.io/token-auth-gcp: 'false'
-      operatorframework.io/cluster-monitoring: 'true'
+      features.operators.openshift.io/cnf: "false"
+      features.operators.openshift.io/cni: "false"
+      features.operators.openshift.io/csi: "false"
+      features.operators.openshift.io/disconnected: "true"
+      features.operators.openshift.io/fips-compliant: "true"
+      features.operators.openshift.io/proxy-aware: "false"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      netobserv.io/version-release: v1.7.0-67
+      operatorframework.io/cluster-monitoring: "true"
       operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
         "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
       operatorframework.io/suggested-namespace: openshift-netobserv-operator
@@ -994,14 +994,18 @@ properties:
       name: Red Hat
       url: https://www.redhat.com
 relatedImages:
-- image: ""
+- image: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:c3be91efcd4cd272f5dc3eabe53ac76f04bc22adbe61f86d42e83e77f092cd36
   name: console_plugin
-- image: ""
+- image: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:9bc712edc0e96525c59c46e8693939ab48514ce6f4b41e3ccf115ad8f6140b96
   name: ebpf_agent
-- image: ""
+- image: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:28bdb6eae77da596c0def119c879e4fb3849065243fc804f4abf5480453b7b6d
   name: flowlogs_pipeline
-- image: ""
-  name: bundle
-- image: ""
+- image: registry.redhat.io/network-observability/network-observability-operator-bundle@sha256:3a3c70c990bd3a012453857698433d674b98445e55cc9c5c4ed38eea29eb82b1
+  name: ""
+- image: registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:93328e2f6e95c9cce31e096c6591c91d419471ef13f441b3f20b16984f3f2f9d
+  name: network-observability-rhel9-operator-93328e2f6e95c9cce31e096c6591c91d419471ef13f441b3f20b16984f3f2f9d-annotation
+- image: registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:93328e2f6e95c9cce31e096c6591c91d419471ef13f441b3f20b16984f3f2f9d
   name: manager
+- image: registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:e34f912158985525f6efb3c4b675f20854fc677c867d12fe3cd2e971309428dc
+  name: kube-rbac-proxy
 schema: olm.bundle

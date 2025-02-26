@@ -1,6 +1,6 @@
-image:
-  registry.redhat.io/network-observability/network-observability-operator-bundle@sha256:652c4315efe070dd4e3b91af036e9baa7bdeb9c6f1864b94b99f7795cfc5db88
-name: network-observability-operator.v1.8.0
+---
+image: registry.redhat.io/network-observability/network-observability-operator-bundle@sha256:f660759b145bd0053ac756def298ae9a3727d84685dc06cd3ee9bbbaaa68971a
+name: network-observability-operator.v1.6.2
 package: netobserv-operator
 properties:
 - type: olm.gvk
@@ -21,7 +21,7 @@ properties:
 - type: olm.package
   value:
     packageName: netobserv-operator
-    version: 1.8.0
+    version: 1.6.2
 - type: olm.csv.metadata
   value:
     annotations:
@@ -416,10 +416,6 @@ properties:
                 "writeTimeout": "10s"
               },
               "namespace": "netobserv",
-              "networkPolicy": {
-                "additionalNamespaces": [],
-                "enable": false
-              },
               "processor": {
                 "imagePullPolicy": "IfNotPresent",
                 "kafkaConsumerAutoscaler": null,
@@ -457,20 +453,20 @@ properties:
       capabilities: Seamless Upgrades
       categories: Monitoring, Networking
       console.openshift.io/plugins: '["netobserv-plugin"]'
-      containerImage: ''
-      createdAt: 2024-11-15T09:48:09
+      containerImage: registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:737ac2d174c1ce1e5435e67360b245f681eb4dc7dce35d3c3cf64636a131257b
+      createdAt: 2024-09-11T10:03:15
       description: Network flows collector and monitoring solution
-      features.operators.openshift.io/cnf: 'false'
-      features.operators.openshift.io/cni: 'false'
-      features.operators.openshift.io/csi: 'false'
-      features.operators.openshift.io/disconnected: 'true'
-      features.operators.openshift.io/fips-compliant: 'true'
-      features.operators.openshift.io/proxy-aware: 'false'
-      features.operators.openshift.io/tls-profiles: 'false'
-      features.operators.openshift.io/token-auth-aws: 'false'
-      features.operators.openshift.io/token-auth-azure: 'false'
-      features.operators.openshift.io/token-auth-gcp: 'false'
-      operatorframework.io/cluster-monitoring: 'true'
+      features.operators.openshift.io/cnf: "false"
+      features.operators.openshift.io/cni: "false"
+      features.operators.openshift.io/csi: "false"
+      features.operators.openshift.io/disconnected: "true"
+      features.operators.openshift.io/fips-compliant: "false"
+      features.operators.openshift.io/proxy-aware: "false"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      operatorframework.io/cluster-monitoring: "true"
       operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
         "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
       operatorframework.io/suggested-namespace: openshift-netobserv-operator
@@ -811,12 +807,6 @@ properties:
           path: loki.readTimeout
         - displayName: Namespace
           path: namespace
-        - displayName: Network policy
-          path: networkPolicy
-        - displayName: Additional namespaces
-          path: networkPolicy.additionalNamespaces
-        - displayName: Enable
-          path: networkPolicy.enable
         - displayName: Log types
           path: processor.logTypes
         - displayName: Disable alerts
@@ -906,7 +896,7 @@ properties:
 
       ## Configuration
 
-      The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/1.6.1-community/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/1.6.1-community/config/samples/flows_v1beta2_flowcollector.yaml).
+      The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/1.0.5/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/1.0.5/config/samples/flows_v1beta2_flowcollector.yaml).
 
       To edit configuration in cluster, run:
 
@@ -922,7 +912,7 @@ properties:
 
       - Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned above, but you might have to configure differently if you used another installation method. Make sure to disable it (`spec.loki.enable`) if you don't want to use Loki.
 
-      - Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/1.6.1-community/docs/QuickFilters.md).
+      - Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/1.0.5/docs/QuickFilters.md).
 
       - Kafka (`spec.deploymentModel: KAFKA` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created.
 
@@ -937,7 +927,7 @@ properties:
       This documentation includes:
 
       - An [overview](https://github.com/netobserv/network-observability-operator#openshift-console) of the features, with screenshots
-      - More information on [configuring metrics](https://github.com/netobserv/network-observability-operator/blob/1.6.1-community/docs/Metrics.md).
+      - More information on [configuring metrics](https://github.com/netobserv/network-observability-operator/blob/1.0.5/docs/Metrics.md).
       - A [performance](https://github.com/netobserv/network-observability-operator#performance-fine-tuning) section, for fine-tuning
       - A [security](https://github.com/netobserv/network-observability-operator#securing-data-and-communications) section
       - An [F.A.Q.](https://github.com/netobserv/network-observability-operator#faq--troubleshooting) section
@@ -994,14 +984,18 @@ properties:
       name: Red Hat
       url: https://www.redhat.com
 relatedImages:
-- image: ""
+- image: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:b19c1783e289f9c892592baafa6ca87973654a406eedcd1e89923849b8e55d5b
   name: console_plugin
-- image: ""
+- image: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:f3607ecd0aae86bced57730dd721c986a49c7d0c1dfb1f541dbdaf373a19668f
   name: ebpf_agent
-- image: ""
+- image: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:ee924ca2c8320838345679ff19b4ba78fa6be42225e1a9ec2daaadc1bc38ee2b
   name: flowlogs_pipeline
-- image: ""
-  name: bundle
-- image: ""
+- image: registry.redhat.io/network-observability/network-observability-operator-bundle@sha256:f660759b145bd0053ac756def298ae9a3727d84685dc06cd3ee9bbbaaa68971a
+  name: ""
+- image: registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:737ac2d174c1ce1e5435e67360b245f681eb4dc7dce35d3c3cf64636a131257b
+  name: network-observability-rhel9-operator-737ac2d174c1ce1e5435e67360b245f681eb4dc7dce35d3c3cf64636a131257b-annotation
+- image: registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:737ac2d174c1ce1e5435e67360b245f681eb4dc7dce35d3c3cf64636a131257b
   name: manager
+- image: registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:f6c37678f1eb3279e603f63d2a821b72394c52d25c2ed5058dc29d4caa15d504
+  name: kube-rbac-proxy
 schema: olm.bundle
