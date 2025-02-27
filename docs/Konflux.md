@@ -9,7 +9,7 @@
 Useful links
 
 - [NetObserv konflux console](https://console.redhat.com/application-pipeline/workspaces/ocp-network-observab/applications)
-- [Konflux documentation](https://gitlab.cee.redhat.com/konflux/docs/users)
+- [Konflux documentation](https://konflux.pages.redhat.com/docs/users/)
 - [Konflux build task reference](https://github.com/konflux-ci/build-definitions/tree/main/task) contains the definitions of tasks that can be used in konflux pipeline
 - [Konflux release configuration](https://gitlab.cee.redhat.com/releng/konflux-release-data) contains release configuration
 - [Konflux sample project](https://github.com/konflux-ci/olm-operator-konflux-sample) is a sample project built as an example on how to use konflux
