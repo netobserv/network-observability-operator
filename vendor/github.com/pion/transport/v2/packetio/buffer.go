@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
+// SPDX-License-Identifier: MIT
+
 // Package packetio provides packet buffer
 package packetio
 
@@ -35,9 +38,9 @@ type Buffer struct {
 	data       []byte
 	head, tail int
 
-	notify chan struct{}
-	subs   bool
-	closed bool
+	notify  chan struct{}
+	waiting bool
+	closed  bool
 
 	count                 int
 	limitCount, limitSize int
@@ -54,7 +57,7 @@ const (
 // NewBuffer creates a new Buffer.
 func NewBuffer() *Buffer {
 	return &Buffer{
-		notify:       make(chan struct{}),
+		notify:       make(chan struct{}, 1),
 		readDeadline: deadline.New(),
 	}
 }
@@ -148,16 +151,6 @@ func (b *Buffer) Write(packet []byte) (int, error) {
 		}
 	}
 
-	var notify chan struct{}
-
-	if b.subs {
-		// readers are waiting.  Prepare to notify, but only
-		// actually do it after we release the lock.
-		notify = b.notify
-		b.notify = make(chan struct{})
-		b.subs = false
-	}
-
 	// store the length of the packet
 	b.data[b.tail] = uint8(len(packet) >> 8)
 	b.tail++
@@ -179,11 +172,12 @@ func (b *Buffer) Write(packet []byte) (int, error) {
 		b.tail = m
 	}
 	b.count++
-	b.mutex.Unlock()
 
-	if notify != nil {
-		close(notify)
+	select {
+	case b.notify <- struct{}{}:
+	default:
 	}
+	b.mutex.Unlock()
 
 	return len(packet), nil
 }
@@ -192,7 +186,7 @@ func (b *Buffer) Write(packet []byte) (int, error) {
 // Blocks until data is available or the buffer is closed.
 // Returns io.ErrShortBuffer is the packet is too small to copy the Write.
 // Returns io.EOF if the buffer is closed.
-func (b *Buffer) Read(packet []byte) (n int, err error) {
+func (b *Buffer) Read(packet []byte) (n int, err error) { //nolint:gocognit
 	// Return immediately if the deadline is already exceeded.
 	select {
 	case <-b.readDeadline.Done():
@@ -245,7 +239,6 @@ func (b *Buffer) Read(packet []byte) (n int, err error) {
 			}
 
 			b.count--
-
 			b.mutex.Unlock()
 
 			if copied < count {
@@ -258,15 +251,12 @@ func (b *Buffer) Read(packet []byte) (n int, err error) {
 			b.mutex.Unlock()
 			return 0, io.EOF
 		}
-
-		notify := b.notify
-		b.subs = true
 		b.mutex.Unlock()
 
 		select {
 		case <-b.readDeadline.Done():
 			return 0, &netError{ErrTimeout, true, true}
-		case <-notify:
+		case <-b.notify:
 		}
 	}
 }
@@ -281,12 +271,10 @@ func (b *Buffer) Close() (err error) {
 		return nil
 	}
 
-	notify := b.notify
+	b.waiting = false
 	b.closed = true
-
+	close(b.notify)
 	b.mutex.Unlock()
-
-	close(notify)
 
 	return nil
 }

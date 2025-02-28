@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"maps"
 	"runtime"
 	"sync"
 	"time"
@@ -30,6 +31,7 @@ type MapTracer struct {
 	metrics                    *metrics.Metrics
 	timeSpentinLookupAndDelete prometheus.Histogram
 	s                          *ovnobserv.SampleDecoder
+	udnEnabled                 bool
 }
 
 type mapFetcher interface {
@@ -38,7 +40,7 @@ type mapFetcher interface {
 }
 
 func NewMapTracer(fetcher mapFetcher, evictionTimeout, staleEntriesEvictTimeout time.Duration, m *metrics.Metrics,
-	s *ovnobserv.SampleDecoder) *MapTracer {
+	s *ovnobserv.SampleDecoder, udnEnabled bool) *MapTracer {
 	return &MapTracer{
 		mapFetcher:                 fetcher,
 		evictionTimeout:            evictionTimeout,
@@ -47,6 +49,7 @@ func NewMapTracer(fetcher mapFetcher, evictionTimeout, staleEntriesEvictTimeout 
 		metrics:                    m,
 		timeSpentinLookupAndDelete: m.CreateTimeSpendInLookupAndDelete(),
 		s:                          s,
+		udnEnabled:                 udnEnabled,
 	}
 }
 
@@ -105,6 +108,16 @@ func (m *MapTracer) evictFlows(ctx context.Context, forceGC bool, forwardFlows c
 	var forwardingFlows []*model.Record
 	flows := m.mapFetcher.LookupAndDeleteMap(m.metrics)
 	elapsed := time.Since(currentTime)
+	udnCache := make(map[string]string)
+	if m.s != nil && m.udnEnabled {
+		udnsMap, err := m.s.GetInterfaceUDNs()
+		if err != nil {
+			mtlog.Errorf("failed to get udns to interfaces map : %v", err)
+		} else {
+			maps.Copy(udnCache, udnsMap)
+			mtlog.Tracef("GetInterfaceUDNS map: %v", udnCache)
+		}
+	}
 	for flowKey, flowMetrics := range flows {
 		forwardingFlows = append(forwardingFlows, model.NewRecord(
 			flowKey,
@@ -112,6 +125,7 @@ func (m *MapTracer) evictFlows(ctx context.Context, forceGC bool, forwardFlows c
 			currentTime,
 			uint64(monotonicTimeNow),
 			m.s,
+			udnCache,
 		))
 	}
 	m.mapFetcher.DeleteMapsStaleEntries(m.staleEntriesEvictTimeout)
