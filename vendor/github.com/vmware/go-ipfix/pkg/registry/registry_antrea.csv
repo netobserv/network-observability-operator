@@ -57,3 +57,4 @@ ElementID,Name,Abstract Data Type,Data Type Semantics,Status,Description,Units,R
 155,appProtocolName,string,,current,,,,,,,,56506,
 156,httpVals,string,,current,,,,,,,,56506,
 157,egressNodeName,string,,current,,,,,,,,56506,
+158,clusterId,string,,current,,,,,,,,56506,

@@ -41,6 +41,7 @@ type Record interface {
 	GetRecordLength() int
 	GetMinDataRecordLen() uint16
 	GetElementMap() map[string]interface{}
+	GetRecordType() ContentType
 }
 
 type baseRecord struct {
@@ -235,6 +236,10 @@ func (d *dataRecord) AddInfoElement(element InfoElementWithValue) error {
 	return nil
 }
 
+func (d *dataRecord) GetRecordType() ContentType {
+	return Data
+}
+
 func (t *templateRecord) PrepareRecord() error {
 	// Add Template Record Header
 	binary.BigEndian.PutUint16(t.buffer[0:2], t.templateID)
@@ -286,4 +291,8 @@ func (t *templateRecord) GetRecordLength() int {
 
 func (t *templateRecord) GetMinDataRecordLen() uint16 {
 	return t.minDataRecLength
+}
+
+func (d *templateRecord) GetRecordType() ContentType {
+	return Template
 }

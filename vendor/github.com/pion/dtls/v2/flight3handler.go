@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
+// SPDX-License-Identifier: MIT
+
 package dtls
 
 import (
@@ -53,7 +56,7 @@ func flight3Parse(ctx context.Context, c flightConn, state *State, cache *handsh
 				if !found {
 					return 0, &alert.Alert{Level: alert.Fatal, Description: alert.IllegalParameter}, errClientNoMatchingSRTPProfile
 				}
-				state.srtpProtectionProfile = profile
+				state.setSRTPProtectionProfile(profile)
 			case *extension.UseExtendedMasterSecret:
 				if cfg.extendedMasterSecret != DisableExtendedMasterSecret {
 					state.extendedMasterSecret = true
@@ -68,7 +71,7 @@ func flight3Parse(ctx context.Context, c flightConn, state *State, cache *handsh
 		if cfg.extendedMasterSecret == RequireExtendedMasterSecret && !state.extendedMasterSecret {
 			return 0, &alert.Alert{Level: alert.Fatal, Description: alert.InsufficientSecurity}, errClientRequiredButNoServerEMS
 		}
-		if len(cfg.localSRTPProtectionProfiles) > 0 && state.srtpProtectionProfile == 0 {
+		if len(cfg.localSRTPProtectionProfiles) > 0 && state.getSRTPProtectionProfile() == 0 {
 			return 0, &alert.Alert{Level: alert.Fatal, Description: alert.InsufficientSecurity}, errRequestedButNoSRTPExtension
 		}
 
@@ -224,7 +227,7 @@ func handleServerKeyExchange(_ flightConn, state *State, cfg *handshakeConfig, h
 	return nil, nil //nolint:nilnil
 }
 
-func flight3Generate(c flightConn, state *State, cache *handshakeCache, cfg *handshakeConfig) ([]*packet, *alert.Alert, error) {
+func flight3Generate(_ flightConn, state *State, _ *handshakeCache, cfg *handshakeConfig) ([]*packet, *alert.Alert, error) {
 	extensions := []extension.Extension{
 		&extension.SupportedSignatureAlgorithms{
 			SignatureHashAlgorithms: cfg.localSignatureSchemes,
