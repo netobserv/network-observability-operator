@@ -8,7 +8,7 @@ require (
 	github.com/bpfman/bpfman-operator v0.5.5
 	github.com/coreos/go-semver v0.3.1
 	github.com/go-logr/logr v1.4.2
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/netobserv/flowlogs-pipeline v1.7.0-community.0.20241217113023-fa0540a1658e
 	github.com/netobserv/netobserv-ebpf-agent v1.7.0-community.0.20250122180127-fa88f3515234
 	github.com/onsi/ginkgo/v2 v2.22.2
