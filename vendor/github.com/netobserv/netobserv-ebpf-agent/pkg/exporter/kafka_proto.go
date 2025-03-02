@@ -53,7 +53,7 @@ func (kp *KafkaProto) batchAndSubmit(records []*model.Record) {
 		pbBytes, err := proto.Marshal(pbflow.FlowToPB(record))
 		if err != nil {
 			klog.WithError(err).Debug("can't encode protobuf message. Ignoring")
-			kp.Metrics.Errors.WithErrorName(componentKafka, "CannotEncodeMessage").Inc()
+			kp.Metrics.Errors.WithErrorName(componentKafka, "CannotEncodeMessage", metrics.HighSeverity).Inc()
 			continue
 		}
 		msgs = append(msgs, kafkago.Message{Value: pbBytes, Key: getFlowKey(record)})
@@ -61,7 +61,7 @@ func (kp *KafkaProto) batchAndSubmit(records []*model.Record) {
 
 	if err := kp.Writer.WriteMessages(context.TODO(), msgs...); err != nil {
 		klog.WithError(err).Error("can't write messages into Kafka")
-		kp.Metrics.Errors.WithErrorName(componentKafka, "CannotWriteMessage").Inc()
+		kp.Metrics.Errors.WithErrorName(componentKafka, "CannotWriteMessage", metrics.HighSeverity).Inc()
 	}
 	kp.Metrics.EvictionCounter.WithSource(componentKafka).Inc()
 	kp.Metrics.EvictedFlowsCounter.WithSource(componentKafka).Add(float64(len(records)))

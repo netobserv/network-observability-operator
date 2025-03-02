@@ -15,6 +15,7 @@
 package exporter
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 
@@ -22,6 +23,16 @@ import (
 )
 
 func CreateIPFIXMsg(set entities.Set, obsDomainID uint32, seqNumber uint32, exportTime time.Time) ([]byte, error) {
+	var buf bytes.Buffer
+	if _, err := WriteIPFIXMsgToBuffer(set, obsDomainID, seqNumber, exportTime, &buf); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+// WriteIPFIXMsgToBuffer serializes the set as an IPFIX message and writes it to the provided
+// buffer. It returns the message length and an error if applicable.
+func WriteIPFIXMsgToBuffer(set entities.Set, obsDomainID uint32, seqNumber uint32, exportTime time.Time, buf *bytes.Buffer) (int, error) {
 	// Create a new message and use it to send the set.
 	msg := entities.NewMessage(false)
 
@@ -30,7 +41,7 @@ func CreateIPFIXMsg(set entities.Set, obsDomainID uint32, seqNumber uint32, expo
 	msgLen := entities.MsgHeaderLength + set.GetSetLength()
 	if msgLen > entities.MaxSocketMsgSize {
 		// This is applicable for both TCP and UDP sockets.
-		return nil, fmt.Errorf("message size exceeds max socket buffer size")
+		return msgLen, fmt.Errorf("message size exceeds max socket buffer size")
 	}
 
 	// Set the fields in the message header.
@@ -42,15 +53,12 @@ func CreateIPFIXMsg(set entities.Set, obsDomainID uint32, seqNumber uint32, expo
 	msg.SetExportTime(uint32(exportTime.Unix()))
 	msg.SetSequenceNum(seqNumber)
 
-	bytesSlice := make([]byte, msgLen)
-	copy(bytesSlice[:entities.MsgHeaderLength], msg.GetMsgHeader())
-	copy(bytesSlice[entities.MsgHeaderLength:entities.MsgHeaderLength+entities.SetHeaderLen], set.GetHeaderBuffer())
-	index := entities.MsgHeaderLength + entities.SetHeaderLen
+	buf.Grow(msgLen)
+	buf.Write(msg.GetMsgHeader())
+	buf.Write(set.GetHeaderBuffer())
 	for _, record := range set.GetRecords() {
-		len := record.GetRecordLength()
-		copy(bytesSlice[index:index+len], record.GetBuffer())
-		index += len
+		buf.Write(record.GetBuffer())
 	}
 
-	return bytesSlice, nil
+	return msgLen, nil
 }
