@@ -328,7 +328,7 @@ github.com/munnerz/goautoneg
 # github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 ## explicit
 github.com/mwitkow/go-conntrack
-# github.com/netobserv/flowlogs-pipeline v1.7.0-community.0.20250219173607-31d6d2795055
+# github.com/netobserv/flowlogs-pipeline v1.7.0-community.0.20250303144123-5f6d6dcd0bdf
 ## explicit; go 1.23.0
 github.com/netobserv/flowlogs-pipeline/pkg/api
 github.com/netobserv/flowlogs-pipeline/pkg/config
@@ -532,7 +532,7 @@ github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.6.1
 ## explicit; go 1.19
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.59.1
+# github.com/prometheus/common v0.59.1 => github.com/netobserv/prometheus-common v0.59.1-netobserv
 ## explicit; go 1.20
 github.com/prometheus/common/config
 github.com/prometheus/common/expfmt
@@ -1670,4 +1670,4 @@ sigs.k8s.io/structured-merge-diff/v4/value
 ## explicit; go 1.12
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v2
-# github.com/prometheus/common v0.55.0 => github.com/netobserv/prometheus-common v0.55.0-netobserv
+# github.com/prometheus/common => github.com/netobserv/prometheus-common v0.59.1-netobserv

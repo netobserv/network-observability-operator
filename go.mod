@@ -9,7 +9,7 @@ require (
 	github.com/coreos/go-semver v0.3.1
 	github.com/go-logr/logr v1.4.2
 	github.com/google/go-cmp v0.6.0
-	github.com/netobserv/flowlogs-pipeline v1.7.0-community.0.20250219173607-31d6d2795055
+	github.com/netobserv/flowlogs-pipeline v1.7.0-community.0.20250303144123-5f6d6dcd0bdf
 	github.com/netobserv/netobserv-ebpf-agent v1.7.0-community.0.20250130135234-c2d377a18f1b
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
@@ -176,4 +176,4 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.5.0 // indirect
 )
 
-replace github.com/prometheus/common v0.55.0 => github.com/netobserv/prometheus-common v0.55.0-netobserv
+replace github.com/prometheus/common => github.com/netobserv/prometheus-common v0.59.1-netobserv
