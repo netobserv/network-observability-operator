@@ -21,13 +21,13 @@ func (p *Preprocessed) GenerateFlatParts(flow config.GenericMap) []config.Generi
 				prefix := fl + ">"
 				for _, vv := range v {
 					switch vvv := vv.(type) {
-					case config.GenericMap:
+					case map[string]string:
 						partsForLabel = append(partsForLabel, flattenNested(prefix, vvv))
 					default:
 						partsForLabel = append(partsForLabel, config.GenericMap{fl: vv})
 					}
 				}
-			case []config.GenericMap:
+			case []map[string]string:
 				prefix := fl + ">"
 				for _, vv := range v {
 					partsForLabel = append(partsForLabel, flattenNested(prefix, vv))
@@ -79,7 +79,7 @@ func distribute(allUnflat [][]config.GenericMap) []config.GenericMap {
 	return ret
 }
 
-func flattenNested(prefix string, nested config.GenericMap) config.GenericMap {
+func flattenNested(prefix string, nested map[string]string) config.GenericMap {
 	subFlow := config.GenericMap{}
 	for k, v := range nested {
 		subFlow[prefix+k] = v

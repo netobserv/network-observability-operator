@@ -162,6 +162,8 @@ func decodeToIEDataType(dataType IEDataType, val interface{}) (interface{}, erro
 		return nil, fmt.Errorf("error when converting value to []bytes for decoding")
 	}
 	switch dataType {
+	case OctetArray:
+		return value, nil
 	case Unsigned8:
 		return value[0], nil
 	case Unsigned16:
@@ -211,6 +213,12 @@ func decodeToIEDataType(dataType IEDataType, val interface{}) (interface{}, erro
 // returns appropriate InfoElementWithValue.
 func DecodeAndCreateInfoElementWithValue(element *InfoElement, value []byte) (InfoElementWithValue, error) {
 	switch element.DataType {
+	case OctetArray:
+		var val []byte
+		if value != nil {
+			val = append(val, value...)
+		}
+		return NewOctetArrayInfoElement(element, val), nil
 	case Unsigned8:
 		var val uint8
 		if value == nil {
@@ -354,6 +362,10 @@ func DecodeAndCreateInfoElementWithValue(element *InfoElement, value []byte) (In
 // used for testing.
 func EncodeToIEDataType(dataType IEDataType, val interface{}) ([]byte, error) {
 	switch dataType {
+	case OctetArray:
+		// Supporting the type properly would require knowing whether we are dealing with a
+		// fixed-length or variable-length element.
+		return nil, fmt.Errorf("octet array data type not supported by this method yet")
 	case Unsigned8:
 		v, ok := val.(uint8)
 		if !ok {
@@ -521,6 +533,25 @@ func encodeInfoElementValueToBuff(element InfoElementWithValue, buffer []byte, i
 		return fmt.Errorf("buffer size is not enough for encoding")
 	}
 	switch element.GetDataType() {
+	case OctetArray:
+		v := element.GetOctetArrayValue()
+		ieLen := element.GetInfoElement().Len
+		if ieLen < VariableLength {
+			// fixed length case
+			if len(v) != int(ieLen) {
+				return fmt.Errorf("invalid value for fixed-length octet array: length mismatch")
+			}
+			copy(buffer[index:], v)
+		} else if len(v) < 255 {
+			buffer[index] = uint8(len(v))
+			copy(buffer[index+1:], v)
+		} else if len(v) <= math.MaxUint16 {
+			buffer[index] = byte(255) // marker byte for long array
+			binary.BigEndian.PutUint16(buffer[index+1:index+3], uint16(len(v)))
+			copy(buffer[index+3:], v)
+		} else {
+			return fmt.Errorf("provided OctetArray value is too long and cannot be encoded: len=%d, maxlen=%d", len(v), math.MaxUint16)
+		}
 	case Unsigned8:
 		copy(buffer[index:index+1], []byte{element.GetUnsigned8Value()})
 	case Unsigned16:

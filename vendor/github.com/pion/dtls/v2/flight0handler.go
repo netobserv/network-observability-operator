@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
+// SPDX-License-Identifier: MIT
+
 package dtls
 
 import (
@@ -11,7 +14,7 @@ import (
 	"github.com/pion/dtls/v2/pkg/protocol/handshake"
 )
 
-func flight0Parse(ctx context.Context, c flightConn, state *State, cache *handshakeCache, cfg *handshakeConfig) (flightVal, *alert.Alert, error) {
+func flight0Parse(_ context.Context, _ flightConn, state *State, cache *handshakeCache, cfg *handshakeConfig) (flightVal, *alert.Alert, error) {
 	seq, msgs, ok := cache.fullPullMap(0, state.cipherSuite,
 		handshakeCachePullRule{handshake.TypeClientHello, cfg.initialEpoch, true, false},
 	)
@@ -57,7 +60,7 @@ func flight0Parse(ctx context.Context, c flightConn, state *State, cache *handsh
 			if !ok {
 				return 0, &alert.Alert{Level: alert.Fatal, Description: alert.InsufficientSecurity}, errServerNoMatchingSRTPProfile
 			}
-			state.srtpProtectionProfile = profile
+			state.setSRTPProtectionProfile(profile)
 		case *extension.UseExtendedMasterSecret:
 			if cfg.extendedMasterSecret != DisableExtendedMasterSecret {
 				state.extendedMasterSecret = true
@@ -113,7 +116,7 @@ func handleHelloResume(sessionID []byte, state *State, cfg *handshakeConfig, nex
 	return next, nil, nil
 }
 
-func flight0Generate(c flightConn, state *State, cache *handshakeCache, cfg *handshakeConfig) ([]*packet, *alert.Alert, error) {
+func flight0Generate(_ flightConn, state *State, _ *handshakeCache, cfg *handshakeConfig) ([]*packet, *alert.Alert, error) {
 	// Initialize
 	if !cfg.insecureSkipHelloVerify {
 		state.cookie = make([]byte, cookieLength)
