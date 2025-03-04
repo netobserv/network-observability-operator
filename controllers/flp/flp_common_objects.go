@@ -17,7 +17,6 @@ import (
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
@@ -166,7 +165,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	})
 	ports = append(ports, corev1.ContainerPort{
 		Name:          prometheusServiceName,
-		ContainerPort: helper.GETFlowCollectorMetricsPort(b.desired),
+		ContainerPort: helper.GetFlowCollectorMetricsPort(b.desired),
 	})
 
 	if advancedConfig.ProfilePort != nil {
@@ -193,7 +192,6 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	}})
 
 	var envs []corev1.EnvVar
-	advancedConfig = helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
 	for _, pair := range helper.KeySorted(advancedConfig.Env) {
@@ -240,7 +238,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 		dnsPolicy = corev1.DNSClusterFirstWithHostNet
 	}
 	annotations["prometheus.io/scrape"] = "true"
-	annotations["prometheus.io/scrape_port"] = fmt.Sprint(helper.GETFlowCollectorMetricsPort(b.desired))
+	annotations["prometheus.io/scrape_port"] = fmt.Sprint(helper.GetFlowCollectorMetricsPort(b.desired))
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:      b.labels,
@@ -308,7 +306,7 @@ func (b *builder) DynamicConfigMap() (*corev1.ConfigMap, error) {
 func (b *builder) GetStaticJSONConfig() (string, error) {
 	metricsSettings := config.MetricsSettings{
 		PromConnectionInfo: api.PromConnectionInfo{
-			Port: int(helper.GETFlowCollectorMetricsPort(b.desired)),
+			Port: int(helper.GetFlowCollectorMetricsPort(b.desired)),
 		},
 		Prefix:  "netobserv_",
 		NoPanic: true,
@@ -363,7 +361,7 @@ func (b *builder) GetDynamicJSONConfig() (string, error) {
 
 }
 func (b *builder) promService() *corev1.Service {
-	port := helper.GETFlowCollectorMetricsPort(b.desired)
+	port := helper.GetFlowCollectorMetricsPort(b.desired)
 	svc := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      b.promServiceName(),
@@ -400,33 +398,6 @@ func (b *builder) serviceAccount() *corev1.ServiceAccount {
 				"app": b.name(),
 			},
 		},
-	}
-}
-
-func (b *builder) clusterRoleBinding(ck ConfKind, mono bool) *rbacv1.ClusterRoleBinding {
-	var rbName string
-	if mono {
-		rbName = RoleBindingMonoName(ck)
-	} else {
-		rbName = RoleBindingName(ck)
-	}
-	return &rbacv1.ClusterRoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: rbName,
-			Labels: map[string]string{
-				"app": b.name(),
-			},
-		},
-		RoleRef: rbacv1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "ClusterRole",
-			Name:     name(ck),
-		},
-		Subjects: []rbacv1.Subject{{
-			Kind:      "ServiceAccount",
-			Name:      b.name(),
-			Namespace: b.info.Namespace,
-		}},
 	}
 }
 
@@ -542,28 +513,4 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 		},
 	}
 	return &flpPrometheusRuleObject
-}
-
-func buildClusterRoleIngester(useOpenShiftSCC bool) *rbacv1.ClusterRole {
-	cr := rbacv1.ClusterRole{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name(ConfKafkaIngester),
-		},
-		Rules: []rbacv1.PolicyRule{
-			{
-				APIGroups: []string{""},
-				Verbs:     []string{"get", "watch"},
-				Resources: []string{"configmaps"},
-			},
-		},
-	}
-	if useOpenShiftSCC {
-		cr.Rules = append(cr.Rules, rbacv1.PolicyRule{
-			APIGroups:     []string{"security.openshift.io"},
-			Verbs:         []string{"use"},
-			Resources:     []string{"securitycontextconstraints"},
-			ResourceNames: []string{"hostnetwork"},
-		})
-	}
-	return &cr
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/resources"
 
 	osv1 "github.com/openshift/api/security/v1"
 	v1 "k8s.io/api/core/v1"
@@ -74,6 +75,12 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 		rlog.Info("creating namespace")
 		return c.CreateOwned(ctx, desired)
 	}
+
+	binding := resources.GetExposeMetricsRoleBinding(ns)
+	if err := c.ReconcileRoleBinding(ctx, binding); err != nil {
+		return err
+	}
+
 	// We noticed that audit labels are automatically removed
 	// in some configurations of K8s, so to avoid an infinite update loop, we just ignore
 	// it (if the user removes it manually, it's at their own risk)

@@ -4,7 +4,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
@@ -83,36 +82,6 @@ func (b *transfoBuilder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 	}
 }
 
-// The operator needs to have at least the same permissions as flowlogs-pipeline in order to grant them
-//+kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get;list;watch
-//+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
-//+kubebuilder:rbac:groups=core,resources=pods;services;nodes;configmaps,verbs=get;list;watch
-
-func BuildClusterRoleTransformer() *rbacv1.ClusterRole {
-	return &rbacv1.ClusterRole{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name(ConfKafkaTransformer),
-		},
-		Rules: []rbacv1.PolicyRule{{
-			APIGroups: []string{""},
-			Verbs:     []string{"list", "get", "watch"},
-			Resources: []string{"pods", "services", "nodes", "configmaps"},
-		}, {
-			APIGroups: []string{"apps"},
-			Verbs:     []string{"list", "get", "watch"},
-			Resources: []string{"replicasets"},
-		}, {
-			APIGroups: []string{"autoscaling"},
-			Verbs:     []string{"create", "delete", "patch", "update", "get", "watch", "list"},
-			Resources: []string{"horizontalpodautoscalers"},
-		}},
-	}
-}
-
 func (b *transfoBuilder) serviceAccount() *corev1.ServiceAccount {
 	return b.generic.serviceAccount()
-}
-
-func (b *transfoBuilder) clusterRoleBinding() *rbacv1.ClusterRoleBinding {
-	return b.generic.clusterRoleBinding(ConfKafkaTransformer, false)
 }

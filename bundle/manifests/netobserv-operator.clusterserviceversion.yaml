@@ -937,10 +937,6 @@ spec:
     spec:
       clusterPermissions:
       - rules:
-        - nonResourceURLs:
-          - /metrics
-          verbs:
-          - get
         - apiGroups:
           - ""
           resources:
@@ -1011,12 +1007,6 @@ spec:
           - get
           - list
           - watch
-        - apiGroups:
-          - authentication.k8s.io
-          resources:
-          - tokenreviews
-          verbs:
-          - create
         - apiGroups:
           - autoscaling
           resources:
@@ -1098,7 +1088,6 @@ spec:
           - network
           verbs:
           - create
-          - get
         - apiGroups:
           - metrics.k8s.io
           resources:
@@ -1143,9 +1132,7 @@ spec:
           - rbac.authorization.k8s.io
           resources:
           - clusterrolebindings
-          - clusterroles
           - rolebindings
-          - roles
           verbs:
           - create
           - delete

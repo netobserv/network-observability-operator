@@ -3,7 +3,6 @@ package flp
 import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
@@ -63,8 +62,4 @@ func (b *monolithBuilder) promService() *corev1.Service {
 
 func (b *monolithBuilder) serviceAccount() *corev1.ServiceAccount {
 	return b.generic.serviceAccount()
-}
-
-func (b *monolithBuilder) clusterRoleBinding(ck ConfKind) *rbacv1.ClusterRoleBinding {
-	return b.generic.clusterRoleBinding(ck, true)
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
+	"github.com/netobserv/network-observability-operator/pkg/resources"
 )
 
 type transformerReconciler struct {
@@ -218,15 +219,21 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 
-	cr := BuildClusterRoleTransformer()
-	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
+	roles := []constants.ClusterRoleName{
+		constants.FLPInformersRole,
+	}
+	if helper.UseLoki(builder.generic.desired) && builder.generic.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
+		roles = append(roles, constants.LokiWriterRole)
+	}
+	bindings, crBindings := resources.GetAllBindings(
+		r.Namespace,
+		builder.generic.name(),
+		builder.generic.name(),
+		[]constants.RoleName{constants.ConfigWatcherRole},
+		roles,
+	)
+	if err := r.ReconcileClusterRoleBindings(ctx, crBindings); err != nil {
 		return err
 	}
-
-	desired := builder.clusterRoleBinding()
-	if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
-		return err
-	}
-
-	return reconcileDataAccessRoles(ctx, r.Common, &builder.generic)
+	return r.ReconcileRoleBindings(ctx, bindings)
 }
