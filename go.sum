@@ -735,8 +735,8 @@ github.com/onsi/gomega v1.36.2/go.mod h1:DdwyADRjrc825LhMEkD76cHR5+pUnjhUN8GlHlR
 github.com/op/go-logging v0.0.0-20160315200505-970db520ece7/go.mod h1:HzydrMdWErDVzsI23lYNej1Htcns9BCg93Dk0bBINWk=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.0.1/go.mod h1:BtxoFyWECRxE4U/7sNtV5W15zMzWCbyJoFRP3s7yZA0=
-github.com/openshift/api v0.0.0-20240722135205-ae4f370f361f h1:B+uJ4LmjO+qwMTZP2YhlpMziMPD4MD1++WdCAV2y+GI=
-github.com/openshift/api v0.0.0-20240722135205-ae4f370f361f/go.mod h1:OOh6Qopf21pSzqNVCB5gomomBXb8o5sGKZxG2KNpaXM=
+github.com/openshift/api v0.0.0-20250228110707-635291d6fdf1 h1:EEiIitbWf/D7MXxpHZc7O0zigK2LNLkjQV91kcT0wHM=
+github.com/openshift/api v0.0.0-20250228110707-635291d6fdf1/go.mod h1:yk60tHAmHhtVpJQo3TwVYq2zpuP70iJIFDCmeKMIzPw=
 github.com/openshift/client-go v0.0.0-20231121143148-910ca30a1a9a h1:4FVrw8hz0Wb3izbf6JfOEK+pJTYpEvteRR73mCh2g/A=
 github.com/openshift/client-go v0.0.0-20231121143148-910ca30a1a9a/go.mod h1:arApQobmOjZqtxw44TwnQdUCH+t9DgZ8geYPFqksHws=
 github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492/go.mod h1:Ngi6UdF0k5OKD5t5wlmGhe/EDKPoUM3BXZSSfIuJbis=
