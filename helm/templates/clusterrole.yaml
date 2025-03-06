@@ -88,7 +88,7 @@ rules:
   - apiGroups:
       - bpfman.io
     resources:
-      - bpfapplications
+      - clusterbpfapplications
     verbs:
       - create
       - delete
@@ -97,6 +97,14 @@ rules:
       - patch
       - update
       - watch
+  - apiGroups:
+      - bpfman.io
+    resources:
+      - clusterbpfapplications/status
+    verbs:
+      - get
+      - patch
+      - update
   - apiGroups:
       - config.openshift.io
     resources:

@@ -1022,7 +1022,7 @@ spec:
         - apiGroups:
           - bpfman.io
           resources:
-          - bpfapplications
+          - clusterbpfapplications
           verbs:
           - create
           - delete
@@ -1031,6 +1031,14 @@ spec:
           - patch
           - update
           - watch
+        - apiGroups:
+          - bpfman.io
+          resources:
+          - clusterbpfapplications/status
+          verbs:
+          - get
+          - patch
+          - update
         - apiGroups:
           - config.openshift.io
           resources:
