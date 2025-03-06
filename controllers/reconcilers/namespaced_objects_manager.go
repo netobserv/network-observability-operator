@@ -104,6 +104,12 @@ func (m *NamespacedObjectManager) NewCRB(name string) *rbacv1.ClusterRoleBinding
 	return &crb
 }
 
+func (m *NamespacedObjectManager) NewRB(name string) *rbacv1.RoleBinding {
+	rb := rbacv1.RoleBinding{}
+	m.AddManagedObject(name, &rb)
+	return &rb
+}
+
 // FetchAll fetches all managed objects (registered using AddManagedObject) in the current namespace.
 // Placeholders are filled with fetched resources. Resources not found are flagged internally.
 func (m *NamespacedObjectManager) FetchAll(ctx context.Context) error {

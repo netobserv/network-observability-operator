@@ -6,6 +6,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func GetRoleBindingName(app string, ref constants.RoleName) string {
+	return string(ref) + "-" + app
+}
+
+func GetClusterRoleBindingName(app string, ref constants.ClusterRoleName) string {
+	return string(ref) + "-" + app
+}
+
 func GetRoleBinding(namespace, app, sa string, ref constants.RoleName) *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
@@ -43,18 +51,6 @@ func GetClusterRoleBinding(namespace, app, sa string, ref constants.ClusterRoleN
 			Namespace: namespace,
 		}},
 	}
-}
-
-func GetAllBindings(namespace, app, sa string, roleRefs []constants.RoleName, clusterRoleRefs []constants.ClusterRoleName) ([]*rbacv1.RoleBinding, []*rbacv1.ClusterRoleBinding) {
-	var rb []*rbacv1.RoleBinding
-	var crb []*rbacv1.ClusterRoleBinding
-	for _, ref := range roleRefs {
-		rb = append(rb, GetRoleBinding(namespace, app, sa, ref))
-	}
-	for _, ref := range clusterRoleRefs {
-		crb = append(crb, GetClusterRoleBinding(namespace, app, sa, ref))
-	}
-	return rb, crb
 }
 
 func GetExposeMetricsRoleBinding(ns string) *rbacv1.RoleBinding {
