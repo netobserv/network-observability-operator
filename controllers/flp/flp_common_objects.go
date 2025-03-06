@@ -4,14 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
+	"slices"
 	"strconv"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 
@@ -26,8 +25,8 @@ const (
 	configVolume            = "config-volume"
 	configPath              = "/etc/flowlogs-pipeline"
 	configFile              = "config.json"
-	healthServiceName       = "health"
-	prometheusServiceName   = "prometheus"
+	healthPortName          = "health"
+	prometheusPortName      = "prometheus"
 	profilePortName         = "pprof"
 	healthTimeoutSeconds    = 5
 	livenessPeriodSeconds   = 10
@@ -35,120 +34,54 @@ const (
 	startupPeriodSeconds    = 10
 )
 
-type ConfKind string
-
-const (
-	ConfMonolith         ConfKind = "allInOne"
-	ConfKafkaIngester    ConfKind = "kafkaIngester"
-	ConfKafkaTransformer ConfKind = "kafkaTransformer"
-)
-
-var FlpConfSuffix = map[ConfKind]string{
-	ConfMonolith:         "",
-	ConfKafkaIngester:    "-ingester",
-	ConfKafkaTransformer: "-transformer",
+func newGRPCPipeline(desired *flowslatest.FlowCollectorSpec) config.PipelineBuilderStage {
+	return config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
+		Port: int(*helper.GetAdvancedProcessorConfig(desired.Processor.Advanced).Port),
+	})
 }
 
-type Builder struct {
-	info            *reconcilers.Instance
-	labels          map[string]string
-	selector        map[string]string
-	desired         *flowslatest.FlowCollectorSpec
-	flowMetrics     *metricslatest.FlowMetricList
-	detectedSubnets []flowslatest.SubnetLabel
-	promTLS         *flowslatest.CertificateReference
-	confKind        ConfKind
-	volumes         volumes.Builder
-	loki            *helper.LokiConfig
-	pipeline        *PipelineBuilder
-	isDownstream    bool
+func newKafkaPipeline(desired *flowslatest.FlowCollectorSpec, volumes *volumes.Builder) config.PipelineBuilderStage {
+	return config.NewKafkaPipeline("kafka-read", api.IngestKafka{
+		Brokers:           []string{desired.Kafka.Address},
+		Topic:             desired.Kafka.Topic,
+		GroupID:           constants.FLPName, // Without groupid, each message is delivered to each consumers
+		Decoder:           api.Decoder{Type: "protobuf"},
+		TLS:               getClientTLS(&desired.Kafka.TLS, "kafka-cert", volumes),
+		SASL:              getSASL(&desired.Kafka.SASL, "kafka-ingest", volumes),
+		PullQueueCapacity: desired.Processor.KafkaConsumerQueueCapacity,
+		PullMaxBytes:      desired.Processor.KafkaConsumerBatchSize,
+	})
 }
 
-type builder = Builder
-
-func NewBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel, ck ConfKind) (Builder, error) {
-	version := helper.ExtractVersion(info.Images[constants.ControllerBaseImageIndex])
-	name := name(ck)
+func getPromTLS(desired *flowslatest.FlowCollectorSpec, serviceName string) (*flowslatest.CertificateReference, error) {
 	var promTLS *flowslatest.CertificateReference
 	switch desired.Processor.Metrics.Server.TLS.Type {
 	case flowslatest.ServerTLSProvided:
 		promTLS = desired.Processor.Metrics.Server.TLS.Provided
 		if promTLS == nil {
-			return builder{}, fmt.Errorf("processor tls configuration set to provided but none is provided")
+			return nil, fmt.Errorf("processor TLS configuration set to provided but none is provided")
 		}
 	case flowslatest.ServerTLSAuto:
 		promTLS = &flowslatest.CertificateReference{
 			Type:     "secret",
-			Name:     promServiceName(ck),
+			Name:     serviceName,
 			CertFile: "tls.crt",
 			CertKey:  "tls.key",
 		}
 	case flowslatest.ServerTLSDisabled:
 		// nothing to do there
 	}
-	return builder{
-		info: info,
-		labels: map[string]string{
-			"app":     name,
-			"version": helper.MaxLabelLength(version),
-		},
-		selector: map[string]string{
-			"app": name,
-		},
-		desired:         desired,
-		flowMetrics:     flowMetrics,
-		detectedSubnets: detectedSubnets,
-		confKind:        ck,
-		promTLS:         promTLS,
-		loki:            info.Loki,
-		isDownstream:    info.IsDownstream,
-	}, nil
+	return promTLS, nil
 }
 
-func name(ck ConfKind) string                   { return constants.FLPName + FlpConfSuffix[ck] }
-func RoleBindingName(ck ConfKind) string        { return name(ck) + "-role" }
-func RoleBindingMonoName(ck ConfKind) string    { return name(ck) + "-role-mono" }
-func promServiceName(ck ConfKind) string        { return name(ck) + "-prom" }
-func staticConfigMapName(ck ConfKind) string    { return name(ck) + "-config" }
-func dynamicConfigMapName(ck ConfKind) string   { return name(ck) + "-config-dynamic" }
-func serviceMonitorName(ck ConfKind) string     { return name(ck) + "-monitor" }
-func prometheusRuleName(ck ConfKind) string     { return name(ck) + "-alert" }
-func (b *builder) name() string                 { return name(b.confKind) }
-func (b *builder) promServiceName() string      { return promServiceName(b.confKind) }
-func (b *builder) staticConfigMapName() string  { return staticConfigMapName(b.confKind) }
-func (b *builder) dynamicConfigMapName() string { return dynamicConfigMapName(b.confKind) }
-func (b *builder) serviceMonitorName() string   { return serviceMonitorName(b.confKind) }
-func (b *builder) prometheusRuleName() string   { return prometheusRuleName(b.confKind) }
-func (b *builder) Pipeline() *PipelineBuilder   { return b.pipeline }
-
-func (b *builder) NewGRPCPipeline() PipelineBuilder {
-	return b.initPipeline(config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
-		Port: int(*helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced).Port),
-	}))
-}
-
-func (b *builder) NewKafkaPipeline() PipelineBuilder {
-	decoder := api.Decoder{Type: "protobuf"}
-	return b.initPipeline(config.NewKafkaPipeline("kafka-read", api.IngestKafka{
-		Brokers:           []string{b.desired.Kafka.Address},
-		Topic:             b.desired.Kafka.Topic,
-		GroupID:           b.name(), // Without groupid, each message is delivered to each consumers
-		Decoder:           decoder,
-		TLS:               getClientTLS(&b.desired.Kafka.TLS, "kafka-cert", &b.volumes),
-		SASL:              getSASL(&b.desired.Kafka.SASL, "kafka-ingest", &b.volumes),
-		PullQueueCapacity: b.desired.Processor.KafkaConsumerQueueCapacity,
-		PullMaxBytes:      b.desired.Processor.KafkaConsumerBatchSize,
-	}))
-}
-
-func (b *builder) initPipeline(ingest config.PipelineBuilderStage) PipelineBuilder {
-	pipeline := newPipelineBuilder(b.desired, b.flowMetrics, b.detectedSubnets, b.info.Loki, b.info.ClusterInfo.ID, &b.volumes, &ingest)
-	b.pipeline = &pipeline
-	return pipeline
-}
-
-func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[string]string) corev1.PodTemplateSpec {
-	advancedConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
+func podTemplate(
+	appName, version, imageName, cmName string,
+	desired *flowslatest.FlowCollectorSpec,
+	vols *volumes.Builder,
+	hasHostPort, hostNetwork bool,
+	annotations map[string]string,
+) corev1.PodTemplateSpec {
+	advancedConfig := helper.GetAdvancedProcessorConfig(desired.Processor.Advanced)
 	var ports []corev1.ContainerPort
 	if hasHostPort {
 		ports = []corev1.ContainerPort{{
@@ -160,12 +93,12 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	}
 
 	ports = append(ports, corev1.ContainerPort{
-		Name:          healthServiceName,
+		Name:          healthPortName,
 		ContainerPort: *advancedConfig.HealthPort,
 	})
 	ports = append(ports, corev1.ContainerPort{
-		Name:          prometheusServiceName,
-		ContainerPort: helper.GetFlowCollectorMetricsPort(b.desired),
+		Name:          prometheusPortName,
+		ContainerPort: helper.GetFlowCollectorMetricsPort(desired),
 	})
 
 	if advancedConfig.ProfilePort != nil {
@@ -176,16 +109,16 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 		})
 	}
 
-	volumeMounts := b.volumes.AppendMounts([]corev1.VolumeMount{{
+	volumeMounts := vols.AppendMounts([]corev1.VolumeMount{{
 		MountPath: configPath,
 		Name:      configVolume,
 	}})
-	volumes := b.volumes.AppendVolumes([]corev1.Volume{{
+	volumes := vols.AppendVolumes([]corev1.Volume{{
 		Name: configVolume,
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: b.staticConfigMapName(),
+					Name: cmName,
 				},
 			},
 		},
@@ -201,10 +134,10 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 
 	container := corev1.Container{
 		Name:            constants.FLPName,
-		Image:           b.info.Images[constants.ControllerBaseImageIndex],
-		ImagePullPolicy: corev1.PullPolicy(b.desired.Processor.ImagePullPolicy),
+		Image:           imageName,
+		ImagePullPolicy: corev1.PullPolicy(desired.Processor.ImagePullPolicy),
 		Args:            []string{fmt.Sprintf(`--config=%s/%s`, configPath, configFile)},
-		Resources:       *b.desired.Processor.Resources.DeepCopy(),
+		Resources:       *desired.Processor.Resources.DeepCopy(),
 		VolumeMounts:    volumeMounts,
 		Ports:           ports,
 		Env:             envs,
@@ -215,7 +148,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path: "/live",
-					Port: intstr.FromString(healthServiceName),
+					Port: intstr.FromString(healthPortName),
 				},
 			},
 			TimeoutSeconds: healthTimeoutSeconds,
@@ -225,7 +158,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path: "/ready",
-					Port: intstr.FromString(healthServiceName),
+					Port: intstr.FromString(healthPortName),
 				},
 			},
 			TimeoutSeconds:   healthTimeoutSeconds,
@@ -238,16 +171,16 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 		dnsPolicy = corev1.DNSClusterFirstWithHostNet
 	}
 	annotations["prometheus.io/scrape"] = "true"
-	annotations["prometheus.io/scrape_port"] = fmt.Sprint(helper.GetFlowCollectorMetricsPort(b.desired))
+	annotations["prometheus.io/scrape_port"] = fmt.Sprint(helper.GetFlowCollectorMetricsPort(desired))
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels:      b.labels,
+			Labels:      map[string]string{"app": appName, "version": version},
 			Annotations: annotations,
 		},
 		Spec: corev1.PodSpec{
 			Volumes:            volumes,
 			Containers:         []corev1.Container{container},
-			ServiceAccountName: b.name(),
+			ServiceAccountName: appName,
 			HostNetwork:        hostNetwork,
 			DNSPolicy:          dnsPolicy,
 			NodeSelector:       advancedConfig.Scheduling.NodeSelector,
@@ -260,59 +193,33 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
-func (b *builder) StaticConfigMap() (*corev1.ConfigMap, string, error) {
-	configStr, err := b.GetStaticJSONConfig()
-	if err != nil {
-		return nil, "", err
-	}
-
+func configMap(name, namespace, data, appName string) (*corev1.ConfigMap, string, error) {
 	configMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.staticConfigMapName(),
-			Namespace: b.info.Namespace,
-			Labels:    b.labels,
+			Name:      name,
+			Namespace: namespace,
+			Labels:    map[string]string{"app": appName},
 		},
 		Data: map[string]string{
-			configFile: configStr,
+			configFile: data,
 		},
 	}
 	hasher := fnv.New64a()
-	_, _ = hasher.Write([]byte(configStr))
+	_, _ = hasher.Write([]byte(data))
 	digest := strconv.FormatUint(hasher.Sum64(), 36)
 	return &configMap, digest, nil
 }
 
-func (b *builder) DynamicConfigMap() (*corev1.ConfigMap, error) {
-	configStr, err := b.GetDynamicJSONConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	configMap := corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.dynamicConfigMapName(),
-			Namespace: b.info.Namespace,
-			Labels:    b.labels,
-		},
-		Data: map[string]string{
-			configFile: configStr,
-		},
-	}
-	hasher := fnv.New64a()
-	_, _ = hasher.Write([]byte(configStr))
-	return &configMap, nil
-}
-
-func (b *builder) GetStaticJSONConfig() (string, error) {
+func metricsSettings(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builder, promTLS *flowslatest.CertificateReference) config.MetricsSettings {
 	metricsSettings := config.MetricsSettings{
 		PromConnectionInfo: api.PromConnectionInfo{
-			Port: int(helper.GetFlowCollectorMetricsPort(b.desired)),
+			Port: int(helper.GetFlowCollectorMetricsPort(desired)),
 		},
 		Prefix:  "netobserv_",
 		NoPanic: true,
 	}
-	if b.desired.Processor.Metrics.Server.TLS.Type != flowslatest.ServerTLSDisabled {
-		cert, key := b.volumes.AddCertificate(b.promTLS, "prom-certs")
+	if desired.Processor.Metrics.Server.TLS.Type != flowslatest.ServerTLSDisabled {
+		cert, key := vol.AddCertificate(promTLS, "prom-certs")
 		if cert != "" && key != "" {
 			metricsSettings.TLS = &api.PromTLSConf{
 				CertPath: cert,
@@ -320,18 +227,23 @@ func (b *builder) GetStaticJSONConfig() (string, error) {
 			}
 		}
 	}
-	advancedConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
+	return metricsSettings
+}
+
+func getStaticJSONConfig(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builder, promTLS *flowslatest.CertificateReference, pipeline *PipelineBuilder, dynCMName string) (string, error) {
+	metricsSettings := metricsSettings(desired, vol, promTLS)
+	advancedConfig := helper.GetAdvancedProcessorConfig(desired.Processor.Advanced)
 	config := map[string]interface{}{
-		"log-level": b.desired.Processor.LogLevel,
+		"log-level": desired.Processor.LogLevel,
 		"health": map[string]interface{}{
 			"port": *advancedConfig.HealthPort,
 		},
-		"pipeline":        b.pipeline.GetStages(),
-		"parameters":      b.pipeline.GetStaticStageParams(),
+		"pipeline":        pipeline.GetStages(),
+		"parameters":      pipeline.GetStaticStageParams(),
 		"metricsSettings": metricsSettings,
 		"dynamicParameters": config.DynamicParameters{
-			Namespace: b.info.Namespace,
-			Name:      b.dynamicConfigMapName(),
+			Namespace: desired.Namespace,
+			Name:      dynCMName,
 			FileName:  configFile,
 		},
 	}
@@ -340,7 +252,6 @@ func (b *builder) GetStaticJSONConfig() (string, error) {
 			"port": *advancedConfig.ProfilePort,
 		}
 	}
-
 	bs, err := json.Marshal(config)
 	if err != nil {
 		return "", err
@@ -348,30 +259,29 @@ func (b *builder) GetStaticJSONConfig() (string, error) {
 	return string(bs), nil
 }
 
-func (b *builder) GetDynamicJSONConfig() (string, error) {
+func getDynamicJSONConfig(pipeline *PipelineBuilder) (string, error) {
 	config := map[string]interface{}{
-		"parameters": b.pipeline.GetDynamicStageParams(),
+		"parameters": pipeline.GetDynamicStageParams(),
 	}
-
 	bs, err := json.Marshal(config)
 	if err != nil {
 		return "", err
 	}
 	return string(bs), nil
-
 }
-func (b *builder) promService() *corev1.Service {
-	port := helper.GetFlowCollectorMetricsPort(b.desired)
+
+func promService(desired *flowslatest.FlowCollectorSpec, svcName, namespace, appLabel string) *corev1.Service {
+	port := helper.GetFlowCollectorMetricsPort(desired)
 	svc := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.promServiceName(),
-			Namespace: b.info.Namespace,
-			Labels:    b.labels,
+			Name:      svcName,
+			Namespace: namespace,
+			Labels:    map[string]string{"app": appLabel},
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: b.selector,
+			Selector: map[string]string{"app": appLabel},
 			Ports: []corev1.ServicePort{{
-				Name:     prometheusServiceName,
+				Name:     prometheusPortName,
 				Port:     port,
 				Protocol: corev1.ProtocolTCP,
 				// Some Kubernetes versions might automatically set TargetPort to Port. We need to
@@ -381,43 +291,32 @@ func (b *builder) promService() *corev1.Service {
 			}},
 		},
 	}
-	if b.desired.Processor.Metrics.Server.TLS.Type == flowslatest.ServerTLSAuto {
+	if desired.Processor.Metrics.Server.TLS.Type == flowslatest.ServerTLSAuto {
 		svc.ObjectMeta.Annotations = map[string]string{
-			constants.OpenShiftCertificateAnnotation: b.promServiceName(),
+			constants.OpenShiftCertificateAnnotation: svcName,
 		}
 	}
 	return &svc
 }
 
-func (b *builder) serviceAccount() *corev1.ServiceAccount {
-	return &corev1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.name(),
-			Namespace: b.info.Namespace,
-			Labels: map[string]string{
-				"app": b.name(),
-			},
-		},
-	}
-}
-
-func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
-	serverName := fmt.Sprintf("%s.%s.svc", b.promServiceName(), b.info.Namespace)
-	scheme, smTLS := helper.GetServiceMonitorTLSConfig(&b.desired.Processor.Metrics.Server.TLS, serverName, b.isDownstream)
+func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, namespace, appLabel string, isDownstream bool) *monitoringv1.ServiceMonitor {
+	serverName := fmt.Sprintf("%s.%s.svc", svcName, namespace)
+	scheme, smTLS := helper.GetServiceMonitorTLSConfig(&desired.Processor.Metrics.Server.TLS, serverName, isDownstream)
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.serviceMonitorName(),
-			Namespace: b.info.Namespace,
-			Labels:    b.labels,
+			Name:      smName,
+			Namespace: namespace,
+			Labels:    map[string]string{"app": appLabel},
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Endpoints: []monitoringv1.Endpoint{
 				{
-					Port:        prometheusServiceName,
+					Port:        prometheusPortName,
 					Interval:    "15s",
 					Scheme:      scheme,
 					TLSConfig:   smTLS,
 					HonorLabels: true,
+					// Relabel for Thanos multi-tenant endpoint, which requires having the namespace label
 					MetricRelabelConfigs: []monitoringv1.RelabelConfig{
 						{
 							SourceLabels: []monitoringv1.LabelName{"__name__", "DstK8S_Namespace"},
@@ -439,32 +338,21 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 				},
 			},
 			NamespaceSelector: monitoringv1.NamespaceSelector{
-				MatchNames: []string{
-					b.info.Namespace,
-				},
+				MatchNames: []string{namespace},
 			},
 			Selector: metav1.LabelSelector{
-				MatchLabels: b.selector,
+				MatchLabels: map[string]string{"app": appLabel},
 			},
 		},
 	}
 }
 
-func shouldAddAlert(name flowslatest.FLPAlert, disabledList []flowslatest.FLPAlert) bool {
-	for _, disabledAlert := range disabledList {
-		if name == disabledAlert {
-			return false
-		}
-	}
-	return true
-}
-
-func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
+func prometheusRule(desired *flowslatest.FlowCollectorSpec, ruleName, namespace, appLabel string) *monitoringv1.PrometheusRule {
 	rules := []monitoringv1.Rule{}
 	d := monitoringv1.Duration("10m")
 
 	// Not receiving flows
-	if shouldAddAlert(flowslatest.AlertNoFlows, b.desired.Processor.Metrics.DisableAlerts) {
+	if !slices.Contains(desired.Processor.Metrics.DisableAlerts, flowslatest.AlertNoFlows) {
 		rules = append(rules, monitoringv1.Rule{
 			Alert: string(flowslatest.AlertNoFlows),
 			Annotations: map[string]string{
@@ -481,7 +369,7 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 	}
 
 	// Flows getting dropped by loki library
-	if shouldAddAlert(flowslatest.AlertLokiError, b.desired.Processor.Metrics.DisableAlerts) {
+	if !slices.Contains(desired.Processor.Metrics.DisableAlerts, flowslatest.AlertLokiError) {
 		rules = append(rules, monitoringv1.Rule{
 			Alert: string(flowslatest.AlertLokiError),
 			Annotations: map[string]string{
@@ -499,9 +387,9 @@ func (b *builder) prometheusRule() *monitoringv1.PrometheusRule {
 
 	flpPrometheusRuleObject := monitoringv1.PrometheusRule{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.prometheusRuleName(),
-			Labels:    b.labels,
-			Namespace: b.info.Namespace,
+			Name:      ruleName,
+			Labels:    map[string]string{"app": appLabel},
+			Namespace: namespace,
 		},
 		Spec: monitoringv1.PrometheusRuleSpec{
 			Groups: []monitoringv1.RuleGroup{

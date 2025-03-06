@@ -8,80 +8,183 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/apis/flowmetrics/v1alpha1"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/volumes"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+)
+
+const (
+	transfoName           = constants.FLPName + "-transformer"
+	transfoConfigMap      = transfoName + "-config"
+	transfoDynConfigMap   = transfoName + "-config-dynamic"
+	transfoPromService    = transfoName + "-prom"
+	transfoServiceMonitor = transfoName + "-monitor"
+	transfoPromRule       = transfoName + "-alert"
 )
 
 type transfoBuilder struct {
-	generic builder
+	info            *reconcilers.Instance
+	desired         *flowslatest.FlowCollectorSpec
+	flowMetrics     *metricslatest.FlowMetricList
+	detectedSubnets []flowslatest.SubnetLabel
+	version         string
+	promTLS         *flowslatest.CertificateReference
+	volumes         volumes.Builder
 }
 
 func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel) (transfoBuilder, error) {
-	gen, err := NewBuilder(info, desired, flowMetrics, detectedSubnets, ConfKafkaTransformer)
+	version := helper.ExtractVersion(info.Images[constants.ControllerBaseImageIndex])
+	promTLS, err := getPromTLS(desired, transfoPromService)
+	if err != nil {
+		return transfoBuilder{}, err
+	}
 	return transfoBuilder{
-		generic: gen,
-	}, err
+		info:            info,
+		desired:         desired,
+		flowMetrics:     flowMetrics,
+		detectedSubnets: detectedSubnets,
+		version:         helper.MaxLabelLength(version),
+		promTLS:         promTLS,
+	}, nil
+}
+
+func (b *transfoBuilder) appLabel() map[string]string {
+	return map[string]string{
+		"app": transfoName,
+	}
+}
+
+func (b *transfoBuilder) appVersionLabels() map[string]string {
+	return map[string]string{
+		"app":     transfoName,
+		"version": b.version,
+	}
 }
 
 func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deployment {
-	pod := b.generic.podTemplate(false /*no listen*/, false /*no host network*/, annotations)
+	pod := podTemplate(
+		transfoName,
+		b.version,
+		b.info.Images[constants.ControllerBaseImageIndex],
+		transfoConfigMap,
+		b.desired,
+		&b.volumes,
+		false, /*no listen*/
+		false, /*no host network*/
+		annotations,
+	)
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.generic.name(),
-			Namespace: b.generic.info.Namespace,
-			Labels:    b.generic.labels,
+			Name:      transfoName,
+			Namespace: b.info.Namespace,
+			Labels:    b.appVersionLabels(),
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: b.generic.desired.Processor.KafkaConsumerReplicas,
+			Replicas: b.desired.Processor.KafkaConsumerReplicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: b.generic.selector,
+				MatchLabels: b.appLabel(),
 			},
 			Template: pod,
 		},
 	}
 }
 
-func (b *transfoBuilder) staticConfigMap() (*corev1.ConfigMap, string, error) {
-	pipeline := b.generic.NewKafkaPipeline()
+func (b *transfoBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
+	kafkaStage := newKafkaPipeline(b.desired, &b.volumes)
+	pipeline := newPipelineBuilder(
+		b.desired,
+		b.flowMetrics,
+		b.detectedSubnets,
+		b.info.Loki,
+		b.info.ClusterInfo.ID,
+		&b.volumes,
+		&kafkaStage,
+	)
 	err := pipeline.AddProcessorStages()
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
-	return b.generic.StaticConfigMap()
-}
 
-func (b *transfoBuilder) dynamicConfigMap() (*corev1.ConfigMap, error) {
-	pipeline := b.generic.NewKafkaPipeline()
-	err := pipeline.AddProcessorStages()
+	// Get static CM
+	data, err := getStaticJSONConfig(b.desired, &b.volumes, b.promTLS, &pipeline, transfoDynConfigMap)
 	if err != nil {
-		return nil, err
+		return nil, "", nil, err
 	}
-	return b.generic.DynamicConfigMap()
+	staticCM, digest, err := configMap(transfoConfigMap, b.info.Namespace, data, transfoName)
+	if err != nil {
+		return nil, "", nil, err
+	}
+
+	// Get dynamic CM (hot reload)
+	data, err = getDynamicJSONConfig(&pipeline)
+	if err != nil {
+		return nil, "", nil, err
+	}
+	dynamicCM, _, err := configMap(transfoDynConfigMap, b.info.Namespace, data, transfoName)
+	if err != nil {
+		return nil, "", nil, err
+	}
+
+	return staticCM, digest, dynamicCM, err
 }
 
 func (b *transfoBuilder) promService() *corev1.Service {
-	return b.generic.promService()
+	return promService(
+		b.desired,
+		transfoPromService,
+		b.info.Namespace,
+		transfoName,
+	)
 }
 
 func (b *transfoBuilder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 	return &ascv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.generic.name(),
-			Namespace: b.generic.info.Namespace,
-			Labels:    b.generic.labels,
+			Name:      transfoName,
+			Namespace: b.info.Namespace,
+			Labels:    b.appLabel(),
 		},
 		Spec: ascv2.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: ascv2.CrossVersionObjectReference{
 				APIVersion: "apps/v1",
 				Kind:       "Deployment",
-				Name:       b.generic.name(),
+				Name:       transfoName,
 			},
-			MinReplicas: b.generic.desired.Processor.KafkaConsumerAutoscaler.MinReplicas,
-			MaxReplicas: b.generic.desired.Processor.KafkaConsumerAutoscaler.MaxReplicas,
-			Metrics:     b.generic.desired.Processor.KafkaConsumerAutoscaler.Metrics,
+			MinReplicas: b.desired.Processor.KafkaConsumerAutoscaler.MinReplicas,
+			MaxReplicas: b.desired.Processor.KafkaConsumerAutoscaler.MaxReplicas,
+			Metrics:     b.desired.Processor.KafkaConsumerAutoscaler.Metrics,
 		},
 	}
 }
 
 func (b *transfoBuilder) serviceAccount() *corev1.ServiceAccount {
-	return b.generic.serviceAccount()
+	return &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      transfoName,
+			Namespace: b.info.Namespace,
+			Labels:    b.appLabel(),
+		},
+	}
+}
+
+func (b *transfoBuilder) serviceMonitor() *monitoringv1.ServiceMonitor {
+	return serviceMonitor(
+		b.desired,
+		transfoServiceMonitor,
+		transfoPromService,
+		b.info.Namespace,
+		transfoName,
+		b.info.IsDownstream,
+	)
+}
+
+func (b *transfoBuilder) prometheusRule() *monitoringv1.PrometheusRule {
+	return prometheusRule(
+		b.desired,
+		transfoPromRule,
+		b.info.Namespace,
+		transfoName,
+	)
 }
