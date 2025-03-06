@@ -2,10 +2,8 @@ module github.com/netobserv/network-observability-operator
 
 go 1.23.0
 
-toolchain go1.23.4
-
 require (
-	github.com/bpfman/bpfman-operator v0.5.6
+	github.com/bpfman/bpfman-operator v0.5.7-0.20250306131041-cd301fcfe248
 	github.com/coreos/go-semver v0.3.1
 	github.com/go-logr/logr v1.4.2
 	github.com/google/go-cmp v0.6.0
@@ -177,3 +175,5 @@ require (
 )
 
 replace github.com/prometheus/common => github.com/netobserv/prometheus-common v0.59.1-netobserv
+
+replace github.com/bpfman/bpfman-operator => github.com/msherif1234/bpfman-operator v0.0.0-20250318200857-a55d6df33ba8

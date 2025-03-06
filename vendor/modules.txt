@@ -35,7 +35,7 @@ github.com/beorn7/perks/quantile
 # github.com/blang/semver/v4 v4.0.0
 ## explicit; go 1.14
 github.com/blang/semver/v4
-# github.com/bpfman/bpfman-operator v0.5.6
+# github.com/bpfman/bpfman-operator v0.5.7-0.20250306131041-cd301fcfe248 => github.com/msherif1234/bpfman-operator v0.0.0-20250318200857-a55d6df33ba8
 ## explicit; go 1.23.0
 github.com/bpfman/bpfman-operator/apis/v1alpha1
 # github.com/cenkalti/backoff/v4 v4.3.0
@@ -1673,3 +1673,4 @@ sigs.k8s.io/structured-merge-diff/v4/value
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v2
 # github.com/prometheus/common => github.com/netobserv/prometheus-common v0.59.1-netobserv
+# github.com/bpfman/bpfman-operator => github.com/msherif1234/bpfman-operator v0.0.0-20250318200857-a55d6df33ba8
