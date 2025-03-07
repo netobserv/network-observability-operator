@@ -4,10 +4,6 @@ kind: ClusterRole
 metadata:
   name: manager-role
 rules:
-- nonResourceURLs:
-  - /metrics
-  verbs:
-  - get
 - apiGroups:
   - ""
   resources:
@@ -78,12 +74,6 @@ rules:
   - get
   - list
   - watch
-- apiGroups:
-  - authentication.k8s.io
-  resources:
-  - tokenreviews
-  verbs:
-  - create
 - apiGroups:
   - autoscaling
   resources:
@@ -165,7 +155,6 @@ rules:
   - network
   verbs:
   - create
-  - get
 - apiGroups:
   - metrics.k8s.io
   resources:
@@ -210,9 +199,7 @@ rules:
   - rbac.authorization.k8s.io
   resources:
   - clusterrolebindings
-  - clusterroles
   - rolebindings
-  - roles
   verbs:
   - create
   - delete

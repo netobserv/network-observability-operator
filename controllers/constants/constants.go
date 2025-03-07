@@ -6,6 +6,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+type ClusterRoleName string
+type RoleName string
+
 const (
 	DefaultOperatorNamespace = "netobserv"
 	OperatorName             = "netobserv-operator"
@@ -44,11 +47,15 @@ const (
 	UWMonitoringNamespace    = "openshift-user-workload-monitoring"
 	ConsoleNamespace         = "openshift-console"
 
-	// Roles
-	LokiCRWriter  = "netobserv-writer"
-	LokiCRBWriter = "netobserv-writer-flp"
-	LokiCRReader  = "netobserv-reader"
-	PromCRReader  = "netobserv-metrics-reader"
+	// [Cluster]Roles, must match names in config/rbac/component_roles.yaml (without netobserv- prefix)
+	LokiWriterRole         ClusterRoleName = "netobserv-writer"
+	LokiReaderRole         ClusterRoleName = "netobserv-reader"
+	PromReaderRole         ClusterRoleName = "netobserv-metrics-reader"
+	ExposeMetricsRole      RoleName        = "netobserv-expose-metrics"
+	FLPInformersRole       ClusterRoleName = "netobserv-informers"
+	HostNetworkRole        ClusterRoleName = "netobserv-hostnetwork"
+	ConsoleTokenReviewRole ClusterRoleName = "netobserv-token-review"
+	ConfigWatcherRole      RoleName        = "netobserv-config-watcher"
 
 	ControllerBaseImageIndex    = 0
 	EBPFAgentByteCodeImageIndex = 1

@@ -50,9 +50,7 @@ func TestPipelineConfig(t *testing.T) {
 	cfg := getConfig()
 	cfg.Processor.LogLevel = "info"
 	b := monoBuilder(ns, &cfg)
-	scm, _, err := b.staticConfigMap()
-	assert.NoError(err)
-	dcm, err := b.dynamicConfigMap()
+	scm, _, dcm, err := b.configMaps()
 	assert.NoError(err)
 	_, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -63,9 +61,7 @@ func TestPipelineConfig(t *testing.T) {
 	// Kafka Transformer
 	cfg.DeploymentModel = flowslatest.DeploymentModelKafka
 	bt := transfBuilder(ns, &cfg)
-	scm, _, err = bt.staticConfigMap()
-	assert.NoError(err)
-	dcm, err = bt.dynamicConfigMap()
+	scm, _, dcm, err = bt.configMaps()
 	assert.NoError(err)
 	_, pipeline = validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -80,9 +76,7 @@ func TestPipelineTraceStage(t *testing.T) {
 	cfg := getConfig()
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, err := b.staticConfigMap()
-	assert.NoError(err)
-	dcm, err := b.dynamicConfigMap()
+	scm, _, dcm, err := b.configMaps()
 	assert.NoError(err)
 	_, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -106,9 +100,7 @@ func TestMergeMetricsConfiguration_Default(t *testing.T) {
 	cfg := getConfig()
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, err := b.staticConfigMap()
-	assert.NoError(err)
-	dcm, err := b.dynamicConfigMap()
+	scm, _, dcm, err := b.configMaps()
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
@@ -130,9 +122,7 @@ func TestMergeMetricsConfiguration_DefaultWithFeatures(t *testing.T) {
 	cfg.Agent.EBPF.Features = []flowslatest.AgentFeature{flowslatest.DNSTracking, flowslatest.FlowRTT, flowslatest.PacketDrop}
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, err := b.staticConfigMap()
-	assert.NoError(err)
-	dcm, err := b.dynamicConfigMap()
+	scm, _, dcm, err := b.configMaps()
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
@@ -156,9 +146,7 @@ func TestMergeMetricsConfiguration_WithList(t *testing.T) {
 	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{"namespace_egress_bytes_total", "namespace_ingress_bytes_total"}
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, err := b.staticConfigMap()
-	assert.NoError(err)
-	dcm, err := b.dynamicConfigMap()
+	scm, _, dcm, err := b.configMaps()
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
@@ -175,9 +163,7 @@ func TestMergeMetricsConfiguration_EmptyList(t *testing.T) {
 	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{}
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, err := b.staticConfigMap()
-	assert.NoError(err)
-	dcm, err := b.dynamicConfigMap()
+	scm, _, dcm, err := b.configMaps()
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	assert.Len(cfs.Parameters, 5)
@@ -202,9 +188,7 @@ func TestPipelineWithExporter(t *testing.T) {
 	})
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, err := b.staticConfigMap()
-	assert.NoError(err)
-	dcm, err := b.dynamicConfigMap()
+	scm, _, dcm, err := b.configMaps()
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -227,9 +211,7 @@ func TestPipelineWithoutLoki(t *testing.T) {
 	cfg.Loki.Enable = ptr.To(false)
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, err := b.staticConfigMap()
-	assert.NoError(err)
-	dcm, err := b.dynamicConfigMap()
+	scm, _, dcm, err := b.configMaps()
 	assert.NoError(err)
 	_, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -307,15 +289,13 @@ func TestPipelineWithSubnetLabels(t *testing.T) {
 	}
 
 	b := monoBuilder("namespace", &cfg)
-	b.generic.detectedSubnets = []flowslatest.SubnetLabel{
+	b.detectedSubnets = []flowslatest.SubnetLabel{
 		{
 			Name:  "Pods",
 			CIDRs: []string{"10.128.0.0/14"},
 		},
 	}
-	scm, _, err := b.staticConfigMap()
-	assert.NoError(err)
-	dcm, err := b.dynamicConfigMap()
+	scm, _, dcm, err := b.configMaps()
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -378,9 +358,7 @@ func TestPipelineWithFilters_WantNamespacesABC(t *testing.T) {
 	}
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, err := b.staticConfigMap()
-	assert.NoError(err)
-	dcm, err := b.dynamicConfigMap()
+	scm, _, dcm, err := b.configMaps()
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -452,9 +430,7 @@ func TestPipelineWithFilters_DontWantNamespacesABC_LokiOnly(t *testing.T) {
 	}
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, err := b.staticConfigMap()
-	assert.NoError(err)
-	dcm, err := b.dynamicConfigMap()
+	scm, _, dcm, err := b.configMaps()
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -547,9 +523,7 @@ func TestPipelineWithFilters_ComplexFilter(t *testing.T) {
 	}
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, err := b.staticConfigMap()
-	assert.NoError(err)
-	dcm, err := b.dynamicConfigMap()
+	scm, _, dcm, err := b.configMaps()
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(

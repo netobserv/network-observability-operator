@@ -55,14 +55,6 @@ func (c *Common) ReconcileRoleBinding(ctx context.Context, desired *rbacv1.RoleB
 	return ReconcileRoleBinding(ctx, &c.Client, desired)
 }
 
-func (c *Common) ReconcileClusterRole(ctx context.Context, desired *rbacv1.ClusterRole) error {
-	return ReconcileClusterRole(ctx, &c.Client, desired)
-}
-
-func (c *Common) ReconcileRole(ctx context.Context, desired *rbacv1.Role) error {
-	return ReconcileRole(ctx, &c.Client, desired)
-}
-
 func (c *Common) ReconcileConfigMap(ctx context.Context, old, new *corev1.ConfigMap) error {
 	return ReconcileConfigMap(ctx, &c.Client, old, new)
 }

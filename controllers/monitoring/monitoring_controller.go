@@ -21,6 +21,7 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/manager"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
+	"github.com/netobserv/network-observability-operator/pkg/resources"
 )
 
 type Reconciler struct {
@@ -110,15 +111,10 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 			return err
 		}
 	}
-	if r.mgr.Config.DownstreamDeployment {
-		desiredRole := buildRoleMonitoringReader()
-		if err := reconcilers.ReconcileClusterRole(ctx, clh, desiredRole); err != nil {
-			return err
-		}
-		desiredBinding := buildRoleBindingMonitoringReader(ns)
-		if err := reconcilers.ReconcileClusterRoleBinding(ctx, clh, desiredBinding); err != nil {
-			return err
-		}
+
+	binding := resources.GetExposeMetricsRoleBinding(ns)
+	if err := reconcilers.ReconcileRoleBinding(ctx, clh, binding); err != nil {
+		return err
 	}
 
 	// Dashboards
