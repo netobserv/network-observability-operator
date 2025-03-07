@@ -12,7 +12,7 @@ metadata:
       "catalog.Dockerfile.downstream".pathChanged() ||
       "catalog/***".pathChanged() ||
       "hack/update-build.sh".pathChanged() ||
-      "hack/bundle_digest.sh".pathChanged() ||
+      "hack/nudging/bundle_digest.sh".pathChanged() ||
       "hack/patch_catalog.py".pathChanged() ||
       "hack/patch_csv.py".pathChanged())
   creationTimestamp: null
