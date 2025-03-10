@@ -34,13 +34,48 @@ git clone https://github.com/netobserv/network-observability-operator.git && cd 
 
 # If you don't already have cert-manager, you'll need it:
 make install-cert-manager
+# (it is expected to see errors while running this script, since it runs several attempts creating a certificate for testing, before eventually succeeding)
 
-helm install netobserv --namespace netobserv --create-namespace -f helm/values.yaml ./helm
+helm install netobserv --namespace netobserv --create-namespace -f helm/values.yaml --set standaloneConsole.enable=true ./helm
+# If you're in OpenShift, you can omit "--set standaloneConsole.enable=true" to use the Console plugin instead.
 ```
 
-More information can be found [here](./config/descriptions/upstream.md).
+After that, you can install Loki, as explained [here](./config/descriptions/upstream.md). Loki is not mandatory but improves the overall experience with NetObserv.
+You will also need Prometheus. If you don't have it already, there is a quick setup provided in this repository, just run `make deploy-prometheus` from there.
 
-After the operator is installed, create a `FlowCollector` resource: refer to the [Configuration section](#configuration) of this document.
+After the operator and Loki are installed, create a `FlowCollector` resource: refer to the [Configuration section](#configuration) of this document. A very short `FlowCollector` should work, using default values, plus with the standalone console enabled:
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: flows.netobserv.io/v1beta2
+kind: FlowCollector
+metadata:
+  name: cluster
+spec:
+  namespace: netobserv
+  consolePlugin:
+    advanced:
+      env:
+        TEST_CONSOLE: "true"
+  prometheus:
+    querier:
+      manual:
+        url: http://prometheus:9090
+EOF
+```
+
+A few remarks:
+- While the [web console](https://github.com/netobserv/network-observability-console-plugin) is primarily designed as a plugin for the OpenShift Console, it is still possible to deploy it as a standalone, which the dev team sometimes use for testing. This is why it is mentioned as "TEST_CONSOLE" here.
+- If you're in OpenShift, you should omit "TEST_CONSOLE: true" to use the Console plugin instead, which offers a better / more integrated experience.
+- You can change the Prometheus URL depending on your installation. This example URL works if you use the `make deploy-prometheus` script from this repository. Prometheus configuration options are documented [here](./docs/FlowCollector.md#flowcollectorspecprometheus-1).
+
+To view the test console, you can port-forward 9001:
+
+```bash
+kubectl port-forward svc/netobserv-plugin 9001:9001 -n netobserv
+```
+
+Then open http://localhost:9001/ in your browser.
 
 ### Install from repository
 

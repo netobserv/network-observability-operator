@@ -3,3 +3,5 @@ certManager:
   existingIssuer:
     kind: ClusterIssuer
     name: ""
+standaloneConsole:
+  enable: false

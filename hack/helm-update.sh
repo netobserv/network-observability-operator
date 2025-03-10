@@ -23,9 +23,14 @@ yq -i 'del(.metadata.labels)' helm/templates/netobserv-webhook-service_v1_servic
 yq '.spec.install.spec.deployments[0].spec' bundle/manifests/netobserv-operator.clusterserviceversion.yaml > _tmp/csv-deployment.yaml
 yq '.spec.install.spec.clusterPermissions[0]' bundle/manifests/netobserv-operator.clusterserviceversion.yaml > _tmp/csv-clusterrole.yaml
 yq '.spec.install.spec.permissions[0]' bundle/manifests/netobserv-operator.clusterserviceversion.yaml > _tmp/csv-role.yaml
-
+ 
 # Create deployment
 yq '{"apiVersion": "apps/v1", "kind": "Deployment", "metadata": {"name": "netobserv-controller-manager", "labels": {"app": "netobserv-operator", "control-plane": "controller-manager"}}, "spec": .}' _tmp/csv-deployment.yaml > helm/templates/deployment.yaml
+
+# Inject paramterized standalone console in deployment
+PLUGIN_IMAGE=$(yq '(.spec.template.spec.containers[0].env[] | select(.name=="RELATED_IMAGE_CONSOLE_PLUGIN") | .value)' helm/templates/deployment.yaml)
+STANDALONE_IMAGE=$(echo $PLUGIN_IMAGE | sed 's/network-observability-console-plugin/network-observability-standalone-frontend/')
+yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_CONSOLE_PLUGIN\") | .value) = \"{{ if .Values.standaloneConsole.enable }}$STANDALONE_IMAGE{{ else }}$PLUGIN_IMAGE{{ end }}\"" helm/templates/deployment.yaml
 
 # Create roles
 yq '{"apiVersion": "v1", "kind": "ServiceAccount", "metadata": {"name": .serviceAccountName}}' _tmp/csv-clusterrole.yaml > helm/templates/serviceaccount.yaml

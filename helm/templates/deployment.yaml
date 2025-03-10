@@ -38,7 +38,7 @@ spec:
             - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
               value: quay.io/netobserv/flowlogs-pipeline:v1.8.0-community
             - name: RELATED_IMAGE_CONSOLE_PLUGIN
-              value: quay.io/netobserv/network-observability-console-plugin:v1.8.0-community
+              value: '{{ if .Values.standaloneConsole.enable }}quay.io/netobserv/network-observability-standalone-frontend:v1.8.0-community{{ else }}quay.io/netobserv/network-observability-console-plugin:v1.8.0-community{{ end }}'
             - name: DOWNSTREAM_DEPLOYMENT
               value: "false"
             - name: PROFILING_BIND_ADDRESS
