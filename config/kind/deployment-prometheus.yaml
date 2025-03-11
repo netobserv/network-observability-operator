@@ -1,3 +1,35 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-scraper
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  verbs:
+  - list
+  - get
+  - watch
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-sa
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-scraper
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prometheus-scraper
+subjects:
+- kind: ServiceAccount
+  name: prometheus-sa
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -35,7 +67,7 @@ spec:
               mountPath: /etc/prometheus/
             - name: prometheus-storage-volume
               mountPath: /prometheus/
-      serviceAccountName: flowlogs-pipeline
+      serviceAccountName: prometheus-sa
       volumes:
         - name: prometheus-config-volume
           configMap:
@@ -75,6 +107,8 @@ data:
       - job_name: 'flowlogs-pipeline'
         kubernetes_sd_configs:
           - role: pod
+            namespaces:
+              own_namespace: true
 
         relabel_configs:
         # Scrape only pods that have "prometheus.io/scrape = true" annotation.

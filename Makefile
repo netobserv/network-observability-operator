@@ -534,6 +534,7 @@ endif
 helm-update: YQ ## Update helm template
 	sed -i -r 's/appVersion:.*/appVersion: $(BUNDLE_VERSION)/g' helm/Chart.yaml
 	hack/helm-update.sh
+	cp LICENSE helm/
 
 include .mk/sample.mk
 include .mk/development.mk
