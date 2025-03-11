@@ -44,8 +44,7 @@ Once all sub-components are released (or have a release candidate), we can proce
 Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, `PLG_VERSION`, `FLP_VERSION` and `BPF_VERSION`.
 
 ```bash
-
-make update-bundle
+make update-bundle helm-update
 
 # Set desired operator version - CAREFUL, no leading "v" here
 version="1.8.1-community"
