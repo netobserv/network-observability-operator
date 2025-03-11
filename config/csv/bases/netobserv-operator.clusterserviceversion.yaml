@@ -353,5 +353,5 @@ spec:
   provider:
     name: Red Hat
     url: https://www.redhat.com
-  replaces: netobserv-operator.v1.6.1-community
+  replaces: netobserv-operator.v1.8.0-community
   version: 0.0.0
