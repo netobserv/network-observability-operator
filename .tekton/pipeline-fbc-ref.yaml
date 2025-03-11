@@ -336,6 +336,32 @@ spec:
       - name: kind
         value: task
       resolver: bundles
+  - name: fbc-target-index-pruning-check
+    params:
+    - name: IMAGE_URL
+      value: $(tasks.build-image-index.results.IMAGE_URL)
+    - name: IMAGE_DIGEST
+      value: $(tasks.build-image-index.results.IMAGE_DIGEST)
+    - name: TARGET_INDEX
+      value: registry.redhat.io/redhat/redhat-operator-index
+    - name: RENDERED_CATALOG_DIGEST
+      value: $(tasks.validate-fbc.results.RENDERED_CATALOG_DIGEST)
+    runAfter:
+    - validate-fbc
+    taskRef:
+      params:
+      - name: name
+        value: fbc-target-index-pruning-check
+      - name: bundle
+        value: quay.io/konflux-ci/tekton-catalog/task-fbc-target-index-pruning-check:0.1@sha256:dbae7ad5cca552647330fb47e8556aa86e53dfa9852398c160860ff37de1cc56
+      - name: kind
+        value: task
+      resolver: bundles
+    when:
+    - input: $(params.skip-checks)
+      operator: in
+      values:
+      - "false"
   - name: validate-fbc
     params:
     - name: IMAGE_URL
