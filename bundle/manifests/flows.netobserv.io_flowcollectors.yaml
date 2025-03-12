@@ -1835,6 +1835,10 @@ spec:
                 default: netobserv
                 description: Namespace where NetObserv pods are deployed.
                 type: string
+                x-kubernetes-validations:
+                - message: Namespace is immutable. If you need to change it, delete
+                    and recreate the resource.
+                  rule: self == oldSelf
               processor:
                 description: |-
                   `processor` defines the settings of the component that receives the flows from the agent,
@@ -7066,6 +7070,10 @@ spec:
                 default: netobserv
                 description: Namespace where NetObserv pods are deployed.
                 type: string
+                x-kubernetes-validations:
+                - message: Namespace is immutable. If you need to change it, delete
+                    and recreate the resource.
+                  rule: self == oldSelf
               networkPolicy:
                 description: '`networkPolicy` defines ingress network policy settings
                   for NetObserv components isolation.'

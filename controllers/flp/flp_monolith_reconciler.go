@@ -61,11 +61,6 @@ func (r *monolithReconciler) context(ctx context.Context) context.Context {
 	return log.IntoContext(ctx, l)
 }
 
-// cleanupNamespace cleans up old namespace
-func (r *monolithReconciler) cleanupNamespace(ctx context.Context) {
-	r.Managed.CleanupPreviousNamespace(ctx)
-}
-
 func (r *monolithReconciler) getStatus() *status.Instance {
 	return &r.Status
 }

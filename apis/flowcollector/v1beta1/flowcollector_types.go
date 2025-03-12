@@ -49,6 +49,7 @@ type FlowCollectorSpec struct {
 
 	// Namespace where NetObserv pods are deployed.
 	// +kubebuilder:default:=netobserv
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Namespace is immutable. If you need to change it, delete and recreate the resource."
 	Namespace string `json:"namespace,omitempty"`
 
 	// Agent configuration for flows extraction.
