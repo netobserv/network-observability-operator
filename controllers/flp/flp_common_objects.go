@@ -299,14 +299,14 @@ func promService(desired *flowslatest.FlowCollectorSpec, svcName, namespace, app
 	return &svc
 }
 
-func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, namespace, appLabel string, isDownstream bool) *monitoringv1.ServiceMonitor {
+func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, namespace, appLabel, version string, isDownstream bool) *monitoringv1.ServiceMonitor {
 	serverName := fmt.Sprintf("%s.%s.svc", svcName, namespace)
 	scheme, smTLS := helper.GetServiceMonitorTLSConfig(&desired.Processor.Metrics.Server.TLS, serverName, isDownstream)
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      smName,
 			Namespace: namespace,
-			Labels:    map[string]string{"app": appLabel},
+			Labels:    map[string]string{"app": appLabel, "version": version},
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Endpoints: []monitoringv1.Endpoint{
@@ -347,7 +347,7 @@ func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, nam
 	}
 }
 
-func prometheusRule(desired *flowslatest.FlowCollectorSpec, ruleName, namespace, appLabel string) *monitoringv1.PrometheusRule {
+func prometheusRule(desired *flowslatest.FlowCollectorSpec, ruleName, namespace, appLabel, version string) *monitoringv1.PrometheusRule {
 	rules := []monitoringv1.Rule{}
 	d := monitoringv1.Duration("10m")
 
@@ -388,7 +388,7 @@ func prometheusRule(desired *flowslatest.FlowCollectorSpec, ruleName, namespace,
 	flpPrometheusRuleObject := monitoringv1.PrometheusRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ruleName,
-			Labels:    map[string]string{"app": appLabel},
+			Labels:    map[string]string{"app": appLabel, "version": version},
 			Namespace: namespace,
 		},
 		Spec: monitoringv1.PrometheusRuleSpec{

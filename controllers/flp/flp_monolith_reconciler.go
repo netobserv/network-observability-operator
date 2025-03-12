@@ -42,10 +42,10 @@ func newMonolithReconciler(cmn *reconcilers.Instance) *monolithReconciler {
 		serviceAccount:   cmn.Managed.NewServiceAccount(monoName),
 		staticConfigMap:  cmn.Managed.NewConfigMap(monoConfigMap),
 		dynamicConfigMap: cmn.Managed.NewConfigMap(monoDynConfigMap),
-		rbConfigWatcher:  cmn.Managed.NewRB(resources.GetRoleBindingName(monoName, constants.ConfigWatcherRole)),
-		rbHostNetwork:    cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoName, constants.HostNetworkRole)),
-		rbLokiWriter:     cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoName, constants.LokiWriterRole)),
-		rbInformer:       cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoName, constants.FLPInformersRole)),
+		rbConfigWatcher:  cmn.Managed.NewRB(resources.GetRoleBindingName(monoShortName, constants.ConfigWatcherRole)),
+		rbHostNetwork:    cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.HostNetworkRole)),
+		rbLokiWriter:     cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.LokiWriterRole)),
+		rbInformer:       cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.FLPInformersRole)),
 	}
 	if cmn.ClusterInfo.HasSvcMonitor() {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(monoServiceMonitor)
@@ -195,14 +195,14 @@ func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *
 	} // We only configure name, update is not needed for now
 
 	// Informers
-	r.rbInformer = resources.GetClusterRoleBinding(r.Namespace, transfoName, transfoName, constants.FLPInformersRole)
+	r.rbInformer = resources.GetClusterRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.FLPInformersRole)
 	if err := r.ReconcileClusterRoleBinding(ctx, r.rbInformer); err != nil {
 		return err
 	}
 
 	// Host network
 	if r.ClusterInfo.IsOpenShift() {
-		r.rbHostNetwork = resources.GetClusterRoleBinding(r.Namespace, transfoName, transfoName, constants.HostNetworkRole)
+		r.rbHostNetwork = resources.GetClusterRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.HostNetworkRole)
 		if err := r.ReconcileClusterRoleBinding(ctx, r.rbHostNetwork); err != nil {
 			return err
 		}
@@ -212,7 +212,7 @@ func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *
 
 	// Loki writer
 	if helper.UseLoki(builder.desired) && builder.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
-		r.rbLokiWriter = resources.GetClusterRoleBinding(r.Namespace, transfoName, transfoName, constants.LokiWriterRole)
+		r.rbLokiWriter = resources.GetClusterRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.LokiWriterRole)
 		if err := r.ReconcileClusterRoleBinding(ctx, r.rbLokiWriter); err != nil {
 			return err
 		}
@@ -221,7 +221,7 @@ func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *
 	}
 
 	// Config watcher
-	r.rbConfigWatcher = resources.GetRoleBinding(r.Namespace, transfoName, transfoName, constants.ConfigWatcherRole)
+	r.rbConfigWatcher = resources.GetRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.ConfigWatcherRole)
 	if err := r.ReconcileRoleBinding(ctx, r.rbConfigWatcher); err != nil {
 		return err
 	}

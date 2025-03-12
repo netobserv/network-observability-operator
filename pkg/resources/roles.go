@@ -6,18 +6,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func GetRoleBindingName(app string, ref constants.RoleName) string {
-	return string(ref) + "-" + app
+func GetRoleBindingName(shortName string, ref constants.RoleName) string {
+	return string(ref) + "-" + shortName
 }
 
-func GetClusterRoleBindingName(app string, ref constants.ClusterRoleName) string {
-	return string(ref) + "-" + app
+func GetClusterRoleBindingName(shortName string, ref constants.ClusterRoleName) string {
+	return string(ref) + "-" + shortName
 }
 
-func GetRoleBinding(namespace, app, sa string, ref constants.RoleName) *rbacv1.RoleBinding {
+func GetRoleBinding(namespace, shortName, app, sa string, ref constants.RoleName) *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      string(ref) + "-" + app,
+			Name:      string(ref) + "-" + shortName,
 			Namespace: namespace,
 			Labels:    map[string]string{"app": app},
 		},
@@ -34,10 +34,10 @@ func GetRoleBinding(namespace, app, sa string, ref constants.RoleName) *rbacv1.R
 	}
 }
 
-func GetClusterRoleBinding(namespace, app, sa string, ref constants.ClusterRoleName) *rbacv1.ClusterRoleBinding {
+func GetClusterRoleBinding(namespace, shortName, app, sa string, ref constants.ClusterRoleName) *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   string(ref) + "-" + app,
+			Name:   string(ref) + "-" + shortName,
 			Labels: map[string]string{"app": app},
 		},
 		RoleRef: rbacv1.RoleRef{

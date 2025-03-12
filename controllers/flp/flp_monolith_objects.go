@@ -16,6 +16,7 @@ import (
 
 const (
 	monoName           = constants.FLPName
+	monoShortName      = constants.FLPShortName
 	monoConfigMap      = monoName + "-config"
 	monoDynConfigMap   = monoName + "-config-dynamic"
 	monoPromService    = monoName + "-prom"
@@ -154,6 +155,7 @@ func (b *monolithBuilder) serviceMonitor() *monitoringv1.ServiceMonitor {
 		monoPromService,
 		b.info.Namespace,
 		monoName,
+		b.version,
 		b.info.IsDownstream,
 	)
 }
@@ -164,5 +166,6 @@ func (b *monolithBuilder) prometheusRule() *monitoringv1.PrometheusRule {
 		monoPromRule,
 		b.info.Namespace,
 		monoName,
+		b.version,
 	)
 }

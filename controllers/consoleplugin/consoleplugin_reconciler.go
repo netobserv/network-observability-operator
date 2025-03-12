@@ -149,6 +149,7 @@ func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builde
 
 	binding := resources.GetClusterRoleBinding(
 		r.Namespace,
+		constants.PluginShortName,
 		constants.PluginName,
 		constants.PluginName,
 		constants.ConsoleTokenReviewRole,

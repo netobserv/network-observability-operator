@@ -44,9 +44,9 @@ func newTransformerReconciler(cmn *reconcilers.Instance) *transformerReconciler 
 		serviceAccount:   cmn.Managed.NewServiceAccount(transfoName),
 		staticConfigMap:  cmn.Managed.NewConfigMap(transfoConfigMap),
 		dynamicConfigMap: cmn.Managed.NewConfigMap(transfoDynConfigMap),
-		rbConfigWatcher:  cmn.Managed.NewRB(resources.GetRoleBindingName(transfoName, constants.ConfigWatcherRole)),
-		rbLokiWriter:     cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoName, constants.LokiWriterRole)),
-		rbInformer:       cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoName, constants.FLPInformersRole)),
+		rbConfigWatcher:  cmn.Managed.NewRB(resources.GetRoleBindingName(transfoShortName, constants.ConfigWatcherRole)),
+		rbLokiWriter:     cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoShortName, constants.LokiWriterRole)),
+		rbInformer:       cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoShortName, constants.FLPInformersRole)),
 	}
 	if cmn.ClusterInfo.HasSvcMonitor() {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(transfoServiceMonitor)
@@ -219,14 +219,14 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 	} // We only configure name, update is not needed for now
 
 	// Informers
-	r.rbInformer = resources.GetClusterRoleBinding(r.Namespace, transfoName, transfoName, constants.FLPInformersRole)
+	r.rbInformer = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.FLPInformersRole)
 	if err := r.ReconcileClusterRoleBinding(ctx, r.rbInformer); err != nil {
 		return err
 	}
 
 	// Loki writer
 	if helper.UseLoki(builder.desired) && builder.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
-		r.rbLokiWriter = resources.GetClusterRoleBinding(r.Namespace, transfoName, transfoName, constants.LokiWriterRole)
+		r.rbLokiWriter = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.LokiWriterRole)
 		if err := r.ReconcileClusterRoleBinding(ctx, r.rbLokiWriter); err != nil {
 			return err
 		}
@@ -235,7 +235,7 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 	}
 
 	// Config watcher
-	r.rbConfigWatcher = resources.GetRoleBinding(r.Namespace, transfoName, transfoName, constants.ConfigWatcherRole)
+	r.rbConfigWatcher = resources.GetRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.ConfigWatcherRole)
 	if err := r.ReconcileRoleBinding(ctx, r.rbConfigWatcher); err != nil {
 		return err
 	}

@@ -17,6 +17,7 @@ import (
 
 const (
 	transfoName           = constants.FLPName + "-transformer"
+	transfoShortName      = constants.FLPShortName + "transfo"
 	transfoConfigMap      = transfoName + "-config"
 	transfoDynConfigMap   = transfoName + "-config-dynamic"
 	transfoPromService    = transfoName + "-prom"
@@ -176,6 +177,7 @@ func (b *transfoBuilder) serviceMonitor() *monitoringv1.ServiceMonitor {
 		transfoPromService,
 		b.info.Namespace,
 		transfoName,
+		b.version,
 		b.info.IsDownstream,
 	)
 }
@@ -186,5 +188,6 @@ func (b *transfoBuilder) prometheusRule() *monitoringv1.PrometheusRule {
 		transfoPromRule,
 		b.info.Namespace,
 		transfoName,
+		b.version,
 	)
 }

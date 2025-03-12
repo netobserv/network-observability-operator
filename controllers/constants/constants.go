@@ -14,9 +14,11 @@ const (
 	OperatorName             = "netobserv-operator"
 	WebhookPort              = 9443
 	FLPName                  = "flowlogs-pipeline"
+	FLPShortName             = "flp"
 	FLPPortName              = "flp" // must be <15 chars
 	FLPMetricsPort           = 9401
 	PluginName               = "netobserv-plugin"
+	PluginShortName          = "plugin"
 
 	// EBPFAgentName and other constants for it
 	EBPFAgentName                     = "netobserv-ebpf-agent"
