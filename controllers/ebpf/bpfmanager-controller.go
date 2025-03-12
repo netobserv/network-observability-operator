@@ -13,7 +13,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -21,31 +20,6 @@ import (
 const (
 	netobservApp = "netobserv"
 )
-
-// bpfmanDetachNetobserv find BpfmanApplication object with all required ebpf hooks and detaches them using bpfman manager
-func (c *AgentController) bpfmanDetachNetobserv(ctx context.Context) error {
-	bpfApp := bpfmaniov1alpha1.ClusterBpfApplication{
-		ObjectMeta: v1.ObjectMeta{
-			Name: netobservApp,
-		},
-		TypeMeta: v1.TypeMeta{
-			Kind: "BpfApplication",
-		},
-	}
-
-	key := client.ObjectKey{Name: netobservApp}
-
-	err := c.Get(ctx, key, &bpfApp)
-	if err != nil {
-		return fmt.Errorf("failed to get BpfApplication: %w", err)
-	}
-
-	err = c.deleteBpfApplication(ctx, &bpfApp)
-	if err != nil {
-		return fmt.Errorf("failed to delete BpfApplication: %w", err)
-	}
-	return nil
-}
 
 // bpfmanAttachNetobserv Creates BpfmanApplication object with all required ebpf hooks and attaches them using bpfman manager
 func (c *AgentController) bpfmanAttachNetobserv(ctx context.Context, fc *flowslatest.FlowCollector) error {
@@ -252,11 +226,6 @@ func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.ClusterBpfApplication, fc *f
 			},
 		}...)
 	}
-}
-
-func (c *AgentController) deleteBpfApplication(ctx context.Context, bpfApp *bpfmaniov1alpha1.ClusterBpfApplication) error {
-	klog.Info("Deleting BpfApplication Object")
-	return c.Delete(ctx, bpfApp)
 }
 
 func (c *AgentController) createBpfApplication(ctx context.Context, bpfApp *bpfmaniov1alpha1.ClusterBpfApplication) error {
