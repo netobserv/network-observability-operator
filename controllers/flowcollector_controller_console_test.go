@@ -17,7 +17,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 )
 
@@ -42,7 +41,7 @@ func flowCollectorConsolePluginSpecs() {
 	consoleCRKey := types.NamespacedName{
 		Name: "cluster",
 	}
-	rbKeyPlugin := types.NamespacedName{Name: constants.PluginName}
+	rbKeyPlugin := types.NamespacedName{Name: "netobserv-token-review-plugin"}
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
@@ -159,7 +158,7 @@ func flowCollectorConsolePluginSpecs() {
 			}, timeout, interval).Should(Succeed())
 			Expect(rb.Subjects).Should(HaveLen(1))
 			Expect(rb.Subjects[0].Name).Should(Equal("netobserv-plugin"))
-			Expect(rb.RoleRef.Name).Should(Equal("netobserv-plugin"))
+			Expect(rb.RoleRef.Name).Should(Equal("netobserv-token-review"))
 		})
 
 		It("Should update successfully", func() {

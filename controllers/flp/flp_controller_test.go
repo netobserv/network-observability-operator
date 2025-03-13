@@ -20,6 +20,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
+	"github.com/netobserv/network-observability-operator/pkg/resources"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 )
 
@@ -60,13 +61,17 @@ func ControllerSpecs() {
 		Namespace: otherNamespace,
 	}
 	flpKeyKafkaTransformer := types.NamespacedName{
-		Name:      constants.FLPName + FlpConfSuffix[ConfKafkaTransformer],
+		Name:      transfoName,
 		Namespace: operatorNamespace,
 	}
-	rbKeyIngest := types.NamespacedName{Name: RoleBindingName(ConfKafkaIngester)}
-	rbKeyTransform := types.NamespacedName{Name: RoleBindingName(ConfKafkaTransformer)}
-	rbKeyIngestMono := types.NamespacedName{Name: RoleBindingMonoName(ConfKafkaIngester)}
-	rbKeyTransformMono := types.NamespacedName{Name: RoleBindingMonoName(ConfKafkaTransformer)}
+	rbKeyConfigWatcherMono := types.NamespacedName{Name: resources.GetRoleBindingName(monoShortName, constants.ConfigWatcherRole), Namespace: operatorNamespace}
+	rbKeyHostNetworkMono := types.NamespacedName{Name: resources.GetClusterRoleBindingName(monoShortName, constants.HostNetworkRole)}
+	rbKeyLokiWriterMono := types.NamespacedName{Name: resources.GetClusterRoleBindingName(monoShortName, constants.LokiWriterRole)}
+	rbKeyInformerMono := types.NamespacedName{Name: resources.GetClusterRoleBindingName(monoShortName, constants.FLPInformersRole)}
+	rbKeyConfigWatcherTransfo := types.NamespacedName{Name: resources.GetRoleBindingName(transfoShortName, constants.ConfigWatcherRole), Namespace: operatorNamespace}
+	rbKeyHostNetworkTransfo := types.NamespacedName{Name: resources.GetClusterRoleBindingName(transfoShortName, constants.HostNetworkRole)}
+	rbKeyLokiWriterTransfo := types.NamespacedName{Name: resources.GetClusterRoleBindingName(transfoShortName, constants.LokiWriterRole)}
+	rbKeyInformerTransfo := types.NamespacedName{Name: resources.GetClusterRoleBindingName(transfoShortName, constants.FLPInformersRole)}
 
 	// Created objects to cleanup
 	cleanupList := []client.Object{}
@@ -139,32 +144,49 @@ func ControllerSpecs() {
 				return svcAcc.Labels != nil && svcAcc.Labels["app"] == constants.FLPName
 			}))
 
-			By("Expecting to create two flowlogs-pipeline role binding")
-			rb1 := rbacv1.ClusterRoleBinding{}
+			By("Expecting to create two flowlogs-pipeline role bindings")
+			rb1 := rbacv1.RoleBinding{}
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyIngestMono, &rb1)
+				return k8sClient.Get(ctx, rbKeyConfigWatcherMono, &rb1)
 			}, timeout, interval).Should(Succeed())
 			Expect(rb1.Subjects).Should(HaveLen(1))
 			Expect(rb1.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
-			Expect(rb1.RoleRef.Name).Should(Equal("flowlogs-pipeline-ingester"))
+			Expect(rb1.RoleRef.Name).Should(Equal("netobserv-config-watcher"))
 
 			rb2 := rbacv1.ClusterRoleBinding{}
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyTransformMono, &rb2)
+				return k8sClient.Get(ctx, rbKeyHostNetworkMono, &rb2)
 			}, timeout, interval).Should(Succeed())
 			Expect(rb2.Subjects).Should(HaveLen(1))
 			Expect(rb2.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
-			Expect(rb2.RoleRef.Name).Should(Equal("flowlogs-pipeline-transformer"))
+			Expect(rb2.RoleRef.Name).Should(Equal("netobserv-hostnetwork"))
 
-			By("Not expecting ingester role binding")
+			rb3 := rbacv1.ClusterRoleBinding{}
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyIngest, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-ingester-role" not found`))
+				return k8sClient.Get(ctx, rbKeyInformerMono, &rb3)
+			}, timeout, interval).Should(Succeed())
+			Expect(rb3.Subjects).Should(HaveLen(1))
+			Expect(rb3.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
+			Expect(rb3.RoleRef.Name).Should(Equal("netobserv-informers"))
 
-			By("Not expecting transformer role binding")
+			By("Not expecting Loki role (requires LokiStack)")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyTransform, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-transformer-role" not found`))
+				return k8sClient.Get(ctx, rbKeyLokiWriterMono, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-writer-flp" not found`))
+
+			By("Not expecting transformer role bindings")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyConfigWatcherTransfo, &rbacv1.RoleBinding{})
+			}, timeout, interval).Should(MatchError(`rolebindings.rbac.authorization.k8s.io "netobserv-config-watcher-flptransfo" not found`))
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyHostNetworkTransfo, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-hostnetwork-flptransfo" not found`))
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyInformerTransfo, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-informers-flptransfo" not found`))
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyLokiWriterTransfo, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-writer-flptransfo" not found`))
 
 			By("Expecting flowlogs-pipeline-config configmap to be created")
 			Eventually(func() interface{} {
@@ -298,27 +320,45 @@ func ControllerSpecs() {
 			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline-transformer" not found`))
 
 			By("Expecting to create transformer flowlogs-pipeline role bindings")
+			rb1 := rbacv1.RoleBinding{}
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyIngest, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-ingester-role" not found`))
+				return k8sClient.Get(ctx, rbKeyConfigWatcherTransfo, &rb1)
+			}, timeout, interval).Should(Succeed())
+			Expect(rb1.Subjects).Should(HaveLen(1))
+			Expect(rb1.Subjects[0].Name).Should(Equal("flowlogs-pipeline-transformer"))
+			Expect(rb1.RoleRef.Name).Should(Equal("netobserv-config-watcher"))
 
 			rb2 := rbacv1.ClusterRoleBinding{}
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyTransform, &rb2)
+				return k8sClient.Get(ctx, rbKeyInformerTransfo, &rb2)
 			}, timeout, interval).Should(Succeed())
 			Expect(rb2.Subjects).Should(HaveLen(1))
 			Expect(rb2.Subjects[0].Name).Should(Equal("flowlogs-pipeline-transformer"))
-			Expect(rb2.RoleRef.Name).Should(Equal("flowlogs-pipeline-transformer"))
+			Expect(rb2.RoleRef.Name).Should(Equal("netobserv-informers"))
 
-			By("Not expecting mono-transformer role binding")
+			By("Not expecting hostnetwork role (not needed with Kafka)")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyIngestMono, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-ingester-role-mono" not found`))
+				return k8sClient.Get(ctx, rbKeyHostNetworkTransfo, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-hostnetwork-flptransfo" not found`))
 
-			By("Not expecting mono-ingester role binding")
+			By("Not expecting Loki role (requires LokiStack)")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyTransformMono, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "flowlogs-pipeline-transformer-role-mono" not found`))
+				return k8sClient.Get(ctx, rbKeyLokiWriterTransfo, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-writer-flptransfo" not found`))
+
+			By("Not expecting mono role bindings")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyConfigWatcherMono, &rbacv1.RoleBinding{})
+			}, timeout, interval).Should(MatchError(`rolebindings.rbac.authorization.k8s.io "netobserv-config-watcher-flp" not found`))
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyHostNetworkMono, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-hostnetwork-flp" not found`))
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyInformerMono, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-informers-flp" not found`))
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, rbKeyLokiWriterMono, &rbacv1.ClusterRoleBinding{})
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-writer-flp" not found`))
 		})
 
 		It("Should delete previous flp deployment", func() {
@@ -679,20 +719,10 @@ func ControllerSpecs() {
 		})
 
 		It("Should deploy Loki roles", func() {
-			By("Expecting Writer ClusterRole")
-			Eventually(func() interface{} {
-				var cr rbacv1.ClusterRole
-				return k8sClient.Get(ctx, types.NamespacedName{Name: constants.LokiCRWriter}, &cr)
-			}, timeout, interval).Should(Succeed())
-			By("Expecting Reader ClusterRole")
-			Eventually(func() interface{} {
-				var cr rbacv1.ClusterRole
-				return k8sClient.Get(ctx, types.NamespacedName{Name: constants.LokiCRReader}, &cr)
-			}, timeout, interval).Should(Succeed())
 			By("Expecting FLP Writer ClusterRoleBinding")
 			Eventually(func() interface{} {
 				var crb rbacv1.ClusterRoleBinding
-				return k8sClient.Get(ctx, types.NamespacedName{Name: constants.LokiCRBWriter}, &crb)
+				return k8sClient.Get(ctx, rbKeyLokiWriterMono, &crb)
 			}, timeout, interval).Should(Succeed())
 		})
 

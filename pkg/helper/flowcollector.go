@@ -170,7 +170,7 @@ func GetEBPFMetricsPort(spec *flowslatest.FlowCollectorEBPF) int32 {
 	return port
 }
 
-func GETFlowCollectorMetricsPort(spec *flowslatest.FlowCollectorSpec) int32 {
+func GetFlowCollectorMetricsPort(spec *flowslatest.FlowCollectorSpec) int32 {
 	port := int32(constants.FLPMetricsPort)
 	if spec.Processor.Metrics.Server.Port != nil {
 		port = *spec.Processor.Metrics.Server.Port

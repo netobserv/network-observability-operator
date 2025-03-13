@@ -15,7 +15,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
@@ -573,42 +572,5 @@ func (b *builder) serviceAccount() *corev1.ServiceAccount {
 				"app": constants.PluginName,
 			},
 		},
-	}
-}
-
-// The operator needs to have at least the same permissions as flowlogs-pipeline in order to grant them
-//+kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
-
-func buildClusterRole() *rbacv1.ClusterRole {
-	return &rbacv1.ClusterRole{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: constants.PluginName,
-		},
-		Rules: []rbacv1.PolicyRule{{
-			APIGroups: []string{"authentication.k8s.io"},
-			Verbs:     []string{"create"},
-			Resources: []string{"tokenreviews"},
-		}},
-	}
-}
-
-func (b *builder) clusterRoleBinding() *rbacv1.ClusterRoleBinding {
-	return &rbacv1.ClusterRoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: constants.PluginName,
-			Labels: map[string]string{
-				"app": constants.PluginName,
-			},
-		},
-		RoleRef: rbacv1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "ClusterRole",
-			Name:     constants.PluginName,
-		},
-		Subjects: []rbacv1.Subject{{
-			Kind:      "ServiceAccount",
-			Name:      constants.PluginName,
-			Namespace: b.info.Namespace,
-		}},
 	}
 }
