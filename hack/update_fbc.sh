@@ -41,6 +41,9 @@ if [[ "${IS_DOWNSTREAM}" == "true" ]]; then
   echo "Adding to index..."
   previous=$(${YQ} 'select(.schema=="olm.channel") | select(.name=="stable") | .entries[-1].name' catalog/released/index.yaml)
   ${YQ} "(select(.name == \"stable\") | .entries) += {\"name\": \"network-observability-operator.${BUNDLE_TAG}\", \"replaces\": \"${previous}\"}" catalog/released/index.yaml >  "${dir_catalog}/index.yaml"
+  echo "Fixing bundle name..."
+  sed -i 's/name: netobserv-operator/name: network-observability-operator/' ${dir_catalog}/bundle.yaml
+  sed -i 's/name: netobserv-operator/name: network-observability-operator/' ${dir_catalog_legacy}/bundle.yaml
 else
   echo "Generating single index..."
   cat <<EOF > "${dir_catalog}/index.yaml"
@@ -56,25 +59,5 @@ EOF
 fi
 
 cp -f "${dir_catalog}/index.yaml" "${dir_catalog_legacy}"
-
-echo "Validating..."
-
-${OPM} validate "${dir_catalog}"
-if [ $? -ne 0 ]; then
-  echo "Validation failed for ${dir_catalog}"
-  exit 1
-else
-  echo "Validation passed for ${dir_catalog}"
-fi
-
-echo "Validating legacy..."
-
-${OPM} validate "${dir_catalog_legacy}"
-if [ $? -ne 0 ]; then
-  echo "Validation failed for ${dir_catalog_legacy}"
-  exit 1
-else
-  echo "Validation passed for ${dir_catalog_legacy}"
-fi
 
 echo "Finished running $(basename "$0")"

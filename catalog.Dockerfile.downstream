@@ -15,7 +15,11 @@ ENTRYPOINT ["opm"]
 CMD ["serve", "/configs", "--cache-dir=/tmp/cache"]
 
 # Copy declarative config root into image at /configs and pre-populate serve cache
-COPY --from=builder /opt/app-root/src/catalog /configs/netobserv-operator
+COPY --from=builder /opt/app-root/src/catalog/released/bundles.yaml /configs/netobserv-operator
+COPY --from=builder /opt/app-root/src/catalog/released/other.yaml /configs/netobserv-operator
+COPY --from=builder /opt/app-root/src/catalog/unreleased/next/index.yaml /configs/netobserv-operator
+COPY --from=builder /opt/app-root/src/catalog/unreleased/next/bundle.yaml /configs/netobserv-operator
+
 RUN opm serve /configs --cache-dir=/tmp/cache --cache-only
 
 # Set DC-specific label for the location of the DC root directory
