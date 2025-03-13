@@ -1,0 +1,43 @@
+entries:
+  - name: network-observability-operator.v1.0.0-202301070345
+  - name: network-observability-operator.v1.1.0-202302110050
+    replaces: network-observability-operator.v1.0.0-202301070345
+  - name: network-observability-operator.v1.2.0
+    replaces: network-observability-operator.v1.1.0-202302110050
+  - name: network-observability-operator.v1.3.0
+    replaces: network-observability-operator.v1.2.0
+  - name: network-observability-operator.v1.4.0
+    replaces: network-observability-operator.v1.3.0
+  - name: network-observability-operator.v1.4.1
+    replaces: network-observability-operator.v1.4.0
+  - name: network-observability-operator.v1.4.2
+    replaces: network-observability-operator.v1.4.1
+  - name: network-observability-operator.v1.5.0
+    replaces: network-observability-operator.v1.4.2
+  - name: network-observability-operator.v1.6.0
+    replaces: network-observability-operator.v1.5.0
+  - name: network-observability-operator.v1.6.1
+    replaces: network-observability-operator.v1.6.0
+  - name: network-observability-operator.v1.6.2
+    replaces: network-observability-operator.v1.6.1
+  - name: network-observability-operator.v1.7.0
+    replaces: network-observability-operator.v1.6.2
+  - name: network-observability-operator.v1.8.0
+    replaces: network-observability-operator.v1.7.0
+  - name: network-observability-operator.v0.0.0-main
+    replaces: network-observability-operator.v1.8.0
+name: stable
+package: netobserv-operator
+schema: olm.channel
+---
+entries:
+  - name: network-observability-operator.v1.0.0-202301070345
+  - name: network-observability-operator.v1.1.0-202302110050
+    replaces: network-observability-operator.v1.0.0-202301070345
+  - name: network-observability-operator.v1.2.0
+    replaces: network-observability-operator.v1.1.0-202302110050
+  - name: network-observability-operator.v1.3.0
+    replaces: network-observability-operator.v1.2.0
+name: v1.0.x
+package: netobserv-operator
+schema: olm.channel

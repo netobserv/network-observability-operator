@@ -1,19 +1,15 @@
 import os
-from sys import exit as sys_exit
 from ruamel.yaml import YAML
 yaml = YAML()
 yaml.explicit_start = True
 
-version = os.getenv('VERSION')
 bundle_image = os.getenv('BUNDLE_IMAGE_PULLSPEC')
 operator_image = os.getenv('OPERATOR_IMAGE_PULLSPEC')
 ebpf_image = os.getenv('EBPF_IMAGE_PULLSPEC')
 flp_image = os.getenv('FLP_IMAGE_PULLSPEC')
 console_image = os.getenv('CONSOLE_IMAGE_PULLSPEC')
-package_name = "network-observability-operator"
-package_full_name = '{}.v{}'.format(package_name, version)
 
-def load_index(pathn):
+def load_bundle(pathn):
    if not pathn.endswith(".yaml"):
       return None
    try:
@@ -23,17 +19,17 @@ def load_index(pathn):
       print("File can not found")
       exit(6)
 
-def dump_index(pathn, index):
+def dump_bundle(pathn, index):
    with open(pathn, "w") as f:
       for o in index:
          yaml.dump(o, f)
    return
 
-index = load_index(os.getenv('TARGET_INDEX_FILE'))
+bundle = load_bundle(os.getenv('NEW_BUNDLE_FILE'))
 
-index[0]["image"] = bundle_image
+bundle[0]["image"] = bundle_image
 
-for relatedImage in index[0]["relatedImages"]:
+for relatedImage in bundle[0]["relatedImages"]:
    if relatedImage["name"] == "bundle":
       relatedImage["image"] = bundle_image
    elif relatedImage["name"] == "manager":
@@ -45,4 +41,4 @@ for relatedImage in index[0]["relatedImages"]:
    elif relatedImage["name"] == "console_plugin":
       relatedImage["image"] = console_image
 
-dump_index(os.getenv('TARGET_INDEX_FILE'), index)
+dump_bundle(os.getenv('NEW_BUNDLE_FILE'), bundle)

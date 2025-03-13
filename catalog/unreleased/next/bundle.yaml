@@ -1,5 +1,6 @@
-image: registry.redhat.io/network-observability/network-observability-operator-bundle@sha256:3a3c70c990bd3a012453857698433d674b98445e55cc9c5c4ed38eea29eb82b1
-name: network-observability-operator.v1.7.0
+---
+image: quay.io/netobserv/network-observability-operator-bundle:v0.0.0-main
+name: network-observability-operator.v0.0.0-main
 package: netobserv-operator
 properties:
 - type: olm.gvk
@@ -20,7 +21,7 @@ properties:
 - type: olm.package
   value:
     packageName: netobserv-operator
-    version: 1.7.0
+    version: 0.0.0-main
 - type: olm.csv.metadata
   value:
     annotations:
@@ -456,26 +457,12 @@ properties:
       capabilities: Seamless Upgrades
       categories: Monitoring, Networking
       console.openshift.io/plugins: '["netobserv-plugin"]'
-      containerImage: registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:93328e2f6e95c9cce31e096c6591c91d419471ef13f441b3f20b16984f3f2f9d
-      createdAt: 2024-10-14T22:34:29
+      containerImage: quay.io/netobserv/network-observability-operator:main
+      createdAt: "2025-03-12T15:17:35Z"
       description: Network flows collector and monitoring solution
-      features.operators.openshift.io/cnf: "false"
-      features.operators.openshift.io/cni: "false"
-      features.operators.openshift.io/csi: "false"
-      features.operators.openshift.io/disconnected: "true"
-      features.operators.openshift.io/fips-compliant: "true"
-      features.operators.openshift.io/proxy-aware: "false"
-      features.operators.openshift.io/tls-profiles: "false"
-      features.operators.openshift.io/token-auth-aws: "false"
-      features.operators.openshift.io/token-auth-azure: "false"
-      features.operators.openshift.io/token-auth-gcp: "false"
-      netobserv.io/version-release: v1.7.0-67
-      operatorframework.io/cluster-monitoring: "true"
       operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
         "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
       operatorframework.io/suggested-namespace: openshift-netobserv-operator
-      operators.openshift.io/valid-subscription: '["OpenShift Kubernetes Engine",
-        "OpenShift Container Platform", "OpenShift Platform Plus"]'
       operators.operatorframework.io/builder: operator-sdk-v1.25.3
       operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
       repository: https://github.com/netobserv/network-observability-operator
@@ -759,6 +746,10 @@ properties:
           path: exporters[0].kafka
           x-descriptors:
           - urn:alm:descriptor:com.tectonic.ui:fieldDependency:exporters.type:Kafka
+        - displayName: OpenTelemetry configuration
+          path: exporters[0].openTelemetry
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldDependency:exporters.type:OpenTelemetry
         - displayName: Exclude interfaces
           path: agent.ebpf.excludeInterfaces
         - displayName: Features
@@ -795,15 +786,15 @@ properties:
           path: loki.manual.querierUrl
         - displayName: Status url
           path: loki.manual.statusUrl
-        - displayName: TenantID
+        - displayName: Tenant id
           path: loki.manual.tenantID
         - displayName: Ingester url
           path: loki.microservices.ingesterUrl
         - displayName: Querier url
           path: loki.microservices.querierUrl
-        - displayName: TenantID
+        - displayName: Tenant id
           path: loki.microservices.tenantID
-        - displayName: TenantID
+        - displayName: Tenant id
           path: loki.monolithic.tenantID
         - displayName: Url
           path: loki.monolithic.url
@@ -817,6 +808,14 @@ properties:
           path: networkPolicy.additionalNamespaces
         - displayName: Enable
           path: networkPolicy.enable
+        - displayName: Deduper
+          path: processor.deduper
+        - displayName: Mode
+          path: processor.deduper.mode
+        - displayName: Sampling
+          path: processor.deduper.sampling
+        - displayName: Filters
+          path: processor.filters
         - displayName: Log types
           path: processor.logTypes
         - displayName: Disable alerts
@@ -865,15 +864,15 @@ properties:
         kind: FlowMetric
         name: flowmetrics.flows.netobserv.io
         version: v1alpha1
-    description: |
-      Network Observability is an OpenShift operator that deploys a monitoring pipeline consisting in:
+    description: |-
+      NetObserv Operator is an OpenShift / Kubernetes operator for network observability. It deploys a monitoring pipeline that consists in:
       - an eBPF agent, that generates network flows from captured packets
       - flowlogs-pipeline, a component that collects, enriches and exports these flows
-      - a Console plugin for flows visualization with powerful filtering options, a topology representation and more
+      - when used in OpenShift, a Console plugin for flows visualization with powerful filtering options, a topology representation and more
 
       Flow data is then available in multiple ways, each optional:
 
-      - As Cluster Monitoring metrics
+      - As Prometheus metrics
       - As raw flow logs stored in Grafana Loki
       - As raw flow logs exported to a collector
 
@@ -881,16 +880,20 @@ properties:
 
       ### Loki
 
-      [Loki](https://grafana.com/oss/loki/), from GrafanaLabs, can optionally be used as the backend to store all collected flows. The Network Observability operator does not install Loki directly, however we provide some guidance to help you there.
+      [Loki](https://grafana.com/oss/loki/), from GrafanaLabs, can optionally be used as the backend to store all collected flows. The NetObserv Operator does not install Loki directly, however we provide some guidance to help you there.
 
-      - For a production or production-like environment usage, refer to [the operator documentation](https://docs.openshift.com/container-platform/latest/network_observability/installing-operators.html).
+      For normal usage, we recommend two options:
 
-      - For a quick try that is not suitable for production and not scalable (it deploys a single pod, configures a 10GB storage PVC, with 24 hours of retention), you can simply run the following commands:
+      - Installing the [Loki Operator](https://loki-operator.dev/docs/prologue/quickstart.md/). We have written [a guide](https://github.com/netobserv/documents/blob/main/loki_operator.md) to help you through those steps. Please note that it requires configuring an object storage. Note also that the Loki Operator can also be used for [OpenShift cluster logging](https://docs.openshift.com/container-platform/latest/logging/cluster-logging.html). If you do so, you should not share the same `LokiStack` for Logging and NetObserv.
+
+      - Installing using [Grafana's official documentation](https://grafana.com/docs/loki/latest/). Here also we wrote a ["distributed Loki" step by step guide](https://github.com/netobserv/documents/blob/main/loki_distributed.md).
+
+      For a quick try that is not suitable for production and not scalable (it deploys a single pod, configures a 10GB storage PVC, with 24 hours of retention), you can simply run the following commands:
 
       ```
-      oc create namespace netobserv
-      oc apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/5410e65b8e05aaabd1244a9524cfedd8ac8c56b5/examples/zero-click-loki/1-storage.yaml) -n netobserv
-      oc apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/5410e65b8e05aaabd1244a9524cfedd8ac8c56b5/examples/zero-click-loki/2-loki.yaml) -n netobserv
+      kubectl create namespace netobserv
+      kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/5410e65b8e05aaabd1244a9524cfedd8ac8c56b5/examples/zero-click-loki/1-storage.yaml) -n netobserv
+      kubectl apply -f <(curl -L https://raw.githubusercontent.com/netobserv/documents/5410e65b8e05aaabd1244a9524cfedd8ac8c56b5/examples/zero-click-loki/2-loki.yaml) -n netobserv
       ```
 
       If you prefer to not use Loki, you must set `spec.loki.enable` to `false` in `FlowCollector`.
@@ -906,12 +909,12 @@ properties:
 
       ## Configuration
 
-      The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/1.6.1-community/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/1.6.1-community/config/samples/flows_v1beta2_flowcollector.yaml).
+      The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/main/config/samples/flows_v1beta2_flowcollector.yaml).
 
       To edit configuration in cluster, run:
 
       ```bash
-      oc edit flowcollector cluster
+      kubectl edit flowcollector cluster
       ```
 
       As it operates cluster-wide on every node, only a single `FlowCollector` is allowed, and it has to be named `cluster`.
@@ -922,7 +925,7 @@ properties:
 
       - Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned above, but you might have to configure differently if you used another installation method. Make sure to disable it (`spec.loki.enable`) if you don't want to use Loki.
 
-      - Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/1.6.1-community/docs/QuickFilters.md).
+      - Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/main/docs/QuickFilters.md).
 
       - Kafka (`spec.deploymentModel: KAFKA` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created.
 
@@ -937,11 +940,11 @@ properties:
       This documentation includes:
 
       - An [overview](https://github.com/netobserv/network-observability-operator#openshift-console) of the features, with screenshots
-      - More information on [configuring metrics](https://github.com/netobserv/network-observability-operator/blob/1.6.1-community/docs/Metrics.md).
+      - More information on [configuring metrics](https://github.com/netobserv/network-observability-operator/blob/main/docs/Metrics.md).
       - A [performance](https://github.com/netobserv/network-observability-operator#performance-fine-tuning) section, for fine-tuning
       - A [security](https://github.com/netobserv/network-observability-operator#securing-data-and-communications) section
       - An [F.A.Q.](https://github.com/netobserv/network-observability-operator#faq--troubleshooting) section
-    displayName: Network Observability
+    displayName: NetObserv Operator
     installModes:
     - supported: false
       type: OwnNamespace
@@ -988,24 +991,20 @@ properties:
       name: Ronen Schaffer
     - email: stlee@redhat.com
       name: Steven Lee
-    maturity: stable
+    maturity: alpha
     minKubeVersion: 1.23.0
     provider:
       name: Red Hat
       url: https://www.redhat.com
 relatedImages:
-- image: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:c3be91efcd4cd272f5dc3eabe53ac76f04bc22adbe61f86d42e83e77f092cd36
-  name: console_plugin
-- image: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:9bc712edc0e96525c59c46e8693939ab48514ce6f4b41e3ccf115ad8f6140b96
-  name: ebpf_agent
-- image: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:28bdb6eae77da596c0def119c879e4fb3849065243fc804f4abf5480453b7b6d
-  name: flowlogs_pipeline
-- image: registry.redhat.io/network-observability/network-observability-operator-bundle@sha256:3a3c70c990bd3a012453857698433d674b98445e55cc9c5c4ed38eea29eb82b1
+- image: quay.io/netobserv/flowlogs-pipeline:main
+  name: flowlogs-pipeline
+- image: quay.io/netobserv/netobserv-ebpf-agent:main
+  name: ebpf-agent
+- image: quay.io/netobserv/network-observability-console-plugin:main
+  name: console-plugin
+- image: quay.io/netobserv/network-observability-operator-bundle:v0.0.0-main
   name: ""
-- image: registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:93328e2f6e95c9cce31e096c6591c91d419471ef13f441b3f20b16984f3f2f9d
-  name: network-observability-rhel9-operator-93328e2f6e95c9cce31e096c6591c91d419471ef13f441b3f20b16984f3f2f9d-annotation
-- image: registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:93328e2f6e95c9cce31e096c6591c91d419471ef13f441b3f20b16984f3f2f9d
-  name: manager
-- image: registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:e34f912158985525f6efb3c4b675f20854fc677c867d12fe3cd2e971309428dc
-  name: kube-rbac-proxy
+- image: quay.io/netobserv/network-observability-operator:main
+  name: ""
 schema: olm.bundle
