@@ -66,11 +66,6 @@ IMAGE_TAG_BASE ?= $(REPO)/network-observability-operator
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMAGE=<some-registry>/<project-name-bundle>:<tag>)
 BUNDLE_IMAGE ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
 
-
-# FBC_IMAGE defines the image:tag used for the file based catalog.
-# You can use it as an arg. (E.g make bundle-build FBC_IMAGE=<some-registry>/<project-name-fbc>:<tag>)
-FBC_IMAGE ?= $(IMAGE_TAG_BASE)-fbc:v$(FBC_VERSION)
-
 # BUNDLE_CONFIG is the config sources to use for OLM bundle - "config/openshift-olm" for OpenShift, or "config/k8s-olm" for upstream Kubernetes.
 BUNDLE_CONFIG ?= config/openshift-olm
 
@@ -434,14 +429,6 @@ bundle-build: ## Build the bundle image.
 bundle-push: ## Push the bundle image.
 	$(OCI_BIN) push ${BUNDLE_IMAGE};
 
-.PHONY: file-based-catalog-build
-file-based-catalog-build: ## Build the bundle image.
-	$(OCI_BIN) build $(OCI_BUILD_OPTS) -f catalog.Dockerfile -t $(FBC_IMAGE) .
-
-.PHONY: file-based-catalog-push
-file-based-catalog-push: ## Push the bundle image.
-	$(OCI_BIN) push ${FBC_IMAGE};
-
 # A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMAGES=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
 BUNDLE_IMAGES ?= $(BUNDLE_IMAGE)
@@ -454,16 +441,17 @@ ifneq ($(origin CATALOG_BASE_IMAGE), undefined)
 FROM_INDEX_OPT := --from-index $(CATALOG_BASE_IMAGE)
 endif
 
+.PHONY: refresh-prod-catalogs
+refresh-prod-catalogs: opm YQ ## Refresh FBC from production catalogs. Set REGISTRY_AUTH_FILE=/path/to/pull-secret.json for authentication.
+	YQ=$(YQ) OPM=$(OPM) ./hack/refresh-redhat-catalog.sh
+
 # Build a catalog image by adding bundle images to an empty catalog using the operator package manager tool, 'opm'.
 # This recipe invokes 'opm' in 'semver' bundle add mode. For more information on add modes, see:
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
 .PHONY: catalog-build
 catalog-build: opm ## Build a catalog image.
-	$(OPM) index add --container-tool ${OCI_BIN} --mode semver --tag $(CATALOG_IMAGE) --bundles $(BUNDLE_IMAGES) $(FROM_INDEX_OPT) $(OPM_OPTS)
-
-.PHONY: file-based-catalog-update
-file-based-catalog-update: opm ## Build a catalog image.
 	OPM=$(OPM) BUNDLE_IMAGE=$(BUNDLE_IMAGE) BUNDLE_TAG="v$(BUNDLE_VERSION)" ./hack/update_fbc.sh
+	$(OCI_BIN) build $(OCI_BUILD_OPTS) --build-arg CATALOG_PATH="catalog/unreleased/v$(BUNDLE_VERSION)" -f catalog.Dockerfile -t $(CATALOG_IMAGE) .
 
 shortlived-catalog-build: ## Build a temporary catalog image, expiring after 2 weeks on quay
 	$(MAKE) catalog-build CATALOG_IMAGE=temp-catalog
