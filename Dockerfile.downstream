@@ -26,6 +26,7 @@ RUN GOOS=linux GOARCH=$TARGETARCH GO111MODULE=on go build -tags strictfipsruntim
 FROM --platform=linux/$TARGETARCH registry.access.redhat.com/ubi9/ubi-minimal:9.5-1741850109
 WORKDIR /
 COPY --from=builder /opt/app-root/manager .
+COPY LICENSE /licenses/
 USER 65532:65532
 
 ENTRYPOINT ["/manager"]
