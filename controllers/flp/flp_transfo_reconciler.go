@@ -235,7 +235,7 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 	}
 
 	// Config watcher
-	r.rbConfigWatcher = resources.GetRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.ConfigWatcherRole)
+	r.rbConfigWatcher = resources.GetRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.ConfigWatcherRole, true)
 	if err := r.ReconcileRoleBinding(ctx, r.rbConfigWatcher); err != nil {
 		return err
 	}

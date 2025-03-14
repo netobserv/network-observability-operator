@@ -221,7 +221,7 @@ func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *
 	}
 
 	// Config watcher
-	r.rbConfigWatcher = resources.GetRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.ConfigWatcherRole)
+	r.rbConfigWatcher = resources.GetRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.ConfigWatcherRole, true)
 	if err := r.ReconcileRoleBinding(ctx, r.rbConfigWatcher); err != nil {
 		return err
 	}
