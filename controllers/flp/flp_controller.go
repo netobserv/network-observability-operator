@@ -74,7 +74,6 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 
 type subReconciler interface {
 	context(context.Context) context.Context
-	cleanupNamespace(context.Context)
 	reconcile(context.Context, *flowslatest.FlowCollector, *metricslatest.FlowMetricList, []flowslatest.SubnetLabel) error
 	getStatus() *status.Instance
 }
@@ -118,7 +117,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	r.currentNamespace = ns
 	previousNamespace := r.status.GetDeployedNamespace(fc)
 	loki := helper.NewLokiConfig(&fc.Spec.Loki, ns)
-	cmn := r.newCommonInfo(clh, ns, previousNamespace, &loki)
+	cmn := r.newCommonInfo(clh, ns, &loki)
 
 	r.watcher.Reset(ns)
 
@@ -155,12 +154,6 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 
 	// Check namespace changed
 	if ns != previousNamespace {
-		if previousNamespace != "" {
-			log.Info("FlowCollector namespace change detected: cleaning up previous namespace", "old", previousNamespace, "new", ns)
-			for _, sr := range reconcilers {
-				sr.cleanupNamespace(sr.context(ctx))
-			}
-		}
 		// Update namespace in status
 		if err := r.status.SetDeployedNamespace(ctx, r.Client, ns); err != nil {
 			return r.status.Error("ChangeNamespaceError", err)
@@ -176,15 +169,14 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	return nil
 }
 
-func (r *Reconciler) newCommonInfo(clh *helper.Client, ns, prevNs string, loki *helper.LokiConfig) reconcilers.Common {
+func (r *Reconciler) newCommonInfo(clh *helper.Client, ns string, loki *helper.LokiConfig) reconcilers.Common {
 	return reconcilers.Common{
-		Client:            *clh,
-		Namespace:         ns,
-		PreviousNamespace: prevNs,
-		ClusterInfo:       r.mgr.ClusterInfo,
-		Watcher:           r.watcher,
-		Loki:              loki,
-		IsDownstream:      r.mgr.Config.DownstreamDeployment,
+		Client:       *clh,
+		Namespace:    ns,
+		ClusterInfo:  r.mgr.ClusterInfo,
+		Watcher:      r.watcher,
+		Loki:         loki,
+		IsDownstream: r.mgr.Config.DownstreamDeployment,
 	}
 }
 
