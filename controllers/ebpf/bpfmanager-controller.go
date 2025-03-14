@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/sirupsen/logrus"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 
 	bpfmaniov1alpha1 "github.com/bpfman/bpfman-operator/apis/v1alpha1"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
@@ -104,7 +104,7 @@ func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.BpfApplication, fc *flowslat
 		enableRTTValue = append(enableRTTValue, uint8(1))
 	}
 
-	if helper.IsEBFPFlowFilterEnabled(&fc.Spec.Agent.EBPF) {
+	if helper.IsEBPFFlowFilterEnabled(&fc.Spec.Agent.EBPF) {
 		enableFLowFilterValue = append(enableFLowFilterValue, uint8(1))
 	}
 
