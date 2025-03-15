@@ -6,6 +6,6 @@ pip-tools==7.4.1
 pyproject_hooks==1.2.0
 ruamel.yaml==0.18.6
 ruamel.yaml.clib==0.2.12
-setuptools==75.8.2
+setuptools==75.9.1
 setuptools-scm==8.2.0
 wheel==0.44.0
