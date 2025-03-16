@@ -14,7 +14,7 @@ require (
 	github.com/netobserv/netobserv-ebpf-agent v1.8.2-community
 	github.com/onsi/ginkgo/v2 v2.23.0
 	github.com/onsi/gomega v1.36.2
-	github.com/openshift/api v0.0.0-20250228110707-635291d6fdf1
+	github.com/openshift/api v0.0.0-20250313134101-8a7efbfb5316
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.81.0
 	github.com/prometheus/common v0.62.0
 	github.com/sirupsen/logrus v1.9.3
@@ -22,7 +22,7 @@ require (
 	go.uber.org/zap v1.27.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.32.3
-  k8s.io/apiextensions-apiserver v0.32.3
+	k8s.io/apiextensions-apiserver v0.32.3
 	k8s.io/apimachinery v0.32.3
 	k8s.io/client-go v0.32.3
 	k8s.io/klog v1.0.0
