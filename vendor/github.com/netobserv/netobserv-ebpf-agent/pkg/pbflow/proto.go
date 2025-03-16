@@ -187,11 +187,7 @@ func PBToFlow(pb *Record) *model.Record {
 
 	if len(pb.GetNetworkEventsMetadata()) != 0 {
 		for _, e := range pb.GetNetworkEventsMetadata() {
-			m := map[string]string{}
-			for k, v := range e.Events {
-				m[k] = v
-			}
-			out.NetworkMonitorEventsMD = append(out.NetworkMonitorEventsMD, m)
+			out.NetworkMonitorEventsMD = append(out.NetworkMonitorEventsMD, e.Events)
 		}
 		protoLog.Tracef("decoded Network events monitor metadata: %v", out.NetworkMonitorEventsMD)
 	}
