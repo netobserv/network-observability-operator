@@ -30,7 +30,7 @@ func (r *FlowCollector) ValidateCreate(ctx context.Context, newObj runtime.Objec
 	if !ok {
 		return nil, kerr.NewBadRequest(fmt.Sprintf("expected a FlowCollector but got a %T", newObj))
 	}
-	return r.validate(ctx, fc)
+	return r.Validate(ctx, fc)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
@@ -40,7 +40,7 @@ func (r *FlowCollector) ValidateUpdate(ctx context.Context, _, newObj runtime.Ob
 	if !ok {
 		return nil, kerr.NewBadRequest(fmt.Sprintf("expected a FlowCollector but got a %T", newObj))
 	}
-	return r.validate(ctx, fc)
+	return r.Validate(ctx, fc)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
@@ -49,7 +49,7 @@ func (r *FlowCollector) ValidateDelete(_ context.Context, _ runtime.Object) (adm
 	return nil, nil
 }
 
-func (r *FlowCollector) validate(ctx context.Context, fc *FlowCollector) (admission.Warnings, error) {
+func (r *FlowCollector) Validate(ctx context.Context, fc *FlowCollector) (admission.Warnings, error) {
 	var allW admission.Warnings
 	var allE []error
 	w, errs := r.validateAgent(ctx, &fc.Spec)

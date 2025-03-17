@@ -165,9 +165,9 @@ func ControllerFlowMetricsSpecs() {
 				return metric1.Status.Conditions
 			}, timeout, interval).Should(Satisfy(func(conds []metav1.Condition) bool {
 				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
-				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
+				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityWarning)
 				// Metrics 1 has cardinality FINE (no label)
-				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionTrue &&
+				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionFalse &&
 					ready.Reason == "Ready" && card.Reason == string(cardinality.WarnFine)
 			}))
 
@@ -180,8 +180,8 @@ func ControllerFlowMetricsSpecs() {
 			}, timeout, interval).Should(Satisfy(func(conds []metav1.Condition) bool {
 				// Metrics 2 has cardinality AVOID (Addr label)
 				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
-				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
-				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionFalse &&
+				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityWarning)
+				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionTrue &&
 					ready.Reason == "Ready" && card.Reason == string(cardinality.WarnAvoid)
 			}))
 
@@ -194,8 +194,8 @@ func ControllerFlowMetricsSpecs() {
 			}, timeout, interval).Should(Satisfy(func(conds []metav1.Condition) bool {
 				// Metrics 3 has cardinality FINE (NetworkEvents nested labels)
 				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
-				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
-				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionTrue &&
+				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityWarning)
+				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionFalse &&
 					ready.Reason == "Ready" && card.Reason == string(cardinality.WarnFine)
 			}))
 		})

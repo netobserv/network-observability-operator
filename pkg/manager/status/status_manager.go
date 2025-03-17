@@ -3,13 +3,14 @@ package status
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
@@ -20,12 +21,13 @@ import (
 type ComponentName string
 
 const (
-	FlowCollectorLegacy ComponentName = "FlowCollectorLegacy"
-	FLPParent           ComponentName = "FLPParent"
-	FLPMonolith         ComponentName = "FLPMonolith"
-	FLPTransformOnly    ComponentName = "FLPTransformOnly"
-	Monitoring          ComponentName = "Monitoring"
-	NetworkPolicy       ComponentName = "NetworkPolicy"
+	FlowCollectorLegacy         ComponentName = "FlowCollectorLegacy"
+	FLPParent                   ComponentName = "FLPParent"
+	FLPMonolith                 ComponentName = "FLPMonolith"
+	FLPTransformer              ComponentName = "FLPTransformer"
+	Monitoring                  ComponentName = "Monitoring"
+	NetworkPolicy               ComponentName = "NetworkPolicy"
+	ConditionConfigurationIssue               = "ConfigurationIssue"
 )
 
 var allNames = []ComponentName{FlowCollectorLegacy, Monitoring}
@@ -127,12 +129,13 @@ func updateStatus(ctx context.Context, c client.Client, conditions ...metav1.Con
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		fc := flowslatest.FlowCollector{}
 		if err := c.Get(ctx, constants.FlowCollectorName, &fc); err != nil {
-			if errors.IsNotFound(err) {
+			if kerr.IsNotFound(err) {
 				// ignore: when it's being deleted, there's no point trying to update its status
 				return nil
 			}
 			return err
 		}
+		conditions = append(conditions, checkValidation(ctx, &fc))
 		for _, c := range conditions {
 			meta.SetStatusCondition(&fc.Status.Conditions, c)
 		}
@@ -141,6 +144,32 @@ func updateStatus(ctx context.Context, c client.Client, conditions ...metav1.Con
 
 	if err != nil {
 		log.Error(err, "failed to update FlowCollector status")
+	}
+}
+
+func checkValidation(ctx context.Context, fc *flowslatest.FlowCollector) metav1.Condition {
+	warnings, err := fc.Validate(ctx, fc)
+	if err != nil {
+		return metav1.Condition{
+			Type:    ConditionConfigurationIssue,
+			Reason:  "Error",
+			Status:  metav1.ConditionTrue,
+			Message: err.Error(),
+		}
+	}
+	if len(warnings) > 0 {
+		return metav1.Condition{
+			Type:    ConditionConfigurationIssue,
+			Reason:  "Warnings",
+			Status:  metav1.ConditionTrue,
+			Message: strings.Join(warnings, "; "),
+		}
+	}
+	// No issue
+	return metav1.Condition{
+		Type:   ConditionConfigurationIssue,
+		Reason: "Valid",
+		Status: metav1.ConditionFalse,
 	}
 }
 

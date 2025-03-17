@@ -22,20 +22,21 @@ type ComponentStatus struct {
 
 func (s *ComponentStatus) toCondition() metav1.Condition {
 	c := metav1.Condition{
-		Type:    string(s.name) + "Ready",
-		Reason:  "Ready",
+		Type:    "Waiting" + string(s.name),
 		Message: s.message,
-	}
-	if s.reason != "" {
-		c.Reason = s.reason
 	}
 	switch s.status {
 	case StatusUnknown:
 		c.Status = metav1.ConditionUnknown
 	case StatusFailure, StatusInProgress:
-		c.Status = metav1.ConditionFalse
-	case StatusReady:
 		c.Status = metav1.ConditionTrue
+		c.Reason = "Not ready"
+	case StatusReady:
+		c.Status = metav1.ConditionFalse
+		c.Reason = "Ready"
+	}
+	if s.reason != "" {
+		c.Reason = s.reason
 	}
 	return c
 }
