@@ -50,8 +50,8 @@ const (
 	ConsoleNamespace         = "openshift-console"
 
 	// [Cluster]Roles, must match names in config/rbac/component_roles.yaml (without netobserv- prefix)
-	LokiWriterRole         ClusterRoleName = "netobserv-writer"
-	LokiReaderRole         ClusterRoleName = "netobserv-reader"
+	LokiWriterRole         ClusterRoleName = "netobserv-loki-writer"
+	LokiReaderRole         ClusterRoleName = "netobserv-loki-reader"
 	PromReaderRole         ClusterRoleName = "netobserv-metrics-reader"
 	ExposeMetricsRole      RoleName        = "netobserv-expose-metrics"
 	FLPInformersRole       ClusterRoleName = "netobserv-informers"
