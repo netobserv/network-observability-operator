@@ -149,6 +149,14 @@ rules:
   - update
 - apiGroups:
   - loki.grafana.com
+  resources:
+  - lokistacks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - loki.grafana.com
   resourceNames:
   - logs
   resources:
