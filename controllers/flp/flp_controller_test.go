@@ -48,17 +48,12 @@ var (
 // nolint:cyclop
 func ControllerSpecs() {
 	const operatorNamespace = "main-namespace"
-	const otherNamespace = "other-namespace"
 	crKey := types.NamespacedName{
 		Name: "cluster",
 	}
 	flpKey1 := types.NamespacedName{
 		Name:      constants.FLPName,
 		Namespace: operatorNamespace,
-	}
-	flpKey2 := types.NamespacedName{
-		Name:      constants.FLPName,
-		Namespace: otherNamespace,
 	}
 	flpKeyKafkaTransformer := types.NamespacedName{
 		Name:      transfoName,
@@ -743,42 +738,6 @@ func ControllerSpecs() {
 		})
 	})
 
-	Context("Changing namespace", func() {
-		It("Should update namespace successfully", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Processor.Advanced.Port = ptr.To(int32(9999))
-				fc.Spec.Namespace = otherNamespace
-			})
-		})
-
-		It("Should redeploy FLP in new namespace", func() {
-			By("Expecting daemonset in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey1, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(MatchError(`daemonsets.apps "flowlogs-pipeline" not found`))
-
-			By("Expecting deployment in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey1, &appsv1.Deployment{})
-			}, timeout, interval).Should(MatchError(`deployments.apps "flowlogs-pipeline" not found`))
-
-			By("Expecting service account in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey1, &v1.ServiceAccount{})
-			}, timeout, interval).Should(MatchError(`serviceaccounts "flowlogs-pipeline" not found`))
-
-			By("Expecting daemonset to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey2, &appsv1.DaemonSet{})
-			}, timeout, interval).Should(Succeed())
-
-			By("Expecting service account to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKey2, &v1.ServiceAccount{})
-			}, timeout, interval).Should(Succeed())
-		})
-	})
-
 	Context("Checking CR ownership", func() {
 		It("Should be garbage collected", func() {
 			// Retrieve CR to get its UID
@@ -788,14 +747,14 @@ func ControllerSpecs() {
 			By("Expecting flowlogs-pipeline daemonset to be garbage collected")
 			Eventually(func() interface{} {
 				d := appsv1.DaemonSet{}
-				_ = k8sClient.Get(ctx, flpKey2, &d)
+				_ = k8sClient.Get(ctx, flpKey1, &d)
 				return &d
 			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
 
 			By("Expecting flowlogs-pipeline service account to be garbage collected")
 			Eventually(func() interface{} {
 				svcAcc := v1.ServiceAccount{}
-				_ = k8sClient.Get(ctx, flpKey2, &svcAcc)
+				_ = k8sClient.Get(ctx, flpKey1, &svcAcc)
 				return &svcAcc
 			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
 
@@ -804,7 +763,7 @@ func ControllerSpecs() {
 				cm := v1.ConfigMap{}
 				_ = k8sClient.Get(ctx, types.NamespacedName{
 					Name:      "flowlogs-pipeline-config",
-					Namespace: otherNamespace,
+					Namespace: operatorNamespace,
 				}, &cm)
 				return &cm
 			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))

@@ -14,20 +14,15 @@ import (
 
 type Common struct {
 	helper.Client
-	Watcher           *watchers.Watcher
-	Namespace         string
-	PreviousNamespace string
-	ClusterInfo       *cluster.Info
-	Loki              *helper.LokiConfig
-	IsDownstream      bool
+	Watcher      *watchers.Watcher
+	Namespace    string
+	ClusterInfo  *cluster.Info
+	Loki         *helper.LokiConfig
+	IsDownstream bool
 }
 
 func (c *Common) PrivilegedNamespace() string {
 	return c.Namespace + constants.EBPFPrivilegedNSSuffix
-}
-
-func (c *Common) PreviousPrivilegedNamespace() string {
-	return c.PreviousNamespace + constants.EBPFPrivilegedNSSuffix
 }
 
 type Instance struct {

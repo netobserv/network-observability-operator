@@ -62,11 +62,6 @@ func (r *transformerReconciler) context(ctx context.Context) context.Context {
 	return log.IntoContext(ctx, l)
 }
 
-// cleanupNamespace cleans up old namespace
-func (r *transformerReconciler) cleanupNamespace(ctx context.Context) {
-	r.Managed.CleanupPreviousNamespace(ctx)
-}
-
 func (r *transformerReconciler) getStatus() *status.Instance {
 	return &r.Status
 }
