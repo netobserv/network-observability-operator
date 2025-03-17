@@ -28,9 +28,10 @@ func (s *ComponentStatus) toCondition() metav1.Condition {
 	switch s.status {
 	case StatusUnknown:
 		c.Status = metav1.ConditionUnknown
+		c.Reason = "Unused"
 	case StatusFailure, StatusInProgress:
 		c.Status = metav1.ConditionTrue
-		c.Reason = "Not ready"
+		c.Reason = "NotReady"
 	case StatusReady:
 		c.Status = metav1.ConditionFalse
 		c.Reason = "Ready"
