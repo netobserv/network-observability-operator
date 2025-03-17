@@ -34,7 +34,7 @@ func TestStatusWorkflow(t *testing.T) {
 	assert.Len(t, conds, 3)
 	assertHasCondition(t, conds, "Ready", "Pending", metav1.ConditionFalse)
 	assertHasCondition(t, conds, "WaitingFlowCollectorLegacy", "DaemonSetNotReady", metav1.ConditionTrue)
-	assertHasCondition(t, conds, "WaitingMonitoring", "", metav1.ConditionUnknown)
+	assertHasCondition(t, conds, "WaitingMonitoring", "Unused", metav1.ConditionUnknown)
 
 	sl.SetReady() // temporary until controllers are broken down
 	sl.CheckDaemonSetProgress(&appsv1.DaemonSet{ObjectMeta: metav1.ObjectMeta{Name: "test"}, Status: appsv1.DaemonSetStatus{
