@@ -33,7 +33,6 @@
   "Dscp": "fine",
   "IcmpType": "fine",
   "IcmpCode": "fine",
-  "Duplicate": "fine",
   "FlowDirection": "fine",
   "IfDirections": "fine",
   "Interfaces": "careful",
