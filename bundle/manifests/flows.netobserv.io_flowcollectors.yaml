@@ -1919,64 +1919,72 @@ spec:
                       Kubernetes liveness and readiness probes'
                     type: boolean
                   filters:
-                    description: '`filters` let you define custom filters to limit
-                      the amount of generated flows.'
-                    items:
-                      description: '`FLPFilterSet` defines the desired configuration
-                        for FLP-based filtering satisfying all conditions'
-                      properties:
-                        allOf:
-                          description: '`filters` is a list of matches that must be
-                            all satisfied in order to remove a flow.'
-                          items:
-                            description: '`FLPSingleFilter` defines the desired configuration
-                              for a single FLP-based filter'
-                            properties:
-                              field:
-                                description: |-
-                                  Name of the field to filter on
-                                  Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.
-                                type: string
-                              matchType:
-                                default: Equal
-                                description: Type of matching to apply
-                                enum:
-                                - Equal
-                                - NotEqual
-                                - Presence
-                                - Absence
-                                - MatchRegex
-                                - NotMatchRegex
-                                type: string
-                              value:
-                                description: Value to filter on. When `matchType`
-                                  is `Equal` or `NotEqual`, you can use field injection
-                                  with `$(SomeField)` to refer to any other field
-                                  of the flow.
-                                type: string
-                            required:
-                            - field
-                            - matchType
-                            type: object
-                          type: array
-                        outputTarget:
-                          description: 'If specified, this filters only target a single
-                            output: `Loki`, `Metrics` or `Exporters`. By default,
-                            all outputs are targeted.'
-                          enum:
-                          - ""
-                          - Loki
-                          - Metrics
-                          - Exporters
-                          type: string
-                        sampling:
-                          description: '`sampling` is an optional sampling rate to
-                            apply to this filter.'
-                          format: int32
-                          minimum: 0
-                          type: integer
-                      type: object
-                    type: array
+                    description: |-
+                      `filters` lets you define custom filters to limit the amount of generated flows.
+                      These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
+                      but with a lesser improvement in performance.
+                      [Unsupported (*)].
+                    properties:
+                      anyOf:
+                        description: '`anyOf` contains a list of rules evaluated individually:
+                          any satisfied rule results in a match.'
+                        items:
+                          description: '`FLPFilterAnyOf` defines the desired configuration
+                            for FLP-based filtering satisfying all conditions.'
+                          properties:
+                            allOf:
+                              description: '`allOf` contains a list of rules that
+                                must all be satisfied in order to match a flow.'
+                              items:
+                                description: '`FLPSingleFilter` defines the desired
+                                  configuration for a single FLP-based filter'
+                                properties:
+                                  field:
+                                    description: |-
+                                      Name of the field to filter on
+                                      Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.
+                                    type: string
+                                  matchType:
+                                    default: Equal
+                                    description: Type of matching to apply
+                                    enum:
+                                    - Equal
+                                    - NotEqual
+                                    - Presence
+                                    - Absence
+                                    - MatchRegex
+                                    - NotMatchRegex
+                                    type: string
+                                  value:
+                                    description: Value to filter on. When `matchType`
+                                      is `Equal` or `NotEqual`, you can use field
+                                      injection with `$(SomeField)` to refer to any
+                                      other field of the flow.
+                                    type: string
+                                required:
+                                - field
+                                - matchType
+                                type: object
+                              type: array
+                            sampling:
+                              description: '`sampling` is an optional sampling rate
+                                to apply to this filter.'
+                              format: int32
+                              minimum: 0
+                              type: integer
+                          type: object
+                        type: array
+                      outputTarget:
+                        description: 'If specified, these filters only target a single
+                          output: `Loki`, `Metrics` or `Exporters`. By default, all
+                          outputs are targeted.'
+                        enum:
+                        - ""
+                        - Loki
+                        - Metrics
+                        - Exporters
+                        type: string
+                    type: object
                   healthPort:
                     default: 8080
                     description: '`healthPort` is a collector HTTP port in the Pod
@@ -8224,66 +8232,73 @@ spec:
                     type: object
                   filters:
                     description: |-
-                      `filters` lets you define custom filters to limit the amount of generated flows.
+                      `filters` lets you define custom filters to limit the amount of generated flows. Flows that match those filters are kept, all other flows are discarded.
                       These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
                       but with a lesser improvement in performance.
                       [Unsupported (*)].
-                    items:
-                      description: '`FLPFilterSet` defines the desired configuration
-                        for FLP-based filtering satisfying all conditions.'
-                      properties:
-                        allOf:
-                          description: '`filters` is a list of matches that must be
-                            all satisfied in order to remove a flow.'
-                          items:
-                            description: '`FLPSingleFilter` defines the desired configuration
-                              for a single FLP-based filter.'
-                            properties:
-                              field:
-                                description: |-
-                                  Name of the field to filter on.
-                                  Refer to the documentation for the list of available fields: https://github.com/netobserv/network-observability-operator/blob/main/docs/flows-format.adoc.
-                                type: string
-                              matchType:
-                                default: Equal
-                                description: Type of matching to apply.
-                                enum:
-                                - Equal
-                                - NotEqual
-                                - Presence
-                                - Absence
-                                - MatchRegex
-                                - NotMatchRegex
-                                type: string
-                              value:
-                                description: Value to filter on. When `matchType`
-                                  is `Equal` or `NotEqual`, you can use field injection
-                                  with `$(SomeField)` to refer to any other field
-                                  of the flow.
-                                type: string
-                            required:
-                            - field
-                            - matchType
-                            type: object
-                          type: array
-                        outputTarget:
-                          description: 'If specified, these filters only target a
-                            single output: `Loki`, `Metrics` or `Exporters`. By default,
-                            all outputs are targeted.'
-                          enum:
-                          - ""
-                          - Loki
-                          - Metrics
-                          - Exporters
-                          type: string
-                        sampling:
-                          description: '`sampling` is an optional sampling rate to
-                            apply to this filter.'
-                          format: int32
-                          minimum: 0
-                          type: integer
-                      type: object
-                    type: array
+                    properties:
+                      anyOf:
+                        description: '`anyOf` contains a list of rules evaluated individually:
+                          any rule that is satisfied results in a match.'
+                        items:
+                          description: '`FLPFilterAnyOf` is a set of rules evaluated
+                            individually.'
+                          properties:
+                            allOf:
+                              description: '`allOf` contains a list of rules that
+                                must all be satisfied in order to match a flow.'
+                              items:
+                                description: '`FLPSingleFilter` defines the desired
+                                  configuration for a single FLP-based filter.'
+                                properties:
+                                  field:
+                                    description: |-
+                                      Name of the field to filter on.
+                                      Refer to the documentation for the list of available fields: https://github.com/netobserv/network-observability-operator/blob/main/docs/flows-format.adoc.
+                                    type: string
+                                  matchType:
+                                    default: Equal
+                                    description: 'Type of matching to apply: `Equal`
+                                      (default), `NotEqual`, `Presence`, `Absence`,
+                                      `MatchRegex` or `NotMatchRegex`.'
+                                    enum:
+                                    - Equal
+                                    - NotEqual
+                                    - Presence
+                                    - Absence
+                                    - MatchRegex
+                                    - NotMatchRegex
+                                    type: string
+                                  value:
+                                    description: Value to filter on. When `matchType`
+                                      is `Equal` or `NotEqual`, you can use field
+                                      injection with `$(SomeField)` to refer to any
+                                      other field of the flow.
+                                    type: string
+                                required:
+                                - field
+                                - matchType
+                                type: object
+                              type: array
+                            sampling:
+                              description: '`sampling` is an optional sampling rate
+                                to apply to this filter.'
+                              format: int32
+                              minimum: 0
+                              type: integer
+                          type: object
+                        type: array
+                      outputTarget:
+                        description: 'If specified, these filters only target a single
+                          output: `Loki`, `Metrics` or `Exporters`. By default, all
+                          outputs are targeted.'
+                        enum:
+                        - ""
+                        - Loki
+                        - Metrics
+                        - Exporters
+                        type: string
+                    type: object
                   imagePullPolicy:
                     default: IfNotPresent
                     description: '`imagePullPolicy` is the Kubernetes pull policy

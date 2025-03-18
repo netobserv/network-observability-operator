@@ -684,11 +684,11 @@ type FlowCollectorFLP struct {
 	Deduper *FLPDeduper `json:"deduper,omitempty"`
 
 	// +optional
-	// `filters` lets you define custom filters to limit the amount of generated flows.
+	// `filters` lets you define custom filters to limit the amount of generated flows. Flows that match those filters are kept, all other flows are discarded.
 	// These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
 	// but with a lesser improvement in performance.
 	// [Unsupported (*)].
-	Filters []FLPFilterSet `json:"filters"`
+	Filters FLPFilters `json:"filters"`
 
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
@@ -737,16 +737,23 @@ const (
 	FLPFilterTargetExporters FLPFilterTarget = "Exporters"
 )
 
-// `FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions.
-type FLPFilterSet struct {
-	// `filters` is a list of matches that must be all satisfied in order to remove a flow.
+// `FLPFilters` defines the desired configuration for FLP-based filtering. Flows that match those filters are kept, all other flows are discarded.
+type FLPFilters struct {
+	// `anyOf` contains a list of rules evaluated individually: any rule that is satisfied results in a match.
 	// +optional
-	AllOf []FLPSingleFilter `json:"allOf"`
+	AnyOf []FLPFilterAnyOf `json:"anyOf"`
 
 	// If specified, these filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.
 	// +optional
 	// +kubebuilder:validation:Enum:="";"Loki";"Metrics";"Exporters"
 	OutputTarget FLPFilterTarget `json:"outputTarget,omitempty"`
+}
+
+// `FLPFilterAnyOf` is a set of rules evaluated individually.
+type FLPFilterAnyOf struct {
+	// `allOf` contains a list of rules that must all be satisfied in order to match a flow.
+	// +optional
+	AllOf []FLPSingleFilter `json:"allOf"`
 
 	// `sampling` is an optional sampling rate to apply to this filter.
 	//+kubebuilder:validation:Minimum=0
@@ -756,7 +763,7 @@ type FLPFilterSet struct {
 
 // `FLPSingleFilter` defines the desired configuration for a single FLP-based filter.
 type FLPSingleFilter struct {
-	// Type of matching to apply.
+	// Type of matching to apply: `Equal` (default), `NotEqual`, `Presence`, `Absence`, `MatchRegex` or `NotMatchRegex`.
 	// +kubebuilder:validation:Enum:="Equal";"NotEqual";"Presence";"Absence";"MatchRegex";"NotMatchRegex"
 	// +kubebuilder:default:="Equal"
 	MatchType FLPFilterMatch `json:"matchType"`

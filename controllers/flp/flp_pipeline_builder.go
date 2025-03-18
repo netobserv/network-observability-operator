@@ -369,10 +369,10 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	return err
 }
 
-func filtersToFLP(in []flowslatest.FLPFilterSet, target flowslatest.FLPFilterTarget) []api.TransformFilterRule {
+func filtersToFLP(in flowslatest.FLPFilters, target flowslatest.FLPFilterTarget) []api.TransformFilterRule {
 	var rules []api.TransformFilterRule
-	for _, f := range in {
-		if f.OutputTarget == target {
+	if in.OutputTarget == target {
+		for _, f := range in.AnyOf {
 			var allOf []*api.KeepEntryRule
 			for _, inner := range f.AllOf {
 				rule := singleFilterToFLP(inner)
