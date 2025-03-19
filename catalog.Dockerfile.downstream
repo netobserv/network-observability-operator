@@ -6,7 +6,7 @@ FROM registry.access.redhat.com/ubi9/python-312 as builder
 COPY --chown=default . .
 RUN pip install -r requirements.txt
 
-RUN /hack/update-build.sh
+RUN ./hack/update-build.sh
 
 FROM $OPM_IMAGE
 ARG BUILDVERSION
