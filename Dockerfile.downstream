@@ -1,11 +1,9 @@
-ARG TARGETARCH
-ARG COMMIT
+ARG BUILDVERSION
 
 # Build the manager binary
 FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:v1.23 as builder
-ARG BUILD_VERSION="unknown"
+ARG BUILDVERSION
 
-ARG TARGETARCH=amd64
 WORKDIR /opt/app-root
 
 # Copy the go manifests and source
@@ -20,12 +18,15 @@ COPY config/ config/
 
 # Build
 ENV GOEXPERIMENT strictfipsruntime
-RUN GOOS=linux GOARCH=$TARGETARCH GO111MODULE=on go build -tags strictfipsruntime -ldflags "-X 'main.buildVersion=$BUILD_VERSION' -X 'main.buildDate=`date +%Y-%m-%d\ %H:%M`'" -mod vendor -a -o manager main.go
+RUN GOOS=linux GO111MODULE=on go build -tags strictfipsruntime -ldflags "-X 'main.buildVersion=${BUILDVERSION}' -X 'main.buildDate=`date +%Y-%m-%d\ %H:%M`'" -mod vendor -a -o manager main.go
 
 # Create final image from minimal + built binary
-FROM --platform=linux/$TARGETARCH registry.access.redhat.com/ubi9/ubi-minimal:9.5-1741850109
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5-1741850109
+ARG BUILDVERSION
+
 WORKDIR /
 COPY --from=builder /opt/app-root/manager .
+COPY LICENSE /licenses/
 USER 65532:65532
 
 ENTRYPOINT ["/manager"]
@@ -37,7 +38,5 @@ LABEL io.k8s.description="Network Observability Operator"
 LABEL summary="Network Observability Operator"
 LABEL maintainer="support@redhat.com"
 LABEL io.openshift.tags="network-observability-operator"
-LABEL upstream-vcs-ref="$COMMIT"
-LABEL upstream-vcs-type="git"
 LABEL description="NetObserv Operator is a Kubernetes / OpenShift operator for network observability."
-LABEL version="1.8.0"
+LABEL version=$BUILDVERSION
