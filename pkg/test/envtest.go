@@ -9,8 +9,9 @@ import (
 	//nolint:revive,stylecheck
 	. "github.com/onsi/ginkgo/v2"
 	//nolint:revive,stylecheck
-	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	. "github.com/onsi/gomega"
+
+	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	configv1 "github.com/openshift/api/config/v1"
 	osv1 "github.com/openshift/api/console/v1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
