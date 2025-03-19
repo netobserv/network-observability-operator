@@ -1,14 +1,15 @@
 ARG OPM_IMAGE=brew.registry.redhat.io/rh-osbs/openshift-ose-operator-registry-rhel9:v4.17
-ARG COMMIT
+ARG BUILDVERSION
 
 FROM registry.access.redhat.com/ubi9/python-312 as builder
 
 COPY --chown=default . .
 RUN pip install -r requirements.txt
 
-RUN COMMIT=$COMMIT ./hack/update-build.sh
+RUN /hack/update-build.sh
 
 FROM $OPM_IMAGE
+ARG BUILDVERSION
 
 # Configure the entrypoint and command
 ENTRYPOINT ["opm"]
@@ -32,7 +33,5 @@ LABEL io.k8s.description="Network Observability Operator Catalog"
 LABEL summary="Network Observability Operator Catalog"
 LABEL maintainer="support@redhat.com"
 LABEL io.openshift.tags="network-observability-operator-catalog"
-LABEL upstream-vcs-ref="$COMMIT"
-LABEL upstream-vcs-type="git"
 LABEL description="Network Observability operator for OpenShift."
-LABEL version="1.9.0"
+LABEL version=$BUILDVERSION
