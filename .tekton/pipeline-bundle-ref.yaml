@@ -164,7 +164,6 @@ spec:
     - name: BUILD_ARGS
       value:
       - $(params.build-args[*])
-      - "COMMIT=tasks.clone-repository.results.commit"
     - name: BUILD_ARGS_FILE
       value: $(params.build-args-file)
     runAfter:
