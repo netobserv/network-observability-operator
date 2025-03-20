@@ -12,7 +12,7 @@ metadata:
       "catalog/***".pathChanged() ||
       "./requirements.txt".pathChanged() ||
       "hack/update-build.sh".pathChanged() ||
-      "hack/bundle_digest.sh".pathChanged() ||
+      "hack/nudging/bundle_digest.sh".pathChanged() ||
       "hack/patch_catalog.py".pathChanged() ||
       "hack/patch_csv.py".pathChanged())
   creationTimestamp: null
@@ -30,6 +30,10 @@ spec:
     value: '{{revision}}'
   - name: output-image
     value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc:latest
+  - name: image-expires-after
+    value: 14d
+  - name: build-args-file
+    value: Dockerfile-args.downstream
   - name: dockerfile
     value: ./catalog.Dockerfile.downstream
   pipelineRef:

@@ -36,6 +36,8 @@ spec:
     value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator:on-pr-{{revision}}
   - name: image-expires-after
     value: 5d
+  - name: build-args-file
+    value: Dockerfile-args.downstream
   - name: dockerfile
     value: ./Dockerfile.downstream
   - name: build-platforms

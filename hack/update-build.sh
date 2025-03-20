@@ -20,8 +20,8 @@ csv_name="netobserv-operator.clusterserviceversion.yaml"
 csv_file="${manifests_dir}/${csv_name}"
 index_file="./catalog/rc.yaml"
 
-source ./hack/container_digest.sh
-source ./hack/bundle_digest.sh
+source ./hack/nudging/container_digest.sh
+source ./hack/nudging/bundle_digest.sh
 
 [ ! -f "${crd_file}" ] && { echo "CustomResourceDefinition file not found, the version or name might have changed on us!"; exit 5; }
 
