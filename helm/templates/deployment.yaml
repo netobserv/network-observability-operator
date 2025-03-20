@@ -34,15 +34,15 @@ spec:
             - /manager
           env:
             - name: RELATED_IMAGE_EBPF_AGENT
-              value: quay.io/netobserv/netobserv-ebpf-agent:v1.8.1-community
+              value: quay.io/netobserv/netobserv-ebpf-agent:v1.8.2-community
             - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
-              value: quay.io/netobserv/flowlogs-pipeline:v1.8.1-community
+              value: quay.io/netobserv/flowlogs-pipeline:v1.8.2-community
             - name: RELATED_IMAGE_CONSOLE_PLUGIN
-              value: '{{ if .Values.standaloneConsole.enable }}quay.io/netobserv/network-observability-standalone-frontend:v1.8.1-community{{ else }}quay.io/netobserv/network-observability-console-plugin:v1.8.1-community{{ end }}'
+              value: '{{ if .Values.standaloneConsole.enable }}quay.io/netobserv/network-observability-standalone-frontend:v1.8.2-community{{ else }}quay.io/netobserv/network-observability-console-plugin:v1.8.2-community{{ end }}'
             - name: DOWNSTREAM_DEPLOYMENT
               value: "false"
             - name: PROFILING_BIND_ADDRESS
-          image: quay.io/netobserv/network-observability-operator:1.8.1-community
+          image: quay.io/netobserv/network-observability-operator:1.8.2-community
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
