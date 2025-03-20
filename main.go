@@ -26,6 +26,7 @@ import (
 	"os"
 
 	bpfmaniov1alpha1 "github.com/bpfman/bpfman-operator/apis/v1alpha1"
+	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	osv1 "github.com/openshift/api/console/v1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
 	securityv1 "github.com/openshift/api/security/v1"
@@ -84,6 +85,7 @@ func init() {
 	utilruntime.Must(monitoringv1.AddToScheme(scheme))
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 	utilruntime.Must(bpfmaniov1alpha1.Install(scheme))
+	utilruntime.Must(lokiv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
