@@ -17,7 +17,7 @@ crd_name="flows.netobserv.io_flowcollectors.yaml"
 crd_file="${manifests_dir}/${crd_name}"
 csv_name="netobserv-operator.clusterserviceversion.yaml"
 csv_file="${manifests_dir}/${csv_name}"
-new_bundle_file="./catalog/rc.yaml"
+new_bundle_file="./catalog/unreleased/next/bundle.yaml"
 
 source ./hack/nudging/container_digest.sh
 source ./hack/nudging/bundle_digest.sh
