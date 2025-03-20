@@ -11,7 +11,7 @@ To release them, a tag in the format "v1.6.0-community" or "v1.6.0-crc0" must be
 E.g:
 
 ```bash
-version="v1.8.1-community"
+version="v1.8.2-community"
 git tag -a "$version" -m "$version"
 git push upstream --tags
 ```
@@ -25,6 +25,18 @@ When the last release candidate is accepted and the final release tag is pushed 
 
 Click the "Auto-generate release note" button.
 
+If you think the "Dependencies" section is too long, you can surround it in a `<details>` block, to make it collapsed. E.g:
+
+```yaml
+<details>
+<summary><b>Dependencies</b></summary>
+
+* Bump [...] from [...] by @dependabot in...
+* ...
+</details>
+```
+
+
 ### Operator
 
 Once all sub-components are released (or have a release candidate), we can proceed with the operator.
@@ -35,7 +47,7 @@ Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, 
 make update-bundle helm-update
 
 # Set desired operator version - CAREFUL, no leading "v" here
-version="1.8.1-community"
+version="1.8.2-community"
 vv=v$version
 test_branch=test-$vv
 
@@ -72,7 +84,18 @@ Grab related components release notes by running:
 make related-release-notes
 ```
 
-Then paste content following the auto-generated release note in GitHub.
+The script should fetch and copy the content in the clipboard. Paste it at the end of the auto-generated release note in GitHub.
+
+If you think the "Dependencies" section is too long, you can surround it in a `<details>` block, to make it collapsed. E.g:
+
+```yaml
+<details>
+<summary><b>Dependencies</b></summary>
+
+* Bump github.com/netobserv/flowlogs-pipeline from [...] by @dependabot in...
+* ...
+</details>
+```
 
 Check the "Create a discussion for this release" option, in category "Announcements".
 

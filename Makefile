@@ -12,17 +12,17 @@ IMAGE_ORG ?= $(USER)
 REPO ?= quay.io/$(IMAGE_ORG)
 
 # Component versions to use in bundle / release (do not use $VERSION for that)
-PREVIOUS_VERSION ?= v1.8.0-community
+PREVIOUS_VERSION ?= v1.8.1-community
 
-BUNDLE_VERSION ?= 1.8.1-community
+BUNDLE_VERSION ?= 1.8.2-community
 #File based catalog
-FBC_VERSION ?= 1.8.1-community
+FBC_VERSION ?= 1.8.2-community
 # console plugin
-export PLG_VERSION ?= v1.8.1-community
+export PLG_VERSION ?= v1.8.2-community
 # flowlogs-pipeline
-export FLP_VERSION ?= v1.8.1-community
+export FLP_VERSION ?= v1.8.2-community
 # eBPF agent
-export BPF_VERSION ?= v1.8.1-community
+export BPF_VERSION ?= v1.8.2-community
 
 # Allows building bundles in Mac replacing BSD 'sed' command by GNU-compatible 'gsed'
 ifeq (,$(shell which gsed 2>/dev/null))
@@ -422,6 +422,7 @@ bundle: bundle-prepare ## Generate final bundle files.
 update-bundle: VERSION=$(BUNDLE_VERSION)
 update-bundle: IMAGE_ORG=netobserv
 update-bundle: bundle ## Prepare a clean bundle to be commited
+	$(MAKE) helm-update
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
@@ -493,12 +494,15 @@ test-workflow: ## Run some tests on this Makefile and the github workflow
 .PHONY: related-release-notes
 related-release-notes: ## Grab release notes for related components (to be inserted in operator's release note upstream, cf RELEASE.md)
 	echo -e "## Related components\n\n" > /tmp/related.md
-	echo -e "### eBPF Agent\n\n" >> /tmp/related.md
-	curl -s  https://api.github.com/repos/netobserv/netobserv-ebpf-agent/releases/tags/$(BPF_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/####/" >> /tmp/related.md
-	echo -e "### Flowlogs-Pipeline\n\n" >> /tmp/related.md
-	curl -s  https://api.github.com/repos/netobserv/flowlogs-pipeline/releases/tags/$(FLP_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/####/" >> /tmp/related.md
-	echo -e "### Console Plugin\n\n" >> /tmp/related.md
-	curl -s  https://api.github.com/repos/netobserv/network-observability-console-plugin/releases/tags/$(PLG_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/####/" >> /tmp/related.md
+	echo -e "<details><summary><b>eBPF Agent</b></summary>\n\n" >> /tmp/related.md
+	curl -s  https://api.github.com/repos/netobserv/netobserv-ebpf-agent/releases/tags/$(BPF_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/###/" >> /tmp/related.md
+	echo -e "</details>\n" >> /tmp/related.md
+	echo -e "<details><summary><b>Flowlogs-Pipeline</b></summary>\n\n" >> /tmp/related.md
+	curl -s  https://api.github.com/repos/netobserv/flowlogs-pipeline/releases/tags/$(FLP_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/###/" >> /tmp/related.md
+	echo -e "</details>\n" >> /tmp/related.md
+	echo -e "<details><summary><b>Console Plugin</b></summary>\n\n" >> /tmp/related.md
+	curl -s  https://api.github.com/repos/netobserv/network-observability-console-plugin/releases/tags/$(PLG_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/###/" >> /tmp/related.md
+	echo -e "</details>\n" >> /tmp/related.md
 	wl-copy < /tmp/related.md
 	cat /tmp/related.md
 	echo -e "\nText has been copied to the clipboard.\n"
