@@ -1,6 +1,6 @@
 apiVersion: v2
-name: Netobserv
-description: A Helm chart to install Network Observability Operator on k8s
+name: netobserv-operator
+description: Network Observability in Kubernetes based on eBPF.
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -15,10 +15,43 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.0.1
+version: 1.8.1
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "1.6.2-community"
+appVersion: 1.8.1-community
+
+keywords:
+- network observability
+- ebpf
+- ipfix
+- flow tracing
+- flows
+- topology
+- network
+- observability
+
+home: https://netobserv.io/
+
+sources:
+- https://github.com/netobserv/network-observability-operator
+- https://github.com/netobserv/flowlogs-pipeline
+- https://github.com/netobserv/netobserv-ebpf-agent
+- https://github.com/netobserv/network-observability-console-plugin
+- https://github.com/netobserv/network-observability-cli
+
+maintainers:
+- email: jpinsonn@redhat.com
+  name: Julien Pinsonneau
+- email: jtakvori@redhat.com
+  name: Joel Takvorian
+- email: mmahmoud@redhat.com
+  name: Mohamed S. Mahmoud
+- email: ocazade@redhat.com
+  name: Olivier Cazade
+- email: stlee@redhat.com
+  name: Steven Lee
+
+icon: https://netobserv.io/static/assets/images/netobserv.svg

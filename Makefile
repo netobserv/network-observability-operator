@@ -526,6 +526,14 @@ endif
 	@echo ""
 	@echo "Everything is ready to be pushed. Before that, you should compare the content of $(BUNDLE_VERSION) with $(PREVIOUS_VERSION) to make sure it looks correct."
 
+# Update helm templates
+.PHONY: helm-update
+helm-update: YQ ## Update helm template
+	sed -i -r 's/appVersion:.*/appVersion: $(BUNDLE_VERSION)/g' helm/Chart.yaml
+	sed -i -r 's/version:.*/version: $(BUNDLE_VERSION:%-community=%)/g' helm/Chart.yaml
+	hack/helm-update.sh
+	cp LICENSE helm/
+
 include .mk/sample.mk
 include .mk/development.mk
 include .mk/local.mk
