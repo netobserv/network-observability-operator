@@ -16,6 +16,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
+	"github.com/netobserv/network-observability-operator/pkg/resources"
 )
 
 type monolithReconciler struct {
@@ -25,29 +26,32 @@ type monolithReconciler struct {
 	serviceAccount   *corev1.ServiceAccount
 	staticConfigMap  *corev1.ConfigMap
 	dynamicConfigMap *corev1.ConfigMap
-	roleBindingIn    *rbacv1.ClusterRoleBinding
-	roleBindingTr    *rbacv1.ClusterRoleBinding
+	rbConfigWatcher  *rbacv1.RoleBinding
+	rbHostNetwork    *rbacv1.ClusterRoleBinding
+	rbLokiWriter     *rbacv1.ClusterRoleBinding
+	rbInformer       *rbacv1.ClusterRoleBinding
 	serviceMonitor   *monitoringv1.ServiceMonitor
 	prometheusRule   *monitoringv1.PrometheusRule
 }
 
 func newMonolithReconciler(cmn *reconcilers.Instance) *monolithReconciler {
-	name := name(ConfMonolith)
 	rec := monolithReconciler{
 		Instance:         cmn,
-		daemonSet:        cmn.Managed.NewDaemonSet(name),
-		promService:      cmn.Managed.NewService(promServiceName(ConfMonolith)),
-		serviceAccount:   cmn.Managed.NewServiceAccount(name),
-		staticConfigMap:  cmn.Managed.NewConfigMap(staticConfigMapName(ConfMonolith)),
-		dynamicConfigMap: cmn.Managed.NewConfigMap(dynamicConfigMapName(ConfMonolith)),
-		roleBindingIn:    cmn.Managed.NewCRB(RoleBindingMonoName(ConfKafkaIngester)),
-		roleBindingTr:    cmn.Managed.NewCRB(RoleBindingMonoName(ConfKafkaTransformer)),
+		daemonSet:        cmn.Managed.NewDaemonSet(monoName),
+		promService:      cmn.Managed.NewService(monoPromService),
+		serviceAccount:   cmn.Managed.NewServiceAccount(monoName),
+		staticConfigMap:  cmn.Managed.NewConfigMap(monoConfigMap),
+		dynamicConfigMap: cmn.Managed.NewConfigMap(monoDynConfigMap),
+		rbConfigWatcher:  cmn.Managed.NewRB(resources.GetRoleBindingName(monoShortName, constants.ConfigWatcherRole)),
+		rbHostNetwork:    cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.HostNetworkRole)),
+		rbLokiWriter:     cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.LokiWriterRole)),
+		rbInformer:       cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.FLPInformersRole)),
 	}
 	if cmn.ClusterInfo.HasSvcMonitor() {
-		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(serviceMonitorName(ConfMonolith))
+		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(monoServiceMonitor)
 	}
 	if cmn.ClusterInfo.HasPromRule() {
-		rec.prometheusRule = cmn.Managed.NewPrometheusRule(prometheusRuleName(ConfMonolith))
+		rec.prometheusRule = cmn.Managed.NewPrometheusRule(monoPromRule)
 	}
 	return &rec
 }
@@ -85,7 +89,7 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 	if err != nil {
 		return err
 	}
-	newSCM, configDigest, err := builder.staticConfigMap()
+	staticCM, configDigest, dynCM, err := builder.configMaps()
 	if err != nil {
 		return err
 	}
@@ -93,16 +97,16 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 		constants.PodConfigurationDigest: configDigest,
 	}
 	if !r.Managed.Exists(r.staticConfigMap) {
-		if err := r.CreateOwned(ctx, newSCM); err != nil {
+		if err := r.CreateOwned(ctx, staticCM); err != nil {
 			return err
 		}
-	} else if !equality.Semantic.DeepDerivative(newSCM.Data, r.staticConfigMap.Data) {
-		if err := r.UpdateIfOwned(ctx, r.staticConfigMap, newSCM); err != nil {
+	} else if !equality.Semantic.DeepDerivative(staticCM.Data, r.staticConfigMap.Data) {
+		if err := r.UpdateIfOwned(ctx, r.staticConfigMap, staticCM); err != nil {
 			return err
 		}
 	}
 
-	if err := r.reconcileDynamicConfigMap(ctx, &builder); err != nil {
+	if err := r.reconcileDynamicConfigMap(ctx, dynCM); err != nil {
 		return err
 	}
 
@@ -136,11 +140,7 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 	return r.reconcileDaemonSet(ctx, builder.daemonSet(annotations))
 }
 
-func (r *monolithReconciler) reconcileDynamicConfigMap(ctx context.Context, builder *monolithBuilder) error {
-	newDCM, err := builder.dynamicConfigMap()
-	if err != nil {
-		return err
-	}
+func (r *monolithReconciler) reconcileDynamicConfigMap(ctx context.Context, newDCM *corev1.ConfigMap) error {
 	if !r.Managed.Exists(r.dynamicConfigMap) {
 		if err := r.CreateOwned(ctx, newDCM); err != nil {
 			return err
@@ -161,13 +161,13 @@ func (r *monolithReconciler) reconcilePrometheusService(ctx context.Context, bui
 		return err
 	}
 	if r.ClusterInfo.HasSvcMonitor() {
-		serviceMonitor := builder.generic.serviceMonitor()
+		serviceMonitor := builder.serviceMonitor()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}
 	if r.ClusterInfo.HasPromRule() {
-		promRules := builder.generic.prometheusRule()
+		promRules := builder.prometheusRule()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
 		}
@@ -194,21 +194,37 @@ func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 
-	cr := buildClusterRoleIngester(r.ClusterInfo.IsOpenShift())
-	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
+	// Informers
+	r.rbInformer = resources.GetClusterRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.FLPInformersRole)
+	if err := r.ReconcileClusterRoleBinding(ctx, r.rbInformer); err != nil {
 		return err
-	}
-	cr = BuildClusterRoleTransformer()
-	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
-		return err
-	}
-	// Monolith uses ingester + transformer cluster roles
-	for _, kind := range []ConfKind{ConfKafkaIngester, ConfKafkaTransformer} {
-		desired := builder.clusterRoleBinding(kind)
-		if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
-			return err
-		}
 	}
 
-	return reconcileDataAccessRoles(ctx, r.Common, &builder.generic)
+	// Host network
+	if r.ClusterInfo.IsOpenShift() {
+		r.rbHostNetwork = resources.GetClusterRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.HostNetworkRole)
+		if err := r.ReconcileClusterRoleBinding(ctx, r.rbHostNetwork); err != nil {
+			return err
+		}
+	} else {
+		r.Managed.TryDelete(ctx, r.rbHostNetwork)
+	}
+
+	// Loki writer
+	if helper.UseLoki(builder.desired) && builder.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
+		r.rbLokiWriter = resources.GetClusterRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.LokiWriterRole)
+		if err := r.ReconcileClusterRoleBinding(ctx, r.rbLokiWriter); err != nil {
+			return err
+		}
+	} else {
+		r.Managed.TryDelete(ctx, r.rbLokiWriter)
+	}
+
+	// Config watcher
+	r.rbConfigWatcher = resources.GetRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.ConfigWatcherRole, true)
+	if err := r.ReconcileRoleBinding(ctx, r.rbConfigWatcher); err != nil {
+		return err
+	}
+
+	return nil
 }

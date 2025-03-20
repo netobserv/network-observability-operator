@@ -11,7 +11,7 @@ def load_manifest(pathn):
       with open(pathn, "r") as f:
          return yaml.load(f)
    except FileNotFoundError:
-      print("File can not found")
+      print("File cannot be found")
       exit(6)
 
 def dump_manifest(pathn, manifest):

@@ -265,14 +265,10 @@ Please refer to [this documentation](./DEVELOPMENT.md) for everything related to
 
 Please refer to [F.A.Q / Troubleshooting main document](./FAQ.md).
 
-## Contributions
+## Discussions and contributions
 
-This project is licensed under [Apache 2.0](./LICENSE) and accepts contributions via GitHub pull requests. Other related `netobserv` projects follow the same rules:
-- [Flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline)
-- [eBPF agent](https://github.com/netobserv/netobserv-ebpf-agent)
-- [OpenShift Console plugin](https://github.com/netobserv/network-observability-console-plugin)
+Discussions related to NetObserv are welcome on [GitHub discussions](https://github.com/orgs/netobserv/discussions) as well as on the [#netobserv-project](http://cloud-native.slack.com/) channel from CNCF slack.
 
-External contributions are welcome and can take various forms:
+If you'd like to reach out because you've found a security issue, please do not share sensitive details publicly. Please follow the instructions described on the [Red Hat Customer Portal](https://access.redhat.com/security/team/contact/?extIdCarryOver=true&sc_cid=701f2000001Css5AAC).
 
-- Providing feedback, by starting [discussions](https://github.com/netobserv/network-observability-operator/discussions) or opening [issues](https://github.com/netobserv/network-observability-operator/issues).
-- Code / doc contributions. You will [find here](./DEVELOPMENT.md) some help on how to build, run and test your code changes. Don't hesitate to [ask for help](https://github.com/netobserv/network-observability-operator/discussions/categories/q-a).
+Refer to the [NetObserv projects contribution guide](https://github.com/netobserv/documents/blob/main/CONTRIBUTING.md) for more details on contributions. You will also [find here](./DEVELOPMENT.md) some help on how to build, run and test your code changes.

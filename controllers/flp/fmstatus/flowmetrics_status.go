@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	ConditionReady         = "Ready"
-	ConditionCardinalityOK = "CardinalityOK"
+	ConditionReady              = "Ready"
+	ConditionCardinalityWarning = "CardinalityWarning"
 )
 
 var mapStatuses map[types.NamespacedName]*metav1.Condition
@@ -54,13 +54,13 @@ func CheckCardinality(fm *metricslatest.FlowMetric) {
 		return
 	}
 	overall := report.GetOverall()
-	status := metav1.ConditionTrue
+	status := metav1.ConditionFalse
 	if overall == cardinality.WarnAvoid || overall == cardinality.WarnUnknown {
-		status = metav1.ConditionFalse
+		status = metav1.ConditionTrue
 	}
 	nsname := types.NamespacedName{Name: fm.Name, Namespace: fm.Namespace}
 	mapCards[nsname] = &metav1.Condition{
-		Type:    ConditionCardinalityOK,
+		Type:    ConditionCardinalityWarning,
 		Reason:  string(overall),
 		Message: report.GetDetails(),
 		Status:  status,

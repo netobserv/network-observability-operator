@@ -17,6 +17,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
+	"github.com/netobserv/network-observability-operator/pkg/resources"
 )
 
 type transformerReconciler struct {
@@ -27,28 +28,31 @@ type transformerReconciler struct {
 	serviceAccount   *corev1.ServiceAccount
 	staticConfigMap  *corev1.ConfigMap
 	dynamicConfigMap *corev1.ConfigMap
-	roleBinding      *rbacv1.ClusterRoleBinding
+	rbConfigWatcher  *rbacv1.RoleBinding
+	rbLokiWriter     *rbacv1.ClusterRoleBinding
+	rbInformer       *rbacv1.ClusterRoleBinding
 	serviceMonitor   *monitoringv1.ServiceMonitor
 	prometheusRule   *monitoringv1.PrometheusRule
 }
 
 func newTransformerReconciler(cmn *reconcilers.Instance) *transformerReconciler {
-	name := name(ConfKafkaTransformer)
 	rec := transformerReconciler{
 		Instance:         cmn,
-		deployment:       cmn.Managed.NewDeployment(name),
-		promService:      cmn.Managed.NewService(promServiceName(ConfKafkaTransformer)),
-		hpa:              cmn.Managed.NewHPA(name),
-		serviceAccount:   cmn.Managed.NewServiceAccount(name),
-		staticConfigMap:  cmn.Managed.NewConfigMap(staticConfigMapName(ConfKafkaTransformer)),
-		dynamicConfigMap: cmn.Managed.NewConfigMap(dynamicConfigMapName(ConfKafkaTransformer)),
-		roleBinding:      cmn.Managed.NewCRB(RoleBindingName(ConfKafkaTransformer)),
+		deployment:       cmn.Managed.NewDeployment(transfoName),
+		promService:      cmn.Managed.NewService(transfoPromService),
+		hpa:              cmn.Managed.NewHPA(transfoName),
+		serviceAccount:   cmn.Managed.NewServiceAccount(transfoName),
+		staticConfigMap:  cmn.Managed.NewConfigMap(transfoConfigMap),
+		dynamicConfigMap: cmn.Managed.NewConfigMap(transfoDynConfigMap),
+		rbConfigWatcher:  cmn.Managed.NewRB(resources.GetRoleBindingName(transfoShortName, constants.ConfigWatcherRole)),
+		rbLokiWriter:     cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoShortName, constants.LokiWriterRole)),
+		rbInformer:       cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoShortName, constants.FLPInformersRole)),
 	}
 	if cmn.ClusterInfo.HasSvcMonitor() {
-		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(serviceMonitorName(ConfKafkaTransformer))
+		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(transfoServiceMonitor)
 	}
 	if cmn.ClusterInfo.HasPromRule() {
-		rec.prometheusRule = cmn.Managed.NewPrometheusRule(prometheusRuleName(ConfKafkaTransformer))
+		rec.prometheusRule = cmn.Managed.NewPrometheusRule(transfoPromRule)
 	}
 	return &rec
 }
@@ -86,7 +90,7 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 	if err != nil {
 		return err
 	}
-	newSCM, configDigest, err := builder.staticConfigMap()
+	newSCM, configDigest, newDCM, err := builder.configMaps()
 	if err != nil {
 		return err
 	}
@@ -103,7 +107,7 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 		}
 	}
 
-	if err := r.reconcileDynamicConfigMap(ctx, &builder); err != nil {
+	if err := r.reconcileDynamicConfigMap(ctx, newDCM); err != nil {
 		return err
 	}
 
@@ -144,11 +148,7 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 	return r.reconcileHPA(ctx, &desired.Spec.Processor, &builder)
 }
 
-func (r *transformerReconciler) reconcileDynamicConfigMap(ctx context.Context, builder *transfoBuilder) error {
-	newDCM, err := builder.dynamicConfigMap()
-	if err != nil {
-		return err
-	}
+func (r *transformerReconciler) reconcileDynamicConfigMap(ctx context.Context, newDCM *corev1.ConfigMap) error {
 	if !r.Managed.Exists(r.dynamicConfigMap) {
 		if err := r.CreateOwned(ctx, newDCM); err != nil {
 			return err
@@ -199,13 +199,13 @@ func (r *transformerReconciler) reconcilePrometheusService(ctx context.Context, 
 		return err
 	}
 	if r.ClusterInfo.HasSvcMonitor() {
-		serviceMonitor := builder.generic.serviceMonitor()
+		serviceMonitor := builder.serviceMonitor()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
 		}
 	}
 	if r.ClusterInfo.HasPromRule() {
-		promRules := builder.generic.prometheusRule()
+		promRules := builder.prometheusRule()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
 		}
@@ -218,15 +218,27 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 
-	cr := BuildClusterRoleTransformer()
-	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
+	// Informers
+	r.rbInformer = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.FLPInformersRole)
+	if err := r.ReconcileClusterRoleBinding(ctx, r.rbInformer); err != nil {
 		return err
 	}
 
-	desired := builder.clusterRoleBinding()
-	if err := r.ReconcileClusterRoleBinding(ctx, desired); err != nil {
+	// Loki writer
+	if helper.UseLoki(builder.desired) && builder.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
+		r.rbLokiWriter = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.LokiWriterRole)
+		if err := r.ReconcileClusterRoleBinding(ctx, r.rbLokiWriter); err != nil {
+			return err
+		}
+	} else {
+		r.Managed.TryDelete(ctx, r.rbLokiWriter)
+	}
+
+	// Config watcher
+	r.rbConfigWatcher = resources.GetRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.ConfigWatcherRole, true)
+	if err := r.ReconcileRoleBinding(ctx, r.rbConfigWatcher); err != nil {
 		return err
 	}
 
-	return reconcileDataAccessRoles(ctx, r.Common, &builder.generic)
+	return nil
 }

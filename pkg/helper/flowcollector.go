@@ -158,7 +158,7 @@ func IsSubnetLabelsEnabled(spec *flowslatest.FlowCollectorFLP) bool {
 	return AutoDetectOpenShiftNetworks(spec) || len(spec.SubnetLabels.CustomLabels) > 0
 }
 
-func IsEBFPFlowFilterEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+func IsEBPFFlowFilterEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 	return spec.FlowFilter != nil && spec.FlowFilter.Enable != nil && *spec.FlowFilter.Enable
 }
 
@@ -170,7 +170,7 @@ func GetEBPFMetricsPort(spec *flowslatest.FlowCollectorEBPF) int32 {
 	return port
 }
 
-func GETFlowCollectorMetricsPort(spec *flowslatest.FlowCollectorSpec) int32 {
+func GetFlowCollectorMetricsPort(spec *flowslatest.FlowCollectorSpec) int32 {
 	port := int32(constants.FLPMetricsPort)
 	if spec.Processor.Metrics.Server.Port != nil {
 		port = *spec.Processor.Metrics.Server.Port

@@ -439,7 +439,7 @@ func TestValidateConntrack(t *testing.T) {
 
 	CurrentClusterInfo = &cluster.Info{}
 	for _, test := range tests {
-		warnings, err := test.fc.validate(context.TODO(), test.fc)
+		warnings, err := test.fc.Validate(context.TODO(), test.fc)
 		if test.expectedError == "" {
 			assert.Nil(t, err, test.name)
 		} else {

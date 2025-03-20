@@ -3,10 +3,6 @@ kind: ClusterRole
 metadata:
   name: netobserv-manager-role
 rules:
-  - nonResourceURLs:
-      - /metrics
-    verbs:
-      - get
   - apiGroups:
       - ""
     resources:
@@ -77,12 +73,6 @@ rules:
       - get
       - list
       - watch
-  - apiGroups:
-      - authentication.k8s.io
-    resources:
-      - tokenreviews
-    verbs:
-      - create
   - apiGroups:
       - autoscaling
     resources:
@@ -158,13 +148,20 @@ rules:
       - update
   - apiGroups:
       - loki.grafana.com
+    resources:
+      - lokistacks
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - loki.grafana.com
     resourceNames:
       - logs
     resources:
       - network
     verbs:
       - create
-      - get
   - apiGroups:
       - metrics.k8s.io
     resources:
@@ -209,9 +206,7 @@ rules:
       - rbac.authorization.k8s.io
     resources:
       - clusterrolebindings
-      - clusterroles
       - rolebindings
-      - roles
     verbs:
       - create
       - delete
