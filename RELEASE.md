@@ -11,7 +11,7 @@ To release them, a tag in the format "v1.6.0-community" or "v1.6.0-crc0" must be
 E.g:
 
 ```bash
-version="v1.8.1-community"
+version="v1.8.2-community"
 git tag -a "$version" -m "$version"
 git push upstream --tags
 ```
@@ -25,6 +25,18 @@ When the last release candidate is accepted and the final release tag is pushed 
 
 Click the "Auto-generate release note" button.
 
+If you think the "Dependencies" section is too long, you can surround it in a `<details>` block, to make it collapsed. E.g:
+
+```yaml
+<details>
+<summary><b>Dependencies</b></summary>
+
+* Bump [...] from [...] by @dependabot in...
+* ...
+</details>
+```
+
+
 ### Operator
 
 Once all sub-components are released (or have a release candidate), we can proceed with the operator.
@@ -35,7 +47,7 @@ Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, 
 make update-bundle helm-update
 
 # Set desired operator version - CAREFUL, no leading "v" here
-version="1.8.1-community"
+version="1.8.2-community"
 vv=v$version
 test_branch=test-$vv
 
@@ -72,11 +84,78 @@ Grab related components release notes by running:
 make related-release-notes
 ```
 
-Then paste content following the auto-generated release note in GitHub.
+The script should fetch and copy the content in the clipboard. Paste it at the end of the auto-generated release note in GitHub.
+
+If you think the "Dependencies" section is too long, you can surround it in a `<details>` block, to make it collapsed. E.g:
+
+```yaml
+<details>
+<summary><b>Dependencies</b></summary>
+
+* Bump github.com/netobserv/flowlogs-pipeline from [...] by @dependabot in...
+* ...
+</details>
+```
 
 Check the "Create a discussion for this release" option, in category "Announcements".
 
 Click on "Publish release".
+
+### Testing HELM
+
+Create a kind cluster, then:
+
+```bash
+PORT_FWD=false make deploy-prometheus deploy-loki install-cert-manager
+helm install my-netobserv --set standaloneConsole.enable=true ./helm
+
+cat <<EOF | kubectl apply -f -
+apiVersion: flows.netobserv.io/v1beta2
+kind: FlowCollector
+metadata:
+  name: cluster
+spec:
+  namespace: netobserv
+  consolePlugin:
+    advanced:
+      env:
+        TEST_CONSOLE: "true"
+  prometheus:
+    querier:
+      manual:
+        url: http://prometheus:9090
+EOF
+
+# Check components image:
+kubectl get pods -oyaml | grep image:
+
+kubectl port-forward svc/netobserv-plugin 9001:9001 -n netobserv
+```
+
+Then open http://localhost:9001/ in your browser.
+
+To clean up:
+
+```bash
+helm delete my-netobserv -n netobserv
+```
+
+### Publishing
+
+```bash
+helm package helm/
+mv netobserv-operator-1.8.2.tgz /path/to/netobserv.github.io/static/helm/
+cd /path/to/netobserv.github.io/static/
+helm repo index helm/ --url https://netobserv.io/static/helm/
+
+# Now, check there's nothing wrong in the generated files before commit
+
+git add helm/netobserv-operator-1.8.2.tgz helm.index.yaml
+git commit -m "Publish helm 1.8.2-community"
+git push upstream HEAD:main
+```
+
+## OLD
 
 ### Testing the upgrade path
 
@@ -94,7 +173,6 @@ If you need to repeat the operation several times, make sure to cleanup between 
 ```bash
 bin/operator-sdk cleanup netobserv-operator
 ```
-
 
 ### Publishing on OperatorHub
 
