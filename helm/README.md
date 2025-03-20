@@ -37,7 +37,7 @@ PORT_FWD=false make deploy-prometheus deploy-loki install-cert-manager
 ### Install with Helm
 
 ```bash
-helm repo add netobserv https://netobserv.io/static/helm/ || helm repo update
+helm repo add netobserv https://netobserv.io/static/helm/ --force-update
 helm install my-netobserv --set standaloneConsole.enable=true netobserv/netobserv-operator
 # If you're in OpenShift, you can omit "--set standaloneConsole.enable=true" to use the Console plugin instead.
 ```
