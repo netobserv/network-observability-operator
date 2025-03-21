@@ -418,6 +418,7 @@ update-bundle: VERSION=$(BUNDLE_VERSION)
 update-bundle: IMAGE_ORG=netobserv
 update-bundle: bundle ## Prepare a clean bundle to be commited
 	$(MAKE) helm-update
+	$(MAKE) update-downstream-catalog-template
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
@@ -445,6 +446,10 @@ endif
 .PHONY: refresh-prod-catalogs
 refresh-prod-catalogs: opm YQ ## Refresh FBC from production catalogs. Set REGISTRY_AUTH_FILE=/path/to/pull-secret.json for authentication.
 	YQ=$(YQ) OPM=$(OPM) ./hack/refresh-redhat-catalog.sh
+
+.PHONY: update-downstream-catalog-template
+update-downstream-catalog-template: opm
+	YQ=$(YQ) OPM=$(OPM) ./hack/update-downstream-catalog-template.sh
 
 # Build a catalog image by adding bundle images to an empty catalog using the operator package manager tool, 'opm'.
 # This recipe invokes 'opm' in 'semver' bundle add mode. For more information on add modes, see:
