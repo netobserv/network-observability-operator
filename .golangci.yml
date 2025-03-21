@@ -17,7 +17,7 @@ linters:
     - typecheck
     - unused
 run:
-  go: "1.22"
+  go: "1.23"
 linters-settings:
   gocritic:
     enabled-checks:
