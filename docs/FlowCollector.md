@@ -3892,10 +3892,13 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorfiltersindex">filters</a></b></td>
-        <td>[]object</td>
+        <td><b><a href="#flowcollectorspecprocessorfilters">filters</a></b></td>
+        <td>object</td>
         <td>
-          `filters` let you define custom filters to limit the amount of generated flows.<br/>
+          `filters` lets you define custom filters to limit the amount of generated flows.
+These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
+but with a lesser improvement in performance.
+[Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4121,12 +4124,15 @@ in edge debug or support scenarios.<br/>
 </table>
 
 
-### FlowCollector.spec.processor.filters[index]
+### FlowCollector.spec.processor.filters
 <sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
 
 
 
-`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions
+`filters` lets you define custom filters to limit the amount of generated flows.
+These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
+but with a lesser improvement in performance.
+[Unsupported (*)].
 
 <table>
     <thead>
@@ -4138,19 +4144,46 @@ in edge debug or support scenarios.<br/>
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorfiltersindexallofindex">allOf</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorfiltersanyofindex">anyOf</a></b></td>
         <td>[]object</td>
         <td>
-          `filters` is a list of matches that must be all satisfied in order to remove a flow.<br/>
+          `anyOf` contains a list of rules evaluated individually: any satisfied rule results in a match.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>outputTarget</b></td>
         <td>enum</td>
         <td>
-          If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.<br/>
+          If specified, these filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.<br/>
           <br/>
             <i>Enum</i>: , Loki, Metrics, Exporters<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.filters.anyOf[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorfilters)</sup></sup>
+
+
+
+`FLPFilterAnyOf` defines the desired configuration for FLP-based filtering satisfying all conditions.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessorfiltersanyofindexallofindex">allOf</a></b></td>
+        <td>[]object</td>
+        <td>
+          `allOf` contains a list of rules that must all be satisfied in order to match a flow.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4167,8 +4200,8 @@ in edge debug or support scenarios.<br/>
 </table>
 
 
-### FlowCollector.spec.processor.filters[index].allOf[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorfiltersindex)</sup></sup>
+### FlowCollector.spec.processor.filters.anyOf[index].allOf[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorfiltersanyofindex)</sup></sup>
 
 
 
@@ -14395,10 +14428,10 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorfiltersindex-1">filters</a></b></td>
-        <td>[]object</td>
+        <td><b><a href="#flowcollectorspecprocessorfilters-1">filters</a></b></td>
+        <td>object</td>
         <td>
-          `filters` lets you define custom filters to limit the amount of generated flows.
+          `filters` lets you define custom filters to limit the amount of generated flows. Flows that match those filters are kept, all other flows are discarded.
 These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
 but with a lesser improvement in performance.
 [Unsupported (*)].<br/>
@@ -16474,12 +16507,15 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
 </table>
 
 
-### FlowCollector.spec.processor.filters[index]
+### FlowCollector.spec.processor.filters
 <sup><sup>[↩ Parent](#flowcollectorspecprocessor-1)</sup></sup>
 
 
 
-`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions.
+`filters` lets you define custom filters to limit the amount of generated flows. Flows that match those filters are kept, all other flows are discarded.
+These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
+but with a lesser improvement in performance.
+[Unsupported (*)].
 
 <table>
     <thead>
@@ -16491,10 +16527,10 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorfiltersindexallofindex-1">allOf</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessorfiltersanyofindex-1">anyOf</a></b></td>
         <td>[]object</td>
         <td>
-          `filters` is a list of matches that must be all satisfied in order to remove a flow.<br/>
+          `anyOf` contains a list of rules evaluated individually: any rule that is satisfied results in a match.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -16504,6 +16540,33 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
           If specified, these filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.<br/>
           <br/>
             <i>Enum</i>: , Loki, Metrics, Exporters<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.filters.anyOf[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorfilters-1)</sup></sup>
+
+
+
+`FLPFilterAnyOf` is a set of rules evaluated individually.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessorfiltersanyofindexallofindex-1">allOf</a></b></td>
+        <td>[]object</td>
+        <td>
+          `allOf` contains a list of rules that must all be satisfied in order to match a flow.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -16520,8 +16583,8 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
 </table>
 
 
-### FlowCollector.spec.processor.filters[index].allOf[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorfiltersindex-1)</sup></sup>
+### FlowCollector.spec.processor.filters.anyOf[index].allOf[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorfiltersanyofindex-1)</sup></sup>
 
 
 
@@ -16548,7 +16611,7 @@ Refer to the documentation for the list of available fields: https://github.com/
         <td><b>matchType</b></td>
         <td>enum</td>
         <td>
-          Type of matching to apply.<br/>
+          Type of matching to apply: `Equal` (default), `NotEqual`, `Presence`, `Absence`, `MatchRegex` or `NotMatchRegex`.<br/>
           <br/>
             <i>Enum</i>: Equal, NotEqual, Presence, Absence, MatchRegex, NotMatchRegex<br/>
             <i>Default</i>: Equal<br/>

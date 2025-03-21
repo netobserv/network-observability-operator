@@ -114,12 +114,13 @@ spec:
     #   mode: Sample
     #   sampling: 100
     # filters:
-    #   - allOf:
-    #       - matchType: Equal
-    #         field: SrcK8S_Namespace
-    #         value: netobserv
-    #     outputTarget: Loki
-    #     sampling: 10
+    #   outputTarget: Loki
+    #   anyOf:
+    #     - allOf:
+    #         - matchType: Equal
+    #           field: SrcK8S_Namespace
+    #           value: netobserv
+    #       sampling: 10
     # advanced:
     #   secondaryNetworks:
     #     - name: "my-vms/custom-nad"
