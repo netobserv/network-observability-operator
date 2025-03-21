@@ -462,7 +462,7 @@ properties:
       categories: Monitoring, Networking
       console.openshift.io/plugins: '["netobserv-plugin"]'
       containerImage: ''
-      createdAt: "2025-03-12T15:17:35Z"
+      createdAt: '2025-03-12T15:17:35Z'
       description: Network flows collector and monitoring solution
       features.operators.openshift.io/cnf: 'false'
       features.operators.openshift.io/cni: 'false'
