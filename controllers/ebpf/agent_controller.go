@@ -52,8 +52,6 @@ const (
 	envKafkaSASLIDPath            = "KAFKA_SASL_CLIENT_ID_PATH"
 	envKafkaSASLSecretPath        = "KAFKA_SASL_CLIENT_SECRET_PATH"
 	envLogLevel                   = "LOG_LEVEL"
-	envDedupe                     = "DEDUPER"
-	dedupeDefault                 = "firstCome"
 	envGoMemLimit                 = "GOMEMLIMIT"
 	envEnablePktDrop              = "ENABLE_PKT_DROPS"
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
@@ -93,11 +91,7 @@ const (
 )
 
 const (
-	EnvDedupeJustMark      = "DEDUPER_JUST_MARK"
-	EnvDedupeMerge         = "DEDUPER_MERGE"
 	envDNSTrackingPort     = "DNS_TRACKING_PORT"
-	DedupeJustMarkDefault  = "false"
-	DedupeMergeDefault     = "true"
 	defaultDNSTrackingPort = "53"
 	bpfmanMapsVolumeName   = "bpfman-maps"
 	bpfManBpfFSPath        = "/run/netobserv/maps"
@@ -767,9 +761,6 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		})
 	}
 
-	dedup := dedupeDefault
-	dedupJustMark := DedupeJustMarkDefault
-	dedupMerge := DedupeMergeDefault
 	dnsTrackingPort := defaultDNSTrackingPort
 	networkEventsGroupID := defaultNetworkEventsGroupID
 	// we need to sort env map to keep idempotency,
@@ -778,12 +769,6 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	for _, pair := range helper.KeySorted(advancedConfig.Env) {
 		k, v := pair[0], pair[1]
 		switch k {
-		case envDedupe:
-			dedup = v
-		case EnvDedupeJustMark:
-			dedupJustMark = v
-		case EnvDedupeMerge:
-			dedupMerge = v
 		case envDNSTrackingPort:
 			dnsTrackingPort = v
 		case envNetworkEventsGroupID:
@@ -793,8 +778,6 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		}
 	}
 
-	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
-	config = append(config, corev1.EnvVar{Name: EnvDedupeJustMark, Value: dedupJustMark})
 	config = append(config, corev1.EnvVar{Name: envDNSTrackingPort, Value: dnsTrackingPort})
 	config = append(config, corev1.EnvVar{Name: envNetworkEventsGroupID, Value: networkEventsGroupID})
 	config = append(config, corev1.EnvVar{
@@ -807,7 +790,6 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		},
 	},
 	)
-	config = append(config, corev1.EnvVar{Name: EnvDedupeMerge, Value: dedupMerge})
 
 	return config
 }

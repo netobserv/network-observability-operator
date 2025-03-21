@@ -78,8 +78,7 @@ type FlowMetricSpec struct {
 	// +optional
 	ValueField string `json:"valueField,omitempty"`
 
-	// `filters` is a list of fields and values used to restrict which flows are taken into account. Oftentimes, these filters must
-	// be used to eliminate duplicates: `Duplicate != "true"` and `FlowDirection = "0"`.
+	// `filters` is a list of fields and values used to restrict which flows are taken into account.
 	// Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.
 	// +optional
 	Filters []MetricFilter `json:"filters"`
