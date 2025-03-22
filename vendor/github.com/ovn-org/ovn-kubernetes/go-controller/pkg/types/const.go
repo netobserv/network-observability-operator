@@ -123,14 +123,14 @@ const (
 	EndpointSliceMirrorControllerName = "endpointslice-mirror-controller.k8s.ovn.org"
 	// EndpointSliceDefaultControllerName default kubernetes EndpointSlice controller name (used as a value for the "endpointslice.kubernetes.io/managed-by" label)
 	EndpointSliceDefaultControllerName = "endpointslice-controller.k8s.io"
-	// LabelSourceEndpointSlice label key used in mirrored EndpointSlice
+	// SourceEndpointSliceAnnotation key used in mirrored EndpointSlice
 	// that has the value of the default EndpointSlice name
-	LabelSourceEndpointSlice = "k8s.ovn.org/source-endpointslice"
+	SourceEndpointSliceAnnotation = "k8s.ovn.org/source-endpointslice"
 	// LabelSourceEndpointSliceVersion label key used in mirrored EndpointSlice
 	// that has the value of the last known default EndpointSlice ResourceVersion
 	LabelSourceEndpointSliceVersion = "k8s.ovn.org/source-endpointslice-version"
-	// LabelUserDefinedEndpointSliceNetwork label key used in mirrored EndpointSlices that contains the current primary user defined network name
-	LabelUserDefinedEndpointSliceNetwork = "k8s.ovn.org/endpointslice-network"
+	// UserDefinedNetworkEndpointSliceAnnotation key used in mirrored EndpointSlices that contains the current primary user defined network name
+	UserDefinedNetworkEndpointSliceAnnotation = "k8s.ovn.org/endpointslice-network"
 	// LabelUserDefinedServiceName label key used in mirrored EndpointSlices that contains the service name matching the EndpointSlice
 	LabelUserDefinedServiceName = "k8s.ovn.org/service-name"
 
@@ -215,6 +215,8 @@ const (
 	LoadBalancerOwnerExternalID = OvnK8sPrefix + "/" + "owner"
 	// key for UDN enabled services routes
 	UDNEnabledServiceExternalID = OvnK8sPrefix + "/" + "udn-enabled-default-service"
+	// RequiredUDNNamespaceLabel is the required namespace label for enabling primary UDNs
+	RequiredUDNNamespaceLabel = "k8s.ovn.org/primary-user-defined-network"
 
 	// different secondary network topology type defined in CNI netconf
 	Layer3Topology   = "layer3"
@@ -226,12 +228,13 @@ const (
 	NetworkRolePrimary   = "primary"
 	NetworkRoleSecondary = "secondary"
 	NetworkRoleDefault   = "default"
-	// defined internally by ovnkube to recognize "default"
-	// network's role as a "infrastructure-locked" network
-	// when user defined network is the primary network for
-	// the pod which makes "default" network niether primary
+	// NetworkRoleInfrastructure is defined internally by ovnkube to recognize "default"
+	// network's role as an "infrastructure-locked" network
+	// when a user defined network is the primary network for
+	// the pod which makes "default" network neither primary
 	// nor secondary
 	NetworkRoleInfrastructure = "infrastructure-locked"
+	NetworkRoleNone           = "none"
 
 	// db index keys
 	// PrimaryIDKey is used as a primary client index

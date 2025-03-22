@@ -11,12 +11,12 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/grafana/loki/operator/apis/loki v0.0.0-20241021105923-5e970e50b166
 	github.com/netobserv/flowlogs-pipeline v1.7.0-community.0.20250303144123-5f6d6dcd0bdf
-	github.com/netobserv/netobserv-ebpf-agent v1.8.0-crc0
+	github.com/netobserv/netobserv-ebpf-agent v1.8.1-crc0
 	github.com/onsi/ginkgo/v2 v2.23.0
 	github.com/onsi/gomega v1.36.2
 	github.com/openshift/api v0.0.0-20250228110707-635291d6fdf1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.80.1
-	github.com/prometheus/common v0.59.1
+	github.com/prometheus/common v0.62.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
@@ -103,14 +103,14 @@ require (
 	github.com/netobserv/loki-client-go v0.0.0-20220927092034-f37122a54500 // indirect
 	github.com/netsampler/goflow2 v1.3.7 // indirect
 	github.com/ovn-org/libovsdb v0.7.1-0.20240820095311-ce1951614a20 // indirect
-	github.com/ovn-org/ovn-kubernetes/go-controller v0.0.0-20250116185920-20e7a0e40c93 // indirect
+	github.com/ovn-org/ovn-kubernetes/go-controller v0.0.0-20250227173154-57a2590a1d16 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pion/dtls/v2 v2.2.12 // indirect
 	github.com/pion/logging v0.2.2 // indirect
 	github.com/pion/transport/v2 v2.2.10 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.20.5 // indirect
+	github.com/prometheus/client_golang v1.21.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/prometheus/prometheus v1.8.2-0.20201028100903-3245b3267b24 // indirect
