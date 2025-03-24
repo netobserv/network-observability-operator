@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.6.0] 2025-02-11
+
+### Changed
+
+- opentelemetry updated to 1.34.0
+
+## [v0.5.1] 2024-06-17
+
+## Fixed 
+
+- fix: make ReadableLogRecord accept the "any" type as Body (#38)
+
 ## [v0.5.0] 2024-04-21
 
 ### Changed

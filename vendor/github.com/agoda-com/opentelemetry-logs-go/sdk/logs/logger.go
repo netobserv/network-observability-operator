@@ -83,7 +83,7 @@ type ReadableLogRecord interface {
 	// SeverityNumber	Numerical value of the severityNumber.
 	SeverityNumber() *logs.SeverityNumber
 	// Body The body of the log record.
-	Body() *string
+	Body() any
 	// Resource 	Describes the source of the log.
 	Resource() *resource.Resource
 	// InstrumentationScope returns information about the instrumentation
@@ -117,7 +117,7 @@ type exportableLogRecord struct {
 	traceFlags           *trace.TraceFlags
 	severityText         *string
 	severityNumber       *logs.SeverityNumber
-	body                 *string
+	body                 any
 	resource             *resource.Resource
 	instrumentationScope *instrumentation.Scope
 	attributes           *[]attribute.KeyValue
@@ -174,10 +174,9 @@ func (r *exportableLogRecord) RecordException(message *string, stacktrace *strin
 	}
 }
 
-func (r *exportableLogRecord) Timestamp() *time.Time        { return r.timestamp }
-func (r *exportableLogRecord) ObservedTimestamp() time.Time { return r.observedTimestamp }
-func (r *exportableLogRecord) TraceId() *trace.TraceID      { return r.traceId }
-
+func (r *exportableLogRecord) Timestamp() *time.Time         { return r.timestamp }
+func (r *exportableLogRecord) ObservedTimestamp() time.Time  { return r.observedTimestamp }
+func (r *exportableLogRecord) TraceId() *trace.TraceID       { return r.traceId }
 func (r *exportableLogRecord) SpanId() *trace.SpanID         { return r.spanId }
 func (r *exportableLogRecord) TraceFlags() *trace.TraceFlags { return r.traceFlags }
 func (r *exportableLogRecord) InstrumentationScope() *instrumentation.Scope {
@@ -185,7 +184,7 @@ func (r *exportableLogRecord) InstrumentationScope() *instrumentation.Scope {
 }
 func (r *exportableLogRecord) SeverityText() *string                { return r.severityText }
 func (r *exportableLogRecord) SeverityNumber() *logs.SeverityNumber { return r.severityNumber }
-func (r *exportableLogRecord) Body() *string                        { return r.body }
+func (r *exportableLogRecord) Body() any                            { return r.body }
 func (r *exportableLogRecord) Resource() *resource.Resource         { return r.resource }
 func (r *exportableLogRecord) Attributes() *[]attribute.KeyValue    { return r.attributes }
 func (r *exportableLogRecord) private()                             {}
