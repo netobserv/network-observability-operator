@@ -1,1 +1,1 @@
-export BUNDLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-operator-bundle@sha256:892431787aebe61b193b2caae8ef1b3f4b0ccc1f329953e9891d6afac9ddcb38'
+export BUNDLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-operator-bundle@sha256:f480d63ad7b2e93658b2070fe76b741abff5b30bd24632d027bf934947ba4a32'
