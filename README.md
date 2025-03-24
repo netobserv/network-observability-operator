@@ -1,6 +1,7 @@
 # NetObserv Operator
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/netobserv/network-observability-operator)
+[![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/NetObserv)](https://artifacthub.io/packages/helm/netobserv/netobserv-operator)
 [![Go Report Card](https://goreportcard.com/badge/github.com/netobserv/network-observability-operator)](https://goreportcard.com/report/github.com/netobserv/network-observability-operator)
 
 NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a monitoring pipeline that consists in:
@@ -42,7 +43,8 @@ PORT_FWD=false make deploy-prometheus deploy-loki install-cert-manager
 
 ### Install with Helm
 
-Check it out on [ArtifactHub](https://artifacthub.io/packages/helm/netobserv/netobserv-operator).
+> [!TIP]
+> See it also on [ArtifactHub](https://artifacthub.io/packages/helm/netobserv/netobserv-operator).
 
 ```bash
 helm repo add netobserv https://netobserv.io/static/helm/ --force-update
