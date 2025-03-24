@@ -152,6 +152,24 @@ func TestValidateAgent(t *testing.T) {
 			expectedWarnings: admission.Warnings{"The NetworkEvents/UDNMapping/EbpfManager features require OpenShift 4.18 or above (version detected: 4.16.5)"},
 		},
 		{
+			name:       "NetworkEvents on ocp 4.18.0-0 doesn't trigger warnings",
+			ocpVersion: "4.18.0-0.nightly-2025-03-20-063534",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{
+						Type: AgentEBPF,
+						EBPF: FlowCollectorEBPF{
+							Features:   []AgentFeature{NetworkEvents},
+							Privileged: true,
+						},
+					},
+				},
+			},
+		},
+		{
 			name:       "NetworkEvents without privilege triggers warning",
 			ocpVersion: "4.18.0",
 			fc: &FlowCollector{
