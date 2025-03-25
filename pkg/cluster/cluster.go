@@ -120,7 +120,10 @@ func (c *Info) OpenShiftVersionIsAtLeast(v string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return !c.openShiftVersion.LessThan(*version), nil
+	openshiftVersion := *c.openShiftVersion
+	// Ignore pre-release block for comparison
+	openshiftVersion.PreRelease = ""
+	return !openshiftVersion.LessThan(*version), nil
 }
 
 // IsOpenShift assumes having openshift SCC API <=> being on openshift
