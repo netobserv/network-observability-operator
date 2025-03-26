@@ -90,11 +90,11 @@ func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) 
 		slices.Contains(fc.Agent.EBPF.Features, EbpfManager) {
 		// Make sure required version of ocp is installed
 		if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
-			b, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast("4.18.0")
+			b, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast("4.19.0")
 			if err != nil {
 				warnings = append(warnings, fmt.Sprintf("Could not detect OpenShift cluster version: %s", err.Error()))
 			} else if !b {
-				warnings = append(warnings, fmt.Sprintf("The NetworkEvents/UDNMapping/EbpfManager features require OpenShift 4.18 or above (version detected: %s)", CurrentClusterInfo.GetOpenShiftVersion()))
+				warnings = append(warnings, fmt.Sprintf("The NetworkEvents/UDNMapping/EbpfManager features require OpenShift 4.19 or above (version detected: %s)", CurrentClusterInfo.GetOpenShiftVersion()))
 			}
 		} else {
 			warnings = append(warnings, "The NetworkEvents/UDNMapping/EbpfManager features are only supported with OpenShift")
