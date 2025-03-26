@@ -376,7 +376,7 @@ github.com/netobserv/loki-client-go/pkg/labelutil
 github.com/netobserv/loki-client-go/pkg/logproto
 github.com/netobserv/loki-client-go/pkg/metric
 github.com/netobserv/loki-client-go/pkg/urlutil
-# github.com/netobserv/netobserv-ebpf-agent v1.8.1-crc0
+# github.com/netobserv/netobserv-ebpf-agent v1.8.2-community
 ## explicit; go 1.23.0
 github.com/netobserv/netobserv-ebpf-agent/pkg/agent
 github.com/netobserv/netobserv-ebpf-agent/pkg/decode
@@ -467,7 +467,7 @@ github.com/ovn-org/libovsdb/model
 github.com/ovn-org/libovsdb/ovsdb
 github.com/ovn-org/libovsdb/ovsdb/serverdb
 github.com/ovn-org/libovsdb/updates
-# github.com/ovn-org/ovn-kubernetes/go-controller v0.0.0-20250227173154-57a2590a1d16
+# github.com/ovn-org/ovn-kubernetes/go-controller v0.0.0-20250314182307-95b6ca544bdf
 ## explicit; go 1.22.0
 github.com/ovn-org/ovn-kubernetes/go-controller/observability-lib/model
 github.com/ovn-org/ovn-kubernetes/go-controller/observability-lib/ovsdb
@@ -527,7 +527,7 @@ github.com/pmezard/go-difflib/difflib
 ## explicit; go 1.23.0
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1
-# github.com/prometheus/client_golang v1.21.0
+# github.com/prometheus/client_golang v1.21.1
 ## explicit; go 1.21
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil/header

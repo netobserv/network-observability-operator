@@ -452,7 +452,12 @@ type GatewayConfig struct {
 	Mode GatewayMode `gcfg:"mode"`
 	// Interface is the network interface to use for the gateway in "shared" mode
 	Interface string `gcfg:"interface"`
-	// Exgress gateway interface is the optional network interface to use for external gw pods traffic.
+	// GatewayAcceleratedInterface is the optional network interface to use for gateway traffic acceleration.
+	// This is typically a VF or SF device. When specified it would be used as the in_port for Openflow rules
+	// on the external bridge. The Host IP would be on this device.
+	// Should be used mutually exclusive to the `--gateway-interface` flag.
+	GatewayAcceleratedInterface string `gcfg:"gateway-accelerated-interface"`
+	// Egress gateway interface is the optional network interface to use for external gw pods traffic.
 	EgressGWInterface string `gcfg:"egw-interface"`
 	// NextHop is the gateway IP address of Interface; will be autodetected if not given
 	NextHop string `gcfg:"next-hop"`
@@ -1405,6 +1410,13 @@ var OVNGatewayFlags = []cli.Flag{
 			"default gateway is configured will be used as the gateway " +
 			"interface. Only useful with \"init-gateways\"",
 		Destination: &cliConfig.Gateway.Interface,
+	},
+	&cli.StringFlag{
+		Name: "gateway-accelerated-interface",
+		Usage: "The optional network interface to use for gateway traffic acceleration. " +
+			"This is typically a VF or SF device. When specified it would be used as the in_port for Openflow rules " +
+			"on the external bridge. The Host IP would be on this device.",
+		Destination: &cliConfig.Gateway.GatewayAcceleratedInterface,
 	},
 	&cli.StringFlag{
 		Name: "exgw-interface",
