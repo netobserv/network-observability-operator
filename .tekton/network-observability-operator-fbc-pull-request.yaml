@@ -17,10 +17,10 @@ metadata:
       "hack/patch_csv.py".pathChanged())
   creationTimestamp: null
   labels:
-    appstudio.openshift.io/application: netobserv-operator
-    appstudio.openshift.io/component: network-observability-operator-fbc
+    appstudio.openshift.io/application: netobserv-ystream
+    appstudio.openshift.io/component: network-observability-operator-fbc-ystream
     pipelines.appstudio.openshift.io/type: build
-  name: network-observability-operator-fbc-on-pull-request
+  name: network-observability-operator-fbc-ystream-on-pull-request
   namespace: ocp-network-observab-tenant
 spec:
   params:
