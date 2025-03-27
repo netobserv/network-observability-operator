@@ -22,10 +22,10 @@ metadata:
       "pkg/***".pathChanged())
   creationTimestamp: null
   labels:
-    appstudio.openshift.io/application: netobserv-operator-1-8
-    appstudio.openshift.io/component: network-observability-operator-1-8
+    appstudio.openshift.io/application: netobserv-zstream
+    appstudio.openshift.io/component: network-observability-operator-zstream
     pipelines.appstudio.openshift.io/type: build
-  name: network-observability-operator-1-8-on-pull-request
+  name: network-observability-operator-zstream-on-pull-request
   namespace: ocp-network-observab-tenant
 spec:
   params:

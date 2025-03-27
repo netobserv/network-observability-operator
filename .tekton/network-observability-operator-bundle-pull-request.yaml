@@ -16,10 +16,10 @@ metadata:
       "hack/patch_csv.py".pathChanged())
   creationTimestamp: null
   labels:
-    appstudio.openshift.io/application: netobserv-operator
-    appstudio.openshift.io/component: network-observability-operator-bundle
+    appstudio.openshift.io/application: netobserv-ystream
+    appstudio.openshift.io/component: network-observability-operator-bundle-ystream
     pipelines.appstudio.openshift.io/type: build
-  name: network-observability-operator-bundle-on-pull-request
+  name: network-observability-operator-bundle-ystream-on-pull-request
   namespace: ocp-network-observab-tenant
 spec:
   params:
