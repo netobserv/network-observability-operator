@@ -19,6 +19,8 @@ In OpenShift, NetObserv is named Network Observability operator and can be found
 
 ### Pre-requisite
 
+The following architectures are supported: amd64, arm64, ppc64le and s390x.
+
 NetObserv has a couple of dependencies that must be installed on your cluster:
 
 - Cert-manager

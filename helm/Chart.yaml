@@ -55,3 +55,12 @@ maintainers:
   name: Steven Lee
 
 icon: https://netobserv.io/static/assets/images/netobserv.svg
+
+annotations:
+  artifacthub.io/operator: "true"
+  artifacthub.io/operatorCapabilities: "Deep Insights"
+  artifacthub.io/screenshots: |
+    - title: Topology view
+      url: https://netobserv.io/static/assets/images/about/topology-main.png
+    - title: Flow details
+      url: https://netobserv.io/static/assets/images/about/network-traffic-main.png
