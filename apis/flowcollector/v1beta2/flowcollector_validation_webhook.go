@@ -86,8 +86,7 @@ func (r *FlowCollector) warnLogLevels(fc *FlowCollectorSpec) admission.Warnings 
 func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
 	var warnings admission.Warnings
 	if slices.Contains(fc.Agent.EBPF.Features, NetworkEvents) ||
-		slices.Contains(fc.Agent.EBPF.Features, UDNMapping) ||
-		slices.Contains(fc.Agent.EBPF.Features, EbpfManager) {
+		slices.Contains(fc.Agent.EBPF.Features, UDNMapping) {
 		// Make sure required version of ocp is installed
 		if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
 			b, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast("4.19.0")

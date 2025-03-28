@@ -292,7 +292,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		volumeMount := corev1.VolumeMount{
 			Name:             bpfNetNSMountName,
 			MountPath:        bpfNetNSMountPath,
-			MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+			MountPropagation: newMountPropagationMode(corev1.MountPropagationHostToContainer),
 		}
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
@@ -314,7 +314,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 			volumeMount := corev1.VolumeMount{
 				Name:             bpfTraceMountName,
 				MountPath:        bpfTraceMountPath,
-				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+				MountPropagation: newMountPropagationMode(corev1.MountPropagationHostToContainer),
 			}
 			volumeMounts = append(volumeMounts, volumeMount)
 		}
@@ -339,7 +339,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 			volumeMount := corev1.VolumeMount{
 				Name:             ovnObservMountName,
 				MountPath:        ovnObservMountPath,
-				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+				MountPropagation: newMountPropagationMode(corev1.MountPropagationHostToContainer),
 			}
 			volumeMounts = append(volumeMounts, volumeMount)
 
@@ -356,7 +356,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 			volumeMount = corev1.VolumeMount{
 				Name:             ovsMountName,
 				MountPath:        ovsMountPath,
-				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+				MountPropagation: newMountPropagationMode(corev1.MountPropagationHostToContainer),
 			}
 			volumeMounts = append(volumeMounts, volumeMount)
 		}
@@ -379,7 +379,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		volumeMount := corev1.VolumeMount{
 			Name:             bpfmanMapsVolumeName,
 			MountPath:        bpfManBpfFSPath,
-			MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+			MountPropagation: newMountPropagationMode(corev1.MountPropagationHostToContainer),
 		}
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
