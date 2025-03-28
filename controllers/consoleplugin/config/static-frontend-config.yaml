@@ -1316,9 +1316,6 @@ fields:
   - name: IcmpCode
     type: number
     description: ICMP code
-  - name: Duplicate
-    type: boolean
-    description: Indicates if this flow was also captured from another interface on the same host
   - name: FlowDirection
     type: number
     description: |

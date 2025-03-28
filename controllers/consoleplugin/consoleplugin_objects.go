@@ -24,7 +24,6 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	cfg "github.com/netobserv/network-observability-operator/controllers/consoleplugin/config"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/helper/loki"
@@ -432,15 +431,6 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 }
 
 func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
-	var err error
-	dedupJustMark, err := strconv.ParseBool(ebpf.DedupeJustMarkDefault)
-	if err != nil {
-		return err
-	}
-	dedupMerge, err := strconv.ParseBool(ebpf.DedupeMergeDefault)
-	if err != nil {
-		return err
-	}
 	if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
 		fconf.Features = append(fconf.Features, "pktDrop")
 	}
@@ -465,30 +455,11 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
 		fconf.Features = append(fconf.Features, "udnMapping")
 	}
 
-	if b.desired.Agent.EBPF.Advanced != nil {
-		if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeJustMark]; ok {
-			dedupJustMark, err = strconv.ParseBool(v)
-			if err != nil {
-				return err
-			}
-		}
-
-		if v, ok := b.desired.Agent.EBPF.Advanced.Env[ebpf.EnvDedupeMerge]; ok {
-			dedupMerge, err = strconv.ParseBool(v)
-			if err != nil {
-				return err
-			}
-		}
-	}
 	fconf.RecordTypes = helper.GetRecordTypes(&b.desired.Processor)
 	fconf.PortNaming = b.desired.ConsolePlugin.PortNaming
 	fconf.QuickFilters = b.desired.ConsolePlugin.QuickFilters
 	fconf.AlertNamespaces = []string{b.info.Namespace}
 	fconf.Sampling = helper.GetSampling(b.desired)
-	fconf.Deduper = cfg.Deduper{
-		Mark:  dedupJustMark,
-		Merge: dedupMerge,
-	}
 	if helper.IsMultiClusterEnabled(&b.desired.Processor) {
 		fconf.Features = append(fconf.Features, "multiCluster")
 	}
