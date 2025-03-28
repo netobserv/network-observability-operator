@@ -16,7 +16,7 @@ def load_bundle(pathn):
       with open(pathn, "r") as f:
          return list(yaml.load_all(f))
    except FileNotFoundError:
-      print("File can not found")
+      print("File cannot be found")
       exit(6)
 
 def dump_bundle(pathn, index):

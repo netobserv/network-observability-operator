@@ -33,6 +33,7 @@ import (
 //+kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors;prometheusrules,verbs=get;create;delete;update;patch;list;watch
 //+kubebuilder:rbac:groups=config.openshift.io,resources=clusterversions;networks,verbs=get;list;watch
 //+kubebuilder:rbac:groups=loki.grafana.com,resources=network,resourceNames=logs,verbs=create
+//+kubebuilder:rbac:groups=loki.grafana.com,resources=lokistacks,verbs=get;list;watch
 //+kubebuilder:rbac:groups=metrics.k8s.io,resources=pods,verbs=create
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=bpfman.io,resources=bpfapplications,verbs=get;list;watch;create;update;patch;delete

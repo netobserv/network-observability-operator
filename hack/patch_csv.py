@@ -11,7 +11,7 @@ def load_manifest(pathn):
       with open(pathn, "r") as f:
          return yaml.load(f)
    except FileNotFoundError:
-      print("File can not found")
+      print("File cannot be found")
       exit(6)
 
 def dump_manifest(pathn, manifest):
@@ -35,7 +35,7 @@ csv['metadata']['annotations']['operators.openshift.io/valid-subscription'] = '[
 csv['metadata']['annotations']['operatorframework.io/cluster-monitoring'] = 'true'
 csv['metadata']['name'] = 'network-observability-operator.v{}'.format(version)
 csv['metadata']['annotations']['createdAt'] = created_at
-csv['metadata']['annotations']['containerImage'] = os.getenv('OPERATOR_PULLSPEC', '')
+csv['metadata']['annotations']['containerImage'] = operator_image
 csv['metadata']['annotations']['features.operators.openshift.io/disconnected'] = 'true'
 csv['metadata']['annotations']['features.operators.openshift.io/fips-compliant'] = 'true'
 csv['metadata']['annotations']['features.operators.openshift.io/proxy-aware'] = 'false'

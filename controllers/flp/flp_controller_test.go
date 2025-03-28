@@ -172,7 +172,7 @@ func ControllerSpecs() {
 			By("Not expecting Loki role (requires LokiStack)")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, rbKeyLokiWriterMono, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-writer-flp" not found`))
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-loki-writer-flp" not found`))
 
 			By("Not expecting transformer role bindings")
 			Eventually(func() interface{} {
@@ -186,7 +186,7 @@ func ControllerSpecs() {
 			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-informers-flptransfo" not found`))
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, rbKeyLokiWriterTransfo, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-writer-flptransfo" not found`))
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-loki-writer-flptransfo" not found`))
 
 			By("Expecting flowlogs-pipeline-config configmap to be created")
 			Eventually(func() interface{} {
@@ -344,7 +344,7 @@ func ControllerSpecs() {
 			By("Not expecting Loki role (requires LokiStack)")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, rbKeyLokiWriterTransfo, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-writer-flptransfo" not found`))
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-loki-writer-flptransfo" not found`))
 
 			By("Not expecting mono role bindings")
 			Eventually(func() interface{} {
@@ -358,7 +358,7 @@ func ControllerSpecs() {
 			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-informers-flp" not found`))
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, rbKeyLokiWriterMono, &rbacv1.ClusterRoleBinding{})
-			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-writer-flp" not found`))
+			}, timeout, interval).Should(MatchError(`clusterrolebindings.rbac.authorization.k8s.io "netobserv-loki-writer-flp" not found`))
 		})
 
 		It("Should delete previous flp deployment", func() {

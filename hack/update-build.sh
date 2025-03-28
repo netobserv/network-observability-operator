@@ -7,8 +7,8 @@ echo "Updating container file"
 # : "${CONTAINER_FILE:=./Dockerfile}"
 # : "${BUNDLE_CONTAINER_FILE:=./bundle.Dockerfile}"
 # : "${CATALOG_CONTAINER_FILE:=./catalog.Dockerfile}"
-: "${TARGET_VERSION:=1.8.0}"
-: "${REPLACE_VERSION:=1.7.0}"
+: "${TARGET_VERSION:=1.9.0}"
+: "${REPLACE_VERSION:=1.8.0}"
 
 # supported_ocp_versions="v4.13"
 manifests_dir="./bundle/manifests"
@@ -17,7 +17,7 @@ crd_name="flows.netobserv.io_flowcollectors.yaml"
 crd_file="${manifests_dir}/${crd_name}"
 csv_name="netobserv-operator.clusterserviceversion.yaml"
 csv_file="${manifests_dir}/${csv_name}"
-new_bundle_file="./catalog/rc.yaml"
+new_bundle_file="./catalog/unreleased/downstream-test-fbc/bundle.yaml"
 
 source ./hack/nudging/container_digest.sh
 source ./hack/nudging/bundle_digest.sh

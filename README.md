@@ -1,6 +1,7 @@
 # NetObserv Operator
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/netobserv/network-observability-operator)
+[![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/NetObserv)](https://artifacthub.io/packages/helm/netobserv/netobserv-operator)
 [![Go Report Card](https://goreportcard.com/badge/github.com/netobserv/network-observability-operator)](https://goreportcard.com/report/github.com/netobserv/network-observability-operator)
 
 NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a monitoring pipeline that consists in:
@@ -25,6 +26,8 @@ In OpenShift, NetObserv is named Network Observability operator and can be found
 
 ### Pre-requisite
 
+The following architectures are supported: amd64, arm64, ppc64le and s390x.
+
 NetObserv has a couple of dependencies that must be installed on your cluster:
 
 - Cert-manager
@@ -42,10 +45,11 @@ PORT_FWD=false make deploy-prometheus deploy-loki install-cert-manager
 
 ### Install with Helm
 
-Check it out on [ArtifactHub](https://artifacthub.io/packages/helm/netobserv/netobserv-operator).
+> [!TIP]
+> See it also on [ArtifactHub](https://artifacthub.io/packages/helm/netobserv/netobserv-operator).
 
 ```bash
-helm repo add netobserv https://netobserv.io/static/helm/ || helm repo update
+helm repo add netobserv https://netobserv.io/static/helm/ --force-update
 helm install my-netobserv --set standaloneConsole.enable=true netobserv/netobserv-operator
 # If you're in OpenShift, you can omit "--set standaloneConsole.enable=true" to use the Console plugin instead.
 ```

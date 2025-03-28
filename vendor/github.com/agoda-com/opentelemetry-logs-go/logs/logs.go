@@ -27,14 +27,16 @@ import (
 // LogRecordConfig contains mutable fields usable for constructing
 // an immutable LogRecord.
 type LogRecordConfig struct {
-	Timestamp            *time.Time
-	ObservedTimestamp    time.Time
-	TraceId              *trace.TraceID
-	SpanId               *trace.SpanID
-	TraceFlags           *trace.TraceFlags
-	SeverityText         *string
-	SeverityNumber       *SeverityNumber
+	Timestamp         *time.Time
+	ObservedTimestamp time.Time
+	TraceId           *trace.TraceID
+	SpanId            *trace.SpanID
+	TraceFlags        *trace.TraceFlags
+	SeverityText      *string
+	SeverityNumber    *SeverityNumber
+	// Deprecated: use BodyAny instead.
 	Body                 *string
+	BodyAny              any
 	Resource             *resource.Resource
 	InstrumentationScope *instrumentation.Scope
 	Attributes           *[]attribute.KeyValue
@@ -43,6 +45,9 @@ type LogRecordConfig struct {
 // NewLogRecord constructs a LogRecord using values from the provided
 // LogRecordConfig.
 func NewLogRecord(config LogRecordConfig) LogRecord {
+	if config.BodyAny == nil && config.Body != nil {
+		config.BodyAny = *config.Body
+	}
 	return LogRecord{
 		timestamp:            config.Timestamp,
 		observedTimestamp:    config.ObservedTimestamp,
@@ -51,7 +56,7 @@ func NewLogRecord(config LogRecordConfig) LogRecord {
 		traceFlags:           config.TraceFlags,
 		severityText:         config.SeverityText,
 		severityNumber:       config.SeverityNumber,
-		body:                 config.Body,
+		body:                 config.BodyAny,
 		resource:             config.Resource,
 		instrumentationScope: config.InstrumentationScope,
 		attributes:           config.Attributes,
@@ -69,7 +74,7 @@ type LogRecord struct {
 	traceFlags           *trace.TraceFlags
 	severityText         *string
 	severityNumber       *SeverityNumber
-	body                 *string
+	body                 any
 	resource             *resource.Resource
 	instrumentationScope *instrumentation.Scope
 	attributes           *[]attribute.KeyValue
@@ -82,7 +87,7 @@ func (l LogRecord) SpanId() *trace.SpanID                        { return l.span
 func (l LogRecord) TraceFlags() *trace.TraceFlags                { return l.traceFlags }
 func (l LogRecord) SeverityText() *string                        { return l.severityText }
 func (l LogRecord) SeverityNumber() *SeverityNumber              { return l.severityNumber }
-func (l LogRecord) Body() *string                                { return l.body }
+func (l LogRecord) Body() any                                    { return l.body }
 func (l LogRecord) Resource() *resource.Resource                 { return l.resource }
 func (l LogRecord) InstrumentationScope() *instrumentation.Scope { return l.instrumentationScope }
 func (l LogRecord) Attributes() *[]attribute.KeyValue            { return l.attributes }

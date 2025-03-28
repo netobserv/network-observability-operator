@@ -150,7 +150,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	// `reconcilers.Common` is dependent on the FlowCollector object, which isn't known at start time.
 	reconcilers := []subReconciler{
 		newMonolithReconciler(cmn.NewInstance([]string{r.mgr.Config.FlowlogsPipelineImage}, r.mgr.Status.ForComponent(status.FLPMonolith))),
-		newTransformerReconciler(cmn.NewInstance([]string{r.mgr.Config.FlowlogsPipelineImage}, r.mgr.Status.ForComponent(status.FLPTransformOnly))),
+		newTransformerReconciler(cmn.NewInstance([]string{r.mgr.Config.FlowlogsPipelineImage}, r.mgr.Status.ForComponent(status.FLPTransformer))),
 	}
 
 	// Check namespace changed

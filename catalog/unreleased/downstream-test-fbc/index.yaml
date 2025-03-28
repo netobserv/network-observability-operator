@@ -24,7 +24,7 @@ entries:
     replaces: network-observability-operator.v1.6.2
   - name: network-observability-operator.v1.8.0
     replaces: network-observability-operator.v1.7.0
-  - name: network-observability-operator.v0.0.0-main
+  - name: network-observability-operator.v1.9.0
     replaces: network-observability-operator.v1.8.0
 name: stable
 package: netobserv-operator
