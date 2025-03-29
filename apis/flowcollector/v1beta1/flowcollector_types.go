@@ -155,7 +155,8 @@ type FlowCollectorIPFIX struct {
 // - `PacketTranslation`, to enrich flows with packets translation information. <br>
 // - `EbpfManager`, to enable using EBPF Manager to manage netobserv ebpf programs [Developer Preview].<br>
 // - `UDNMapping`, to enable interfaces mapping to udn [Developer Preview]. <br>
-// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation";"EbpfManager";"UDNMapping"
+// - `IPSec`, to track flows with IPsec encryption. <br>
+// +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation";"EbpfManager";"UDNMapping";"IPSec"
 type AgentFeature string
 
 const (
@@ -166,6 +167,7 @@ const (
 	PacketTranslation AgentFeature = "PacketTranslation"
 	EbpfManager       AgentFeature = "EbpfManager"
 	UDNMapping        AgentFeature = "UDNMapping"
+	IPSec             AgentFeature = "IPSec"
 )
 
 // Name of an eBPF agent alert.
@@ -367,6 +369,7 @@ type FlowCollectorEBPF struct {
 	// - `PacketTranslation`: enable enriching flows with packet's translation information. <br>
 	// - `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
 	// - `UDNMapping`, to enable interfaces mapping to udn. <br>
+	// - `IPSec`, to track flows with IPsec encryption. <br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 
