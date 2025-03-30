@@ -20,8 +20,8 @@ github.com/agoda-com/opentelemetry-logs-go/logs
 github.com/agoda-com/opentelemetry-logs-go/sdk/internal/env
 github.com/agoda-com/opentelemetry-logs-go/sdk/logs
 github.com/agoda-com/opentelemetry-logs-go/semconv
-# github.com/antlr4-go/antlr/v4 v4.13.0
-## explicit; go 1.20
+# github.com/antlr4-go/antlr/v4 v4.13.1
+## explicit; go 1.22
 github.com/antlr4-go/antlr/v4
 # github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 ## explicit; go 1.13
