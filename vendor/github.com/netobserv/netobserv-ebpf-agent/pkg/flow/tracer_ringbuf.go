@@ -79,13 +79,13 @@ func (m *RingBufTracer) TraceLoop(ctx context.Context) node.StartFunc[*model.Raw
 func (m *RingBufTracer) listenAndForwardRingBuffer(debugging bool, forwardCh chan<- *model.RawRecord) error {
 	event, err := m.ringBuffer.ReadRingBuf()
 	if err != nil {
-		m.metrics.Errors.WithErrorName("ringbuffer", "CannotReadRingbuffer").Inc()
+		m.metrics.Errors.WithErrorName("ringbuffer", "CannotReadRingbuffer", metrics.HighSeverity).Inc()
 		return fmt.Errorf("reading from ring buffer: %w", err)
 	}
 	// Parses the ringbuf event entry into an Event structure.
 	readFlow, err := model.ReadFrom(bytes.NewBuffer(event.RawSample))
 	if err != nil {
-		m.metrics.Errors.WithErrorName("ringbuffer", "CannotParseRingbuffer").Inc()
+		m.metrics.Errors.WithErrorName("ringbuffer", "CannotParseRingbuffer", metrics.HighSeverity).Inc()
 		return fmt.Errorf("parsing data received from the ring buffer: %w", err)
 	}
 	mapFullError := readFlow.Metrics.Errno == uint8(syscall.E2BIG)

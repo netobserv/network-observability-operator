@@ -20,12 +20,9 @@ type BpfAdditionalMetrics struct {
 	FlowRtt          uint64
 	NetworkEvents    [4][8]uint8
 	TranslatedFlow   BpfTranslatedFlowT
-	_                [2]byte
-	ObservedIntf     [4]BpfObservedIntfT
 	EthProtocol      uint16
 	NetworkEventsIdx uint8
-	NbObservedIntf   uint8
-	_                [4]byte
+	_                [7]byte
 }
 
 type BpfDirectionT uint32
@@ -124,7 +121,11 @@ type BpfFlowMetricsT struct {
 	DirectionFirstSeen uint8
 	Errno              uint8
 	Dscp               uint8
-	_                  [5]byte
+	NbObservedIntf     uint8
+	ObservedDirection  [6]uint8
+	_                  [2]byte
+	ObservedIntf       [6]uint32
+	_                  [4]byte
 }
 
 type BpfFlowRecordT struct {
@@ -147,12 +148,6 @@ const (
 	BpfGlobalCountersKeyTOBSERVED_INTF_MISSED                BpfGlobalCountersKeyT = 9
 	BpfGlobalCountersKeyTMAX_COUNTERS                        BpfGlobalCountersKeyT = 10
 )
-
-type BpfObservedIntfT struct {
-	Direction uint8
-	_         [3]byte
-	IfIndex   uint32
-}
 
 type BpfPktDropsT struct {
 	Bytes           uint64

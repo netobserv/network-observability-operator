@@ -11,6 +11,7 @@ type InfoElementWithValue interface {
 	// TODO: Handle error to make it more robust if it is called prior to AddInfoElement.
 	GetInfoElement() *InfoElement
 	AddInfoElement(infoElement *InfoElement)
+	GetOctetArrayValue() []byte
 	GetUnsigned8Value() uint8
 	GetUnsigned16Value() uint16
 	GetUnsigned32Value() uint32
@@ -25,6 +26,7 @@ type InfoElementWithValue interface {
 	GetMacAddressValue() net.HardwareAddr
 	GetStringValue() string
 	GetIPAddressValue() net.IP
+	SetOctetArrayValue(val []byte)
 	SetUnsigned8Value(val uint8)
 	SetUnsigned16Value(val uint16)
 	SetUnsigned32Value(val uint32)
@@ -62,6 +64,10 @@ func (b *baseInfoElement) GetInfoElement() *InfoElement {
 
 func (b *baseInfoElement) AddInfoElement(infoElement *InfoElement) {
 	b.element = infoElement
+}
+
+func (b *baseInfoElement) GetOctetArrayValue() []byte {
+	panic("accessing value of wrong data type")
 }
 
 func (b *baseInfoElement) GetUnsigned8Value() uint8 {
@@ -118,6 +124,10 @@ func (b *baseInfoElement) GetStringValue() string {
 
 func (b *baseInfoElement) GetIPAddressValue() net.IP {
 	panic("accessing value of wrong data type")
+}
+
+func (b *baseInfoElement) SetOctetArrayValue(val []byte) {
+	panic("setting value with wrong data type")
 }
 
 func (b *baseInfoElement) SetUnsigned8Value(val uint8) {
@@ -178,6 +188,46 @@ func (b *baseInfoElement) SetIPAddressValue(val net.IP) {
 
 func (b *baseInfoElement) GetLength() int {
 	return int(b.element.Len)
+}
+
+type OctetArrayInfoElement struct {
+	value []byte
+	baseInfoElement
+}
+
+func NewOctetArrayInfoElement(element *InfoElement, val []byte) *OctetArrayInfoElement {
+	infoElem := &OctetArrayInfoElement{
+		value: val,
+	}
+	infoElem.element = element
+	return infoElem
+}
+
+func (a *OctetArrayInfoElement) GetOctetArrayValue() []byte {
+	return a.value
+}
+
+func (a *OctetArrayInfoElement) GetLength() int {
+	if a.element.Len < VariableLength {
+		return int(a.element.Len)
+	}
+	if len(a.value) < 255 {
+		return len(a.value) + 1
+	} else {
+		return len(a.value) + 3
+	}
+}
+
+func (a *OctetArrayInfoElement) SetOctetArrayValue(val []byte) {
+	a.value = val
+}
+
+func (a *OctetArrayInfoElement) IsValueEmpty() bool {
+	return a.value == nil
+}
+
+func (a *OctetArrayInfoElement) ResetValue() {
+	a.value = nil
 }
 
 type Unsigned8InfoElement struct {
