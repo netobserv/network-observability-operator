@@ -558,8 +558,8 @@ github.com/k8snetworkplumbingwg/govdpa v0.1.5-0.20230926073613-07c1031aea47 h1:i
 github.com/k8snetworkplumbingwg/govdpa v0.1.5-0.20230926073613-07c1031aea47/go.mod h1:SPaDIyUmwN03Bgn0u/mhoiE4o/+koeKh11VUsdsUX0U=
 github.com/k8snetworkplumbingwg/ipamclaims v0.4.0-alpha h1:ss+EP77GlQmh90hGKpnAG4Q3VVxRlB7GoncemaPtO4g=
 github.com/k8snetworkplumbingwg/ipamclaims v0.4.0-alpha/go.mod h1:qlR+sKxQ2OGfwhFCuXSd7rJ/GgC38vQBeHKQ7f2YnpI=
-github.com/k8snetworkplumbingwg/multi-networkpolicy v0.0.0-20200914073308-0f33b9190170 h1:rtPle+U5e7Fia0j44gm+p5QMgOIXXB3A8GtFeCCh8Kk=
-github.com/k8snetworkplumbingwg/multi-networkpolicy v0.0.0-20200914073308-0f33b9190170/go.mod h1:CF9uYILB8GY25A/6Hhi1AWKc29qbyLu8r7Gs+uINGZE=
+github.com/k8snetworkplumbingwg/multi-networkpolicy v1.0.1 h1:Egj1hEVYNXWFlKpgzAXxe/2o8VNiVcAJLrKzlinILQo=
+github.com/k8snetworkplumbingwg/multi-networkpolicy v1.0.1/go.mod h1:kEJ4WM849yNmXekuSXLRwb+LaZ9usC06O8JgoAIq+f4=
 github.com/k8snetworkplumbingwg/network-attachment-definition-client v1.6.0 h1:BT3ghAY0q7lWib9rz+tVXDFkm27dJV6SLCn7TunZwo4=
 github.com/k8snetworkplumbingwg/network-attachment-definition-client v1.6.0/go.mod h1:wxt2YWRVItDtaQmVSmaN5ubE2L1c9CiNoHQwSJnM8Ko=
 github.com/k8snetworkplumbingwg/sriovnet v1.2.1-0.20230427090635-4929697df2dc h1:v6+jUd70AayPbIRgTYUNpnBLG5cBPTY0+10y80CZeMk=
@@ -758,8 +758,8 @@ github.com/openzipkin/zipkin-go v0.2.1/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnh
 github.com/openzipkin/zipkin-go v0.2.2/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
 github.com/ovn-org/libovsdb v0.7.1-0.20240820095311-ce1951614a20 h1:OoDvzyaK7F/ZANIIFOgb4Haj7mye3Hle0fYZZNdidSs=
 github.com/ovn-org/libovsdb v0.7.1-0.20240820095311-ce1951614a20/go.mod h1:dJbxEaalQl83nn904K32FaMjlH/qOObZ0bj4ejQ78AI=
-github.com/ovn-org/ovn-kubernetes/go-controller v0.0.0-20250314182307-95b6ca544bdf h1:WArJXO/EVSMMXDgM4PlIECs46aD6aoKTBMQjjkVUyMQ=
-github.com/ovn-org/ovn-kubernetes/go-controller v0.0.0-20250314182307-95b6ca544bdf/go.mod h1:MzFM3OEsLM2w/4MBMOCsxGR6ZBUvJfOxvQHB8LIKSv4=
+github.com/ovn-org/ovn-kubernetes/go-controller v0.0.0-20250325200454-5518ba106938 h1:5KGmZLrKgbyzYL5srKyvgJPFtYObxrLllRnpXhH/UF0=
+github.com/ovn-org/ovn-kubernetes/go-controller v0.0.0-20250325200454-5518ba106938/go.mod h1:friASuZzYHNkvWg2JfPBR/FUlFTj4EE66SFc9yV/rdY=
 github.com/pact-foundation/pact-go v1.0.4/go.mod h1:uExwJY4kCzNPcHRj+hCR/HBbOOIwwtUjcrb0b5/5kLM=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
