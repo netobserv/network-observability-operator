@@ -1,4 +1,4 @@
-# cel.dev/expr v0.19.0
+# cel.dev/expr v0.22.1
 ## explicit; go 1.21.1
 cel.dev/expr
 # github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible
