@@ -178,4 +178,4 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.5.0 // indirect
 )
 
-replace github.com/prometheus/common => github.com/netobserv/prometheus-common v0.59.1-netobserv
+replace github.com/prometheus/common => github.com/netobserv/prometheus-common v0.62.0
