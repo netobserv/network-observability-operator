@@ -3,13 +3,11 @@ package permissions
 import (
 	"context"
 	"fmt"
-
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/resources"
-
 	osv1 "github.com/openshift/api/security/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -19,6 +17,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+// AllowedCapabilities description of what capabilities netobserv requires when running w/o ebpf manager
+// BPF: Allows netobserv to use eBPF programs and maps.
+// PERFMON: Allows access to perf monitoring and profiling features.
+// NET_ADMIN: required for TC programs to attach/detach to/from qdisc and for TCX hooks.
+// SYS_RESOURCE: allows a process to override resource limits and manage system-wide resource usage.
 var AllowedCapabilities = []v1.Capability{"BPF", "PERFMON", "NET_ADMIN", "SYS_RESOURCE"}
 
 // Reconciler reconciles the different resources to enable the privileged operation of the
@@ -167,6 +170,10 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 	} else {
 		scc.AllowedCapabilities = AllowedCapabilities
 	}
+	if helper.IsEbpfManagerEnabled(desired) {
+		rlog.Info("Using Ebpf Manager setting up custom SecurityContextConstraints")
+		scc.RequiredDropCapabilities = []v1.Capability{"ALL"}
+	}
 	actual := &osv1.SecurityContextConstraints{}
 	if err := c.Get(ctx, client.ObjectKeyFromObject(scc), actual); err != nil {
 		if errors.IsNotFound(err) {
@@ -185,6 +192,7 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 		!equality.Semantic.DeepDerivative(&scc.Users, &actual.Users) ||
 		scc.AllowPrivilegedContainer != actual.AllowPrivilegedContainer ||
 		scc.AllowHostDirVolumePlugin != actual.AllowHostDirVolumePlugin ||
+		!equality.Semantic.DeepDerivative(&scc.RequiredDropCapabilities, &actual.RequiredDropCapabilities) ||
 		!equality.Semantic.DeepDerivative(&scc.AllowedCapabilities, &actual.AllowedCapabilities) {
 
 		rlog.Info("updating SecurityContextConstraints")
