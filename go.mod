@@ -2,7 +2,7 @@ module github.com/netobserv/network-observability-operator
 
 go 1.23.0
 
-toolchain go1.23.4
+toolchain go1.24.1
 
 require (
 	github.com/bpfman/bpfman-operator v0.5.6
@@ -28,7 +28,7 @@ require (
 	k8s.io/klog v1.0.0
 	k8s.io/kube-aggregator v0.32.3
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
-	sigs.k8s.io/controller-runtime v0.20.3
+	sigs.k8s.io/controller-runtime v0.20.4
 	sigs.k8s.io/yaml v1.4.0
 )
 
