@@ -3829,7 +3829,7 @@ spec:
                                       - SCTP
                                     type: string
                                   sampling:
-                                    description: '`sampling` sampling rate for the matched flows, overriding the global sampling defined at `spec.agent.ebpf.sampling`.'
+                                    description: '`sampling` is the sampling ratio for the matched packets, overriding the global sampling defined at `spec.agent.ebpf.sampling`.'
                                     format: int32
                                     type: integer
                                   sourcePorts:
@@ -3863,7 +3863,7 @@ spec:
                               minItems: 1
                               type: array
                             sampling:
-                              description: '`sampling` sampling rate for the matched flows, overriding the global sampling defined at `spec.agent.ebpf.sampling`.'
+                              description: '`sampling` is the sampling ratio for the matched packets, overriding the global sampling defined at `spec.agent.ebpf.sampling`.'
                               format: int32
                               type: integer
                             sourcePorts:
@@ -4105,7 +4105,7 @@ spec:
                           type: object
                         sampling:
                           default: 50
-                          description: Sampling rate of the flow reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.
+                          description: Sampling ratio of the eBPF probe. 100 means one packet on 100 is sent. 0 or 1 means all packets are sampled.
                           format: int32
                           minimum: 0
                           type: integer
@@ -7570,7 +7570,7 @@ spec:
                           type: string
                         sampling:
                           default: 50
-                          description: '`sampling` is the sampling rate when deduper `mode` is `Sample`.'
+                          description: '`sampling` is the sampling ratio when deduper `mode` is `Sample`. For example, a value of `50` means that 1 flow in 50 is sampled.'
                           format: int32
                           minimum: 0
                           type: integer
@@ -7622,7 +7622,7 @@ spec:
                               - Exporters
                             type: string
                           sampling:
-                            description: '`sampling` is an optional sampling rate to apply to this filter.'
+                            description: '`sampling` is an optional sampling ratio to apply to this filter. For example, a value of `50` means that 1 matching flow in 50 is sampled.'
                             format: int32
                             minimum: 0
                             type: integer
