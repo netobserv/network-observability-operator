@@ -146,8 +146,7 @@ When set to `Egress`, it is equivalent to adding the regular expression filter o
         <td><b><a href="#flowmetricspecfiltersindex">filters</a></b></td>
         <td>[]object</td>
         <td>
-          `filters` is a list of fields and values used to restrict which flows are taken into account. Oftentimes, these filters must
-be used to eliminate duplicates: `Duplicate != "true"` and `FlowDirection = "0"`.
+          `filters` is a list of fields and values used to restrict which flows are taken into account.
 Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.<br/>
         </td>
         <td>false</td>
