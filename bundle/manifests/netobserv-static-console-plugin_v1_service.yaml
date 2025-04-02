@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: static-console-plugin-tls
+  creationTimestamp: null
+  labels:
+    app: static-console-plugin
+  name: netobserv-static-console-plugin
+spec:
+  ports:
+  - name: https
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  selector:
+    app: static-console-plugin
+status:
+  loadBalancer: {}

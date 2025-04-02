@@ -1,0 +1,22 @@
+apiVersion: console.openshift.io/v1
+kind: ConsolePlugin
+metadata:
+  name: netobserv-static-plugin
+spec:
+  backend:
+    service:
+      basePath: /
+      name: netobserv-static-plugin
+      namespace: system
+      port: 9001
+    type: Service
+  displayName: NetObserv configuration plugin
+  proxy:
+  - alias: backend
+    authorization: UserToken
+    endpoint:
+      service:
+        name: netobserv-static-plugin
+        namespace: netobserv
+        port: 9001
+      type: Service

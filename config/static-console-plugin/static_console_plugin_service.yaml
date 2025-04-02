@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: static-console-plugin
+  annotations:
+        service.beta.openshift.io/serving-cert-secret-name: static-console-plugin-tls
+  name: static-console-plugin
+  namespace: system
+spec:
+  ports:
+  - name: https
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  selector:
+    app: static-console-plugin
