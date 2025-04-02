@@ -16,24 +16,28 @@ import (
 // Client includes a kube client with some additional helper functions
 type Client struct {
 	client.Client
-	SetControllerReference func(client.Object) error
+	SetControllerReferenceIfAvailable func(client.Object) error
 }
 
 func UnmanagedClient(cl client.Client) Client {
 	return Client{
-		Client:                 cl,
-		SetControllerReference: func(_ client.Object) error { return nil },
+		Client:                            cl,
+		SetControllerReferenceIfAvailable: func(_ client.Object) error { return nil },
 	}
 }
 
 func NewFlowCollectorClientHelper(ctx context.Context, c client.Client) (*Client, *flowslatest.FlowCollector, error) {
 	fc, err := getFlowCollector(ctx, c)
-	if err != nil || fc == nil {
+	if err != nil {
 		return nil, fc, err
 	}
 	return &Client{
 		Client: c,
-		SetControllerReference: func(obj client.Object) error {
+		SetControllerReferenceIfAvailable: func(obj client.Object) error {
+			// skip reference if owner or object is nil
+			if fc == nil || obj == nil {
+				return nil
+			}
 			return controllerutil.SetControllerReference(fc, obj, c.Scheme())
 		},
 	}, fc, nil
@@ -42,12 +46,12 @@ func NewFlowCollectorClientHelper(ctx context.Context, c client.Client) (*Client
 // CreateOwned is an helper function that creates an object, sets owner reference and writes info & errors logs
 func (c *Client) CreateOwned(ctx context.Context, obj client.Object) error {
 	log := log.FromContext(ctx)
-	err := c.SetControllerReference(obj)
+	err := c.SetControllerReferenceIfAvailable(obj)
 	if err != nil {
 		log.Error(err, "Failed to set controller reference")
 		return err
 	}
-	AddOwnedLabel(obj)
+	AddManagedLabel(obj)
 	kind := reflect.TypeOf(obj).String()
 	log.Info("CREATING a new "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 	err = c.Create(ctx, obj)
@@ -64,7 +68,7 @@ func (c *Client) UpdateOwned(ctx context.Context, old, obj client.Object) error 
 	if old != nil {
 		obj.SetResourceVersion(old.GetResourceVersion())
 	}
-	err := c.SetControllerReference(obj)
+	err := c.SetControllerReferenceIfAvailable(obj)
 	if err != nil {
 		log.Error(err, "Failed to set controller reference")
 		return err
@@ -107,7 +111,7 @@ func getFlowCollector(ctx context.Context, c client.Client) (*flowslatest.FlowCo
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			log.Info("FlowCollector resource not found. Ignoring since object must be deleted")
+			log.Info("FlowCollector resource not found.")
 			return nil, nil
 		}
 		// Error reading the object - requeue the request.

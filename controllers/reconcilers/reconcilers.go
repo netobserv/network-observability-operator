@@ -32,11 +32,14 @@ var (
 		},
 		CreateFunc:  func(_ event.CreateEvent) bool { return true },
 		DeleteFunc:  func(_ event.DeleteEvent) bool { return true },
-		GenericFunc: func(_ event.GenericEvent) bool { return false },
+		GenericFunc: func(_ event.GenericEvent) bool { return true },
 	})
 )
 
 func ReconcileClusterRoleBinding(ctx context.Context, cl *helper.Client, desired *rbacv1.ClusterRoleBinding) error {
+	//nolint:errcheck
+	cl.SetControllerReferenceIfAvailable(desired)
+
 	actual := rbacv1.ClusterRoleBinding{}
 	if err := cl.Get(ctx, types.NamespacedName{Name: desired.ObjectMeta.Name}, &actual); err != nil {
 		if errors.IsNotFound(err) {
@@ -64,6 +67,9 @@ func ReconcileClusterRoleBinding(ctx context.Context, cl *helper.Client, desired
 }
 
 func ReconcileRoleBinding(ctx context.Context, cl *helper.Client, desired *rbacv1.RoleBinding) error {
+	//nolint:errcheck
+	cl.SetControllerReferenceIfAvailable(desired)
+
 	actual := rbacv1.RoleBinding{}
 	if err := cl.Get(ctx, types.NamespacedName{Name: desired.ObjectMeta.Name, Namespace: desired.ObjectMeta.Namespace}, &actual); err != nil {
 		if errors.IsNotFound(err) {
@@ -91,6 +97,9 @@ func ReconcileRoleBinding(ctx context.Context, cl *helper.Client, desired *rbacv
 }
 
 func ReconcileConfigMap(ctx context.Context, cl *helper.Client, current, desired *corev1.ConfigMap) error {
+	//nolint:errcheck
+	cl.SetControllerReferenceIfAvailable(desired)
+
 	if current == nil {
 		if desired == nil {
 			return nil
@@ -111,6 +120,9 @@ func ReconcileConfigMap(ctx context.Context, cl *helper.Client, current, desired
 }
 
 func ReconcileDaemonSet(ctx context.Context, ci *Instance, old, new *appsv1.DaemonSet, containerName string, report *helper.ChangeReport) error {
+	//nolint:errcheck
+	ci.SetControllerReferenceIfAvailable(new)
+
 	if !ci.Managed.Exists(old) {
 		ci.Status.SetCreatingDaemonSet(new)
 		return ci.CreateOwned(ctx, new)
@@ -123,6 +135,9 @@ func ReconcileDaemonSet(ctx context.Context, ci *Instance, old, new *appsv1.Daem
 }
 
 func ReconcileDeployment(ctx context.Context, ci *Instance, old, new *appsv1.Deployment, containerName string, replicas int32, hpa *flowslatest.FlowCollectorHPA, report *helper.ChangeReport) error {
+	//nolint:errcheck
+	ci.SetControllerReferenceIfAvailable(new)
+
 	if !ci.Managed.Exists(old) {
 		ci.Status.SetCreatingDeployment(new)
 		return ci.CreateOwned(ctx, new)
@@ -135,11 +150,14 @@ func ReconcileDeployment(ctx context.Context, ci *Instance, old, new *appsv1.Dep
 }
 
 func ReconcileHPA(ctx context.Context, ci *Instance, old, new *ascv2.HorizontalPodAutoscaler, desired *flowslatest.FlowCollectorHPA, report *helper.ChangeReport) error {
+	//nolint:errcheck
+	ci.SetControllerReferenceIfAvailable(new)
+
 	// Delete or Create / Update Autoscaler according to HPA option
 	if helper.HPAEnabled(desired) {
 		if !ci.Managed.Exists(old) {
 			return ci.CreateOwned(ctx, new)
-		} else if helper.AutoScalerChanged(old, *desired, report) {
+		} else if helper.AutoScalerChanged(old, new, *desired, report) {
 			return ci.UpdateIfOwned(ctx, old, new)
 		}
 	} else {
@@ -149,6 +167,9 @@ func ReconcileHPA(ctx context.Context, ci *Instance, old, new *ascv2.HorizontalP
 }
 
 func ReconcileService(ctx context.Context, ci *Instance, old, new *corev1.Service, report *helper.ChangeReport) error {
+	//nolint:errcheck
+	ci.SetControllerReferenceIfAvailable(new)
+
 	if !ci.Managed.Exists(old) {
 		if err := ci.CreateOwned(ctx, new); err != nil {
 			return err
@@ -166,6 +187,9 @@ func ReconcileService(ctx context.Context, ci *Instance, old, new *corev1.Servic
 }
 
 func ReconcileNetworkPolicy(ctx context.Context, cl *helper.Client, name types.NamespacedName, desired *networkingv1.NetworkPolicy) error {
+	//nolint:errcheck
+	cl.SetControllerReferenceIfAvailable(desired)
+
 	current := networkingv1.NetworkPolicy{}
 	if err := cl.Get(ctx, name, &current); err != nil {
 		if errors.IsNotFound(err) {
@@ -190,6 +214,9 @@ func ReconcileNetworkPolicy(ctx context.Context, cl *helper.Client, name types.N
 }
 
 func GenericReconcile[K client.Object](ctx context.Context, m *NamespacedObjectManager, cl *helper.Client, old, new K, report *helper.ChangeReport, changeFunc func(old, new K, report *helper.ChangeReport) bool) error {
+	//nolint:errcheck
+	cl.SetControllerReferenceIfAvailable(new)
+
 	if !m.Exists(old) {
 		return cl.CreateOwned(ctx, new)
 	}
