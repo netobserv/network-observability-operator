@@ -84,22 +84,20 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	return nil
 }
 
-func (r *FlowCollectorReconciler) InitReconcile(ctx context.Context) error {
+func (r *FlowCollectorReconciler) InitReconcile(ctx context.Context) {
 	log := log.FromContext(ctx)
 	log.Info("Initializing resources...")
 
-	var err error
 	for attempt := range initReconcileAttempts {
 		// delay the reconcile calls to let some time to the cache to load
 		time.Sleep(5 * time.Second)
-		_, err = r.Reconcile(ctx, reconcile.Request{})
+		_, err := r.Reconcile(ctx, reconcile.Request{})
 		if err != nil {
 			log.Error(err, "Error while doing initial reconcile", "attempt", attempt)
 		} else {
-			break
+			return
 		}
 	}
-	return err
 }
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
