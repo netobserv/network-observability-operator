@@ -187,9 +187,6 @@ func ReconcileService(ctx context.Context, ci *Instance, old, new *corev1.Servic
 }
 
 func ReconcileNetworkPolicy(ctx context.Context, cl *helper.Client, name types.NamespacedName, desired *networkingv1.NetworkPolicy) error {
-	//nolint:errcheck
-	cl.SetControllerReferenceIfAvailable(desired)
-
 	current := networkingv1.NetworkPolicy{}
 	if err := cl.Get(ctx, name, &current); err != nil {
 		if errors.IsNotFound(err) {

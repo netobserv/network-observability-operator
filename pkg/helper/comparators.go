@@ -182,5 +182,5 @@ func AutoScalerChanged(old, new *ascv2.HorizontalPodAutoscaler, desired flowslat
 }
 
 func ownershipChanged(old *[]metav1.OwnerReference, new *[]metav1.OwnerReference) bool {
-	return deepEqual(old, new)
+	return !deepEqual(old, new)
 }

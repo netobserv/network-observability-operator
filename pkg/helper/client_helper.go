@@ -73,6 +73,7 @@ func (c *Client) UpdateOwned(ctx context.Context, old, obj client.Object) error 
 		log.Error(err, "Failed to set controller reference")
 		return err
 	}
+	AddManagedLabel(obj)
 	kind := reflect.TypeOf(obj).String()
 	log.Info("UPDATING "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 	err = c.Update(ctx, obj)
