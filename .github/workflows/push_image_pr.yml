@@ -48,13 +48,13 @@ jobs:
         run: |
           echo "WF_RELIMG_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
       - name: build bundle
-        run: OCI_BUILD_OPTS="--label quay.expires-after=2w" IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} PLG_VERSION=${{ env.WF_RELIMG_VERSION }} FLP_VERSION=${{ env.WF_RELIMG_VERSION }} BPF_VERSION=${{ env.WF_RELIMG_VERSION }} BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle bundle-build
+        run: OCI_BUILD_OPTS="--label quay.expires-after=2w" IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} PLG_VERSION=${{ env.WF_RELIMG_VERSION }} FLP_VERSION=${{ env.WF_RELIMG_VERSION }} BPF_VERSION=${{ env.WF_RELIMG_VERSION }} BUNDLE_VERSION=0.0.0-sha-${{ env.short_sha }} make bundle bundle-build
       - name: push bundle to quay.io
-        run: IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make bundle-push
+        run: IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} BUNDLE_VERSION=0.0.0-sha-${{ env.short_sha }} make bundle-push
       - name: build catalog
-        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make shortlived-catalog-build
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-sha-${{ env.short_sha }} make shortlived-catalog-build
       - name: push catalog to quay.io
-        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-${{ env.short_sha }} make catalog-push
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-sha-${{ env.short_sha }} make catalog-push
       - uses: actions/github-script@v5
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -65,8 +65,8 @@ jobs:
               repo: context.repo.repo,
               body: `New images:
             * ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }}
-            * ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-${{ env.short_sha }}
-            * ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-${{ env.short_sha }}
+            * ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-sha-${{ env.short_sha }}
+            * ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-sha-${{ env.short_sha }}
 
             They will expire after two weeks.
 
@@ -76,7 +76,7 @@ jobs:
             IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make deploy
 
             # Or using operator-sdk
-            operator-sdk run bundle ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-${{ env.short_sha }}
+            operator-sdk run bundle ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-sha-${{ env.short_sha }}
             \`\`\`
 
             Or as a Catalog Source:
@@ -88,7 +88,7 @@ jobs:
               namespace: openshift-marketplace
             spec:
               sourceType: grpc
-              image: ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-${{ env.short_sha }}
+              image: ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-sha-${{ env.short_sha }}
               displayName: NetObserv development catalog
               publisher: Me
               updateStrategy:

@@ -82,15 +82,15 @@ run_step "push_image_pr.yml" "push-pr-image" "build image"
 expect_image_tagged "quay.io/netobserv/network-observability-operator:$short_sha-amd64"
 
 run_step "push_image_pr.yml" "push-pr-image" "build bundle"
-expect_image_tagged "quay.io/netobserv/network-observability-operator-bundle:v0.0.0-$short_sha"
+expect_image_tagged "quay.io/netobserv/network-observability-operator-bundle:v0.0.0-sha-$short_sha"
 expect_occurrences $bundle_csv "quay.io/netobserv/network-observability-operator:$short_sha" 2
 expect_occurrences $bundle_csv "quay.io/netobserv/netobserv-ebpf-agent:main" 2
 expect_occurrences $bundle_csv "quay.io/netobserv/flowlogs-pipeline:main" 2
 expect_occurrences $bundle_csv "quay.io/netobserv/network-observability-console-plugin:main" 2
 
 run_step "push_image_pr.yml" "push-pr-image" "build catalog" "OPM_OPTS=--permissive"
-expect_occurrences_at_least $test_out "quay.io/netobserv/network-observability-operator-bundle:v0.0.0-$short_sha" 1
-expect_image_tagged "quay.io/netobserv/network-observability-operator-catalog:v0.0.0-$short_sha"
+expect_occurrences_at_least $test_out "quay.io/netobserv/network-observability-operator-bundle:v0.0.0-sha-$short_sha" 1
+expect_image_tagged "quay.io/netobserv/network-observability-operator-catalog:v0.0.0-sha-$short_sha"
 
 echo -e "✅\n"
 echo -e "🥁🥁🥁 TESTING push_image.yml 🥁🥁🥁"
