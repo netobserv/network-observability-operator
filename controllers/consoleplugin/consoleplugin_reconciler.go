@@ -52,11 +52,6 @@ func NewReconciler(cmn *reconcilers.Instance) CPReconciler {
 	return rec
 }
 
-// CleanupNamespace cleans up old namespace
-func (r *CPReconciler) CleanupNamespace(ctx context.Context) {
-	r.Managed.CleanupPreviousNamespace(ctx)
-}
-
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
 func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	l := log.FromContext(ctx).WithName("console-plugin")

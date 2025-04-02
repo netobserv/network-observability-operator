@@ -54,11 +54,6 @@ func (c *Reconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCol
 
 func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 	ns := c.PrivilegedNamespace()
-	if ns != c.PreviousPrivilegedNamespace() {
-		if err := c.cleanupPreviousNamespace(ctx); err != nil {
-			return err
-		}
-	}
 	rlog := log.FromContext(ctx, "PrivilegedNamespace", ns)
 	actual := &v1.Namespace{}
 	if err := c.Get(ctx, client.ObjectKey{Name: ns}, actual); err != nil {
@@ -199,46 +194,5 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 		return c.UpdateIfOwned(ctx, actual, scc)
 	}
 	rlog.Info("SecurityContextConstraints already reconciled. Doing nothing")
-	return nil
-}
-
-func (c *Reconciler) cleanupPreviousNamespace(ctx context.Context) error {
-	rlog := log.FromContext(ctx, "PreviousPrivilegedNamespace", c.PreviousPrivilegedNamespace())
-
-	// Delete service account
-	if err := c.Delete(ctx, &v1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.EBPFServiceAccount,
-			Namespace: c.PreviousPrivilegedNamespace(),
-		},
-	}); err != nil {
-		if errors.IsNotFound(err) {
-			return nil
-		}
-		return fmt.Errorf("deleting eBPF agent ServiceAccount: %w", err)
-	}
-	// Do not delete SCC as it's not namespace-scoped (it will be reconciled "as usual")
-
-	previous := &v1.Namespace{}
-	if err := c.Get(ctx, client.ObjectKey{Name: c.PreviousPrivilegedNamespace()}, previous); err != nil {
-		if errors.IsNotFound(err) {
-			// Not found => return without error
-			rlog.Info("Previous privileged namespace not found, skipping cleanup")
-			return nil
-		}
-		return fmt.Errorf("can't retrieve previous namespace: %w", err)
-	}
-	// Make sure we own that namespace
-	if helper.IsOwned(previous) {
-		rlog.Info("Owning previous privileged namespace: deleting it")
-		if err := c.Delete(ctx, previous); err != nil {
-			if errors.IsNotFound(err) {
-				return nil
-			}
-			return fmt.Errorf("deleting privileged namespace: %w", err)
-		}
-	} else {
-		rlog.Info("Not owning previous privileged namespace: delete related content only")
-	}
 	return nil
 }
