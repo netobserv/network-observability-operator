@@ -297,8 +297,8 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		}
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
-
-	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketDrop) {
+	// EBPF Manager takes care of mounting the kernel debug volume.
+	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketDrop) && !helper.IsEbpfManagerEnabled(&coll.Spec.Agent.EBPF) {
 		if !coll.Spec.Agent.EBPF.Privileged {
 			rlog.Error(fmt.Errorf("invalid configuration"), "To use PacketsDrop feature privileged mode needs to be enabled")
 		} else {
