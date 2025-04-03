@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"maps"
 	"time"
 
 	"github.com/netobserv/netobserv-ebpf-agent/pkg/ebpf"
@@ -23,6 +24,7 @@ type Accounter struct {
 	monoClock    func() time.Duration
 	metrics      *metrics.Metrics
 	s            *ovnobserv.SampleDecoder
+	udnEnabled   bool
 }
 
 var alog = logrus.WithField("component", "flow/Accounter")
@@ -35,6 +37,7 @@ func NewAccounter(
 	monoClock func() time.Duration,
 	m *metrics.Metrics,
 	s *ovnobserv.SampleDecoder,
+	udnEnabled bool,
 ) *Accounter {
 	acc := Accounter{
 		maxEntries:   maxEntries,
@@ -44,6 +47,7 @@ func NewAccounter(
 		monoClock:    monoClock,
 		metrics:      m,
 		s:            s,
+		udnEnabled:   udnEnabled,
 	}
 	return &acc
 }
@@ -99,9 +103,19 @@ func (c *Accounter) evict(entries map[ebpf.BpfFlowId]*ebpf.BpfFlowMetrics, evict
 	now := c.clock()
 	monotonicNow := uint64(c.monoClock())
 	records := make([]*model.Record, 0, len(entries))
+	udnCache := make(map[string]string)
+	if c.s != nil && c.udnEnabled {
+		udnsMap, err := c.s.GetInterfaceUDNs()
+		if err != nil {
+			alog.Errorf("failed to get udns to interfaces map : %v", err)
+		} else {
+			maps.Copy(udnCache, udnsMap)
+			alog.Tracef("GetInterfaceUDNS map: %v", udnCache)
+		}
+	}
 	for key, metrics := range entries {
 		flowContent := model.NewBpfFlowContent(*metrics)
-		records = append(records, model.NewRecord(key, &flowContent, now, monotonicNow, c.s))
+		records = append(records, model.NewRecord(key, &flowContent, now, monotonicNow, c.s, udnCache))
 	}
 	c.metrics.EvictionCounter.WithSourceAndReason("accounter", reason).Inc()
 	c.metrics.EvictedFlowsCounter.WithSourceAndReason("accounter", reason).Add(float64(len(records)))

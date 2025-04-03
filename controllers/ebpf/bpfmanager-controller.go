@@ -4,16 +4,16 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
-	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/sirupsen/logrus"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 
 	bpfmaniov1alpha1 "github.com/bpfman/bpfman-operator/apis/v1alpha1"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -21,35 +21,10 @@ const (
 	netobservApp = "netobserv"
 )
 
-// bpfmanDetachNetobserv find BpfmanApplication object with all required ebpf hooks and detaches them using bpfman manager
-func (c *AgentController) bpfmanDetachNetobserv(ctx context.Context) error {
-	bpfApp := bpfmaniov1alpha1.BpfApplication{
-		ObjectMeta: v1.ObjectMeta{
-			Name: netobservApp,
-		},
-		TypeMeta: v1.TypeMeta{
-			Kind: "BpfApplication",
-		},
-	}
-
-	key := client.ObjectKey{Name: netobservApp}
-
-	err := c.Get(ctx, key, &bpfApp)
-	if err != nil {
-		return fmt.Errorf("failed to get BpfApplication: %w", err)
-	}
-
-	err = c.deleteBpfApplication(ctx, &bpfApp)
-	if err != nil {
-		return fmt.Errorf("failed to delete BpfApplication: %w", err)
-	}
-	return nil
-}
-
 // bpfmanAttachNetobserv Creates BpfmanApplication object with all required ebpf hooks and attaches them using bpfman manager
 func (c *AgentController) bpfmanAttachNetobserv(ctx context.Context, fc *flowslatest.FlowCollector) error {
 	var err error
-	bpfApp := bpfmaniov1alpha1.BpfApplication{
+	bpfApp := bpfmaniov1alpha1.ClusterBpfApplication{
 		ObjectMeta: v1.ObjectMeta{
 			Name: netobservApp,
 		},
@@ -83,9 +58,7 @@ func (c *AgentController) bpfmanAttachNetobserv(ctx context.Context, fc *flowsla
 	return err
 }
 
-func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.BpfApplication, fc *flowslatest.FlowCollector, netobservBCImage string) {
-	interfaces := fc.Spec.Agent.EBPF.Interfaces
-
+func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.ClusterBpfApplication, fc *flowslatest.FlowCollector, netobservBCImage string) {
 	samplingValue := make([]byte, 4)
 	dnsPortValue := make([]byte, 2)
 	var enableDNSValue, enableRTTValue, enableFLowFilterValue, enableNetworkEvents, traceValue, networkEventsGroupIDValue, enablePktTranslation []byte
@@ -104,7 +77,7 @@ func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.BpfApplication, fc *flowslat
 		enableRTTValue = append(enableRTTValue, uint8(1))
 	}
 
-	if helper.IsEBFPFlowFilterEnabled(&fc.Spec.Agent.EBPF) {
+	if helper.IsEBPFFlowFilterEnabled(&fc.Spec.Agent.EBPF) {
 		enableFLowFilterValue = append(enableFLowFilterValue, uint8(1))
 	}
 
@@ -148,113 +121,117 @@ func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.BpfApplication, fc *flowslat
 		"enable_pkt_translation_tracking":   enablePktTranslation,
 	}
 
-	bpfApp.Spec.BpfAppCommon.ByteCode = bpfmaniov1alpha1.BytecodeSelector{
-		Image: &bpfmaniov1alpha1.BytecodeImage{
+	bpfApp.Spec.BpfAppCommon.ByteCode = bpfmaniov1alpha1.ByteCodeSelector{
+		Image: &bpfmaniov1alpha1.ByteCodeImage{
 			Url:             netobservBCImage,
 			ImagePullPolicy: bpfmaniov1alpha1.PullIfNotPresent,
 		},
 	}
-	bpfApp.Spec.Programs = []bpfmaniov1alpha1.BpfApplicationProgram{
+	bpfApp.Spec.Programs = []bpfmaniov1alpha1.ClBpfApplicationProgram{
 		{
+			Name: "tcx_ingress_flow_parse",
 			Type: bpfmaniov1alpha1.ProgTypeTCX,
-			TCX: &bpfmaniov1alpha1.TcxProgramInfo{
-				BpfProgramCommon: bpfmaniov1alpha1.BpfProgramCommon{
-					BpfFunctionName: "tcx_ingress_flow_parse",
+			TCX: &bpfmaniov1alpha1.ClTcxProgramInfo{
+				Links: []bpfmaniov1alpha1.ClTcxAttachInfo{
+					{
+						InterfaceSelector: bpfmaniov1alpha1.InterfaceSelector{
+							InterfacesDiscoveryConfig: &bpfmaniov1alpha1.InterfaceDiscovery{
+								InterfaceAutoDiscovery: ptr.To(true)},
+						},
+						Direction: bpfmaniov1alpha1.TCIngress,
+					},
 				},
-				InterfaceSelector: bpfmaniov1alpha1.InterfaceSelector{Interfaces: &interfaces},
-				Direction:         "ingress",
 			},
 		},
 		{
+			Name: "tcx_egress_flow_parse",
 			Type: bpfmaniov1alpha1.ProgTypeTCX,
-			TCX: &bpfmaniov1alpha1.TcxProgramInfo{
-				BpfProgramCommon: bpfmaniov1alpha1.BpfProgramCommon{
-					BpfFunctionName: "tcx_egress_flow_parse",
+			TCX: &bpfmaniov1alpha1.ClTcxProgramInfo{
+				Links: []bpfmaniov1alpha1.ClTcxAttachInfo{
+					{
+						InterfaceSelector: bpfmaniov1alpha1.InterfaceSelector{
+							InterfacesDiscoveryConfig: &bpfmaniov1alpha1.InterfaceDiscovery{
+								InterfaceAutoDiscovery: ptr.To(true)},
+						},
+						Direction: bpfmaniov1alpha1.TCEgress,
+					},
 				},
-				InterfaceSelector: bpfmaniov1alpha1.InterfaceSelector{Interfaces: &interfaces},
-				Direction:         "egress",
 			},
 		},
 	}
 
 	if helper.IsFlowRTTEnabled(&fc.Spec.Agent.EBPF) {
-		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.BpfApplicationProgram{
+		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.ClBpfApplicationProgram{
 			{
+				Name: "tcp_rcv_fentry",
 				Type: bpfmaniov1alpha1.ProgTypeFentry,
-				Fentry: &bpfmaniov1alpha1.FentryProgramInfo{
-					BpfProgramCommon: bpfmaniov1alpha1.BpfProgramCommon{
-						BpfFunctionName: "tcp_rcv_fentry",
+				FEntry: &bpfmaniov1alpha1.ClFentryProgramInfo{
+					ClFentryLoadInfo: bpfmaniov1alpha1.ClFentryLoadInfo{
+						Function: "tcp_rcv_established",
 					},
-					FunctionName: "tcp_rcv_established",
-				},
-			},
-			{
-				Type: bpfmaniov1alpha1.ProgTypeKprobe,
-				Kprobe: &bpfmaniov1alpha1.KprobeProgramInfo{
-					BpfProgramCommon: bpfmaniov1alpha1.BpfProgramCommon{
-						BpfFunctionName: "tcp_rcv_kprobe",
+					Links: []bpfmaniov1alpha1.ClFentryAttachInfo{
+						{
+							Mode: bpfmaniov1alpha1.Attach,
+						},
 					},
-					FunctionName: "tcp_rcv_established",
-					RetProbe:     false,
 				},
 			},
 		}...)
 	}
 
 	if helper.IsNetworkEventsEnabled(&fc.Spec.Agent.EBPF) {
-		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.BpfApplicationProgram{
+		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.ClBpfApplicationProgram{
 			{
+				Name: "network_events_monitoring",
 				Type: bpfmaniov1alpha1.ProgTypeKprobe,
-				Kprobe: &bpfmaniov1alpha1.KprobeProgramInfo{
-					BpfProgramCommon: bpfmaniov1alpha1.BpfProgramCommon{
-						BpfFunctionName: "rh_network_events_monitoring",
+				KProbe: &bpfmaniov1alpha1.ClKprobeProgramInfo{
+					Links: []bpfmaniov1alpha1.ClKprobeAttachInfo{
+						{
+							Function: "psample_sample_packet",
+						},
 					},
-					FunctionName: "rh_psample_sample_packet",
-					RetProbe:     false,
 				},
 			},
 		}...)
 	}
 
 	if helper.IsPktDropEnabled(&fc.Spec.Agent.EBPF) {
-		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.BpfApplicationProgram{
+		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.ClBpfApplicationProgram{
 			{
+				Name: "kfree_skb",
 				Type: bpfmaniov1alpha1.ProgTypeTracepoint,
-				Tracepoint: &bpfmaniov1alpha1.TracepointProgramInfo{
-					BpfProgramCommon: bpfmaniov1alpha1.BpfProgramCommon{
-						BpfFunctionName: "kfree_skb",
+				TracePoint: &bpfmaniov1alpha1.ClTracepointProgramInfo{
+					Links: []bpfmaniov1alpha1.ClTracepointAttachInfo{
+						{
+							Name: "skb/kfree_skb",
+						},
 					},
-					Names: []string{"skb/kfree_skb"},
 				},
 			},
 		}...)
 	}
 
 	if helper.IsPacketTranslationEnabled(&fc.Spec.Agent.EBPF) {
-		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.BpfApplicationProgram{
+		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.ClBpfApplicationProgram{
 			{
+				Name: "track_nat_manip_pkt",
 				Type: bpfmaniov1alpha1.ProgTypeKprobe,
-				Kprobe: &bpfmaniov1alpha1.KprobeProgramInfo{
-					BpfProgramCommon: bpfmaniov1alpha1.BpfProgramCommon{
-						BpfFunctionName: "track_nat_manip_pkt",
+				KProbe: &bpfmaniov1alpha1.ClKprobeProgramInfo{
+					Links: []bpfmaniov1alpha1.ClKprobeAttachInfo{
+						{
+							Function: "nf_nat_manip_pkt",
+						},
 					},
-					FunctionName: "nf_nat_manip_pkt",
-					RetProbe:     false,
 				},
 			},
 		}...)
 	}
 }
 
-func (c *AgentController) deleteBpfApplication(ctx context.Context, bpfApp *bpfmaniov1alpha1.BpfApplication) error {
-	klog.Info("Deleting BpfApplication Object")
-	return c.Delete(ctx, bpfApp)
-}
-
-func (c *AgentController) createBpfApplication(ctx context.Context, bpfApp *bpfmaniov1alpha1.BpfApplication) error {
+func (c *AgentController) createBpfApplication(ctx context.Context, bpfApp *bpfmaniov1alpha1.ClusterBpfApplication) error {
 	return c.CreateOwned(ctx, bpfApp)
 }
 
-func (c *AgentController) updateBpfApplication(ctx context.Context, bpfApp *bpfmaniov1alpha1.BpfApplication) error {
+func (c *AgentController) updateBpfApplication(ctx context.Context, bpfApp *bpfmaniov1alpha1.ClusterBpfApplication) error {
 	return c.UpdateOwned(ctx, bpfApp, bpfApp)
 }

@@ -44,7 +44,7 @@ func TestValidateAgent(t *testing.T) {
 							Sampling:   ptr.To(int32(100)),
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								FlowFilterRules: []EBPFFlowFilterRule{
+								Rules: []EBPFFlowFilterRule{
 									{
 										Action:    "Accept",
 										CIDR:      "0.0.0.0/0",
@@ -73,7 +73,7 @@ func TestValidateAgent(t *testing.T) {
 							Sampling:   ptr.To(int32(100)),
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								FlowFilterRules: []EBPFFlowFilterRule{
+								Rules: []EBPFFlowFilterRule{
 									{
 										Action:    "Accept",
 										CIDR:      "0.0.0.0/0",
@@ -149,11 +149,29 @@ func TestValidateAgent(t *testing.T) {
 					},
 				},
 			},
-			expectedWarnings: admission.Warnings{"The NetworkEvents/UDNMapping/EbpfManager features require OpenShift 4.18 or above (version detected: 4.16.5)"},
+			expectedWarnings: admission.Warnings{"The NetworkEvents/UDNMapping/EbpfManager features require OpenShift 4.19 or above (version detected: 4.16.5)"},
+		},
+		{
+			name:       "NetworkEvents on ocp 4.19.0-0 doesn't trigger warnings",
+			ocpVersion: "4.19.0-0.nightly-2025-03-20-063534",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{
+						Type: AgentEBPF,
+						EBPF: FlowCollectorEBPF{
+							Features:   []AgentFeature{NetworkEvents},
+							Privileged: true,
+						},
+					},
+				},
+			},
 		},
 		{
 			name:       "NetworkEvents without privilege triggers warning",
-			ocpVersion: "4.18.0",
+			ocpVersion: "4.19.0",
 			fc: &FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "cluster",
@@ -181,7 +199,7 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								FlowFilterRules: []EBPFFlowFilterRule{
+								Rules: []EBPFFlowFilterRule{
 									{
 										Action:      "Accept",
 										CIDR:        "0.0.0.0/0",
@@ -208,7 +226,7 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								FlowFilterRules: []EBPFFlowFilterRule{
+								Rules: []EBPFFlowFilterRule{
 									{
 										Ports: intstr.FromString("abcd"),
 									},
@@ -232,7 +250,7 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								FlowFilterRules: []EBPFFlowFilterRule{
+								Rules: []EBPFFlowFilterRule{
 									{
 										Ports: intstr.FromString("80-255"),
 									},
@@ -255,7 +273,7 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								FlowFilterRules: []EBPFFlowFilterRule{
+								Rules: []EBPFFlowFilterRule{
 									{
 										Ports: intstr.FromString("255-80"),
 									},
@@ -279,7 +297,7 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								FlowFilterRules: []EBPFFlowFilterRule{
+								Rules: []EBPFFlowFilterRule{
 									{
 										Ports: intstr.FromString("80-?"),
 									},
@@ -303,7 +321,7 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								FlowFilterRules: []EBPFFlowFilterRule{
+								Rules: []EBPFFlowFilterRule{
 									{
 										Ports: intstr.FromString("255,80"),
 									},
@@ -326,7 +344,7 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								FlowFilterRules: []EBPFFlowFilterRule{
+								Rules: []EBPFFlowFilterRule{
 									{
 										Ports: intstr.FromString("80,100,250"),
 									},
@@ -350,7 +368,7 @@ func TestValidateAgent(t *testing.T) {
 						EBPF: FlowCollectorEBPF{
 							FlowFilter: &EBPFFlowFilter{
 								Enable: ptr.To(true),
-								FlowFilterRules: []EBPFFlowFilterRule{
+								Rules: []EBPFFlowFilterRule{
 									{
 										CIDR: "1.1.1.1",
 									},
@@ -439,7 +457,7 @@ func TestValidateConntrack(t *testing.T) {
 
 	CurrentClusterInfo = &cluster.Info{}
 	for _, test := range tests {
-		warnings, err := test.fc.validate(context.TODO(), test.fc)
+		warnings, err := test.fc.Validate(context.TODO(), test.fc)
 		if test.expectedError == "" {
 			assert.Nil(t, err, test.name)
 		} else {

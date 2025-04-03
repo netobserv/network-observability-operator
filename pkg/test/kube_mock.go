@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -128,6 +129,18 @@ func (o *ClientMock) MockConfigMap(obj *v1.ConfigMap) {
 		arg.SetNamespace(obj.GetNamespace())
 		arg.SetOwnerReferences(obj.GetOwnerReferences())
 		arg.Data = obj.Data
+	}).Return(nil)
+	o.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+}
+
+func (o *ClientMock) MockCRB(obj *rbacv1.ClusterRoleBinding) {
+	o.objs[key(obj)] = obj
+	o.On("Get", mock.Anything, types.NamespacedName{Name: obj.GetName()}, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		arg := args.Get(2).(*rbacv1.ClusterRoleBinding)
+		arg.SetName(obj.GetName())
+		arg.SetOwnerReferences(obj.GetOwnerReferences())
+		arg.RoleRef = obj.RoleRef
+		arg.Subjects = obj.Subjects
 	}).Return(nil)
 	o.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 }

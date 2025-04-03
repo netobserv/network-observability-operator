@@ -30,7 +30,7 @@ func (r *FlowCollector) ValidateCreate(ctx context.Context, newObj runtime.Objec
 	if !ok {
 		return nil, kerr.NewBadRequest(fmt.Sprintf("expected a FlowCollector but got a %T", newObj))
 	}
-	return r.validate(ctx, fc)
+	return r.Validate(ctx, fc)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
@@ -40,7 +40,7 @@ func (r *FlowCollector) ValidateUpdate(ctx context.Context, _, newObj runtime.Ob
 	if !ok {
 		return nil, kerr.NewBadRequest(fmt.Sprintf("expected a FlowCollector but got a %T", newObj))
 	}
-	return r.validate(ctx, fc)
+	return r.Validate(ctx, fc)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
@@ -49,7 +49,7 @@ func (r *FlowCollector) ValidateDelete(_ context.Context, _ runtime.Object) (adm
 	return nil, nil
 }
 
-func (r *FlowCollector) validate(ctx context.Context, fc *FlowCollector) (admission.Warnings, error) {
+func (r *FlowCollector) Validate(ctx context.Context, fc *FlowCollector) (admission.Warnings, error) {
 	var allW admission.Warnings
 	var allE []error
 	w, errs := r.validateAgent(ctx, &fc.Spec)
@@ -86,15 +86,14 @@ func (r *FlowCollector) warnLogLevels(fc *FlowCollectorSpec) admission.Warnings 
 func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
 	var warnings admission.Warnings
 	if slices.Contains(fc.Agent.EBPF.Features, NetworkEvents) ||
-		slices.Contains(fc.Agent.EBPF.Features, UDNMapping) ||
-		slices.Contains(fc.Agent.EBPF.Features, EbpfManager) {
+		slices.Contains(fc.Agent.EBPF.Features, UDNMapping) {
 		// Make sure required version of ocp is installed
 		if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
-			b, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast("4.18.0")
+			b, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast("4.19.0")
 			if err != nil {
 				warnings = append(warnings, fmt.Sprintf("Could not detect OpenShift cluster version: %s", err.Error()))
 			} else if !b {
-				warnings = append(warnings, fmt.Sprintf("The NetworkEvents/UDNMapping/EbpfManager features require OpenShift 4.18 or above (version detected: %s)", CurrentClusterInfo.GetOpenShiftVersion()))
+				warnings = append(warnings, fmt.Sprintf("The NetworkEvents/UDNMapping/EbpfManager features require OpenShift 4.19 or above (version detected: %s)", CurrentClusterInfo.GetOpenShiftVersion()))
 			}
 		} else {
 			warnings = append(warnings, "The NetworkEvents/UDNMapping/EbpfManager features are only supported with OpenShift")
@@ -119,8 +118,8 @@ func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) 
 	var errs []error
 	if fc.Agent.EBPF.FlowFilter != nil && fc.Agent.EBPF.FlowFilter.Enable != nil && *fc.Agent.EBPF.FlowFilter.Enable {
 		m := make(map[string]bool)
-		for i := range fc.Agent.EBPF.FlowFilter.FlowFilterRules {
-			rule := fc.Agent.EBPF.FlowFilter.FlowFilterRules[i]
+		for i := range fc.Agent.EBPF.FlowFilter.Rules {
+			rule := fc.Agent.EBPF.FlowFilter.Rules[i]
 			key := rule.CIDR + "-" + rule.PeerCIDR
 			if found := m[key]; found {
 				errs = append(errs, fmt.Errorf("flow filter rule CIDR and PeerCIDR %s already exists",

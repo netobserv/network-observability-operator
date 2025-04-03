@@ -121,7 +121,7 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 	ns := helper.GetNamespace(&desired.Spec)
 	previousNamespace := r.status.GetDeployedNamespace(desired)
 	loki := helper.NewLokiConfig(&desired.Spec.Loki, ns)
-	reconcilersInfo := r.newCommonInfo(clh, ns, previousNamespace, &loki)
+	reconcilersInfo := r.newCommonInfo(clh, ns, &loki)
 
 	if err := r.checkFinalizer(ctx, desired); err != nil {
 		return err
@@ -137,13 +137,6 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 
 	// Check namespace changed
 	if ns != previousNamespace {
-		if previousNamespace != "" {
-			// Namespace updated, clean up previous namespace
-			log.FromContext(ctx).
-				Info("FlowCollector namespace change detected: cleaning up previous namespace", "old", previousNamespace, "new", ns)
-			cpReconciler.CleanupNamespace(ctx)
-		}
-
 		// Update namespace in status
 		if err := r.status.SetDeployedNamespace(ctx, r.Client, ns); err != nil {
 			return r.status.Error("ChangeNamespaceError", err)
@@ -176,14 +169,13 @@ func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *f
 	return nil
 }
 
-func (r *FlowCollectorReconciler) newCommonInfo(clh *helper.Client, ns, prevNs string, loki *helper.LokiConfig) reconcilers.Common {
+func (r *FlowCollectorReconciler) newCommonInfo(clh *helper.Client, ns string, loki *helper.LokiConfig) reconcilers.Common {
 	return reconcilers.Common{
-		Client:            *clh,
-		Namespace:         ns,
-		PreviousNamespace: prevNs,
-		ClusterInfo:       r.mgr.ClusterInfo,
-		Watcher:           r.watcher,
-		Loki:              loki,
-		IsDownstream:      r.mgr.Config.DownstreamDeployment,
+		Client:       *clh,
+		Namespace:    ns,
+		ClusterInfo:  r.mgr.ClusterInfo,
+		Watcher:      r.watcher,
+		Loki:         loki,
+		IsDownstream: r.mgr.Config.DownstreamDeployment,
 	}
 }

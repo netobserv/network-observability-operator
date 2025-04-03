@@ -14,20 +14,15 @@ import (
 
 type Common struct {
 	helper.Client
-	Watcher           *watchers.Watcher
-	Namespace         string
-	PreviousNamespace string
-	ClusterInfo       *cluster.Info
-	Loki              *helper.LokiConfig
-	IsDownstream      bool
+	Watcher      *watchers.Watcher
+	Namespace    string
+	ClusterInfo  *cluster.Info
+	Loki         *helper.LokiConfig
+	IsDownstream bool
 }
 
 func (c *Common) PrivilegedNamespace() string {
 	return c.Namespace + constants.EBPFPrivilegedNSSuffix
-}
-
-func (c *Common) PreviousPrivilegedNamespace() string {
-	return c.PreviousNamespace + constants.EBPFPrivilegedNSSuffix
 }
 
 type Instance struct {
@@ -53,14 +48,6 @@ func (c *Common) ReconcileClusterRoleBinding(ctx context.Context, desired *rbacv
 
 func (c *Common) ReconcileRoleBinding(ctx context.Context, desired *rbacv1.RoleBinding) error {
 	return ReconcileRoleBinding(ctx, &c.Client, desired)
-}
-
-func (c *Common) ReconcileClusterRole(ctx context.Context, desired *rbacv1.ClusterRole) error {
-	return ReconcileClusterRole(ctx, &c.Client, desired)
-}
-
-func (c *Common) ReconcileRole(ctx context.Context, desired *rbacv1.Role) error {
-	return ReconcileRole(ctx, &c.Client, desired)
 }
 
 func (c *Common) ReconcileConfigMap(ctx context.Context, old, new *corev1.ConfigMap) error {

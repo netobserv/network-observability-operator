@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -13,17 +13,33 @@ import (
 var (
 	// Add to this list any object that we used to generate in past versions, and stopped doing so.
 	// For instance, with any object that was renamed between two releases of the operator:
-	// The old version with a different name could therefor remain on the cluster after an upgrade.
+	// The old version with a different name could therefore remain on the cluster after an upgrade.
 	cleanupList = []cleanupItem{
+		// Old role bindings (1.8 and before)
 		{
-			// Old name of NetObserv grafana dashboard / configmap (noo 1.3)
-			ref:         client.ObjectKey{Name: "grafana-dashboard-netobserv", Namespace: "openshift-config-managed"},
-			placeholder: &corev1.ConfigMap{},
+			ref:         client.ObjectKey{Name: "netobserv-plugin"},
+			placeholder: &rbacv1.ClusterRoleBinding{},
+			namespaced:  false,
 		},
 		{
-			// Old name of NetObserv grafana dashboard / configmap (noo 1.5)
-			ref:         client.ObjectKey{Name: "grafana-dashboard-netobserv-flow-metrics", Namespace: "openshift-config-managed"},
-			placeholder: &corev1.ConfigMap{},
+			ref:         client.ObjectKey{Name: "flowlogs-pipeline-ingester-role-mono"},
+			placeholder: &rbacv1.ClusterRoleBinding{},
+			namespaced:  false,
+		},
+		{
+			ref:         client.ObjectKey{Name: "flowlogs-pipeline-transformer-role-mono"},
+			placeholder: &rbacv1.ClusterRoleBinding{},
+			namespaced:  false,
+		},
+		{
+			ref:         client.ObjectKey{Name: "flowlogs-pipeline-ingester-role"},
+			placeholder: &rbacv1.ClusterRoleBinding{},
+			namespaced:  false,
+		},
+		{
+			ref:         client.ObjectKey{Name: "flowlogs-pipeline-transformer-role"},
+			placeholder: &rbacv1.ClusterRoleBinding{},
+			namespaced:  false,
 		},
 	}
 	// Need to run only once, at operator startup, this is not part of the reconcile loop
@@ -33,6 +49,7 @@ var (
 type cleanupItem struct {
 	ref         client.ObjectKey
 	placeholder client.Object
+	namespaced  bool
 }
 
 func CleanPastReferences(ctx context.Context, cl client.Client, defaultNamespace string) error {
@@ -43,7 +60,7 @@ func CleanPastReferences(ctx context.Context, cl client.Client, defaultNamespace
 	log.Info("Check and clean old objects")
 	// Search for all past references to clean up. If one is found, delete it.
 	for _, item := range cleanupList {
-		if item.ref.Namespace == "" {
+		if item.ref.Namespace == "" && item.namespaced {
 			item.ref.Namespace = defaultNamespace
 		}
 		if err := cl.Get(ctx, item.ref, item.placeholder); err != nil {

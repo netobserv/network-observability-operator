@@ -1,6 +1,7 @@
 # NetObserv Operator
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/netobserv/network-observability-operator)
+[![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/NetObserv)](https://artifacthub.io/packages/helm/netobserv/netobserv-operator)
 [![Go Report Card](https://goreportcard.com/badge/github.com/netobserv/network-observability-operator)](https://goreportcard.com/report/github.com/netobserv/network-observability-operator)
 
 NetObserv Operator is a Kubernetes / OpenShift operator for network observability. It deploys a monitoring pipeline that consists in:
@@ -16,24 +17,76 @@ Flow data is then available in multiple ways, each optional:
 
 ## Getting Started
 
-You can install NetObserv Operator using [OLM](https://olm.operatorframework.io/) if it is available in your cluster, or directly from its repository.
+You can install the NetObserv Operator using [Helm](https://helm.sh/), or directly from sources.
 
-### Install with OLM
+In OpenShift, NetObserv is named Network Observability operator and can be found in OperatorHub as an OLM operator. This section does not apply to it: please refer to the [OpenShift documentation](https://docs.openshift.com/container-platform/latest/observability/network_observability/installing-operators.html) in that case.
 
 > [!IMPORTANT]
-> There hasn't been recent releases pushed to the community OperatorHub. This is mostly due to the lack of demand. Unless there is demand, going forward we only release the downstream NetObserv aka [Network Observability operator](https://docs.openshift.com/container-platform/latest/observability/network_observability/network-observability-operator-release-notes.html) for OpenShift. But there's nothing written in stone. [Let us know](https://github.com/netobserv/network-observability-operator/discussions) if you would like that to change.
+> NetObserv community was previously distributed via [OperatorHub](https://operatorhub.io/operator/netobserv-operator). This installation method is replaced with a helm chart. If you previously installed NetObserv community from OperatorHub, we recommend that you uninstall it, and re-install using the helm chart. The operation should not cause any data loss.
 
-NetObserv Operator is available in [OperatorHub](https://operatorhub.io/operator/netobserv-operator) with guided steps on how to install this. It is also available in the OperatorHub catalog directly in the OpenShift Console.
+### Pre-requisite
 
-![OpenShift OperatorHub search](./docs/assets/operatorhub-search.png)
+The following architectures are supported: amd64, arm64, ppc64le and s390x.
 
-Please read the [operator description in OLM](./config/descriptions/upstream.md).
+NetObserv has a couple of dependencies that must be installed on your cluster:
 
-After the operator is installed, create a `FlowCollector` resource:
+- Cert-manager
+- Prometheus
+- Loki
 
-![OpenShift OperatorHub FlowCollector](./docs/assets/operatorhub-flowcollector.png)
+Loki is not mandatory but improves the overall experience with NetObserv.
+If you don't have these dependencies already, some convenience scripts are available from the repository, provided for demo purpose:
 
-Refer to the [Configuration section](#configuration) of this document.
+```bash
+git clone https://github.com/netobserv/network-observability-operator.git && cd network-observability-operator
+PORT_FWD=false make deploy-prometheus deploy-loki install-cert-manager
+# (it is expected to see errors while running this script, since it runs several attempts creating a certificate for testing, before eventually succeeding)
+```
+
+### Install with Helm
+
+> [!TIP]
+> See it also on [ArtifactHub](https://artifacthub.io/packages/helm/netobserv/netobserv-operator).
+
+```bash
+helm repo add netobserv https://netobserv.io/static/helm/ --force-update
+helm install my-netobserv --set standaloneConsole.enable=true netobserv/netobserv-operator
+# If you're in OpenShift, you can omit "--set standaloneConsole.enable=true" to use the Console plugin instead.
+```
+
+You can now create a `FlowCollector` resource. Refer to the [Configuration section](#configuration) of this document. A very short `FlowCollector` should work, using default values, plus with the standalone console enabled:
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: flows.netobserv.io/v1beta2
+kind: FlowCollector
+metadata:
+  name: cluster
+spec:
+  namespace: netobserv
+  consolePlugin:
+    advanced:
+      env:
+        TEST_CONSOLE: "true"
+  prometheus:
+    querier:
+      manual:
+        url: http://prometheus:9090
+EOF
+```
+
+A few remarks:
+- While the [web console](https://github.com/netobserv/network-observability-console-plugin) is primarily designed as a plugin for the OpenShift Console, it is still possible to deploy it as a standalone, which the dev team sometimes use for testing. This is why it is mentioned as "TEST_CONSOLE" here.
+- If you're in OpenShift, you should omit "TEST_CONSOLE: true" to use the Console plugin instead, which offers a better / more integrated experience.
+- You can change the Prometheus URL depending on your installation. This example URL works if you use the `make deploy-prometheus` script from the repository. Prometheus configuration options are documented [here](./docs/FlowCollector.md#flowcollectorspecprometheus-1).
+
+To view the test console, you can port-forward 9001:
+
+```bash
+kubectl port-forward svc/netobserv-plugin 9001:9001 -n netobserv
+```
+
+Then open http://localhost:9001/ in your browser.
 
 ### Install from repository
 
@@ -216,14 +269,10 @@ Please refer to [this documentation](./DEVELOPMENT.md) for everything related to
 
 Please refer to [F.A.Q / Troubleshooting main document](./FAQ.md).
 
-## Contributions
+## Discussions and contributions
 
-This project is licensed under [Apache 2.0](./LICENSE) and accepts contributions via GitHub pull requests. Other related `netobserv` projects follow the same rules:
-- [Flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline)
-- [eBPF agent](https://github.com/netobserv/netobserv-ebpf-agent)
-- [OpenShift Console plugin](https://github.com/netobserv/network-observability-console-plugin)
+Discussions related to NetObserv are welcome on [GitHub discussions](https://github.com/orgs/netobserv/discussions) as well as on the [#netobserv-project](http://cloud-native.slack.com/) channel from CNCF slack.
 
-External contributions are welcome and can take various forms:
+If you'd like to reach out because you've found a security issue, please do not share sensitive details publicly. Please follow the instructions described on the [Red Hat Customer Portal](https://access.redhat.com/security/team/contact/?extIdCarryOver=true&sc_cid=701f2000001Css5AAC).
 
-- Providing feedback, by starting [discussions](https://github.com/netobserv/network-observability-operator/discussions) or opening [issues](https://github.com/netobserv/network-observability-operator/issues).
-- Code / doc contributions. You will [find here](./DEVELOPMENT.md) some help on how to build, run and test your code changes. Don't hesitate to [ask for help](https://github.com/netobserv/network-observability-operator/discussions/categories/q-a).
+Refer to the [NetObserv projects contribution guide](https://github.com/netobserv/documents/blob/main/CONTRIBUTING.md) for more details on contributions. You will also [find here](./DEVELOPMENT.md) some help on how to build, run and test your code changes.

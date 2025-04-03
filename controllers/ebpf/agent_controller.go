@@ -145,30 +145,6 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 		return err
 	}
 
-	if c.PreviousPrivilegedNamespace() != c.PrivilegedNamespace() {
-		c.Managed.TryDeleteAll(ctx)
-
-		if current == nil {
-			rlog.Info("nothing to do, namespace already cleaned up", "currentAgent", target.Spec.Agent)
-			return nil
-		}
-		rlog.Info("namespace cleanup: deleting eBPF agent", "currentAgent", target.Spec.Agent)
-		if helper.IsAgentFeatureEnabled(&target.Spec.Agent.EBPF, flowslatest.EbpfManager) {
-			if err := c.bpfmanDetachNetobserv(ctx); err != nil {
-				rlog.Error(err, "failed to delete bpfapplication object")
-				// continue with eBPF agent deletion
-			}
-		}
-		if err := c.Delete(ctx, current); err != nil {
-			if errors.IsNotFound(err) {
-				return nil
-			}
-			return fmt.Errorf("deleting eBPF agent: %w", err)
-		}
-		// Current now has been deleted. Set it to nil to that it triggers actionCreate if we are changing namespace
-		current = nil
-	}
-
 	if err := c.permissions.Reconcile(ctx, &target.Spec.Agent.EBPF); err != nil {
 		return fmt.Errorf("reconciling permissions: %w", err)
 	}
@@ -212,12 +188,12 @@ func (c *AgentController) current(ctx context.Context) (*v1.DaemonSet, error) {
 	agentDS := v1.DaemonSet{}
 	if err := c.Get(ctx, types.NamespacedName{
 		Name:      constants.EBPFAgentName,
-		Namespace: c.PreviousPrivilegedNamespace(),
+		Namespace: c.PrivilegedNamespace(),
 	}, &agentDS); err != nil {
 		if errors.IsNotFound(err) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("can't read DaemonSet %s/%s: %w", c.PreviousPrivilegedNamespace(), constants.EBPFAgentName, err)
+		return nil, fmt.Errorf("can't read DaemonSet %s/%s: %w", c.PrivilegedNamespace(), constants.EBPFAgentName, err)
 	}
 	return &agentDS, nil
 }
@@ -292,7 +268,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		volumeMount := corev1.VolumeMount{
 			Name:             bpfNetNSMountName,
 			MountPath:        bpfNetNSMountPath,
-			MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+			MountPropagation: newMountPropagationMode(corev1.MountPropagationHostToContainer),
 		}
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
@@ -314,7 +290,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 			volumeMount := corev1.VolumeMount{
 				Name:             bpfTraceMountName,
 				MountPath:        bpfTraceMountPath,
-				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+				MountPropagation: newMountPropagationMode(corev1.MountPropagationHostToContainer),
 			}
 			volumeMounts = append(volumeMounts, volumeMount)
 		}
@@ -339,7 +315,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 			volumeMount := corev1.VolumeMount{
 				Name:             ovnObservMountName,
 				MountPath:        ovnObservMountPath,
-				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+				MountPropagation: newMountPropagationMode(corev1.MountPropagationHostToContainer),
 			}
 			volumeMounts = append(volumeMounts, volumeMount)
 
@@ -356,7 +332,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 			volumeMount = corev1.VolumeMount{
 				Name:             ovsMountName,
 				MountPath:        ovsMountPath,
-				MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+				MountPropagation: newMountPropagationMode(corev1.MountPropagationHostToContainer),
 			}
 			volumeMounts = append(volumeMounts, volumeMount)
 		}
@@ -379,7 +355,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		volumeMount := corev1.VolumeMount{
 			Name:             bpfmanMapsVolumeName,
 			MountPath:        bpfManBpfFSPath,
-			MountPropagation: newMountPropagationMode(corev1.MountPropagationBidirectional),
+			MountPropagation: newMountPropagationMode(corev1.MountPropagationHostToContainer),
 		}
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
@@ -502,10 +478,10 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 		})
 	}
 
-	if helper.IsEBFPFlowFilterEnabled(&coll.Spec.Agent.EBPF) {
+	if helper.IsEBPFFlowFilterEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{Name: envEnableFlowFilter, Value: "true"})
-		if len(coll.Spec.Agent.EBPF.FlowFilter.FlowFilterRules) != 0 {
-			if filterRules := c.configureFlowFiltersRules(coll.Spec.Agent.EBPF.FlowFilter.FlowFilterRules); filterRules != nil {
+		if len(coll.Spec.Agent.EBPF.FlowFilter.Rules) != 0 {
+			if filterRules := c.configureFlowFiltersRules(coll.Spec.Agent.EBPF.FlowFilter.Rules); filterRules != nil {
 				config = append(config, filterRules...)
 			}
 		} else {

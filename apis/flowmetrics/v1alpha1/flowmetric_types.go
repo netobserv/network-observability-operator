@@ -93,7 +93,7 @@ type FlowMetricSpec struct {
 	// +optional
 	Labels []string `json:"labels"`
 
-	// `flatten` is a list of list-type fields that must be flattened, such as Interfaces and NetworkEvents. Flattened fields generate one metric per item in that field.
+	// `flatten` is a list of array-type fields that must be flattened, such as Interfaces or NetworkEvents. Flattened fields generate one metric per item in that field.
 	// For instance, when flattening `Interfaces` on a bytes counter, a flow having Interfaces [br-ex, ens5] increases one counter for `br-ex` and another for `ens5`.
 	// +optional
 	Flatten []string `json:"flatten"`

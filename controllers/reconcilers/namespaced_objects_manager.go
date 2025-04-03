@@ -18,10 +18,9 @@ import (
 
 // NamespacedObjectManager provides some helpers to manage (fetch, delete) namespace-scoped objects
 type NamespacedObjectManager struct {
-	client            client.Client
-	Namespace         string
-	PreviousNamespace string
-	managedObjects    []managedObject
+	client         client.Client
+	Namespace      string
+	managedObjects []managedObject
 }
 
 type managedObject struct {
@@ -33,9 +32,8 @@ type managedObject struct {
 
 func NewNamespacedObjectManager(cmn *Common) *NamespacedObjectManager {
 	return &NamespacedObjectManager{
-		client:            cmn.Client,
-		Namespace:         cmn.Namespace,
-		PreviousNamespace: cmn.PreviousNamespace,
+		client:    cmn.Client,
+		Namespace: cmn.Namespace,
 	}
 }
 
@@ -104,6 +102,12 @@ func (m *NamespacedObjectManager) NewCRB(name string) *rbacv1.ClusterRoleBinding
 	return &crb
 }
 
+func (m *NamespacedObjectManager) NewRB(name string) *rbacv1.RoleBinding {
+	rb := rbacv1.RoleBinding{}
+	m.AddManagedObject(name, &rb)
+	return &rb
+}
+
 // FetchAll fetches all managed objects (registered using AddManagedObject) in the current namespace.
 // Placeholders are filled with fetched resources. Resources not found are flagged internally.
 func (m *NamespacedObjectManager) FetchAll(ctx context.Context) error {
@@ -134,25 +138,6 @@ func (m *NamespacedObjectManager) FetchAll(ctx context.Context) error {
 		log.Info("(Items not deployed: " + strings.Join(notFound, ",") + ")")
 	}
 	return nil
-}
-
-// CleanupPreviousNamespace removes all managed objects (registered using AddManagedObject) from the previous namespace.
-func (m *NamespacedObjectManager) CleanupPreviousNamespace(ctx context.Context) {
-	m.cleanup(ctx, m.PreviousNamespace)
-}
-
-func (m *NamespacedObjectManager) cleanup(ctx context.Context, namespace string) {
-	log := log.FromContext(ctx)
-	for _, obj := range m.managedObjects {
-		ref := obj.placeholder.DeepCopyObject().(client.Object)
-		ref.SetName(obj.name)
-		ref.SetNamespace(namespace)
-		log.Info("DELETING "+obj.kind, "Namespace", namespace, "Name", obj.name)
-		err := m.client.Delete(ctx, ref)
-		if client.IgnoreNotFound(err) != nil {
-			log.Error(err, "Failed to delete old "+obj.kind, "Namespace", namespace, "Name", obj.name)
-		}
-	}
 }
 
 // TryDeleteAll is an helper function that tries to delete all managed objects previously loaded using FetchAll.

@@ -118,12 +118,15 @@ func ControllerFlowMetricsSpecs() {
 
 			By("Expecting flowlogs-pipeline-config-dynamic configmap to be created")
 			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, dcmKey, &dcm)
-			}, timeout, interval).Should(Succeed())
-
-			metrics, err := getConfiguredMetrics(&dcm)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(metrics).To(HaveLen(5)) // only default metrics
+				if err := k8sClient.Get(ctx, dcmKey, &dcm); err != nil {
+					return err
+				}
+				metrics, err := getConfiguredMetrics(&dcm)
+				if err != nil {
+					return err
+				}
+				return metrics
+			}, timeout, interval).Should(HaveLen(5)) // only default metrics
 		})
 	})
 
@@ -165,9 +168,9 @@ func ControllerFlowMetricsSpecs() {
 				return metric1.Status.Conditions
 			}, timeout, interval).Should(Satisfy(func(conds []metav1.Condition) bool {
 				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
-				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
+				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityWarning)
 				// Metrics 1 has cardinality FINE (no label)
-				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionTrue &&
+				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionFalse &&
 					ready.Reason == "Ready" && card.Reason == string(cardinality.WarnFine)
 			}))
 
@@ -180,8 +183,8 @@ func ControllerFlowMetricsSpecs() {
 			}, timeout, interval).Should(Satisfy(func(conds []metav1.Condition) bool {
 				// Metrics 2 has cardinality AVOID (Addr label)
 				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
-				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
-				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionFalse &&
+				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityWarning)
+				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionTrue &&
 					ready.Reason == "Ready" && card.Reason == string(cardinality.WarnAvoid)
 			}))
 
@@ -194,8 +197,8 @@ func ControllerFlowMetricsSpecs() {
 			}, timeout, interval).Should(Satisfy(func(conds []metav1.Condition) bool {
 				// Metrics 3 has cardinality FINE (NetworkEvents nested labels)
 				ready := meta.FindStatusCondition(conds, fmstatus.ConditionReady)
-				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityOK)
-				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionTrue &&
+				card := meta.FindStatusCondition(conds, fmstatus.ConditionCardinalityWarning)
+				return ready != nil && card != nil && ready.Status == metav1.ConditionTrue && card.Status == metav1.ConditionFalse &&
 					ready.Reason == "Ready" && card.Reason == string(cardinality.WarnFine)
 			}))
 		})

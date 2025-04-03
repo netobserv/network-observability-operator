@@ -123,6 +123,7 @@ var (
 		TypeCounter,
 		"component",
 		"error",
+		"severity",
 	)
 	flowEnrichmentCounterCounter = defineMetric(
 		"flows_enrichment_total",
@@ -307,6 +308,14 @@ type ErrorCounter struct {
 	vec *prometheus.CounterVec
 }
 
-func (c *ErrorCounter) WithErrorName(component, errName string) prometheus.Counter {
-	return c.vec.WithLabelValues(component, errName)
+type ErrorSeverity string
+
+const (
+	HighSeverity   ErrorSeverity = "high"
+	MediumSeverity ErrorSeverity = "medium"
+	LowSeverity    ErrorSeverity = "low"
+)
+
+func (c *ErrorCounter) WithErrorName(component, errName string, severity ErrorSeverity) prometheus.Counter {
+	return c.vec.WithLabelValues(component, errName, string(severity))
 }

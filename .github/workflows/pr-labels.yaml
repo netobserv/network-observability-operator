@@ -1,0 +1,17 @@
+name: Pull request labels
+on:
+  pull_request_target:
+    types: [opened]
+
+jobs:
+  pr-labels:
+    if: ${{ github.event.pull_request.user.login == 'red-hat-konflux[bot]' }}
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+    - run: gh pr edit "$NUMBER" --add-label "dependencies"
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_REPO: ${{ github.repository }}
+        NUMBER: ${{ github.event.pull_request.number }}

@@ -12,17 +12,17 @@ IMAGE_ORG ?= $(USER)
 REPO ?= quay.io/$(IMAGE_ORG)
 
 # Component versions to use in bundle / release (do not use $VERSION for that)
-PREVIOUS_VERSION ?= v1.6.0-community
+PREVIOUS_VERSION ?= v1.8.1-community
 
-BUNDLE_VERSION ?= 1.6.1-community
+BUNDLE_VERSION ?= 1.8.2-community
 #File based catalog
-FBC_VERSION ?= 1.6.1-community
+FBC_VERSION ?= 1.8.2-community
 # console plugin
-export PLG_VERSION ?= v1.6.1-community
+export PLG_VERSION ?= v1.8.2-community
 # flowlogs-pipeline
-export FLP_VERSION ?= v1.6.1-community
+export FLP_VERSION ?= v1.8.2-community
 # eBPF agent
-export BPF_VERSION ?= v1.6.1-community
+export BPF_VERSION ?= v1.8.2-community
 
 # Allows building bundles in Mac replacing BSD 'sed' command by GNU-compatible 'gsed'
 ifeq (,$(shell which gsed 2>/dev/null))
@@ -65,11 +65,6 @@ IMAGE_TAG_BASE ?= $(REPO)/network-observability-operator
 # BUNDLE_IMAGE defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMAGE=<some-registry>/<project-name-bundle>:<tag>)
 BUNDLE_IMAGE ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
-
-
-# FBC_IMAGE defines the image:tag used for the file based catalog.
-# You can use it as an arg. (E.g make bundle-build FBC_IMAGE=<some-registry>/<project-name-fbc>:<tag>)
-FBC_IMAGE ?= $(IMAGE_TAG_BASE)-fbc:v$(FBC_VERSION)
 
 # BUNDLE_CONFIG is the config sources to use for OLM bundle - "config/openshift-olm" for OpenShift, or "config/k8s-olm" for upstream Kubernetes.
 BUNDLE_CONFIG ?= config/openshift-olm
@@ -179,7 +174,7 @@ ifeq (,$(shell which opm 2>/dev/null))
 	set -e ;\
 	mkdir -p $(dir $(OPM)) ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.45.0/$${OS}-$${ARCH}-opm ;\
+	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.50.0/$${OS}-$${ARCH}-opm ;\
 	chmod +x $(OPM) ;\
 	}
 else
@@ -422,6 +417,7 @@ bundle: bundle-prepare ## Generate final bundle files.
 update-bundle: VERSION=$(BUNDLE_VERSION)
 update-bundle: IMAGE_ORG=netobserv
 update-bundle: bundle ## Prepare a clean bundle to be commited
+	$(MAKE) helm-update
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
@@ -433,14 +429,6 @@ bundle-build: ## Build the bundle image.
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
 	$(OCI_BIN) push ${BUNDLE_IMAGE};
-
-.PHONY: file-based-catalog-build
-file-based-catalog-build: ## Build the bundle image.
-	$(OCI_BIN) build $(OCI_BUILD_OPTS) -f catalog.Dockerfile -t $(FBC_IMAGE) .
-
-.PHONY: file-based-catalog-push
-file-based-catalog-push: ## Push the bundle image.
-	$(OCI_BIN) push ${FBC_IMAGE};
 
 # A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMAGES=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
@@ -454,16 +442,17 @@ ifneq ($(origin CATALOG_BASE_IMAGE), undefined)
 FROM_INDEX_OPT := --from-index $(CATALOG_BASE_IMAGE)
 endif
 
+.PHONY: refresh-prod-catalogs
+refresh-prod-catalogs: opm YQ ## Refresh FBC from production catalogs. Set REGISTRY_AUTH_FILE=/path/to/pull-secret.json for authentication.
+	YQ=$(YQ) OPM=$(OPM) ./hack/refresh-redhat-catalog.sh
+
 # Build a catalog image by adding bundle images to an empty catalog using the operator package manager tool, 'opm'.
 # This recipe invokes 'opm' in 'semver' bundle add mode. For more information on add modes, see:
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
 .PHONY: catalog-build
 catalog-build: opm ## Build a catalog image.
-	$(OPM) index add --container-tool ${OCI_BIN} --mode semver --tag $(CATALOG_IMAGE) --bundles $(BUNDLE_IMAGES) $(FROM_INDEX_OPT) $(OPM_OPTS)
-
-.PHONY: file-based-catalog-update
-file-based-catalog-update: opm ## Build a catalog image.
-	OPM=$(OPM) BUNDLE_IMAGE=$(BUNDLE_IMAGE) BUNDLE_TAG="v$(BUNDLE_VERSION)" ./hack/update_fbc.sh
+	OPM=$(OPM) BUNDLE_IMAGE=$(BUNDLE_IMAGE) BUNDLE_TAG="v$(BUNDLE_VERSION)" IS_DOWNSTREAM=$(IS_DOWNSTREAM) ./hack/update_fbc.sh
+	$(OCI_BIN) build $(OCI_BUILD_OPTS) --build-arg CATALOG_PATH="catalog/unreleased/v$(BUNDLE_VERSION)" -f catalog.Dockerfile -t $(CATALOG_IMAGE) .
 
 shortlived-catalog-build: ## Build a temporary catalog image, expiring after 2 weeks on quay
 	$(MAKE) catalog-build CATALOG_IMAGE=temp-catalog
@@ -493,12 +482,15 @@ test-workflow: ## Run some tests on this Makefile and the github workflow
 .PHONY: related-release-notes
 related-release-notes: ## Grab release notes for related components (to be inserted in operator's release note upstream, cf RELEASE.md)
 	echo -e "## Related components\n\n" > /tmp/related.md
-	echo -e "### eBPF Agent\n\n" >> /tmp/related.md
-	curl -s  https://api.github.com/repos/netobserv/netobserv-ebpf-agent/releases/tags/$(BPF_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/####/" >> /tmp/related.md
-	echo -e "### Flowlogs-Pipeline\n\n" >> /tmp/related.md
-	curl -s  https://api.github.com/repos/netobserv/flowlogs-pipeline/releases/tags/$(FLP_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/####/" >> /tmp/related.md
-	echo -e "### Console Plugin\n\n" >> /tmp/related.md
-	curl -s  https://api.github.com/repos/netobserv/network-observability-console-plugin/releases/tags/$(PLG_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/####/" >> /tmp/related.md
+	echo -e "<details><summary><b>eBPF Agent</b></summary>\n\n" >> /tmp/related.md
+	curl -s  https://api.github.com/repos/netobserv/netobserv-ebpf-agent/releases/tags/$(BPF_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/###/" >> /tmp/related.md
+	echo -e "</details>\n" >> /tmp/related.md
+	echo -e "<details><summary><b>Flowlogs-Pipeline</b></summary>\n\n" >> /tmp/related.md
+	curl -s  https://api.github.com/repos/netobserv/flowlogs-pipeline/releases/tags/$(FLP_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/###/" >> /tmp/related.md
+	echo -e "</details>\n" >> /tmp/related.md
+	echo -e "<details><summary><b>Console Plugin</b></summary>\n\n" >> /tmp/related.md
+	curl -s  https://api.github.com/repos/netobserv/network-observability-console-plugin/releases/tags/$(PLG_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/###/" >> /tmp/related.md
+	echo -e "</details>\n" >> /tmp/related.md
 	wl-copy < /tmp/related.md
 	cat /tmp/related.md
 	echo -e "\nText has been copied to the clipboard.\n"
@@ -525,6 +517,14 @@ endif
 
 	@echo ""
 	@echo "Everything is ready to be pushed. Before that, you should compare the content of $(BUNDLE_VERSION) with $(PREVIOUS_VERSION) to make sure it looks correct."
+
+# Update helm templates
+.PHONY: helm-update
+helm-update: YQ ## Update helm template
+	sed -i -r 's/appVersion:.*/appVersion: $(BUNDLE_VERSION)/g' helm/Chart.yaml
+	sed -i -r 's/version:.*/version: $(BUNDLE_VERSION:%-community=%)/g' helm/Chart.yaml
+	hack/helm-update.sh
+	cp LICENSE helm/
 
 include .mk/sample.mk
 include .mk/development.mk

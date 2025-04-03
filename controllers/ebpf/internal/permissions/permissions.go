@@ -3,12 +3,11 @@ package permissions
 import (
 	"context"
 	"fmt"
-
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-
+	"github.com/netobserv/network-observability-operator/pkg/resources"
 	osv1 "github.com/openshift/api/security/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -18,6 +17,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+// AllowedCapabilities description of what capabilities netobserv requires when running w/o ebpf manager
+// BPF: Allows netobserv to use eBPF programs and maps.
+// PERFMON: Allows access to perf monitoring and profiling features.
+// NET_ADMIN: required for TC programs to attach/detach to/from qdisc and for TCX hooks.
+// SYS_RESOURCE: allows a process to override resource limits and manage system-wide resource usage.
 var AllowedCapabilities = []v1.Capability{"BPF", "PERFMON", "NET_ADMIN", "SYS_RESOURCE"}
 
 // Reconciler reconciles the different resources to enable the privileged operation of the
@@ -50,11 +54,6 @@ func (c *Reconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCol
 
 func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 	ns := c.PrivilegedNamespace()
-	if ns != c.PreviousPrivilegedNamespace() {
-		if err := c.cleanupPreviousNamespace(ctx); err != nil {
-			return err
-		}
-	}
 	rlog := log.FromContext(ctx, "PrivilegedNamespace", ns)
 	actual := &v1.Namespace{}
 	if err := c.Get(ctx, client.ObjectKey{Name: ns}, actual); err != nil {
@@ -74,6 +73,12 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 		rlog.Info("creating namespace")
 		return c.CreateOwned(ctx, desired)
 	}
+
+	binding := resources.GetExposeMetricsRoleBinding(ns)
+	if err := c.ReconcileRoleBinding(ctx, binding); err != nil {
+		return err
+	}
+
 	// We noticed that audit labels are automatically removed
 	// in some configurations of K8s, so to avoid an infinite update loop, we just ignore
 	// it (if the user removes it manually, it's at their own risk)
@@ -160,6 +165,10 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 	} else {
 		scc.AllowedCapabilities = AllowedCapabilities
 	}
+	if helper.IsEbpfManagerEnabled(desired) {
+		rlog.Info("Using Ebpf Manager setting up custom SecurityContextConstraints")
+		scc.RequiredDropCapabilities = []v1.Capability{"ALL"}
+	}
 	actual := &osv1.SecurityContextConstraints{}
 	if err := c.Get(ctx, client.ObjectKeyFromObject(scc), actual); err != nil {
 		if errors.IsNotFound(err) {
@@ -178,52 +187,12 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 		!equality.Semantic.DeepDerivative(&scc.Users, &actual.Users) ||
 		scc.AllowPrivilegedContainer != actual.AllowPrivilegedContainer ||
 		scc.AllowHostDirVolumePlugin != actual.AllowHostDirVolumePlugin ||
+		!equality.Semantic.DeepDerivative(&scc.RequiredDropCapabilities, &actual.RequiredDropCapabilities) ||
 		!equality.Semantic.DeepDerivative(&scc.AllowedCapabilities, &actual.AllowedCapabilities) {
 
 		rlog.Info("updating SecurityContextConstraints")
 		return c.UpdateIfOwned(ctx, actual, scc)
 	}
 	rlog.Info("SecurityContextConstraints already reconciled. Doing nothing")
-	return nil
-}
-
-func (c *Reconciler) cleanupPreviousNamespace(ctx context.Context) error {
-	rlog := log.FromContext(ctx, "PreviousPrivilegedNamespace", c.PreviousPrivilegedNamespace())
-
-	// Delete service account
-	if err := c.Delete(ctx, &v1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.EBPFServiceAccount,
-			Namespace: c.PreviousPrivilegedNamespace(),
-		},
-	}); err != nil {
-		if errors.IsNotFound(err) {
-			return nil
-		}
-		return fmt.Errorf("deleting eBPF agent ServiceAccount: %w", err)
-	}
-	// Do not delete SCC as it's not namespace-scoped (it will be reconciled "as usual")
-
-	previous := &v1.Namespace{}
-	if err := c.Get(ctx, client.ObjectKey{Name: c.PreviousPrivilegedNamespace()}, previous); err != nil {
-		if errors.IsNotFound(err) {
-			// Not found => return without error
-			rlog.Info("Previous privileged namespace not found, skipping cleanup")
-			return nil
-		}
-		return fmt.Errorf("can't retrieve previous namespace: %w", err)
-	}
-	// Make sure we own that namespace
-	if helper.IsOwned(previous) {
-		rlog.Info("Owning previous privileged namespace: deleting it")
-		if err := c.Delete(ctx, previous); err != nil {
-			if errors.IsNotFound(err) {
-				return nil
-			}
-			return fmt.Errorf("deleting privileged namespace: %w", err)
-		}
-	} else {
-		rlog.Info("Not owning previous privileged namespace: delete related content only")
-	}
 	return nil
 }

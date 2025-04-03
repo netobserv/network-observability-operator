@@ -31,7 +31,7 @@ undeploy-loki-tls:
 .PHONY: deploy-loki-tls
 deploy-loki-tls:
 	@echo -e "\n==> Deploy tls loki"
-	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
+	kubectl create namespace $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
 	kubectl config set-context --current --namespace=$(NAMESPACE)
 	curl -S -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/1-storage.yaml | kubectl create -f - || true
 	curl -S -L https://raw.githubusercontent.com/netobserv/documents/main/examples/zero-click-loki/2-loki-tls.yaml	 | kubectl create -f - || true
@@ -119,6 +119,8 @@ undeploy-all: undeploy-infra undeploy-sample-cr undeploy-sample-workload
 .PHONY: deploy-prometheus
 deploy-prometheus: ## Deploy prometheus.
 	@echo -e "\n==> Deploy prometheus"
+	kubectl create namespace $(NAMESPACE) || true
+	kubectl config set-context --current --namespace=$(NAMESPACE)
 	kubectl apply -f config/kind/deployment-prometheus.yaml
 	kubectl rollout status "deploy/prometheus" --timeout=600s
 	-pkill --oldest --full "9090:9090"

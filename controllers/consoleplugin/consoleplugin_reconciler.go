@@ -18,6 +18,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
+	"github.com/netobserv/network-observability-operator/pkg/resources"
 )
 
 // Type alias
@@ -49,11 +50,6 @@ func NewReconciler(cmn *reconcilers.Instance) CPReconciler {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(constants.PluginName)
 	}
 	return rec
-}
-
-// CleanupNamespace cleans up old namespace
-func (r *CPReconciler) CleanupNamespace(ctx context.Context) {
-	r.Managed.CleanupPreviousNamespace(ctx)
 }
 
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
@@ -146,13 +142,14 @@ func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builde
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // update not needed for now
 
-	cr := buildClusterRole()
-	if err := r.ReconcileClusterRole(ctx, cr); err != nil {
-		return err
-	}
-
-	desired := builder.clusterRoleBinding()
-	return r.ReconcileClusterRoleBinding(ctx, desired)
+	binding := resources.GetClusterRoleBinding(
+		r.Namespace,
+		constants.PluginShortName,
+		constants.PluginName,
+		constants.PluginName,
+		constants.ConsoleTokenReviewRole,
+	)
+	return r.ReconcileClusterRoleBinding(ctx, binding)
 }
 
 func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec) error {

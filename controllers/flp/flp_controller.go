@@ -10,10 +10,8 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/flp/fmstatus"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
-	"github.com/netobserv/network-observability-operator/pkg/helper/loki"
 	"github.com/netobserv/network-observability-operator/pkg/manager"
 	"github.com/netobserv/network-observability-operator/pkg/manager/status"
-	"github.com/netobserv/network-observability-operator/pkg/resources"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
 	configv1 "github.com/openshift/api/config/v1"
 	"gopkg.in/yaml.v2"
@@ -76,7 +74,6 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 
 type subReconciler interface {
 	context(context.Context) context.Context
-	cleanupNamespace(context.Context)
 	reconcile(context.Context, *flowslatest.FlowCollector, *metricslatest.FlowMetricList, []flowslatest.SubnetLabel) error
 	getStatus() *status.Instance
 }
@@ -120,7 +117,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	r.currentNamespace = ns
 	previousNamespace := r.status.GetDeployedNamespace(fc)
 	loki := helper.NewLokiConfig(&fc.Spec.Loki, ns)
-	cmn := r.newCommonInfo(clh, ns, previousNamespace, &loki)
+	cmn := r.newCommonInfo(clh, ns, &loki)
 
 	r.watcher.Reset(ns)
 
@@ -152,17 +149,11 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	// `reconcilers.Common` is dependent on the FlowCollector object, which isn't known at start time.
 	reconcilers := []subReconciler{
 		newMonolithReconciler(cmn.NewInstance([]string{r.mgr.Config.FlowlogsPipelineImage}, r.mgr.Status.ForComponent(status.FLPMonolith))),
-		newTransformerReconciler(cmn.NewInstance([]string{r.mgr.Config.FlowlogsPipelineImage}, r.mgr.Status.ForComponent(status.FLPTransformOnly))),
+		newTransformerReconciler(cmn.NewInstance([]string{r.mgr.Config.FlowlogsPipelineImage}, r.mgr.Status.ForComponent(status.FLPTransformer))),
 	}
 
 	// Check namespace changed
 	if ns != previousNamespace {
-		if previousNamespace != "" {
-			log.Info("FlowCollector namespace change detected: cleaning up previous namespace", "old", previousNamespace, "new", ns)
-			for _, sr := range reconcilers {
-				sr.cleanupNamespace(sr.context(ctx))
-			}
-		}
 		// Update namespace in status
 		if err := r.status.SetDeployedNamespace(ctx, r.Client, ns); err != nil {
 			return r.status.Error("ChangeNamespaceError", err)
@@ -178,15 +169,14 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	return nil
 }
 
-func (r *Reconciler) newCommonInfo(clh *helper.Client, ns, prevNs string, loki *helper.LokiConfig) reconcilers.Common {
+func (r *Reconciler) newCommonInfo(clh *helper.Client, ns string, loki *helper.LokiConfig) reconcilers.Common {
 	return reconcilers.Common{
-		Client:            *clh,
-		Namespace:         ns,
-		PreviousNamespace: prevNs,
-		ClusterInfo:       r.mgr.ClusterInfo,
-		Watcher:           r.watcher,
-		Loki:              loki,
-		IsDownstream:      r.mgr.Config.DownstreamDeployment,
+		Client:       *clh,
+		Namespace:    ns,
+		ClusterInfo:  r.mgr.ClusterInfo,
+		Watcher:      r.watcher,
+		Loki:         loki,
+		IsDownstream: r.mgr.Config.DownstreamDeployment,
 	}
 }
 
@@ -242,27 +232,6 @@ func reconcileMonitoringCerts(ctx context.Context, info *reconcilers.Common, tls
 	}
 
 	return nil
-}
-
-func reconcileDataAccessRoles(ctx context.Context, r *reconcilers.Common, b *builder) error {
-	if helper.UseLoki(b.desired) && b.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
-		roles, bindings := loki.ClusterRoles(b.name(), b.name(), b.info.Namespace)
-		if len(roles) > 0 {
-			for i := range roles {
-				if err := r.ReconcileClusterRole(ctx, &roles[i]); err != nil {
-					return err
-				}
-			}
-			for i := range bindings {
-				if err := r.ReconcileClusterRoleBinding(ctx, &bindings[i]); err != nil {
-					return err
-				}
-			}
-		}
-	}
-	// Install netobserv-metrics-reader role
-	cr := resources.PromReaderCR()
-	return r.ReconcileClusterRole(ctx, &cr)
 }
 
 func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.SubnetLabel, error) {

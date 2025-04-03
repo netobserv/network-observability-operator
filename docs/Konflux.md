@@ -6,20 +6,14 @@
 
 ## Links
 
-Usefull links
+Useful links
 
-[Netobserv konflux console](https://console.redhat.com/application-pipeline/workspaces/ocp-network-observab/applications)
-
-[Konflux documentation](https://gitlab.cee.redhat.com/konflux/docs/users)
-
-[Konflux build task reference](https://github.com/konflux-ci/build-definitions/tree/main/task) contains the definitions of tasks that can be used in konflux pipeline
-
-[Konflux release configuration](https://gitlab.cee.redhat.com/releng/konflux-release-data) contains release configuration
-
-[Konflux sample project](https://github.com/konflux-ci/olm-operator-konflux-sample) is a sample project built as an example on how to use konflux
-
-[Lightspeed operator](https://github.com/openshift/lightspeed-operator/blob/main/.tekton/fbc-v4-15-pull-request.yaml) probably one of the first project to release with konflux
-
+- [NetObserv konflux console](https://console.redhat.com/application-pipeline/workspaces/ocp-network-observab/applications)
+- [Konflux documentation](https://konflux.pages.redhat.com/docs/users/)
+- [Konflux build task reference](https://github.com/konflux-ci/build-definitions/tree/main/task) contains the definitions of tasks that can be used in konflux pipeline
+- [Konflux release configuration](https://gitlab.cee.redhat.com/releng/konflux-release-data) contains release configuration
+- [Konflux sample project](https://github.com/konflux-ci/olm-operator-konflux-sample) is a sample project built as an example on how to use konflux
+- [Lightspeed operator](https://github.com/openshift/lightspeed-operator/blob/main/.tekton/fbc-v4-15-pull-request.yaml) probably one of the first project to release with konflux
 
 ## Builds
 
@@ -48,47 +42,66 @@ Konflux will regulary create new pull requests, there are three categories :
 
 ## Deploying
 
-The FBC image can be added as a CatalogSource
+An `ImageDigestMirrorSet` is required:
 
-> apiVersion: operators.coreos.com/v1alpha1
-> kind: CatalogSource
-> metadata:
->   name: netobserv-konflux
->   namespace: openshift-marketplace
-> spec:
->   displayName: netobserv-konflux
->   image: 'quay.io/repository/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-fbc:latest'
->   publisher: Netobserv team
->   sourceType: grpc
+```yaml
+apiVersion: config.openshift.io/v1
+kind: ImageDigestMirrorSet
+metadata:
+  name: netobserv
+spec:
+  imageDigestMirrors:
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator
+      source: registry.redhat.io/network-observability/network-observability-rhel9-operator
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline
+      source: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/netobserv-ebpf-agent
+      source: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-console-plugin
+      source: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-cli-container
+      source: registry.redhat.io/network-observability/network-observability-cli-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-bundle
+      source: registry.redhat.io/network-observability/network-observability-operator-bundle
+```
 
-An `ImageDigestMirrorSet` is then required
+The testing FBC image can be added as a CatalogSource:
 
-> apiVersion: config.openshift.io/v1
-> kind: ImageDigestMirrorSet
-> metadata:
->   name: netobserv
-> spec:
->   imageDigestMirrors:
->     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator
->       source: registry.redhat.io/network-observability/network-observability-rhel9-operator
->     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/flowlogs-pipeline
->       source: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9
->     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-ebpf-agent
->       source: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9
->     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin
->       source: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9
->     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-cli
->       source: registry.redhat.io/network-observability/network-observability-cli-rhel9
->     - mirrors:
->       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle
->       source: registry.redhat.io/network-observability/network-observability-operator-bundle
+```yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: netobserv-konflux
+  namespace: openshift-marketplace
+spec:
+  displayName: netobserv-konflux
+  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc:latest'
+  publisher: Netobserv team
+  sourceType: grpc
+```
 
-## Release
+or, using a pinned FBC candidate bound to a specific release of OCP (here an example for 4.14) :
+
+```yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: netobserv-candidate-konflux
+  namespace: openshift-marketplace
+spec:
+  displayName: netobserv-candidate-konflux
+  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/fbc-v4-14:on-pr-e4100cd49d5794f0fe76f00546e23dd2559b387f'
+  publisher: Netobserv team
+  sourceType: grpc
+```
+
+## Release pipeline setup
 
 [Konflux release configuration](https://gitlab.cee.redhat.com/releng/konflux-release-data) define the release process for konflux built projects.
 
@@ -99,7 +112,7 @@ For new releases two differents directory are important :
 
 To be able to see release pipeline, a read access to the `rhtap-releng` namespace is required, this access must be requested in the konflux-user slack channel.
 
-## Branching
+### Branching
 
 After creating a new release branch, the following steps need to be done:
 - create a new konflux component
@@ -108,7 +121,26 @@ After creating a new release branch, the following steps need to be done:
 - creating the new `ReleasePlanAdmission` objects, one for staging one for production
 - creating the new `ReleasePlan` objects, one for staging, one for production, note that the `auto-release` label in the production file must be false
 
-Once it is ready to be released, a new `Release` objects needs to be created to trigger the production release pipeline.
+## Release
+
+Once it is ready to be released, a new `Release` object needs to be created to trigger the production release pipeline:
+
+```yaml
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: release-netobserv-1-8-0-0                      # name+version - last digit is the attempt number, in case you need to retry
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'  # your konflux / redhat user
+spec:
+  releasePlan: netobserv-1-8
+  snapshot: netobserv-operator-1-8-9ms9w               # the validated snapshot
+```
+
+It must be created on the OCP instance that runs Konflux (ask for the address if you don't have it).
+
+For the record, store the created Release in the `releases` directory of this repo.
 
 ## After release
 

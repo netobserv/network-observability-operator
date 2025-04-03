@@ -17,7 +17,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
 )
 
@@ -42,7 +41,7 @@ func flowCollectorConsolePluginSpecs() {
 	consoleCRKey := types.NamespacedName{
 		Name: "cluster",
 	}
-	rbKeyPlugin := types.NamespacedName{Name: constants.PluginName}
+	rbKeyPlugin := types.NamespacedName{Name: "netobserv-token-review-plugin"}
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
@@ -159,7 +158,7 @@ func flowCollectorConsolePluginSpecs() {
 			}, timeout, interval).Should(Succeed())
 			Expect(rb.Subjects).Should(HaveLen(1))
 			Expect(rb.Subjects[0].Name).Should(Equal("netobserv-plugin"))
-			Expect(rb.RoleRef.Name).Should(Equal("netobserv-plugin"))
+			Expect(rb.RoleRef.Name).Should(Equal("netobserv-token-review"))
 		})
 
 		It("Should update successfully", func() {
@@ -354,52 +353,6 @@ func flowCollectorConsolePluginSpecs() {
 				_ = k8sClient.Get(ctx, cpKey, &svcAcc)
 				return &svcAcc
 			}, timeout, interval).Should(BeGarbageCollectedBy(flowCR))
-		})
-	})
-
-	Context("Changing namespace", func() {
-		const otherNamespace = "other-namespace"
-		cpKey2 := types.NamespacedName{
-			Name:      "netobserv-plugin",
-			Namespace: otherNamespace,
-		}
-
-		It("Should update namespace successfully", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Namespace = otherNamespace
-			})
-		})
-
-		It("Should redeploy console plugin in new namespace", func() {
-			By("Expecting deployment in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, cpKey, &appsv1.Deployment{})
-			}, timeout, interval).Should(MatchError(`deployments.apps "netobserv-plugin" not found`))
-
-			By("Expecting service in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, cpKey, &v1.Service{})
-			}, timeout, interval).Should(MatchError(`services "netobserv-plugin" not found`))
-
-			By("Expecting service account in previous namespace to be deleted")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, cpKey, &v1.ServiceAccount{})
-			}, timeout, interval).Should(MatchError(`serviceaccounts "netobserv-plugin" not found`))
-
-			By("Expecting deployment to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, cpKey2, &appsv1.Deployment{})
-			}, timeout, interval).Should(Succeed())
-
-			By("Expecting service to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, cpKey2, &v1.Service{})
-			}, timeout, interval).Should(Succeed())
-
-			By("Expecting service account to be created in new namespace")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, cpKey2, &v1.ServiceAccount{})
-			}, timeout, interval).Should(Succeed())
 		})
 	})
 

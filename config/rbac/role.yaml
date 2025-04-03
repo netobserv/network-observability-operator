@@ -4,10 +4,6 @@ kind: ClusterRole
 metadata:
   name: manager-role
 rules:
-- nonResourceURLs:
-  - /metrics
-  verbs:
-  - get
 - apiGroups:
   - ""
   resources:
@@ -79,12 +75,6 @@ rules:
   - list
   - watch
 - apiGroups:
-  - authentication.k8s.io
-  resources:
-  - tokenreviews
-  verbs:
-  - create
-- apiGroups:
   - autoscaling
   resources:
   - horizontalpodautoscalers
@@ -99,7 +89,7 @@ rules:
 - apiGroups:
   - bpfman.io
   resources:
-  - bpfapplications
+  - clusterbpfapplications
   verbs:
   - create
   - delete
@@ -108,6 +98,14 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - bpfman.io
+  resources:
+  - clusterbpfapplications/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - config.openshift.io
   resources:
@@ -159,13 +157,20 @@ rules:
   - update
 - apiGroups:
   - loki.grafana.com
+  resources:
+  - lokistacks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - loki.grafana.com
   resourceNames:
   - logs
   resources:
   - network
   verbs:
   - create
-  - get
 - apiGroups:
   - metrics.k8s.io
   resources:
@@ -210,9 +215,7 @@ rules:
   - rbac.authorization.k8s.io
   resources:
   - clusterrolebindings
-  - clusterroles
   - rolebindings
-  - roles
   verbs:
   - create
   - delete
