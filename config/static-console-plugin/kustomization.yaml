@@ -1,0 +1,15 @@
+resources:
+- static_console_plugin.yaml
+- static_console_plugin_deployment.yaml
+- static_console_plugin_service.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: static-console-plugin
+  newName: quay.io/netobserv/network-observability-console-plugin
+  newTag: b35da77
+

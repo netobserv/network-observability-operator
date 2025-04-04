@@ -24,6 +24,7 @@ bases:
 - ../../crd
 - ../../rbac
 - ../../manager
+- ../../static-console-plugin
 - ../../webhook
 patchesStrategicMerge:
 - patch.yaml

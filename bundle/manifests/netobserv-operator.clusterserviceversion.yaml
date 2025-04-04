@@ -1279,6 +1279,52 @@ spec:
                 secret:
                   defaultMode: 420
                   secretName: manager-metrics-tls
+      - label:
+          app: static-console-plugin
+        name: netobserv-static-console-plugin
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: static-console-plugin
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                app: static-console-plugin
+            spec:
+              containers:
+              - command:
+                - /static-plugin
+                env:
+                - name: GODEBUG
+                  value: http2server=0
+                image: quay.io/netobserv/network-observability-console-plugin:b35da77
+                imagePullPolicy: Always
+                name: static-plugin
+                resources:
+                  limits:
+                    memory: 200Mi
+                  requests:
+                    cpu: 100m
+                    memory: 100Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - ALL
+                  readOnlyRootFilesystem: true
+                volumeMounts:
+                - mountPath: /var/serving-cert
+                  name: static-console-plugin-tls
+                  readOnly: true
+              securityContext:
+                runAsNonRoot: true
+              volumes:
+              - name: static-console-plugin-tls
+                secret:
+                  defaultMode: 420
+                  secretName: static-console-plugin-tls
       permissions:
       - rules:
         - apiGroups:
