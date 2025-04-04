@@ -48,26 +48,26 @@ An `ImageDigestMirrorSet` is required:
 apiVersion: config.openshift.io/v1
 kind: ImageDigestMirrorSet
 metadata:
-  name: netobserv
+  name: netobserv-image-digest-mirror-set
 spec:
   imageDigestMirrors:
     - mirrors:
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-ystream
       source: registry.redhat.io/network-observability/network-observability-rhel9-operator
     - mirrors:
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/flowlogs-pipeline-ystream
       source: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9
     - mirrors:
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/netobserv-ebpf-agent
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-ebpf-agent-ystream
       source: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9
     - mirrors:
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-console-plugin
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-ystream
       source: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9
     - mirrors:
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-cli-container
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-cli-ystream
       source: registry.redhat.io/network-observability/network-observability-cli-rhel9
     - mirrors:
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-bundle
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle-ystream
       source: registry.redhat.io/network-observability/network-observability-operator-bundle
 ```
 
