@@ -462,30 +462,30 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 
 	// equals specs
-	autoScalerSpec, plugin := getAutoScalerSpecs()
+	autoScaler, plugin := getAutoScalerSpecs()
 	report := helper.NewChangeReport("")
-	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), false)
+	assert.Equal(helper.AutoScalerChanged(&autoScaler, &autoScaler, plugin.Autoscaler, &report), false)
 	assert.Contains(report.String(), "no change")
 
 	// wrong max replicas
-	autoScalerSpec, plugin = getAutoScalerSpecs()
-	autoScalerSpec.Spec.MaxReplicas = 10
+	autoScaler, plugin = getAutoScalerSpecs()
+	autoScaler.Spec.MaxReplicas = 10
 	report = helper.NewChangeReport("")
-	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
+	assert.Equal(helper.AutoScalerChanged(&autoScaler, &autoScaler, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Max replicas changed")
 
 	// missing min replicas
-	autoScalerSpec, plugin = getAutoScalerSpecs()
-	autoScalerSpec.Spec.MinReplicas = nil
+	autoScaler, plugin = getAutoScalerSpecs()
+	autoScaler.Spec.MinReplicas = nil
 	report = helper.NewChangeReport("")
-	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
+	assert.Equal(helper.AutoScalerChanged(&autoScaler, &autoScaler, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Min replicas changed")
 
 	// missing metrics
-	autoScalerSpec, plugin = getAutoScalerSpecs()
-	autoScalerSpec.Spec.Metrics = []ascv2.MetricSpec{}
+	autoScaler, plugin = getAutoScalerSpecs()
+	autoScaler.Spec.Metrics = []ascv2.MetricSpec{}
 	report = helper.NewChangeReport("")
-	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
+	assert.Equal(helper.AutoScalerChanged(&autoScaler, &autoScaler, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Metrics changed")
 }
 

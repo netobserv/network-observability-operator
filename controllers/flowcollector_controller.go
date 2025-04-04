@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	osv1 "github.com/openshift/api/console/v1"
 	securityv1 "github.com/openshift/api/security/v1"
@@ -13,9 +14,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/consoleplugin"
+	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/cleanup"
@@ -26,7 +29,8 @@ import (
 )
 
 const (
-	flowsFinalizer = "flows.netobserv.io/finalizer"
+	flowsFinalizer        = "flows.netobserv.io/finalizer"
+	initReconcileAttempts = 5
 )
 
 // FlowCollectorReconciler reconciles a FlowCollector object
@@ -74,7 +78,26 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	}
 	r.watcher = watchers.NewWatcher(ctrl)
 
+	// force reconcile at startup
+	go r.InitReconcile(ctx)
+
 	return nil
+}
+
+func (r *FlowCollectorReconciler) InitReconcile(ctx context.Context) {
+	log := log.FromContext(ctx)
+	log.Info("Initializing resources...")
+
+	for attempt := range initReconcileAttempts {
+		// delay the reconcile calls to let some time to the cache to load
+		time.Sleep(5 * time.Second)
+		_, err := r.Reconcile(ctx, reconcile.Request{})
+		if err != nil {
+			log.Error(err, "Error while doing initial reconcile", "attempt", attempt)
+		} else {
+			return
+		}
+	}
 }
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -95,8 +118,14 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to get FlowCollector: %w", err)
 	} else if desired == nil {
-		// Delete case
-		return ctrl.Result{}, nil
+		l.Info("Creating a default console plugin to expose API forms")
+		// reconcile console plugin only since FlowCollector doesn't exists
+		cpReconciler := consoleplugin.NewReconciler(r.newDefaultReconcilerInstance(clh))
+		err := cpReconciler.ReconcileDefault(ctx)
+		if err != nil {
+			l.Error(err, "Console Plugin reconcile failure")
+		}
+		return ctrl.Result{}, err
 	}
 
 	// At the moment, status workflow is to start as ready then degrade if necessary
@@ -167,6 +196,12 @@ func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *f
 	}
 
 	return nil
+}
+
+func (r *FlowCollectorReconciler) newDefaultReconcilerInstance(clh *helper.Client) *reconcilers.Instance {
+	// force default namespace
+	reconcilersInfo := r.newCommonInfo(clh, constants.DefaultOperatorNamespace, &helper.LokiConfig{})
+	return reconcilersInfo.NewInstance([]string{r.mgr.Config.ConsolePluginImage}, r.status)
 }
 
 func (r *FlowCollectorReconciler) newCommonInfo(clh *helper.Client, ns string, loki *helper.LokiConfig) reconcilers.Common {
