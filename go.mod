@@ -2,6 +2,8 @@ module github.com/netobserv/network-observability-operator
 
 go 1.23.0
 
+toolchain go1.24.1
+
 require (
 	github.com/bpfman/bpfman-operator v0.5.7-0.20250326184106-575c6895aeee
 	github.com/coreos/go-semver v0.3.1
@@ -10,8 +12,8 @@ require (
 	github.com/grafana/loki/operator/apis/loki v0.0.0-20241021105923-5e970e50b166
 	github.com/netobserv/flowlogs-pipeline v1.8.2-community
 	github.com/netobserv/netobserv-ebpf-agent v1.8.2-community
-	github.com/onsi/ginkgo/v2 v2.23.0
-	github.com/onsi/gomega v1.36.2
+	github.com/onsi/ginkgo/v2 v2.23.3
+	github.com/onsi/gomega v1.36.3
 	github.com/openshift/api v0.0.0-20250313134101-8a7efbfb5316
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.81.0
 	github.com/prometheus/common v0.62.0
