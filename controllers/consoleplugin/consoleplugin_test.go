@@ -2,10 +2,8 @@ package consoleplugin
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
-	promConfig "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -487,32 +485,6 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	report = helper.NewChangeReport("")
 	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Metrics changed")
-}
-
-// ensure HTTPClientConfig Marshal / Unmarshal works as expected for ProxyURL *URL
-// ProxyURL should not be set when only TLSConfig.InsecureSkipVerify is specified
-func TestHTTPClientConfig(t *testing.T) {
-	config := promConfig.HTTPClientConfig{
-		TLSConfig: promConfig.TLSConfig{
-			InsecureSkipVerify: true,
-		},
-	}
-	err := config.Validate()
-	assert.Nil(t, err)
-
-	bs, _ := json.Marshal(config)
-	assert.Equal(t, `{"tls_config":{"insecure_skip_verify":true},"follow_redirects":false,"enable_http2":false,"proxy_url":null}`, string(bs))
-
-	config2 := promConfig.HTTPClientConfig{}
-	err = json.Unmarshal(bs, &config2)
-	assert.Nil(t, err)
-	assert.True(t, config2.TLSConfig.InsecureSkipVerify)
-	assert.Equal(t, promConfig.URL{}, config2.ProxyURL)
-
-	err = config2.Validate()
-	assert.Nil(t, err)
-	assert.True(t, config2.TLSConfig.InsecureSkipVerify)
-	assert.Nil(t, config2.ProxyURL.URL)
 }
 
 func TestNoMissingFields(t *testing.T) {
