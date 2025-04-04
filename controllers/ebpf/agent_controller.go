@@ -70,6 +70,7 @@ const (
 	envEnablePacketTranslation    = "ENABLE_PKT_TRANSLATION"
 	envEnableEbpfMgr              = "EBPF_PROGRAM_MANAGER_MODE"
 	envEnableUDNMapping           = "ENABLE_UDN_MAPPING"
+	envEnableIPsec                = "ENABLE_IPSEC_TRACKING"
 	envListSeparator              = ","
 )
 
@@ -272,8 +273,8 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		}
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
-
-	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketDrop) {
+	// EBPF Manager takes care of mounting the kernel debug volume.
+	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketDrop) && !helper.IsEbpfManagerEnabled(&coll.Spec.Agent.EBPF) {
 		if !coll.Spec.Agent.EBPF.Privileged {
 			rlog.Error(fmt.Errorf("invalid configuration"), "To use PacketsDrop feature privileged mode needs to be enabled")
 		} else {
@@ -346,7 +347,8 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 					Driver: "csi.bpfman.io",
 					VolumeAttributes: map[string]string{
 						"csi.bpfman.io/program": "netobserv",
-						"csi.bpfman.io/maps":    "aggregated_flows,additional_flow_metrics,direct_flows,dns_flows,filter_map,peer_filter_map,global_counters,packet_record",
+						"csi.bpfman.io/maps": "aggregated_flows,additional_flow_metrics,direct_flows," +
+							"dns_flows,filter_map,peer_filter_map,global_counters,packet_record,ipsec_ingress_map,ipsec_egress_map",
 					},
 				},
 			},
@@ -724,6 +726,13 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	if helper.IsDNSTrackingEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableDNSTracking,
+			Value: "true",
+		})
+	}
+
+	if helper.IsIPSecEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableIPsec,
 			Value: "true",
 		})
 	}

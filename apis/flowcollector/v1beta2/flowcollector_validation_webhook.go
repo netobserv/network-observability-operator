@@ -111,7 +111,7 @@ func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) 
 				warnings = append(warnings, fmt.Sprintf("The PacketDrop feature requires OpenShift 4.14 or above (version detected: %s)", CurrentClusterInfo.GetOpenShiftVersion()))
 			}
 		}
-		if !fc.Agent.EBPF.Privileged {
+		if !fc.Agent.EBPF.Privileged && !slices.Contains(fc.Agent.EBPF.Features, EbpfManager) {
 			warnings = append(warnings, "The PacketDrop feature requires eBPF Agent to run in privileged mode")
 		}
 	}
