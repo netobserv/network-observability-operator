@@ -23,7 +23,7 @@ func (m *FlowFetcher) legacyLookupAndDeleteMap(met *metrics.Metrics) map[ebpf.Bp
 		count++
 		if err := flowMap.Delete(id); err != nil {
 			log.WithError(err).WithField("flowId", id).Warnf("couldn't delete flow entry")
-			met.Errors.WithErrorName("flow-fetcher-legacy", "CannotDeleteFlows").Inc()
+			met.Errors.WithErrorName("flow-fetcher-legacy", "CannotDeleteFlows", metrics.HighSeverity).Inc()
 		}
 		flows[id] = model.NewBpfFlowContent(baseMetrics)
 	}
@@ -44,7 +44,7 @@ func (p *PacketFetcher) legacyLookupAndDeleteMap(met *metrics.Metrics) map[int][
 	for iterator.Next(&id, &packet) {
 		if err := packetMap.Delete(id); err != nil {
 			log.WithError(err).WithField("packetID ", id).Warnf("couldn't delete  entry")
-			met.Errors.WithErrorName("pkt-fetcher-legacy", "CannotDeleteEntry").Inc()
+			met.Errors.WithErrorName("pkt-fetcher-legacy", "CannotDeleteEntry", metrics.HighSeverity).Inc()
 		}
 		packets[id] = append(packets[id], packet...)
 	}

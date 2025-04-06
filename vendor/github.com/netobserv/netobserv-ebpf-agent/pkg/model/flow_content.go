@@ -116,26 +116,6 @@ func (p *BpfFlowContent) AccumulateAdditional(other *ebpf.BpfAdditionalMetrics) 
 	if !AllZeroIP(IP(other.TranslatedFlow.Saddr)) && !AllZeroIP(IP(other.TranslatedFlow.Daddr)) {
 		p.AdditionalMetrics.TranslatedFlow = other.TranslatedFlow
 	}
-	// Accumulate interfaces + directions
-	accumulateInterfaces(&p.AdditionalMetrics.NbObservedIntf, &p.AdditionalMetrics.ObservedIntf, other.NbObservedIntf, other.ObservedIntf)
-}
-
-func accumulateInterfaces(dstSize *uint8, dstIntf *[MaxObservedInterfaces]ebpf.BpfObservedIntfT, srcSize uint8, srcIntf [MaxObservedInterfaces]ebpf.BpfObservedIntfT) {
-	iObs := uint8(0)
-outer:
-	for *dstSize < uint8(len(dstIntf)) && iObs < srcSize {
-		for u := uint8(0); u < *dstSize; u++ {
-			if dstIntf[u].Direction == srcIntf[iObs].Direction &&
-				dstIntf[u].IfIndex == srcIntf[iObs].IfIndex {
-				// Ignore if already exists
-				iObs++
-				continue outer
-			}
-		}
-		dstIntf[*dstSize] = srcIntf[iObs]
-		*dstSize++
-		iObs++
-	}
 }
 
 func allZerosMac(s [6]uint8) bool {
