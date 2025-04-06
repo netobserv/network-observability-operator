@@ -45,14 +45,21 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("running %v: exit status %v: %v", e.cmd.Args, e.ExitStatus(), e.msg)
 }
 
+var isNotExistPatterns = []string{
+	"Bad rule (does a matching rule exist in that chain?).\n",
+	"No chain/target/match by that name.\n",
+	"No such file or directory",
+	"does not exist",
+}
+
 // IsNotExist returns true if the error is due to the chain or rule not existing
 func (e *Error) IsNotExist() bool {
-	if e.ExitStatus() != 1 {
-		return false
+	for _, str := range isNotExistPatterns {
+		if strings.Contains(e.msg, str) {
+			return true
+		}
 	}
-	msgNoRuleExist := "Bad rule (does a matching rule exist in that chain?).\n"
-	msgNoChainExist := "No chain/target/match by that name.\n"
-	return strings.Contains(e.msg, msgNoRuleExist) || strings.Contains(e.msg, msgNoChainExist)
+	return false
 }
 
 // Protocol to differentiate between IPv4 and IPv6
@@ -105,23 +112,44 @@ func Timeout(timeout int) option {
 	}
 }
 
-// New creates a new IPTables configured with the options passed as parameter.
-// For backwards compatibility, by default always uses IPv4 and timeout 0.
+func Path(path string) option {
+	return func(ipt *IPTables) {
+		ipt.path = path
+	}
+}
+
+// New creates a new IPTables configured with the options passed as parameters.
+// Supported parameters are:
+//
+//	IPFamily(Protocol)
+//	Timeout(int)
+//	Path(string)
+//
+// For backwards compatibility, by default New uses IPv4 and timeout 0.
 // i.e. you can create an IPv6 IPTables using a timeout of 5 seconds passing
 // the IPFamily and Timeout options as follow:
+//
 //	ip6t := New(IPFamily(ProtocolIPv6), Timeout(5))
 func New(opts ...option) (*IPTables, error) {
 
 	ipt := &IPTables{
 		proto:   ProtocolIPv4,
 		timeout: 0,
+		path:    "",
 	}
 
 	for _, opt := range opts {
 		opt(ipt)
 	}
 
-	path, err := exec.LookPath(getIptablesCommand(ipt.proto))
+	// if path wasn't preset through New(Path()), autodiscover it
+	cmd := ""
+	if ipt.path == "" {
+		cmd = getIptablesCommand(ipt.proto)
+	} else {
+		cmd = ipt.path
+	}
+	path, err := exec.LookPath(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -185,6 +213,26 @@ func (ipt *IPTables) Insert(table, chain string, pos int, rulespec ...string) er
 	return ipt.run(cmd...)
 }
 
+// Replace replaces rulespec to specified table/chain (in specified pos)
+func (ipt *IPTables) Replace(table, chain string, pos int, rulespec ...string) error {
+	cmd := append([]string{"-t", table, "-R", chain, strconv.Itoa(pos)}, rulespec...)
+	return ipt.run(cmd...)
+}
+
+// InsertUnique acts like Insert except that it won't insert a duplicate (no matter the position in the chain)
+func (ipt *IPTables) InsertUnique(table, chain string, pos int, rulespec ...string) error {
+	exists, err := ipt.Exists(table, chain, rulespec...)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return ipt.Insert(table, chain, pos, rulespec...)
+	}
+
+	return nil
+}
+
 // Append appends rulespec to specified table/chain
 func (ipt *IPTables) Append(table, chain string, rulespec ...string) error {
 	cmd := append([]string{"-t", table, "-A", chain}, rulespec...)
@@ -217,6 +265,22 @@ func (ipt *IPTables) DeleteIfExists(table, chain string, rulespec ...string) err
 		err = ipt.Delete(table, chain, rulespec...)
 	}
 	return err
+}
+
+// DeleteById deletes the rule with the specified ID in the given table and chain.
+func (ipt *IPTables) DeleteById(table, chain string, id int) error {
+	cmd := []string{"-t", table, "-D", chain, strconv.Itoa(id)}
+	return ipt.run(cmd...)
+}
+
+// List rules in specified table/chain
+func (ipt *IPTables) ListById(table, chain string, id int) (string, error) {
+	args := []string{"-t", table, "-S", chain, strconv.Itoa(id)}
+	rule, err := ipt.executeList(args)
+	if err != nil {
+		return "", err
+	}
+	return rule[0], nil
 }
 
 // List rules in specified table/chain
@@ -290,6 +354,11 @@ func (ipt *IPTables) Stats(table, chain string) ([][]string, error) {
 	}
 
 	ipv6 := ipt.proto == ProtocolIPv6
+
+	// Skip the warning if exist
+	if strings.HasPrefix(lines[0], "#") {
+		lines = lines[1:]
+	}
 
 	rows := [][]string{}
 	for i, line := range lines {
@@ -510,7 +579,9 @@ func (ipt *IPTables) runWithOutput(args []string, stdout io.Writer) error {
 			syscall.Close(fmu.fd)
 			return err
 		}
-		defer ul.Unlock()
+		defer func() {
+			_ = ul.Unlock()
+		}()
 	}
 
 	var stderr bytes.Buffer
@@ -619,7 +690,7 @@ func iptablesHasWaitCommand(v1 int, v2 int, v3 int) bool {
 	return false
 }
 
-//Checks if an iptablse version is after 1.6.0, when --wait support second
+// Checks if an iptablse version is after 1.6.0, when --wait support second
 func iptablesWaitSupportSecond(v1 int, v2 int, v3 int) bool {
 	if v1 > 1 {
 		return true
