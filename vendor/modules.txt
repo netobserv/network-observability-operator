@@ -1,7 +1,7 @@
 # cel.dev/expr v0.18.0
 ## explicit; go 1.21.1
 cel.dev/expr
-# github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible
+# github.com/Knetic/govaluate v3.0.1-0.20250325060307-7625b7f8c03d+incompatible
 ## explicit
 github.com/Knetic/govaluate
 # github.com/agoda-com/opentelemetry-logs-go v0.5.0
