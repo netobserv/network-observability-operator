@@ -125,8 +125,8 @@ github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM
 github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
 github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40/go.mod h1:8rLXio+WjiTceGBHIoTvn60HIbs7Hm7bcHjyrSqYB9c=
 github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
-github.com/bpfman/bpfman-operator v0.5.7-0.20250326184106-575c6895aeee h1:TGDaCoo3B8ylbez0CC4hs4Pno8uyVvGjDGQDg+FuE38=
-github.com/bpfman/bpfman-operator v0.5.7-0.20250326184106-575c6895aeee/go.mod h1:WbvefB3NZ6oFGMrZGP/YTOShFA1JHqEFnA9/shlpUtk=
+github.com/bpfman/bpfman-operator v0.5.7-0.20250403210015-d749d10505de h1:TjIDbJoMR6RL+LoMOlU0EK82DPdFES0pgfXlGO+p1Rw=
+github.com/bpfman/bpfman-operator v0.5.7-0.20250403210015-d749d10505de/go.mod h1:vSyLSzd/av9CYFYZoUPz6VLegAXupjvzhvfK9Zf85+k=
 github.com/c-bata/go-prompt v0.2.2/go.mod h1:VzqtzE2ksDBcdln8G7mk2RX9QyGjH+OVqOCSiVIqS34=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
 github.com/cenk/hub v1.0.1 h1:RBwXNOF4a8KjD8BJ08XqN8KbrqaGiQLDrgvUGJSHuPA=
