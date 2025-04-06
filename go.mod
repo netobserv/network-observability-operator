@@ -111,7 +111,7 @@ require (
 	github.com/prometheus/client_golang v1.21.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/prometheus/prometheus v1.8.2-0.20201028100903-3245b3267b24 // indirect
+	github.com/prometheus/prometheus v1.99.0 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/safchain/ethtool v0.3.1-0.20231027162144-83e5e0097c91 // indirect
