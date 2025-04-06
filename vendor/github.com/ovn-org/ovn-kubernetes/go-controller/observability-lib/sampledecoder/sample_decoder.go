@@ -8,11 +8,13 @@ import (
 	"strings"
 
 	"github.com/ovn-org/libovsdb/client"
+
 	"github.com/ovn-org/ovn-kubernetes/go-controller/observability-lib/model"
 	"github.com/ovn-org/ovn-kubernetes/go-controller/observability-lib/ovsdb"
 	libovsdbops "github.com/ovn-org/ovn-kubernetes/go-controller/pkg/libovsdb/ops"
 	"github.com/ovn-org/ovn-kubernetes/go-controller/pkg/nbdb"
 	"github.com/ovn-org/ovn-kubernetes/go-controller/pkg/observability"
+	"github.com/ovn-org/ovn-kubernetes/go-controller/pkg/util"
 )
 
 type SampleDecoder struct {
@@ -292,18 +294,8 @@ func (d *SampleDecoder) DeleteCollector(collectorID int) error {
 	return err
 }
 
-// This is a copy of the ParseNetworkName function from go-controller/pkg/clustermanager/userdefinednetwork/template/net-attach-def-template.go
-// We need to copy it to optimize dependencies of observability-lib.
-func ParseNetworkName(networkName string) (udnNamespace, udnName string) {
-	parts := strings.Split(networkName, ".")
-	if len(parts) == 2 {
-		return parts[0], parts[1]
-	}
-	return "", ""
-}
-
 func networkNameToUDNNamespacedName(networkName string) string {
-	namespace, name := ParseNetworkName(networkName)
+	namespace, name := util.ParseNetworkName(networkName)
 	if name == "" {
 		return ""
 	}

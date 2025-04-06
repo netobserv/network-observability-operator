@@ -123,14 +123,14 @@ const (
 	EndpointSliceMirrorControllerName = "endpointslice-mirror-controller.k8s.ovn.org"
 	// EndpointSliceDefaultControllerName default kubernetes EndpointSlice controller name (used as a value for the "endpointslice.kubernetes.io/managed-by" label)
 	EndpointSliceDefaultControllerName = "endpointslice-controller.k8s.io"
-	// LabelSourceEndpointSlice label key used in mirrored EndpointSlice
+	// SourceEndpointSliceAnnotation key used in mirrored EndpointSlice
 	// that has the value of the default EndpointSlice name
-	LabelSourceEndpointSlice = "k8s.ovn.org/source-endpointslice"
+	SourceEndpointSliceAnnotation = "k8s.ovn.org/source-endpointslice"
 	// LabelSourceEndpointSliceVersion label key used in mirrored EndpointSlice
 	// that has the value of the last known default EndpointSlice ResourceVersion
 	LabelSourceEndpointSliceVersion = "k8s.ovn.org/source-endpointslice-version"
-	// LabelUserDefinedEndpointSliceNetwork label key used in mirrored EndpointSlices that contains the current primary user defined network name
-	LabelUserDefinedEndpointSliceNetwork = "k8s.ovn.org/endpointslice-network"
+	// UserDefinedNetworkEndpointSliceAnnotation key used in mirrored EndpointSlices that contains the current primary user defined network name
+	UserDefinedNetworkEndpointSliceAnnotation = "k8s.ovn.org/endpointslice-network"
 	// LabelUserDefinedServiceName label key used in mirrored EndpointSlices that contains the service name matching the EndpointSlice
 	LabelUserDefinedServiceName = "k8s.ovn.org/service-name"
 
@@ -145,6 +145,7 @@ const (
 
 	// OpenFlow and Networking constants
 	RouteAdvertisementICMPType    = 134
+	NeighborSolicitationICMPType  = 135
 	NeighborAdvertisementICMPType = 136
 
 	// Meter constants
@@ -215,6 +216,8 @@ const (
 	LoadBalancerOwnerExternalID = OvnK8sPrefix + "/" + "owner"
 	// key for UDN enabled services routes
 	UDNEnabledServiceExternalID = OvnK8sPrefix + "/" + "udn-enabled-default-service"
+	// RequiredUDNNamespaceLabel is the required namespace label for enabling primary UDNs
+	RequiredUDNNamespaceLabel = "k8s.ovn.org/primary-user-defined-network"
 
 	// different secondary network topology type defined in CNI netconf
 	Layer3Topology   = "layer3"
@@ -226,12 +229,13 @@ const (
 	NetworkRolePrimary   = "primary"
 	NetworkRoleSecondary = "secondary"
 	NetworkRoleDefault   = "default"
-	// defined internally by ovnkube to recognize "default"
-	// network's role as a "infrastructure-locked" network
-	// when user defined network is the primary network for
-	// the pod which makes "default" network niether primary
+	// NetworkRoleInfrastructure is defined internally by ovnkube to recognize "default"
+	// network's role as an "infrastructure-locked" network
+	// when a user defined network is the primary network for
+	// the pod which makes "default" network neither primary
 	// nor secondary
 	NetworkRoleInfrastructure = "infrastructure-locked"
+	NetworkRoleNone           = "none"
 
 	// db index keys
 	// PrimaryIDKey is used as a primary client index
@@ -261,4 +265,40 @@ const (
 	// entry for the gateway routers. After this time, the entry is removed and
 	// may be refreshed with a new ARP request.
 	GRMACBindingAgeThreshold = "300"
+
+	// InvalidID signifies an invalid ID. Currently used for network and tunnel IDs.
+	InvalidID = -1
+
+	// NoTunnelID signifies an empty/unset ID. Currently used for tunnel ID (reserved as un-usable when the allocator is created)
+	NoTunnelID = 0
+
+	// DefaultNetworkID is reserved for the default network only
+	DefaultNetworkID = 0
+
+	// NoNetworkID is used to signal internally that an ID is empty and should, updates
+	// with this value should be ignored
+	NoNetworkID = -2
+
+	// OVNKubeITPMark is the fwmark used for host->ITP=local svc traffic. Note
+	// that the fwmark is not a part of the packet, but just stored by kernel in
+	// its memory to track/filter packet. Hence fwmark is lost as soon as packet
+	// exits the host. The mark is set with an iptables rule by gateway and used
+	// to route to management port.
+	OVNKubeITPMark = "0x1745ec" // constant itp(174)-service(5ec)
+
+	// "mgmtport-no-snat-nodeports" is a set containing protocol / nodePort tuples
+	// indicating traffic that should not be SNATted when passing through the
+	// management port because it is addressed to an `externalTrafficPolicy: Local`
+	// NodePort.
+	NFTMgmtPortNoSNATNodePorts = "mgmtport-no-snat-nodeports"
+
+	// "mgmtport-no-snat-services-v4" and "mgmtport-no-snat-services-v6" are sets
+	// containing loadBalancerIP / protocol / port tuples indicating traffic that
+	// should not be SNATted when passing through the management port because it is
+	// addressed to an `externalTrafficPolicy: Local` load balancer IP.
+	NFTMgmtPortNoSNATServicesV4 = "mgmtport-no-snat-services-v4"
+	NFTMgmtPortNoSNATServicesV6 = "mgmtport-no-snat-services-v6"
+
+	// CUDNPrefix of all CUDN network names
+	CUDNPrefix = "cluster_udn_"
 )
