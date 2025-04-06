@@ -488,8 +488,8 @@ func EncodeToIEDataType(dataType IEDataType, val interface{}) ([]byte, error) {
 		if !ok {
 			return nil, fmt.Errorf("val argument %v is not of type net.IP for this element", val)
 		}
-		if ipv4Add := v.To4(); ipv4Add != nil {
-			return ipv4Add, nil
+		if ipv4Addr := v.To4(); ipv4Addr != nil {
+			return ipv4Addr, nil
 		} else {
 			return nil, fmt.Errorf("provided IP %v does not belong to IPv4 address family", v)
 		}
@@ -499,8 +499,8 @@ func EncodeToIEDataType(dataType IEDataType, val interface{}) ([]byte, error) {
 		if !ok {
 			return nil, fmt.Errorf("val argument %v is not of type net.IP for this element", val)
 		}
-		if ipv6Add := v.To16(); ipv6Add != nil {
-			return ipv6Add, nil
+		if ipv6Addr := v.To16(); ipv6Addr != nil {
+			return ipv6Addr, nil
 		} else {
 			return nil, fmt.Errorf("provided IPv6 address %v is not of correct length", v)
 		}
@@ -590,14 +590,14 @@ func encodeInfoElementValueToBuff(element InfoElementWithValue, buffer []byte, i
 	case MacAddress:
 		copy(buffer[index:], element.GetMacAddressValue())
 	case Ipv4Address:
-		if ipv4Add := element.GetIPAddressValue().To4(); ipv4Add != nil {
-			copy(buffer[index:], ipv4Add)
+		if ipv4Addr := element.GetIPAddressValue().To4(); ipv4Addr != nil {
+			copy(buffer[index:], ipv4Addr)
 		} else {
 			return fmt.Errorf("provided IP %v does not belong to IPv4 address family", element.GetIPAddressValue())
 		}
 	case Ipv6Address:
-		if ipv6Add := element.GetIPAddressValue().To16(); ipv6Add != nil {
-			copy(buffer[index:], ipv6Add)
+		if ipv6Addr := element.GetIPAddressValue().To16(); ipv6Addr != nil {
+			copy(buffer[index:], ipv6Addr)
 		} else {
 			return fmt.Errorf("provided IPv6 address %v is not of correct length", element.GetIPAddressValue())
 		}
@@ -619,4 +619,95 @@ func encodeInfoElementValueToBuff(element InfoElementWithValue, buffer []byte, i
 		return fmt.Errorf("API supports only valid information elements with datatypes given in RFC7011")
 	}
 	return nil
+}
+
+// appendInfoElementValueToBuffer appends the encoded element value to the provided buffer.
+func appendInfoElementValueToBuffer(element InfoElementWithValue, buffer []byte) ([]byte, error) {
+	switch element.GetDataType() {
+	case OctetArray:
+		v := element.GetOctetArrayValue()
+		ieLen := element.GetInfoElement().Len
+		if ieLen < VariableLength {
+			// fixed length case
+			if len(v) != int(ieLen) {
+				return nil, fmt.Errorf("invalid value for fixed-length octet array: length mismatch")
+			}
+			buffer = append(buffer, v...)
+		} else if len(v) < 255 {
+			buffer = append(buffer, byte(len(v)))
+			buffer = append(buffer, v...)
+		} else if len(v) <= math.MaxUint16 {
+			buffer = append(buffer, byte(255))
+			buffer = binary.BigEndian.AppendUint16(buffer, uint16(len(v)))
+			buffer = append(buffer, v...)
+		} else {
+			return nil, fmt.Errorf("provided OctetArray value is too long and cannot be encoded: len=%d, maxlen=%d", len(v), math.MaxUint16)
+		}
+	case Unsigned8:
+		buffer = append(buffer, element.GetUnsigned8Value())
+	case Unsigned16:
+		buffer = binary.BigEndian.AppendUint16(buffer, element.GetUnsigned16Value())
+	case Unsigned32:
+		buffer = binary.BigEndian.AppendUint32(buffer, element.GetUnsigned32Value())
+	case Unsigned64:
+		buffer = binary.BigEndian.AppendUint64(buffer, element.GetUnsigned64Value())
+	case Signed8:
+		buffer = append(buffer, byte(element.GetSigned8Value()))
+	case Signed16:
+		buffer = binary.BigEndian.AppendUint16(buffer, uint16(element.GetSigned16Value()))
+	case Signed32:
+		buffer = binary.BigEndian.AppendUint32(buffer, uint32(element.GetSigned32Value()))
+	case Signed64:
+		buffer = binary.BigEndian.AppendUint64(buffer, uint64(element.GetSigned64Value()))
+	case Float32:
+		buffer = binary.BigEndian.AppendUint32(buffer, math.Float32bits(element.GetFloat32Value()))
+	case Float64:
+		buffer = binary.BigEndian.AppendUint64(buffer, math.Float64bits(element.GetFloat64Value()))
+	case Boolean:
+		// Following boolean spec from RFC7011
+		indicator := byte(1)
+		if !element.GetBooleanValue() {
+			indicator = byte(2)
+		}
+		buffer = append(buffer, indicator)
+	case DateTimeSeconds:
+		buffer = binary.BigEndian.AppendUint32(buffer, element.GetUnsigned32Value())
+	case DateTimeMilliseconds:
+		buffer = binary.BigEndian.AppendUint64(buffer, element.GetUnsigned64Value())
+		// Currently only supporting seconds and milliseconds
+	case DateTimeMicroseconds, DateTimeNanoseconds:
+		// TODO: RFC 7011 has extra spec for these data types. Need to follow that
+		return nil, fmt.Errorf("API does not support micro and nano seconds types yet")
+	case MacAddress:
+		buffer = append(buffer, element.GetMacAddressValue()...)
+	case Ipv4Address:
+		if ipv4Add := element.GetIPAddressValue().To4(); ipv4Add != nil {
+			buffer = append(buffer, ipv4Add...)
+		} else {
+			return nil, fmt.Errorf("provided IP %v does not belong to IPv4 address family", element.GetIPAddressValue())
+		}
+	case Ipv6Address:
+		if ipv6Add := element.GetIPAddressValue().To16(); ipv6Add != nil {
+			buffer = append(buffer, ipv6Add...)
+		} else {
+			return nil, fmt.Errorf("provided IPv6 address %v is not of correct length", element.GetIPAddressValue())
+		}
+	case String:
+		v := element.GetStringValue()
+		if len(v) < 255 {
+			buffer = append(buffer, byte(len(v)))
+			// See https://pkg.go.dev/builtin#append
+			// As a special case, it is legal to append a string to a byte slice
+			buffer = append(buffer, v...)
+		} else if len(v) <= math.MaxUint16 {
+			buffer = append(buffer, byte(255)) // marker byte for long strings
+			buffer = binary.BigEndian.AppendUint16(buffer, uint16(len(v)))
+			buffer = append(buffer, v...)
+		} else {
+			return nil, fmt.Errorf("provided String value is too long and cannot be encoded: len=%d, maxlen=%d", len(v), math.MaxUint16)
+		}
+	default:
+		return nil, fmt.Errorf("API supports only valid information elements with datatypes given in RFC7011")
+	}
+	return buffer, nil
 }

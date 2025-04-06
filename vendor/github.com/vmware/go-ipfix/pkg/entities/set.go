@@ -148,9 +148,9 @@ func (s *set) AddRecord(elements []InfoElementWithValue, templateID uint16) erro
 func (s *set) AddRecordWithExtraElements(elements []InfoElementWithValue, numExtraElements int, templateID uint16) error {
 	var record Record
 	if s.setType == Data {
-		record = NewDataRecord(templateID, len(elements), numExtraElements, s.isDecoding)
+		record = NewDataRecord(templateID, len(elements), numExtraElements)
 	} else if s.setType == Template {
-		record = NewTemplateRecord(templateID, len(elements), s.isDecoding)
+		record = NewTemplateRecord(templateID, len(elements))
 		err := record.PrepareRecord()
 		if err != nil {
 			return err
@@ -172,9 +172,9 @@ func (s *set) AddRecordWithExtraElements(elements []InfoElementWithValue, numExt
 func (s *set) AddRecordV2(elements []InfoElementWithValue, templateID uint16) error {
 	var record Record
 	if s.setType == Data {
-		record = NewDataRecordFromElements(templateID, elements, s.isDecoding)
+		record = NewDataRecordFromElements(templateID, elements)
 	} else if s.setType == Template {
-		record = NewTemplateRecordFromElements(templateID, elements, s.isDecoding)
+		record = NewTemplateRecordFromElements(templateID, elements)
 		err := record.PrepareRecord()
 		if err != nil {
 			return err

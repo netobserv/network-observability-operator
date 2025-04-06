@@ -17,8 +17,6 @@ package entities
 import (
 	"encoding/binary"
 	"fmt"
-
-	"k8s.io/klog/v2"
 )
 
 //go:generate mockgen -copyright_file ../../license_templates/license_header.raw.txt -destination=testing/mock_record.go -package=testing github.com/vmware/go-ipfix/pkg/entities Record
@@ -29,11 +27,14 @@ import (
 // To begin with, we will have local buffer in record.
 // Have an interface and expose functions to user.
 
+const TemplateRecordHeaderLength = 4
+
 type Record interface {
 	PrepareRecord() error
 	AddInfoElement(element InfoElementWithValue) error
 	// TODO: Functions for multiple elements as well.
-	GetBuffer() []byte
+	GetBuffer() ([]byte, error)
+	AppendToBuffer(buffer []byte) ([]byte, error)
 	GetTemplateID() uint16
 	GetFieldCount() uint16
 	GetOrderedElementList() []InfoElementWithValue
@@ -45,43 +46,30 @@ type Record interface {
 }
 
 type baseRecord struct {
-	buffer             []byte
 	fieldCount         uint16
 	templateID         uint16
 	orderedElementList []InfoElementWithValue
-	isDecoding         bool
-	len                int
-	Record
 }
 
 type dataRecord struct {
 	baseRecord
 }
 
-func NewDataRecord(id uint16, numElements, numExtraElements int, isDecoding bool) *dataRecord {
+func NewDataRecord(id uint16, numElements, numExtraElements int) *dataRecord {
 	return &dataRecord{
 		baseRecord{
 			fieldCount:         0,
 			templateID:         id,
-			isDecoding:         isDecoding,
 			orderedElementList: make([]InfoElementWithValue, numElements, numElements+numExtraElements),
 		},
 	}
 }
 
-func NewDataRecordFromElements(id uint16, elements []InfoElementWithValue, isDecoding bool) *dataRecord {
-	length := 0
-	if !isDecoding {
-		for idx := range elements {
-			length += elements[idx].GetLength()
-		}
-	}
+func NewDataRecordFromElements(id uint16, elements []InfoElementWithValue) *dataRecord {
 	return &dataRecord{
 		baseRecord{
 			fieldCount:         uint16(len(elements)),
 			templateID:         id,
-			isDecoding:         isDecoding,
-			len:                length,
 			orderedElementList: elements,
 		},
 	}
@@ -92,35 +80,35 @@ type templateRecord struct {
 	// Minimum data record length required to be sent for this template.
 	// Elements with variable length are considered to be one byte.
 	minDataRecLength uint16
-	// index is used when adding elements to orderedElementList
+	// index is used when adding elements to orderedElementList.
 	index int
+	// buffer is used to marshal the template record.
+	buffer []byte
 }
 
-func NewTemplateRecord(id uint16, numElements int, isDecoding bool) *templateRecord {
+func NewTemplateRecord(id uint16, numElements int) *templateRecord {
 	return &templateRecord{
 		baseRecord{
-			buffer:             make([]byte, 4),
 			fieldCount:         uint16(numElements),
 			templateID:         id,
-			isDecoding:         isDecoding,
 			orderedElementList: make([]InfoElementWithValue, numElements, numElements),
 		},
 		0,
 		0,
+		make([]byte, 4),
 	}
 }
 
-func NewTemplateRecordFromElements(id uint16, elements []InfoElementWithValue, isDecoding bool) *templateRecord {
+func NewTemplateRecordFromElements(id uint16, elements []InfoElementWithValue) *templateRecord {
 	r := &templateRecord{
 		baseRecord{
-			buffer:             make([]byte, 4),
 			fieldCount:         uint16(len(elements)),
 			templateID:         id,
-			isDecoding:         isDecoding,
 			orderedElementList: elements,
 		},
 		0,
 		len(elements),
+		make([]byte, 4),
 	}
 	for idx := range elements {
 		infoElement := elements[idx].GetInfoElement()
@@ -203,30 +191,39 @@ func (d *dataRecord) PrepareRecord() error {
 	return nil
 }
 
-func (d *dataRecord) GetBuffer() []byte {
-	if len(d.buffer) == d.len || d.isDecoding {
-		return d.buffer
-	}
-	d.buffer = make([]byte, d.len)
+func (d *dataRecord) GetBuffer() ([]byte, error) {
+	buffer := make([]byte, d.GetRecordLength())
 	index := 0
 	for _, element := range d.orderedElementList {
-		err := encodeInfoElementValueToBuff(element, d.buffer, index)
-		if err != nil {
-			klog.Error(err)
+		if err := encodeInfoElementValueToBuff(element, buffer, index); err != nil {
+			return nil, err
 		}
 		index += element.GetLength()
 	}
-	return d.buffer
+	return buffer, nil
+}
+
+// Callers should ensure that the provided slice has enough capacity (e.g., by calling
+// GetRecordLength), in order to avoid memory allocations.
+func (d *dataRecord) AppendToBuffer(buffer []byte) ([]byte, error) {
+	var err error
+	for _, element := range d.orderedElementList {
+		if buffer, err = appendInfoElementValueToBuffer(element, buffer); err != nil {
+			return nil, err
+		}
+	}
+	return buffer, nil
 }
 
 func (d *dataRecord) GetRecordLength() int {
-	return d.len
+	length := 0
+	for _, element := range d.orderedElementList {
+		length += element.GetLength()
+	}
+	return length
 }
 
 func (d *dataRecord) AddInfoElement(element InfoElementWithValue) error {
-	if !d.isDecoding {
-		d.len = d.len + element.GetLength()
-	}
 	if len(d.orderedElementList) <= int(d.fieldCount) {
 		d.orderedElementList = append(d.orderedElementList, element)
 	} else {
@@ -234,6 +231,11 @@ func (d *dataRecord) AddInfoElement(element InfoElementWithValue) error {
 	}
 	d.fieldCount++
 	return nil
+}
+
+// This method is only meaningful for template records.
+func (d *dataRecord) GetMinDataRecordLen() uint16 {
+	return 0
 }
 
 func (d *dataRecord) GetRecordType() ContentType {
@@ -281,8 +283,12 @@ func (t *templateRecord) AddInfoElement(element InfoElementWithValue) error {
 	return nil
 }
 
-func (t *templateRecord) GetBuffer() []byte {
-	return t.buffer
+func (t *templateRecord) GetBuffer() ([]byte, error) {
+	return t.buffer, nil
+}
+
+func (t *templateRecord) AppendToBuffer(buffer []byte) ([]byte, error) {
+	return append(buffer, t.buffer...), nil
 }
 
 func (t *templateRecord) GetRecordLength() int {
