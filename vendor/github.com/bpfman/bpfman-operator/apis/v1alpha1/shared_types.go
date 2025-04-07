@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// +kubebuilder:validation:Required
 package v1alpha1
 
 import (
@@ -33,6 +32,13 @@ type InterfaceDiscovery struct {
 	//+kubebuilder:default:={"lo"}
 	//+optional
 	ExcludeInterfaces []string `json:"excludeInterfaces,omitempty"`
+
+	// allowedInterfaces contains the interface names. If empty, the agent
+	// fetches all the interfaces in the system, excepting the ones listed in `excludeInterfaces`.
+	// An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
+	// Otherwise, it is matched as a case-sensitive string.
+	//+optional
+	AllowedInterfaces []string `json:"allowedInterfaces,omitempty"`
 }
 
 // InterfaceSelector defines interface to attach to.
@@ -187,21 +193,27 @@ const (
 // ByteCodeSelector defines the various ways to reference bpf bytecode objects.
 type ByteCodeSelector struct {
 	// image used to specify a bytecode container image.
+	// +optional
 	Image *ByteCodeImage `json:"image,omitempty"`
 
 	// path is used to specify a bytecode object via filepath.
+	// +kubebuilder:validation:Pattern=`^(/[^/\0]+)+/?$`
+	// +optional
 	Path *string `json:"path,omitempty"`
 }
 
 // ByteCodeImage defines how to specify a bytecode container image.
 type ByteCodeImage struct {
 	// url is a valid container image URL used to reference a remote bytecode image.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength:=525
+	// +kubebuilder:validation:Pattern=`[a-zA-Z0-9_][a-zA-Z0-9._-]{0,127}`
 	Url string `json:"url"`
 
 	// pullPolicy describes a policy for if/when to pull a bytecode image. Defaults to IfNotPresent.
 	// +kubebuilder:default:=IfNotPresent
 	// +optional
-	ImagePullPolicy PullPolicy `json:"imagePullPolicy"`
+	ImagePullPolicy PullPolicy `json:"imagePullPolicy,omitempty"`
 
 	// imagePullSecret is the name of the secret bpfman should use to get remote image
 	// repository secrets.
@@ -327,9 +339,14 @@ const (
 	// node while attempting to apply the configuration described in the CRD.
 	BpfAppStateCondProgramListChangedError BpfApplicationStateConditionType = "ProgramListChangedError"
 
-	// BpfAppStateCondDeleteError indicates that the BPF Application was marked
-	// for deletion, but deletion was unsuccessful on the given node.
-	BpfAppStateCondDeleteError BpfApplicationStateConditionType = "DeleteError"
+	// BpfAppStateCondUnloadError indicates that the BPF Application was marked
+	// for deletion, but unloading one or more programs was unsuccessful on the
+	// given node.
+	BpfAppStateCondUnloadError BpfApplicationStateConditionType = "UnloadError"
+
+	// BpfAppStateCondUnloaded indicates that the BPF Application was marked
+	// for deletion, and has been successfully unloaded.
+	BpfAppStateCondUnloaded BpfApplicationStateConditionType = "Unloaded"
 )
 
 // Condition is a helper method to promote any given
@@ -363,13 +380,21 @@ func (b BpfApplicationStateConditionType) Condition() metav1.Condition {
 			Reason:  "Error",
 			Message: "An error has occurred",
 		}
-	case BpfAppStateCondDeleteError:
-		condType := string(BpfAppStateCondDeleteError)
+	case BpfAppStateCondUnloadError:
+		condType := string(BpfAppStateCondUnloadError)
 		cond = metav1.Condition{
 			Type:    condType,
 			Status:  metav1.ConditionTrue,
-			Reason:  "Delete Error",
-			Message: "Deletion failed on one or more nodes",
+			Reason:  "Unload Error",
+			Message: "Unload failed for one or more programs",
+		}
+	case BpfAppStateCondUnloaded:
+		condType := string(BpfAppStateCondUnloaded)
+		cond = metav1.Condition{
+			Type:    condType,
+			Status:  metav1.ConditionTrue,
+			Reason:  "Unloaded",
+			Message: "The application has been successfully unloaded",
 		}
 	}
 	return cond

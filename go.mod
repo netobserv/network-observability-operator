@@ -3,7 +3,7 @@ module github.com/netobserv/network-observability-operator
 go 1.23.0
 
 require (
-	github.com/bpfman/bpfman-operator v0.5.7-0.20250326184106-575c6895aeee
+	github.com/bpfman/bpfman-operator v0.5.7-0.20250403210015-d749d10505de
 	github.com/coreos/go-semver v0.3.1
 	github.com/go-logr/logr v1.4.2
 	github.com/google/go-cmp v0.7.0
