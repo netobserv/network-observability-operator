@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	ebpfconfig "github.com/netobserv/netobserv-ebpf-agent/pkg/agent"
+	ebpfconfig "github.com/netobserv/netobserv-ebpf-agent/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
