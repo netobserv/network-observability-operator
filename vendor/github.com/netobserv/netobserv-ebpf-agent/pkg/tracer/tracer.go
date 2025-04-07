@@ -35,9 +35,12 @@ const (
 	// ebpf map names as defined in bpf/maps_definition.h
 	aggregatedFlowsMap    = "aggregated_flows"
 	additionalFlowMetrics = "additional_flow_metrics"
+	directFlowsMap        = "direct_flows"
 	dnsLatencyMap         = "dns_flows"
-	flowFilterMap         = "filter_map"
-	flowPeerFilterMap     = "peer_filter_map"
+	filterMap             = "filter_map"
+	peerFilterMap         = "peer_filter_map"
+	globalCountersMap     = "global_counters"
+	pcaRecordsMap         = "packet_record"
 	// constants defined in flows.c as "volatile const"
 	constSampling                       = "sampling"
 	constHasFilterSampling              = "has_filter_sampling"
@@ -52,7 +55,6 @@ const (
 	constEnablePktTranslation           = "enable_pkt_translation_tracking"
 	pktDropHook                         = "kfree_skb"
 	constPcaEnable                      = "enable_pca"
-	pcaRecordsMap                       = "packet_record"
 	tcEgressFilterName                  = "tc/tc_egress_flow_parse"
 	tcIngressFilterName                 = "tc/tc_ingress_flow_parse"
 	tcpFentryHook                       = "tcp_rcv_fentry"
@@ -137,8 +139,15 @@ func NewFlowFetcher(cfg *FlowFetcherConfig) (*FlowFetcher, error) {
 		spec.Maps[additionalFlowMetrics].MaxEntries = uint32(cfg.CacheMaxSize)
 
 		// remove pinning from all maps
-		maps2Name := []string{"aggregated_flows", "additional_flow_metrics", "direct_flows", "dns_flows", "filter_map", "peer_filter_map", "global_counters", "packet_record"}
-		for _, m := range maps2Name {
+		for _, m := range []string{
+			aggregatedFlowsMap,
+			additionalFlowMetrics,
+			directFlowsMap,
+			dnsLatencyMap,
+			filterMap,
+			peerFilterMap,
+			globalCountersMap,
+			pcaRecordsMap} {
 			spec.Maps[m].Pinning = 0
 		}
 
@@ -171,8 +180,8 @@ func NewFlowFetcher(cfg *FlowFetcherConfig) (*FlowFetcher, error) {
 			enableFlowFiltering = 1
 			hasFilterSampling = filter.hasSampling()
 		} else {
-			spec.Maps[flowFilterMap].MaxEntries = 1
-			spec.Maps[flowPeerFilterMap].MaxEntries = 1
+			spec.Maps[filterMap].MaxEntries = 1
+			spec.Maps[peerFilterMap].MaxEntries = 1
 		}
 		enableNetworkEventsMonitoring := 0
 		if cfg.EnableNetworkEventsMonitoring {
@@ -294,47 +303,49 @@ func NewFlowFetcher(cfg *FlowFetcherConfig) (*FlowFetcher, error) {
 		}
 
 		log.Info("BPFManager mode: loading aggregated flows pinned maps")
-		mPath := path.Join(pinDir, "aggregated_flows")
+		mPath := path.Join(pinDir, aggregatedFlowsMap)
 		objects.BpfMaps.AggregatedFlows, err = cilium.LoadPinnedMap(mPath, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load %s: %w", mPath, err)
 		}
 		log.Info("BPFManager mode: loading additional flow metrics pinned maps")
-		mPath = path.Join(pinDir, "additional_flow_metrics")
+		mPath = path.Join(pinDir, additionalFlowMetrics)
 		objects.BpfMaps.AdditionalFlowMetrics, err = cilium.LoadPinnedMap(mPath, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load %s: %w", mPath, err)
 		}
 		log.Info("BPFManager mode: loading direct flows pinned maps")
-		mPath = path.Join(pinDir, "direct_flows")
+		mPath = path.Join(pinDir, directFlowsMap)
 		objects.BpfMaps.DirectFlows, err = cilium.LoadPinnedMap(mPath, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load %s: %w", mPath, err)
 		}
 		log.Infof("BPFManager mode: loading DNS flows pinned maps")
-		mPath = path.Join(pinDir, "dns_flows")
+		mPath = path.Join(pinDir, dnsLatencyMap)
 		objects.BpfMaps.DnsFlows, err = cilium.LoadPinnedMap(mPath, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load %s: %w", mPath, err)
 		}
 		log.Infof("BPFManager mode: loading filter pinned maps")
-		mPath = path.Join(pinDir, "filter_map")
+		mPath = path.Join(pinDir, filterMap)
 		objects.BpfMaps.FilterMap, err = cilium.LoadPinnedMap(mPath, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load %s: %w", mPath, err)
 		}
+		log.Infof("BPFManager mode: loading Peerfilter pinned maps")
+		mPath = path.Join(pinDir, peerFilterMap)
 		objects.BpfMaps.PeerFilterMap, err = cilium.LoadPinnedMap(mPath, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load %s: %w", mPath, err)
 		}
 		log.Infof("BPFManager mode: loading global counters pinned maps")
-		mPath = path.Join(pinDir, "global_counters")
+		mPath = path.Join(pinDir, globalCountersMap)
 		objects.BpfMaps.GlobalCounters, err = cilium.LoadPinnedMap(mPath, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load %s: %w", mPath, err)
 		}
 		log.Infof("BPFManager mode: loading packet record pinned maps")
-		mPath = path.Join(pinDir, "packet_record")
+		mPath = path.Join(pinDir, pcaRecordsMap)
 		objects.BpfMaps.PacketRecord, err = cilium.LoadPinnedMap(mPath, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load %s: %w", mPath, err)
@@ -402,12 +413,29 @@ func (m *FlowFetcher) AttachTCX(iface ifaces.Interface) error {
 			if errors.Is(err, fs.ErrExist) {
 				// The interface already has a TCX egress hook
 				log.WithField("iface", iface.Name).Debug("interface already has a TCX egress hook ignore")
+				if q, err := link.QueryPrograms(link.QueryOptions{
+					Target: iface.Index,
+					Attach: cilium.AttachTCXEgress,
+				}); err == nil {
+					for _, id := range q.Programs {
+						linkID, ok := id.LinkID()
+						if !ok {
+							return fmt.Errorf("failed to get linkID for %s: %w", iface.Name, err)
+						}
+						if egrLink, err = link.NewFromID(linkID); err != nil {
+							return fmt.Errorf("failed to get link for egress flow to %s: %w", iface.Name, err)
+						}
+						ilog.WithField("link", linkID).Debug("attaching egress flow to link")
+					}
+				} else {
+					return fmt.Errorf("failed to query TCX egress flow to %s: %w", iface.Name, err)
+				}
 			} else {
 				return fmt.Errorf("failed to attach TCX egress: %w", err)
 			}
 		}
 		m.egressTCXLink[iface] = egrLink
-		ilog.WithField("interface", iface.Name).Debug("successfully attach egressTCX hook")
+		ilog.WithField("interface", iface.Name).Debugf("successfully attach egressTCX hook link: %v", egrLink)
 	}
 
 	if m.enableIngress {
@@ -420,12 +448,29 @@ func (m *FlowFetcher) AttachTCX(iface ifaces.Interface) error {
 			if errors.Is(err, fs.ErrExist) {
 				// The interface already has a TCX ingress hook
 				log.WithField("iface", iface.Name).Debug("interface already has a TCX ingress hook ignore")
+				if q, err := link.QueryPrograms(link.QueryOptions{
+					Target: iface.Index,
+					Attach: cilium.AttachTCXIngress,
+				}); err == nil {
+					for _, id := range q.Programs {
+						linkID, ok := id.LinkID()
+						if !ok {
+							return fmt.Errorf("failed to get linkID for %s: %w", iface.Name, err)
+						}
+						if ingLink, err = link.NewFromID(linkID); err != nil {
+							return fmt.Errorf("failed to get link for ingress flow to %s: %w", iface.Name, err)
+						}
+						ilog.WithField("link", linkID).Debug("attaching ingress flow to link")
+					}
+				} else {
+					return fmt.Errorf("failed to query existing TCX ingress flow to %s: %w", iface.Name, err)
+				}
 			} else {
 				return fmt.Errorf("failed to attach TCX ingress: %w", err)
 			}
 		}
 		m.ingressTCXLink[iface] = ingLink
-		ilog.WithField("interface", iface.Name).Debug("successfully attach ingressTCX hook")
+		ilog.WithField("interface", iface.Name).Debugf("successfully attach ingressTCX hook link: %v", ingLink)
 	}
 
 	return nil
@@ -453,7 +498,8 @@ func (m *FlowFetcher) DetachTCX(iface ifaces.Interface) error {
 			if err := l.Close(); err != nil {
 				return fmt.Errorf("TCX: failed to close egress link: %w", err)
 			}
-			ilog.WithField("interface", iface.Name).Debug("successfully detach egressTCX hook")
+			ilog.WithField("interface", iface.Name).Debugf("successfully detach egressTCX hook link: %v",
+				m.egressTCXLink[iface])
 		} else {
 			return fmt.Errorf("egress link does not have a TCX egress hook")
 		}
@@ -464,7 +510,8 @@ func (m *FlowFetcher) DetachTCX(iface ifaces.Interface) error {
 			if err := l.Close(); err != nil {
 				return fmt.Errorf("TCX: failed to close ingress link: %w", err)
 			}
-			ilog.WithField("interface", iface.Name).Debug("successfully detach ingressTCX hook")
+			ilog.WithField("interface", iface.Name).Debugf("successfully detach ingressTCX hook link: %v",
+				m.ingressTCXLink[iface])
 		} else {
 			return fmt.Errorf("ingress link does not have a TCX ingress hook")
 		}
@@ -728,22 +775,43 @@ func (m *FlowFetcher) Close() error {
 		if err := m.objects.TcxIngressFlowParse.Close(); err != nil {
 			errs = append(errs, err)
 		}
+		if err := m.objects.AggregatedFlows.Unpin(); err != nil {
+			errs = append(errs, err)
+		}
 		if err := m.objects.AggregatedFlows.Close(); err != nil {
+			errs = append(errs, err)
+		}
+		if err := m.objects.AdditionalFlowMetrics.Unpin(); err != nil {
 			errs = append(errs, err)
 		}
 		if err := m.objects.AdditionalFlowMetrics.Close(); err != nil {
 			errs = append(errs, err)
 		}
+		if err := m.objects.DirectFlows.Unpin(); err != nil {
+			errs = append(errs, err)
+		}
 		if err := m.objects.DirectFlows.Close(); err != nil {
+			errs = append(errs, err)
+		}
+		if err := m.objects.DnsFlows.Unpin(); err != nil {
 			errs = append(errs, err)
 		}
 		if err := m.objects.DnsFlows.Close(); err != nil {
 			errs = append(errs, err)
 		}
+		if err := m.objects.GlobalCounters.Unpin(); err != nil {
+			errs = append(errs, err)
+		}
 		if err := m.objects.GlobalCounters.Close(); err != nil {
 			errs = append(errs, err)
 		}
+		if err := m.objects.FilterMap.Unpin(); err != nil {
+			errs = append(errs, err)
+		}
 		if err := m.objects.FilterMap.Close(); err != nil {
+			errs = append(errs, err)
+		}
+		if err := m.objects.PeerFilterMap.Unpin(); err != nil {
 			errs = append(errs, err)
 		}
 		if err := m.objects.PeerFilterMap.Close(); err != nil {
@@ -792,10 +860,8 @@ func (m *FlowFetcher) Close() error {
 	}
 	m.ingressTCXLink = map[ifaces.Interface]link.Link{}
 
-	if !m.useEbpfManager {
-		if err := m.removeAllPins(); err != nil {
-			errs = append(errs, err)
-		}
+	if err := m.removeAllPins(); err != nil {
+		errs = append(errs, err)
 	}
 
 	if len(errs) == 0 {
@@ -887,7 +953,7 @@ func (m *FlowFetcher) LookupAndDeleteMap(met *metrics.Metrics) map[ebpf.BpfFlowI
 				return m.legacyLookupAndDeleteMap(met)
 			}
 			log.WithError(err).WithField("flowId", id).Warnf("couldn't lookup/delete flow entry")
-			met.Errors.WithErrorName("flow-fetcher", "CannotDeleteFlows").Inc()
+			met.Errors.WithErrorName("flow-fetcher", "CannotDeleteFlows", metrics.HighSeverity).Inc()
 			continue
 		}
 		flows[id] = model.NewBpfFlowContent(baseMetrics)
@@ -911,7 +977,7 @@ func (m *FlowFetcher) LookupAndDeleteMap(met *metrics.Metrics) map[ebpf.BpfFlowI
 				return m.legacyLookupAndDeleteMap(met)
 			}
 			log.WithError(err).WithField("flowId", id).Warnf("couldn't lookup/delete additional metrics entry")
-			met.Errors.WithErrorName("flow-fetcher", "CannotDeleteAdditionalMetric").Inc()
+			met.Errors.WithErrorName("flow-fetcher", "CannotDeleteAdditionalMetric", metrics.HighSeverity).Inc()
 			continue
 		}
 		flow, found := flows[id]
@@ -959,7 +1025,7 @@ func (m *FlowFetcher) ReadGlobalCounter(met *metrics.Metrics) {
 		ebpf.BpfGlobalCountersKeyTNETWORK_EVENTS_ERR_GROUPID_MISMATCH: met.NetworkEventsCounter.WithSourceAndReason("network-events", "NetworkEventsErrorsGroupIDMismatch"),
 		ebpf.BpfGlobalCountersKeyTNETWORK_EVENTS_ERR_UPDATE_MAP_FLOWS: met.NetworkEventsCounter.WithSourceAndReason("network-events", "NetworkEventsErrorsFlowMapUpdate"),
 		ebpf.BpfGlobalCountersKeyTNETWORK_EVENTS_GOOD:                 met.NetworkEventsCounter.WithSourceAndReason("network-events", "NetworkEventsGoodEvent"),
-		ebpf.BpfGlobalCountersKeyTOBSERVED_INTF_MISSED:                met.Errors.WithErrorName("flow-fetcher", "MaxObservedInterfacesReached"),
+		ebpf.BpfGlobalCountersKeyTOBSERVED_INTF_MISSED:                met.Errors.WithErrorName("flow-fetcher", "MaxObservedInterfacesReached", metrics.LowSeverity),
 	}
 	zeroCounters := make([]uint32, cilium.MustPossibleCPU())
 	for key := ebpf.BpfGlobalCountersKeyT(0); key < ebpf.BpfGlobalCountersKeyTMAX_COUNTERS; key++ {
@@ -1297,8 +1363,15 @@ func NewPacketFetcher(cfg *FlowFetcherConfig) (*PacketFetcher, error) {
 	}
 
 	// remove pinning from all maps
-	maps2Name := []string{"aggregated_flows", "additional_flow_metrics", "direct_flows", "dns_flows", "filter_map", "global_counters", "packet_record"}
-	for _, m := range maps2Name {
+	for _, m := range []string{
+		aggregatedFlowsMap,
+		additionalFlowMetrics,
+		directFlowsMap,
+		dnsLatencyMap,
+		filterMap,
+		peerFilterMap,
+		globalCountersMap,
+		pcaRecordsMap} {
 		spec.Maps[m].Pinning = 0
 	}
 
@@ -1510,6 +1583,23 @@ func (p *PacketFetcher) AttachTCX(iface ifaces.Interface) error {
 			if errors.Is(err, fs.ErrExist) {
 				// The interface already has a TCX egress hook
 				log.WithField("iface", iface.Name).Debug("interface already has a TCX PCA egress hook ignore")
+				if q, err := link.QueryPrograms(link.QueryOptions{
+					Target: iface.Index,
+					Attach: cilium.AttachTCXEgress,
+				}); err == nil {
+					for _, id := range q.Programs {
+						linkID, ok := id.LinkID()
+						if !ok {
+							return fmt.Errorf("failed to get linkID for %s: %w", iface.Name, err)
+						}
+						if egrLink, err = link.NewFromID(linkID); err != nil {
+							return fmt.Errorf("failed to get link for egress flow to %s: %w", iface.Name, err)
+						}
+						ilog.WithField("link", linkID).Debug("attaching egress flow to link")
+					}
+				} else {
+					return fmt.Errorf("failed to query TCX egress flow to %s: %w", iface.Name, err)
+				}
 			} else {
 				return fmt.Errorf("failed to attach PCA TCX egress: %w", err)
 			}
@@ -1528,6 +1618,23 @@ func (p *PacketFetcher) AttachTCX(iface ifaces.Interface) error {
 			if errors.Is(err, fs.ErrExist) {
 				// The interface already has a TCX ingress hook
 				log.WithField("iface", iface.Name).Debug("interface already has a TCX PCA ingress hook ignore")
+				if q, err := link.QueryPrograms(link.QueryOptions{
+					Target: iface.Index,
+					Attach: cilium.AttachTCXEgress,
+				}); err == nil {
+					for _, id := range q.Programs {
+						linkID, ok := id.LinkID()
+						if !ok {
+							return fmt.Errorf("failed to get linkID for %s: %w", iface.Name, err)
+						}
+						if ingLink, err = link.NewFromID(linkID); err != nil {
+							return fmt.Errorf("failed to get link for ingress flow to %s: %w", iface.Name, err)
+						}
+						ilog.WithField("link", linkID).Debug("attaching ingress flow to link")
+					}
+				} else {
+					return fmt.Errorf("failed to query TCX ingress flow to %s: %w", iface.Name, err)
+				}
 			} else {
 				return fmt.Errorf("failed to attach PCA TCX ingress: %w", err)
 			}
@@ -1723,7 +1830,7 @@ func (p *PacketFetcher) LookupAndDeleteMap(met *metrics.Metrics) map[int][]*byte
 				return p.legacyLookupAndDeleteMap(met)
 			}
 			log.WithError(err).WithField("packetID", id).Warnf("couldn't delete entry")
-			met.Errors.WithErrorName("pkt-fetcher", "CannotDeleteEntry").Inc()
+			met.Errors.WithErrorName("pkt-fetcher", "CannotDeleteEntry", metrics.HighSeverity).Inc()
 		}
 		packets[id] = packet
 	}

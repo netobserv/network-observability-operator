@@ -79,4 +79,5 @@ func loadAntreaRegistry() {
 	registerInfoElement(*entities.NewInfoElement("appProtocolName", 155, 13, 56506, 65535), 56506)
 	registerInfoElement(*entities.NewInfoElement("httpVals", 156, 13, 56506, 65535), 56506)
 	registerInfoElement(*entities.NewInfoElement("egressNodeName", 157, 13, 56506, 65535), 56506)
+	registerInfoElement(*entities.NewInfoElement("clusterId", 158, 13, 56506, 65535), 56506)
 }

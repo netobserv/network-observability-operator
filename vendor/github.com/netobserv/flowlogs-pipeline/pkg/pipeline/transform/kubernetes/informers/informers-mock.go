@@ -180,8 +180,8 @@ func (f *FakeInformers) InitFromConfig(_ api.NetworkTransformKubeConfig, _ *oper
 }
 
 func (f *FakeInformers) GetInfo(keys []cni.SecondaryNetKey, ip string) (*Info, error) {
-	if len(keys) > 0 {
-		i := f.customKeysInfo[keys[0].Key]
+	for _, key := range keys {
+		i := f.customKeysInfo[key.Key]
 		if i != nil {
 			return i, nil
 		}

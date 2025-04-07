@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
+// SPDX-License-Identifier: MIT
+
 package dtls
 
 import (
@@ -19,7 +22,7 @@ type State struct {
 	masterSecret              []byte
 	cipherSuite               CipherSuite // nil if a cipherSuite hasn't been chosen
 
-	srtpProtectionProfile SRTPProtectionProfile // Negotiated SRTPProtectionProfile
+	srtpProtectionProfile atomic.Value // Negotiated SRTPProtectionProfile
 	PeerCertificates      [][]byte
 	IdentityHint          []byte
 	SessionID             []byte
@@ -84,7 +87,7 @@ func (s *State) serialize() *serializedState {
 		SequenceNumber:        atomic.LoadUint64(&s.localSequenceNumber[epoch]),
 		LocalRandom:           localRnd,
 		RemoteRandom:          remoteRnd,
-		SRTPProtectionProfile: uint16(s.srtpProtectionProfile),
+		SRTPProtectionProfile: uint16(s.getSRTPProtectionProfile()),
 		PeerCertificates:      s.PeerCertificates,
 		IdentityHint:          s.IdentityHint,
 		SessionID:             s.SessionID,
@@ -120,7 +123,7 @@ func (s *State) deserialize(serialized serializedState) {
 	s.cipherSuite = cipherSuiteForID(CipherSuiteID(serialized.CipherSuiteID), nil)
 
 	atomic.StoreUint64(&s.localSequenceNumber[epoch], serialized.SequenceNumber)
-	s.srtpProtectionProfile = SRTPProtectionProfile(serialized.SRTPProtectionProfile)
+	s.setSRTPProtectionProfile(SRTPProtectionProfile(serialized.SRTPProtectionProfile))
 
 	// Set remote certificate
 	s.PeerCertificates = serialized.PeerCertificates
@@ -169,10 +172,8 @@ func (s *State) UnmarshalBinary(data []byte) error {
 	}
 
 	s.deserialize(serialized)
-	if err := s.initCipherSuite(); err != nil {
-		return err
-	}
-	return nil
+
+	return s.initCipherSuite()
 }
 
 // ExportKeyingMaterial returns length bytes of exported key material in a new
@@ -211,5 +212,17 @@ func (s *State) getLocalEpoch() uint16 {
 	if localEpoch, ok := s.localEpoch.Load().(uint16); ok {
 		return localEpoch
 	}
+	return 0
+}
+
+func (s *State) setSRTPProtectionProfile(profile SRTPProtectionProfile) {
+	s.srtpProtectionProfile.Store(profile)
+}
+
+func (s *State) getSRTPProtectionProfile() SRTPProtectionProfile {
+	if val, ok := s.srtpProtectionProfile.Load().(SRTPProtectionProfile); ok {
+		return val
+	}
+
 	return 0
 }

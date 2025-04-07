@@ -57,7 +57,7 @@ func (g *GRPCProto) ExportFlows(input <-chan []*model.Record) {
 		for _, pbRecords := range pbflow.FlowsToPB(inputRecords, g.maxFlowsPerMessage) {
 			log.Debugf("sending %d records", len(pbRecords.Entries))
 			if _, err := g.clientConn.Client().Send(context.TODO(), pbRecords); err != nil {
-				g.metrics.Errors.WithErrorName(componentGRPC, "CannotWriteMessage").Inc()
+				g.metrics.Errors.WithErrorName(componentGRPC, "CannotWriteMessage", metrics.HighSeverity).Inc()
 				log.WithError(err).Error("couldn't send flow records to collector")
 			}
 			g.batchCounter.Inc()
@@ -66,6 +66,6 @@ func (g *GRPCProto) ExportFlows(input <-chan []*model.Record) {
 	}
 	if err := g.clientConn.Close(); err != nil {
 		log.WithError(err).Warn("couldn't close flow export client")
-		g.metrics.Errors.WithErrorName(componentGRPC, "CannotCloseClient").Inc()
+		g.metrics.Errors.WithErrorName(componentGRPC, "CannotCloseClient", metrics.MediumSeverity).Inc()
 	}
 }
