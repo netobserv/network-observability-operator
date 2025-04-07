@@ -1,5 +1,5 @@
 # Do not remove empty lines, they are there to reduce conflicts
-export OPERATOR_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:5197e89bd62ddd274df0e0edf360c5fb170750811572fce95ebdf8f09cedf287'
+export OPERATOR_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:ddba5539b7aa3d828ffe7e4e56dfba0b880570a916cd5a86cb06a602d1f674ce'
 #
 export EBPF_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:2eebe07e954f966b35c381002b8c4c83f7f12d844be1110a7bf22985afa4e9af'
 #
