@@ -294,7 +294,7 @@ spec:
       - name: name
         value: sast-shell-check
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-sast-shell-check:0.1@sha256:d355a9c5ae26f22d8e7213a92fd37015d0435b1c2003e0b7e4881f3d48f84462 
+        value: quay.io/konflux-ci/tekton-catalog/task-sast-shell-check@sha256:1b3d68c33a92dfc3da3975581cae80c99c8d1995cab519ae98c6331b5677ded0
       - name: kind
         value: task
       resolver: bundles
@@ -319,7 +319,7 @@ spec:
       - name: name
         value: sast-unicode-check
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-sast-unicode-check:0.1@sha256:cc8232ac2281a823209aa53e2ef37f410e32a3e2e3aca0b01faeef55421a11be
+        value: quay.io/konflux-ci/tekton-catalog/task-sast-unicode-check@sha256:b1a9af196a79baa75632ef494eb6db987f57e870d882d47f5b495e1441c01e3b
       - name: kind
         value: task
       resolver: bundles
