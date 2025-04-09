@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: static-console-plugin
+  namespace: system
+  labels:
+    app: static-console-plugin
+spec:
+  selector:
+    matchLabels:
+      app: static-console-plugin
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: static-console-plugin
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - command:
+        - /static-plugin
+        env:
+        - name: GODEBUG
+          value: http2server=0
+        image: static-console-plugin
+        name: static-plugin
+        imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        volumeMounts:
+        - mountPath: /var/serving-cert
+          name: static-console-plugin-tls
+          readOnly: true
+      volumes:
+      - name: static-console-plugin-tls
+        secret:
+          defaultMode: 420
+          secretName: static-console-plugin-tls
