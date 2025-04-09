@@ -81,7 +81,7 @@ metadata:
   namespace: openshift-marketplace
 spec:
   displayName: netobserv-konflux
-  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc-ystream:latest'
+  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-fbc-ystream:latest'
   publisher: Netobserv team
   sourceType: grpc
 ```
@@ -127,7 +127,7 @@ metadata:
   namespace: openshift-marketplace
 spec:
   displayName: netobserv-konflux
-  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc-zstream:latest'
+  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-fbc-zstream:1.8'
   publisher: Netobserv team
   sourceType: grpc
 ```
