@@ -40,7 +40,7 @@ Konflux will regulary create new pull requests, there are three categories :
 - [Konflux tasks update](https://github.com/netobserv/network-observability-operator/pull/787) Up to date tasks are required to pass security check during release. Also the migration note sometimes contains instruction to some required actions
 - [Dependencies update](https://github.com/netobserv/network-observability-operator/pull/962) Kondlux internally use [https://github.com/renovatebot/renovate](renovate) to automatically create this PR.
 
-## Deploying
+## Deploying y-stream (1.y.0)
 
 An `ImageDigestMirrorSet` is required:
 
@@ -81,22 +81,53 @@ metadata:
   namespace: openshift-marketplace
 spec:
   displayName: netobserv-konflux
-  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc:latest'
+  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc-ystream:latest'
   publisher: Netobserv team
   sourceType: grpc
 ```
 
-or, using a pinned FBC candidate bound to a specific release of OCP (here an example for 4.14) :
+## Deploying z-stream (1.y.z)
+
+An `ImageDigestMirrorSet` is required:
+
+```yaml
+apiVersion: config.openshift.io/v1
+kind: ImageDigestMirrorSet
+metadata:
+  name: netobserv-image-digest-mirror-set
+spec:
+  imageDigestMirrors:
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-zstream
+      source: registry.redhat.io/network-observability/network-observability-rhel9-operator
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/flowlogs-pipeline-zstream
+      source: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-ebpf-agent-zstream
+      source: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-zstream
+      source: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-cli-zstream
+      source: registry.redhat.io/network-observability/network-observability-cli-rhel9
+    - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle-zstream
+      source: registry.redhat.io/network-observability/network-observability-operator-bundle
+```
+
+The testing FBC image can be added as a CatalogSource:
 
 ```yaml
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:
-  name: netobserv-candidate-konflux
+  name: netobserv-konflux
   namespace: openshift-marketplace
 spec:
-  displayName: netobserv-candidate-konflux
-  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/fbc-v4-14:on-pr-e4100cd49d5794f0fe76f00546e23dd2559b387f'
+  displayName: netobserv-konflux
+  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc-zstream:latest'
   publisher: Netobserv team
   sourceType: grpc
 ```
