@@ -9,6 +9,7 @@ import (
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
@@ -38,7 +39,8 @@ func DaemonSetChanged(current, desired *appsv1.DaemonSet) ReconcileAction {
 	if !IsSubSet(current.ObjectMeta.Labels, desired.ObjectMeta.Labels) ||
 		!deepDerivative(dSpec.Selector, cSpec.Selector) ||
 		!deepDerivative(dSpec.Template, cSpec.Template) ||
-		assignationChanged(&cSpec.Template, &dSpec.Template, nil) {
+		assignationChanged(&cSpec.Template, &dSpec.Template, nil) ||
+		ownershipChanged(&cSpec.Template.OwnerReferences, &dSpec.Template.OwnerReferences) {
 		return ActionUpdate
 	}
 
@@ -54,7 +56,8 @@ func DaemonSetChanged(current, desired *appsv1.DaemonSet) ReconcileAction {
 
 func DeploymentChanged(old, new *appsv1.Deployment, contName string, checkReplicas bool, desiredReplicas int32, report *ChangeReport) bool {
 	return report.Check("Pod changed", PodChanged(&old.Spec.Template, &new.Spec.Template, contName, report)) ||
-		report.Check("Replicas changed", (checkReplicas && *old.Spec.Replicas != desiredReplicas))
+		report.Check("Replicas changed", (checkReplicas && *old.Spec.Replicas != desiredReplicas)) ||
+		report.Check("Ownership changed", ownershipChanged(&old.OwnerReferences, &new.OwnerReferences))
 }
 
 func PodChanged(old, new *corev1.PodTemplateSpec, containerName string, report *ChangeReport) bool {
@@ -72,7 +75,7 @@ func PodChanged(old, new *corev1.PodTemplateSpec, containerName string, report *
 		report.Add("New container not found")
 		return true
 	}
-	return report.Check("Container changed", containerChanged(oldContainer, newContainer, report))
+	return report.Check("Container changed", containerChanged(oldContainer, newContainer, report)) || report.Check("Ownership changed", ownershipChanged(&old.OwnerReferences, &new.OwnerReferences))
 }
 
 func annotationsChanged(old, new *corev1.PodTemplateSpec, report *ChangeReport) bool {
@@ -137,18 +140,21 @@ func probeChanged(old, new *corev1.Probe) bool {
 func ServiceChanged(old, new *corev1.Service, report *ChangeReport) bool {
 	return report.Check("Service annotations changed", !deepDerivative(new.Annotations, old.Annotations)) ||
 		report.Check("Service labels changed", !deepDerivative(new.Labels, old.Labels)) ||
-		report.Check("Service spec changed", !deepDerivative(new.Spec, old.Spec))
+		report.Check("Service spec changed", !deepDerivative(new.Spec, old.Spec)) ||
+		report.Check("Ownership changed", ownershipChanged(&old.OwnerReferences, &new.OwnerReferences))
 }
 
 func ServiceMonitorChanged(old, new *monitoringv1.ServiceMonitor, report *ChangeReport) bool {
 	return report.Check("ServiceMonitor spec changed", !deepDerivative(new.Spec, old.Spec)) ||
-		report.Check("ServiceMonitor labels changed", !IsSubSet(old.Labels, new.Labels))
+		report.Check("ServiceMonitor labels changed", !IsSubSet(old.Labels, new.Labels)) ||
+		report.Check("Ownership changed", ownershipChanged(&old.OwnerReferences, &new.OwnerReferences))
 }
 
 func PrometheusRuleChanged(old, new *monitoringv1.PrometheusRule, report *ChangeReport) bool {
 	// Note: DeepDerivative misses changes in Spec.Groups.Rules (covered by test "Expecting PrometheusRule to exist and be updated")
 	return report.Check("PrometheusRule spec changed", !deepEqual(new.Spec, old.Spec)) ||
-		report.Check("PrometheusRule labels changed", !IsSubSet(old.Labels, new.Labels))
+		report.Check("PrometheusRule labels changed", !IsSubSet(old.Labels, new.Labels)) ||
+		report.Check("Ownership changed", ownershipChanged(&old.OwnerReferences, &new.OwnerReferences))
 }
 
 // FindContainer searches in pod containers one that matches the provided name
@@ -161,16 +167,20 @@ func FindContainer(podSpec *corev1.PodSpec, name string) *corev1.Container {
 	return nil
 }
 
-func AutoScalerChanged(asc *ascv2.HorizontalPodAutoscaler, desired flowslatest.FlowCollectorHPA, report *ChangeReport) bool {
+func AutoScalerChanged(old, new *ascv2.HorizontalPodAutoscaler, desired flowslatest.FlowCollectorHPA, report *ChangeReport) bool {
 	differentPointerValues := func(a, b *int32) bool {
 		return (a == nil && b != nil) || (a != nil && b == nil) || (a != nil && *a != *b)
 	}
-	if report.Check("Max replicas changed", asc.Spec.MaxReplicas != desired.MaxReplicas) ||
-		report.Check("Min replicas changed", differentPointerValues(asc.Spec.MinReplicas, desired.MinReplicas)) {
+	if report.Check("Max replicas changed", old.Spec.MaxReplicas != desired.MaxReplicas) ||
+		report.Check("Min replicas changed", differentPointerValues(old.Spec.MinReplicas, desired.MinReplicas)) ||
+		report.Check("Metrics changed", !deepDerivative(desired.Metrics, old.Spec.Metrics)) ||
+		report.Check("Ownership changed", ownershipChanged(&old.OwnerReferences, &new.OwnerReferences)) {
 		return true
 	}
-	if report.Check("Metrics changed", !deepDerivative(desired.Metrics, asc.Spec.Metrics)) {
-		return true
-	}
+
 	return false
+}
+
+func ownershipChanged(old *[]metav1.OwnerReference, new *[]metav1.OwnerReference) bool {
+	return !deepEqual(old, new)
 }

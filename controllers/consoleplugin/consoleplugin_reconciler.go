@@ -12,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
@@ -50,6 +51,20 @@ func NewReconciler(cmn *reconcilers.Instance) CPReconciler {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(constants.PluginName)
 	}
 	return rec
+}
+
+func (r *CPReconciler) ReconcileDefault(ctx context.Context) error {
+	// Fake a FlowCollector to create console plugin and expose forms
+	return r.Reconcile(ctx, &flowslatest.FlowCollector{
+		Spec: flowslatest.FlowCollectorSpec{
+			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
+				Enable: ptr.To(true),
+				Advanced: &flowslatest.AdvancedPluginConfig{
+					Register: ptr.To(true),
+				},
+			},
+		},
+	})
 }
 
 // Reconcile is the reconciler entry point to reconcile the current plugin state with the desired configuration
