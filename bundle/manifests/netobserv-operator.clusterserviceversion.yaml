@@ -802,6 +802,10 @@ spec:
         path: processor.deduper.sampling
       - displayName: Filters
         path: processor.filters
+      - displayName: Any of
+        path: processor.filters.anyOf
+      - displayName: Output target
+        path: processor.filters.outputTarget
       - displayName: Log types
         path: processor.logTypes
       - displayName: Disable alerts
