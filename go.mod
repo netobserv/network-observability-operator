@@ -13,7 +13,7 @@ require (
 	github.com/netobserv/netobserv-ebpf-agent v1.8.1-crc0
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
-	github.com/openshift/api v0.0.0-20250313134101-8a7efbfb5316
+	github.com/openshift/api v0.0.0-20250411135543-10a8fa583797
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.79.2
 	github.com/prometheus/common v0.62.0
 	github.com/sirupsen/logrus v1.9.3
