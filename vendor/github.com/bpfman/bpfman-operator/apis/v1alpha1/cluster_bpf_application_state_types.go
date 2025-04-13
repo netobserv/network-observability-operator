@@ -36,6 +36,7 @@ import (
 // +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'TracePoint' ?  has(self.tracepoint) : !has(self.tracepoint)",message="tracepoint configuration is required when type is tracepoint, and forbidden otherwise"
 type ClBpfApplicationProgramState struct {
 	BpfProgramStateCommon `json:",inline"`
+
 	// type specifies the bpf program type
 	// +unionDiscriminator
 	// +required
@@ -93,22 +94,27 @@ type ClBpfApplicationProgramState struct {
 	TracePoint *ClTracepointProgramInfoState `json:"tracepoint,omitempty"`
 }
 
-// BpfApplicationSpec defines the desired state of BpfApplication
-type ClBpfApplicationStateSpec struct {
-	// node is the name of the node for this BpfApplicationStateSpec.
-	Node string `json:"node"`
+// ClBpfApplicationStateStatus reflects the status of the ClusterBpfApplicationState on the given node
+type ClBpfApplicationStateStatus struct {
 	// updateCount is the number of times the BpfApplicationState has been updated. Set to 1
 	// when the object is created, then it is incremented prior to each update.
 	// This allows us to verify that the API server has the updated object prior
 	// to starting a new Reconcile operation.
 	UpdateCount int64 `json:"updateCount"`
+	// node is the name of the node for this BpfApplicationStateSpec.
+	Node string `json:"node"`
 	// appLoadStatus reflects the status of loading the bpf application on the
 	// given node.
 	AppLoadStatus AppLoadStatus `json:"appLoadStatus"`
 	// programs is a list of bpf programs contained in the parent application.
-	// It is a map from the bpf program name to BpfApplicationProgramState
-	// elements.
 	Programs []ClBpfApplicationProgramState `json:"programs,omitempty"`
+	// Conditions contains the overall status of the ClusterBpfApplicationState
+	// object on the given node.
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 
 // +genclient
@@ -118,15 +124,14 @@ type ClBpfApplicationStateSpec struct {
 // +kubebuilder:resource:scope=Cluster
 
 // ClusterBpfApplicationState contains the per-node state of a BpfApplication.
-// +kubebuilder:printcolumn:name="Node",type=string,JSONPath=".spec.node"
+// +kubebuilder:printcolumn:name="Node",type=string,JSONPath=".status.node"
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.conditions[0].reason`
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type ClusterBpfApplicationState struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ClBpfApplicationStateSpec `json:"spec,omitempty"`
-	Status BpfAppStatus              `json:"status,omitempty"`
+	Status ClBpfApplicationStateStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -153,8 +158,8 @@ func (an ClusterBpfApplicationState) GetLabels() map[string]string {
 	return an.Labels
 }
 
-func (an ClusterBpfApplicationState) GetStatus() *BpfAppStatus {
-	return &an.Status
+func (an ClusterBpfApplicationState) GetConditions() []metav1.Condition {
+	return an.Status.Conditions
 }
 
 func (an ClusterBpfApplicationState) GetClientObject() client.Object {
