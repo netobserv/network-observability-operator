@@ -41,7 +41,7 @@ func WriteIPFIXMsgToBuffer(set entities.Set, obsDomainID uint32, seqNumber uint3
 	msgLen := entities.MsgHeaderLength + set.GetSetLength()
 	if msgLen > entities.MaxSocketMsgSize {
 		// This is applicable for both TCP and UDP sockets.
-		return msgLen, fmt.Errorf("message size exceeds max socket buffer size")
+		return 0, fmt.Errorf("message size exceeds max socket buffer size")
 	}
 
 	// Set the fields in the message header.
@@ -56,9 +56,17 @@ func WriteIPFIXMsgToBuffer(set entities.Set, obsDomainID uint32, seqNumber uint3
 	buf.Grow(msgLen)
 	buf.Write(msg.GetMsgHeader())
 	buf.Write(set.GetHeaderBuffer())
+	b := buf.AvailableBuffer()
 	for _, record := range set.GetRecords() {
-		buf.Write(record.GetBuffer())
+		var err error
+		// Calls to AppendToBuffer won't cause memory allocations as the
+		// buffer is already guaranteed to have enough capacity.
+		b, err = record.AppendToBuffer(b)
+		if err != nil {
+			return 0, err
+		}
 	}
+	buf.Write(b)
 
 	return msgLen, nil
 }

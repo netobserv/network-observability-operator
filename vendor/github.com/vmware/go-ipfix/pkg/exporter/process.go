@@ -48,8 +48,7 @@ type templateValue struct {
 //  3. Supports only TCP and UDP; one session at a time. SCTP is not supported.
 //  4. UDP needs to send PMTU size packets as per RFC7011. In order to guarantee
 //     this, maxMsgSize should be set correctly. maxMsgSize is the maximum
-//     payload (IPFIX message) size, not the maximum packet size. You need to
-//     compute maxMsgSize based on the desired maximum packet size. If
+//     payload (IPFIX message) size, not the maximum packet size. If
 //     maxMsgSize is not set correctly, the message may be fragmented.
 type ExportingProcess struct {
 	connToCollector net.Conn
@@ -94,10 +93,58 @@ type ExporterInput struct {
 	// JSONBufferLen is recommended for sending json records. If not given a
 	// valid value, we use a default of 5000B
 	JSONBufferLen int
-	// For UDP, this should be set by taking into account the PMTU and
-	// header sizes.
-	MaxMsgSize        int
+	// MaxMsgSize can be used to provide a custom maximum IPFIX message
+	// size. If it is omitted, we will use an appropriate default based on
+	// the configured protocol. For UDP, we want to avoid fragmentation, so
+	// the MaxMsgSize should be set by taking into account the PMTU and
+	// header sizes. The recommended approach is to keep MaxMsgSize unset
+	// and provide the correct PMTU value.
+	MaxMsgSize int
+	// PathMTU is used to calculate the maximum message size when the
+	// protocol is UDP. It is ignored for TCP. If both MaxMsgSize and
+	// PathMTU are set, and MaxMsgSize is incompatible with the provided
+	// PathMTU, exporter initialization will fail.
+	PathMTU           int
 	CheckConnInterval time.Duration
+}
+
+func calculateMaxMsgSize(proto string, requestedSize int, pathMTU int, isIPv6 bool) (int, error) {
+	if requestedSize > 0 && (requestedSize < entities.MinSupportedMsgSize || requestedSize > entities.MaxSocketMsgSize) {
+		return 0, fmt.Errorf("requested message size should be between %d and %d", entities.MinSupportedMsgSize, entities.MaxSocketMsgSize)
+	}
+	if proto == "tcp" {
+		if requestedSize == 0 {
+			return entities.MaxSocketMsgSize, nil
+		} else {
+			return requestedSize, nil
+		}
+	}
+	// UDP protocol
+	if pathMTU == 0 {
+		if requestedSize == 0 {
+			klog.InfoS("Neither max IPFIX message size nor PMTU were provided, defaulting to min message size", "messageSize", entities.MinSupportedMsgSize)
+			return entities.MinSupportedMsgSize, nil
+		}
+		klog.InfoS("PMTU was not provided, configured message size may cause fragmentation", "messageSize", requestedSize)
+		return requestedSize, nil
+	}
+	// 20-byte IPv4, 8-byte UDP header
+	mtuDeduction := 28
+	if isIPv6 {
+		// An extra 20 bytes for IPv6
+		mtuDeduction += 20
+	}
+	maxMsgSize := pathMTU - mtuDeduction
+	if maxMsgSize < entities.MinSupportedMsgSize {
+		return 0, fmt.Errorf("provided PMTU %d is not large enough to accommodate min message size %d", pathMTU, entities.MinSupportedMsgSize)
+	}
+	if requestedSize > maxMsgSize {
+		return 0, fmt.Errorf("requested message size %d exceeds max message size %d calculated from provided PMTU", requestedSize, maxMsgSize)
+	}
+	if requestedSize > 0 {
+		return requestedSize, nil
+	}
+	return maxMsgSize, nil
 }
 
 // InitExportingProcess takes in collector address(net.Addr format), obsID(observation ID)
@@ -105,6 +152,9 @@ type ExporterInput struct {
 // for collectors listening over UDP; unit is seconds. For TCP, you can pass any
 // value and it will be ignored. For UDP, if 0 is passed, 600s is used as the default.
 func InitExportingProcess(input ExporterInput) (*ExportingProcess, error) {
+	if input.CollectorProtocol != "tcp" && input.CollectorProtocol != "udp" {
+		return nil, fmt.Errorf("unsupported collector protocol: %s", input.CollectorProtocol)
+	}
 	var conn net.Conn
 	var err error
 	if input.TLSClientConfig != nil {
@@ -151,6 +201,15 @@ func InitExportingProcess(input ExporterInput) (*ExportingProcess, error) {
 			return nil, err
 		}
 	}
+	var isIPv6 bool
+	switch addr := conn.RemoteAddr().(type) {
+	case *net.TCPAddr:
+		isIPv6 = addr.IP.To4() == nil
+	case *net.UDPAddr:
+		isIPv6 = addr.IP.To4() == nil
+	default:
+		return nil, fmt.Errorf("unsupported net.Addr type %T", addr)
+	}
 	expProc := &ExportingProcess{
 		connToCollector: conn,
 		obsDomainID:     input.ObservationDomainID,
@@ -169,13 +228,12 @@ func InitExportingProcess(input ExporterInput) (*ExportingProcess, error) {
 			expProc.jsonBufferLen = input.JSONBufferLen
 		}
 	} else {
-		if input.MaxMsgSize == 0 {
-			expProc.maxMsgSize = entities.MaxSocketMsgSize
-		} else if input.MaxMsgSize < entities.MinSupportedMsgSize {
-			return nil, fmt.Errorf("maxMsgSize cannot be less than 512B")
-		} else {
-			expProc.maxMsgSize = input.MaxMsgSize
+		maxMsgSize, err := calculateMaxMsgSize(input.CollectorProtocol, input.MaxMsgSize, input.PathMTU, isIPv6)
+		if err != nil {
+			return nil, err
 		}
+		klog.InfoS("Calculated max IPFIX message size", "size", maxMsgSize)
+		expProc.maxMsgSize = maxMsgSize
 	}
 
 	// Start a goroutine to check whether the collector has already closed the TCP connection.
@@ -549,7 +607,8 @@ func (ep *ExportingProcess) dataRecSanityCheck(rec entities.Record) error {
 	if rec.GetFieldCount() != uint16(len(ep.templatesMap[templateID].elements)) {
 		return fmt.Errorf("process: field count of data does not match templateID %d", templateID)
 	}
-	if len(rec.GetBuffer()) < int(ep.templatesMap[templateID].minDataRecLen) {
+
+	if rec.GetRecordLength() < int(ep.templatesMap[templateID].minDataRecLen) {
 		return fmt.Errorf("process: Data Record does not pass the min required length (%d) check for template ID %d", ep.templatesMap[templateID].minDataRecLen, templateID)
 	}
 	return nil
