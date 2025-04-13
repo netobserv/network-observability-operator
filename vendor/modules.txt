@@ -186,7 +186,7 @@ github.com/mwitkow/go-conntrack
 github.com/netobserv/flowlogs-pipeline/pkg/api
 github.com/netobserv/flowlogs-pipeline/pkg/config
 github.com/netobserv/flowlogs-pipeline/pkg/utils
-# github.com/netobserv/netobserv-ebpf-agent v1.7.0-community.0.20250407081901-1451f70eff81
+# github.com/netobserv/netobserv-ebpf-agent v1.9.0-crc0
 ## explicit; go 1.23.0
 github.com/netobserv/netobserv-ebpf-agent/pkg/config
 # github.com/onsi/ginkgo/v2 v2.23.0
