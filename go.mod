@@ -2,7 +2,7 @@ module github.com/netobserv/network-observability-operator
 
 go 1.23.0
 
-toolchain go1.23.4
+toolchain go1.24.2
 
 require (
 	github.com/bpfman/bpfman-operator v0.5.5
