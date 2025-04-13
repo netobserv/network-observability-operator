@@ -32,7 +32,7 @@ require (
 )
 
 require (
-	cel.dev/expr v0.19.0 // indirect
+	cel.dev/expr v0.23.1 // indirect
 	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/agoda-com/opentelemetry-logs-go v0.6.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
