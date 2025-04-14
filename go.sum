@@ -111,10 +111,10 @@ github.com/netobserv/flowlogs-pipeline v1.9.0-crc0 h1:pcMBC09TJkc1BqTW7Jnnh1hUH4
 github.com/netobserv/flowlogs-pipeline v1.9.0-crc0/go.mod h1:5riYx6GjjDywIRkTnNbZzQAsXbHhrjo9z068vKSN298=
 github.com/netobserv/netobserv-ebpf-agent v1.9.0-crc0 h1:9QfmmJUXfrvhvUsevhOuIpOWYQTkjOkHMDbKsMH0JZQ=
 github.com/netobserv/netobserv-ebpf-agent v1.9.0-crc0/go.mod h1:yxbe0VsNABhouBSLBt3aNkH+gokVzrh/8Fkj8OGIAUE=
-github.com/onsi/ginkgo/v2 v2.23.0 h1:FA1xjp8ieYDzlgS5ABTpdUDB7wtngggONc8a7ku2NqQ=
-github.com/onsi/ginkgo/v2 v2.23.0/go.mod h1:zXTP6xIp3U8aVuXN8ENK9IXRaTjFnpVB9mGmaSRvxnM=
-github.com/onsi/gomega v1.36.2 h1:koNYke6TVk6ZmnyHrCXba/T/MoLBXFjeC1PtvYgw0A8=
-github.com/onsi/gomega v1.36.2/go.mod h1:DdwyADRjrc825LhMEkD76cHR5+pUnjhUN8GlHlRPHzY=
+github.com/onsi/ginkgo/v2 v2.23.3 h1:edHxnszytJ4lD9D5Jjc4tiDkPBZ3siDeJJkUZJJVkp0=
+github.com/onsi/ginkgo/v2 v2.23.3/go.mod h1:zXTP6xIp3U8aVuXN8ENK9IXRaTjFnpVB9mGmaSRvxnM=
+github.com/onsi/gomega v1.37.0 h1:CdEG8g0S133B4OswTDC/5XPSzE1OeP29QOioj2PID2Y=
+github.com/onsi/gomega v1.37.0/go.mod h1:8D9+Txp43QWKhM24yyOBEdpkzN8FvJyAwecBgsU4KU0=
 github.com/openshift/api v0.0.0-20250411135543-10a8fa583797 h1:8x3G8QOZqo2bRAL8JFlPz/odqQECI/XmlZeRwnFxJ8I=
 github.com/openshift/api v0.0.0-20250411135543-10a8fa583797/go.mod h1:yk60tHAmHhtVpJQo3TwVYq2zpuP70iJIFDCmeKMIzPw=
 github.com/pelletier/go-toml/v2 v2.2.2 h1:aYUidT7k73Pcl9nb2gScu7NSrKCSHIDE89b3+6Wq+LM=
