@@ -109,7 +109,7 @@ func IsPrivileged(spec *flowslatest.FlowCollectorEBPF) bool {
 }
 
 func IsPktDropEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	if IsPrivileged(spec) && IsAgentFeatureEnabled(spec, flowslatest.PacketDrop) {
+	if (IsPrivileged(spec) || IsEbpfManagerEnabled(spec)) && IsAgentFeatureEnabled(spec, flowslatest.PacketDrop) {
 		return true
 	}
 	return false
@@ -136,6 +136,10 @@ func IsEbpfManagerEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 
 func IsUDNMappingEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 	return IsAgentFeatureEnabled(spec, flowslatest.UDNMapping)
+}
+
+func IsIPSecEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
+	return IsAgentFeatureEnabled(spec, flowslatest.IPSec)
 }
 
 func IsConntrack(spec *flowslatest.FlowCollectorFLP) bool {

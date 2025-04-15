@@ -64,22 +64,27 @@ type BpfApplicationProgramState struct {
 	URetProbe *UprobeProgramInfoState `json:"uretprobe,omitempty"`
 }
 
-// BpfApplicationSpec defines the desired state of BpfApplication
-type BpfApplicationStateSpec struct {
-	// node is the name of the node for this BpfApplicationStateSpec.
-	Node string `json:"node"`
+// BpfApplicationStateStatus reflects the status of the BpfApplication on the given node
+type BpfApplicationStateStatus struct {
 	// updateCount is the number of times the BpfApplicationState has been updated. Set to 1
 	// when the object is created, then it is incremented prior to each update.
 	// This allows us to verify that the API server has the updated object prior
 	// to starting a new Reconcile operation.
 	UpdateCount int64 `json:"updateCount"`
+	// node is the name of the node for this BpfApplicationStateSpec.
+	Node string `json:"node"`
 	// appLoadStatus reflects the status of loading the bpf application on the
 	// given node.
 	AppLoadStatus AppLoadStatus `json:"appLoadStatus"`
 	// programs is a list of bpf programs contained in the parent application.
-	// It is a map from the bpf program name to BpfApplicationProgramState
-	// elements.
 	Programs []BpfApplicationProgramState `json:"programs,omitempty"`
+	// Conditions contains the overall status of the BpfApplicationState object
+	// on the given node.
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 
 // +genclient
@@ -88,15 +93,14 @@ type BpfApplicationStateSpec struct {
 // +kubebuilder:resource:scope=Namespaced
 
 // BpfApplicationState contains the per-node state of a BpfApplication.
-// +kubebuilder:printcolumn:name="Node",type=string,JSONPath=".spec.node"
+// +kubebuilder:printcolumn:name="Node",type=string,JSONPath=".status.node"
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.conditions[0].reason`
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type BpfApplicationState struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   BpfApplicationStateSpec `json:"spec,omitempty"`
-	Status BpfAppStatus            `json:"status,omitempty"`
+	Status BpfApplicationStateStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -123,8 +127,8 @@ func (an BpfApplicationState) GetLabels() map[string]string {
 	return an.Labels
 }
 
-func (an BpfApplicationState) GetStatus() *BpfAppStatus {
-	return &an.Status
+func (an BpfApplicationState) GetConditions() []metav1.Condition {
+	return an.Status.Conditions
 }
 
 func (an BpfApplicationState) GetClientObject() client.Object {

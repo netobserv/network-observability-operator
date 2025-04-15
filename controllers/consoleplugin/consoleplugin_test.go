@@ -2,10 +2,8 @@ package consoleplugin
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
-	promConfig "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -340,59 +338,6 @@ func TestConfigMapContent(t *testing.T) {
 	assert.NotEmpty(config.Frontend.Filters)
 	assert.NotEmpty(config.Frontend.Scopes)
 	assert.Equal(config.Frontend.Sampling, 1)
-	assert.Equal(config.Frontend.Deduper.Mark, false)
-	assert.Equal(config.Frontend.Deduper.Merge, true)
-}
-
-func TestConfigMapError(t *testing.T) {
-	assert := assert.New(t)
-
-	agentSpec := flowslatest.FlowCollectorAgent{
-		Type: "eBPF",
-		EBPF: flowslatest.FlowCollectorEBPF{
-			Sampling: ptr.To(int32(1)),
-			Advanced: &flowslatest.AdvancedAgentConfig{
-				Env: map[string]string{
-					"DEDUPER_JUST_MARK": "invalid",
-				},
-			},
-		},
-	}
-	lokiSpec := flowslatest.FlowCollectorLoki{}
-	loki := helper.NewLokiConfig(&lokiSpec, "any")
-
-	// spec with invalid flag
-	spec := flowslatest.FlowCollectorSpec{
-		Agent:         agentSpec,
-		ConsolePlugin: getPluginConfig(),
-		Loki:          lokiSpec,
-	}
-	builder := getBuilder(&spec, &loki)
-	cm, _, err := builder.configMap(context.Background())
-	assert.Nil(cm)
-	assert.NotNil(err)
-
-	// update to valid flags
-	agentSpec.EBPF.Advanced.Env = map[string]string{
-		"DEDUPER_JUST_MARK": "false",
-		"DEDUPER_MERGE":     "true",
-	}
-	spec = flowslatest.FlowCollectorSpec{
-		Agent:         agentSpec,
-		ConsolePlugin: getPluginConfig(),
-		Loki:          lokiSpec,
-	}
-	builder = getBuilder(&spec, &loki)
-	cm, _, err = builder.configMap(context.Background())
-	assert.NotNil(cm)
-	assert.Nil(err)
-
-	// parse output config and check expected values
-	var config config.PluginConfig
-	err = yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &config)
-	assert.Nil(err)
-	assert.Equal(config.Frontend.Deduper.Mark, false)
-	assert.Equal(config.Frontend.Deduper.Merge, true)
 }
 
 func TestServiceUpdateCheck(t *testing.T) {
@@ -487,32 +432,6 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	report = helper.NewChangeReport("")
 	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Metrics changed")
-}
-
-// ensure HTTPClientConfig Marshal / Unmarshal works as expected for ProxyURL *URL
-// ProxyURL should not be set when only TLSConfig.InsecureSkipVerify is specified
-func TestHTTPClientConfig(t *testing.T) {
-	config := promConfig.HTTPClientConfig{
-		TLSConfig: promConfig.TLSConfig{
-			InsecureSkipVerify: true,
-		},
-	}
-	err := config.Validate()
-	assert.Nil(t, err)
-
-	bs, _ := json.Marshal(config)
-	assert.Equal(t, `{"tls_config":{"insecure_skip_verify":true},"follow_redirects":false,"enable_http2":false,"proxy_url":null}`, string(bs))
-
-	config2 := promConfig.HTTPClientConfig{}
-	err = json.Unmarshal(bs, &config2)
-	assert.Nil(t, err)
-	assert.True(t, config2.TLSConfig.InsecureSkipVerify)
-	assert.Equal(t, promConfig.URL{}, config2.ProxyURL)
-
-	err = config2.Validate()
-	assert.Nil(t, err)
-	assert.True(t, config2.TLSConfig.InsecureSkipVerify)
-	assert.Nil(t, config2.ProxyURL.URL)
 }
 
 func TestNoMissingFields(t *testing.T) {

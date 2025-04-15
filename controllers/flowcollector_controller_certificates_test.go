@@ -145,13 +145,7 @@ func flowCollectorCertificatesSpecs() {
 			DeploymentModel: flowslatest.DeploymentModelKafka,
 			Agent: flowslatest.FlowCollectorAgent{
 				Type: "eBPF",
-				EBPF: flowslatest.FlowCollectorEBPF{
-					Advanced: &flowslatest.AdvancedAgentConfig{
-						Env: map[string]string{
-							"DEDUPER_JUST_MARK": "true",
-						},
-					},
-				},
+				EBPF: flowslatest.FlowCollectorEBPF{},
 			},
 			Loki: flowslatest.FlowCollectorLoki{
 				Enable: ptr.To(true),

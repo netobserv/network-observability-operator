@@ -62,6 +62,27 @@ A couple of settings deserve special attention:
 
 - To enable availability zones awareness, set `spec.processor.addZone` to `true`.
 
+## Resource considerations
+
+The following table outlines examples of resource considerations for clusters with certain workload sizes.
+The examples outlined in the table demonstrate scenarios that are tailored to specific workloads. Consider each example only as a baseline from which adjustments can be made to accommodate your workload needs.
+
+
+| Resource recommendations                        | Extra small (10 nodes) | Small (25 nodes)       | Medium (65 nodes) **    | Large (120 nodes) **          |
+| ----------------------------------------------- | ---------------------- | ---------------------- | ----------------------- | ----------------------------- |
+| *Worker Node vCPU and memory*                   | 4 vCPUs\| 16GiB mem *  | 16 vCPUs\| 64GiB mem * | 16 vCPUs\| 64GiB mem  * |16 vCPUs\| 64GiB Mem *         |
+| *LokiStack size*                                | `1x.extra-small`       | `1x.small`             | `1x.small`              | `1x.medium`                   |
+| *Network Observability controller memory limit* | 400Mi (default)        | 400Mi (default)        | 400Mi (default)         | 800Mi                         |
+| *eBPF sampling rate*                            | 50 (default)           | 50 (default)           | 50 (default)            | 50 (default)                  |
+| *eBPF memory limit*                             | 800Mi (default)        | 800Mi (default)        | 2000Mi                  | 800Mi (default)               |
+| *FLP memory limit*                              | 800Mi (default)        | 800Mi (default)        | 800Mi (default)         | 800Mi (default)               |
+| *FLP Kafka partitions*                          | N/A                    | 48                     | 48                      | 48                            |
+| *Kafka consumer replicas*                       | N/A                    | 24                     | 24                      | 24                            |
+| *Kafka brokers*                                 | N/A                    | 3 (default)            | 3 (default)             | 3 (default)                   |
+
+*. Tested with AWS M6i instances.
+**. In addition to this worker and its controller, 3 infra nodes (size `M6i.12xlarge`) and 1 workload node (size `M6i.8xlarge`) were tested.
+
 ## Further reading
 
 Please refer to the documentation on GitHub for more information.

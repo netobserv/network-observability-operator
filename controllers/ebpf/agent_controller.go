@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	ebpfconfig "github.com/netobserv/netobserv-ebpf-agent/pkg/agent"
+	ebpfconfig "github.com/netobserv/netobserv-ebpf-agent/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
@@ -52,8 +52,6 @@ const (
 	envKafkaSASLIDPath            = "KAFKA_SASL_CLIENT_ID_PATH"
 	envKafkaSASLSecretPath        = "KAFKA_SASL_CLIENT_SECRET_PATH"
 	envLogLevel                   = "LOG_LEVEL"
-	envDedupe                     = "DEDUPER"
-	dedupeDefault                 = "firstCome"
 	envGoMemLimit                 = "GOMEMLIMIT"
 	envEnablePktDrop              = "ENABLE_PKT_DROPS"
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
@@ -70,6 +68,7 @@ const (
 	envEnablePacketTranslation    = "ENABLE_PKT_TRANSLATION"
 	envEnableEbpfMgr              = "EBPF_PROGRAM_MANAGER_MODE"
 	envEnableUDNMapping           = "ENABLE_UDN_MAPPING"
+	envEnableIPsec                = "ENABLE_IPSEC_TRACKING"
 	envListSeparator              = ","
 )
 
@@ -93,11 +92,7 @@ const (
 )
 
 const (
-	EnvDedupeJustMark      = "DEDUPER_JUST_MARK"
-	EnvDedupeMerge         = "DEDUPER_MERGE"
 	envDNSTrackingPort     = "DNS_TRACKING_PORT"
-	DedupeJustMarkDefault  = "false"
-	DedupeMergeDefault     = "true"
 	defaultDNSTrackingPort = "53"
 	bpfmanMapsVolumeName   = "bpfman-maps"
 	bpfManBpfFSPath        = "/run/netobserv/maps"
@@ -272,8 +267,8 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		}
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
-
-	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketDrop) {
+	// EBPF Manager takes care of mounting the kernel debug volume.
+	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketDrop) && !helper.IsEbpfManagerEnabled(&coll.Spec.Agent.EBPF) {
 		if !coll.Spec.Agent.EBPF.Privileged {
 			rlog.Error(fmt.Errorf("invalid configuration"), "To use PacketsDrop feature privileged mode needs to be enabled")
 		} else {
@@ -346,7 +341,8 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 					Driver: "csi.bpfman.io",
 					VolumeAttributes: map[string]string{
 						"csi.bpfman.io/program": "netobserv",
-						"csi.bpfman.io/maps":    "aggregated_flows,additional_flow_metrics,direct_flows,dns_flows,filter_map,peer_filter_map,global_counters,packet_record",
+						"csi.bpfman.io/maps": "aggregated_flows,additional_flow_metrics,direct_flows," +
+							"dns_flows,filter_map,peer_filter_map,global_counters,packet_record,ipsec_ingress_map,ipsec_egress_map",
 					},
 				},
 			},
@@ -728,6 +724,13 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		})
 	}
 
+	if helper.IsIPSecEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{
+			Name:  envEnableIPsec,
+			Value: "true",
+		})
+	}
+
 	if helper.IsEBPFMetricsEnabled(&coll.Spec.Agent.EBPF) {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableMetrics,
@@ -743,9 +746,6 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		})
 	}
 
-	dedup := dedupeDefault
-	dedupJustMark := DedupeJustMarkDefault
-	dedupMerge := DedupeMergeDefault
 	dnsTrackingPort := defaultDNSTrackingPort
 	networkEventsGroupID := defaultNetworkEventsGroupID
 	// we need to sort env map to keep idempotency,
@@ -754,12 +754,6 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	for _, pair := range helper.KeySorted(advancedConfig.Env) {
 		k, v := pair[0], pair[1]
 		switch k {
-		case envDedupe:
-			dedup = v
-		case EnvDedupeJustMark:
-			dedupJustMark = v
-		case EnvDedupeMerge:
-			dedupMerge = v
 		case envDNSTrackingPort:
 			dnsTrackingPort = v
 		case envNetworkEventsGroupID:
@@ -769,8 +763,6 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		}
 	}
 
-	config = append(config, corev1.EnvVar{Name: envDedupe, Value: dedup})
-	config = append(config, corev1.EnvVar{Name: EnvDedupeJustMark, Value: dedupJustMark})
 	config = append(config, corev1.EnvVar{Name: envDNSTrackingPort, Value: dnsTrackingPort})
 	config = append(config, corev1.EnvVar{Name: envNetworkEventsGroupID, Value: networkEventsGroupID})
 	config = append(config, corev1.EnvVar{
@@ -783,7 +775,6 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		},
 	},
 	)
-	config = append(config, corev1.EnvVar{Name: EnvDedupeMerge, Value: dedupMerge})
 
 	return config
 }

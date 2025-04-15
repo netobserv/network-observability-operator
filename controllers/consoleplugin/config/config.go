@@ -108,11 +108,6 @@ type FieldConfig struct {
 	Filter      string `yaml:"filter,omitempty" json:"filter,omitempty"`
 }
 
-type Deduper struct {
-	Mark  bool `yaml:"mark" json:"mark"`
-	Merge bool `yaml:"merge" json:"merge"`
-}
-
 type FrontendConfig struct {
 	RecordTypes     []api.ConnTrackOutputRecordTypeEnum `yaml:"recordTypes" json:"recordTypes"`
 	PortNaming      flowslatest.ConsolePluginPortConfig `yaml:"portNaming,omitempty" json:"portNaming,omitempty"`
@@ -123,7 +118,6 @@ type FrontendConfig struct {
 	AlertNamespaces []string                            `yaml:"alertNamespaces,omitempty" json:"alertNamespaces,omitempty"`
 	Sampling        int                                 `yaml:"sampling" json:"sampling"`
 	Features        []string                            `yaml:"features" json:"features"`
-	Deduper         Deduper                             `yaml:"deduper" json:"deduper"`
 	Fields          []FieldConfig                       `yaml:"fields" json:"fields"`
 }
 

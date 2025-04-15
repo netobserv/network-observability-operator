@@ -48,26 +48,32 @@ An `ImageDigestMirrorSet` is required:
 apiVersion: config.openshift.io/v1
 kind: ImageDigestMirrorSet
 metadata:
-  name: netobserv
+  name: netobserv-image-digest-mirror-set
 spec:
   imageDigestMirrors:
     - mirrors:
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-ystream
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-zstream
       source: registry.redhat.io/network-observability/network-observability-rhel9-operator
     - mirrors:
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/flowlogs-pipeline-ystream
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/flowlogs-pipeline-ztream
       source: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9
     - mirrors:
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/netobserv-ebpf-agent
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-ebpf-agent-ystream
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-ebpf-agent-zstream
       source: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9
     - mirrors:
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-console-plugin
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-ystream
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-ztream
       source: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9
     - mirrors:
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-cli-container
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-cli-ystream
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-cli-zstream
       source: registry.redhat.io/network-observability/network-observability-cli-rhel9
     - mirrors:
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-bundle
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle-ystream
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle-zstream
       source: registry.redhat.io/network-observability/network-observability-operator-bundle
 ```
 
@@ -81,22 +87,9 @@ metadata:
   namespace: openshift-marketplace
 spec:
   displayName: netobserv-konflux
-  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/network-observability-operator-fbc:latest'
-  publisher: Netobserv team
-  sourceType: grpc
-```
-
-or, using a pinned FBC candidate bound to a specific release of OCP (here an example for 4.14) :
-
-```yaml
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-  name: netobserv-candidate-konflux
-  namespace: openshift-marketplace
-spec:
-  displayName: netobserv-candidate-konflux
-  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/fbc-v4-14:on-pr-e4100cd49d5794f0fe76f00546e23dd2559b387f'
+  image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/catalog-ystream:latest'
+  # for z-stream, use instead:
+  # image: 'quay.io/redhat-user-workloads/ocp-network-observab-tenant/catalog-zstream:latest'
   publisher: Netobserv team
   sourceType: grpc
 ```
