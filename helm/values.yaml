@@ -5,3 +5,9 @@ certManager:
     name: ""
 standaloneConsole:
   enable: false
+
+prometheus:
+  enabled: true
+
+loki:
+  enabled: true
