@@ -18,6 +18,7 @@ const (
 	FLPPortName              = "flp" // must be <15 chars
 	FLPMetricsPort           = 9401
 	PluginName               = "netobserv-plugin"
+	StaticPluginName         = "netobserv-plugin-static"
 	PluginShortName          = "plugin"
 
 	// EBPFAgentName and other constants for it

@@ -32,7 +32,6 @@ import (
 )
 
 const secretName = "console-serving-cert"
-const displayName = "NetObserv plugin"
 const proxyAlias = "backend"
 
 const configMapName = "console-plugin-config"
@@ -52,34 +51,34 @@ type builder struct {
 	volumes  volumes.Builder
 }
 
-func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) builder {
+func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, name string) builder {
 	version := helper.ExtractVersion(info.Images[constants.ControllerBaseImageIndex])
 	advanced := helper.GetAdvancedPluginConfig(desired.ConsolePlugin.Advanced)
 	return builder{
 		info: info,
 		labels: map[string]string{
-			"app":     constants.PluginName,
+			"app":     name,
 			"version": helper.MaxLabelLength(version),
 		},
 		selector: map[string]string{
-			"app": constants.PluginName,
+			"app": name,
 		},
 		desired:  desired,
 		advanced: &advanced,
 	}
 }
 
-func (b *builder) consolePlugin() *osv1.ConsolePlugin {
+func (b *builder) consolePlugin(name, displayName string) *osv1.ConsolePlugin {
 	return &osv1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: constants.PluginName,
+			Name: name,
 		},
 		Spec: osv1.ConsolePluginSpec{
 			DisplayName: displayName,
 			Backend: osv1.ConsolePluginBackend{
 				Type: osv1.Service,
 				Service: &osv1.ConsolePluginService{
-					Name:      constants.PluginName,
+					Name:      name,
 					Namespace: b.info.Namespace,
 					Port:      *b.advanced.Port,
 					BasePath:  "/"},
@@ -89,7 +88,7 @@ func (b *builder) consolePlugin() *osv1.ConsolePlugin {
 					Endpoint: osv1.ConsolePluginProxyEndpoint{
 						Type: osv1.ProxyTypeService,
 						Service: &osv1.ConsolePluginProxyServiceConfig{
-							Name:      constants.PluginName,
+							Name:      name,
 							Namespace: b.info.Namespace,
 							Port:      *b.advanced.Port}},
 					Alias:         proxyAlias,
@@ -160,10 +159,10 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 	}
 }
 
-func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
+func (b *builder) deployment(name, cmDigest string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.PluginName,
+			Name:      name,
 			Namespace: b.info.Namespace,
 			Labels:    b.labels,
 		},
@@ -172,14 +171,25 @@ func (b *builder) deployment(cmDigest string) *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: b.selector,
 			},
-			Template: *b.podTemplate(cmDigest),
+			Template: *b.podTemplate(name, cmDigest),
 		},
 	}
 }
 
-func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
-	volumes := []corev1.Volume{
-		{
+func (b *builder) podTemplate(name, cmDigest string) *corev1.PodTemplateSpec {
+	annotations := map[string]string{}
+	args := []string{
+		"-loglevel", b.desired.ConsolePlugin.LogLevel,
+	}
+	volumes := []corev1.Volume{}
+	volumeMounts := []corev1.VolumeMount{}
+
+	if cmDigest != "" {
+		annotations[constants.PodConfigurationDigest] = cmDigest
+
+		args = append(args, "-config", filepath.Join(configPath, configFile))
+
+		volumes = append(volumes, corev1.Volume{
 			Name: configVolume,
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
@@ -188,15 +198,13 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 					},
 				},
 			},
-		},
-	}
+		})
 
-	volumeMounts := []corev1.VolumeMount{
-		{
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      configVolume,
 			MountPath: configPath,
 			ReadOnly:  true,
-		},
+		})
 	}
 
 	if !helper.UseTestConsolePlugin(b.desired) {
@@ -217,28 +225,22 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 
 	return &corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: b.labels,
-			Annotations: map[string]string{
-				constants.PodConfigurationDigest: cmDigest,
-			},
+			Labels:      b.labels,
+			Annotations: annotations,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
-				Name:            constants.PluginName,
+				Name:            name,
 				Image:           b.info.Images[constants.ControllerBaseImageIndex],
 				ImagePullPolicy: corev1.PullPolicy(b.desired.ConsolePlugin.ImagePullPolicy),
 				Resources:       *b.desired.ConsolePlugin.Resources.DeepCopy(),
 				VolumeMounts:    b.volumes.AppendMounts(volumeMounts),
 				Env:             []corev1.EnvVar{constants.EnvNoHTTP2},
-				Args: []string{
-
-					"-loglevel", b.desired.ConsolePlugin.LogLevel,
-					"-config", filepath.Join(configPath, configFile),
-				},
+				Args:            args,
 				SecurityContext: helper.ContainerDefaultSecurityContext(),
 			}},
 			Volumes:            b.volumes.AppendVolumes(volumes),
-			ServiceAccountName: constants.PluginName,
+			ServiceAccountName: name,
 			NodeSelector:       b.advanced.Scheduling.NodeSelector,
 			Tolerations:        b.advanced.Scheduling.Tolerations,
 			Affinity:           b.advanced.Scheduling.Affinity,
@@ -267,10 +269,10 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 	}
 }
 
-func (b *builder) mainService() *corev1.Service {
+func (b *builder) mainService(name string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.PluginName,
+			Name:      name,
 			Namespace: b.info.Namespace,
 			Labels:    b.labels,
 			Annotations: map[string]string{
@@ -538,13 +540,13 @@ func (b *builder) configMap(ctx context.Context) (*corev1.ConfigMap, string, err
 	return &configMap, digest, nil
 }
 
-func (b *builder) serviceAccount() *corev1.ServiceAccount {
+func (b *builder) serviceAccount(name string) *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.PluginName,
+			Name:      name,
 			Namespace: b.info.Namespace,
 			Labels: map[string]string{
-				"app": constants.PluginName,
+				"app": name,
 			},
 		},
 	}
