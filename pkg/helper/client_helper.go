@@ -47,7 +47,7 @@ func (c *Client) CreateOwned(ctx context.Context, obj client.Object) error {
 		log.Error(err, "Failed to set controller reference")
 		return err
 	}
-	AddOwnedLabel(obj)
+	AddManagedLabel(obj)
 	kind := reflect.TypeOf(obj).String()
 	log.Info("CREATING a new "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 	err = c.Create(ctx, obj)
@@ -69,6 +69,7 @@ func (c *Client) UpdateOwned(ctx context.Context, old, obj client.Object) error 
 		log.Error(err, "Failed to set controller reference")
 		return err
 	}
+	AddManagedLabel(obj)
 	kind := reflect.TypeOf(obj).String()
 	log.Info("UPDATING "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 	err = c.Update(ctx, obj)

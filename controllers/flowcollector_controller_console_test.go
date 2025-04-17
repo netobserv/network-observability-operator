@@ -246,14 +246,14 @@ func flowCollectorConsolePluginSpecs() {
 	})
 
 	Context("Registering to the Console CR", func() {
-		It("Should start unregistered", func() {
+		It("Should start with static plugin registered", func() {
 			Eventually(func() interface{} {
 				cr := operatorsv1.Console{}
 				if err := k8sClient.Get(ctx, consoleCRKey, &cr); err != nil {
 					return err
 				}
 				return cr.Spec.Plugins
-			}, timeout, interval).Should(BeEmpty())
+			}, timeout, interval).Should(Equal([]string{"netobserv-plugin-static"}))
 		})
 
 		It("Should be registered", func() {
@@ -269,7 +269,7 @@ func flowCollectorConsolePluginSpecs() {
 					return err
 				}
 				return cr.Spec.Plugins
-			}, timeout, interval).Should(Equal([]string{"netobserv-plugin"}))
+			}, timeout, interval).Should(Equal([]string{"netobserv-plugin-static", "netobserv-plugin"}))
 		})
 	})
 
