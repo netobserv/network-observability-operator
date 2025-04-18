@@ -322,36 +322,36 @@ func TestPipelineWithFilters_WantNamespacesABC(t *testing.T) {
 
 	cfg := flowslatest.FlowCollectorSpec{
 		Processor: flowslatest.FlowCollectorFLP{
-			Filters: []flowslatest.FLPFilterSet{
-				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterEqual,
-							Field:     "namespace",
-							Value:     "A",
+			Filters: flowslatest.FLPFilters{
+				OutputTarget: flowslatest.FLPFilterTargetAll,
+				AnyOf: []flowslatest.FLPFilterAnyOf{
+					{
+						AllOf: []flowslatest.FLPSingleFilter{
+							{
+								MatchType: flowslatest.FLPFilterEqual,
+								Field:     "namespace",
+								Value:     "A",
+							},
 						},
 					},
-					OutputTarget: flowslatest.FLPFilterTargetAll,
-				},
-				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterEqual,
-							Field:     "namespace",
-							Value:     "B",
+					{
+						AllOf: []flowslatest.FLPSingleFilter{
+							{
+								MatchType: flowslatest.FLPFilterEqual,
+								Field:     "namespace",
+								Value:     "B",
+							},
 						},
 					},
-					OutputTarget: flowslatest.FLPFilterTargetAll,
-				},
-				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterEqual,
-							Field:     "namespace",
-							Value:     "C",
+					{
+						AllOf: []flowslatest.FLPSingleFilter{
+							{
+								MatchType: flowslatest.FLPFilterEqual,
+								Field:     "namespace",
+								Value:     "C",
+							},
 						},
 					},
-					OutputTarget: flowslatest.FLPFilterTargetAll,
 				},
 			},
 		},
@@ -404,26 +404,28 @@ func TestPipelineWithFilters_DontWantNamespacesABC_LokiOnly(t *testing.T) {
 
 	cfg := flowslatest.FlowCollectorSpec{
 		Processor: flowslatest.FlowCollectorFLP{
-			Filters: []flowslatest.FLPFilterSet{
-				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterNotEqual,
-							Field:     "namespace",
-							Value:     "A",
-						},
-						{
-							MatchType: flowslatest.FLPFilterNotEqual,
-							Field:     "namespace",
-							Value:     "B",
-						},
-						{
-							MatchType: flowslatest.FLPFilterNotEqual,
-							Field:     "namespace",
-							Value:     "C",
+			Filters: flowslatest.FLPFilters{
+				OutputTarget: flowslatest.FLPFilterTargetLoki,
+				AnyOf: []flowslatest.FLPFilterAnyOf{
+					{
+						AllOf: []flowslatest.FLPSingleFilter{
+							{
+								MatchType: flowslatest.FLPFilterNotEqual,
+								Field:     "namespace",
+								Value:     "A",
+							},
+							{
+								MatchType: flowslatest.FLPFilterNotEqual,
+								Field:     "namespace",
+								Value:     "B",
+							},
+							{
+								MatchType: flowslatest.FLPFilterNotEqual,
+								Field:     "namespace",
+								Value:     "C",
+							},
 						},
 					},
-					OutputTarget: flowslatest.FLPFilterTargetLoki,
 				},
 			},
 		},
@@ -468,55 +470,54 @@ func TestPipelineWithFilters_ComplexFilter(t *testing.T) {
 
 	cfg := flowslatest.FlowCollectorSpec{
 		Processor: flowslatest.FlowCollectorFLP{
-			Filters: []flowslatest.FLPFilterSet{
-				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterNotEqual,
-							Field:     "namespace",
-							Value:     "dont_want_1",
-						},
-						{
-							MatchType: flowslatest.FLPFilterNotEqual,
-							Field:     "namespace",
-							Value:     "dont_want_2",
-						},
-					},
-					OutputTarget: flowslatest.FLPFilterTargetAll,
-				},
-				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterPresence,
-							Field:     "sample_if_exist",
+			Filters: flowslatest.FLPFilters{
+				OutputTarget: flowslatest.FLPFilterTargetMetrics,
+				AnyOf: []flowslatest.FLPFilterAnyOf{
+					{
+						AllOf: []flowslatest.FLPSingleFilter{
+							{
+								MatchType: flowslatest.FLPFilterNotEqual,
+								Field:     "namespace",
+								Value:     "dont_want_1",
+							},
+							{
+								MatchType: flowslatest.FLPFilterNotEqual,
+								Field:     "namespace",
+								Value:     "dont_want_2",
+							},
 						},
 					},
-					OutputTarget: flowslatest.FLPFilterTargetAll,
-					Sampling:     50,
-				},
-				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterAbsence,
-							Field:     "keep_if_not_exist",
+					{
+						AllOf: []flowslatest.FLPSingleFilter{
+							{
+								MatchType: flowslatest.FLPFilterPresence,
+								Field:     "sample_if_exist",
+							},
+						},
+						Sampling: 50,
+					},
+					{
+						AllOf: []flowslatest.FLPSingleFilter{
+							{
+								MatchType: flowslatest.FLPFilterAbsence,
+								Field:     "keep_if_not_exist",
+							},
 						},
 					},
-					OutputTarget: flowslatest.FLPFilterTargetAll,
-				},
-				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterEqual,
-							Field:     "namespace",
-							Value:     "C",
-						},
-						{
-							MatchType: flowslatest.FLPFilterEqual,
-							Field:     "workload",
-							Value:     "C1",
+					{
+						AllOf: []flowslatest.FLPSingleFilter{
+							{
+								MatchType: flowslatest.FLPFilterEqual,
+								Field:     "namespace",
+								Value:     "C",
+							},
+							{
+								MatchType: flowslatest.FLPFilterEqual,
+								Field:     "workload",
+								Value:     "C1",
+							},
 						},
 					},
-					OutputTarget: flowslatest.FLPFilterTargetLoki,
 				},
 			},
 		},
@@ -527,7 +528,7 @@ func TestPipelineWithFilters_ComplexFilter(t *testing.T) {
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
-		`[{"name":"grpc"},{"name":"enrich","follows":"grpc"},{"name":"filters","follows":"enrich"},{"name":"filters-loki","follows":"filters"},{"name":"loki","follows":"filters-loki"},{"name":"prometheus","follows":"filters"}]`,
+		`[{"name":"grpc"},{"name":"enrich","follows":"grpc"},{"name":"loki","follows":"enrich"},{"name":"filters-prom","follows":"enrich"},{"name":"prometheus","follows":"filters-prom"}]`,
 		pipeline,
 	)
 
@@ -566,11 +567,6 @@ func TestPipelineWithFilters_ComplexFilter(t *testing.T) {
 					},
 				},
 			},
-		},
-		cfs.Parameters[2].Transform.Filter.Rules,
-	)
-	assert.Equal(
-		[]api.TransformFilterRule{
 			{
 				Type: api.KeepEntryAllSatisfied,
 				KeepEntryAllSatisfied: []*api.KeepEntryRule{
