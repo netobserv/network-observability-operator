@@ -35,17 +35,17 @@ spec:
             - /manager
           env:
             - name: RELATED_IMAGE_EBPF_AGENT
-              value: quay.io/netobserv/netobserv-ebpf-agent:v1.9.0-community
+              value: "{{ .Values.ebpf_agent.image }} : {{ .Values.ebpf_agent.version }}"
             - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
-              value: quay.io/netobserv/flowlogs-pipeline:v1.9.0-community
+              value: "{{ .Values.flowlog_pipeline.image }} : {{ .Values.flowlog_pipeline.version }}"
             - name: RELATED_IMAGE_CONSOLE_PLUGIN
-              value: '{{ if .Values.standaloneConsole.enable }}quay.io/netobserv/network-observability-standalone-frontend:v1.9.0-community{{ else }}quay.io/netobserv/network-observability-console-plugin:v1.9.0-community{{ end }}'
+              value: '{{ if .Values.standaloneConsole.enable }}"{{ .Values.console_plugin.standalone_enable.image }} : {{ .Values.console_plugin.standalone_enable.version}}"{{ else }} "{{ .Values.console_plugin.standalone_disable.image }} : {{ .Values.console_plugin.standalone_disable.version}}"{ {{ end }}'
             - name: RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT
-              value: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
+              value: '{{ if .Values.standaloneConsole.enable }}"{{ .Values.console_plugin.standalone_enable.image }} : {{ .Values.console_plugin.standalone_enable.version}}"{{ else }} "{{ .Values.console_plugin.standalone_disable.image }} : {{ .Values.console_plugin.standalone_disable.version}}"{ {{ end }}'
             - name: DOWNSTREAM_DEPLOYMENT
               value: "false"
             - name: PROFILING_BIND_ADDRESS
-          image: quay.io/netobserv/network-observability-operator:1.9.0-community
+          image: "{{ .Values.netobserv.image }}:{{ .Values.netobserv.version }}"
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
