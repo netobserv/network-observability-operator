@@ -9,4 +9,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: netobserv-controller-manager
-    namespace: '{{ .Release.Namespace }}'
+    namespace: netobserv
