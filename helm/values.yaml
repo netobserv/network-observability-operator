@@ -6,8 +6,34 @@ certManager:
 standaloneConsole:
   enable: false
 
+
+# Deployment manifest values
+ebpf_agent:
+  image: quay.io/netobserv/netobserv-ebpf-agent
+  version: v1.8.2-community
+
+flowlog_pipeline:
+  image: quay.io/netobserv/flowlogs-pipeline
+  version: v1.8.2-community
+
+console_plugin:
+  standalone_enable:
+    image: quay.io/netobserv/network-observability-standalone-frontend
+    version: v1.8.2-community
+  
+  standalone_disable:
+    image: quay.io/netobserv/network-observability-console-plugin
+    version: v1.8.2-community
+
+netobserv:
+  image: quay.io/netobserv/network-observability-operator
+  version: 1.8.2-community
+
+
+# Dependency toggle condition value
 prometheus:
   enabled: true
 
 loki:
   enabled: true
+

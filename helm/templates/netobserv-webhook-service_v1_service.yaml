@@ -3,6 +3,7 @@ kind: Service
 metadata:
   creationTimestamp: null
   name: netobserv-webhook-service
+  namespace: netobserv
 spec:
   ports:
     - port: 443
