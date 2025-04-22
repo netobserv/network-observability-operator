@@ -466,3 +466,62 @@ func TestValidateConntrack(t *testing.T) {
 		assert.Equal(t, test.expectedWarnings, warnings, test.name)
 	}
 }
+
+func TestValidateFLPQueries(t *testing.T) {
+	tests := []struct {
+		name             string
+		fc               *FlowCollector
+		expectedError    string
+		expectedWarnings admission.Warnings
+	}{
+		{
+			name: "Valid FLP query",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Processor: FlowCollectorFLP{
+						Filters: []FLPFilterSet{
+							{
+								Query: `SrcK8S_Namespace="foo" and without(DstK8S_Namespace)`,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Invalid FLP query",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Processor: FlowCollectorFLP{
+						Filters: []FLPFilterSet{
+							{
+								Query: `SrcK8S_Namespace="foo" and without(DstK8S_Namespace)`,
+							},
+							{
+								Query: `invalid query`,
+							},
+						},
+					},
+				},
+			},
+			expectedError: "cannot parse spec.processor.filters[1].query: syntax error",
+		},
+	}
+
+	CurrentClusterInfo = &cluster.Info{}
+	for _, test := range tests {
+		warnings, err := test.fc.Validate(context.TODO(), test.fc)
+		if test.expectedError == "" {
+			assert.Nil(t, err, test.name)
+		} else {
+			assert.ErrorContains(t, err, test.expectedError, test.name)
+		}
+		assert.Equal(t, test.expectedWarnings, warnings, test.name)
+	}
+}

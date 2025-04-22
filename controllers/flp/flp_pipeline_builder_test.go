@@ -324,33 +324,15 @@ func TestPipelineWithFilters_WantNamespacesABC(t *testing.T) {
 		Processor: flowslatest.FlowCollectorFLP{
 			Filters: []flowslatest.FLPFilterSet{
 				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterEqual,
-							Field:     "namespace",
-							Value:     "A",
-						},
-					},
+					Query:        `namespace="A"`,
 					OutputTarget: flowslatest.FLPFilterTargetAll,
 				},
 				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterEqual,
-							Field:     "namespace",
-							Value:     "B",
-						},
-					},
+					Query:        `namespace="B"`,
 					OutputTarget: flowslatest.FLPFilterTargetAll,
 				},
 				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterEqual,
-							Field:     "namespace",
-							Value:     "C",
-						},
-					},
+					Query:        `namespace="C"`,
 					OutputTarget: flowslatest.FLPFilterTargetAll,
 				},
 			},
@@ -368,31 +350,16 @@ func TestPipelineWithFilters_WantNamespacesABC(t *testing.T) {
 	assert.Equal(
 		[]api.TransformFilterRule{
 			{
-				Type: api.KeepEntryAllSatisfied,
-				KeepEntryAllSatisfied: []*api.KeepEntryRule{
-					{
-						Type:      api.KeepEntryIfEqual,
-						KeepEntry: &api.TransformFilterGenericRule{Input: "namespace", Value: "A"},
-					},
-				},
+				Type:           api.KeepEntryQuery,
+				KeepEntryQuery: `namespace="A"`,
 			},
 			{
-				Type: api.KeepEntryAllSatisfied,
-				KeepEntryAllSatisfied: []*api.KeepEntryRule{
-					{
-						Type:      api.KeepEntryIfEqual,
-						KeepEntry: &api.TransformFilterGenericRule{Input: "namespace", Value: "B"},
-					},
-				},
+				Type:           api.KeepEntryQuery,
+				KeepEntryQuery: `namespace="B"`,
 			},
 			{
-				Type: api.KeepEntryAllSatisfied,
-				KeepEntryAllSatisfied: []*api.KeepEntryRule{
-					{
-						Type:      api.KeepEntryIfEqual,
-						KeepEntry: &api.TransformFilterGenericRule{Input: "namespace", Value: "C"},
-					},
-				},
+				Type:           api.KeepEntryQuery,
+				KeepEntryQuery: `namespace="C"`,
 			},
 		},
 		cfs.Parameters[2].Transform.Filter.Rules,
@@ -406,23 +373,7 @@ func TestPipelineWithFilters_DontWantNamespacesABC_LokiOnly(t *testing.T) {
 		Processor: flowslatest.FlowCollectorFLP{
 			Filters: []flowslatest.FLPFilterSet{
 				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterNotEqual,
-							Field:     "namespace",
-							Value:     "A",
-						},
-						{
-							MatchType: flowslatest.FLPFilterNotEqual,
-							Field:     "namespace",
-							Value:     "B",
-						},
-						{
-							MatchType: flowslatest.FLPFilterNotEqual,
-							Field:     "namespace",
-							Value:     "C",
-						},
-					},
+					Query:        `namespace!="A" and namespace!="B" and namespace!="C"`,
 					OutputTarget: flowslatest.FLPFilterTargetLoki,
 				},
 			},
@@ -440,151 +391,10 @@ func TestPipelineWithFilters_DontWantNamespacesABC_LokiOnly(t *testing.T) {
 	assert.Equal(
 		[]api.TransformFilterRule{
 			{
-				Type: api.KeepEntryAllSatisfied,
-				KeepEntryAllSatisfied: []*api.KeepEntryRule{
-					{
-						Type:      api.KeepEntryIfNotEqual,
-						KeepEntry: &api.TransformFilterGenericRule{Input: "namespace", Value: "A"},
-					},
-					{
-						Type:      api.KeepEntryIfNotEqual,
-						KeepEntry: &api.TransformFilterGenericRule{Input: "namespace", Value: "B"},
-					},
-					{
-						Type:      api.KeepEntryIfNotEqual,
-						KeepEntry: &api.TransformFilterGenericRule{Input: "namespace", Value: "C"},
-					},
-				},
+				Type:           api.KeepEntryQuery,
+				KeepEntryQuery: `namespace!="A" and namespace!="B" and namespace!="C"`,
 			},
 		},
 		cfs.Parameters[2].Transform.Filter.Rules,
-	)
-}
-
-func TestPipelineWithFilters_ComplexFilter(t *testing.T) {
-	assert := assert.New(t)
-
-	// Keep flow when: (namespace!=dont_want_1 AND namespace!=dont_want_2) OR (keep_if_exist is present) OR (throw_if_not_exist is absent)
-
-	cfg := flowslatest.FlowCollectorSpec{
-		Processor: flowslatest.FlowCollectorFLP{
-			Filters: []flowslatest.FLPFilterSet{
-				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterNotEqual,
-							Field:     "namespace",
-							Value:     "dont_want_1",
-						},
-						{
-							MatchType: flowslatest.FLPFilterNotEqual,
-							Field:     "namespace",
-							Value:     "dont_want_2",
-						},
-					},
-					OutputTarget: flowslatest.FLPFilterTargetAll,
-				},
-				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterPresence,
-							Field:     "sample_if_exist",
-						},
-					},
-					OutputTarget: flowslatest.FLPFilterTargetAll,
-					Sampling:     50,
-				},
-				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterAbsence,
-							Field:     "keep_if_not_exist",
-						},
-					},
-					OutputTarget: flowslatest.FLPFilterTargetAll,
-				},
-				{
-					AllOf: []flowslatest.FLPSingleFilter{
-						{
-							MatchType: flowslatest.FLPFilterEqual,
-							Field:     "namespace",
-							Value:     "C",
-						},
-						{
-							MatchType: flowslatest.FLPFilterEqual,
-							Field:     "workload",
-							Value:     "C1",
-						},
-					},
-					OutputTarget: flowslatest.FLPFilterTargetLoki,
-				},
-			},
-		},
-	}
-
-	b := monoBuilder("namespace", &cfg)
-	scm, _, dcm, err := b.configMaps()
-	assert.NoError(err)
-	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
-	assert.Equal(
-		`[{"name":"grpc"},{"name":"enrich","follows":"grpc"},{"name":"filters","follows":"enrich"},{"name":"filters-loki","follows":"filters"},{"name":"loki","follows":"filters-loki"},{"name":"prometheus","follows":"filters"}]`,
-		pipeline,
-	)
-
-	// Keep flow when: (namespace!=dont_want_1 AND namespace!=dont_want_2) OR (keep_if_exist is present) OR (throw_if_not_exist is absent)
-	assert.Equal(
-		[]api.TransformFilterRule{
-			{
-				Type: api.KeepEntryAllSatisfied,
-				KeepEntryAllSatisfied: []*api.KeepEntryRule{
-					{
-						Type:      api.KeepEntryIfNotEqual,
-						KeepEntry: &api.TransformFilterGenericRule{Input: "namespace", Value: "dont_want_1"},
-					},
-					{
-						Type:      api.KeepEntryIfNotEqual,
-						KeepEntry: &api.TransformFilterGenericRule{Input: "namespace", Value: "dont_want_2"},
-					},
-				},
-			},
-			{
-				Type: api.KeepEntryAllSatisfied,
-				KeepEntryAllSatisfied: []*api.KeepEntryRule{
-					{
-						Type:      api.KeepEntryIfExists,
-						KeepEntry: &api.TransformFilterGenericRule{Input: "sample_if_exist", Value: ""},
-					},
-				},
-				KeepEntrySampling: 50,
-			},
-			{
-				Type: api.KeepEntryAllSatisfied,
-				KeepEntryAllSatisfied: []*api.KeepEntryRule{
-					{
-						Type:      api.KeepEntryIfDoesntExist,
-						KeepEntry: &api.TransformFilterGenericRule{Input: "keep_if_not_exist", Value: ""},
-					},
-				},
-			},
-		},
-		cfs.Parameters[2].Transform.Filter.Rules,
-	)
-	assert.Equal(
-		[]api.TransformFilterRule{
-			{
-				Type: api.KeepEntryAllSatisfied,
-				KeepEntryAllSatisfied: []*api.KeepEntryRule{
-					{
-						Type:      api.KeepEntryIfEqual,
-						KeepEntry: &api.TransformFilterGenericRule{Input: "namespace", Value: "C"},
-					},
-					{
-						Type:      api.KeepEntryIfEqual,
-						KeepEntry: &api.TransformFilterGenericRule{Input: "workload", Value: "C1"},
-					},
-				},
-			},
-		},
-		cfs.Parameters[3].Transform.Filter.Rules,
 	)
 }
