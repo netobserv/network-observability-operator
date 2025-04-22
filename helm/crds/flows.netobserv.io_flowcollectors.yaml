@@ -12,7 +12,7 @@ spec:
       clientConfig:
         service:
           name: netobserv-webhook-service
-          namespace: '{{ .Release.Namespace }}'
+          namespace: netobserv
           path: /convert
       conversionReviewVersions:
         - v1
