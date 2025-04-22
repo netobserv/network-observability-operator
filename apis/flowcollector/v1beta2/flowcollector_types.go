@@ -288,7 +288,7 @@ type EBPFFlowFilterRule struct {
 	// +optional
 	PktDrops *bool `json:"pktDrops,omitempty"`
 
-	// `sampling` sampling rate for the matched flows, overriding the global sampling defined at `spec.agent.ebpf.sampling`.
+	// `sampling` is the sampling ratio for the matched packets, overriding the global sampling defined at `spec.agent.ebpf.sampling`.
 	// +optional
 	Sampling *uint32 `json:"sampling,omitempty"`
 }
@@ -325,7 +325,7 @@ type FlowCollectorEBPF struct {
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
-	// Sampling rate of the flow reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.
+	// Sampling ratio of the eBPF probe. 100 means one packet on 100 is sent. 0 or 1 means all packets are sampled.
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=50
 	//+optional
@@ -719,7 +719,7 @@ type FLPDeduper struct {
 	// +kubebuilder:default:=Disabled
 	Mode FLPDeduperMode `json:"mode,omitempty"`
 
-	// `sampling` is the sampling rate when deduper `mode` is `Sample`.
+	// `sampling` is the sampling ratio when deduper `mode` is `Sample`. For example, a value of `50` means that 1 flow in 50 is sampled.
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=50
 	Sampling int32 `json:"sampling,omitempty"`
@@ -752,7 +752,7 @@ type FLPFilterSet struct {
 	// +kubebuilder:validation:Enum:="";"Loki";"Metrics";"Exporters"
 	OutputTarget FLPFilterTarget `json:"outputTarget,omitempty"`
 
-	// `sampling` is an optional sampling rate to apply to this filter.
+	// `sampling` is an optional sampling ratio to apply to this filter. For example, a value of `50` means that 1 matching flow in 50 is sampled.
 	//+kubebuilder:validation:Minimum=0
 	// +optional
 	Sampling int32 `json:"sampling,omitempty"`
