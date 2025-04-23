@@ -47,6 +47,9 @@ csv['metadata']['annotations']['features.operators.openshift.io/cnf'] = 'false'
 csv['metadata']['annotations']['features.operators.openshift.io/cni'] = 'false'
 csv['metadata']['annotations']['features.operators.openshift.io/csi'] = 'false'
 
+# Add OpenShift Optional category
+csv['metadata']['annotations']['categories'] += ', OpenShift Optional'
+
 # inject bundle creation date in pods annotations
 podMeta = csv['spec']['install']['spec']['deployments'][0]['spec']['template']['metadata']
 if 'annotations' in podMeta:
