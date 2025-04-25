@@ -16,8 +16,11 @@
       {
         "matchManagers": ["gomod"],
         "matchDepTypes": ["indirect"],
-        "enabled": true,
-        "automerge": true
+        "enabled": true
+      },
+      {
+        "matchPackageNames": ["**"],
+        "groupName": "Go modules"
       }
     ]
   }
