@@ -139,4 +139,28 @@ For the record, store the created Release in the `releases` directory of this re
 
 After a release, the following steps should be done:
 - moving release candidate file in the catalog to the already released directory
-- bumping version label inside the different conteiner images
+- bumping version label inside the different container images
+
+### Freezing branch
+
+You may want to freeze a branch (stop mintmaker from opening PRs) after it was released on zstream, if you don't plan more releases there at the moment. To do so, log in the Konflux' OpenShift and run:
+
+```bash
+oc -n ocp-network-observab-tenant annotate component/flowlogs-pipeline-zstream mintmaker.appstudio.redhat.com/disabled=true
+oc -n ocp-network-observab-tenant annotate component/netobserv-ebpf-agent-zstream mintmaker.appstudio.redhat.com/disabled=true
+oc -n ocp-network-observab-tenant annotate component/network-observability-console-plugin-zstream mintmaker.appstudio.redhat.com/disabled=true
+oc -n ocp-network-observab-tenant annotate component/network-observability-operator-zstream mintmaker.appstudio.redhat.com/disabled=true
+oc -n ocp-network-observab-tenant annotate component/network-observability-operator-bundle-zstream mintmaker.appstudio.redhat.com/disabled=true
+oc -n ocp-network-observab-tenant annotate component/network-observability-cli-zstream mintmaker.appstudio.redhat.com/disabled=true
+```
+
+To re-enable them, just delete these annotations
+
+```bash
+oc -n ocp-network-observab-tenant annotate component/flowlogs-pipeline-zstream mintmaker.appstudio.redhat.com/disabled-
+oc -n ocp-network-observab-tenant annotate component/netobserv-ebpf-agent-zstream mintmaker.appstudio.redhat.com/disabled-
+oc -n ocp-network-observab-tenant annotate component/network-observability-console-plugin-zstream mintmaker.appstudio.redhat.com/disabled-
+oc -n ocp-network-observab-tenant annotate component/network-observability-operator-zstream mintmaker.appstudio.redhat.com/disabled-
+oc -n ocp-network-observab-tenant annotate component/network-observability-operator-bundle-zstream mintmaker.appstudio.redhat.com/disabled-
+oc -n ocp-network-observab-tenant annotate component/network-observability-cli-zstream mintmaker.appstudio.redhat.com/disabled-
+```
