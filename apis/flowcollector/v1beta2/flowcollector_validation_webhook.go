@@ -19,8 +19,15 @@ import (
 )
 
 var (
-	log                = logf.Log.WithName("flowcollector-resource")
-	CurrentClusterInfo *cluster.Info
+	log                    = logf.Log.WithName("flowcollector-resource")
+	CurrentClusterInfo     *cluster.Info
+	needPrivileged         = []AgentFeature{UDNMapping, NetworkEvents}
+	neededOpenShiftVersion = map[AgentFeature]string{
+		PacketDrop:    "4.14.0",
+		UDNMapping:    "4.19.0",
+		NetworkEvents: "4.19.0",
+		EbpfManager:   "4.19.0",
+	}
 )
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
@@ -85,35 +92,33 @@ func (r *FlowCollector) warnLogLevels(fc *FlowCollectorSpec) admission.Warnings 
 // nolint:cyclop
 func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
 	var warnings admission.Warnings
-	if slices.Contains(fc.Agent.EBPF.Features, NetworkEvents) ||
-		slices.Contains(fc.Agent.EBPF.Features, UDNMapping) {
-		// Make sure required version of ocp is installed
-		if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
-			b, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast("4.19.0")
-			if err != nil {
-				warnings = append(warnings, fmt.Sprintf("Could not detect OpenShift cluster version: %s", err.Error()))
-			} else if !b {
-				warnings = append(warnings, fmt.Sprintf("The NetworkEvents/UDNMapping/EbpfManager features require OpenShift 4.19 or above (version detected: %s)", CurrentClusterInfo.GetOpenShiftVersion()))
+	for feat, minVersion := range neededOpenShiftVersion {
+		if slices.Contains(fc.Agent.EBPF.Features, feat) {
+			if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
+				// Make sure required version of ocp is installed
+				ok, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast(minVersion)
+				if err != nil {
+					warnings = append(warnings, fmt.Sprintf("Could not detect OpenShift cluster version: %s", err.Error()))
+				} else if !ok {
+					warnings = append(warnings, fmt.Sprintf("The %s feature requires OpenShift %s or above (version detected: %s)", feat, minVersion, CurrentClusterInfo.GetOpenShiftVersion()))
+				}
+			} else {
+				warnings = append(warnings, fmt.Sprintf("Unknown environment, cannot detect if the feature %s is supported", feat))
 			}
-		} else {
-			warnings = append(warnings, "The NetworkEvents/UDNMapping/EbpfManager features are only supported with OpenShift")
-		}
-		if !fc.Agent.EBPF.Privileged {
-			warnings = append(warnings, "The NetworkEvents/UDNMapping/EbpfManager features require eBPF Agent to run in privileged mode")
 		}
 	}
-	if slices.Contains(fc.Agent.EBPF.Features, PacketDrop) {
-		if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
-			b, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast("4.14.0")
-			if err != nil {
-				warnings = append(warnings, fmt.Sprintf("Could not detect OpenShift cluster version: %s", err.Error()))
-			} else if !b {
-				warnings = append(warnings, fmt.Sprintf("The PacketDrop feature requires OpenShift 4.14 or above (version detected: %s)", CurrentClusterInfo.GetOpenShiftVersion()))
+	if !fc.Agent.EBPF.Privileged {
+		for _, feat := range needPrivileged {
+			if slices.Contains(fc.Agent.EBPF.Features, feat) {
+				warnings = append(warnings, fmt.Sprintf("The %s feature requires eBPF Agent to run in privileged mode, which is currently disabled in spec.agent.ebpf.privileged", feat))
 			}
 		}
-		if !fc.Agent.EBPF.Privileged && !slices.Contains(fc.Agent.EBPF.Features, EbpfManager) {
-			warnings = append(warnings, "The PacketDrop feature requires eBPF Agent to run in privileged mode")
-		}
+	}
+
+	if slices.Contains(fc.Agent.EBPF.Features, PacketDrop) &&
+		!fc.Agent.EBPF.Privileged &&
+		!slices.Contains(fc.Agent.EBPF.Features, EbpfManager) {
+		warnings = append(warnings, "The PacketDrop feature requires eBPF Agent to run in privileged mode, which is currently disabled in spec.agent.ebpf.privileged, or to use with eBPF Manager")
 	}
 	var errs []error
 	if fc.Agent.EBPF.FlowFilter != nil && fc.Agent.EBPF.FlowFilter.Enable != nil && *fc.Agent.EBPF.FlowFilter.Enable {
