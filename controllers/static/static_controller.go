@@ -2,6 +2,7 @@ package static
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -70,8 +71,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 	defer r.status.Commit(ctx, r.Client)
 
 	// always reconcile static console plugin
-	scp := helper.UnmanagedClient(r.Client)
-	staticPluginReconciler := consoleplugin.NewStaticReconciler(r.newDefaultReconcilerInstance(&scp))
+	scp, err := helper.NewControllerClientHelper(r.mgr.Config.Namespace, ctx, r.Client)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to get controller deployment: %w", err)
+	}
+	staticPluginReconciler := consoleplugin.NewStaticReconciler(r.newDefaultReconcilerInstance(scp))
 	if err := staticPluginReconciler.ReconcileStaticPlugin(ctx, true); err != nil {
 		l.Error(err, "Static plugin reconcile failure")
 		// Set status failure unless it was already set

@@ -12,6 +12,7 @@ type RoleName string
 const (
 	DefaultOperatorNamespace = "netobserv"
 	OperatorName             = "netobserv-operator"
+	ControllerName           = "netobserv-controller-manager"
 	WebhookPort              = 9443
 	FLPName                  = "flowlogs-pipeline"
 	FLPShortName             = "flp"
