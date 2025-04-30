@@ -31,7 +31,6 @@ import (
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 )
 
-const secretName = "console-serving-cert"
 const proxyAlias = "backend"
 
 const configMapName = "console-plugin-config"
@@ -130,14 +129,14 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 							Cert: monitoringv1.SecretOrConfigMap{
 								Secret: &corev1.SecretKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: secretName,
+										Name: fmt.Sprintf("%s-cert", constants.PluginName),
 									},
 									Key: "tls.crt",
 								},
 							},
 							KeySecret: &corev1.SecretKeySelector{
 								LocalObjectReference: corev1.LocalObjectReference{
-									Name: secretName,
+									Name: fmt.Sprintf("%s-cert", constants.PluginName),
 								},
 								Key: "tls.key",
 							},
@@ -209,15 +208,15 @@ func (b *builder) podTemplate(name, cmDigest string) *corev1.PodTemplateSpec {
 
 	if !helper.UseTestConsolePlugin(b.desired) {
 		volumes = append(volumes, corev1.Volume{
-			Name: secretName,
+			Name: fmt.Sprintf("%s-cert", name),
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretName,
+					SecretName: fmt.Sprintf("%s-cert", name),
 				},
 			},
 		})
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      secretName,
+			Name:      fmt.Sprintf("%s-cert", name),
 			MountPath: "/var/serving-cert",
 			ReadOnly:  true,
 		})
@@ -276,7 +275,7 @@ func (b *builder) mainService(name string) *corev1.Service {
 			Namespace: b.info.Namespace,
 			Labels:    b.labels,
 			Annotations: map[string]string{
-				constants.OpenShiftCertificateAnnotation: "console-serving-cert",
+				constants.OpenShiftCertificateAnnotation: fmt.Sprintf("%s-cert", name),
 			},
 		},
 		Spec: corev1.ServiceSpec{
