@@ -28,8 +28,8 @@ func UnmanagedClient(cl client.Client) Client {
 	}
 }
 
-func NewControllerClientHelper(ns string, ctx context.Context, c client.Client) (*Client, error) {
-	dpl, err := getControllerDeployment(ns, ctx, c)
+func NewControllerClientHelper(ctx context.Context, ns string, c client.Client) (*Client, error) {
+	dpl, err := getControllerDeployment(ctx, ns, c)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func getFlowCollector(ctx context.Context, c client.Client) (*flowslatest.FlowCo
 	return desired, nil
 }
 
-func getControllerDeployment(ns string, ctx context.Context, c client.Client) (*appsv1.Deployment, error) {
+func getControllerDeployment(ctx context.Context, ns string, c client.Client) (*appsv1.Deployment, error) {
 	dpl := &appsv1.Deployment{}
 	if err := c.Get(ctx, types.NamespacedName{
 		Name:      constants.ControllerName,

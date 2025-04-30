@@ -71,7 +71,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 	defer r.status.Commit(ctx, r.Client)
 
 	// always reconcile static console plugin
-	scp, err := helper.NewControllerClientHelper(r.mgr.Config.Namespace, ctx, r.Client)
+	scp, err := helper.NewControllerClientHelper(ctx, r.mgr.Config.Namespace, r.Client)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to get controller deployment: %w", err)
 	}
