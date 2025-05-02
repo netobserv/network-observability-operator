@@ -115,10 +115,8 @@ spec:
     #   mode: Sample
     #   sampling: 100
     # filters:
-    #   - allOf:
-    #       - matchType: Equal
-    #         field: SrcK8S_Namespace
-    #         value: netobserv
+    #   - query: |
+    #       (SrcK8S_Namespace="netobserv" OR (SrcK8S_Namespace="openshift-console" AND DstK8S_Namespace="netobserv"))
     #     outputTarget: Loki
     #     sampling: 10
     # advanced:

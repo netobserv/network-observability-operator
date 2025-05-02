@@ -4139,19 +4139,19 @@ in edge debug or support scenarios.<br/>
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorfiltersindexallofindex">allOf</a></b></td>
-        <td>[]object</td>
-        <td>
-          `filters` is a list of matches that must be all satisfied in order to remove a flow.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>outputTarget</b></td>
         <td>enum</td>
         <td>
           If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.<br/>
           <br/>
             <i>Enum</i>: , Loki, Metrics, Exporters<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>query</b></td>
+        <td>string</td>
+        <td>
+          A query that selects the network flows to keep. More information about this query language in https://github.com/netobserv/flowlogs-pipeline/blob/main/docs/filtering.md.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4162,51 +4162,6 @@ in edge debug or support scenarios.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Minimum</i>: 0<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.filters[index].allOf[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorfiltersindex)</sup></sup>
-
-
-
-`FLPSingleFilter` defines the desired configuration for a single FLP-based filter
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>field</b></td>
-        <td>string</td>
-        <td>
-          Name of the field to filter on
-Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>matchType</b></td>
-        <td>enum</td>
-        <td>
-          Type of matching to apply<br/>
-          <br/>
-            <i>Enum</i>: Equal, NotEqual, Presence, Absence, MatchRegex, NotMatchRegex<br/>
-            <i>Default</i>: Equal<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>value</b></td>
-        <td>string</td>
-        <td>
-          Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -16493,19 +16448,19 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorfiltersindexallofindex-1">allOf</a></b></td>
-        <td>[]object</td>
-        <td>
-          `filters` is a list of matches that must be all satisfied in order to remove a flow.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>outputTarget</b></td>
         <td>enum</td>
         <td>
           If specified, these filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.<br/>
           <br/>
             <i>Enum</i>: , Loki, Metrics, Exporters<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>query</b></td>
+        <td>string</td>
+        <td>
+          A query that selects the network flows to keep. More information about this query language in https://github.com/netobserv/flowlogs-pipeline/blob/main/docs/filtering.md.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -16516,51 +16471,6 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
           <br/>
             <i>Format</i>: int32<br/>
             <i>Minimum</i>: 0<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.filters[index].allOf[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorfiltersindex-1)</sup></sup>
-
-
-
-`FLPSingleFilter` defines the desired configuration for a single FLP-based filter.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>field</b></td>
-        <td>string</td>
-        <td>
-          Name of the field to filter on.
-Refer to the documentation for the list of available fields: https://github.com/netobserv/network-observability-operator/blob/main/docs/flows-format.adoc.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>matchType</b></td>
-        <td>enum</td>
-        <td>
-          Type of matching to apply.<br/>
-          <br/>
-            <i>Enum</i>: Equal, NotEqual, Presence, Absence, MatchRegex, NotMatchRegex<br/>
-            <i>Default</i>: Equal<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>value</b></td>
-        <td>string</td>
-        <td>
-          Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

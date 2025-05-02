@@ -167,12 +167,14 @@ github.com/munnerz/goautoneg
 # github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 ## explicit
 github.com/mwitkow/go-conntrack
-# github.com/netobserv/flowlogs-pipeline v1.9.0-crc0
+# github.com/netobserv/flowlogs-pipeline v1.9.0-crc0.0.20250502080315-db59695ae6de
 ## explicit; go 1.23.0
 github.com/netobserv/flowlogs-pipeline/pkg/api
 github.com/netobserv/flowlogs-pipeline/pkg/config
+github.com/netobserv/flowlogs-pipeline/pkg/dsl
 github.com/netobserv/flowlogs-pipeline/pkg/utils
-# github.com/netobserv/netobserv-ebpf-agent v1.9.0-crc0
+github.com/netobserv/flowlogs-pipeline/pkg/utils/filters
+# github.com/netobserv/netobserv-ebpf-agent v1.9.0-crc0.0.20250425123944-0cd2534ae7b0
 ## explicit; go 1.23.0
 github.com/netobserv/netobserv-ebpf-agent/pkg/config
 # github.com/onsi/ginkgo/v2 v2.23.4

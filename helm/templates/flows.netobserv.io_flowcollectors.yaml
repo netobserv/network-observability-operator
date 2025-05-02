@@ -1756,35 +1756,6 @@ spec:
                       items:
                         description: '`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions'
                         properties:
-                          allOf:
-                            description: '`filters` is a list of matches that must be all satisfied in order to remove a flow.'
-                            items:
-                              description: '`FLPSingleFilter` defines the desired configuration for a single FLP-based filter'
-                              properties:
-                                field:
-                                  description: |-
-                                    Name of the field to filter on
-                                    Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.
-                                  type: string
-                                matchType:
-                                  default: Equal
-                                  description: Type of matching to apply
-                                  enum:
-                                    - Equal
-                                    - NotEqual
-                                    - Presence
-                                    - Absence
-                                    - MatchRegex
-                                    - NotMatchRegex
-                                  type: string
-                                value:
-                                  description: Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.
-                                  type: string
-                              required:
-                                - field
-                                - matchType
-                              type: object
-                            type: array
                           outputTarget:
                             description: 'If specified, this filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.'
                             enum:
@@ -1792,6 +1763,9 @@ spec:
                               - Loki
                               - Metrics
                               - Exporters
+                            type: string
+                          query:
+                            description: A query that selects the network flows to keep. More information about this query language in https://github.com/netobserv/flowlogs-pipeline/blob/main/docs/filtering.md.
                             type: string
                           sampling:
                             description: '`sampling` is an optional sampling rate to apply to this filter.'
@@ -7596,35 +7570,6 @@ spec:
                       items:
                         description: '`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions.'
                         properties:
-                          allOf:
-                            description: '`filters` is a list of matches that must be all satisfied in order to remove a flow.'
-                            items:
-                              description: '`FLPSingleFilter` defines the desired configuration for a single FLP-based filter.'
-                              properties:
-                                field:
-                                  description: |-
-                                    Name of the field to filter on.
-                                    Refer to the documentation for the list of available fields: https://github.com/netobserv/network-observability-operator/blob/main/docs/flows-format.adoc.
-                                  type: string
-                                matchType:
-                                  default: Equal
-                                  description: Type of matching to apply.
-                                  enum:
-                                    - Equal
-                                    - NotEqual
-                                    - Presence
-                                    - Absence
-                                    - MatchRegex
-                                    - NotMatchRegex
-                                  type: string
-                                value:
-                                  description: Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.
-                                  type: string
-                              required:
-                                - field
-                                - matchType
-                              type: object
-                            type: array
                           outputTarget:
                             description: 'If specified, these filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.'
                             enum:
@@ -7632,6 +7577,9 @@ spec:
                               - Loki
                               - Metrics
                               - Exporters
+                            type: string
+                          query:
+                            description: A query that selects the network flows to keep. More information about this query language in https://github.com/netobserv/flowlogs-pipeline/blob/main/docs/filtering.md.
                             type: string
                           sampling:
                             description: '`sampling` is an optional sampling ratio to apply to this filter. For example, a value of `50` means that 1 matching flow in 50 is sampled.'

@@ -373,49 +373,14 @@ func filtersToFLP(in []flowslatest.FLPFilterSet, target flowslatest.FLPFilterTar
 	var rules []api.TransformFilterRule
 	for _, f := range in {
 		if f.OutputTarget == target {
-			var allOf []*api.KeepEntryRule
-			for _, inner := range f.AllOf {
-				rule := singleFilterToFLP(inner)
-				allOf = append(allOf, &rule)
-			}
 			rules = append(rules, api.TransformFilterRule{
-				Type:                  api.KeepEntryAllSatisfied,
-				KeepEntryAllSatisfied: allOf,
-				KeepEntrySampling:     uint16(f.Sampling),
+				Type:              api.KeepEntryQuery,
+				KeepEntryQuery:    f.Query,
+				KeepEntrySampling: uint16(f.Sampling),
 			})
 		}
 	}
 	return rules
-}
-
-func singleFilterToFLP(in flowslatest.FLPSingleFilter) api.KeepEntryRule {
-	var t api.TransformFilterKeepEntryEnum
-	switch in.MatchType {
-	case flowslatest.FLPFilterEqual:
-		t = api.KeepEntryIfEqual
-	case flowslatest.FLPFilterNotEqual:
-		t = api.KeepEntryIfNotEqual
-	case flowslatest.FLPFilterPresence:
-		t = api.KeepEntryIfExists
-	case flowslatest.FLPFilterAbsence:
-		t = api.KeepEntryIfDoesntExist
-	case flowslatest.FLPFilterRegex:
-		t = api.KeepEntryIfRegexMatch
-	case flowslatest.FLPFilterNotRegex:
-		t = api.KeepEntryIfNotRegexMatch
-	}
-	// For now we don't handle numeric fields except for a few specific cases.
-	// Since we don't do any arithmetic in matchers (e.g. no "x > y" kind of match), it doesn't sound necessary to add more recognized fields here.
-	// That's open for a follow-up
-	isNumeric := in.Field == "FlowDirection" || in.Field == "Flags"
-	return api.KeepEntryRule{
-		Type: t,
-		KeepEntry: &api.TransformFilterGenericRule{
-			Input:   in.Field,
-			Value:   in.Value,
-			CastInt: isNumeric,
-		},
-	}
 }
 
 func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem, error) {

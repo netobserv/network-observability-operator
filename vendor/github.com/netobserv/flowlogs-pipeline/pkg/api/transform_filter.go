@@ -37,7 +37,7 @@ const (
 	RemoveEntryIfEqual       TransformFilterEnum = "remove_entry_if_equal"        // removes the entry if the field value equals specified value
 	RemoveEntryIfNotEqual    TransformFilterEnum = "remove_entry_if_not_equal"    // removes the entry if the field value does not equal specified value
 	RemoveEntryAllSatisfied  TransformFilterEnum = "remove_entry_all_satisfied"   // removes the entry if all of the defined rules are satisfied
-	KeepEntryAllSatisfied    TransformFilterEnum = "keep_entry_all_satisfied"     // keeps the entry if the set of rules are all satisfied
+	KeepEntryQuery           TransformFilterEnum = "keep_entry_query"             // keeps the entry if it matches the query
 	AddField                 TransformFilterEnum = "add_field"                    // adds (input) field to the entry; overrides previous value if present (key=input, value=value)
 	AddFieldIfDoesntExist    TransformFilterEnum = "add_field_if_doesnt_exist"    // adds a field to the entry if the field does not exist
 	AddFieldIf               TransformFilterEnum = "add_field_if"                 // add output field set to assignee if input field satisfies criteria from parameters field
@@ -56,23 +56,12 @@ const (
 	RemoveEntryIfNotEqualD    TransformFilterRemoveEntryEnum = "remove_entry_if_not_equal"    // removes the entry if the field value does not equal specified value
 )
 
-type TransformFilterKeepEntryEnum string
-
-const (
-	KeepEntryIfExists        TransformFilterKeepEntryEnum = "keep_entry_if_exists"          // keeps the entry if the field exists
-	KeepEntryIfDoesntExist   TransformFilterKeepEntryEnum = "keep_entry_if_doesnt_exist"    // keeps the entry if the field does not exist
-	KeepEntryIfEqual         TransformFilterKeepEntryEnum = "keep_entry_if_equal"           // keeps the entry if the field value equals specified value
-	KeepEntryIfNotEqual      TransformFilterKeepEntryEnum = "keep_entry_if_not_equal"       // keeps the entry if the field value does not equal specified value
-	KeepEntryIfRegexMatch    TransformFilterKeepEntryEnum = "keep_entry_if_regex_match"     // keeps the entry if the field value matches the specified regex
-	KeepEntryIfNotRegexMatch TransformFilterKeepEntryEnum = "keep_entry_if_not_regex_match" // keeps the entry if the field value does not match the specified regex
-)
-
 type TransformFilterRule struct {
 	Type                    TransformFilterEnum              `yaml:"type,omitempty" json:"type,omitempty" doc:"(enum) one of the following:"`
 	RemoveField             *TransformFilterGenericRule      `yaml:"removeField,omitempty" json:"removeField,omitempty" doc:"configuration for remove_field rule"`
 	RemoveEntry             *TransformFilterGenericRule      `yaml:"removeEntry,omitempty" json:"removeEntry,omitempty" doc:"configuration for remove_entry_* rules"`
 	RemoveEntryAllSatisfied []*RemoveEntryRule               `yaml:"removeEntryAllSatisfied,omitempty" json:"removeEntryAllSatisfied,omitempty" doc:"configuration for remove_entry_all_satisfied rule"`
-	KeepEntryAllSatisfied   []*KeepEntryRule                 `yaml:"keepEntryAllSatisfied,omitempty" json:"keepEntryAllSatisfied,omitempty" doc:"configuration for keep_entry rule"`
+	KeepEntryQuery          string                           `yaml:"keepEntryQuery,omitempty" json:"keepEntryQuery,omitempty" doc:"configuration for keep_entry rule"`
 	KeepEntrySampling       uint16                           `yaml:"keepEntrySampling,omitempty" json:"keepEntrySampling,omitempty" doc:"sampling value for keep_entry type: 1 flow on <sampling> is kept"`
 	AddField                *TransformFilterGenericRule      `yaml:"addField,omitempty" json:"addField,omitempty" doc:"configuration for add_field rule"`
 	AddFieldIfDoesntExist   *TransformFilterGenericRule      `yaml:"addFieldIfDoesntExist,omitempty" json:"addFieldIfDoesntExist,omitempty" doc:"configuration for add_field_if_doesnt_exist rule"`
@@ -92,9 +81,6 @@ func (r *TransformFilterRule) preprocess() {
 	}
 	for i := range r.RemoveEntryAllSatisfied {
 		r.RemoveEntryAllSatisfied[i].RemoveEntry.preprocess()
-	}
-	for i := range r.KeepEntryAllSatisfied {
-		r.KeepEntryAllSatisfied[i].KeepEntry.preprocess()
 	}
 	for i := range r.ConditionalSampling {
 		r.ConditionalSampling[i].preprocess()
@@ -125,11 +111,6 @@ type TransformFilterRuleWithAssignee struct {
 type RemoveEntryRule struct {
 	Type        TransformFilterRemoveEntryEnum `yaml:"type,omitempty" json:"type,omitempty" doc:"(enum) one of the following:"`
 	RemoveEntry *TransformFilterGenericRule    `yaml:"removeEntry,omitempty" json:"removeEntry,omitempty" doc:"configuration for remove_entry_* rules"`
-}
-
-type KeepEntryRule struct {
-	Type      TransformFilterKeepEntryEnum `yaml:"type,omitempty" json:"type,omitempty" doc:"(enum) one of the following:"`
-	KeepEntry *TransformFilterGenericRule  `yaml:"keepEntry,omitempty" json:"keepEntry,omitempty" doc:"configuration for keep_entry_* rules"`
 }
 
 type SamplingCondition struct {

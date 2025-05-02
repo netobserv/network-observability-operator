@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/netobserv/flowlogs-pipeline/pkg/dsl"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -54,7 +55,7 @@ func (r *FlowCollector) Validate(ctx context.Context, fc *FlowCollector) (admiss
 	var allE []error
 	w, errs := r.validateAgent(ctx, &fc.Spec)
 	allW, allE = collect(allW, allE, w, errs)
-	w, errs = r.validateConversationTracking(ctx, &fc.Spec)
+	w, errs = r.validateFLPConfig(ctx, &fc.Spec)
 	allW, allE = collect(allW, allE, w, errs)
 	w = r.warnLogLevels(&fc.Spec)
 	allW, allE = collect(allW, allE, w, nil)
@@ -269,14 +270,19 @@ func validatePortString(s string) (uint16, error) {
 	return uint16(p), nil
 }
 
-func (r *FlowCollector) validateConversationTracking(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
+func (r *FlowCollector) validateFLPConfig(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
+	var errs []error
 	var warnings admission.Warnings
 	if fc.Processor.LogTypes != nil && *fc.Processor.LogTypes == LogTypeAll {
 		warnings = append(warnings, "Enabling all log types (in spec.processor.logTypes) has a high impact on resources footprint")
 	}
-	var errs []error
 	if fc.Processor.LogTypes != nil && *fc.Processor.LogTypes != LogTypeFlows && fc.Loki.Enable != nil && !*fc.Loki.Enable {
 		errs = append(errs, errors.New("enabling conversation tracking without Loki is not allowed, as it generates extra processing for no benefit"))
+	}
+	for i, filter := range fc.Processor.Filters {
+		if _, err := dsl.Parse(filter.Query); err != nil {
+			errs = append(errs, fmt.Errorf("cannot parse spec.processor.filters[%d].query: %w", i, err))
+		}
 	}
 	return warnings, errs
 }
