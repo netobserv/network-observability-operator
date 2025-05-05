@@ -363,7 +363,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	// Custom filters: Exporters only
 	filters = filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetExporters)
 	if len(filters) > 0 {
-		expStage = expStage.TransformFilter("filters-exp", api.TransformFilter{Rules: filters})
+		expStage = expStage.TransformFilter("filters-exp", api.TransformFilter{Rules: filters, SamplingField: "Sampling"})
 	}
 	err := b.addCustomExportStages(&expStage, flpMetrics)
 	return err
