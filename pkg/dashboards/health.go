@@ -14,7 +14,7 @@ func CreateHealthDashboard(netobsNs, nsFlowsMetric string) (string, error) {
 	d.Rows = append(d.Rows, NewRow("", false, "100px", []Panel{
 		NewPanel("Flows per second", metricslatest.ChartTypeSingleStat, "", 3, NewTarget(
 			`sum(rate(netobserv_ingest_flows_processed[1m]))`, "")),
-		NewPanel("Sampling", metricslatest.ChartTypeSingleStat, "", 3, NewTarget(
+		NewPanel("Global sampling", metricslatest.ChartTypeSingleStat, "", 3, NewTarget(
 			"avg(netobserv_agent_sampling_rate)", "")),
 		NewPanel("Errors last minute", metricslatest.ChartTypeSingleStat, "", 3, NewTarget(
 			`(sum(increase(netobserv_agent_errors_total{severity!="low"}[1m])) OR on() vector(0))

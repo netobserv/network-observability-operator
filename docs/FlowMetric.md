@@ -102,9 +102,10 @@ To check the cardinality of all NetObserv metrics, run as `promql`: `count({__na
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          Metric type: "Counter" or "Histogram".
+          Metric type: "Counter", "Histogram" or "Gauge".
 Use "Counter" for any value that increases over time and on which you can compute a rate, such as Bytes or Packets.
-Use "Histogram" for any value that must be sampled independently, such as latencies.<br/>
+Use "Histogram" for any value that must be sampled independently, such as latencies.
+Use "Gauge" for other values that don't necessitate accuracy over time (gauges are sampled only every N seconds when Prometheus fetches the metric).<br/>
           <br/>
             <i>Enum</i>: Counter, Histogram<br/>
         </td>

@@ -25,19 +25,18 @@ type FilterMatchType string
 type FlowDirection string
 
 const (
-	CounterMetric   MetricType = "Counter"
-	HistogramMetric MetricType = "Histogram"
-	// Note: we don't expose gauge on purpose to avoid configuration mistake related to gauge limitation.
-	// 99% of times, "counter" or "histogram" should be the ones to use. We can eventually revisit later.
-	MatchEqual    FilterMatchType = "Equal"
-	MatchNotEqual FilterMatchType = "NotEqual"
-	MatchPresence FilterMatchType = "Presence"
-	MatchAbsence  FilterMatchType = "Absence"
-	MatchRegex    FilterMatchType = "MatchRegex"
-	MatchNotRegex FilterMatchType = "NotMatchRegex"
-	Egress        FlowDirection   = "Egress"
-	Ingress       FlowDirection   = "Ingress"
-	AnyDirection  FlowDirection   = "Any"
+	CounterMetric   MetricType      = "Counter"
+	GaugeMetric     MetricType      = "Gauge"
+	HistogramMetric MetricType      = "Histogram"
+	MatchEqual      FilterMatchType = "Equal"
+	MatchNotEqual   FilterMatchType = "NotEqual"
+	MatchPresence   FilterMatchType = "Presence"
+	MatchAbsence    FilterMatchType = "Absence"
+	MatchRegex      FilterMatchType = "MatchRegex"
+	MatchNotRegex   FilterMatchType = "NotMatchRegex"
+	Egress          FlowDirection   = "Egress"
+	Ingress         FlowDirection   = "Ingress"
+	AnyDirection    FlowDirection   = "Any"
 )
 
 type MetricFilter struct {
@@ -65,9 +64,10 @@ type FlowMetricSpec struct {
 	// +required
 	MetricName string `json:"metricName"`
 
-	// Metric type: "Counter" or "Histogram".
+	// Metric type: "Counter", "Histogram" or "Gauge".
 	// Use "Counter" for any value that increases over time and on which you can compute a rate, such as Bytes or Packets.
 	// Use "Histogram" for any value that must be sampled independently, such as latencies.
+	// Use "Gauge" for other values that don't necessitate accuracy over time (gauges are sampled only every N seconds when Prometheus fetches the metric).
 	// +kubebuilder:validation:Enum:="Counter";"Histogram"
 	// +required
 	Type MetricType `json:"type"`

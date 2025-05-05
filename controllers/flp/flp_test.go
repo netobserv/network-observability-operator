@@ -373,8 +373,8 @@ func TestDeploymentChanged(t *testing.T) {
 	second := b.deployment(annotate(digest))
 
 	report := helper.NewChangeReport("")
-	checkChanged := func(old, new *appsv1.Deployment, spec flowslatest.FlowCollectorSpec) bool {
-		return helper.DeploymentChanged(old, new, constants.FLPName, !helper.HPAEnabled(&spec.Processor.KafkaConsumerAutoscaler), *spec.Processor.KafkaConsumerReplicas, &report)
+	checkChanged := func(old, newd *appsv1.Deployment, spec flowslatest.FlowCollectorSpec) bool {
+		return helper.DeploymentChanged(old, newd, constants.FLPName, !helper.HPAEnabled(&spec.Processor.KafkaConsumerAutoscaler), *spec.Processor.KafkaConsumerReplicas, &report)
 	}
 
 	assert.True(checkChanged(first, second, cfg))
