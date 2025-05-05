@@ -459,22 +459,22 @@ properties:
           }
         ]
       capabilities: Seamless Upgrades
-      categories: Monitoring, Networking
+      categories: Monitoring, Networking, OpenShift Optional
       console.openshift.io/plugins: '["netobserv-plugin"]'
       containerImage: ''
-      createdAt: '2025-03-12T15:17:35Z'
+      createdAt: 2025-05-05T07:17:03
       description: Network flows collector and monitoring solution
-      features.operators.openshift.io/cnf: 'false'
-      features.operators.openshift.io/cni: 'false'
-      features.operators.openshift.io/csi: 'false'
-      features.operators.openshift.io/disconnected: 'true'
-      features.operators.openshift.io/fips-compliant: 'true'
-      features.operators.openshift.io/proxy-aware: 'false'
-      features.operators.openshift.io/tls-profiles: 'false'
-      features.operators.openshift.io/token-auth-aws: 'false'
-      features.operators.openshift.io/token-auth-azure: 'false'
-      features.operators.openshift.io/token-auth-gcp: 'false'
-      operatorframework.io/cluster-monitoring: 'true'
+      features.operators.openshift.io/cnf: "false"
+      features.operators.openshift.io/cni: "false"
+      features.operators.openshift.io/csi: "false"
+      features.operators.openshift.io/disconnected: "true"
+      features.operators.openshift.io/fips-compliant: "true"
+      features.operators.openshift.io/proxy-aware: "false"
+      features.operators.openshift.io/tls-profiles: "false"
+      features.operators.openshift.io/token-auth-aws: "false"
+      features.operators.openshift.io/token-auth-azure: "false"
+      features.operators.openshift.io/token-auth-gcp: "false"
+      operatorframework.io/cluster-monitoring: "true"
       operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
         "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
       operatorframework.io/suggested-namespace: openshift-netobserv-operator
@@ -922,7 +922,7 @@ properties:
 
       ## Configuration
 
-      The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/1.6.1-community/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/1.6.1-community/config/samples/flows_v1beta2_flowcollector.yaml).
+      The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/1.8.2-community/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/1.8.2-community/config/samples/flows_v1beta2_flowcollector.yaml).
 
       To edit configuration in cluster, run:
 
@@ -938,7 +938,7 @@ properties:
 
       - Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned above, but you might have to configure differently if you used another installation method. Make sure to disable it (`spec.loki.enable`) if you don't want to use Loki.
 
-      - Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/1.6.1-community/docs/QuickFilters.md).
+      - Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/1.8.2-community/docs/QuickFilters.md).
 
       - Kafka (`spec.deploymentModel: KAFKA` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created.
 
@@ -974,7 +974,7 @@ properties:
       This documentation includes:
 
       - An [overview](https://github.com/netobserv/network-observability-operator#openshift-console) of the features, with screenshots
-      - More information on [configuring metrics](https://github.com/netobserv/network-observability-operator/blob/1.6.1-community/docs/Metrics.md).
+      - More information on [configuring metrics](https://github.com/netobserv/network-observability-operator/blob/1.8.2-community/docs/Metrics.md).
       - A [performance](https://github.com/netobserv/network-observability-operator#performance-fine-tuning) section, for fine-tuning
       - A [security](https://github.com/netobserv/network-observability-operator#securing-data-and-communications) section
       - An [F.A.Q.](https://github.com/netobserv/network-observability-operator#faq--troubleshooting) section
