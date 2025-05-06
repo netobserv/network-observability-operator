@@ -82,3 +82,25 @@ jobs:
         flags: unittests
         fail_ci_if_error: true
         verbose: true
+  
+  update-newtag-in-helm-chart:
+    name: update image version in helm
+    runs-on: ubuntu-latest
+    needs: push-image
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.TOKEN_GITHUB }}
+
+    - name: Update image version in deployment file
+      run: |
+        sed -i '/netobserv:/,/^[^ ]/s/version: .*/version: "${{ env.WF_VERSION }}"/' network-observability-operator/helm/values.yaml
+
+    - name: Commit and push changes
+      run: |
+        git config --global user.email "jtakvori@redhat.com"
+        git config --global user.name "jotak"
+        git add network-observability-operator/helm/values.yaml
+        git commit -m "Updated image version in values.yaml"
+        git push
