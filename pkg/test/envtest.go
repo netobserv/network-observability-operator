@@ -20,7 +20,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -192,15 +191,15 @@ func CreateFakeController(ctx context.Context, k8sClient client.Client) {
 					"controller": "dummy",
 				},
 			},
-			Template: v1.PodTemplateSpec{
+			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						"controller": "dummy",
 					},
 				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{
-						v1.Container{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
 							Name:  "controller",
 							Image: "nginx:latest",
 						},
