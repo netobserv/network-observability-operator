@@ -13,6 +13,9 @@ const (
 )
 
 var (
+	createFakeController = func() {
+		test.CreateFakeController(ctx, k8sClient)
+	}
 	updateCR = func(key types.NamespacedName, updater func(*flowslatest.FlowCollector)) {
 		test.UpdateCR(ctx, k8sClient, key, updater)
 	}

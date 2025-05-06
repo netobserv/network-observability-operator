@@ -57,10 +57,6 @@ func (r *CPReconciler) reconcileStatic(ctx context.Context, desired *flowslatest
 		// Create object builder
 		builder := newBuilder(r.Instance, &desired.Spec, constants.StaticPluginName)
 
-		if err := r.reconcilePermissions(ctx, &builder, constants.StaticPluginName); err != nil {
-			return err
-		}
-
 		if err = r.reconcilePlugin(ctx, &builder, &desired.Spec, constants.StaticPluginName, "NetObserv static plugin"); err != nil {
 			return err
 		}
