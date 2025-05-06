@@ -176,6 +176,7 @@ func (b *builder) deployment(name, cmDigest string) *appsv1.Deployment {
 }
 
 func (b *builder) podTemplate(name, cmDigest string) *corev1.PodTemplateSpec {
+	var sa string
 	annotations := map[string]string{}
 	args := []string{
 		"-loglevel", b.desired.ConsolePlugin.LogLevel,
@@ -184,6 +185,7 @@ func (b *builder) podTemplate(name, cmDigest string) *corev1.PodTemplateSpec {
 	volumeMounts := []corev1.VolumeMount{}
 
 	if cmDigest != "" {
+		sa = name
 		annotations[constants.PodConfigurationDigest] = cmDigest
 
 		args = append(args, "-config", filepath.Join(configPath, configFile))
@@ -239,7 +241,7 @@ func (b *builder) podTemplate(name, cmDigest string) *corev1.PodTemplateSpec {
 				SecurityContext: helper.ContainerDefaultSecurityContext(),
 			}},
 			Volumes:            b.volumes.AppendVolumes(volumes),
-			ServiceAccountName: name,
+			ServiceAccountName: sa,
 			NodeSelector:       b.advanced.Scheduling.NodeSelector,
 			Tolerations:        b.advanced.Scheduling.Tolerations,
 			Affinity:           b.advanced.Scheduling.Affinity,
