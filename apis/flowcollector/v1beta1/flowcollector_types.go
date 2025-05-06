@@ -341,7 +341,7 @@ type FlowCollectorEBPF struct {
 	LogLevel string `json:"logLevel,omitempty"`
 
 	// Privileged mode for the eBPF Agent container. When ignored or set to `false`, the operator sets
-	// granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container.
+	// granular capabilities (BPF, PERFMON, NET_ADMIN) to the container.
 	// If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF
 	// is in use, then you can turn on this mode for more global privileges.
 	// Some agent features require the privileged mode, such as packet drops tracking (see `features`) and SR-IOV support.
@@ -1097,6 +1097,10 @@ type DebugConfig struct {
 	// in edge debug or support scenarios.
 	//+optional
 	Env map[string]string `json:"env,omitempty"`
+
+	// Linux capapbilities override, when not running as privileged. Default capabilities are BPF, PERFMON and NET_ADMIN.
+	// +optional
+	CapOverride []string `json:"capOverride,omitempty"`
 }
 
 // `SubnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.

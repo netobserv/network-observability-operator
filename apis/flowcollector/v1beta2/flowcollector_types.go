@@ -365,7 +365,7 @@ type FlowCollectorEBPF struct {
 	LogLevel string `json:"logLevel,omitempty"`
 
 	// Privileged mode for the eBPF Agent container. When ignored or set to `false`, the operator sets
-	// granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container.
+	// granular capabilities (BPF, PERFMON, NET_ADMIN) to the container.
 	// If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF
 	// is in use, then you can turn on this mode for more global privileges.
 	// Some agent features require the privileged mode, such as packet drops tracking (see `features`) and SR-IOV support.
@@ -379,7 +379,8 @@ type FlowCollectorEBPF struct {
 
 	// `advanced` allows setting some aspects of the internal configuration of the eBPF agent.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
-	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk. You can also
+	// override the default Linux capabilities from there.
 	// +optional
 	Advanced *AdvancedAgentConfig `json:"advanced,omitempty"`
 
@@ -1247,6 +1248,10 @@ type AdvancedAgentConfig struct {
 	// scheduling controls how the pods are scheduled on nodes.
 	// +optional
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
+
+	// Linux capapbilities override, when not running as privileged. Default capabilities are BPF, PERFMON and NET_ADMIN.
+	// +optional
+	CapOverride []string `json:"capOverride,omitempty"`
 }
 
 // `AdvancedProcessorConfig` allows tweaking some aspects of the internal configuration of the processor.

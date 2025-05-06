@@ -21,8 +21,7 @@ import (
 // BPF: Allows netobserv to use eBPF programs and maps.
 // PERFMON: Allows access to perf monitoring and profiling features.
 // NET_ADMIN: required for TC programs to attach/detach to/from qdisc and for TCX hooks.
-// SYS_RESOURCE: allows a process to override resource limits and manage system-wide resource usage.
-var AllowedCapabilities = []v1.Capability{"BPF", "PERFMON", "NET_ADMIN", "SYS_RESOURCE"}
+var AllowedCapabilities = []v1.Capability{"BPF", "PERFMON", "NET_ADMIN"}
 
 // Reconciler reconciles the different resources to enable the privileged operation of the
 // Netobserv Agent:
@@ -162,6 +161,11 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 	if desired.Privileged {
 		scc.AllowPrivilegedContainer = true
 		scc.AllowHostDirVolumePlugin = true
+	} else if len(desired.Advanced.CapOverride) > 0 {
+		scc.AllowedCapabilities = []v1.Capability{}
+		for _, cap := range desired.Advanced.CapOverride {
+			scc.AllowedCapabilities = append(scc.AllowedCapabilities, v1.Capability(cap))
+		}
 	} else {
 		scc.AllowedCapabilities = AllowedCapabilities
 	}

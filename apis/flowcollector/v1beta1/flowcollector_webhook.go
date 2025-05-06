@@ -506,7 +506,8 @@ func Convert_v1beta2_AdvancedProcessorConfig_To_v1beta1_DebugConfig(in *v1beta2.
 // nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in *FlowCollectorEBPF, out *v1beta2.FlowCollectorEBPF, s apiconversion.Scope) error {
 	out.Advanced = &v1beta2.AdvancedAgentConfig{
-		Env: in.Debug.Env,
+		Env:         in.Debug.Env,
+		CapOverride: in.Debug.CapOverride,
 	}
 	return autoConvert_v1beta1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in, out, s)
 }
@@ -517,6 +518,7 @@ func Convert_v1beta1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in *FlowColl
 func Convert_v1beta2_FlowCollectorEBPF_To_v1beta1_FlowCollectorEBPF(in *v1beta2.FlowCollectorEBPF, out *FlowCollectorEBPF, s apiconversion.Scope) error {
 	if in.Advanced != nil {
 		out.Debug.Env = in.Advanced.Env
+		out.Debug.CapOverride = in.Advanced.CapOverride
 	}
 	return autoConvert_v1beta2_FlowCollectorEBPF_To_v1beta1_FlowCollectorEBPF(in, out, s)
 }
