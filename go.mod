@@ -1,6 +1,7 @@
 module github.com/netobserv/network-observability-operator
 
 go 1.23.0
+toolchain go1.24.1
 
 require (
 	github.com/bpfman/bpfman-operator v0.5.7-0.20250411151105-cd81bc6e57d7
@@ -13,7 +14,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
 	github.com/openshift/api v0.0.0-20250426060331-e577b4d83475
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.81.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.82.0
 	github.com/prometheus/common v0.63.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
