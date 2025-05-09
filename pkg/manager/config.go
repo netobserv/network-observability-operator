@@ -14,6 +14,8 @@ type Config struct {
 	ConsolePluginImage string
 	// EBPFByteCodeImage is the ebpf byte code image used by EBPF Manager
 	EBPFByteCodeImage string
+	// Default namespace
+	Namespace string
 	// Release kind is either upstream or downstream
 	DownstreamDeployment bool
 }
@@ -27,6 +29,9 @@ func (cfg *Config) Validate() error {
 	}
 	if cfg.ConsolePluginImage == "" {
 		return errors.New("console plugin image argument can't be empty")
+	}
+	if cfg.Namespace == "" {
+		return errors.New("namespace argument can't be empty")
 	}
 	return nil
 }

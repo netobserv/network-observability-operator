@@ -27,6 +27,10 @@ const cpNamespace = "namespace-console-specs"
 
 // nolint:cyclop
 func flowCollectorConsolePluginSpecs() {
+	staticCpKey := types.NamespacedName{
+		Name:      "netobserv-plugin-static",
+		Namespace: "main-namespace",
+	}
 	cpKey := types.NamespacedName{
 		Name:      "netobserv-plugin",
 		Namespace: cpNamespace,
@@ -52,6 +56,10 @@ func flowCollectorConsolePluginSpecs() {
 	})
 
 	Context("Console plugin test init", func() {
+		It("Should create controller pod owner", func() {
+			createFakeController()
+		})
+
 		It("Should create Console CR", func() {
 			created := &operatorsv1.Console{
 				ObjectMeta: metav1.ObjectMeta{
@@ -75,7 +83,25 @@ func flowCollectorConsolePluginSpecs() {
 			// Create
 			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
 		})
+	})
 
+	Context("Deploying the static console plugin", func() {
+		It("Should create successfully", func() {
+			By("Expecting to create the static console plugin Deployment")
+			dp := appsv1.Deployment{}
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, staticCpKey, &dp)
+			}, timeout, interval).Should(Succeed())
+
+			By("Expecting to create the static console plugin Service")
+			svc := v1.Service{}
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, staticCpKey, &svc)
+			}, timeout, interval).Should(Succeed())
+		})
+	})
+
+	Context("Create FlowCollector CR", func() {
 		It("Should create CR successfully", func() {
 			created := &flowslatest.FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{
@@ -246,14 +272,14 @@ func flowCollectorConsolePluginSpecs() {
 	})
 
 	Context("Registering to the Console CR", func() {
-		It("Should start unregistered", func() {
+		It("Should start with static plugin registered", func() {
 			Eventually(func() interface{} {
 				cr := operatorsv1.Console{}
 				if err := k8sClient.Get(ctx, consoleCRKey, &cr); err != nil {
 					return err
 				}
 				return cr.Spec.Plugins
-			}, timeout, interval).Should(BeEmpty())
+			}, timeout, interval).Should(Equal([]string{"netobserv-plugin-static"}))
 		})
 
 		It("Should be registered", func() {
@@ -262,14 +288,14 @@ func flowCollectorConsolePluginSpecs() {
 				fc.Spec.ConsolePlugin.Advanced.Register = ptr.To(true)
 			})
 
-			By("Expecting the Console CR to not have plugin registered")
+			By("Expecting the Console CR to have both plugins registered")
 			Eventually(func() interface{} {
 				cr := operatorsv1.Console{}
 				if err := k8sClient.Get(ctx, consoleCRKey, &cr); err != nil {
 					return err
 				}
 				return cr.Spec.Plugins
-			}, timeout, interval).Should(Equal([]string{"netobserv-plugin"}))
+			}, timeout, interval).Should(Equal([]string{"netobserv-plugin-static", "netobserv-plugin"}))
 		})
 	})
 
@@ -356,6 +382,33 @@ func flowCollectorConsolePluginSpecs() {
 		})
 	})
 
+	Context("Checking controller ownership", func() {
+		It("Should be garbage collected", func() {
+			dp := appsv1.Deployment{}
+			By("Getting controller deployment")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "netobserv-controller-manager",
+					Namespace: "main-namespace",
+				}, &dp)
+			}, timeout, interval).Should(Succeed())
+
+			By("Expecting static console plugin deployment to be garbage collected")
+			Eventually(func() interface{} {
+				d := appsv1.Deployment{}
+				_ = k8sClient.Get(ctx, staticCpKey, &d)
+				return &d
+			}, timeout, interval).Should(BeGarbageCollectedBy(&dp))
+
+			By("Expecting static console plugin service to be garbage collected")
+			Eventually(func() interface{} {
+				svc := v1.Service{}
+				_ = k8sClient.Get(ctx, staticCpKey, &svc)
+				return &svc
+			}, timeout, interval).Should(BeGarbageCollectedBy(&dp))
+		})
+	})
+
 	Context("Cleanup", func() {
 		It("Should delete CR", func() {
 			cleanupCR(crKey)
@@ -368,6 +421,22 @@ func flowCollectorConsolePluginSpecs() {
 						Name: consoleCRKey.Name,
 					},
 				})
+			}, timeout, interval).Should(Succeed())
+		})
+
+		It("Should delete fake controller", func() {
+			dp := appsv1.Deployment{}
+			By("Retreive controller deployment")
+			Eventually(func() interface{} {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      "netobserv-controller-manager",
+					Namespace: "main-namespace",
+				}, &dp)
+			}, timeout, interval).Should(Succeed())
+
+			By("Delete controller deployment")
+			Eventually(func() error {
+				return k8sClient.Delete(ctx, &dp)
 			}, timeout, interval).Should(Succeed())
 		})
 	})
