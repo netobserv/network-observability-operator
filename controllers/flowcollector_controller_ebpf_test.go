@@ -90,7 +90,7 @@ func flowCollectorEBPFSpecs() {
 			Expect(len(spec.Containers)).To(Equal(1))
 			Expect(spec.Containers[0].SecurityContext.Privileged).To(BeNil())
 			Expect(spec.Containers[0].SecurityContext.Capabilities.Add).To(ContainElements(
-				[]v1.Capability{"BPF", "PERFMON", "NET_ADMIN", "SYS_RESOURCE"},
+				[]v1.Capability{"BPF", "PERFMON", "NET_ADMIN"},
 			))
 			Expect(spec.Containers[0].SecurityContext.RunAsUser).To(Not(BeNil()))
 			Expect(*spec.Containers[0].SecurityContext.RunAsUser).To(Equal(int64(0)))
