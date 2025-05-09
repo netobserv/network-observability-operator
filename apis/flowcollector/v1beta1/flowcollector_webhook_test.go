@@ -125,6 +125,7 @@ func TestBeta1ConversionRoundtrip_Metrics(t *testing.T) {
 
 	expectedDefaultMetrics := []v1beta2.FLPMetric{
 		"namespace_egress_packets_total",
+		"namespace_sampling",
 		"namespace_flows_total",
 		"namespace_rtt_seconds",
 		"namespace_drop_packets_total",

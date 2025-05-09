@@ -37,6 +37,7 @@ var (
 	DefaultIncludeList = []string{
 		"node_ingress_bytes_total",
 		"node_egress_bytes_total",
+		"workload_sampling",
 		"workload_ingress_bytes_total",
 		"workload_egress_bytes_total",
 		"namespace_flows_total",
@@ -51,6 +52,7 @@ var (
 		"node_egress_bytes_total",
 		"workload_ingress_bytes_total",
 		"workload_egress_bytes_total",
+		"workload_sampling",
 		"workload_ingress_packets_total",
 		"workload_egress_packets_total",
 		"workload_flows_total",
@@ -93,6 +95,16 @@ func init() {
 				})
 			}
 		}
+		// Sampling
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			FlowMetricSpec: metricslatest.FlowMetricSpec{
+				MetricName: fmt.Sprintf("%s_sampling", groupTrimmed),
+				Type:       metricslatest.GaugeMetric,
+				ValueField: "Sampling",
+				Labels:     labels,
+			},
+			tags: []string{group, "sampling"},
+		})
 		// Flows metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
@@ -283,6 +295,9 @@ func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
 	if !helper.IsNetworkEventsEnabled(&spec.Agent.EBPF) {
 		list = removeMetricsByPattern(list, "_network_policy_")
 	}
+	if !hasFiltersSampling(spec) {
+		list = removeMetricsByPattern(list, "_sampling")
+	}
 	return list
 }
 
@@ -338,4 +353,20 @@ func GetDefinitions(fc *flowslatest.FlowCollectorSpec, allMetrics bool) []metric
 func MergePredefined(fm []metricslatest.FlowMetric, fc *flowslatest.FlowCollectorSpec) []metricslatest.FlowMetric {
 	predefined := GetDefinitions(fc, false)
 	return append(predefined, fm...)
+}
+
+func hasFiltersSampling(fc *flowslatest.FlowCollectorSpec) bool {
+	if fc.Agent.EBPF.FlowFilter != nil {
+		for i := range fc.Agent.EBPF.FlowFilter.Rules {
+			if fc.Agent.EBPF.FlowFilter.Rules[i].Sampling != nil && *fc.Agent.EBPF.FlowFilter.Rules[i].Sampling > 1 {
+				return true
+			}
+		}
+	}
+	for _, rule := range fc.Processor.Filters {
+		if rule.Sampling > 1 {
+			return true
+		}
+	}
+	return false
 }
