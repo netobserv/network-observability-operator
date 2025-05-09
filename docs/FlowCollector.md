@@ -285,17 +285,21 @@ Otherwise it is matched as a case-sensitive string.<br/>
         <td>[]enum</td>
         <td>
           List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
-- `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
-the kernel debug filesystem, so the eBPF pod has to run as privileged.
+- `PacketDrop`: Enable the packets drop flows logging feature. This feature requires mounting
+the kernel debug filesystem, so the eBPF agent pods must run as privileged.
 If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
-- `DNSTracking`: enable the DNS tracking feature.<br>
-- `FlowRTT`: enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
-- `NetworkEvents`: enable the Network events monitoring feature. This feature requires mounting
-the kernel debug filesystem, so the eBPF pod has to run as privileged.
-- `PacketTranslation`: enable enriching flows with packet's translation information. <br>
-- `EbpfManager`: allow using eBPF manager to manage netobserv ebpf programs. <br>
-- `UDNMapping`, to enable interfaces mapping to udn. <br>
-- `IPSec`, to track flows with IPsec encryption. <br><br/>
+- `DNSTracking`: Enable the DNS tracking feature.<br>
+- `FlowRTT`: Enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
+- `NetworkEvents`: Enable the network events monitoring feature, such as correlating flows and network policies.
+This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
+It requires using the OVN-Kubernetes network plugin with the Observability feature.
+IMPORTANT: This feature is available as a Technology Preview.<br>
+- `PacketTranslation`: Enable enriching flows with packet translation information, such as Service NAT.<br>
+- `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
+- `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN). <br>
+This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
+It requires using the OVN-Kubernetes network plugin with the Observability feature.
+- `IPSec`, to track flows between nodes with IPsec encryption. <br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6240,10 +6244,10 @@ It requires using the OVN-Kubernetes network plugin with the Observability featu
 IMPORTANT: This feature is available as a Technology Preview.<br>
 - `PacketTranslation`: Enable enriching flows with packet translation information, such as Service NAT.<br>
 - `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
-- `UDNMapping`: [Unsupported (*)]. Enable interfaces mapping to User Defined Networks (UDN). <br>
+- `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN). <br>
 This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
-- `IPSec`, to track flows with IPsec encryption. <br><br/>
+- `IPSec`, to track flows between nodes with IPsec encryption. <br><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8242,8 +8246,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td>
           `rules` defines a list of filtering rules on the eBPF Agents.
 When filtering is enabled, by default, flows that don't match any rule are rejected.
-To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.
-[Unsupported (*)].<br/>
+To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14347,8 +14350,7 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/
         <td><b><a href="#flowcollectorspecprocessordeduper-1">deduper</a></b></td>
         <td>object</td>
         <td>
-          `deduper` allows you to sample or drop flows identified as duplicates, in order to save on resource usage.
-[Unsupported (*)].<br/>
+          `deduper` allows you to sample or drop flows identified as duplicates, in order to save on resource usage.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14357,8 +14359,7 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/
         <td>
           `filters` lets you define custom filters to limit the amount of generated flows.
 These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
-but with a lesser improvement in performance.
-[Unsupported (*)].<br/>
+but with a lesser improvement in performance.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -16392,7 +16393,6 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
 
 
 `deduper` allows you to sample or drop flows identified as duplicates, in order to save on resource usage.
-[Unsupported (*)].
 
 <table>
     <thead>
@@ -16407,7 +16407,7 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
         <td><b>mode</b></td>
         <td>enum</td>
         <td>
-          Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication because the Agent cannot de-duplicate same flows reported from different nodes.<br>
+          Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication, since the Agent cannot de-duplicate same flows reported from different nodes.<br>
 - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially losing some information such as the network interfaces used from peer, or network events.<br>
 - Use `Sample` to randomly keep only one flow on 50, which is the default, among the ones considered as duplicates. This is a compromise between dropping every duplicate or keeping every duplicate. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling values are `50`, the combined sampling is 1:2500.<br>
 - Use `Disabled` to turn off Processor-based de-duplication.<br><br/>
@@ -16451,7 +16451,7 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
         <td><b>outputTarget</b></td>
         <td>enum</td>
         <td>
-          If specified, these filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.<br/>
+          If specified, these filters target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.<br/>
           <br/>
             <i>Enum</i>: , Loki, Metrics, Exporters<br/>
         </td>
