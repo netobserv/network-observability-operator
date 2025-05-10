@@ -2,19 +2,15 @@ apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   annotations:
+    build.appstudio.openshift.io/build-nudge-files: hack/nudging/bundle_digest.sh
     build.appstudio.openshift.io/repo: https://github.com/netobserv/network-observability-operator?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
-    build.appstudio.openshift.io/build-nudge-files: "hack/nudging/bundle_digest.sh"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch == "main"  &&
-      (".tekton/***".pathChanged() ||
-      "bundle.Dockerfile.downstream".pathChanged() ||
-      "bundle/***".pathChanged() ||
-      "./requirements.txt".pathChanged() ||
-      "hack/update-build.sh".pathChanged() ||
-      "hack/nudging/container_digest.sh".pathChanged() ||
-      "hack/patch_csv.py".pathChanged())
+    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
+      == "main"  && (".tekton/***".pathChanged() || "bundle.Dockerfile.downstream".pathChanged()
+      || "bundle/***".pathChanged() || "./requirements.txt".pathChanged() || "hack/update-build.sh".pathChanged()
+      || "hack/nudging/container_digest.sh".pathChanged() || "hack/patch_csv.py".pathChanged())
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: netobserv-ystream
@@ -35,9 +31,11 @@ spec:
   - name: dockerfile
     value: bundle.Dockerfile.downstream
   - name: prefetch-input
-    value: "{\"type\":\"pip\", \"path\":\".\"}"
+    value: '{"type":"pip", "path":"."}'
   pipelineRef:
     name: build-bundle-pipeline
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-network-observability-operator-bundle-ystream
   workspaces:
   - name: workspace
     volumeClaimTemplate:
@@ -53,3 +51,4 @@ spec:
   - name: git-auth
     secret:
       secretName: '{{ git_auth_secret }}'
+status: {}

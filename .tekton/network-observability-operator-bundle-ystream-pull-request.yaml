@@ -7,13 +7,10 @@ metadata:
     build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "pull_request" && target_branch == "main" &&
-      (".tekton/***".pathChanged() ||
-      "bundle.Dockerfile.downstream".pathChanged() ||
-      "bundle/***".pathChanged() ||
-      "./requirements.txt".pathChanged() ||
-      "hack/update-build.sh".pathChanged() ||
-      "hack/patch_csv.py".pathChanged())
+    pipelinesascode.tekton.dev/on-cel-expression: event == "pull_request" && target_branch
+      == "main" && (".tekton/***".pathChanged() || "bundle.Dockerfile.downstream".pathChanged()
+      || "bundle/***".pathChanged() || "./requirements.txt".pathChanged() || "hack/update-build.sh".pathChanged()
+      || "hack/patch_csv.py".pathChanged())
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: netobserv-ystream
@@ -36,9 +33,11 @@ spec:
   - name: dockerfile
     value: bundle.Dockerfile.downstream
   - name: prefetch-input
-    value: "{\"type\":\"pip\", \"path\":\".\"}"
+    value: '{"type":"pip", "path":"."}'
   pipelineRef:
     name: build-bundle-pipeline
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-network-observability-operator-bundle-ystream
   workspaces:
   - name: workspace
     volumeClaimTemplate:
@@ -54,3 +53,4 @@ spec:
   - name: git-auth
     secret:
       secretName: '{{ git_auth_secret }}'
+status: {}
