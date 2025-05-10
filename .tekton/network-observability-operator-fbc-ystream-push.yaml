@@ -6,15 +6,11 @@ metadata:
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch == "main" &&
-      (".tekton/***".pathChanged() ||
-      "catalog.Dockerfile.downstream".pathChanged() ||
-      "catalog/***".pathChanged() ||
-      "./requirements.txt".pathChanged() ||
-      "hack/update-build.sh".pathChanged() ||
-      "hack/nudging/bundle_digest.sh".pathChanged() ||
-      "hack/patch_catalog.py".pathChanged() ||
-      "hack/patch_csv.py".pathChanged())
+    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
+      == "main" && (".tekton/***".pathChanged() || "catalog.Dockerfile.downstream".pathChanged()
+      || "catalog/***".pathChanged() || "./requirements.txt".pathChanged() || "hack/update-build.sh".pathChanged()
+      || "hack/nudging/bundle_digest.sh".pathChanged() || "hack/patch_catalog.py".pathChanged()
+      || "hack/patch_csv.py".pathChanged())
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: netobserv-ystream
@@ -36,6 +32,8 @@ spec:
     value: ./catalog.Dockerfile.downstream
   pipelineRef:
     name: build-fbc-pipeline
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-network-observability-operator-fbc-ystream
   workspaces:
   - name: workspace
     volumeClaimTemplate:
@@ -51,3 +49,4 @@ spec:
   - name: git-auth
     secret:
       secretName: '{{ git_auth_secret }}'
+status: {}
