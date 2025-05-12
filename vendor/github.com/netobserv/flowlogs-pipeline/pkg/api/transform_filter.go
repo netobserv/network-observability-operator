@@ -18,7 +18,8 @@
 package api
 
 type TransformFilter struct {
-	Rules []TransformFilterRule `yaml:"rules,omitempty" json:"rules,omitempty" doc:"list of filter rules, each includes:"`
+	Rules         []TransformFilterRule `yaml:"rules,omitempty" json:"rules,omitempty" doc:"list of filter rules, each includes:"`
+	SamplingField string                `yaml:"samplingField,omitempty" json:"samplingField,omitempty" doc:"sampling field name to be set when sampling is used; if the field already exists in flows, its value is multiplied with the new sampling"`
 }
 
 func (tf *TransformFilter) Preprocess() {

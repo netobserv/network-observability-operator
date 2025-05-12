@@ -200,7 +200,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	// Custom filters
 	filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetAll)
 	if len(filters) > 0 {
-		nextStage = nextStage.TransformFilter("filters", api.TransformFilter{Rules: filters})
+		nextStage = nextStage.TransformFilter("filters", newTransformFilter(filters))
 	}
 
 	// Dedup stage
@@ -260,7 +260,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		// Custom filters: Loki only
 		filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetLoki)
 		if len(filters) > 0 {
-			lokiStage = lokiStage.TransformFilter("filters-loki", api.TransformFilter{Rules: filters})
+			lokiStage = lokiStage.TransformFilter("filters-loki", newTransformFilter(filters))
 		}
 
 		lokiWrite := api.WriteLoki{
@@ -348,7 +348,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		// Custom filters: Loki only
 		filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetMetrics)
 		if len(filters) > 0 {
-			promStage = promStage.TransformFilter("filters-prom", api.TransformFilter{Rules: filters})
+			promStage = promStage.TransformFilter("filters-prom", newTransformFilter(filters))
 		}
 
 		// prometheus stage (encode) configuration
@@ -363,10 +363,14 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	// Custom filters: Exporters only
 	filters = filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetExporters)
 	if len(filters) > 0 {
-		expStage = expStage.TransformFilter("filters-exp", api.TransformFilter{Rules: filters})
+		expStage = expStage.TransformFilter("filters-exp", newTransformFilter(filters))
 	}
 	err := b.addCustomExportStages(&expStage, flpMetrics)
 	return err
+}
+
+func newTransformFilter(rules []api.TransformFilterRule) api.TransformFilter {
+	return api.TransformFilter{Rules: rules, SamplingField: "Sampling"}
 }
 
 func filtersToFLP(in []flowslatest.FLPFilterSet, target flowslatest.FLPFilterTarget) []api.TransformFilterRule {
@@ -576,7 +580,7 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 			clusterName = b.desired.Processor.ClusterName
 		} else {
 			// Take clustername from openshift
-			clusterName = string(b.clusterID)
+			clusterName = b.clusterID
 		}
 		if clusterName != "" {
 			transformFilterRules = []api.TransformFilterRule{
