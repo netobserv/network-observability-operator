@@ -7,14 +7,10 @@ metadata:
     build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "pull_request" && target_branch == "main" &&
-      (".tekton/***".pathChanged() ||
-      "catalog.Dockerfile.downstream".pathChanged() ||
-      "catalog/***".pathChanged() ||
-      "./requirements.txt".pathChanged() ||
-      "hack/update-build.sh".pathChanged() ||
-      "hack/patch_catalog.py".pathChanged() ||
-      "hack/patch_csv.py".pathChanged())
+    pipelinesascode.tekton.dev/on-cel-expression: event == "pull_request" && target_branch
+      == "main" && (".tekton/***".pathChanged() || "catalog.Dockerfile.downstream".pathChanged()
+      || "catalog/***".pathChanged() || "./requirements.txt".pathChanged() || "hack/update-build.sh".pathChanged()
+      || "hack/patch_catalog.py".pathChanged() || "hack/patch_csv.py".pathChanged())
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: netobserv-ystream
@@ -37,9 +33,12 @@ spec:
   - name: dockerfile
     value: ./catalog.Dockerfile.downstream
   - name: build-platforms
-    value: ["linux/x86_64"]
+    value:
+    - linux/x86_64
   pipelineRef:
     name: build-fbc-pipeline
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-network-observability-operator-fbc-ystream
   workspaces:
   - name: workspace
     volumeClaimTemplate:
