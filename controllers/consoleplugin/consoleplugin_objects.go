@@ -455,6 +455,10 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
 		fconf.Features = append(fconf.Features, "udnMapping")
 	}
 
+	if helper.IsUDNMappingEnabled(&b.desired.Agent.EBPF) || helper.HasSecondaryIndexes(&b.desired.Processor) {
+		fconf.Features = append(fconf.Features, "multiNetworks")
+	}
+
 	if helper.IsIPSecEnabled(&b.desired.Agent.EBPF) {
 		fconf.Features = append(fconf.Features, "ipsec")
 	}

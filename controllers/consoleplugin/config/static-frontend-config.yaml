@@ -175,8 +175,9 @@ columns:
     tooltip: Network name, such as Secondary network or UDN.
     field: SrcK8S_NetworkName
     filter: src_network
-    default: false
+    default: true
     width: 15
+    feature: multiNetworks
   - id: DstK8S_Name
     group: Destination
     name: Name
@@ -315,8 +316,9 @@ columns:
     tooltip: Network name, such as Secondary network or UDN.
     field: DstK8S_NetworkName
     filter: dst_network
-    default: false
+    default: true
     width: 15
+    feature: multiNetworks
   - id: K8S_Name
     name: Names
     calculated: '[SrcK8S_Name,DstK8S_Name]'
@@ -458,7 +460,7 @@ columns:
     tooltip: The list of User Defined Networks.
     field: Udns
     filter: udns
-    default: true
+    default: false
     width: 15
     feature: udnMapping
   - id: FlowDirInts
@@ -1094,7 +1096,7 @@ scopes:
     labels:
       - SrcK8S_NetworkName
       - DstK8S_NetworkName
-    feature: udnMapping
+    feature: multiNetworks
     filters:
       - src_network
       - dst_network
