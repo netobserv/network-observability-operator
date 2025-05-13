@@ -8,8 +8,11 @@ MULTIARCH_TARGETS ?= amd64
 # In CI, to be replaced by `netobserv`
 IMAGE_ORG ?= $(USER)
 
+# Image registry such as quay or docker
+IMAGE_REGISTRY ?= quay.io
+
 # Default image repo
-REPO ?= quay.io/$(IMAGE_ORG)
+REPO ?= $(IMAGE_REGISTRY)/$(IMAGE_ORG)
 
 # Component versions to use in bundle / release (do not use $VERSION for that)
 PREVIOUS_VERSION ?= v1.8.1-community
