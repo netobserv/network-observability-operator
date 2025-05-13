@@ -44,6 +44,12 @@ helm install my-netobserv --set standaloneConsole.enable=true netobserv/netobser
 # If you're in OpenShift, you can omit "--set standaloneConsole.enable=true" to use the Console plugin instead.
 ```
 
+or, to install from local repo:
+
+```bash
+helm install my-netobserv --set standaloneConsole.enable=true ./helm
+```
+
 You can now create a `FlowCollector` resource. A very short `FlowCollector` should work, using default values, plus with the standalone console enabled:
 
 ```bash
