@@ -105,7 +105,6 @@ type FieldConfig struct {
 	Type        string `yaml:"type" json:"type"`
 	Description string `yaml:"description" json:"description"`
 	LokiLabel   bool   `yaml:"lokiLabel,omitempty" json:"lokiLabel,omitempty"`
-	Filter      string `yaml:"filter,omitempty" json:"filter,omitempty"`
 }
 
 type FrontendConfig struct {

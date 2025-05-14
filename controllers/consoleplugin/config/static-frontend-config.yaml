@@ -485,7 +485,6 @@ columns:
     fields:
       - Packets
       - PktDropPackets
-    filter: pkt_drop_cause
     default: true
     width: 5
   - id: FlowDuration
@@ -525,6 +524,7 @@ columns:
     name: Drop State
     tooltip: TCP state on last dropped packet.
     field: PktDropLatestState
+    filter: pkt_drop_state
     default: false
     width: 10
     feature: pktDrop
@@ -532,6 +532,7 @@ columns:
     name: Drop Cause
     tooltip: TCP state on last dropped packet.
     field: PktDropLatestDropCause
+    filter: pkt_drop_cause
     default: false
     width: 10
     feature: pktDrop
@@ -1379,11 +1380,9 @@ fields:
   - name: PktDropLatestState
     type: string
     description: TCP state on last dropped packet
-    filter: pkt_drop_state # couldn't guess from config
   - name: PktDropLatestDropCause
     type: string
     description: Latest drop cause
-    filter: pkt_drop_cause # couldn't guess from config
   - name: PktDropLatestFlags
     type: number
     description: TCP flags on last dropped packet
