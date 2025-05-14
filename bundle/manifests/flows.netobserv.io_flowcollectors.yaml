@@ -106,7 +106,7 @@ spec:
                           such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
                         properties:
                           capOverride:
-                            description: Linux capapbilities override, when not running
+                            description: Linux capabilities override, when not running
                               as privileged. Default capabilities are BPF, PERFMON
                               and NET_ADMIN.
                             items:
@@ -1889,7 +1889,7 @@ spec:
                       such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
                     properties:
                       capOverride:
-                        description: Linux capapbilities override, when not running
+                        description: Linux capabilities override, when not running
                           as privileged. Default capabilities are BPF, PERFMON and
                           NET_ADMIN.
                         items:
@@ -2899,7 +2899,7 @@ spec:
                           override the default Linux capabilities from there.
                         properties:
                           capOverride:
-                            description: Linux capapbilities override, when not running
+                            description: Linux capabilities override, when not running
                               as privileged. Default capabilities are BPF, PERFMON
                               and NET_ADMIN.
                             items:

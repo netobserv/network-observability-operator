@@ -409,7 +409,7 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
         <td><b>capOverride</b></td>
         <td>[]string</td>
         <td>
-          Linux capapbilities override, when not running as privileged. Default capabilities are BPF, PERFMON and NET_ADMIN.<br/>
+          Linux capabilities override, when not running as privileged. Default capabilities are BPF, PERFMON and NET_ADMIN.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -4075,7 +4075,7 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
         <td><b>capOverride</b></td>
         <td>[]string</td>
         <td>
-          Linux capapbilities override, when not running as privileged. Default capabilities are BPF, PERFMON and NET_ADMIN.<br/>
+          Linux capabilities override, when not running as privileged. Default capabilities are BPF, PERFMON and NET_ADMIN.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6373,7 +6373,7 @@ override the default Linux capabilities from there.
         <td><b>capOverride</b></td>
         <td>[]string</td>
         <td>
-          Linux capapbilities override, when not running as privileged. Default capabilities are BPF, PERFMON and NET_ADMIN.<br/>
+          Linux capabilities override, when not running as privileged. Default capabilities are BPF, PERFMON and NET_ADMIN.<br/>
         </td>
         <td>false</td>
       </tr><tr>

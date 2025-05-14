@@ -1098,7 +1098,7 @@ type DebugConfig struct {
 	//+optional
 	Env map[string]string `json:"env,omitempty"`
 
-	// Linux capapbilities override, when not running as privileged. Default capabilities are BPF, PERFMON and NET_ADMIN.
+	// Linux capabilities override, when not running as privileged. Default capabilities are BPF, PERFMON and NET_ADMIN.
 	// +optional
 	CapOverride []string `json:"capOverride,omitempty"`
 }
