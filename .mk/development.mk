@@ -142,9 +142,9 @@ get-related-images:
 .PHONY: set-agent-image
 set-agent-image:
 ifeq ("", "$(CSV)")
-	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_EBPF_AGENT=quay.io/$(USER)/netobserv-ebpf-agent:$(VERSION)
+	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_EBPF_AGENT=$(IMAGE_REGISTRY)/$(USER)/netobserv-ebpf-agent:$(VERSION)
 else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) ebpf-agent RELATED_IMAGE_EBPF_AGENT quay.io/$(USER)/netobserv-ebpf-agent:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) ebpf-agent RELATED_IMAGE_EBPF_AGENT $(IMAGE_REGISTRY)/$(USER)/netobserv-ebpf-agent:$(VERSION)
 endif
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
@@ -154,9 +154,9 @@ endif
 .PHONY: set-flp-image
 set-flp-image:
 ifeq ("", "$(CSV)")
-	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_FLOWLOGS_PIPELINE=quay.io/$(USER)/flowlogs-pipeline:$(VERSION)
+	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_FLOWLOGS_PIPELINE=$(IMAGE_REGISTRY)/$(USER)/flowlogs-pipeline:$(VERSION)
 else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) flowlogs-pipeline RELATED_IMAGE_FLOWLOGS_PIPELINE quay.io/$(USER)/flowlogs-pipeline:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) flowlogs-pipeline RELATED_IMAGE_FLOWLOGS_PIPELINE $(IMAGE_REGISTRY)/$(USER)/flowlogs-pipeline:$(VERSION)
 endif
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
@@ -166,9 +166,9 @@ endif
 .PHONY: set-plugin-image
 set-plugin-image:
 ifeq ("", "$(CSV)")
-	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN=quay.io/$(USER)/network-observability-console-plugin:$(VERSION)
+	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
 else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_CONSOLE_PLUGIN quay.io/$(USER)/network-observability-console-plugin:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_CONSOLE_PLUGIN $(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
 endif
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
@@ -206,9 +206,9 @@ pprof-pf:
 use-test-console:
 	@echo -e "\n==> Enabling the test console..."
 ifeq ("", "$(CSV)")
-	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN=quay.io/$(USER)/network-observability-standalone-frontend:$(VERSION)
+	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN=$(IMAGE_REGISTRY)/$(USER)/network-observability-standalone-frontend:$(VERSION)
 else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_CONSOLE_PLUGIN quay.io/$(USER)/network-observability-standalone-frontend:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_CONSOLE_PLUGIN $(IMAGE_REGISTRY)/$(USER)/network-observability-standalone-frontend:$(VERSION)
 endif
 	@echo -e "\n==> Waiting for operator redeployed..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
