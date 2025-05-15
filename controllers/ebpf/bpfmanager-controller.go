@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	flowslatest "github.com/netobserv/network-observability-operator/apis/flowcollector/v1beta2"
-	"github.com/netobserv/network-observability-operator/controllers/constants"
+	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 
 	bpfmaniov1alpha1 "github.com/bpfman/bpfman-operator/apis/v1alpha1"
@@ -38,7 +38,7 @@ func (c *AgentController) bpfmanAttachNetobserv(ctx context.Context, fc *flowsla
 	err = c.Get(ctx, key, &bpfApp)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			prepareBpfApplication(&bpfApp, fc, c.Images[constants.EBPFAgentByteCodeImageIndex])
+			prepareBpfApplication(&bpfApp, fc, c.Images[reconcilers.BpfByteCodeImage])
 			err = c.createBpfApplication(ctx, &bpfApp)
 			if err != nil {
 				return fmt.Errorf("failed to create BpfApplication: %w for obj: %s", err, fc.Name)
@@ -48,7 +48,7 @@ func (c *AgentController) bpfmanAttachNetobserv(ctx context.Context, fc *flowsla
 		}
 	} else {
 		// object exists repopulate it with the new configuration and update it
-		prepareBpfApplication(&bpfApp, fc, c.Images[constants.EBPFAgentByteCodeImageIndex])
+		prepareBpfApplication(&bpfApp, fc, c.Images[reconcilers.BpfByteCodeImage])
 		err = c.updateBpfApplication(ctx, &bpfApp)
 		if err != nil {
 			return fmt.Errorf("failed to update BpfApplication: %w for obj: %s", err, fc.Name)

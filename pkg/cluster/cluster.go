@@ -112,7 +112,7 @@ func (c *Info) GetOpenShiftVersion() string {
 	return c.openShiftVersion.String()
 }
 
-func (c *Info) OpenShiftVersionIsAtLeast(v string) (bool, error) {
+func (c *Info) IsOpenShiftVersionLessThan(v string) (bool, error) {
 	if c.openShiftVersion == nil {
 		return false, errors.New("OpenShift version not defined, can't compare versions")
 	}
@@ -123,7 +123,12 @@ func (c *Info) OpenShiftVersionIsAtLeast(v string) (bool, error) {
 	openshiftVersion := *c.openShiftVersion
 	// Ignore pre-release block for comparison
 	openshiftVersion.PreRelease = ""
-	return !openshiftVersion.LessThan(*version), nil
+	return openshiftVersion.LessThan(*version), nil
+}
+
+func (c *Info) IsOpenShiftVersionAtLeast(v string) (bool, error) {
+	b, err := c.IsOpenShiftVersionLessThan(v)
+	return !b, err
 }
 
 // IsOpenShift assumes having openshift SCC API <=> being on openshift

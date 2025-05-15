@@ -36,7 +36,7 @@ type transfoBuilder struct {
 }
 
 func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel) (transfoBuilder, error) {
-	version := helper.ExtractVersion(info.Images[constants.ControllerBaseImageIndex])
+	version := helper.ExtractVersion(info.Images[reconcilers.MainImage])
 	promTLS, err := getPromTLS(desired, transfoPromService)
 	if err != nil {
 		return transfoBuilder{}, err
@@ -68,7 +68,7 @@ func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deplo
 	pod := podTemplate(
 		transfoName,
 		b.version,
-		b.info.Images[constants.ControllerBaseImageIndex],
+		b.info.Images[reconcilers.MainImage],
 		transfoConfigMap,
 		b.desired,
 		&b.volumes,

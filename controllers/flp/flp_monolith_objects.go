@@ -35,7 +35,7 @@ type monolithBuilder struct {
 }
 
 func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel) (monolithBuilder, error) {
-	version := helper.ExtractVersion(info.Images[constants.ControllerBaseImageIndex])
+	version := helper.ExtractVersion(info.Images[reconcilers.MainImage])
 	promTLS, err := getPromTLS(desired, monoPromService)
 	if err != nil {
 		return monolithBuilder{}, err
@@ -67,7 +67,7 @@ func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.Daemo
 	pod := podTemplate(
 		monoName,
 		b.version,
-		b.info.Images[constants.ControllerBaseImageIndex],
+		b.info.Images[reconcilers.MainImage],
 		monoConfigMap,
 		b.desired,
 		&b.volumes,
