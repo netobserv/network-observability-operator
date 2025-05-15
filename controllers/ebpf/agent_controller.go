@@ -614,7 +614,7 @@ func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *core
 
 	sc := helper.ContainerDefaultSecurityContext()
 	sc.RunAsUser = ptr.To(int64(0))
-	sc.Capabilities.Add = permissions.AllowedCapabilities
+	sc.Capabilities.Add = permissions.GetAllowedCapabilities(&coll.Spec.Agent.EBPF)
 	return sc
 }
 

@@ -18,13 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// AllowedCapabilities description of what capabilities netobserv requires when running w/o ebpf manager
-// BPF: Allows netobserv to use eBPF programs and maps.
-// PERFMON: Allows access to perf monitoring and profiling features.
-// NET_ADMIN: required for TC programs to attach/detach to/from qdisc and for TCX hooks.
-// SYS_RESOURCE: allows a process to override resource limits and manage system-wide resource usage.
-var AllowedCapabilities = []v1.Capability{"BPF", "PERFMON", "NET_ADMIN", "SYS_RESOURCE"}
-
 // Reconciler reconciles the different resources to enable the privileged operation of the
 // Netobserv Agent:
 // - Create the privileged namespace with Pod Permissions annotations (for Vanilla K8s)
@@ -164,7 +157,7 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 		scc.AllowPrivilegedContainer = true
 		scc.AllowHostDirVolumePlugin = true
 	} else {
-		scc.AllowedCapabilities = AllowedCapabilities
+		scc.AllowedCapabilities = GetAllowedCapabilities(desired)
 	}
 	if helper.IsEbpfManagerEnabled(desired) {
 		rlog.Info("Using Ebpf Manager setting up custom SecurityContextConstraints")
@@ -189,11 +182,28 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 		scc.AllowPrivilegedContainer != actual.AllowPrivilegedContainer ||
 		scc.AllowHostDirVolumePlugin != actual.AllowHostDirVolumePlugin ||
 		!equality.Semantic.DeepDerivative(&scc.RequiredDropCapabilities, &actual.RequiredDropCapabilities) ||
-		!equality.Semantic.DeepDerivative(&scc.AllowedCapabilities, &actual.AllowedCapabilities) {
+		!equality.Semantic.DeepEqual(&scc.AllowedCapabilities, &actual.AllowedCapabilities) {
 
 		rlog.Info("updating SecurityContextConstraints")
 		return c.UpdateIfOwned(ctx, actual, scc)
 	}
 	rlog.Info("SecurityContextConstraints already reconciled. Doing nothing")
 	return nil
+}
+
+// GetAllowedCapabilities description of what capabilities netobserv requires when running w/o ebpf manager and w/o full privileges
+func GetAllowedCapabilities(spec *flowslatest.FlowCollectorEBPF) []v1.Capability {
+	if spec.Privileged {
+		return nil
+	} else if spec.Advanced != nil && len(spec.Advanced.CapOverride) > 0 {
+		var caps []v1.Capability
+		for _, cap := range spec.Advanced.CapOverride {
+			caps = append(caps, v1.Capability(cap))
+		}
+		return caps
+	}
+	// BPF: Allows netobserv to use eBPF programs and maps.
+	// PERFMON: Allows access to perf monitoring and profiling features.
+	// NET_ADMIN: required for TC programs to attach/detach to/from qdisc and for TCX hooks.
+	return []v1.Capability{"BPF", "PERFMON", "NET_ADMIN"}
 }
