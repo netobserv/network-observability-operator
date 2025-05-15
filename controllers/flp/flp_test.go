@@ -46,8 +46,8 @@ var rs = corev1.ResourceRequirements{
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	},
 }
-var image = "quay.io/netobserv/flowlogs-pipeline:dev"
-var image2 = "quay.io/netobserv/flowlogs-pipeline:dev2"
+var image = map[reconcilers.ImageRef]string{reconcilers.MainImage: "quay.io/netobserv/flowlogs-pipeline:dev"}
+var image2 = map[reconcilers.ImageRef]string{reconcilers.MainImage: "quay.io/netobserv/flowlogs-pipeline:dev2"}
 var pullPolicy = corev1.PullIfNotPresent
 var minReplicas = int32(1)
 var maxReplicas = int32(5)
@@ -170,14 +170,14 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki, ClusterInfo: &cluster.Info{}}
-	b, _ := newMonolithBuilder(info.NewInstance([]string{image}, status.Instance{}), cfg, &metricslatest.FlowMetricList{}, nil)
+	b, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{}, nil)
 	return b
 }
 
 func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) transfoBuilder {
 	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki, ClusterInfo: &cluster.Info{}}
-	b, _ := newTransfoBuilder(info.NewInstance([]string{image}, status.Instance{}), cfg, &metricslatest.FlowMetricList{}, nil)
+	b, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{}, nil)
 	return b
 }
 
@@ -552,7 +552,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2", ClusterInfo: &cluster.Info{}}
-	b, _ = newMonolithBuilder(info.NewInstance([]string{image2}, status.Instance{}), &cfg, b.flowMetrics, nil)
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.flowMetrics, nil)
 	third := b.serviceMonitor()
 
 	report = helper.NewChangeReport("")
@@ -560,7 +560,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 	assert.Contains(report.String(), "ServiceMonitor labels changed")
 
 	// Check scheme changed
-	b, _ = newMonolithBuilder(info.NewInstance([]string{image2}, status.Instance{}), &cfg, b.flowMetrics, nil)
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.flowMetrics, nil)
 	fourth := b.serviceMonitor()
 	fourth.Spec.Endpoints[0].Scheme = "https"
 
@@ -605,7 +605,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2", ClusterInfo: &cluster.Info{}}
-	b, _ = newMonolithBuilder(info.NewInstance([]string{image2}, status.Instance{}), &cfg, b.flowMetrics, nil)
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.flowMetrics, nil)
 	third := b.prometheusRule()
 
 	report = helper.NewChangeReport("")
@@ -754,8 +754,8 @@ func TestLabels(t *testing.T) {
 
 	cfg := getConfig()
 	info := reconcilers.Common{Namespace: "ns", ClusterInfo: &cluster.Info{}}
-	builder, _ := newMonolithBuilder(info.NewInstance([]string{image}, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil)
-	tBuilder, _ := newTransfoBuilder(info.NewInstance([]string{image}, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil)
+	builder, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil)
+	tBuilder, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil)
 
 	// Deployment
 	depl := tBuilder.deployment(annotate("digest"))

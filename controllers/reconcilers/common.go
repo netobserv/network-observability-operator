@@ -25,14 +25,22 @@ func (c *Common) PrivilegedNamespace() string {
 	return c.Namespace + constants.EBPFPrivilegedNSSuffix
 }
 
+type ImageRef string
+
+const (
+	MainImage             ImageRef = "main"
+	BpfByteCodeImage      ImageRef = "bpf-bytecode"
+	ConsolePluginPF4Image ImageRef = "console-plugin-pf4"
+)
+
 type Instance struct {
 	*Common
 	Managed *NamespacedObjectManager
-	Images  []string
+	Images  map[ImageRef]string
 	Status  status.Instance
 }
 
-func (c *Common) NewInstance(images []string, st status.Instance) *Instance {
+func (c *Common) NewInstance(images map[ImageRef]string, st status.Instance) *Instance {
 	managed := NewNamespacedObjectManager(c)
 	return &Instance{
 		Common:  c,

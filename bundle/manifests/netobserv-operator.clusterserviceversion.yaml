@@ -1242,6 +1242,7 @@ spec:
                 - --ebpf-agent-image=$(RELATED_IMAGE_EBPF_AGENT)
                 - --flowlogs-pipeline-image=$(RELATED_IMAGE_FLOWLOGS_PIPELINE)
                 - --console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)
+                - --console-plugin-pf4-image=$(RELATED_IMAGE_CONSOLE_PLUGIN_PF4)
                 - --downstream-deployment=$(DOWNSTREAM_DEPLOYMENT)
                 - --profiling-bind-address=$(PROFILING_BIND_ADDRESS)
                 - --metrics-cert-file=/etc/tls/private/tls.crt
@@ -1255,6 +1256,8 @@ spec:
                   value: quay.io/netobserv/flowlogs-pipeline:v1.8.2-community
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN
                   value: quay.io/netobserv/network-observability-console-plugin:v1.8.2-community
+                - name: RELATED_IMAGE_CONSOLE_PLUGIN_PF4
+                  value: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
                 - name: DOWNSTREAM_DEPLOYMENT
                   value: "false"
                 - name: PROFILING_BIND_ADDRESS
@@ -1396,6 +1399,8 @@ spec:
     name: flowlogs-pipeline
   - image: quay.io/netobserv/network-observability-console-plugin:v1.8.2-community
     name: console-plugin
+  - image: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
+    name: console-plugin-pf4
   replaces: netobserv-operator.v1.8.1-community
   version: 1.8.2-community
   webhookdefinitions:
