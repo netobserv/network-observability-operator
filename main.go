@@ -112,6 +112,7 @@ func main() {
 	flag.StringVar(&config.EBPFAgentImage, "ebpf-agent-image", "quay.io/netobserv/netobserv-ebpf-agent:main", "The image of the eBPF agent")
 	flag.StringVar(&config.FlowlogsPipelineImage, "flowlogs-pipeline-image", "quay.io/netobserv/flowlogs-pipeline:main", "The image of Flowlogs Pipeline")
 	flag.StringVar(&config.ConsolePluginImage, "console-plugin-image", "quay.io/netobserv/network-observability-console-plugin:main", "The image of the Console Plugin")
+	flag.StringVar(&config.ConsolePluginPF4Image, "console-plugin-pf4-image", "quay.io/netobserv/network-observability-console-plugin-pf4:main", "The image of the Console Plugin (Patterfly 4 variant, for backward compatibility)")
 	flag.StringVar(&config.EBPFByteCodeImage, "ebpf-bytecode-image", "quay.io/netobserv/ebpf-bytecode:main", "The EBPF bytecode for the eBPF agent")
 	flag.BoolVar(&config.DownstreamDeployment, "downstream-deployment", false, "Either this deployment is a downstream deployment ot not")
 	flag.BoolVar(&enableHTTP2, "enable-http2", enableHTTP2, "If HTTP/2 should be enabled for the metrics and webhook servers.")

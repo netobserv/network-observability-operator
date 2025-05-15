@@ -59,9 +59,7 @@ const (
 	ConsoleTokenReviewRole ClusterRoleName = "netobserv-token-review"
 	ConfigWatcherRole      RoleName        = "netobserv-config-watcher"
 
-	ControllerBaseImageIndex    = 0
-	EBPFAgentByteCodeImageIndex = 1
-	EnvTestConsole              = "TEST_CONSOLE"
+	EnvTestConsole = "TEST_CONSOLE"
 )
 
 var FlowCollectorName = types.NamespacedName{Name: "cluster"}

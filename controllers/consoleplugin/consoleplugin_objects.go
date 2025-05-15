@@ -44,19 +44,27 @@ const metricsPort = 9002
 const metricsPortName = "metrics"
 
 type builder struct {
-	info     *reconcilers.Instance
-	labels   map[string]string
-	selector map[string]string
-	desired  *flowslatest.FlowCollectorSpec
-	advanced *flowslatest.AdvancedPluginConfig
-	volumes  volumes.Builder
+	info       *reconcilers.Instance
+	imageToUse string
+	labels     map[string]string
+	selector   map[string]string
+	desired    *flowslatest.FlowCollectorSpec
+	advanced   *flowslatest.AdvancedPluginConfig
+	volumes    volumes.Builder
 }
 
 func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec) builder {
-	version := helper.ExtractVersion(info.Images[constants.ControllerBaseImageIndex])
+	imageToUse := info.Images[reconcilers.MainImage]
+	needsPF4, err := info.ClusterInfo.IsOpenShiftVersionLessThan("4.15.0")
+	if err == nil && needsPF4 {
+		imageToUse = info.Images[reconcilers.ConsolePluginPF4Image]
+	}
+
+	version := helper.ExtractVersion(imageToUse)
 	advanced := helper.GetAdvancedPluginConfig(desired.ConsolePlugin.Advanced)
 	return builder{
-		info: info,
+		info:       info,
+		imageToUse: imageToUse,
 		labels: map[string]string{
 			"app":     constants.PluginName,
 			"version": helper.MaxLabelLength(version),
@@ -225,7 +233,7 @@ func (b *builder) podTemplate(cmDigest string) *corev1.PodTemplateSpec {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
 				Name:            constants.PluginName,
-				Image:           b.info.Images[constants.ControllerBaseImageIndex],
+				Image:           b.imageToUse,
 				ImagePullPolicy: corev1.PullPolicy(b.desired.ConsolePlugin.ImagePullPolicy),
 				Resources:       *b.desired.ConsolePlugin.Resources.DeepCopy(),
 				VolumeMounts:    b.volumes.AppendMounts(volumeMounts),

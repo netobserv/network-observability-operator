@@ -97,7 +97,7 @@ func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) 
 		if slices.Contains(fc.Agent.EBPF.Features, feat) {
 			if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
 				// Make sure required version of ocp is installed
-				ok, err := CurrentClusterInfo.OpenShiftVersionIsAtLeast(minVersion)
+				ok, err := CurrentClusterInfo.IsOpenShiftVersionAtLeast(minVersion)
 				if err != nil {
 					warnings = append(warnings, fmt.Sprintf("Could not detect OpenShift cluster version: %s", err.Error()))
 				} else if !ok {
