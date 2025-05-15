@@ -6,6 +6,14 @@ import (
 	"reflect"
 	"sync"
 
+	osv1 "github.com/openshift/api/console/v1"
+	securityv1 "github.com/openshift/api/security/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	ascv2 "k8s.io/api/autoscaling/v2"
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -103,19 +111,82 @@ func (c *Client) getAndCreateWatchIfNeeded(ctx context.Context, info GVKInfo, gv
 	return fetched.(client.Object), objKey, nil
 }
 
-// "Terrible hack" cc directxman12 / sigs.k8s.io/controller-runtime/pkg/cache/internal/cache_reader.go
 func copyInto(obj runtime.Object, out client.Object) error {
-	// Copy the value of the item in the cache to the returned value
-	// TODO(directxman12): this is a terrible hack, pls fix (we should have deepcopyinto)
+	// cleanup unecessary fields
+	cp := obj.DeepCopyObject()
+	switch out.(type) {
+	case *corev1.ConfigMap:
+		co := cp.(*corev1.ConfigMap)
+		co.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		co.SetAnnotations(map[string]string{})
+		co.BinaryData = nil
+	case *osv1.ConsolePlugin:
+		cp := cp.(*osv1.ConsolePlugin)
+		cp.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		cp.SetAnnotations(map[string]string{})
+	case *appsv1.DaemonSet:
+		da := cp.(*appsv1.DaemonSet)
+		da.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		da.SetAnnotations(map[string]string{})
+		da.Status.Conditions = []appsv1.DaemonSetCondition{}
+	case *appsv1.Deployment:
+		de := cp.(*appsv1.Deployment)
+		de.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		de.SetAnnotations(map[string]string{})
+		de.Status.Conditions = []appsv1.DeploymentCondition{}
+	case *ascv2.HorizontalPodAutoscaler:
+		ho := cp.(*ascv2.HorizontalPodAutoscaler)
+		ho.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		ho.SetAnnotations(map[string]string{})
+		ho.Status.CurrentMetrics = []ascv2.MetricStatus{}
+		ho.Status.Conditions = []ascv2.HorizontalPodAutoscalerCondition{}
+	case *corev1.Namespace:
+		na := cp.(*corev1.Namespace)
+		na.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		na.SetAnnotations(map[string]string{})
+		na.Status.Conditions = []corev1.NamespaceCondition{}
+	case *networkingv1.NetworkPolicy:
+		na := cp.(*networkingv1.NetworkPolicy)
+		na.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		na.SetAnnotations(map[string]string{})
+	case *corev1.Pod:
+		po := cp.(*corev1.Pod)
+		po.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		po.SetAnnotations(map[string]string{})
+		po.Status.Conditions = []corev1.PodCondition{}
+		po.Status.ContainerStatuses = []corev1.ContainerStatus{}
+		po.Status.EphemeralContainerStatuses = []corev1.ContainerStatus{}
+		po.Status.InitContainerStatuses = []corev1.ContainerStatus{}
+		po.Status.HostIPs = []corev1.HostIP{}
+		po.Status.PodIPs = []corev1.PodIP{}
+		po.Status.ResourceClaimStatuses = []corev1.PodResourceClaimStatus{}
+	case *corev1.Secret:
+		se := cp.(*corev1.Secret)
+		se.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		se.SetAnnotations(map[string]string{})
+	case *securityv1.SecurityContextConstraints:
+		se := cp.(*securityv1.SecurityContextConstraints)
+		se.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		se.SetAnnotations(map[string]string{})
+	case *corev1.Service:
+		se := cp.(*corev1.Service)
+		se.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		se.SetAnnotations(map[string]string{})
+		se.Status.LoadBalancer.Ingress = []corev1.LoadBalancerIngress{}
+		se.Status.Conditions = []metav1.Condition{}
+	case *corev1.ServiceAccount:
+		po := cp.(*corev1.ServiceAccount)
+		po.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		po.SetAnnotations(map[string]string{})
+	}
+
 	outVal := reflect.ValueOf(out)
-	objVal := reflect.ValueOf(obj)
+	objVal := reflect.ValueOf(cp)
 	if !objVal.Type().AssignableTo(outVal.Type()) {
 		return fmt.Errorf("cache had type %s, but %s was asked for", objVal.Type(), outVal.Type())
 	}
 	reflect.Indirect(outVal).Set(reflect.Indirect(objVal))
-	// if !c.disableDeepCopy {
-	// 	out.GetObjectKind().SetGroupVersionKind(c.groupVersionKind)
-	// }
+
 	return nil
 }
 
@@ -142,6 +213,7 @@ func (c *Client) setToCache(key string, obj runtime.Object) error {
 	if !ok {
 		return fmt.Errorf("could not convert runtime.Object to client.Object")
 	}
+
 	c.wmut.Lock()
 	defer c.wmut.Unlock()
 	if ca := c.watchedObjects[key]; ca != nil {

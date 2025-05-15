@@ -42,7 +42,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("monitoring").
-		Owns(&corev1.Namespace{}).
+		Owns(&corev1.Namespace{}, reconcilers.UpdateOrDeleteOnlyPred).
 		Watches(
 			&metricslatest.FlowMetric{},
 			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
@@ -51,6 +51,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 				}
 				return []reconcile.Request{}
 			}),
+			reconcilers.IgnoreStatusChange,
 		).
 		Complete(&r)
 }

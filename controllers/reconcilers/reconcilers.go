@@ -34,6 +34,23 @@ var (
 		DeleteFunc:  func(_ event.DeleteEvent) bool { return true },
 		GenericFunc: func(_ event.GenericEvent) bool { return false },
 	})
+	UpdateOrDeleteOnlyPred = builder.WithPredicates(predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Update only if generation change, filter out anything else.
+			// We only need to check generation change here, because it is only
+			// updated on spec changes. On the other hand RevisionVersion
+			// changes also on status changes. We want to omit reconciliation
+			// for status updates for now.
+			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
+		},
+		CreateFunc: func(_ event.CreateEvent) bool { return false },
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// DeleteStateUnknown evaluates to false only if the object
+			// has been confirmed as deleted by the api server.
+			return !e.DeleteStateUnknown
+		},
+		GenericFunc: func(_ event.GenericEvent) bool { return false },
+	})
 )
 
 func ReconcileClusterRoleBinding(ctx context.Context, cl *helper.Client, desired *rbacv1.ClusterRoleBinding) error {
