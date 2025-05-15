@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/coreos/go-semver/semver"
 	configv1 "github.com/openshift/api/config/v1"
@@ -11,8 +12,10 @@ import (
 	operatorv1 "github.com/openshift/api/operator/v1"
 	securityv1 "github.com/openshift/api/security/v1"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type Info struct {
@@ -30,9 +33,9 @@ var (
 	ocpSecurity   = "securitycontextconstraints." + securityv1.SchemeGroupVersion.String()
 )
 
-func NewInfo(dcl *discovery.DiscoveryClient) (Info, error) {
+func NewInfo(ctx context.Context, dcl *discovery.DiscoveryClient) (Info, error) {
 	info := Info{}
-	if err := info.fetchAvailableAPIs(dcl); err != nil {
+	if err := info.fetchAvailableAPIs(ctx, dcl); err != nil {
 		return info, err
 	}
 	return info, nil
@@ -47,7 +50,8 @@ func (c *Info) CheckClusterInfo(ctx context.Context, cl client.Client) error {
 	return nil
 }
 
-func (c *Info) fetchAvailableAPIs(client *discovery.DiscoveryClient) error {
+func (c *Info) fetchAvailableAPIs(ctx context.Context, client *discovery.DiscoveryClient) error {
+	log := log.FromContext(ctx)
 	c.apisMap = map[string]bool{
 		consolePlugin: false,
 		cno:           false,
@@ -56,22 +60,37 @@ func (c *Info) fetchAvailableAPIs(client *discovery.DiscoveryClient) error {
 		ocpSecurity:   false,
 	}
 	_, resources, err := client.ServerGroupsAndResources()
-	if err != nil {
+	// We may receive partial data along with an error
+	var discErr *discovery.ErrGroupDiscoveryFailed
+	if err != nil && (!errors.As(err, &discErr) || len(resources) == 0) {
 		return err
 	}
 	for apiName := range c.apisMap {
-	out:
-		for i := range resources {
-			for j := range resources[i].APIResources {
-				gvk := resources[i].APIResources[j].Name + "." + resources[i].GroupVersion
-				if apiName == gvk {
-					c.apisMap[apiName] = true
-					break out
+		if hasAPI(apiName, resources) {
+			c.apisMap[apiName] = true
+		} else {
+			// Check if the wanted API is in error
+			for gv, err := range discErr.Groups {
+				if strings.Contains(apiName, gv.String()) {
+					log.Error(err, "some API-related features are unavailable; you can check for stale APIs with 'kubectl get apiservice'", "GroupVersion", gv.String())
 				}
 			}
 		}
 	}
+
 	return nil
+}
+
+func hasAPI(apiName string, resources []*metav1.APIResourceList) bool {
+	for i := range resources {
+		for j := range resources[i].APIResources {
+			gvk := resources[i].APIResources[j].Name + "." + resources[i].GroupVersion
+			if apiName == gvk {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (c *Info) fetchOpenShiftClusterVersion(ctx context.Context, cl client.Client) error {
