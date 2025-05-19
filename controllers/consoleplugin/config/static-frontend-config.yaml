@@ -175,8 +175,9 @@ columns:
     tooltip: Network name, such as Secondary network or UDN.
     field: SrcK8S_NetworkName
     filter: src_network
-    default: false
+    default: true
     width: 15
+    feature: multiNetworks
   - id: DstK8S_Name
     group: Destination
     name: Name
@@ -315,8 +316,9 @@ columns:
     tooltip: Network name, such as Secondary network or UDN.
     field: DstK8S_NetworkName
     filter: dst_network
-    default: false
+    default: true
     width: 15
+    feature: multiNetworks
   - id: K8S_Name
     name: Names
     calculated: '[SrcK8S_Name,DstK8S_Name]'
@@ -458,7 +460,7 @@ columns:
     tooltip: The list of User Defined Networks.
     field: Udns
     filter: udns
-    default: true
+    default: false
     width: 15
     feature: udnMapping
   - id: FlowDirInts
@@ -483,7 +485,6 @@ columns:
     fields:
       - Packets
       - PktDropPackets
-    filter: pkt_drop_cause
     default: true
     width: 5
   - id: FlowDuration
@@ -523,6 +524,7 @@ columns:
     name: Drop State
     tooltip: TCP state on last dropped packet.
     field: PktDropLatestState
+    filter: pkt_drop_state
     default: false
     width: 10
     feature: pktDrop
@@ -530,6 +532,7 @@ columns:
     name: Drop Cause
     tooltip: TCP state on last dropped packet.
     field: PktDropLatestDropCause
+    filter: pkt_drop_cause
     default: false
     width: 10
     feature: pktDrop
@@ -1094,7 +1097,7 @@ scopes:
     labels:
       - SrcK8S_NetworkName
       - DstK8S_NetworkName
-    feature: udnMapping
+    feature: multiNetworks
     filters:
       - src_network
       - dst_network
@@ -1377,11 +1380,9 @@ fields:
   - name: PktDropLatestState
     type: string
     description: TCP state on last dropped packet
-    filter: pkt_drop_state # couldn't guess from config
   - name: PktDropLatestDropCause
     type: string
     description: Latest drop cause
-    filter: pkt_drop_cause # couldn't guess from config
   - name: PktDropLatestFlags
     type: number
     description: TCP flags on last dropped packet

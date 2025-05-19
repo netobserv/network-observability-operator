@@ -166,6 +166,10 @@ func IsEBPFFlowFilterEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
 	return spec.FlowFilter != nil && spec.FlowFilter.Enable != nil && *spec.FlowFilter.Enable
 }
 
+func HasSecondaryIndexes(spec *flowslatest.FlowCollectorFLP) bool {
+	return spec.Advanced != nil && len(spec.Advanced.SecondaryNetworks) > 0
+}
+
 func GetEBPFMetricsPort(spec *flowslatest.FlowCollectorEBPF) int32 {
 	port := int32(constants.EBPFMetricPort)
 	if spec.Metrics.Server.Port != nil {
