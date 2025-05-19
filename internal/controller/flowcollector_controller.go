@@ -49,18 +49,18 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	builder := ctrl.NewControllerManagedBy(mgr.Manager).
 		Named("legacy").
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
-		Owns(&appsv1.Deployment{}).
-		Owns(&appsv1.DaemonSet{}).
-		Owns(&ascv2.HorizontalPodAutoscaler{}).
-		Owns(&corev1.Namespace{}).
-		Owns(&corev1.Service{}).
-		Owns(&corev1.ServiceAccount{})
+		Owns(&appsv1.Deployment{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&appsv1.DaemonSet{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&ascv2.HorizontalPodAutoscaler{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&corev1.Namespace{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&corev1.Service{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&corev1.ServiceAccount{}, reconcilers.UpdateOrDeleteOnlyPred)
 
 	if mgr.ClusterInfo.IsOpenShift() {
-		builder.Owns(&securityv1.SecurityContextConstraints{})
+		builder.Owns(&securityv1.SecurityContextConstraints{}, reconcilers.UpdateOrDeleteOnlyPred)
 	}
 	if mgr.ClusterInfo.HasConsolePlugin() {
-		builder.Owns(&osv1.ConsolePlugin{})
+		builder.Owns(&osv1.ConsolePlugin{}, reconcilers.UpdateOrDeleteOnlyPred)
 	} else {
 		log.Info("Console not detected: the console plugin is not available")
 	}

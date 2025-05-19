@@ -3,8 +3,13 @@ package narrowcache
 import (
 	"context"
 
+	appsv1 "k8s.io/api/apps/v1"
+	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
@@ -22,6 +27,7 @@ type GVKInfo struct {
 	Obj     client.Object
 	Getter  func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error)
 	Watcher func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error)
+	Cleanup func(obj runtime.Object) runtime.Object
 }
 
 var (
@@ -34,6 +40,152 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.CoreV1().ConfigMaps(key.Namespace).Watch(ctx, opts)
 		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			cm := obj.(*corev1.ConfigMap)
+			cm.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			cm.BinaryData = nil
+			return cm
+		},
+	}
+	ClusterRoles = GVKInfo{
+		Obj: &rbacv1.ClusterRole{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.RbacV1().ClusterRoles().Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.RbacV1().ClusterRoles().Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			cr := obj.(*rbacv1.ClusterRole)
+			cr.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			return cr
+		},
+	}
+	ClusterRoleBindings = GVKInfo{
+		Obj: &rbacv1.ClusterRoleBinding{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.RbacV1().ClusterRoleBindings().Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.RbacV1().ClusterRoleBindings().Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			crb := obj.(*rbacv1.ClusterRoleBinding)
+			crb.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			return crb
+		},
+	}
+	Daemonsets = GVKInfo{
+		Obj: &appsv1.DaemonSet{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.AppsV1().DaemonSets(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.AppsV1().DaemonSets(key.Namespace).Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			ds := obj.(*appsv1.DaemonSet)
+			ds.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			ds.Status.Conditions = []appsv1.DaemonSetCondition{}
+			return ds
+		},
+	}
+	Deployments = GVKInfo{
+		Obj: &appsv1.Deployment{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.AppsV1().Deployments(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.AppsV1().Deployments(key.Namespace).Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			dpl := obj.(*appsv1.Deployment)
+			dpl.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			dpl.Status.Conditions = []appsv1.DeploymentCondition{}
+			return dpl
+		},
+	}
+	HorizontalPodAutoscalers = GVKInfo{
+		Obj: &ascv2.HorizontalPodAutoscaler{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.AutoscalingV2().HorizontalPodAutoscalers(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.AutoscalingV2().HorizontalPodAutoscalers(key.Namespace).Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			hpa := obj.(*ascv2.HorizontalPodAutoscaler)
+			hpa.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			hpa.Status.CurrentMetrics = []ascv2.MetricStatus{}
+			hpa.Status.Conditions = []ascv2.HorizontalPodAutoscalerCondition{}
+			return hpa
+		},
+	}
+	Namespaces = GVKInfo{
+		Obj: &corev1.Namespace{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.CoreV1().Namespaces().Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.CoreV1().Namespaces().Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			ns := obj.(*corev1.Namespace)
+			ns.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			ns.Status.Conditions = []corev1.NamespaceCondition{}
+			return ns
+		},
+	}
+	NetworkPolicies = GVKInfo{
+		Obj: &networkingv1.NetworkPolicy{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.NetworkingV1().NetworkPolicies(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.NetworkingV1().NetworkPolicies(key.Namespace).Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			np := obj.(*networkingv1.NetworkPolicy)
+			np.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			return np
+		},
+	}
+	Roles = GVKInfo{
+		Obj: &rbacv1.Role{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.RbacV1().Roles(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.RbacV1().Roles(key.Namespace).Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			ro := obj.(*rbacv1.Role)
+			ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			return ro
+		},
+	}
+	RoleBindings = GVKInfo{
+		Obj: &rbacv1.RoleBinding{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.RbacV1().RoleBindings(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.RbacV1().RoleBindings(key.Namespace).Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			rb := obj.(*rbacv1.RoleBinding)
+			rb.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			return rb
+		},
 	}
 	Secrets = GVKInfo{
 		Obj: &corev1.Secret{},
@@ -43,6 +195,44 @@ var (
 		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.CoreV1().Secrets(key.Namespace).Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			sc := obj.(*corev1.Secret)
+			sc.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			sc.StringData = nil
+			return sc
+		},
+	}
+	Services = GVKInfo{
+		Obj: &corev1.Service{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.CoreV1().Services(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.CoreV1().Services(key.Namespace).Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			sv := obj.(*corev1.Service)
+			sv.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			sv.Status.LoadBalancer.Ingress = []corev1.LoadBalancerIngress{}
+			sv.Status.Conditions = []metav1.Condition{}
+			return sv
+		},
+	}
+	ServiceAccounts = GVKInfo{
+		Obj: &corev1.ServiceAccount{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.CoreV1().ServiceAccounts(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.CoreV1().ServiceAccounts(key.Namespace).Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			sa := obj.(*corev1.ServiceAccount)
+			sa.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			return sa
 		},
 	}
 	NewLiveClient func(c *rest.Config) (kubernetes.Interface, error) = func(c *rest.Config) (kubernetes.Interface, error) {

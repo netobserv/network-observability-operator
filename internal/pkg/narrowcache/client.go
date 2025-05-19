@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/workqueue"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -92,7 +91,8 @@ func (c *Client) getAndCreateWatchIfNeeded(ctx context.Context, info GVKInfo, gv
 	}
 
 	// Store fetched object
-	err = c.setToCache(objKey, fetched)
+	obj := info.Cleanup(fetched)
+	err = c.setToCache(objKey, obj)
 	if err != nil {
 		return nil, objKey, err
 	}
@@ -142,6 +142,7 @@ func (c *Client) setToCache(key string, obj runtime.Object) error {
 	if !ok {
 		return fmt.Errorf("could not convert runtime.Object to client.Object")
 	}
+
 	c.wmut.Lock()
 	defer c.wmut.Unlock()
 	if ca := c.watchedObjects[key]; ca != nil {

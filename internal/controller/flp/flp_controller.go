@@ -47,12 +47,12 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("flp").
-		Owns(&appsv1.Deployment{}).
-		Owns(&appsv1.DaemonSet{}).
-		Owns(&ascv2.HorizontalPodAutoscaler{}).
-		Owns(&corev1.Namespace{}).
-		Owns(&corev1.Service{}).
-		Owns(&corev1.ServiceAccount{}).
+		Owns(&appsv1.Deployment{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&appsv1.DaemonSet{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&ascv2.HorizontalPodAutoscaler{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&corev1.Namespace{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&corev1.Service{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&corev1.ServiceAccount{}, reconcilers.UpdateOrDeleteOnlyPred).
 		Watches(
 			&metricslatest.FlowMetric{},
 			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
@@ -61,6 +61,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 				}
 				return []reconcile.Request{}
 			}),
+			reconcilers.IgnoreStatusChange,
 		)
 
 	ctrl, err := builder.Build(&r)
