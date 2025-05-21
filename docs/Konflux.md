@@ -70,7 +70,7 @@ spec:
     - mirrors:
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf4-ystream
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf4-ztream
-      source: registry.redhat.io/network-observability/network-observability-console-plugin-pf4-rhel9
+      source: registry.redhat.io/network-observability/network-observability-console-plugin-compat-rhel9
     - mirrors:
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-cli-ystream
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-cli-zstream

@@ -12,8 +12,8 @@ type Config struct {
 	FlowlogsPipelineImage string
 	// ConsolePluginImage is the image of the Console Plugin that is managed by the operator
 	ConsolePluginImage string
-	// ConsolePluginPF4Image is the image of the Console Plugin that is managed by the operator (Patterfly 4 variant, for backward compatibility)
-	ConsolePluginPF4Image string
+	// ConsolePluginCompatImage is a backward compatible image of the Console Plugin that is managed by the operator (e.g. a Patterfly 4 variant)
+	ConsolePluginCompatImage string
 	// EBPFByteCodeImage is the ebpf byte code image used by EBPF Manager
 	EBPFByteCodeImage string
 	// Release kind is either upstream or downstream

@@ -57,7 +57,7 @@ func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 	imageToUse := reconcilers.MainImage
 	needsPF4, err := info.ClusterInfo.IsOpenShiftVersionLessThan("4.15.0")
 	if err == nil && needsPF4 {
-		imageToUse = reconcilers.ConsolePluginPF4Image
+		imageToUse = reconcilers.ConsolePluginCompatImage
 	}
 
 	version := helper.ExtractVersion(info.Images[imageToUse])

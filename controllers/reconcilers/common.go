@@ -28,9 +28,9 @@ func (c *Common) PrivilegedNamespace() string {
 type ImageRef string
 
 const (
-	MainImage             ImageRef = "main"
-	BpfByteCodeImage      ImageRef = "bpf-bytecode"
-	ConsolePluginPF4Image ImageRef = "console-plugin-pf4"
+	MainImage                ImageRef = "main"
+	BpfByteCodeImage         ImageRef = "bpf-bytecode"
+	ConsolePluginCompatImage ImageRef = "console-plugin-compat"
 )
 
 type Instance struct {
