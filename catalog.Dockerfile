@@ -1,4 +1,4 @@
-FROM quay.io/operator-framework/opm:v1.53.0
+FROM quay.io/operator-framework/opm:v1.55.0
 
 # Configure the entrypoint and command
 ENTRYPOINT ["/bin/opm"]
