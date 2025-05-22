@@ -81,7 +81,7 @@ func NewManager(
 	if err != nil {
 		return nil, fmt.Errorf("can't instantiate discovery client: %w", err)
 	}
-	info, err := cluster.NewInfo(dc)
+	info, err := cluster.NewInfo(ctx, dc)
 	if err != nil {
 		return nil, fmt.Errorf("can't collect cluster info: %w", err)
 	}
