@@ -209,7 +209,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	if coll == nil {
 		return nil, nil
 	}
-	version := helper.ExtractVersion(c.Images[constants.ControllerBaseImageIndex])
+	version := helper.ExtractVersion(c.Images[reconcilers.MainImage])
 	annotations := make(map[string]string)
 	env, err := c.envConfig(ctx, coll, annotations)
 	if err != nil {
@@ -384,7 +384,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 					Volumes:            volumes,
 					Containers: []corev1.Container{{
 						Name:            constants.EBPFAgentName,
-						Image:           c.Images[constants.ControllerBaseImageIndex],
+						Image:           c.Images[reconcilers.MainImage],
 						ImagePullPolicy: corev1.PullPolicy(coll.Spec.Agent.EBPF.ImagePullPolicy),
 						Resources:       coll.Spec.Agent.EBPF.Resources,
 						SecurityContext: c.securityContext(coll),

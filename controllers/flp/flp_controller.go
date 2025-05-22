@@ -147,9 +147,10 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	// Create sub-reconcilers
 	// TODO: refactor to move these subReconciler allocations in `Start`. It will involve some decoupling work, as currently
 	// `reconcilers.Common` is dependent on the FlowCollector object, which isn't known at start time.
+	images := map[reconcilers.ImageRef]string{reconcilers.MainImage: r.mgr.Config.FlowlogsPipelineImage}
 	reconcilers := []subReconciler{
-		newMonolithReconciler(cmn.NewInstance([]string{r.mgr.Config.FlowlogsPipelineImage}, r.mgr.Status.ForComponent(status.FLPMonolith))),
-		newTransformerReconciler(cmn.NewInstance([]string{r.mgr.Config.FlowlogsPipelineImage}, r.mgr.Status.ForComponent(status.FLPTransformer))),
+		newMonolithReconciler(cmn.NewInstance(images, r.mgr.Status.ForComponent(status.FLPMonolith))),
+		newTransformerReconciler(cmn.NewInstance(images, r.mgr.Status.ForComponent(status.FLPTransformer))),
 	}
 
 	// Check namespace changed

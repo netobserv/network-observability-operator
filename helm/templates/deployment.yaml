@@ -26,6 +26,7 @@ spec:
             - --ebpf-agent-image=$(RELATED_IMAGE_EBPF_AGENT)
             - --flowlogs-pipeline-image=$(RELATED_IMAGE_FLOWLOGS_PIPELINE)
             - --console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)
+            - --console-plugin-compat-image=$(RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT)
             - --downstream-deployment=$(DOWNSTREAM_DEPLOYMENT)
             - --profiling-bind-address=$(PROFILING_BIND_ADDRESS)
             - --metrics-cert-file=/etc/tls/private/tls.crt
@@ -39,6 +40,8 @@ spec:
               value: quay.io/netobserv/flowlogs-pipeline:v1.8.2-community
             - name: RELATED_IMAGE_CONSOLE_PLUGIN
               value: '{{ if .Values.standaloneConsole.enable }}quay.io/netobserv/network-observability-standalone-frontend:v1.8.2-community{{ else }}quay.io/netobserv/network-observability-console-plugin:v1.8.2-community{{ end }}'
+            - name: RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT
+              value: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
             - name: DOWNSTREAM_DEPLOYMENT
               value: "false"
             - name: PROFILING_BIND_ADDRESS
