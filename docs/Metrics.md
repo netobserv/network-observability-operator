@@ -51,10 +51,18 @@ When the `DNSTracking` feature is enabled in `spec.agent.ebpf.features`, additio
 - `node_dns_latency_seconds`
 - `workload_dns_latency_seconds` `**`
 
-When the `NetworkEvents` feature is enabled in `spec.agent.ebpf.features`, 
+When the `NetworkEvents` feature is enabled in `spec.agent.ebpf.features`,
 - `namespace_network_policy_events_total` `*`
 - `node_network_policy_events_total`
 - `workload_network_policy_events_total`
+
+When the `IPSec` feature is enabled in `spec.agent.ebpf.features`,
+- `node_ipsec_success_flows_total`
+- `node_ipsec_retcode_flows_total`
+- `namespace_ipsec_success_flows_total`
+- `namespace_ipsec_retcode_flows_total`
+- `workload_ipsec_success_flows_total`
+- `workload_ipsec_retcode_flows_total`
 
 ## Custom metrics using the FlowMetrics API
 
