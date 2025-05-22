@@ -113,7 +113,7 @@ func TestBeta1ConversionRoundtrip_Metrics(t *testing.T) {
 			Processor: FlowCollectorFLP{
 				Metrics: FLPMetrics{
 					DisableAlerts: []FLPAlert{AlertLokiError},
-					IgnoreTags:    []string{"nodes", "workloads", "bytes", "ingress"},
+					IgnoreTags:    []string{"nodes", "workloads", "bytes", "ingress", "ipsec"},
 				},
 			},
 		},

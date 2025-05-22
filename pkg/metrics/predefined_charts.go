@@ -246,6 +246,22 @@ func netpolCharts(group string) []metricslatest.Chart {
 		}, group, "")...)
 }
 
+func ipsecStatusChart(group string) []metricslatest.Chart {
+	sectionName := "IPSEC"
+	charts := chartVariantsFor(&metricslatest.Chart{
+		Type:          metricslatest.ChartTypeLine,
+		SectionName:   sectionName,
+		DashboardName: mainDashboard,
+		Title:         "IPSEC flows rate",
+		Queries: []metricslatest.Query{{
+			PromQL: `sum(rate($METRIC[2m]))by(IPSecStatus)`,
+			Legend: "{{ IPSecStatus }}",
+		}},
+	}, group, "")
+	return charts
+
+}
+
 func chartVariantsFor(chart *metricslatest.Chart, group, unit string) []metricslatest.Chart {
 	switch group {
 	case tagNodes:
