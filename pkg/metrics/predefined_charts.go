@@ -246,6 +246,38 @@ func netpolCharts(group string) []metricslatest.Chart {
 		}, group, "")...)
 }
 
+func ipsecRateCharts(group string) []metricslatest.Chart {
+	sectionName := "IPSEC"
+	charts := chartVariantsFor(&metricslatest.Chart{
+		Type:          metricslatest.ChartTypeLine,
+		SectionName:   sectionName,
+		DashboardName: mainDashboard,
+		Title:         "IPSEC flows rate",
+		Queries: []metricslatest.Query{{
+			PromQL: `sum(rate($METRIC[2m]))`,
+			Legend: "{{ SrcK8S_OwnerName }} / {{ DstK8S_OwnerName }}",
+		}},
+	}, group, "")
+	return charts
+
+}
+
+func ipsecRetValueCharts(group string) []metricslatest.Chart {
+	sectionName := "IPSEC"
+	charts := chartVariantsFor(&metricslatest.Chart{
+		Type:          metricslatest.ChartTypeStackArea,
+		SectionName:   sectionName,
+		DashboardName: mainDashboard,
+		Title:         "IPSEC return code rate",
+		Queries: []metricslatest.Query{{
+			PromQL: `sum(rate($METRIC{IPSecRetCode!=""}[2m]))by(IPSecRetCode)`,
+			Legend: "Return value: {{ IPSecRetCode }}",
+		}},
+	}, group, "")
+	return charts
+
+}
+
 func chartVariantsFor(chart *metricslatest.Chart, group, unit string) []metricslatest.Chart {
 	switch group {
 	case tagNodes:
