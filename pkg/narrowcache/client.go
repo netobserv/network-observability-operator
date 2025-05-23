@@ -3,17 +3,24 @@ package narrowcache
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"sync"
 
+	"github.com/jinzhu/copier"
+	osv1 "github.com/openshift/api/console/v1"
+	securityv1 "github.com/openshift/api/security/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	ascv2 "k8s.io/api/autoscaling/v2"
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/workqueue"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -52,10 +59,7 @@ func (c *Client) Get(ctx context.Context, key client.ObjectKey, out client.Objec
 		if err != nil {
 			return err
 		}
-		err = copyInto(obj, out)
-		if err != nil {
-			return err
-		}
+		copier.Copy(out, obj)
 		return nil
 	}
 
@@ -103,22 +107,6 @@ func (c *Client) getAndCreateWatchIfNeeded(ctx context.Context, info GVKInfo, gv
 	return fetched.(client.Object), objKey, nil
 }
 
-// "Terrible hack" cc directxman12 / sigs.k8s.io/controller-runtime/pkg/cache/internal/cache_reader.go
-func copyInto(obj runtime.Object, out client.Object) error {
-	// Copy the value of the item in the cache to the returned value
-	// TODO(directxman12): this is a terrible hack, pls fix (we should have deepcopyinto)
-	outVal := reflect.ValueOf(out)
-	objVal := reflect.ValueOf(obj)
-	if !objVal.Type().AssignableTo(outVal.Type()) {
-		return fmt.Errorf("cache had type %s, but %s was asked for", objVal.Type(), outVal.Type())
-	}
-	reflect.Indirect(outVal).Set(reflect.Indirect(objVal))
-	// if !c.disableDeepCopy {
-	// 	out.GetObjectKind().SetGroupVersionKind(c.groupVersionKind)
-	// }
-	return nil
-}
-
 func (c *Client) updateCache(ctx context.Context, key string, watcher watch.Interface) {
 	rlog := log.FromContext(ctx).WithName("narrowcache")
 	for watchEvent := range watcher.ResultChan() {
@@ -138,10 +126,54 @@ func (c *Client) updateCache(ctx context.Context, key string, watcher watch.Inte
 }
 
 func (c *Client) setToCache(key string, obj runtime.Object) error {
+	// cleanup unecessary fields
+	switch ro := obj.(type) {
+	case *corev1.ConfigMap:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		ro.BinaryData = nil
+	case *rbacv1.ClusterRole:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+	case *rbacv1.ClusterRoleBinding:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+	case *osv1.ConsolePlugin:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+	case *appsv1.DaemonSet:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		ro.Status.Conditions = []appsv1.DaemonSetCondition{}
+	case *appsv1.Deployment:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		ro.Status.Conditions = []appsv1.DeploymentCondition{}
+	case *ascv2.HorizontalPodAutoscaler:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		ro.Status.CurrentMetrics = []ascv2.MetricStatus{}
+		ro.Status.Conditions = []ascv2.HorizontalPodAutoscalerCondition{}
+	case *corev1.Namespace:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		ro.Status.Conditions = []corev1.NamespaceCondition{}
+	case *networkingv1.NetworkPolicy:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+	case *rbacv1.Role:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+	case *rbacv1.RoleBinding:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+	case *corev1.Secret:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		ro.StringData = nil
+	case *securityv1.SecurityContextConstraints:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+	case *corev1.Service:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+		ro.Status.LoadBalancer.Ingress = []corev1.LoadBalancerIngress{}
+		ro.Status.Conditions = []metav1.Condition{}
+	case *corev1.ServiceAccount:
+		ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
+	}
+
 	cObj, ok := obj.(client.Object)
 	if !ok {
 		return fmt.Errorf("could not convert runtime.Object to client.Object")
 	}
+
 	c.wmut.Lock()
 	defer c.wmut.Unlock()
 	if ca := c.watchedObjects[key]; ca != nil {
