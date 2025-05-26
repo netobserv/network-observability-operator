@@ -1072,6 +1072,7 @@ filters:
     name: IPSec Status
     component: text
     placeholder: 'E.g: success, error'
+    hint: Status of the IPSec encryption (on egress, provided by the kernel function xfrm_output) or decryption (on ingress, via xfrm_input).
 scopes:
   - id: cluster
     name: Cluster
