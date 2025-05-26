@@ -660,17 +660,11 @@ columns:
     default: false
     width: 15
     feature: packetTranslation
-  - id: IPSec
-    name: Is IPSec operation successful?
-    field: IPSecSuccess
-    filter: ipsec_success
-    default: true
-    width: 10
-    feature: ipsec
-  - id: IPSecCode
-    name: IPSec Return Code
-    field: IPSecRetCode
-    filter: ipsec_retcode
+  - id: IPSecStatus
+    name: IPSec Status
+    tooltip: Status of the IPSec encryption (on egress, provided by the kernel function xfrm_output) or decryption (on ingress, via xfrm_input).
+    field: IPSecStatus
+    filter: ipsec_status
     default: true
     width: 10
     feature: ipsec
@@ -1074,12 +1068,10 @@ filters:
     component: autocomplete
     category: destination
     hint: Specify a single port number or name.
-  - id: ipsec_success
-    name: IPSec processing succeeded ?
-    component: number
-  - id: ipsec_retcode
-    name: IPSec processing return code
-    component: number
+  - id: ipsec_status
+    name: IPSec Status
+    component: text
+    placeholder: 'E.g: success, error'
 scopes:
   - id: cluster
     name: Cluster
@@ -1433,12 +1425,9 @@ fields:
   - name: K8S_ClusterName
     type: string
     description: Cluster name or identifier
-  - name: IPSecRetCode
-    type: number
-    description: IPSec operation return code
-  - name: IPSecSuccess
-    type: boolean
-    description: IPSec processing succeeded
+  - name: IPSecStatus
+    type: string
+    description: Status of the IPSec encryption (on egress, given by the kernel xfrm_output function) or decryption (on ingress, via xfrm_input)
   - name: _RecordType
     type: string
     description: "Type of record: `flowLog` for regular flow logs, or `newConnection`, `heartbeat`, `endConnection` for conversation tracking"
