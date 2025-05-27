@@ -55,7 +55,7 @@ deploy-kafka: DEFAULT_SC=$(shell kubectl get storageclass -o=jsonpath='{.items[?
 deploy-kafka:
 	@echo -e "\n==> Deploy default Kafka. Get more help on https://github.com/netobserv/documents/blob/main/kafka.md"
 	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
-	kubectl apply -f "https://strimzi.io/install/latest?namespace="$(NAMESPACE) -n $(NAMESPACE)
+	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/strimzi-cluster-operator.yaml" | sed 's/namespace: default/namespace: $(NAMESPACE)/g' | kubectl apply -n $(NAMESPACE) -f -
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/metrics-config.yaml" -n $(NAMESPACE)
 	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/default.yaml" | envsubst | kubectl apply -n $(NAMESPACE) -f -
 	@echo -e "\n==>Using storage class ${DEFAULT_SC}"
@@ -67,7 +67,7 @@ deploy-kafka-tls: DEFAULT_SC=$(shell kubectl get storageclass -o=jsonpath='{.ite
 deploy-kafka-tls:
 	@echo -e "\n==> Deploy Kafka with mTLS. Get more help on https://github.com/netobserv/documents/blob/main/kafka.md"
 	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
-	kubectl apply -f "https://strimzi.io/install/latest?namespace="$(NAMESPACE) -n $(NAMESPACE)
+	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/strimzi-cluster-operator.yaml" | sed 's/namespace: default/namespace: $(NAMESPACE)/g' | kubectl apply -n $(NAMESPACE) -f -
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/metrics-config.yaml" -n $(NAMESPACE)
 	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/tls.yaml" | envsubst | kubectl apply -n $(NAMESPACE) -f -
 	@echo -e "\n==>Using storage class ${DEFAULT_SC}"
@@ -81,7 +81,7 @@ undeploy-kafka: ## Undeploy kafka.
 	kubectl delete -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/topic.yaml" -n $(NAMESPACE) --ignore-not-found=true
 	kubectl delete kafkauser flp-kafka -n $(NAMESPACE) --ignore-not-found=true
 	kubectl delete kafka kafka-cluster -n $(NAMESPACE) --ignore-not-found=true
-	kubectl delete -f "https://strimzi.io/install/latest?namespace="$(NAMESPACE) -n $(NAMESPACE) --ignore-not-found=true
+	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/strimzi-cluster-operator.yaml" | sed 's/namespace: default/namespace: $(NAMESPACE)/g' | kubectl delete -n $(NAMESPACE) -f -
 
 .PHONY: deploy-grafana
 deploy-grafana: ## Deploy grafana.
