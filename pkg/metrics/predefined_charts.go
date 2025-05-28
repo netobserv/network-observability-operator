@@ -252,7 +252,7 @@ func ipsecStatusChart(group string) []metricslatest.Chart {
 		Type:          metricslatest.ChartTypeLine,
 		SectionName:   sectionName,
 		DashboardName: mainDashboard,
-		Title:         "IPSEC flows rate",
+		Title:         "IPsec flows rate",
 		Queries: []metricslatest.Query{{
 			PromQL: `sum(rate($METRIC[2m]))by(IPSecStatus)`,
 			Legend: "{{ IPSecStatus }}",
