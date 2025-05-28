@@ -205,7 +205,7 @@ func init() {
 		ipsecLabels = append(ipsecLabels, "IPSecStatus")
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
-				MetricName: fmt.Sprintf("%s_ipsec_flows_status_total", groupTrimmed),
+				MetricName: fmt.Sprintf("%s_ipsec_flows_total", groupTrimmed),
 				Type:       metricslatest.CounterMetric,
 				Labels:     ipsecLabels,
 				Charts:     ipsecStatusChart(group),

@@ -57,7 +57,7 @@ When the `NetworkEvents` feature is enabled in `spec.agent.ebpf.features`,
 - `workload_network_policy_events_total`
 
 When the `IPSec` feature is enabled in `spec.agent.ebpf.features`,
-- `node_ipsec_flows_status_total`
+- `node_ipsec_flows_total`
 
 ## Custom metrics using the FlowMetrics API
 
