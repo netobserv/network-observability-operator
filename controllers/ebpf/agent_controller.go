@@ -69,6 +69,8 @@ const (
 	envEnableEbpfMgr              = "EBPF_PROGRAM_MANAGER_MODE"
 	envEnableUDNMapping           = "ENABLE_UDN_MAPPING"
 	envEnableIPsec                = "ENABLE_IPSEC_TRACKING"
+	envDNSTrackingPort            = "DNS_TRACKING_PORT"
+	envPreferredInterface         = "PREFERRED_INTERFACE_FOR_MAC_PREFIX"
 	envListSeparator              = ","
 )
 
@@ -92,7 +94,6 @@ const (
 )
 
 const (
-	envDNSTrackingPort     = "DNS_TRACKING_PORT"
 	defaultDNSTrackingPort = "53"
 	bpfmanMapsVolumeName   = "bpfman-maps"
 	bpfManBpfFSPath        = "/run/netobserv/maps"
@@ -402,7 +403,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 }
 
 func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowCollector, annots map[string]string) ([]corev1.EnvVar, error) {
-	config := c.setEnvConfig(coll)
+	config := c.getEnvConfig(coll)
 
 	if helper.UseKafka(&coll.Spec) {
 		config = append(config,
@@ -619,8 +620,11 @@ func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *core
 }
 
 // nolint:golint,cyclop
-func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1.EnvVar {
+func (c *AgentController) getEnvConfig(coll *flowslatest.FlowCollector) []corev1.EnvVar {
 	var config []corev1.EnvVar
+
+	// Hard-coded config to deal with OVN unrecognized MAC
+	config = append(config, corev1.EnvVar{Name: envPreferredInterface, Value: "0a:58=eth0"})
 
 	if coll.Spec.Agent.EBPF.CacheActiveTimeout != "" {
 		config = append(config, corev1.EnvVar{
@@ -773,8 +777,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 				FieldPath:  "status.hostIP",
 			},
 		},
-	},
-	)
+	})
 
 	return config
 }
