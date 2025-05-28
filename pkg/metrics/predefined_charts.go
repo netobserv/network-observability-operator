@@ -248,7 +248,19 @@ func netpolCharts(group string) []metricslatest.Chart {
 
 func ipsecStatusChart(group string) []metricslatest.Chart {
 	sectionName := "IPsec"
-	charts := chartVariantsFor(&metricslatest.Chart{
+	charts := []metricslatest.Chart{{
+		Type:          metricslatest.ChartTypeSingleStat,
+		SectionName:   "",
+		DashboardName: mainDashboard,
+		Title:         "IPsec encrypted traffic",
+		Unit:          metricslatest.UnitPercent,
+		Queries: []metricslatest.Query{
+			{
+				PromQL: `sum(rate(netobserv_node_ipsec_flows_total{IPSecStatus="success"}[2m])) / sum(rate(netobserv_cross_nodes_ingress_flows_total[2m]))`,
+			},
+		},
+	}}
+	charts = append(charts, chartVariantsFor(&metricslatest.Chart{
 		Type:          metricslatest.ChartTypeLine,
 		SectionName:   sectionName,
 		DashboardName: mainDashboard,
@@ -257,9 +269,9 @@ func ipsecStatusChart(group string) []metricslatest.Chart {
 			PromQL: `sum(rate($METRIC[2m]))by(IPSecStatus)`,
 			Legend: "{{ IPSecStatus }}",
 		}},
-	}, group, "")
-	return charts
+	}, group, "")...)
 
+	return charts
 }
 
 func chartVariantsFor(chart *metricslatest.Chart, group, unit string) []metricslatest.Chart {
