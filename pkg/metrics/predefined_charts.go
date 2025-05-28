@@ -247,7 +247,7 @@ func netpolCharts(group string) []metricslatest.Chart {
 }
 
 func ipsecStatusChart(group string) []metricslatest.Chart {
-	sectionName := "IPSEC"
+	sectionName := "IPsec"
 	charts := chartVariantsFor(&metricslatest.Chart{
 		Type:          metricslatest.ChartTypeLine,
 		SectionName:   sectionName,
