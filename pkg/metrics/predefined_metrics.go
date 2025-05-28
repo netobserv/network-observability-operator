@@ -207,6 +207,7 @@ func init() {
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
 				MetricName: fmt.Sprintf("%s_ipsec_flows_total", groupTrimmed),
 				Type:       metricslatest.CounterMetric,
+				Filters:    []metricslatest.MetricFilter{{Field: "IPSecStatus", MatchType: metricslatest.MatchPresence}},
 				Labels:     ipsecLabels,
 				Charts:     ipsecStatusChart(group),
 			},
