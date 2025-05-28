@@ -6261,7 +6261,7 @@ IMPORTANT: This feature is available as a Technology Preview.<br>
 - `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
 - `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN). <br>
 This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
-It requires using the OVN-Kubernetes network plugin with the Observability feature.
+It requires using the OVN-Kubernetes network plugin with the Observability feature. <br>
 - `IPSec`, to track flows between nodes with IPsec encryption. <br><br/>
         </td>
         <td>false</td>
