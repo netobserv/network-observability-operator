@@ -623,6 +623,9 @@ func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *core
 func (c *AgentController) getEnvConfig(coll *flowslatest.FlowCollector) []corev1.EnvVar {
 	var config []corev1.EnvVar
 
+	// Hard-coded config to deal with OVN unrecognized MAC
+	config = append(config, corev1.EnvVar{Name: envPreferredInterface, Value: "0a:58=eth0"})
+
 	if coll.Spec.Agent.EBPF.CacheActiveTimeout != "" {
 		config = append(config, corev1.EnvVar{
 			Name:  envCacheActiveTimeout,
@@ -775,8 +778,6 @@ func (c *AgentController) getEnvConfig(coll *flowslatest.FlowCollector) []corev1
 			},
 		},
 	})
-	// Hard-coded config to deal with OVN unrecognized MAC
-	config = append(config, corev1.EnvVar{Name: envPreferredInterface, Value: "0a:58=eth0"})
 
 	return config
 }
