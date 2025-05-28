@@ -79,6 +79,7 @@ func TestFlowMetricToFLP(t *testing.T) {
 	assert.NoError(err)
 	names := getSortedMetricsNames(items)
 	assert.Equal([]string{
+		"cross_nodes_ingress_flows_total",
 		"m_1",
 		"m_2",
 		"namespace_flows_total",

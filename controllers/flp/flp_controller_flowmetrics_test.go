@@ -126,7 +126,7 @@ func ControllerFlowMetricsSpecs() {
 					return err
 				}
 				return metrics
-			}, timeout, interval).Should(HaveLen(5)) // only default metrics
+			}, timeout, interval).Should(HaveLen(6)) // only default metrics
 		})
 	})
 

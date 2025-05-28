@@ -32,6 +32,7 @@ Available names are: (names followed by `*` are enabled by default; names follow
 - `workload_ingress_bytes_total` `*`
 - `workload_ingress_packets_total`
 - `workload_flows_total`
+- `cross_nodes_ingress_flows_total` `*`
 
 When the `PacketDrop` feature is enabled in `spec.agent.ebpf.features` (with privileged mode), additional metrics are available:
 - `namespace_drop_bytes_total`
@@ -57,7 +58,7 @@ When the `NetworkEvents` feature is enabled in `spec.agent.ebpf.features`,
 - `workload_network_policy_events_total`
 
 When the `IPSec` feature is enabled in `spec.agent.ebpf.features`,
-- `node_ipsec_flows_total`
+- `node_ipsec_flows_total` `*`
 
 ## Custom metrics using the FlowMetrics API
 
