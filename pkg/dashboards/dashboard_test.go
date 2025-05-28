@@ -21,7 +21,7 @@ func TestCreateFlowMetricsDashboard_All(t *testing.T) {
 
 	assert.Equal("NetObserv / Main", d.Title)
 
-	assert.Equal([]string{"Overview", "Traffic rates", "TCP latencies", "Byte and packet drops", "DNS", "Network Policy"}, d.Titles())
+	assert.Equal([]string{"Overview", "Traffic rates", "TCP latencies", "Byte and packet drops", "DNS", "Network Policy", "IPsec"}, d.Titles())
 
 	assert.Len(d.Rows[0].Panels, 18)
 	assert.Len(d.Rows[1].Panels, 20)

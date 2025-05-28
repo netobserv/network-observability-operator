@@ -199,6 +199,20 @@ func init() {
 			},
 			tags: []string{group, "network-policy"},
 		})
+
+		// IPSEC
+		ipsecLabels := labels
+		ipsecLabels = append(ipsecLabels, "IPSecStatus")
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			FlowMetricSpec: metricslatest.FlowMetricSpec{
+				MetricName: fmt.Sprintf("%s_ipsec_flows_total", groupTrimmed),
+				Type:       metricslatest.CounterMetric,
+				Filters:    []metricslatest.MetricFilter{{Field: "IPSecStatus", MatchType: metricslatest.MatchPresence}},
+				Labels:     ipsecLabels,
+				Charts:     ipsecStatusChart(group),
+			},
+			tags: []string{group, "ipsec"},
+		})
 	}
 }
 
@@ -297,6 +311,9 @@ func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
 	}
 	if !hasFiltersSampling(spec) {
 		list = removeMetricsByPattern(list, "_sampling")
+	}
+	if !helper.IsIPSecEnabled(&spec.Agent.EBPF) {
+		list = removeMetricsByPattern(list, "_ipsec_")
 	}
 	return list
 }
