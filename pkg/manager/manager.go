@@ -64,7 +64,23 @@ func NewManager(
 	log := log.FromContext(ctx)
 	log.Info("Creating manager")
 
-	narrowCache := narrowcache.NewConfig(kcfg, narrowcache.ConfigMaps, narrowcache.Secrets)
+	narrowCache := narrowcache.NewConfig(kcfg,
+		narrowcache.ConfigMaps,
+		narrowcache.ClusterRoles,
+		narrowcache.ClusterRoleBindings,
+		// narrowcache.ConsolePlugin,
+		narrowcache.Daemonsets,
+		narrowcache.Deployments,
+		narrowcache.HorizontalPodAutoscalers,
+		narrowcache.Namespaces,
+		narrowcache.NetworkPolicies,
+		narrowcache.Roles,
+		narrowcache.RoleBindings,
+		narrowcache.Secrets,
+		// narrowcache.SecurityContextConstraints,
+		narrowcache.Services,
+		narrowcache.ServiceAccounts,
+	)
 	opts.Client = client.Options{Cache: narrowCache.ControllerRuntimeClientCacheOptions()}
 
 	internalManager, err := ctrl.NewManager(kcfg, *opts)
