@@ -662,7 +662,7 @@ columns:
     feature: packetTranslation
   - id: IPSecStatus
     name: IPSec Status
-    tooltip: Status of the IPSec encryption (on egress, provided by the kernel function xfrm_output) or decryption (on ingress, via xfrm_input).
+    tooltip: Status of the IPsec encryption (on egress, provided by the kernel function xfrm_output) or decryption (on ingress, via xfrm_input).
     field: IPSecStatus
     filter: ipsec_status
     default: true
@@ -1072,7 +1072,7 @@ filters:
     name: IPSec Status
     component: text
     placeholder: 'E.g: success, error'
-    hint: Status of the IPSec encryption (on egress, provided by the kernel function xfrm_output) or decryption (on ingress, via xfrm_input).
+    hint: Status of the IPsec encryption (on egress, provided by the kernel function xfrm_output) or decryption (on ingress, via xfrm_input).
 scopes:
   - id: cluster
     name: Cluster
@@ -1428,7 +1428,7 @@ fields:
     description: Cluster name or identifier
   - name: IPSecStatus
     type: string
-    description: Status of the IPSec encryption (on egress, given by the kernel xfrm_output function) or decryption (on ingress, via xfrm_input)
+    description: Status of the IPsec encryption (on egress, given by the kernel xfrm_output function) or decryption (on ingress, via xfrm_input)
   - name: _RecordType
     type: string
     description: "Type of record: `flowLog` for regular flow logs, or `newConnection`, `heartbeat`, `endConnection` for conversation tracking"
