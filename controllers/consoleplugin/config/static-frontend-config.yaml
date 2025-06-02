@@ -662,7 +662,7 @@ columns:
     feature: packetTranslation
   - id: IPSecStatus
     name: IPSec Status
-    tooltip: Status of the IPSec encryption (on egress, provided by the kernel function xfrm_output) or decryption (on ingress, via xfrm_input).
+    tooltip: Status of the IPsec encryption (on egress, provided by the kernel function xfrm_output) or decryption (on ingress, via xfrm_input).
     field: IPSecStatus
     filter: ipsec_status
     default: true
