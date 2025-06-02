@@ -155,13 +155,6 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | no
 | fine
 | n/a
-| `Duplicate`
-| boolean
-| Indicates if this flow was also captured from another interface on the same host
-| n/a
-| no
-| fine
-| n/a
 | `Flags`
 | string[]
 | List of TCP flags comprised in the flow, as per RFC-9293, with additional custom flags to represent the following per-packet combinations: +
@@ -182,6 +175,13 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | yes
 | fine
 | host.direction
+| `IPSecStatus`
+| string
+| Status of the IPSec encryption (on egress, given by the kernel xfrm_output function) or decryption (on ingress, via xfrm_input)
+| `ipsec_status`
+| no
+| fine
+| n/a
 | `IcmpCode`
 | number
 | ICMP code
@@ -242,7 +242,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | `Packets`
 | number
 | Number of packets
-| `pkt_drop_cause`
+| n/a
 | no
 | avoid
 | packets
