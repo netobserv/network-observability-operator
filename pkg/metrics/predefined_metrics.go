@@ -46,7 +46,7 @@ var (
 		"namespace_dns_latency_seconds",
 		"namespace_network_policy_events_total",
 		"node_ipsec_flows_total",
-		"cross_nodes_ingress_flows_total",
+		"node_to_node_ingress_flows_total",
 	}
 	// More metrics enabled when Loki is disabled, to avoid loss of information
 	DefaultIncludeListLokiDisabled = []string{
@@ -64,7 +64,7 @@ var (
 		"workload_dns_latency_seconds",
 		"namespace_network_policy_events_total",
 		"node_ipsec_flows_total",
-		"cross_nodes_ingress_flows_total",
+		"node_to_node_ingress_flows_total",
 	}
 	// Pre-deprecation default IgnoreTags list (1.4) - used before switching to whitelist approach,
 	// to make sure there is no unintended new metrics being collected
@@ -221,7 +221,7 @@ func init() {
 	// Cross-nodes metric
 	predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 		FlowMetricSpec: metricslatest.FlowMetricSpec{
-			MetricName: "cross_nodes_ingress_flows_total",
+			MetricName: "node_to_node_ingress_flows_total",
 			Type:       metricslatest.CounterMetric,
 			Labels:     mapLabels[tagNodes],
 			Filters: []metricslatest.MetricFilter{

@@ -105,10 +105,10 @@ func TestMergeMetricsConfiguration_Default(t *testing.T) {
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
 	assert.Equal([]string{
-		"cross_nodes_ingress_flows_total",
 		"namespace_flows_total",
 		"node_egress_bytes_total",
 		"node_ingress_bytes_total",
+		"node_to_node_ingress_flows_total",
 		"workload_egress_bytes_total",
 		"workload_ingress_bytes_total",
 	}, names)
@@ -128,13 +128,13 @@ func TestMergeMetricsConfiguration_DefaultWithFeatures(t *testing.T) {
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
 	assert.Equal([]string{
-		"cross_nodes_ingress_flows_total",
 		"namespace_dns_latency_seconds",
 		"namespace_drop_packets_total",
 		"namespace_flows_total",
 		"namespace_rtt_seconds",
 		"node_egress_bytes_total",
 		"node_ingress_bytes_total",
+		"node_to_node_ingress_flows_total",
 		"workload_egress_bytes_total",
 		"workload_ingress_bytes_total",
 	}, names)

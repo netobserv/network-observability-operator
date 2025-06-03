@@ -32,7 +32,7 @@ Available names are: (names followed by `*` are enabled by default; names follow
 - `workload_ingress_bytes_total` `*`
 - `workload_ingress_packets_total`
 - `workload_flows_total`
-- `cross_nodes_ingress_flows_total` `*`
+- `node_to_node_ingress_flows_total` `*`
 
 When the `PacketDrop` feature is enabled in `spec.agent.ebpf.features` (with privileged mode), additional metrics are available:
 - `namespace_drop_bytes_total`
