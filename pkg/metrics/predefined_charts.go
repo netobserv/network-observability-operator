@@ -256,7 +256,7 @@ func ipsecStatusChart(group string) []metricslatest.Chart {
 		Unit:          metricslatest.UnitPercent,
 		Queries: []metricslatest.Query{
 			{
-				PromQL: `sum(rate(netobserv_node_ipsec_flows_total{IPSecStatus="success"}[2m])) / sum(rate(netobserv_cross_nodes_ingress_flows_total[2m]))`,
+				PromQL: `sum(rate(netobserv_node_ipsec_flows_total{IPSecStatus="success"}[2m])) / sum(rate(netobserv_node_to_node_ingress_flows_total[2m]))`,
 			},
 		},
 	}}
