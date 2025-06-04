@@ -7,8 +7,6 @@
 
 set -euo pipefail
 
-: ${IS_DOWNSTREAM:="false"}
-
 : ${OPM:=$(command -v opm)}
 echo "using opm from ${OPM}"
 # check if opm version is v1.39.0 or exit
@@ -37,16 +35,8 @@ cp -f catalog/released-legacy/other.yaml ${dir_catalog_legacy}
 ${OPM} render "${BUNDLE_IMAGE}" --output=yaml --migrate-level=bundle-object-to-csv-metadata > "${dir_catalog}/bundle.yaml"
 ${OPM} render "${BUNDLE_IMAGE}" --output=yaml > "${dir_catalog_legacy}/bundle.yaml"
 
-if [[ "${IS_DOWNSTREAM}" == "true" ]]; then
-  echo "Adding to index..."
-  previous=$(${YQ} 'select(.schema=="olm.channel") | select(.name=="stable") | .entries[-1].name' catalog/released/index.yaml)
-  ${YQ} "(select(.name == \"stable\") | .entries) += {\"name\": \"network-observability-operator.${BUNDLE_TAG}\", \"replaces\": \"${previous}\"}" catalog/released/index.yaml >  "${dir_catalog}/index.yaml"
-  echo "Fixing bundle name..."
-  sed -i 's/name: netobserv-operator/name: network-observability-operator/' ${dir_catalog}/bundle.yaml
-  sed -i 's/name: netobserv-operator/name: network-observability-operator/' ${dir_catalog_legacy}/bundle.yaml
-else
-  echo "Generating single index..."
-  cat <<EOF > "${dir_catalog}/index.yaml"
+echo "Generating single index..."
+cat <<EOF > "${dir_catalog}/index.yaml"
 ---
 entries:
   - name: netobserv-operator.${BUNDLE_TAG}
@@ -54,9 +44,9 @@ name: latest
 package: netobserv-operator
 schema: olm.channel
 EOF
-  sed -i 's/defaultChannel: stable/defaultChannel: latest/' ${dir_catalog}/other.yaml
-  sed -i 's/defaultChannel: stable/defaultChannel: latest/' ${dir_catalog_legacy}/other.yaml
-fi
+
+sed -i 's/defaultChannel: stable/defaultChannel: latest/' ${dir_catalog}/other.yaml
+sed -i 's/defaultChannel: stable/defaultChannel: latest/' ${dir_catalog_legacy}/other.yaml
 
 cp -f "${dir_catalog}/index.yaml" "${dir_catalog_legacy}"
 
