@@ -84,6 +84,7 @@ func TestFlowMetricToFLP(t *testing.T) {
 		"namespace_flows_total",
 		"node_egress_bytes_total",
 		"node_ingress_bytes_total",
+		"node_to_node_ingress_flows_total",
 		"workload_egress_bytes_total",
 		"workload_ingress_bytes_total",
 	}, names)
