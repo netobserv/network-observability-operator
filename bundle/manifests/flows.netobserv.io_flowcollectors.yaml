@@ -2415,6 +2415,7 @@ spec:
                           - node_dns_latency_seconds
                           - workload_dns_latency_seconds
                           - node_ipsec_flows_total
+                          - node_to_node_ingress_flows_total
                           type: string
                         type: array
                       server:
@@ -8689,6 +8690,7 @@ spec:
                           - namespace_network_policy_events_total
                           - workload_network_policy_events_total
                           - node_ipsec_flows_total
+                          - node_to_node_ingress_flows_total
                           type: string
                         type: array
                       server:
