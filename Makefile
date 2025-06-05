@@ -454,7 +454,7 @@ refresh-prod-catalogs: opm YQ ## Refresh FBC from production catalogs. Set REGIS
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
 .PHONY: catalog-build
 catalog-build: opm ## Build a catalog image.
-	OPM=$(OPM) BUNDLE_IMAGE=$(BUNDLE_IMAGE) BUNDLE_TAG="v$(BUNDLE_VERSION)" IS_DOWNSTREAM=$(IS_DOWNSTREAM) ./hack/update_fbc.sh
+	OPM=$(OPM) BUNDLE_IMAGE=$(BUNDLE_IMAGE) BUNDLE_TAG="v$(BUNDLE_VERSION)" ./hack/update_fbc.sh
 	$(OCI_BIN) build $(OCI_BUILD_OPTS) --build-arg CATALOG_PATH="catalog/unreleased/v$(BUNDLE_VERSION)" -f catalog.Dockerfile -t $(CATALOG_IMAGE) .
 
 shortlived-catalog-build: ## Build a temporary catalog image, expiring after 2 weeks on quay
