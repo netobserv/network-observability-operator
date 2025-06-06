@@ -48,7 +48,7 @@ for i in $(seq 0 $(( $nbfields-1 )) ); do
   fi
   cardWarn=$(printf "$cardinalityMap" | jq -r ".$name")
   if [[ "$cardWarn" == "null" ]]; then
-      errors="$errors\nmissing cardinality for field $name"
+      errors="$errors\nmissing cardinality for field $name; check cardinality.json"
   fi
   otel=$(printf "$otelMap" | jq -r ".$name")
   if [[ "$otel" == "null" ]]; then
