@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/bpfman/bpfman-operator v0.5.7-0.20250411151105-cd81bc6e57d7
 	github.com/coreos/go-semver v0.3.1
-	github.com/go-logr/logr v1.4.2
+	github.com/go-logr/logr v1.4.3
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/loki/operator/apis/loki v0.0.0-20241021105923-5e970e50b166
 	github.com/netobserv/flowlogs-pipeline v1.9.0-crc0.0.20250512093345-8eac25609689
