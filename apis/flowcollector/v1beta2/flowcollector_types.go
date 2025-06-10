@@ -1279,7 +1279,6 @@ type AdvancedProcessorConfig struct {
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:validation:Maximum=65535
-	//+kubebuilder:default:=6060
 	//+optional
 	// `profilePort` allows setting up a Go pprof profiler listening to this port
 	ProfilePort *int32 `json:"profilePort,omitempty"`
