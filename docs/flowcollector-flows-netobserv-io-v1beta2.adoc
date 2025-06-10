@@ -180,7 +180,8 @@ Type::
 | `object`
 | `advanced` allows setting some aspects of the internal configuration of the eBPF agent.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk. You can also
+override the default Linux capabilities from there.
 
 | `cacheActiveTimeout`
 | `string`
@@ -221,10 +222,13 @@ IMPORTANT: This feature is available as a Technology Preview. +
 
 - `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage Network Observability eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed. +
 
-- `UDNMapping`: [Unsupported (*)]. Enable interfaces mapping to User Defined Networks (UDN).  +
+- `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN).  +
 
 This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
-It requires using the OVN-Kubernetes network plugin with the Observability feature.
+It requires using the OVN-Kubernetes network plugin with the Observability feature.  +
+
+- `IPSec`, to track flows between nodes with IPsec encryption.  +
+
 
 | `flowFilter`
 | `object`
@@ -256,7 +260,7 @@ Otherwise it is matched as a case-sensitive string.
 | `privileged`
 | `boolean`
 | Privileged mode for the eBPF Agent container. When ignored or set to `false`, the operator sets
-granular capabilities (BPF, PERFMON, NET_ADMIN, SYS_RESOURCE) to the container.
+granular capabilities (BPF, PERFMON, NET_ADMIN) to the container.
 If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF
 is in use, then you can turn on this mode for more global privileges.
 Some agent features require the privileged mode, such as packet drops tracking (see `features`) and SR-IOV support.
@@ -268,7 +272,7 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
 
 | `sampling`
 | `integer`
-| Sampling rate of the flow reporter. 100 means one flow on 100 is sent. 0 or 1 means all flows are sampled.
+| Sampling ratio of the eBPF probe. 100 means one packet on 100 is sent. 0 or 1 means all packets are sampled.
 
 |===
 == .spec.agent.ebpf.advanced
@@ -277,7 +281,8 @@ Description::
 --
 `advanced` allows setting some aspects of the internal configuration of the eBPF agent.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk. You can also
+override the default Linux capabilities from there.
 --
 
 Type::
@@ -289,6 +294,10 @@ Type::
 [cols="1,1,1",options="header"]
 |===
 | Property | Type | Description
+
+| `capOverride`
+| `array (string)`
+| Linux capabilities override, when not running as privileged. Default capabilities are BPF, PERFMON and NET_ADMIN.
 
 | `env`
 | `object (string)`
@@ -445,11 +454,10 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
 | `rules` defines a list of filtering rules on the eBPF Agents.
 When filtering is enabled, by default, flows that don't match any rule are rejected.
 To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.
-[Unsupported (*)].
 
 | `sampling`
 | `integer`
-| `sampling` sampling rate for the matched flows, overriding the global sampling defined at `spec.agent.ebpf.sampling`.
+| `sampling` is the sampling ratio for the matched packets, overriding the global sampling defined at `spec.agent.ebpf.sampling`.
 
 | `sourcePorts`
 | `integer-or-string`
@@ -471,7 +479,6 @@ Description::
 `rules` defines a list of filtering rules on the eBPF Agents.
 When filtering is enabled, by default, flows that don't match any rule are rejected.
 To change the default, you can define a rule that accepts everything: `{ action: "Accept", cidr: "0.0.0.0/0" }`, and then refine with rejecting rules.
-[Unsupported (*)].
 --
 
 Type::
@@ -552,7 +559,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
 
 | `sampling`
 | `integer`
-| `sampling` sampling rate for the matched flows, overriding the global sampling defined at `spec.agent.ebpf.sampling`.
+| `sampling` is the sampling ratio for the matched packets, overriding the global sampling defined at `spec.agent.ebpf.sampling`.
 
 | `sourcePorts`
 | `integer-or-string`
@@ -2705,14 +2712,12 @@ such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
 | `deduper`
 | `object`
 | `deduper` allows you to sample or drop flows identified as duplicates, in order to save on resource usage.
-[Unsupported (*)].
 
 | `filters`
 | `array`
 | `filters` lets you define custom filters to limit the amount of generated flows.
 These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
 but with a lesser improvement in performance.
-[Unsupported (*)].
 
 | `imagePullPolicy`
 | `string`
@@ -2746,9 +2751,9 @@ This setting is ignored when Kafka is disabled.
 
 - `Flows` to export regular network flows. This is the default. +
 
-- `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates. +
+- `Conversations` to generate events for started conversations, ended conversations as well as periodic "tick" updates. Note that in this mode, Prometheus metrics are not accurate on long-standing conversations. +
 
-- `EndedConversations` to generate only ended conversations events. +
+- `EndedConversations` to generate only ended conversations events. Note that in this mode, Prometheus metrics are not accurate on long-standing conversations. +
 
 - `All` to generate both network flows and all conversations events. It is not recommended due to the impact on resources footprint. +
 
@@ -2959,7 +2964,6 @@ Description::
 +
 --
 `deduper` allows you to sample or drop flows identified as duplicates, in order to save on resource usage.
-[Unsupported (*)].
 --
 
 Type::
@@ -2974,7 +2978,7 @@ Type::
 
 | `mode`
 | `string`
-| Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication because the Agent cannot de-duplicate same flows reported from different nodes. +
+| Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication, since the Agent cannot de-duplicate same flows reported from different nodes. +
 
 - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially losing some information such as the network interfaces used from peer, or network events. +
 
@@ -2985,7 +2989,7 @@ Type::
 
 | `sampling`
 | `integer`
-| `sampling` is the sampling rate when deduper `mode` is `Sample`.
+| `sampling` is the sampling ratio when deduper `mode` is `Sample`. For example, a value of `50` means that 1 flow in 50 is sampled.
 
 |===
 == .spec.processor.filters
@@ -2995,7 +2999,6 @@ Description::
 `filters` lets you define custom filters to limit the amount of generated flows.
 These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
 but with a lesser improvement in performance.
-[Unsupported (*)].
 --
 
 Type::
@@ -3021,64 +3024,17 @@ Type::
 |===
 | Property | Type | Description
 
-| `allOf`
-| `array`
-| `filters` is a list of matches that must be all satisfied in order to remove a flow.
-
 | `outputTarget`
 | `string`
-| If specified, these filters only target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.
+| If specified, these filters target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.
+
+| `query`
+| `string`
+| A query that selects the network flows to keep. More information about this query language in https://github.com/netobserv/flowlogs-pipeline/blob/main/docs/filtering.md.
 
 | `sampling`
 | `integer`
-| `sampling` is an optional sampling rate to apply to this filter.
-
-|===
-== .spec.processor.filters[].allOf
-Description::
-+
---
-`filters` is a list of matches that must be all satisfied in order to remove a flow.
---
-
-Type::
-  `array`
-
-
-
-
-== .spec.processor.filters[].allOf[]
-Description::
-+
---
-`FLPSingleFilter` defines the desired configuration for a single FLP-based filter.
---
-
-Type::
-  `object`
-
-Required::
-  - `field`
-  - `matchType`
-
-
-
-[cols="1,1,1",options="header"]
-|===
-| Property | Type | Description
-
-| `field`
-| `string`
-| Name of the field to filter on.
-Refer to the documentation for the list of available fields: https://github.com/netobserv/network-observability-operator/blob/main/docs/flows-format.adoc.
-
-| `matchType`
-| `string`
-| Type of matching to apply.
-
-| `value`
-| `string`
-| Value to filter on. When `matchType` is `Equal` or `NotEqual`, you can use field injection with `$(SomeField)` to refer to any other field of the flow.
+| `sampling` is an optional sampling ratio to apply to this filter. For example, a value of `50` means that 1 matching flow in 50 is sampled.
 
 |===
 == .spec.processor.kafkaConsumerAutoscaler
