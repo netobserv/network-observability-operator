@@ -270,7 +270,6 @@ func GetAdvancedProcessorConfig(specConfig *flowslatest.AdvancedProcessorConfig)
 		Env:                            map[string]string{},
 		Port:                           ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "port")),
 		HealthPort:                     ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "healthPort")),
-		ProfilePort:                    ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "profilePort")),
 		EnableKubeProbes:               ptr.To(GetFieldDefaultBool(ProcessorAdvancedPath, "enableKubeProbes")),
 		DropUnusedFields:               ptr.To(GetFieldDefaultBool(ProcessorAdvancedPath, "dropUnusedFields")),
 		ConversationHeartbeatInterval:  ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationHeartbeatInterval")),

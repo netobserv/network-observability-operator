@@ -7168,7 +7168,6 @@ spec:
                         minimum: 1025
                         type: integer
                       profilePort:
-                        default: 6060
                         description: '`profilePort` allows setting up a Go pprof profiler
                           listening to this port'
                         format: int32

@@ -121,12 +121,18 @@ func GetFieldDefaultString(path []string, field string) string {
 
 func GetFieldDefaultInt32(path []string, field string) int32 {
 	defaultValueStr := GetFieldDefaultString(path, field)
+	if defaultValueStr == "" {
+		return 0
+	}
 	intVar, _ := strconv.ParseInt(defaultValueStr, 0, 32)
 	return int32(intVar)
 }
 
 func GetFieldDefaultBool(path []string, field string) bool {
 	defaultValueStr := GetFieldDefaultString(path, field)
+	if defaultValueStr == "" {
+		return false
+	}
 	return defaultValueStr == "true"
 }
 
@@ -148,7 +154,7 @@ func GetFieldDefaultMapString(path []string, field string) map[string]string {
 
 func GetFieldDefault(path []string, field string) []byte {
 	pathProperties := getPathProperties(path)
-	if fieldSchema, ok := pathProperties[field]; ok {
+	if fieldSchema, ok := pathProperties[field]; ok && fieldSchema.Default != nil {
 		return fieldSchema.Default.Raw
 	}
 	return []byte{}
