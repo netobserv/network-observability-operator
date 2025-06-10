@@ -14602,7 +14602,6 @@ By convention, some values are forbidden. It must be greater than 1024 and diffe
           `profilePort` allows setting up a Go pprof profiler listening to this port<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 6060<br/>
             <i>Minimum</i>: 0<br/>
             <i>Maximum</i>: 65535<br/>
         </td>
