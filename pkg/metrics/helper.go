@@ -9,14 +9,14 @@ func GetFilters(fm *metricslatest.FlowMetricSpec) []metricslatest.MetricFilter {
 	if fm.Direction == metricslatest.Egress {
 		filters = append(filters, metricslatest.MetricFilter{
 			Field:     "FlowDirection",
-			Value:     "1|2",
-			MatchType: metricslatest.MatchRegex,
+			MatchType: metricslatest.MatchNotEqual,
+			Value:     "0", // 1 or 2
 		})
 	} else if fm.Direction == metricslatest.Ingress {
 		filters = append(filters, metricslatest.MetricFilter{
 			Field:     "FlowDirection",
-			Value:     "0|2",
-			MatchType: metricslatest.MatchRegex,
+			MatchType: metricslatest.MatchNotEqual,
+			Value:     "1", // 0 or 2
 		})
 	}
 	return append(fm.Filters, filters...)
