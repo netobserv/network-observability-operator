@@ -106,7 +106,7 @@ func TestFlowMetricToFLP(t *testing.T) {
 		Filters: []api.MetricsFilter{
 			{Key: "f", Value: "v", Type: api.MetricFilterRegex},
 			{Key: "f2", Type: api.MetricFilterAbsence},
-			{Key: "FlowDirection", Value: "1|2", Type: api.MetricFilterRegex},
+			{Key: "FlowDirection", Value: "0", Type: api.MetricFilterNotEqual},
 		},
 		Labels:  []string{"by_field"},
 		Buckets: []float64{1, 5, 10, 50, 100},
