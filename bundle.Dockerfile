@@ -1,5 +1,7 @@
 FROM scratch
 
+ARG BUNDLEVERSION=1.9.0
+
 # Core bundle labels.
 LABEL operators.operatorframework.io.bundle.mediatype.v1=registry+v1
 LABEL operators.operatorframework.io.bundle.manifests.v1=manifests/
@@ -14,6 +16,8 @@ LABEL operators.operatorframework.io.metrics.project_layout=go.kubebuilder.io/v3
 # Labels for testing.
 LABEL operators.operatorframework.io.test.mediatype.v1=scorecard+v1
 LABEL operators.operatorframework.io.test.config.v1=tests/scorecard/
+
+LABEL version=$BUNDLEVERSION
 
 # Copy files to locations specified by labels.
 COPY bundle/manifests /manifests/
