@@ -92,13 +92,6 @@ To check the cardinality of all NetObserv metrics, run as `promql`: `count({__na
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>metricName</b></td>
-        <td>string</td>
-        <td>
-          Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_".<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
@@ -169,6 +162,13 @@ It must be done carefully as it impacts the metric cardinality (cf https://rhobs
 In general, avoid setting very high cardinality labels such as IP or MAC addresses.
 "SrcK8S_OwnerName" or "DstK8S_OwnerName" should be preferred over "SrcK8S_Name" or "DstK8S_Name" as much as possible.
 Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>metricName</b></td>
+        <td>string</td>
+        <td>
+          Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_".<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -377,6 +377,13 @@ FlowMetricStatus defines the observed state of FlowMetric
           `conditions` represent the latest available observations of an object's state<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>prometheusName</b></td>
+        <td>string</td>
+        <td>
+          Metric name, including prefix, as it appears in Prometheus<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
