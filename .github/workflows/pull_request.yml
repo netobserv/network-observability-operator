@@ -46,7 +46,7 @@ jobs:
     - name: generate bundle
       run: make update-bundle
     - name: check bundle clean state
-      run: git add -A && git diff HEAD -I "operator-sdk-v" --exit-code
+      run: git add -A && git diff HEAD -I "operator-sdk-v" -I "createdAt" --exit-code
 
   helm-check:
     runs-on: ubuntu-latest

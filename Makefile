@@ -233,7 +233,7 @@ ifeq (,$(shell which $(OPSDK) 2>/dev/null))
 	set -e ;\
 	mkdir -p $(dir $(OPSDK)) ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPSDK) https://github.com/operator-framework/operator-sdk/releases/download/v1.25.3/operator-sdk_$${OS}_$${ARCH} ;\
+	curl -sSLo $(OPSDK) https://github.com/operator-framework/operator-sdk/releases/download/v1.31.0/operator-sdk_$${OS}_$${ARCH} ;\
 	chmod +x $(OPSDK) ;\
 	}
 endif
@@ -425,7 +425,6 @@ update-bundle: bundle ## Prepare a clean bundle to be commited
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
 	cp ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml tmp-bundle
-	$(SED) -i -r 's~:created-at:~$(DATE)~' ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
 	-$(OCI_BIN) build $(OCI_BUILD_OPTS) -f bundle.Dockerfile -t $(BUNDLE_IMAGE) .
 	mv tmp-bundle ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
 
@@ -503,7 +502,6 @@ prepare-operatorhub: ## Copy bundle for an upstream release on OperatorHub
 	$(SED) -i '/scorecard/d' ./bundle.Dockerfile
 	$(SED) -i '/scorecard/d' ./bundle/metadata/annotations.yaml
 	$(SED) -i '/Annotations for testing/d' ./bundle/metadata/annotations.yaml
-	$(SED) -i -r 's~:created-at:~$(DATE)~' ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
 	@read -p "Going to hard-reset git's $(OPERATORHUB_PATH) - type y to proceed: " -n 1 -r; \
 	if [[ $$REPLY =~ ^[^Yy] ]]; \
 	then \
