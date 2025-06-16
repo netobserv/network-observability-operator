@@ -61,19 +61,19 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 		CRDInstallOptions: envtest.CRDInstallOptions{
 			Paths: []string{
 				// Hack to reintroduce when the API stored version != latest version: comment-out config/crd/bases and use hack instead; see also Makefile "hack-crd-for-test"
-				filepath.Join(basePath, "..", "config", "crd", "bases"),
+				filepath.Join(basePath, "..", "..", "config", "crd", "bases"),
 				// filepath.Join(basePath, "..", "hack"),
 				// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
-				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "console", "v1", "zz_generated.crd-manifests"),
-				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "config", "v1", "zz_generated.crd-manifests"),
-				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "operator", "v1", "zz_generated.crd-manifests"),
-				filepath.Join(basePath, "..", "vendor", "github.com", "openshift", "api", "security", "v1", "zz_generated.crd-manifests"),
-				filepath.Join(basePath, "..", "test-assets"),
+				filepath.Join(basePath, "..", "..", "vendor", "github.com", "openshift", "api", "console", "v1", "zz_generated.crd-manifests"),
+				filepath.Join(basePath, "..", "..", "vendor", "github.com", "openshift", "api", "config", "v1", "zz_generated.crd-manifests"),
+				filepath.Join(basePath, "..", "..", "vendor", "github.com", "openshift", "api", "operator", "v1", "zz_generated.crd-manifests"),
+				filepath.Join(basePath, "..", "..", "vendor", "github.com", "openshift", "api", "security", "v1", "zz_generated.crd-manifests"),
+				filepath.Join(basePath, "..", "..", "test-assets"),
 			},
 			CleanUpAfterUse: true,
 			WebhookOptions: envtest.WebhookInstallOptions{
 				Paths: []string{
-					filepath.Join(basePath, "..", "config", "webhook"),
+					filepath.Join(basePath, "..", "..", "config", "webhook"),
 				},
 			},
 		},
@@ -158,7 +158,7 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sManager).NotTo(BeNil())
 
-	err = helper.SetCRDForTests(filepath.Join(basePath, ".."))
+	err = helper.SetCRDForTests(filepath.Join(basePath, "..", ".."))
 	Expect(err).NotTo(HaveOccurred())
 
 	go func() {
