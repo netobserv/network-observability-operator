@@ -104,7 +104,7 @@ spec:
       - name: name
         value: git-clone
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-git-clone:0.1@sha256:3ced9a6b9d8520773d3ffbf062190515a362ecda11e72f56e38e4dd980294b57
+        value: quay.io/konflux-ci/tekton-catalog/task-git-clone:0.1@sha256:eca6b8106b6ec1ea4b03d196c007928c57a0683ea1ce068e8f34f9b9bef3387d
       - name: kind
         value: task
       resolver: bundles
@@ -129,7 +129,7 @@ spec:
       - name: name
         value: prefetch-dependencies
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-prefetch-dependencies:0.2@sha256:8c649b82a9d228018e5a5d9b844df9fd1db63db33c9b5034586af3a766378de7
+        value: quay.io/konflux-ci/tekton-catalog/task-prefetch-dependencies:0.2@sha256:735a71137e43f8055bb1871653b5cbca5c8c437d90e1c78c5ba83f19b1ebedc9
       - name: kind
         value: task
       resolver: bundles
@@ -294,7 +294,7 @@ spec:
       - name: name
         value: sast-shell-check
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-sast-shell-check:0.1@sha256:18d594df21cb92cbc409065b25a863492ea7209e2a34045ced69a24a68ca41d8
+        value: quay.io/konflux-ci/tekton-catalog/task-sast-shell-check:0.1@sha256:1c1ca37f7191f2f7804b3b0b68054c047edd3938fc7a846f51977859c667e031
       - name: kind
         value: task
       resolver: bundles
@@ -344,7 +344,7 @@ spec:
       - name: name
         value: rpms-signature-scan
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-rpms-signature-scan:0.2@sha256:80a4562d5f86eb6812f00d4e30e94c1ad27ec937735dc29f5a63e9335676b3dc
+        value: quay.io/konflux-ci/tekton-catalog/task-rpms-signature-scan:0.2@sha256:ec7f6de651458e4a5842b145e761b0d86b03b52bec1515d6d8a1b8cf107af95c
       - name: kind
         value: task
       resolver: bundles
@@ -377,8 +377,10 @@ spec:
       - "false"
   - name: apply-tags
     params:
-    - name: IMAGE
+    - name: IMAGE_URL
       value: $(tasks.build-container.results.IMAGE_URL)
+    - name: IMAGE_DIGEST
+      value: $(tasks.build-container.results.IMAGE_DIGEST)
     runAfter:
     - build-container
     taskRef:
@@ -386,7 +388,7 @@ spec:
       - name: name
         value: apply-tags
       - name: bundle
-        value: quay.io/konflux-ci/tekton-catalog/task-apply-tags:0.1@sha256:1c6f673fe100a49f58aaef62580c8adf0c397790964f4e7bac7fcd3f4d07c92e
+        value: quay.io/konflux-ci/tekton-catalog/task-apply-tags:0.2@sha256:0c411c27483849a936c0c420a57e477113e9fafc63077647200d6614d9ebb872
       - name: kind
         value: task
       resolver: bundles
