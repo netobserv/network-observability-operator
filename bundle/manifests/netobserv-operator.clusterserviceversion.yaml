@@ -435,13 +435,13 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.8.2-community
-    createdAt: "2025-06-16T14:09:13Z"
+    createdAt: "2025-06-16T15:06:19Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
     operatorframework.io/suggested-namespace: openshift-netobserv-operator
-    operators.operatorframework.io/builder: operator-sdk-v1.31.0
-    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+    operators.operatorframework.io/builder: operator-sdk-v1.40.0
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
     repository: https://github.com/netobserv/network-observability-operator
     support: NetObserv team
   labels:

@@ -9,11 +9,11 @@ metadata:
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     # TODO: re-enable after 1.9 release
     # pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
-    #   == "main"  && (".tekton/***".pathChanged() || "apis/***".pathChanged() || "controllers/***".pathChanged()
+    #   == "main"  && (".tekton/***".pathChanged() || "api/***".pathChanged() || "internal/***".pathChanged()
     #   || "Dockerfile.downstream".pathChanged() || "docs/***".pathChanged() || "go.mod".pathChanged()
     #   || "go.sum".pathChanged() || "hack/update-build.sh".pathChanged() || "LICENSE".pathChanged()
     #   || "main.go".pathChanged() || "Makefile".pathChanged() || "manifests/***".pathChanged()
-    #   || "pkg/***".pathChanged() || "vendor/***".pathChanged())
+    #   || "vendor/***".pathChanged())
     pipelinesascode.tekton.dev/on-cel-expression: false
   creationTimestamp: null
   labels:

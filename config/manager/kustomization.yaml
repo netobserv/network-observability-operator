@@ -1,21 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 resources:
 - manager.yaml
 - metrics_service.yaml
-
 generatorOptions:
   disableNameSuffixHash: true
-
 configMapGenerator:
 - files:
   - controller_manager_config.yaml
   name: manager-config
-patchesStrategicMerge:
-- manager_webhook_patch.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
+patches:
+- path: manager_webhook_patch.yaml
 images:
 - name: controller
   newName: quay.io/netobserv/network-observability-operator
   newTag: 1.8.2-community
-commonLabels:
-  app: netobserv-operator
+labels:
+- includeSelectors: true
+  pairs:
+    app: netobserv-operator

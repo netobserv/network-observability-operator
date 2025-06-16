@@ -13,9 +13,8 @@ COPY go.mod go.mod
 COPY go.sum go.sum
 COPY vendor/ vendor/
 COPY main.go main.go
-COPY apis/ apis/
-COPY controllers/ controllers/
-COPY pkg/ pkg/
+COPY api/ api/
+COPY internal/ internal/
 COPY config/crd/bases config/crd/bases
 
 # Build
