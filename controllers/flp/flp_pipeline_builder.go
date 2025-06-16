@@ -321,25 +321,32 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		nextStage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
 	}
 
-	// obtain encode_prometheus stage from metrics_definitions
-	allMetrics := metrics.MergePredefined(b.flowMetrics.Items, b.desired)
-
+	// Configure metrics
 	var flpMetrics []api.MetricsItem
-	for i := range allMetrics {
-		fm := &allMetrics[i]
-		m, err := flowMetricToFLP(&fm.Spec)
+
+	// First, add predefined metrics
+	predefined := metrics.GetDefinitions(b.desired, false)
+	for i := range predefined {
+		fm := predefined[i]
+		m, err := flowMetricToFLP(&fm)
 		if err != nil {
-			// fm.Name is empty for predefined metrics; check this is a custom metric, not a predefined one
-			if fm.Name != "" {
-				fmstatus.SetFailure(fm, err.Error())
-				continue
-			}
 			// Predefined metric failure => bug
-			return fmt.Errorf("error reading FlowMetric definition '%s': %w", fm.Name, err)
+			return fmt.Errorf("error reading predefined FlowMetric '%s': %w", fm.Name, err)
 		}
-		if fm.Name != "" {
-			fmstatus.CheckCardinality(fm)
+		flpMetrics = append(flpMetrics, *m)
+	}
+
+	// Then add user-defined FlowMetrics
+	for i := range b.flowMetrics.Items {
+		fm := &b.flowMetrics.Items[i]
+		m, err := flowMetricToFLP(fm)
+		if err != nil {
+			fmstatus.SetFailure(fm, err.Error())
+			continue
 		}
+		// Update with actual name
+		fm.Status.PrometheusName = "netobserv_" + m.Name
+		fmstatus.CheckCardinality(fm)
 		flpMetrics = append(flpMetrics, *m)
 	}
 
@@ -387,30 +394,34 @@ func filtersToFLP(in []flowslatest.FLPFilterSet, target flowslatest.FLPFilterTar
 	return rules
 }
 
-func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem, error) {
-	m := &api.MetricsItem{
-		Name:     flowMetric.MetricName,
-		Type:     api.MetricEncodeOperationEnum(strings.ToLower(string(flowMetric.Type))),
-		Filters:  []api.MetricsFilter{},
-		Labels:   flowMetric.Labels,
-		Remap:    flowMetric.Remap,
-		Flatten:  flowMetric.Flatten,
-		ValueKey: flowMetric.ValueField,
+func flowMetricToFLP(fm *metricslatest.FlowMetric) (*api.MetricsItem, error) {
+	metricName := fm.Spec.MetricName
+	if metricName == "" {
+		metricName = helper.PrometheusMetricName(fm.Name)
 	}
-	for _, f := range metrics.GetFilters(flowMetric) {
+	m := &api.MetricsItem{
+		Name:     metricName,
+		Type:     api.MetricEncodeOperationEnum(strings.ToLower(string(fm.Spec.Type))),
+		Filters:  []api.MetricsFilter{},
+		Labels:   fm.Spec.Labels,
+		Remap:    fm.Spec.Remap,
+		Flatten:  fm.Spec.Flatten,
+		ValueKey: fm.Spec.ValueField,
+	}
+	for _, f := range metrics.GetFilters(&fm.Spec) {
 		m.Filters = append(m.Filters, api.MetricsFilter{Key: f.Field, Value: f.Value, Type: api.MetricFilterEnum(conversion.PascalToLower(string(f.MatchType), '_'))})
 	}
-	for _, b := range flowMetric.Buckets {
+	for _, b := range fm.Spec.Buckets {
 		f, err := strconv.ParseFloat(b, 64)
 		if err != nil {
 			return nil, fmt.Errorf("could not parse metric buckets as floats: '%s'; error was: %w", b, err)
 		}
 		m.Buckets = append(m.Buckets, f)
 	}
-	if flowMetric.Divider != "" {
-		f, err := strconv.ParseFloat(flowMetric.Divider, 64)
+	if fm.Spec.Divider != "" {
+		f, err := strconv.ParseFloat(fm.Spec.Divider, 64)
 		if err != nil {
-			return nil, fmt.Errorf("could not parse metric divider as float: '%s'; error was: %w", flowMetric.Divider, err)
+			return nil, fmt.Errorf("could not parse metric divider as float: '%s'; error was: %w", fm.Spec.Divider, err)
 		}
 		m.ValueScale = f
 	}

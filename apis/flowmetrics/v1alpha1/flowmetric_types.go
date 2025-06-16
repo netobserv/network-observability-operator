@@ -61,7 +61,7 @@ type MetricFilter struct {
 // To check the cardinality of all NetObserv metrics, run as `promql`: `count({__name__=~"netobserv.*"}) by (__name__)`.
 type FlowMetricSpec struct {
 	// Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_".
-	// +required
+	// +optional
 	MetricName string `json:"metricName"`
 
 	// Metric type: "Counter", "Histogram" or "Gauge".
@@ -193,13 +193,16 @@ type Query struct {
 type FlowMetricStatus struct {
 	// `conditions` represent the latest available observations of an object's state
 	Conditions []metav1.Condition `json:"conditions"`
+	// Metric name, including prefix, as it appears in Prometheus
+	// +optional
+	PrometheusName string `json:"prometheusName"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Metric Name",type="string",JSONPath=`.spec.metricName`
+// +kubebuilder:printcolumn:name="Metric Name",type="string",JSONPath=`.status.prometheusName`
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=`.status.conditions[?(@.type=="Ready")].reason`
-// +kubebuilder:printcolumn:name="Cardinality",type="string",JSONPath=`.status.conditions[?(@.type=="CardinalityOK")].reason`
+// +kubebuilder:printcolumn:name="Cardinality",type="string",JSONPath=`.status.conditions[?(@.type=="CardinalityWarning")].reason`
 // FlowMetric is the API allowing to create custom metrics from the collected flow logs.
 type FlowMetric struct {
 	metav1.TypeMeta   `json:",inline"`

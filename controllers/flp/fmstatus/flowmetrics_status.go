@@ -69,17 +69,27 @@ func CheckCardinality(fm *metricslatest.FlowMetric) {
 }
 
 func Sync(ctx context.Context, c client.Client, fm *metricslatest.FlowMetricList) {
+	log := log.FromContext(ctx)
+	log.Info("Syncing FlowMetrics status")
 	for i := range fm.Items {
 		nsname := types.NamespacedName{Name: fm.Items[i].Name, Namespace: fm.Items[i].Namespace}
 		// main condition is mandatory; cardinality condition is optional
 		if cond, ok := mapStatuses[nsname]; ok {
 			cardCond := mapCards[nsname]
-			setStatus(ctx, c, nsname, cond, cardCond)
+			setStatus(ctx, c, nsname, func(s *metricslatest.FlowMetricStatus) {
+				if cond != nil {
+					meta.SetStatusCondition(&s.Conditions, *cond)
+				}
+				if cardCond != nil {
+					meta.SetStatusCondition(&s.Conditions, *cardCond)
+				}
+				s.PrometheusName = fm.Items[i].Status.PrometheusName
+			})
 		}
 	}
 }
 
-func setStatus(ctx context.Context, c client.Client, nsname types.NamespacedName, mainCond *metav1.Condition, cardinalityCond *metav1.Condition) {
+func setStatus(ctx context.Context, c client.Client, nsname types.NamespacedName, applyStatus func(s *metricslatest.FlowMetricStatus)) {
 	log := log.FromContext(ctx)
 
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
@@ -92,12 +102,7 @@ func setStatus(ctx context.Context, c client.Client, nsname types.NamespacedName
 			}
 			return err
 		}
-		if mainCond != nil {
-			meta.SetStatusCondition(&fm.Status.Conditions, *mainCond)
-		}
-		if cardinalityCond != nil {
-			meta.SetStatusCondition(&fm.Status.Conditions, *cardinalityCond)
-		}
+		applyStatus(&fm.Status)
 		return c.Status().Update(ctx, &fm)
 	})
 

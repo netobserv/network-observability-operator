@@ -154,5 +154,9 @@ func TestCRDDefault(t *testing.T) {
 	assert.Equal(t, false, IsDefaultValue([]string{"spec", "processor", "debug"}, "lokiMaxRetries", "12"))
 	// lokiStaticLabels
 	assert.Equal(t, "app: netobserv-flowcollector\n", GetFieldDefaultString([]string{"spec", "processor", "debug"}, "lokiStaticLabels"))
+}
 
+func TestPrometheusMetricName(t *testing.T) {
+	name := PrometheusMetricName("a-metric-name:unit")
+	assert.Equal(t, "a_metric_name:unit", name)
 }
