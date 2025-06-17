@@ -103,6 +103,7 @@ type ScopeConfig struct {
 type FieldConfig struct {
 	Name        string `yaml:"name" json:"name"`
 	Type        string `yaml:"type" json:"type"`
+	Format      string `yaml:"format" json:"format"`
 	Description string `yaml:"description" json:"description"`
 	LokiLabel   bool   `yaml:"lokiLabel,omitempty" json:"lokiLabel,omitempty"`
 }
