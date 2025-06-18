@@ -3,6 +3,7 @@
 package helper
 
 import (
+	"regexp"
 	"sort"
 	"strings"
 
@@ -130,4 +131,10 @@ func FindFields(labels []string, isNumber bool) bool {
 
 func NamespacedName(obj client.Object) types.NamespacedName {
 	return types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}
+}
+
+var promInvalidChars = regexp.MustCompile(`[^a-zA-Z0-9:_]`)
+
+func PrometheusMetricName(from string) string {
+	return promInvalidChars.ReplaceAllString(from, "_")
 }

@@ -25,13 +25,13 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.metricName
+    - jsonPath: .status.prometheusName
       name: Metric Name
       type: string
     - jsonPath: .status.conditions[?(@.type=="Ready")].reason
       name: Status
       type: string
-    - jsonPath: .status.conditions[?(@.type=="CardinalityOK")].reason
+    - jsonPath: .status.conditions[?(@.type=="CardinalityWarning")].reason
       name: Cardinality
       type: string
     name: v1alpha1
@@ -241,7 +241,6 @@ spec:
                   Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.
                 type: string
             required:
-            - metricName
             - type
             type: object
           status:
@@ -305,6 +304,9 @@ spec:
                   - type
                   type: object
                 type: array
+              prometheusName:
+                description: Metric name, including prefix, as it appears in Prometheus
+                type: string
             required:
             - conditions
             type: object
