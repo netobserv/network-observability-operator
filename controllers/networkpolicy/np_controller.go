@@ -33,7 +33,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("networkPolicy").
-		Owns(&networkingv1.NetworkPolicy{}).
+		Owns(&networkingv1.NetworkPolicy{}, reconcilers.UpdateOrDeleteOnlyPred).
 		Complete(&r)
 }
 
