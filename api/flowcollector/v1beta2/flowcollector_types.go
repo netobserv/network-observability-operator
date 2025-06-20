@@ -378,7 +378,7 @@ type FlowCollectorEBPF struct {
 
 	// `advanced` allows setting some aspects of the internal configuration of the eBPF agent.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
-	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk. You can also
+	// such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk. You can also
 	// override the default Linux capabilities from there.
 	// +optional
 	Advanced *AdvancedAgentConfig `json:"advanced,omitempty"`
@@ -694,7 +694,7 @@ type FlowCollectorFLP struct {
 
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
-	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+	// such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 	// +optional
 	Advanced *AdvancedProcessorConfig `json:"advanced,omitempty"`
 }
@@ -1064,7 +1064,7 @@ type FlowCollectorConsolePlugin struct {
 
 	// `advanced` allows setting some aspects of the internal configuration of the console plugin.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
-	// such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+	// such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 	// +optional
 	Advanced *AdvancedPluginConfig `json:"advanced,omitempty"`
 }

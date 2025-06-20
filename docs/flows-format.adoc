@@ -157,7 +157,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | n/a
 | `Flags`
 | string[]
-| List of TCP flags comprised in the flow, as per RFC-9293, with additional custom flags to represent the following per-packet combinations: +
+| List of TCP flags comprised in the flow, according to RFC-9293, with additional custom flags to represent the following per-packet combinations: +
 - SYN_ACK +
 - FIN_ACK +
 - RST_ACK

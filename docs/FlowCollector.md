@@ -6204,7 +6204,7 @@ is set to `eBPF`.
         <td>
           `advanced` allows setting some aspects of the internal configuration of the eBPF agent.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk. You can also
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk. You can also
 override the default Linux capabilities from there.<br/>
         </td>
         <td>false</td>
@@ -6361,7 +6361,7 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
 
 `advanced` allows setting some aspects of the internal configuration of the eBPF agent.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk. You can also
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk. You can also
 override the default Linux capabilities from there.
 
 <table>
@@ -8966,7 +8966,7 @@ refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of 
         <td>
           `advanced` allows setting some aspects of the internal configuration of the console plugin.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9055,7 +9055,7 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
 
 `advanced` allows setting some aspects of the internal configuration of the console plugin.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 
 <table>
     <thead>
@@ -14357,7 +14357,7 @@ This feature requires the "topology.kubernetes.io/zone" label to be set on nodes
         <td>
           `advanced` allows setting some aspects of the internal configuration of the flow processor.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14502,7 +14502,7 @@ When a subnet matches the source or destination IP of a flow, a corresponding fi
 
 `advanced` allows setting some aspects of the internal configuration of the flow processor.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 
 <table>
     <thead>
