@@ -180,7 +180,7 @@ Type::
 | `object`
 | `advanced` allows setting some aspects of the internal configuration of the eBPF agent.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk. You can also
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk. You can also
 override the default Linux capabilities from there.
 
 | `cacheActiveTimeout`
@@ -281,7 +281,7 @@ Description::
 --
 `advanced` allows setting some aspects of the internal configuration of the eBPF agent.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk. You can also
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk. You can also
 override the default Linux capabilities from there.
 --
 
@@ -801,7 +801,7 @@ Type::
 | `object`
 | `advanced` allows setting some aspects of the internal configuration of the console plugin.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 
 | `autoscaler`
 | `object`
@@ -843,7 +843,7 @@ Description::
 --
 `advanced` allows setting some aspects of the internal configuration of the console plugin.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 --
 
 Type::
@@ -2703,7 +2703,7 @@ This feature requires the "topology.kubernetes.io/zone" label to be set on nodes
 | `object`
 | `advanced` allows setting some aspects of the internal configuration of the flow processor.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 
 | `clusterName`
 | `string`
@@ -2783,7 +2783,7 @@ Description::
 --
 `advanced` allows setting some aspects of the internal configuration of the flow processor.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 --
 
 Type::
