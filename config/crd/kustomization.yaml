@@ -1,3 +1,6 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
 # This kustomization.yaml is not intended to be run by itself,
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
@@ -6,11 +9,8 @@ resources:
 - bases/flows.netobserv.io_flowmetrics.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
-patchesStrategicMerge:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
 # patches here are for enabling the conversion webhook for each CRD
-- patches/webhook_in_flowcollectors.yaml
-- patches/webhook_in_flowmetrics.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
@@ -20,10 +20,12 @@ patchesStrategicMerge:
 #+kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 patches:
-- target:
+- path: patches/singleton_in_flowcollectors.yaml
+  target:
     kind: CustomResourceDefinition
     name: flowcollectors.flows.netobserv.io
-  path: patches/singleton_in_flowcollectors.yaml
+- path: patches/webhook_in_flowcollectors.yaml
+- path: patches/webhook_in_flowmetrics.yaml
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.
 configurations:
