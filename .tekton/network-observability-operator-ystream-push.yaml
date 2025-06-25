@@ -14,7 +14,7 @@ metadata:
     #   || "go.sum".pathChanged() || "hack/update-build.sh".pathChanged() || "LICENSE".pathChanged()
     #   || "main.go".pathChanged() || "Makefile".pathChanged() || "manifests/***".pathChanged()
     #   || "vendor/***".pathChanged())
-    pipelinesascode.tekton.dev/on-cel-expression: false
+    pipelinesascode.tekton.dev/on-cel-expression: "false"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: netobserv-ystream
