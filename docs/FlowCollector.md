@@ -6204,7 +6204,7 @@ is set to `eBPF`.
         <td>
           `advanced` allows setting some aspects of the internal configuration of the eBPF agent.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk. You can also
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk. You can also
 override the default Linux capabilities from there.<br/>
         </td>
         <td>false</td>
@@ -6249,18 +6249,17 @@ Otherwise it is matched as a case-sensitive string.<br/>
         <td>
           List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
 - `PacketDrop`: Enable the packets drop flows logging feature. This feature requires mounting
-the kernel debug filesystem, so the eBPF agent pods must run as privileged.
-If the `spec.agent.ebpf.privileged` parameter is not set, an error is reported.<br>
+the kernel debug filesystem, so the eBPF agent pods must run as privileged via `spec.agent.ebpf.privileged`.<br>
 - `DNSTracking`: Enable the DNS tracking feature.<br>
 - `FlowRTT`: Enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
 - `NetworkEvents`: Enable the network events monitoring feature, such as correlating flows and network policies.
-This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
+This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged via `spec.agent.ebpf.privileged`.
 It requires using the OVN-Kubernetes network plugin with the Observability feature.
 IMPORTANT: This feature is available as a Technology Preview.<br>
 - `PacketTranslation`: Enable enriching flows with packet translation information, such as Service NAT.<br>
 - `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
 - `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN). <br>
-This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged.
+This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged via `spec.agent.ebpf.privileged`.
 It requires using the OVN-Kubernetes network plugin with the Observability feature. <br>
 - `IPSec`, to track flows between nodes with IPsec encryption. <br><br/>
         </td>
@@ -6361,7 +6360,7 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
 
 `advanced` allows setting some aspects of the internal configuration of the eBPF agent.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk. You can also
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk. You can also
 override the default Linux capabilities from there.
 
 <table>
@@ -8966,7 +8965,7 @@ refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of 
         <td>
           `advanced` allows setting some aspects of the internal configuration of the console plugin.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -9055,7 +9054,7 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
 
 `advanced` allows setting some aspects of the internal configuration of the console plugin.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 
 <table>
     <thead>
@@ -14357,7 +14356,7 @@ This feature requires the "topology.kubernetes.io/zone" label to be set on nodes
         <td>
           `advanced` allows setting some aspects of the internal configuration of the flow processor.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.<br/>
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -14502,7 +14501,7 @@ When a subnet matches the source or destination IP of a flow, a corresponding fi
 
 `advanced` allows setting some aspects of the internal configuration of the flow processor.
 This section is aimed mostly for debugging and fine-grained performance optimizations,
-such as `GOGC` and `GOMAXPROCS` env vars. Set these values at your own risk.
+such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 
 <table>
     <thead>
