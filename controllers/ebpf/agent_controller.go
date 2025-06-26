@@ -13,6 +13,7 @@ import (
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/controllers/ebpf/internal/permissions"
 	"github.com/netobserv/network-observability-operator/controllers/reconcilers"
+	"github.com/netobserv/network-observability-operator/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/volumes"
 	"github.com/netobserv/network-observability-operator/pkg/watchers"
@@ -71,6 +72,7 @@ const (
 	envEnableIPsec                = "ENABLE_IPSEC_TRACKING"
 	envDNSTrackingPort            = "DNS_TRACKING_PORT"
 	envPreferredInterface         = "PREFERRED_INTERFACE_FOR_MAC_PREFIX"
+	envAttachMode                 = "TC_ATTACH_MODE"
 	envListSeparator              = ","
 )
 
@@ -91,6 +93,7 @@ const (
 	ovsHostMountPath            = "/var/run/openvswitch"
 	ovsMountName                = "var-run-ovs"
 	defaultNetworkEventsGroupID = "10"
+	defaultPreferredInterface   = "0a:58=eth0" // Hard-coded default config to deal with OVN-generated MACs
 )
 
 const (
@@ -403,7 +406,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 }
 
 func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowCollector, annots map[string]string) ([]corev1.EnvVar, error) {
-	config := c.getEnvConfig(coll)
+	config := getEnvConfig(coll, c.ClusterInfo)
 
 	if helper.UseKafka(&coll.Spec) {
 		config = append(config,
@@ -473,19 +476,6 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			Name:  envFlowsTargetPort,
 			Value: strconv.Itoa(int(*advancedConfig.Port)),
 		})
-	}
-
-	if helper.IsEBPFFlowFilterEnabled(&coll.Spec.Agent.EBPF) {
-		config = append(config, corev1.EnvVar{Name: envEnableFlowFilter, Value: "true"})
-		if len(coll.Spec.Agent.EBPF.FlowFilter.Rules) != 0 {
-			if filterRules := c.configureFlowFiltersRules(coll.Spec.Agent.EBPF.FlowFilter.Rules); filterRules != nil {
-				config = append(config, filterRules...)
-			}
-		} else {
-			if filter := c.configureFlowFilter(coll.Spec.Agent.EBPF.FlowFilter); filter != nil {
-				config = append(config, filter...)
-			}
-		}
 	}
 
 	return config, nil
@@ -581,7 +571,7 @@ func processPorts(ports intstr.IntOrString, single *int32, list *string, rangeFi
 	}
 }
 
-func (c *AgentController) configureFlowFiltersRules(rules []flowslatest.EBPFFlowFilterRule) []corev1.EnvVar {
+func configureFlowFiltersRules(rules []flowslatest.EBPFFlowFilterRule) []corev1.EnvVar {
 	filters := make([]ebpfconfig.FlowFilter, 0)
 	for i := range rules {
 		filters = append(filters, mapFlowFilterRuleToFilter(&rules[i]))
@@ -595,7 +585,7 @@ func (c *AgentController) configureFlowFiltersRules(rules []flowslatest.EBPFFlow
 	return []corev1.EnvVar{{Name: envFilterRules, Value: string(jsonData)}}
 }
 
-func (c *AgentController) configureFlowFilter(filter *flowslatest.EBPFFlowFilter) []corev1.EnvVar {
+func configureFlowFilter(filter *flowslatest.EBPFFlowFilter) []corev1.EnvVar {
 	f := mapFlowFilterToFilter(filter)
 	jsonData, err := json.Marshal([]ebpfconfig.FlowFilter{f})
 	if err != nil {
@@ -620,11 +610,8 @@ func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *core
 }
 
 // nolint:golint,cyclop
-func (c *AgentController) getEnvConfig(coll *flowslatest.FlowCollector) []corev1.EnvVar {
+func getEnvConfig(coll *flowslatest.FlowCollector, cinfo *cluster.Info) []corev1.EnvVar {
 	var config []corev1.EnvVar
-
-	// Hard-coded config to deal with OVN unrecognized MAC
-	config = append(config, corev1.EnvVar{Name: envPreferredInterface, Value: "0a:58=eth0"})
 
 	if coll.Spec.Agent.EBPF.CacheActiveTimeout != "" {
 		config = append(config, corev1.EnvVar{
@@ -750,25 +737,19 @@ func (c *AgentController) getEnvConfig(coll *flowslatest.FlowCollector) []corev1
 		})
 	}
 
-	dnsTrackingPort := defaultDNSTrackingPort
-	networkEventsGroupID := defaultNetworkEventsGroupID
-	// we need to sort env map to keep idempotency,
-	// as equal maps could be iterated in different order
-	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
-	for _, pair := range helper.KeySorted(advancedConfig.Env) {
-		k, v := pair[0], pair[1]
-		switch k {
-		case envDNSTrackingPort:
-			dnsTrackingPort = v
-		case envNetworkEventsGroupID:
-			networkEventsGroupID = v
-		default:
-			config = append(config, corev1.EnvVar{Name: k, Value: v})
+	if helper.IsEBPFFlowFilterEnabled(&coll.Spec.Agent.EBPF) {
+		config = append(config, corev1.EnvVar{Name: envEnableFlowFilter, Value: "true"})
+		if len(coll.Spec.Agent.EBPF.FlowFilter.Rules) != 0 {
+			if filterRules := configureFlowFiltersRules(coll.Spec.Agent.EBPF.FlowFilter.Rules); filterRules != nil {
+				config = append(config, filterRules...)
+			}
+		} else {
+			if filter := configureFlowFilter(coll.Spec.Agent.EBPF.FlowFilter); filter != nil {
+				config = append(config, filter...)
+			}
 		}
 	}
 
-	config = append(config, corev1.EnvVar{Name: envDNSTrackingPort, Value: dnsTrackingPort})
-	config = append(config, corev1.EnvVar{Name: envNetworkEventsGroupID, Value: networkEventsGroupID})
 	config = append(config, corev1.EnvVar{
 		Name: envAgentIP,
 		ValueFrom: &corev1.EnvVarSource{
@@ -778,6 +759,22 @@ func (c *AgentController) getEnvConfig(coll *flowslatest.FlowCollector) []corev1
 			},
 		},
 	})
+
+	defaultAttach := "tcx"
+	if old, _ := cinfo.IsOpenShiftVersionLessThan("4.15.0"); old {
+		defaultAttach = "tc"
+	}
+
+	// Other default config that can be overriden by env
+	defaults := map[string]string{
+		envDNSTrackingPort:      defaultDNSTrackingPort,
+		envNetworkEventsGroupID: defaultNetworkEventsGroupID,
+		envPreferredInterface:   defaultPreferredInterface,
+		envAttachMode:           defaultAttach,
+	}
+	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
+	moreConfig := helper.BuildEnvFromDefaults(advancedConfig.Env, defaults)
+	config = append(config, moreConfig...)
 
 	return config
 }
