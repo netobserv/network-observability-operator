@@ -10,17 +10,27 @@
     ],
     "postUpdateOptions": [
       "gomodUpdateImportPaths",
-      "gomodTidy"
+      "gomodTidy",
+      "gomodVendor"
     ],
     "packageRules": [
       {
         "matchManagers": ["gomod"],
-        "matchDepTypes": ["indirect"],
-        "enabled": true
+        "groupName": "Go modules"
       },
       {
-        "matchPackageNames": ["**"],
-        "groupName": "Go modules"
+        "matchManagers": ["gomod"],
+        "matchUpdateTypes": ["major"],
+        "enabled": false
+      }
+    ]
+  },
+  "dockerfile": {
+    "packageRules": [
+      {
+        "matchManagers": ["dockerfile"],
+        "matchPackageNames": "docker.io/library/golang",
+        "enabled": false
       }
     ]
   }
