@@ -224,6 +224,24 @@ func TestValidateAgent(t *testing.T) {
 			expectedWarnings: admission.Warnings{"The NetworkEvents feature requires eBPF Agent to run in privileged mode, which is currently disabled in spec.agent.ebpf.privileged"},
 		},
 		{
+			name:       "UDNMapping on ocp 4.18.0-0 doesn't trigger warnings",
+			ocpVersion: "4.18.0-0.nightly-2025-06-30-082606",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{
+						Type: AgentEBPF,
+						EBPF: FlowCollectorEBPF{
+							Features:   []AgentFeature{UDNMapping},
+							Privileged: true,
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "FlowFilter different ports configs are mutually exclusive",
 			fc: &FlowCollector{
 				ObjectMeta: metav1.ObjectMeta{
