@@ -3,6 +3,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.2
+    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/serving-cert'
   creationTimestamp: null
   name: flowcollectors.flows.netobserv.io
 spec:

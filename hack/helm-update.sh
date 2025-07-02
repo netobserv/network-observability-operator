@@ -7,6 +7,7 @@ for crd in "flows.netobserv.io_flowcollectors.yaml" "flows.netobserv.io_flowmetr
   cp "bundle/manifests/$crd" helm/templates
   sed -i -r 's/(`[^`]*\{\{[^`]*`)/{{\1}}/g' helm/templates/$crd # escape "{{" for helm
   yq -i '.spec.conversion.webhook.clientConfig.service.namespace="{{ .Release.Namespace }}"' helm/templates/$crd
+  yq -i '.metadata.annotations["cert-manager.io/inject-ca-from"]="{{ .Release.Namespace }}/serving-cert"' helm/templates/$crd
 done
 
 # Copy unchanged files
@@ -38,3 +39,5 @@ yq '{"apiVersion": "rbac.authorization.k8s.io/v1", "kind": "ClusterRole", "metad
 yq '{"apiVersion": "rbac.authorization.k8s.io/v1", "kind": "ClusterRoleBinding", "metadata": {"name": "netobserv-manager-rolebinding"}, "roleRef": {"apiGroup": "rbac.authorization.k8s.io", "kind": "ClusterRole", "name": "netobserv-manager-role"}, "subjects": [{"kind": "ServiceAccount", "name": .serviceAccountName, "namespace": "{{ .Release.Namespace }}"}]}' _tmp/csv-clusterrole.yaml > helm/templates/clusterrolebinding.yaml
 yq '{"apiVersion": "rbac.authorization.k8s.io/v1", "kind": "Role", "metadata": {"name": "netobserv-leader-election-role"}, "rules": .rules}' _tmp/csv-role.yaml > helm/templates/role.yaml
 yq '{"apiVersion": "rbac.authorization.k8s.io/v1", "kind": "RoleBinding", "metadata": {"name": "netobserv-leader-election-rolebinding"}, "roleRef": {"apiGroup": "rbac.authorization.k8s.io", "kind": "Role", "name": "netobserv-leader-election-role"}, "subjects": [{"kind": "ServiceAccount", "name": .serviceAccountName, "namespace": "{{ .Release.Namespace }}"}]}' _tmp/csv-role.yaml > helm/templates/rolebinding.yaml
+
+for f in bundle/manifests/*_rbac.authorization.k8s.io_v1_clusterrole.yaml; do cp "$f" helm/templates/ ; done

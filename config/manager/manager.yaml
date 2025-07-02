@@ -32,11 +32,11 @@ spec:
         - --profiling-bind-address=$(PROFILING_BIND_ADDRESS)
         env:
           - name: RELATED_IMAGE_EBPF_AGENT
-            value: quay.io/netobserv/netobserv-ebpf-agent:v1.8.2-community
+            value: quay.io/netobserv/netobserv-ebpf-agent:v1.9.0-community
           - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
-            value: quay.io/netobserv/flowlogs-pipeline:v1.8.2-community
+            value: quay.io/netobserv/flowlogs-pipeline:v1.9.0-community
           - name: RELATED_IMAGE_CONSOLE_PLUGIN
-            value: quay.io/netobserv/network-observability-console-plugin:v1.8.2-community
+            value: quay.io/netobserv/network-observability-console-plugin:v1.9.0-community
           - name: RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT
             value: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
           - name: DOWNSTREAM_DEPLOYMENT

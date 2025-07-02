@@ -11,7 +11,7 @@ To release them, a tag in the format "v1.6.0-community" or "v1.6.0-crc0" must be
 E.g:
 
 ```bash
-version="v1.8.2-community"
+version="v1.9.0-community"
 git tag -a "$version" -m "$version"
 git push upstream --tags
 ```
@@ -47,7 +47,7 @@ Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, 
 make update-bundle helm-update
 
 # Set desired operator version - CAREFUL, no leading "v" here
-version="1.8.2-community"
+version="1.9.0-community"
 vv=v$version
 test_branch=test-$vv
 
@@ -144,14 +144,14 @@ helm delete my-netobserv -n netobserv
 
 ```bash
 helm package helm/
-mv netobserv-operator-1.8.2.tgz /path/to/netobserv.github.io/static/helm/
+mv netobserv-operator-1.9.0.tgz /path/to/netobserv.github.io/static/helm/
 cd /path/to/netobserv.github.io/static/
 helm repo index helm/ --url https://netobserv.io/static/helm/
 
 # Now, check there's nothing wrong in the generated files before commit
 
-git add helm/netobserv-operator-1.8.2.tgz helm.index.yaml
-git commit -m "Publish helm 1.8.2-community"
+git add helm/netobserv-operator-1.9.0.tgz helm.index.yaml
+git commit -m "Publish helm 1.9.0-community"
 git push upstream HEAD:main
 ```
 
