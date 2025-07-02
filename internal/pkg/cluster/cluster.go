@@ -68,7 +68,7 @@ func (c *Info) fetchAvailableAPIs(ctx context.Context, client *discovery.Discove
 	for apiName := range c.apisMap {
 		if hasAPI(apiName, resources) {
 			c.apisMap[apiName] = true
-		} else {
+		} else if discErr != nil {
 			// Check if the wanted API is in error
 			for gv, err := range discErr.Groups {
 				if strings.Contains(apiName, gv.String()) {
