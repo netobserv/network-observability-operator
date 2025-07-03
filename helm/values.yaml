@@ -29,8 +29,11 @@ operator:
   version: 1.9.0-community
 
 # Dependency toggle condition value
+install:
+  prom: false
+  loki: false
+
 prometheus:
-  install: false
   server:
     global:
       scrape_interval: 15s
@@ -41,8 +44,6 @@ prometheus:
   prometheus-pushgateway:
     enabled: false
 
-loki:
-  install: false
 loki-stack:
   promtail:
     enabled: false

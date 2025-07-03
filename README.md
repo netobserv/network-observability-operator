@@ -34,14 +34,16 @@ NetObserv has a couple of dependencies that must be installed on your cluster:
 - Prometheus
 - Loki
 
-Loki is not mandatory but improves the overall experience with NetObserv.
-If you don't have these dependencies already, some convenience scripts are available from the repository, provided for demo purpose:
+Cert-manager has to be installed separately. For example, using helm:
 
 ```bash
-git clone https://github.com/netobserv/network-observability-operator.git && cd network-observability-operator
-PORT_FWD=false make deploy-prometheus deploy-loki install-cert-manager
-# (it is expected to see errors while running this script, since it runs several attempts creating a certificate for testing, before eventually succeeding)
+helm repo add cert-manager https://charts.jetstack.io
+helm install my-cert-manager cert-manager/cert-manager --set crds.enabled=true
 ```
+
+Prometheus and Loki can be installed separately, or as dependencies of NetObserv (see below).
+
+Loki is not mandatory but improves the overall experience with NetObserv.
 
 ### Install with Helm
 
@@ -50,11 +52,17 @@ PORT_FWD=false make deploy-prometheus deploy-loki install-cert-manager
 
 ```bash
 helm repo add netobserv https://netobserv.io/static/helm/ --force-update
-helm install my-netobserv --set standaloneConsole.enable=true netobserv/netobserv-operator
+
+# Standalone install, including dependencies:
+helm install my-netobserv -n netobserv --create-namespace --set standaloneConsole.enable=true --set install.loki=true --set install.prom=true netobserv/netobserv-operator
+
+# OR minimal install (Prometheus/Loki are installed separately)
+helm install my-netobserv -n netobserv --create-namespace --set standaloneConsole.enable=true netobserv/netobserv-operator
+
 # If you're in OpenShift, you can omit "--set standaloneConsole.enable=true" to use the Console plugin instead.
 ```
 
-You can now create a `FlowCollector` resource. Refer to the [Configuration section](#configuration) of this document. A very short `FlowCollector` should work, using default values, plus with the standalone console enabled:
+You can now create a `FlowCollector` resource. Refer to the [Configuration section](#configuration) of this document. A short `FlowCollector` should work, using most default values, plus with the standalone console enabled:
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -68,17 +76,21 @@ spec:
     advanced:
       env:
         TEST_CONSOLE: "true"
+  loki:
+    mode: Monolithic
+    monolithic:
+      url: 'http://my-netobserv-loki.netobserv.svc:3100/'
   prometheus:
     querier:
       manual:
-        url: http://prometheus:9090
+        url: http://my-netobserv-prometheus-server.netobserv.svc/
 EOF
 ```
 
 A few remarks:
 - While the [web console](https://github.com/netobserv/network-observability-console-plugin) is primarily designed as a plugin for the OpenShift Console, it is still possible to deploy it as a standalone, which the dev team sometimes use for testing. This is why it is mentioned as "TEST_CONSOLE" here.
 - If you're in OpenShift, you should omit "TEST_CONSOLE: true" to use the Console plugin instead, which offers a better / more integrated experience.
-- You can change the Prometheus URL depending on your installation. This example URL works if you use the `make deploy-prometheus` script from the repository. Prometheus configuration options are documented [here](./docs/FlowCollector.md#flowcollectorspecprometheus-1).
+- You can change the Prometheus and Loki URLs depending on your installation. This example works if you use the "standalone" installation described above, with `install.loki=true` and `install.prom=true`. Prometheus and Loki configuration options are documented [here](./docs/FlowCollector.md).
 
 To view the test console, you can port-forward 9001:
 
