@@ -67,11 +67,10 @@ annotations:
 
 dependencies:
 - name: prometheus
-  version: "27.7.1"
+  version: "~27.7.1"
   repository: https://prometheus-community.github.io/helm-charts
-  condition: prometheus.install
-
+  condition: install.prom
 - name: loki-stack
-  version: "2.10.2"
+  version: "~2.10.2"
   repository: https://grafana.github.io/helm-charts
-  condition: loki.install
+  condition: install.loki
