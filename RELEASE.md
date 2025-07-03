@@ -16,14 +16,14 @@ git tag -a "$version" -m "$version"
 git push upstream --tags
 ```
 
-The release script should be triggered (check github actions).
+The release script should be triggered (check github actions). It will automatically draft a new release, with artifacts attached.
 
-When the last release candidate is accepted and the final release tag is pushed (using the same procedure), you can generate the release via the github interface:
-- [console plugin](https://github.com/netobserv/network-observability-console-plugin/releases/new)
-- [flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline/releases/new)
-- [netobserv-ebpf-agent](https://github.com/netobserv/netobserv-ebpf-agent/releases/new)
+If the release looks good, you can publish it via the github interface:
+- [console plugin](https://github.com/netobserv/network-observability-console-plugin/releases)
+- [flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline/releases)
+- [netobserv-ebpf-agent](https://github.com/netobserv/netobserv-ebpf-agent/releases)
 
-Click the "Auto-generate release note" button.
+Edit the draft, set the previous tag then click the "Generate release notes" button.
 
 If you think the "Dependencies" section is too long, you can surround it in a `<details>` block, to make it collapsed. E.g:
 
@@ -73,10 +73,10 @@ git push upstream HEAD:main
 git push upstream :$test_branch
 ```
 
-When the last release candidate is accepted and the final release tag is pushed (using the same procedure), you can generate the release via the github interface:
-- [operator](https://github.com/netobserv/network-observability-operator/releases/new)
+If the release looks good, you can publish it via the github interface:
+- [operator](https://github.com/netobserv/network-observability-operator/releases)
 
-Click the "Auto-generate release note" button.
+Edit the draft, set the previous tag then click the "Generate release notes" button.
 
 Grab related components release notes by running:
 
@@ -149,11 +149,14 @@ cd /path/to/netobserv.github.io/static/
 helm repo index helm/ --url https://netobserv.io/static/helm/
 
 # Now, check there's nothing wrong in the generated files before commit
+colordiff <(yq '.entries.netobserv-operator[0]' helm/index.yaml) <(yq '.entries.netobserv-operator[1]' helm/index.yaml)
 
-git add helm/netobserv-operator-1.9.0.tgz helm.index.yaml
+git add helm/netobserv-operator-1.9.0.tgz helm/index.yaml
 git commit -m "Publish helm 1.9.0-community"
 git push upstream HEAD:main
 ```
+
+Check ArtifactHub for update after a few minutes: https://artifacthub.io/packages/helm/netobserv/netobserv-operator
 
 ## OLD
 

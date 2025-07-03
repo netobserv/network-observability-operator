@@ -60,3 +60,30 @@ jobs:
         run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=${{ env.tag }} make catalog-build
       - name: push catalog to quay.io
         run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=${{ env.tag }} make catalog-push
+      - name: extract binaries
+        run: MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.tag }} make extract-binaries
+      - name: create draft release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.tag }}
+          release_name: ${{ env.tag }}
+          draft: true
+          prerelease: false
+      - name: upload binaries
+        uses: actions/github-script@v2
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs').promises;
+            const upload_url = '${{ steps.create_release.outputs.upload_url }}';
+            for (let file of await fs.readdir('./release-assets')) {
+              console.log('uploading', file);
+              await github.repos.uploadReleaseAsset({
+                url: upload_url,
+                name: file,
+                data: await fs.readFile(`./release-assets/${file}`)
+              }); 
+            }
