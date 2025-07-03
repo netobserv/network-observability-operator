@@ -35,17 +35,17 @@ spec:
             - /manager
           env:
             - name: RELATED_IMAGE_EBPF_AGENT
-              value: "{{ .Values.ebpf_agent.image }} : {{ .Values.ebpf_agent.version }}"
+              value: '{{ .Values.ebpfAgent.image }}:{{ .Values.ebpfAgent.version }}'
             - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
-              value: "{{ .Values.flowlog_pipeline.image }} : {{ .Values.flowlog_pipeline.version }}"
+              value: '{{ .Values.flowlogsPipeline.image }}:{{ .Values.flowlogsPipeline.version }}'
             - name: RELATED_IMAGE_CONSOLE_PLUGIN
-              value: '{{ if .Values.standaloneConsole.enable }}"{{ .Values.console_plugin.standalone_enable.image }} : {{ .Values.console_plugin.standalone_enable.version}}"{{ else }} "{{ .Values.console_plugin.standalone_disable.image }} : {{ .Values.console_plugin.standalone_disable.version}}"{ {{ end }}'
+              value: '{{ if .Values.standaloneConsole.enable }}{{ .Values.standaloneConsole.image }}:{{ .Values.standaloneConsole.version }}{{ else }}{{ .Values.consolePlugin.image }}:{{ .Values.consolePlugin.version }}{{ end }}'
             - name: RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT
-              value: '{{ if .Values.standaloneConsole.enable }}"{{ .Values.console_plugin.standalone_enable.image }} : {{ .Values.console_plugin.standalone_enable.version}}"{{ else }} "{{ .Values.console_plugin.standalone_disable.image }} : {{ .Values.console_plugin.standalone_disable.version}}"{ {{ end }}'
+              value: '{{ if .Values.standaloneConsole.enable }}{{ .Values.standaloneConsole.image }}:{{ .Values.standaloneConsole.version }}{{ else }}{{ .Values.consolePlugin.image }}:{{ .Values.consolePlugin.version }}{{ end }}'
             - name: DOWNSTREAM_DEPLOYMENT
               value: "false"
             - name: PROFILING_BIND_ADDRESS
-          image: "{{ .Values.netobserv.image }}:{{ .Values.netobserv.version }}"
+          image: '{{ .Values.operator.image }}:{{ .Values.operator.version }}'
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
