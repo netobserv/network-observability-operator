@@ -4,10 +4,10 @@ mkdir -p _tmp
 
 # Copy and edit CRDs
 for crd in "flows.netobserv.io_flowcollectors.yaml" "flows.netobserv.io_flowmetrics.yaml"; do
-  cp "bundle/manifests/$crd" helm/templates
-  sed -i -r 's/(`[^`]*\{\{[^`]*`)/{{\1}}/g' helm/templates/$crd # escape "{{" for helm
-  yq -i '.spec.conversion.webhook.clientConfig.service.namespace="{{ .Release.Namespace }}"' helm/templates/$crd
-  yq -i '.metadata.annotations["cert-manager.io/inject-ca-from"]="{{ .Release.Namespace }}/serving-cert"' helm/templates/$crd
+  cp "bundle/manifests/$crd" helm/crds
+  sed -i -r 's/(`[^`]*\{\{[^`]*`)/{{\1}}/g' helm/crds/$crd # escape "{{" for helm
+  yq -i 'del(.spec.conversion)' helm/crds/$crd
+  yq -i 'del(.spec.versions[] | select(.deprecated == true))' helm/crds/$crd
 done
 
 # Copy unchanged files
@@ -28,10 +28,12 @@ yq '.spec.install.spec.permissions[0]' bundle/manifests/netobserv-operator.clust
 # Create deployment
 yq '{"apiVersion": "apps/v1", "kind": "Deployment", "metadata": {"name": "netobserv-controller-manager", "labels": {"app": "netobserv-operator", "control-plane": "controller-manager"}}, "spec": .}' _tmp/csv-deployment.yaml > helm/templates/deployment.yaml
 
-# Inject paramterized standalone console in deployment
-PLUGIN_IMAGE=$(yq '(.spec.template.spec.containers[0].env[] | select(.name=="RELATED_IMAGE_CONSOLE_PLUGIN") | .value)' helm/templates/deployment.yaml)
-STANDALONE_IMAGE=$(echo $PLUGIN_IMAGE | sed 's/network-observability-console-plugin/network-observability-standalone-frontend/')
-yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_CONSOLE_PLUGIN\") | .value) = \"{{ if .Values.standaloneConsole.enable }}$STANDALONE_IMAGE{{ else }}$PLUGIN_IMAGE{{ end }}\"" helm/templates/deployment.yaml
+# Inject parameterized images
+yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_EBPF_AGENT\") | .value) = \"{{ .Values.ebpfAgent.image }}:{{ .Values.ebpfAgent.version }}\"" helm/templates/deployment.yaml
+yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_FLOWLOGS_PIPELINE\") | .value) = \"{{ .Values.flowlogsPipeline.image }}:{{ .Values.flowlogsPipeline.version }}\"" helm/templates/deployment.yaml
+yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_CONSOLE_PLUGIN\") | .value) = \"{{ if .Values.standaloneConsole.enable }}{{ .Values.standaloneConsole.image }}:{{ .Values.standaloneConsole.version }}{{ else }}{{ .Values.consolePlugin.image }}:{{ .Values.consolePlugin.version }}{{ end }}\"" helm/templates/deployment.yaml
+yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT\") | .value) = \"{{ if .Values.standaloneConsole.enable }}{{ .Values.standaloneConsole.image }}:{{ .Values.standaloneConsole.version }}{{ else }}{{ .Values.consolePlugin.image }}:{{ .Values.consolePlugin.version }}{{ end }}\"" helm/templates/deployment.yaml
+yq -i ".spec.template.spec.containers[0].image = \"{{ .Values.operator.image }}:{{ .Values.operator.version }}\"" helm/templates/deployment.yaml
 
 # Create roles
 yq '{"apiVersion": "v1", "kind": "ServiceAccount", "metadata": {"name": .serviceAccountName}}' _tmp/csv-clusterrole.yaml > helm/templates/serviceaccount.yaml

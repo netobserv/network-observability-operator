@@ -65,14 +65,13 @@ annotations:
     - title: Flow details
       url: https://netobserv.io/static/assets/images/about/network-traffic-main.png
 
-
 dependencies:
 - name: prometheus
   version: "27.7.1"
   repository: https://prometheus-community.github.io/helm-charts
-  condition: prometheus.enabled
+  condition: prometheus.install
 
 - name: loki-stack
   version: "2.10.2"
   repository: https://grafana.github.io/helm-charts
-  condition: loki.enabled
+  condition: loki.install
