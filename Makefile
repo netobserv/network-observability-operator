@@ -540,6 +540,11 @@ endif
 helm-update: YQ ## Update helm template
 	sed -i -r 's/^appVersion:.*/appVersion: $(BUNDLE_VERSION)/g' helm/Chart.yaml
 	sed -i -r 's/^version:.*/version: $(BUNDLE_VERSION:%-community=%)/g' helm/Chart.yaml
+	yq -i '.ebpfAgent.version="v$(BUNDLE_VERSION)"' helm/values.yaml
+	yq -i '.flowlogsPipeline.version="v$(BUNDLE_VERSION)"' helm/values.yaml
+	yq -i '.consolePlugin.version="v$(BUNDLE_VERSION)"' helm/values.yaml
+	yq -i '.standaloneConsole.version="v$(BUNDLE_VERSION)"' helm/values.yaml
+	yq -i '.operator.version="$(BUNDLE_VERSION)"' helm/values.yaml
 	hack/helm-update.sh
 	cp LICENSE helm/
 
