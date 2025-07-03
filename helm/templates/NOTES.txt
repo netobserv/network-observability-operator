@@ -1,0 +1,30 @@
+You can now create a FlowCollector resource. A very short FlowCollector should work, using default values, plus with the standalone console enabled:
+
+apiVersion: flows.netobserv.io/v1beta2
+kind: FlowCollector
+metadata:
+  name: cluster
+spec:
+  namespace: netobserv
+  consolePlugin:
+    advanced:
+      env:
+        TEST_CONSOLE: "true"
+  prometheus:
+    querier:
+      manual:
+        url: http://prometheus:9090
+
+
+A few remarks:
+While the web console is primarily designed as a plugin for the OpenShift Console, it is still possible to deploy it as a standalone, which the dev team sometimes use for testing. This is why it is mentioned as "TEST_CONSOLE" here.
+If you're in OpenShift, you should omit "TEST_CONSOLE: true" to use the Console plugin instead, which offers a better / more integrated experience.
+You can change the Prometheus URL depending on your installation. This example URL works if you use the make deploy-prometheus script from the repository. Prometheus configuration options are documented here.
+To view the test console, you can port-forward 9001:
+
+kubectl port-forward svc/netobserv-plugin 9001:9001 -n netobserv
+
+Then open http://localhost:9001/ in your browser.
+
+More information
+Refer to the GitHub repository README for more information: https://github.com/netobserv/network-observability-operator/blob/main/README.md
