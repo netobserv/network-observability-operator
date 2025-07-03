@@ -145,7 +145,29 @@ After a release, the following steps should be done:
 - moving release candidate file in the catalog to the already released directory
 - bumping version label inside the different container images
 
-### Freezing branch
+### Redirecting branches
+
+After release, we need to repurpose zstream to the just released branch, and ystream to main:
+
+```bash
+oc patch components flowlogs-pipeline-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'main'}]"
+oc patch components netobserv-ebpf-agent-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'main'}]"
+oc patch components network-observability-cli-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'main'}]"
+oc patch components network-observability-console-plugin-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'main'}]"
+oc patch components network-observability-operator-bundle-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'main'}]"
+oc patch components network-observability-operator-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'main'}]"
+oc patch components network-observability-console-plugin-pf4-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'main-pf4'}]"
+
+oc patch components flowlogs-pipeline-zstream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.9'}]"
+oc patch components netobserv-ebpf-agent-zstream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.9'}]"
+oc patch components network-observability-cli-zstream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.9'}]"
+oc patch components network-observability-console-plugin-zstream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.9'}]"
+oc patch components network-observability-operator-bundle-zstream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.9'}]"
+oc patch components network-observability-operator-zstream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.9'}]"
+oc patch components network-observability-console-plugin-pf4-zstream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.9-pf4'}]"
+```
+
+### Freezing zstream
 
 You may want to freeze a branch (stop mintmaker from opening PRs) after it was released on zstream, if you don't plan more releases there at the moment. To do so, log in the Konflux' OpenShift and run:
 
