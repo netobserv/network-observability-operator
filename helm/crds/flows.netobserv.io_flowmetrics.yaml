@@ -3,20 +3,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.2
-    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/serving-cert'
   creationTimestamp: null
   name: flowmetrics.flows.netobserv.io
 spec:
-  conversion:
-    strategy: Webhook
-    webhook:
-      clientConfig:
-        service:
-          name: netobserv-webhook-service
-          namespace: '{{ .Release.Namespace }}'
-          path: /convert
-      conversionReviewVersions:
-        - v1
   group: flows.netobserv.io
   names:
     kind: FlowMetric

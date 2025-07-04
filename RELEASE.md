@@ -106,8 +106,10 @@ Click on "Publish release".
 Create a kind cluster, then:
 
 ```bash
-PORT_FWD=false make deploy-prometheus deploy-loki install-cert-manager
-helm install my-netobserv --set standaloneConsole.enable=true ./helm
+helm repo add cert-manager https://charts.jetstack.io
+helm install my-cert-manager cert-manager/cert-manager --set crds.enabled=true
+
+helm install my-netobserv -n netobserv --create-namespace --set standaloneConsole.enable=true --set install.loki=true --set install.prom=true ./helm
 
 cat <<EOF | kubectl apply -f -
 apiVersion: flows.netobserv.io/v1beta2
@@ -120,10 +122,14 @@ spec:
     advanced:
       env:
         TEST_CONSOLE: "true"
+  loki:
+    mode: Monolithic
+    monolithic:
+      url: 'http://my-netobserv-loki.netobserv.svc:3100/'
   prometheus:
     querier:
       manual:
-        url: http://prometheus:9090
+        url: http://my-netobserv-prometheus-server.netobserv.svc/
 EOF
 
 # Check components image:
