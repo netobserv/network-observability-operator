@@ -1,19 +1,4 @@
-/*
-Copyright 2021.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
+//nolint:revive
 package v1beta1
 
 import (
@@ -143,7 +128,6 @@ func ClearDefaultAdvancedConfig(fc *v1beta2.FlowCollector) {
 }
 
 // This function need to be manually created because we moved fields between v1beta2 and v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollector_To_v1beta2_FlowCollector(in *FlowCollector, out *v1beta2.FlowCollector, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta1_FlowCollector_To_v1beta2_FlowCollector(in, out, s); err != nil {
 		return fmt.Errorf("auto convert FlowCollector v1beta1 to v1beta2: %w", err)
@@ -153,7 +137,6 @@ func Convert_v1beta1_FlowCollector_To_v1beta2_FlowCollector(in *FlowCollector, o
 }
 
 // This function need to be manually created because we moved fields between v1beta2 and v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollector_To_v1beta1_FlowCollector(in *v1beta2.FlowCollector, out *FlowCollector, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta2_FlowCollector_To_v1beta1_FlowCollector(in, out, s); err != nil {
 		return fmt.Errorf("auto convert FlowCollector v1beta1 to v1beta2: %w", err)
@@ -163,7 +146,6 @@ func Convert_v1beta2_FlowCollector_To_v1beta1_FlowCollector(in *v1beta2.FlowColl
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorLoki_To_v1beta1_FlowCollectorLoki(in *v1beta2.FlowCollectorLoki, out *FlowCollectorLoki, s apiconversion.Scope) error {
 	// Note that, despite we loose namespace info here, this isn't an issue because it's going to be restored from annotations
 	manual := helper.NewLokiConfig(in, "")
@@ -194,7 +176,6 @@ func Convert_v1beta2_FlowCollectorLoki_To_v1beta1_FlowCollectorLoki(in *v1beta2.
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *FlowCollectorLoki, out *v1beta2.FlowCollectorLoki, s apiconversion.Scope) error {
 	out.Mode = v1beta2.LokiModeManual
 	out.Manual = v1beta2.LokiManualParams{
@@ -230,7 +211,6 @@ func Convert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *FlowColl
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(in *FlowCollectorConsolePlugin, out *v1beta2.FlowCollectorConsolePlugin, s apiconversion.Scope) error {
 	debugPath := helper.PluginAdvancedPath
 	out.Advanced = &v1beta2.AdvancedPluginConfig{
@@ -244,7 +224,6 @@ func Convert_v1beta1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsoleP
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_FLPMetrics_To_v1beta2_FLPMetrics(in *FLPMetrics, out *v1beta2.FLPMetrics, s apiconversion.Scope) error {
 	err := autoConvert_v1beta1_FLPMetrics_To_v1beta2_FLPMetrics(in, out, s)
 	if err != nil {
@@ -256,7 +235,6 @@ func Convert_v1beta1_FLPMetrics_To_v1beta2_FLPMetrics(in *FLPMetrics, out *v1bet
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorSpec_To_v1beta2_FlowCollectorSpec(in *FlowCollectorSpec, out *v1beta2.FlowCollectorSpec, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta1_FlowCollectorSpec_To_v1beta2_FlowCollectorSpec(in, out, s); err != nil {
 		return err
@@ -275,14 +253,12 @@ func Convert_v1beta1_FlowCollectorSpec_To_v1beta2_FlowCollectorSpec(in *FlowColl
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in *v1beta2.FLPMetrics, out *FLPMetrics, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in, out, s)
 }
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorSpec_To_v1beta1_FlowCollectorSpec(in *v1beta2.FlowCollectorSpec, out *FlowCollectorSpec, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta2_FlowCollectorSpec_To_v1beta1_FlowCollectorSpec(in, out, s); err != nil {
 		return err
@@ -301,7 +277,6 @@ func Convert_v1beta2_FlowCollectorSpec_To_v1beta1_FlowCollectorSpec(in *v1beta2.
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorAgent_To_v1beta2_FlowCollectorAgent(in *FlowCollectorAgent, out *v1beta2.FlowCollectorAgent, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta1_FlowCollectorAgent_To_v1beta2_FlowCollectorAgent(in, out, s); err != nil {
 		return err
@@ -312,7 +287,6 @@ func Convert_v1beta1_FlowCollectorAgent_To_v1beta2_FlowCollectorAgent(in *FlowCo
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorAgent_To_v1beta1_FlowCollectorAgent(in *v1beta2.FlowCollectorAgent, out *FlowCollectorAgent, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta2_FlowCollectorAgent_To_v1beta1_FlowCollectorAgent(in, out, s); err != nil {
 		return err
@@ -324,7 +298,6 @@ func Convert_v1beta2_FlowCollectorAgent_To_v1beta1_FlowCollectorAgent(in *v1beta
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
 // and new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowCollectorFLP, out *v1beta2.FlowCollectorFLP, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in, out, s); err != nil {
 		return err
@@ -349,7 +322,6 @@ func Convert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowCollec
 }
 
 // we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorConsolePlugin_To_v1beta1_FlowCollectorConsolePlugin(in *v1beta2.FlowCollectorConsolePlugin, out *FlowCollectorConsolePlugin, s apiconversion.Scope) error {
 	if in.Advanced != nil {
 		out.Register = in.Advanced.Register
@@ -360,7 +332,6 @@ func Convert_v1beta2_FlowCollectorConsolePlugin_To_v1beta1_FlowCollectorConsoleP
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_DebugConfig_To_v1beta2_AdvancedAgentConfig(in *DebugConfig, out *v1beta2.AdvancedAgentConfig, s apiconversion.Scope) error {
 	out.Env = in.Env
 	return nil
@@ -369,7 +340,6 @@ func Convert_v1beta1_DebugConfig_To_v1beta2_AdvancedAgentConfig(in *DebugConfig,
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
 // and new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(in *v1beta2.FlowCollectorFLP, out *FlowCollectorFLP, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta2_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(in, out, s); err != nil {
 		return err
@@ -393,7 +363,6 @@ func Convert_v1beta2_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(in *v1beta2.Fl
 }
 
 // we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_AdvancedAgentConfig_To_v1beta1_DebugConfig(in *v1beta2.AdvancedAgentConfig, out *DebugConfig, s apiconversion.Scope) error {
 	out.Env = in.Env
 	return nil
@@ -401,7 +370,6 @@ func Convert_v1beta2_AdvancedAgentConfig_To_v1beta1_DebugConfig(in *v1beta2.Adva
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_ServerTLS_To_v1beta2_ServerTLS(in *ServerTLS, out *v1beta2.ServerTLS, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta1_ServerTLS_To_v1beta2_ServerTLS(in, out, s); err != nil {
 		return err
@@ -411,7 +379,6 @@ func Convert_v1beta1_ServerTLS_To_v1beta2_ServerTLS(in *ServerTLS, out *v1beta2.
 }
 
 // we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_DebugConfig_To_v1beta2_AdvancedProcessorConfig(in *DebugConfig, out *v1beta2.AdvancedProcessorConfig, s apiconversion.Scope) error {
 	out.Env = in.Env
 	return nil
@@ -419,7 +386,6 @@ func Convert_v1beta1_DebugConfig_To_v1beta2_AdvancedProcessorConfig(in *DebugCon
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_ServerTLS_To_v1beta1_ServerTLS(in *v1beta2.ServerTLS, out *ServerTLS, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta2_ServerTLS_To_v1beta1_ServerTLS(in, out, s); err != nil {
 		return err
@@ -430,7 +396,6 @@ func Convert_v1beta2_ServerTLS_To_v1beta1_ServerTLS(in *v1beta2.ServerTLS, out *
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorHPA_To_v1beta2_FlowCollectorHPA(in *FlowCollectorHPA, out *v1beta2.FlowCollectorHPA, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta1_FlowCollectorHPA_To_v1beta2_FlowCollectorHPA(in, out, s); err != nil {
 		return err
@@ -441,7 +406,6 @@ func Convert_v1beta1_FlowCollectorHPA_To_v1beta2_FlowCollectorHPA(in *FlowCollec
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorHPA_To_v1beta1_FlowCollectorHPA(in *v1beta2.FlowCollectorHPA, out *FlowCollectorHPA, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta2_FlowCollectorHPA_To_v1beta1_FlowCollectorHPA(in, out, s); err != nil {
 		return err
@@ -452,7 +416,6 @@ func Convert_v1beta2_FlowCollectorHPA_To_v1beta1_FlowCollectorHPA(in *v1beta2.Fl
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_SASLConfig_To_v1beta2_SASLConfig(in *SASLConfig, out *v1beta2.SASLConfig, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta1_SASLConfig_To_v1beta2_SASLConfig(in, out, s); err != nil {
 		return err
@@ -463,7 +426,6 @@ func Convert_v1beta1_SASLConfig_To_v1beta2_SASLConfig(in *SASLConfig, out *v1bet
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_SASLConfig_To_v1beta1_SASLConfig(in *v1beta2.SASLConfig, out *SASLConfig, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta2_SASLConfig_To_v1beta1_SASLConfig(in, out, s); err != nil {
 		return err
@@ -474,7 +436,6 @@ func Convert_v1beta2_SASLConfig_To_v1beta1_SASLConfig(in *v1beta2.SASLConfig, ou
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorExporter_To_v1beta2_FlowCollectorExporter(in *FlowCollectorExporter, out *v1beta2.FlowCollectorExporter, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta1_FlowCollectorExporter_To_v1beta2_FlowCollectorExporter(in, out, s); err != nil {
 		return err
@@ -485,7 +446,6 @@ func Convert_v1beta1_FlowCollectorExporter_To_v1beta2_FlowCollectorExporter(in *
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorExporter_To_v1beta1_FlowCollectorExporter(in *v1beta2.FlowCollectorExporter, out *FlowCollectorExporter, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta2_FlowCollectorExporter_To_v1beta1_FlowCollectorExporter(in, out, s); err != nil {
 		return err
@@ -495,7 +455,6 @@ func Convert_v1beta2_FlowCollectorExporter_To_v1beta1_FlowCollectorExporter(in *
 }
 
 // we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_AdvancedProcessorConfig_To_v1beta1_DebugConfig(in *v1beta2.AdvancedProcessorConfig, out *DebugConfig, s apiconversion.Scope) error {
 	out.Env = in.Env
 	return nil
@@ -503,7 +462,6 @@ func Convert_v1beta2_AdvancedProcessorConfig_To_v1beta1_DebugConfig(in *v1beta2.
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in *FlowCollectorEBPF, out *v1beta2.FlowCollectorEBPF, s apiconversion.Scope) error {
 	out.Advanced = &v1beta2.AdvancedAgentConfig{
 		Env:         in.Debug.Env,
@@ -514,7 +472,6 @@ func Convert_v1beta1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in *FlowColl
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorEBPF_To_v1beta1_FlowCollectorEBPF(in *v1beta2.FlowCollectorEBPF, out *FlowCollectorEBPF, s apiconversion.Scope) error {
 	if in.Advanced != nil {
 		out.Debug.Env = in.Advanced.Env

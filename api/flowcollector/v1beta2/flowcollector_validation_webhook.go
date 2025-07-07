@@ -90,7 +90,6 @@ func (r *FlowCollector) warnLogLevels(fc *FlowCollectorSpec) admission.Warnings 
 	return w
 }
 
-// nolint:cyclop
 func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
 	var warnings admission.Warnings
 	for feat, minVersion := range neededOpenShiftVersion {

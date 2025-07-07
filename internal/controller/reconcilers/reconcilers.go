@@ -110,37 +110,37 @@ func ReconcileConfigMap(ctx context.Context, cl *helper.Client, current, desired
 	return cl.UpdateIfOwned(ctx, current, desired)
 }
 
-func ReconcileDaemonSet(ctx context.Context, ci *Instance, old, new *appsv1.DaemonSet, containerName string, report *helper.ChangeReport) error {
+func ReconcileDaemonSet(ctx context.Context, ci *Instance, old, n *appsv1.DaemonSet, containerName string, report *helper.ChangeReport) error {
 	if !ci.Managed.Exists(old) {
-		ci.Status.SetCreatingDaemonSet(new)
-		return ci.CreateOwned(ctx, new)
+		ci.Status.SetCreatingDaemonSet(n)
+		return ci.CreateOwned(ctx, n)
 	}
 	ci.Status.CheckDaemonSetProgress(old)
-	if helper.PodChanged(&old.Spec.Template, &new.Spec.Template, containerName, report) {
-		return ci.UpdateIfOwned(ctx, old, new)
+	if helper.PodChanged(&old.Spec.Template, &n.Spec.Template, containerName, report) {
+		return ci.UpdateIfOwned(ctx, old, n)
 	}
 	return nil
 }
 
-func ReconcileDeployment(ctx context.Context, ci *Instance, old, new *appsv1.Deployment, containerName string, replicas int32, hpa *flowslatest.FlowCollectorHPA, report *helper.ChangeReport) error {
+func ReconcileDeployment(ctx context.Context, ci *Instance, old, n *appsv1.Deployment, containerName string, replicas int32, hpa *flowslatest.FlowCollectorHPA, report *helper.ChangeReport) error {
 	if !ci.Managed.Exists(old) {
-		ci.Status.SetCreatingDeployment(new)
-		return ci.CreateOwned(ctx, new)
+		ci.Status.SetCreatingDeployment(n)
+		return ci.CreateOwned(ctx, n)
 	}
 	ci.Status.CheckDeploymentProgress(old)
-	if helper.DeploymentChanged(old, new, containerName, !helper.HPAEnabled(hpa), replicas, report) {
-		return ci.UpdateIfOwned(ctx, old, new)
+	if helper.DeploymentChanged(old, n, containerName, !helper.HPAEnabled(hpa), replicas, report) {
+		return ci.UpdateIfOwned(ctx, old, n)
 	}
 	return nil
 }
 
-func ReconcileHPA(ctx context.Context, ci *Instance, old, new *ascv2.HorizontalPodAutoscaler, desired *flowslatest.FlowCollectorHPA, report *helper.ChangeReport) error {
+func ReconcileHPA(ctx context.Context, ci *Instance, old, n *ascv2.HorizontalPodAutoscaler, desired *flowslatest.FlowCollectorHPA, report *helper.ChangeReport) error {
 	// Delete or Create / Update Autoscaler according to HPA option
 	if helper.HPAEnabled(desired) {
 		if !ci.Managed.Exists(old) {
-			return ci.CreateOwned(ctx, new)
+			return ci.CreateOwned(ctx, n)
 		} else if helper.AutoScalerChanged(old, *desired, report) {
-			return ci.UpdateIfOwned(ctx, old, new)
+			return ci.UpdateIfOwned(ctx, old, n)
 		}
 	} else {
 		ci.Managed.TryDelete(ctx, old)
@@ -148,16 +148,16 @@ func ReconcileHPA(ctx context.Context, ci *Instance, old, new *ascv2.HorizontalP
 	return nil
 }
 
-func ReconcileService(ctx context.Context, ci *Instance, old, new *corev1.Service, report *helper.ChangeReport) error {
+func ReconcileService(ctx context.Context, ci *Instance, old, n *corev1.Service, report *helper.ChangeReport) error {
 	if !ci.Managed.Exists(old) {
-		if err := ci.CreateOwned(ctx, new); err != nil {
+		if err := ci.CreateOwned(ctx, n); err != nil {
 			return err
 		}
-	} else if helper.ServiceChanged(old, new, report) {
+	} else if helper.ServiceChanged(old, n, report) {
 		// In case we're updating an existing service, we need to build from the old one to keep immutable fields such as clusterIP
 		newSVC := old.DeepCopy()
-		newSVC.Spec.Ports = new.Spec.Ports
-		newSVC.ObjectMeta.Annotations = new.ObjectMeta.Annotations
+		newSVC.Spec.Ports = n.Spec.Ports
+		newSVC.ObjectMeta.Annotations = n.ObjectMeta.Annotations
 		if err := ci.UpdateIfOwned(ctx, old, newSVC); err != nil {
 			return err
 		}
@@ -189,12 +189,12 @@ func ReconcileNetworkPolicy(ctx context.Context, cl *helper.Client, name types.N
 	return cl.UpdateIfOwned(ctx, &current, desired)
 }
 
-func GenericReconcile[K client.Object](ctx context.Context, m *NamespacedObjectManager, cl *helper.Client, old, new K, report *helper.ChangeReport, changeFunc func(old, new K, report *helper.ChangeReport) bool) error {
+func GenericReconcile[K client.Object](ctx context.Context, m *NamespacedObjectManager, cl *helper.Client, old, n K, report *helper.ChangeReport, changeFunc func(old, n K, report *helper.ChangeReport) bool) error {
 	if !m.Exists(old) {
-		return cl.CreateOwned(ctx, new)
+		return cl.CreateOwned(ctx, n)
 	}
-	if changeFunc(old, new, report) {
-		return cl.UpdateIfOwned(ctx, old, new)
+	if changeFunc(old, n, report) {
+		return cl.UpdateIfOwned(ctx, old, n)
 	}
 	return nil
 }

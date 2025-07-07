@@ -192,10 +192,6 @@ func (r *Row) ToGrafanaJSON() string {
 	for _, panel := range r.Panels {
 		panels = append(panels, panel.ToGrafanaJSON())
 	}
-	showTitle := true
-	if r.Title == "" {
-		showTitle = false
-	}
 	return fmt.Sprintf(`
 	{
 		"collapse": %t,
@@ -205,7 +201,7 @@ func (r *Row) ToGrafanaJSON() string {
 		"showTitle": %t,
 		"title": "%s"
 	}
-	`, r.Collapse, r.Height, strings.Join(panels, ","), showTitle, r.Title)
+	`, r.Collapse, r.Height, strings.Join(panels, ","), r.Title != "", r.Title)
 }
 
 func (p *Panel) ToGrafanaJSON() string {

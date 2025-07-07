@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
-	//nolint:revive,stylecheck
+	//nolint:revive,staticcheck
 	. "github.com/onsi/ginkgo/v2"
-	//nolint:revive,stylecheck
+	//nolint:revive,staticcheck
 	. "github.com/onsi/gomega"
 
 	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"

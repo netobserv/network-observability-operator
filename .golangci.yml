@@ -1,32 +1,56 @@
+version: "2"
+run:
+  go: "1.23"
 linters:
   enable:
-    - errcheck
-    - errorlint
-    - cyclop
-    - errname
-    - exhaustive
     - copyloopvar
+    - cyclop
+    - errcheck
+    - errname
+    - errorlint
+    - exhaustive
     - gocritic
-    - gofmt
-    - gosimple
     - govet
     - ineffassign
     - revive
     - staticcheck
-    - stylecheck
-    - typecheck
     - unused
-run:
-  go: "1.23"
-linters-settings:
-  gocritic:
-    enabled-checks:
-      - hugeParam
-      - rangeExprCopy
-      - rangeValCopy
-      - indexAlloc
-    settings:
-      ifElseChain:
-        minThreshold: 3
-  cyclop:
-    max-complexity: 20
+  settings:
+    cyclop:
+      max-complexity: 20
+    gocritic:
+      enabled-checks:
+        - hugeParam
+        - rangeExprCopy
+        - rangeValCopy
+        - indexAlloc
+      settings:
+        ifElseChain:
+          minThreshold: 3
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+    rules:
+      - linters:
+        - staticcheck
+        text: "QF1003:"
+      - linters:
+        - staticcheck
+        text: "QF1008:"
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

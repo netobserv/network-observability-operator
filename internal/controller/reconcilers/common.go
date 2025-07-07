@@ -58,10 +58,10 @@ func (c *Common) ReconcileRoleBinding(ctx context.Context, desired *rbacv1.RoleB
 	return ReconcileRoleBinding(ctx, &c.Client, desired)
 }
 
-func (c *Common) ReconcileConfigMap(ctx context.Context, old, new *corev1.ConfigMap) error {
-	return ReconcileConfigMap(ctx, &c.Client, old, new)
+func (c *Common) ReconcileConfigMap(ctx context.Context, old, n *corev1.ConfigMap) error {
+	return ReconcileConfigMap(ctx, &c.Client, old, n)
 }
 
-func (i *Instance) ReconcileService(ctx context.Context, old, new *corev1.Service, report *helper.ChangeReport) error {
-	return ReconcileService(ctx, i, old, new, report)
+func (i *Instance) ReconcileService(ctx context.Context, old, n *corev1.Service, report *helper.ChangeReport) error {
+	return ReconcileService(ctx, i, old, n, report)
 }

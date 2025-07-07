@@ -609,7 +609,7 @@ func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *core
 	return sc
 }
 
-// nolint:golint,cyclop
+// nolint:cyclop
 func getEnvConfig(coll *flowslatest.FlowCollector, cinfo *cluster.Info) []corev1.EnvVar {
 	var config []corev1.EnvVar
 
