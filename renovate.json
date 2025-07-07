@@ -5,9 +5,7 @@
   ],
   "labels": ["dependencies"],
   "gomod": {
-    "schedule": [
-      "after 5am on sunday"
-    ],
+    "schedule": ["* * 7 */3 *"],
     "postUpdateOptions": [
       "gomodUpdateImportPaths",
       "gomodTidy",
@@ -17,11 +15,6 @@
       {
         "matchManagers": ["gomod"],
         "groupName": "Go modules"
-      },
-      {
-        "matchManagers": ["gomod"],
-        "matchUpdateTypes": ["major"],
-        "enabled": false
       }
     ]
   },
