@@ -3,5 +3,38 @@ certManager:
   existingIssuer:
     kind: ClusterIssuer
     name: ""
+# Deployment manifest values
+ebpfAgent:
+  image: quay.io/netobserv/netobserv-ebpf-agent
+  version: v1.9.0-community
+flowlogsPipeline:
+  image: quay.io/netobserv/flowlogs-pipeline
+  version: v1.9.0-community
+consolePlugin:
+  image: quay.io/netobserv/network-observability-console-plugin
+  version: v1.9.0-community
 standaloneConsole:
   enable: false
+  image: quay.io/netobserv/network-observability-standalone-frontend
+  version: v1.9.0-community
+operator:
+  image: quay.io/netobserv/network-observability-operator
+  version: 1.9.0-community
+# Dependency toggle condition value
+install:
+  prom: false
+  loki: false
+# Subcharts config
+prometheus:
+  server:
+    global:
+      scrape_interval: 15s
+  kube-state-metrics:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+loki-stack:
+  promtail:
+    enabled: false

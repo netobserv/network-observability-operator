@@ -35,17 +35,15 @@ spec:
             - /manager
           env:
             - name: RELATED_IMAGE_EBPF_AGENT
-              value: quay.io/netobserv/netobserv-ebpf-agent:v1.9.0-community
+              value: '{{ .Values.ebpfAgent.image }}:{{ .Values.ebpfAgent.version }}'
             - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
-              value: quay.io/netobserv/flowlogs-pipeline:v1.9.0-community
+              value: '{{ .Values.flowlogsPipeline.image }}:{{ .Values.flowlogsPipeline.version }}'
             - name: RELATED_IMAGE_CONSOLE_PLUGIN
-              value: '{{ if .Values.standaloneConsole.enable }}quay.io/netobserv/network-observability-standalone-frontend:v1.9.0-community{{ else }}quay.io/netobserv/network-observability-console-plugin:v1.9.0-community{{ end }}'
-            - name: RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT
-              value: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
+              value: '{{ if .Values.standaloneConsole.enable }}{{ .Values.standaloneConsole.image }}:{{ .Values.standaloneConsole.version }}{{ else }}{{ .Values.consolePlugin.image }}:{{ .Values.consolePlugin.version }}{{ end }}'
             - name: DOWNSTREAM_DEPLOYMENT
               value: "false"
             - name: PROFILING_BIND_ADDRESS
-          image: quay.io/netobserv/network-observability-operator:1.9.0-community
+          image: '{{ .Values.operator.image }}:{{ .Values.operator.version }}'
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
