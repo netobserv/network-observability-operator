@@ -32,7 +32,7 @@ yq '{"apiVersion": "apps/v1", "kind": "Deployment", "metadata": {"name": "netobs
 yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_EBPF_AGENT\") | .value) = \"{{ .Values.ebpfAgent.image }}:{{ .Values.ebpfAgent.version }}\"" helm/templates/deployment.yaml
 yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_FLOWLOGS_PIPELINE\") | .value) = \"{{ .Values.flowlogsPipeline.image }}:{{ .Values.flowlogsPipeline.version }}\"" helm/templates/deployment.yaml
 yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_CONSOLE_PLUGIN\") | .value) = \"{{ if .Values.standaloneConsole.enable }}{{ .Values.standaloneConsole.image }}:{{ .Values.standaloneConsole.version }}{{ else }}{{ .Values.consolePlugin.image }}:{{ .Values.consolePlugin.version }}{{ end }}\"" helm/templates/deployment.yaml
-yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT\") | .value) = \"{{ if .Values.standaloneConsole.enable }}{{ .Values.standaloneConsole.image }}:{{ .Values.standaloneConsole.version }}{{ else }}{{ .Values.consolePlugin.image }}:{{ .Values.consolePlugin.version }}{{ end }}\"" helm/templates/deployment.yaml
+yq -i "del(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT\"))" helm/templates/deployment.yaml
 yq -i ".spec.template.spec.containers[0].image = \"{{ .Values.operator.image }}:{{ .Values.operator.version }}\"" helm/templates/deployment.yaml
 
 # Create roles
