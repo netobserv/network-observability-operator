@@ -52,13 +52,13 @@ func DaemonSetChanged(current, desired *appsv1.DaemonSet) ReconcileAction {
 	return ActionNone
 }
 
-func DeploymentChanged(old, new *appsv1.Deployment, contName string, checkReplicas bool, desiredReplicas int32, report *ChangeReport) bool {
-	return report.Check("Pod changed", PodChanged(&old.Spec.Template, &new.Spec.Template, contName, report)) ||
+func DeploymentChanged(old, n *appsv1.Deployment, contName string, checkReplicas bool, desiredReplicas int32, report *ChangeReport) bool {
+	return report.Check("Pod changed", PodChanged(&old.Spec.Template, &n.Spec.Template, contName, report)) ||
 		report.Check("Replicas changed", (checkReplicas && *old.Spec.Replicas != desiredReplicas))
 }
 
-func PodChanged(old, new *corev1.PodTemplateSpec, containerName string, report *ChangeReport) bool {
-	if annotationsChanged(old, new, report) || volumesChanged(old, new, report) || assignationChanged(old, new, report) {
+func PodChanged(old, n *corev1.PodTemplateSpec, containerName string, report *ChangeReport) bool {
+	if annotationsChanged(old, n, report) || volumesChanged(old, n, report) || assignationChanged(old, n, report) {
 		return true
 	}
 	// Find containers
@@ -67,7 +67,7 @@ func PodChanged(old, new *corev1.PodTemplateSpec, containerName string, report *
 		report.Add("Old container not found")
 		return true
 	}
-	newContainer := FindContainer(&new.Spec, containerName)
+	newContainer := FindContainer(&n.Spec, containerName)
 	if newContainer == nil {
 		report.Add("New container not found")
 		return true
@@ -75,8 +75,8 @@ func PodChanged(old, new *corev1.PodTemplateSpec, containerName string, report *
 	return report.Check("Container changed", containerChanged(oldContainer, newContainer, report))
 }
 
-func annotationsChanged(old, new *corev1.PodTemplateSpec, report *ChangeReport) bool {
-	if old.Annotations == nil && new.Annotations == nil {
+func annotationsChanged(old, n *corev1.PodTemplateSpec, report *ChangeReport) bool {
+	if old.Annotations == nil && n.Annotations == nil {
 		return false
 	}
 	if old.Annotations == nil {
@@ -86,7 +86,7 @@ func annotationsChanged(old, new *corev1.PodTemplateSpec, report *ChangeReport) 
 	// Check domain annotations (config digest, certificate stamp...)
 	for k, v := range old.Annotations {
 		if strings.HasPrefix(k, constants.AnnotationDomain) {
-			if new.Annotations[k] != v {
+			if n.Annotations[k] != v {
 				report.Add(fmt.Sprintf("Annotation changed: '%s: %s'", k, v))
 				return true
 			}
@@ -95,20 +95,20 @@ func annotationsChanged(old, new *corev1.PodTemplateSpec, report *ChangeReport) 
 	return false
 }
 
-func assignationChanged(old, new *corev1.PodTemplateSpec, report *ChangeReport) bool {
-	if !deepEqual(new.Spec.NodeSelector, old.Spec.NodeSelector) {
+func assignationChanged(old, n *corev1.PodTemplateSpec, report *ChangeReport) bool {
+	if !deepEqual(n.Spec.NodeSelector, old.Spec.NodeSelector) {
 		if report != nil {
 			report.Add("NodeSelector changed")
 		}
 		return true
 	}
-	if !deepDerivative(new.Spec.Affinity, old.Spec.Affinity) {
+	if !deepDerivative(n.Spec.Affinity, old.Spec.Affinity) {
 		if report != nil {
 			report.Add("Affinity changed")
 		}
 		return true
 	}
-	if new.Spec.PriorityClassName != old.Spec.PriorityClassName {
+	if n.Spec.PriorityClassName != old.Spec.PriorityClassName {
 		if report != nil {
 			report.Add("PriorityClassName changed")
 		}
@@ -117,38 +117,38 @@ func assignationChanged(old, new *corev1.PodTemplateSpec, report *ChangeReport) 
 	return false
 }
 
-func volumesChanged(old, new *corev1.PodTemplateSpec, report *ChangeReport) bool {
-	return report.Check("Volumes changed", !deepDerivative(new.Spec.Volumes, old.Spec.Volumes))
+func volumesChanged(old, n *corev1.PodTemplateSpec, report *ChangeReport) bool {
+	return report.Check("Volumes changed", !deepDerivative(n.Spec.Volumes, old.Spec.Volumes))
 }
 
-func containerChanged(old, new *corev1.Container, report *ChangeReport) bool {
-	return report.Check("Image changed", new.Image != old.Image) ||
-		report.Check("Pull policy changed", new.ImagePullPolicy != old.ImagePullPolicy) ||
-		report.Check("Args changed", !deepDerivative(new.Args, old.Args)) ||
-		report.Check("Resources req/limit changed", !deepDerivative(new.Resources, old.Resources)) ||
-		report.Check("Liveness probe changed", probeChanged(new.LivenessProbe, old.LivenessProbe)) ||
-		report.Check("Startup probe changed", probeChanged(new.StartupProbe, old.StartupProbe))
+func containerChanged(old, n *corev1.Container, report *ChangeReport) bool {
+	return report.Check("Image changed", n.Image != old.Image) ||
+		report.Check("Pull policy changed", n.ImagePullPolicy != old.ImagePullPolicy) ||
+		report.Check("Args changed", !deepDerivative(n.Args, old.Args)) ||
+		report.Check("Resources req/limit changed", !deepDerivative(n.Resources, old.Resources)) ||
+		report.Check("Liveness probe changed", probeChanged(n.LivenessProbe, old.LivenessProbe)) ||
+		report.Check("Startup probe changed", probeChanged(n.StartupProbe, old.StartupProbe))
 }
 
-func probeChanged(old, new *corev1.Probe) bool {
-	return (old == nil && new != nil) || (old != nil && new == nil)
+func probeChanged(old, n *corev1.Probe) bool {
+	return (old == nil && n != nil) || (old != nil && n == nil)
 }
 
-func ServiceChanged(old, new *corev1.Service, report *ChangeReport) bool {
-	return report.Check("Service annotations changed", !deepDerivative(new.Annotations, old.Annotations)) ||
-		report.Check("Service labels changed", !deepDerivative(new.Labels, old.Labels)) ||
-		report.Check("Service spec changed", !deepDerivative(new.Spec, old.Spec))
+func ServiceChanged(old, n *corev1.Service, report *ChangeReport) bool {
+	return report.Check("Service annotations changed", !deepDerivative(n.Annotations, old.Annotations)) ||
+		report.Check("Service labels changed", !deepDerivative(n.Labels, old.Labels)) ||
+		report.Check("Service spec changed", !deepDerivative(n.Spec, old.Spec))
 }
 
-func ServiceMonitorChanged(old, new *monitoringv1.ServiceMonitor, report *ChangeReport) bool {
-	return report.Check("ServiceMonitor spec changed", !deepDerivative(new.Spec, old.Spec)) ||
-		report.Check("ServiceMonitor labels changed", !IsSubSet(old.Labels, new.Labels))
+func ServiceMonitorChanged(old, n *monitoringv1.ServiceMonitor, report *ChangeReport) bool {
+	return report.Check("ServiceMonitor spec changed", !deepDerivative(n.Spec, old.Spec)) ||
+		report.Check("ServiceMonitor labels changed", !IsSubSet(old.Labels, n.Labels))
 }
 
-func PrometheusRuleChanged(old, new *monitoringv1.PrometheusRule, report *ChangeReport) bool {
+func PrometheusRuleChanged(old, n *monitoringv1.PrometheusRule, report *ChangeReport) bool {
 	// Note: DeepDerivative misses changes in Spec.Groups.Rules (covered by test "Expecting PrometheusRule to exist and be updated")
-	return report.Check("PrometheusRule spec changed", !deepEqual(new.Spec, old.Spec)) ||
-		report.Check("PrometheusRule labels changed", !IsSubSet(old.Labels, new.Labels))
+	return report.Check("PrometheusRule spec changed", !deepEqual(n.Spec, old.Spec)) ||
+		report.Check("PrometheusRule labels changed", !IsSubSet(old.Labels, n.Labels))
 }
 
 // FindContainer searches in pod containers one that matches the provided name

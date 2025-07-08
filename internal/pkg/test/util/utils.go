@@ -1,4 +1,4 @@
-package util
+package util //nolint:revive
 
 import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"

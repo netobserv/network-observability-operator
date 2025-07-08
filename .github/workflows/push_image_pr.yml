@@ -15,16 +15,13 @@ jobs:
     if: ${{ github.event.label.name == 'ok-to-test' }}
     name: push PR image
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go: ['1.23']
     steps:
       - name: install make
         run: sudo apt-get install make
       - name: set up go 1.x
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ matrix.go }}
+          go-version: '1.24'
       - name: checkout
         uses: actions/checkout@v3
         with:
