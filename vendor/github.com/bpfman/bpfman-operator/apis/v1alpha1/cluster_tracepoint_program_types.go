@@ -17,17 +17,27 @@ limitations under the License.
 // All fields are required unless explicitly marked optional
 package v1alpha1
 
-// ClTracepointProgramInfo contains the Tracepoint program details
 type ClTracepointProgramInfo struct {
-	// links is the list of points to which the program should be attached.  The list items
-	// are optional and may be updated after the bpf program has been loaded
+	// links is an optional field and is the list of attachment points to which the
+	// Tracepoint program should be attached. The Tracepoint program is loaded in
+	// kernel memory when the BPF Application CRD is created and the selected
+	// Kubernetes nodes are active. The Tracepoint program will not be triggered
+	// until the program has also been attached to an attachment point described in
+	// this list. Items may be added or removed from the list at any point, causing
+	// the Tracepoint program to be attached or detached.
+	//
+	// The attachment point for a Tracepoint program is a one of a predefined set
+	// of Linux kernel functions.
 	// +optional
 	Links []ClTracepointAttachInfo `json:"links,omitempty"`
 }
 
 type ClTracepointAttachInfo struct {
-	// name refers to the name of a kernel tracepoint to attach the
-	// bpf program to.
+	// name is a required field and specifies the name of the Linux kernel
+	// Tracepoint to attach the eBPF program. name must not be an empty string,
+	// must not exceed 64 characters in length, must start with alpha characters
+	// and must only contain alphanumeric characters.
+	// +required
 	// +kubebuilder:validation:Pattern="^[a-zA-Z][a-zA-Z0-9_]+."
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=64
@@ -35,11 +45,10 @@ type ClTracepointAttachInfo struct {
 }
 
 type ClTracepointProgramInfoState struct {
-	// links is the list of attach points for the BPF program on the given node. Each entry
-	// in *AttachInfoState represents a specific, unique attach point that is
-	// derived from *AttachInfo by fully expanding any selectors.  Each entry
-	// also contains information about the attach point required by the
-	// reconciler
+	// links is a list of attachment points for the Tracepoint program. Each entry
+	// in the list includes a linkStatus, which indicates if the attachment was
+	// successful or not on this node, a linkId, which is the kernel ID for the
+	// link if successfully attached, and other attachment specific data.
 	// +optional
 	Links []ClTracepointAttachInfoState `json:"links,omitempty"`
 }
@@ -48,5 +57,8 @@ type ClTracepointAttachInfoState struct {
 	AttachInfoStateCommon `json:",inline"`
 
 	// The name of a kernel tracepoint to attach the bpf program to.
+	// name is the provisioned name of the Linux kernel tracepoint function the
+	// Tracepoint program should be attached.
+	// +required
 	Name string `json:"name"`
 }

@@ -25,59 +25,59 @@ const (
 )
 
 type FlowFilter struct {
-	// FilterDirection is the direction of the flow filter.
+	// Direction is the direction of the flow filter.
 	// Possible values are "Ingress" or "Egress".
-	FilterDirection string `json:"direction,omitempty"`
-	// FilterIPCIDR is the IP CIDR to filter flows.
+	Direction string `json:"direction,omitempty"`
+	// IPCIDR is the IP CIDR to filter flows.
 	// Example: 10.10.10.0/24 or 100:100:100:100::/64, default is 0.0.0.0/0
-	FilterIPCIDR string `json:"ip_cidr,omitempty"`
-	// FilterProtocol is the protocol to filter flows.
+	IPCIDR string `json:"ip_cidr,omitempty"`
+	// Protocol is the protocol to filter flows.
 	// supported protocols: TCP, UDP, SCTP, ICMP, ICMPv6
-	FilterProtocol string `json:"protocol,omitempty"`
-	// FilterSourcePort is the source port to filter flows.
-	FilterSourcePort int32 `json:"source_port,omitempty"`
-	// FilterDestinationPort is the destination port to filter flows.
-	FilterDestinationPort int32 `json:"destination_port,omitempty"`
-	// FilterPort is the port to filter flows, can be use for either source or destination port.
-	FilterPort int32 `json:"port,omitempty"`
-	// FilterSourcePortRange is the source port range to filter flows.
+	Protocol string `json:"protocol,omitempty"`
+	// SourcePort is the source port to filter flows.
+	SourcePort int32 `json:"source_port,omitempty"`
+	// DestinationPort is the destination port to filter flows.
+	DestinationPort int32 `json:"destination_port,omitempty"`
+	// Port is the port to filter flows, can be use for either source or destination port.
+	Port int32 `json:"port,omitempty"`
+	// SourcePortRange is the source port range to filter flows.
 	// Example: 8000-8010
-	FilterSourcePortRange string `json:"source_port_range,omitempty"`
-	// FilterSourcePorts is two source ports to filter flows.
+	SourcePortRange string `json:"source_port_range,omitempty"`
+	// SourcePorts is two source ports to filter flows.
 	// Example: 8000,8010
-	FilterSourcePorts string `json:"source_ports,omitempty"`
-	// FilterDestinationPortRange is the destination port range to filter flows.
+	SourcePorts string `json:"source_ports,omitempty"`
+	// DestinationPortRange is the destination port range to filter flows.
 	// Example: 8000-8010
-	FilterDestinationPortRange string `json:"destination_port_range,omitempty"`
-	// FilterDestinationPorts is two destination ports to filter flows.
+	DestinationPortRange string `json:"destination_port_range,omitempty"`
+	// DestinationPorts is two destination ports to filter flows.
 	// Example: 8000,8010
-	FilterDestinationPorts string `json:"destination_ports,omitempty"`
-	// FilterPortRange is the port range to filter flows, can be used for either source or destination port.
+	DestinationPorts string `json:"destination_ports,omitempty"`
+	// PortRange is the port range to filter flows, can be used for either source or destination port.
 	// Example: 8000-8010
-	FilterPortRange string `json:"port_range,omitempty"`
-	// FilterPorts is two ports option to filter flows, can be used for either source or destination port.
+	PortRange string `json:"port_range,omitempty"`
+	// Ports is two ports option to filter flows, can be used for either source or destination port.
 	// Example: 8000,8010
-	FilterPorts string `json:"ports,omitempty"`
-	// FilterICMPType is the ICMP type to filter flows.
-	FilterICMPType int `json:"icmp_type,omitempty"`
-	// FilterICMPCode is the ICMP code to filter flows.
-	FilterICMPCode int `json:"icmp_code,omitempty"`
-	// FilterPeerIP is the IP to filter flows.
+	Ports string `json:"ports,omitempty"`
+	// ICMPType is the ICMP type to filter flows.
+	ICMPType int `json:"icmp_type,omitempty"`
+	// ICMPCode is the ICMP code to filter flows.
+	ICMPCode int `json:"icmp_code,omitempty"`
+	// PeerIP is the IP to filter flows.
 	// Example: 10.10.10.10
-	FilterPeerIP string `json:"peer_ip,omitempty"`
-	// FilterAction is the action to filter flows.
+	PeerIP string `json:"peer_ip,omitempty"`
+	// Action is the action to filter flows.
 	// Possible values are "Accept" or "Reject".
-	FilterAction string `json:"action,omitempty"`
-	// FilterTCPFlags is the TCP flags to filter flows.
+	Action string `json:"action,omitempty"`
+	// TCPFlags is the TCP flags to filter flows.
 	// possible values are: SYN, SYN-ACK, ACK, FIN, RST, PSH, URG, ECE, CWR, FIN-ACK, RST-ACK
-	FilterTCPFlags string `json:"tcp_flags,omitempty"`
-	// FilterDrops allow filtering flows with packet drops, default is false.
-	FilterDrops bool `json:"drops,omitempty"`
-	// FilterSample is the sample rate this matching flow will use
-	FilterSample uint32 `json:"sample,omitempty"`
-	// FilterPeerCIDR is the PeerIP CIDR to filter flows.
+	TCPFlags string `json:"tcp_flags,omitempty"`
+	// Drops allow filtering flows with packet drops, default is false.
+	Drops bool `json:"drops,omitempty"`
+	// Sample is the sample rate this matching flow will use
+	Sample uint32 `json:"sample,omitempty"`
+	// PeerCIDR is the PeerIP CIDR to filter flows.
 	// Example: 10.10.10.0/24 or 100:100:100:100::/64, default is 0.0.0.0/0
-	FilterPeerCIDR string `json:"peer_cidr,omitempty"`
+	PeerCIDR string `json:"peer_cidr,omitempty"`
 }
 
 type Agent struct {
@@ -238,6 +238,12 @@ type Agent struct {
 	EnableUDNMapping bool `env:"ENABLE_UDN_MAPPING" envDefault:"false"`
 	// EnableIPsecTracking enable tracking IPsec flows encryption
 	EnableIPsecTracking bool `env:"ENABLE_IPSEC_TRACKING" envDefault:"false"`
+	// PreferredInterfaceForMACPrefix is a comma-separated list of key=value pairs.
+	// It allows to specify a preference when retrieving interface names per flow in case of index collision, when using multiple network namespaces are used.
+	// This setting is only used when the interface name could not be found for a given index and MAC.
+	// E.g. "0a:58=eth0" (used for ovn-kubernetes)
+	PreferredInterfaceForMACPrefix string `env:"PREFERRED_INTERFACE_FOR_MAC_PREFIX"`
+
 	/* Deprecated configs are listed below this line
 	 * See manageDeprecatedConfigs function for details
 	 */

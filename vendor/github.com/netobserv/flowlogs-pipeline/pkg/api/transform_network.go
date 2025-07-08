@@ -67,7 +67,7 @@ type NetworkTransformRule struct {
 	KubernetesInfra *K8sInfraRule                 `yaml:"kubernetes_infra,omitempty" json:"kubernetes_infra,omitempty" doc:"Kubernetes infra rule configuration"`
 	Kubernetes      *K8sRule                      `yaml:"kubernetes,omitempty" json:"kubernetes,omitempty" doc:"Kubernetes rule configuration"`
 	AddSubnet       *NetworkAddSubnetRule         `yaml:"add_subnet,omitempty" json:"add_subnet,omitempty" doc:"Add subnet rule configuration"`
-	AddLocation     *NetworkGenericRule           `yaml:"add_location,omitempty" json:"add_location,omitempty" doc:"Add location rule configuration"`
+	AddLocation     *NetworkAddLocationRule       `yaml:"add_location,omitempty" json:"add_location,omitempty" doc:"Add location rule configuration"`
 	AddSubnetLabel  *NetworkAddSubnetLabelRule    `yaml:"add_subnet_label,omitempty" json:"add_subnet_label,omitempty" doc:"Add subnet label rule configuration"`
 	AddService      *NetworkAddServiceRule        `yaml:"add_service,omitempty" json:"add_service,omitempty" doc:"Add service rule configuration"`
 	DecodeTCPFlags  *NetworkGenericRule           `yaml:"decode_tcp_flags,omitempty" json:"decode_tcp_flags,omitempty" doc:"Decode bitwise TCP flags into a string"`
@@ -110,6 +110,12 @@ type NetworkAddSubnetRule struct {
 	Input      string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
 	Output     string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
 	SubnetMask string `yaml:"subnet_mask,omitempty" json:"subnet_mask,omitempty" doc:"subnet mask field"`
+}
+
+type NetworkAddLocationRule struct {
+	Input    string `yaml:"input,omitempty" json:"input,omitempty" doc:"entry input field"`
+	Output   string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
+	FilePath string `yaml:"file_path,omitempty" json:"file_path,omitempty" doc:"path of the location DB file (zip archive), from ip2location.com (Lite DB9); leave unset to try downloading the file at startup"`
 }
 
 type NetworkAddSubnetLabelRule struct {

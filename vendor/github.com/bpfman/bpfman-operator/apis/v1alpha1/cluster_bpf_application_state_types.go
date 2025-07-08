@@ -22,7 +22,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// ClBpfApplicationProgramState defines the desired state of BpfApplication
 // +union
 // +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'XDP' ?  has(self.xdp) : !has(self.xdp)",message="xdp configuration is required when type is xdp, and forbidden otherwise"
 // +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'TC' ?  has(self.tc) : !has(self.tc)",message="tc configuration is required when type is tc, and forbidden otherwise"
@@ -37,79 +36,143 @@ import (
 type ClBpfApplicationProgramState struct {
 	BpfProgramStateCommon `json:",inline"`
 
-	// type specifies the bpf program type
+	// type specifies the provisioned eBPF program type for this program entry.
+	// Type will be one of:
+	//   FEntry, FExit, KProbe, KRetProbe, TC, TCX, Tracepoint, UProbe,
+	//   URetProbe, XDP
+	//
+	// When set to FEntry, the fentry object will be populated with the eBPF
+	// program data associated with an FEntry program.
+	//
+	// When set to FExit, the fexit object will be populated with the eBPF program
+	// data associated with an FExit program.
+	//
+	// When set to KProbe, the kprobe object will be populated with the eBPF
+	// program data associated with a KProbe program.
+	//
+	// When set to KRetProbe, the kretprobe object will be populated with the
+	// eBPF program data associated with a KRetProbe program.
+	//
+	// When set to TC, the tc object will be populated with the eBPF program data
+	// associated with a TC program.
+	//
+	// When set to TCX, the tcx object will be populated with the eBPF program
+	// data associated with a TCX program.
+	//
+	// When set to Tracepoint, the tracepoint object will be populated with the
+	// eBPF program data associated with a Tracepoint program.
+	//
+	// When set to UProbe, the uprobe object will be populated with the eBPF
+	// program data associated with a UProbe program.
+	//
+	// When set to URetProbe, the uretprobe object will be populated with the eBPF
+	// program data associated with a URetProbe program.
+	//
+	// When set to XDP, the xdp object will be populated with the eBPF program data
+	// associated with a URetProbe program.
 	// +unionDiscriminator
 	// +required
-	// +kubebuilder:validation:Enum:="XDP";"TC";"TCX";"FEntry";"FExit";"KProbe";"KRetProbe";"UProbe";"URetProbe";"TracePoint"
+	// +kubebuilder:validation:Enum:="FEntry";"FExit";"KProbe";"KRetProbe";"TC";"TCX";"TracePoint";"UProbe";"URetProbe";"XDP"
 	Type EBPFProgType `json:"type"`
 
-	// xdp defines the desired state of the application's XdpPrograms.
+	// xdp contains the attachment data for an XDP program when type is set to XDP.
 	// +unionMember
 	// +optional
 	XDP *ClXdpProgramInfoState `json:"xdp,omitempty"`
 
-	// tc defines the desired state of the application's TcPrograms.
+	// tc contains the attachment data for a TC program when type is set to TC.
 	// +unionMember
 	// +optional
 	TC *ClTcProgramInfoState `json:"tc,omitempty"`
 
-	// tcx defines the desired state of the application's TcxPrograms.
+	// tcx contains the attachment data for a TCX program when type is set to TCX.
 	// +unionMember
 	// +optional
 	TCX *ClTcxProgramInfoState `json:"tcx,omitempty"`
 
-	// fentry defines the desired state of the application's FentryPrograms.
+	// fentry contains the attachment data for an FEntry program when type is set
+	// to FEntry.
 	// +unionMember
 	// +optional
 	FEntry *ClFentryProgramInfoState `json:"fentry,omitempty"`
 
-	// fexit defines the desired state of the application's FexitPrograms.
+	// fexit contains the attachment data for an FExit program when type is set to
+	// FExit.
 	// +unionMember
 	// +optional
 	FExit *ClFexitProgramInfoState `json:"fexit,omitempty"`
 
-	// kprobe defines the desired state of the application's KprobePrograms.
+	// kprobe contains the attachment data for a KProbe program when type is set to
+	// KProbe.
 	// +unionMember
 	// +optional
 	KProbe *ClKprobeProgramInfoState `json:"kprobe,omitempty"`
 
-	// kretprobe defines the desired state of the application's KprobePrograms.
+	// kretprobe contains the attachment data for a KRetProbe program when type is
+	// set to KRetProbe.
 	// +unionMember
 	// +optional
 	KRetProbe *ClKretprobeProgramInfoState `json:"kretprobe,omitempty"`
 
-	// uprobe defines the desired state of the application's UprobePrograms.
+	// uprobe contains the attachment data for a UProbe program when type is set to
+	// UProbe.
 	// +unionMember
 	// +optional
 	UProbe *ClUprobeProgramInfoState `json:"uprobe,omitempty"`
 
-	// uretprobe defines the desired state of the application's UretprobePrograms.
+	// uretprobe contains the attachment data for a URetProbe program when type is
+	// set to URetProbe.
 	// +unionMember
 	// +optional
 	URetProbe *ClUprobeProgramInfoState `json:"uretprobe,omitempty"`
 
-	// tracepoint defines the desired state of the application's TracepointPrograms.
+	// tracepoint contains the attachment data for a Tracepoint program when type
+	// is set to Tracepoint.
 	// +unionMember
 	// +optional
 	TracePoint *ClTracepointProgramInfoState `json:"tracepoint,omitempty"`
 }
 
-// ClBpfApplicationStateStatus reflects the status of the ClusterBpfApplicationState on the given node
 type ClBpfApplicationStateStatus struct {
-	// updateCount is the number of times the BpfApplicationState has been updated. Set to 1
-	// when the object is created, then it is incremented prior to each update.
-	// This allows us to verify that the API server has the updated object prior
-	// to starting a new Reconcile operation.
+	// UpdateCount tracks the number of times the BpfApplicationState object has
+	// been updated. The bpfman agent initializes it to 1 when it creates the
+	// object, and then increments it before each subsequent update. It serves
+	// as a lightweight sequence number to verify that the API server is serving
+	// the most recent version of the object before beginning a new Reconcile
+	// operation.
 	UpdateCount int64 `json:"updateCount"`
-	// node is the name of the node for this BpfApplicationStateSpec.
+	// node is the name of the Kubernetes node for this ClusterBpfApplicationState.
 	Node string `json:"node"`
-	// appLoadStatus reflects the status of loading the bpf application on the
+	// appLoadStatus reflects the status of loading the eBPF application on the
 	// given node.
+	//
+	// NotLoaded is a temporary state that is assigned when a
+	// ClusterBpfApplicationState is created and the initial reconcile is being
+	// processed.
+	//
+	// LoadSuccess is returned if all the programs have been loaded with no errors.
+	//
+	// LoadError is returned if one or more programs encountered an error and were
+	// not loaded.
+	//
+	// NotSelected is returned if this application did not select to run on this
+	// Kubernetes node.
+	//
+	// UnloadSuccess is returned when all the programs were successfully unloaded.
+	//
+	// UnloadError is returned if one or more programs encountered an error when
+	// being unloaded.
 	AppLoadStatus AppLoadStatus `json:"appLoadStatus"`
-	// programs is a list of bpf programs contained in the parent application.
+	// programs is a list of eBPF programs contained in the parent
+	// ClusterBpfApplication instance. Each entry in the list contains the derived
+	// program attributes as well as the attach status for each program on the
+	// given Kubernetes node.
 	Programs []ClBpfApplicationProgramState `json:"programs,omitempty"`
-	// Conditions contains the overall status of the ClusterBpfApplicationState
-	// object on the given node.
+	// conditions contains the summary state of the ClusterBpfApplication for the
+	// given Kubernetes node. If one or more programs failed to load or attach to
+	// the designated attachment point, the condition will report the error. If
+	// more than one error has occurred, condition will contain the first error
+	// encountered.
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +listType=map
@@ -123,7 +186,10 @@ type ClBpfApplicationStateStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
 
-// ClusterBpfApplicationState contains the per-node state of a BpfApplication.
+// ClusterBpfApplicationState contains the state of a ClusterBpfApplication
+// instance for a given Kubernetes node. When a user creates a
+// ClusterBpfApplication instance, bpfman creates a ClusterBpfApplicationState
+// instance for each node in a Kubernetes cluster.
 // +kubebuilder:printcolumn:name="Node",type=string,JSONPath=".status.node"
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.conditions[0].reason`
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
@@ -131,6 +197,10 @@ type ClusterBpfApplicationState struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// status reflects the status of a ClusterBpfApplication instance for the given
+	// node. appLoadStatus and conditions provide an overall status for the given
+	// node, while each item in the programs list provides a per eBPF program
+	// status for the given node.
 	Status ClBpfApplicationStateStatus `json:"status,omitempty"`
 }
 

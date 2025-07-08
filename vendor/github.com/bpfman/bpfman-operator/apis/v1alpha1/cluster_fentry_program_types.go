@@ -17,19 +17,29 @@ limitations under the License.
 // All fields are required unless explicitly marked optional
 package v1alpha1
 
-// ClFentryProgramInfo defines the Fentry program details
 type ClFentryProgramInfo struct {
 	ClFentryLoadInfo `json:",inline"`
-	// Whether the program should be attached to the function.
+
+	// links is an optional field and is a flag to indicate if the FEntry program
+	// should be attached. The attachment point for a FEntry program is a Linux
+	// kernel function. Unlike other eBPF program types, an FEntry program must be
+	// provided with the target function at load time. The links field is optional,
+	// but unlike other program types where it represents a list of attachment
+	// points, for FEntry programs it contains at most one entry that determines
+	// whether the program should be attached to the specified function. To attach
+	// the program, add an entry to links with mode set to Attach. To detach it,
+	// remove the entry from links.
 	// +optional
 	// +kubebuilder:validation:MaxItems=1
 	Links []ClFentryAttachInfo `json:"links,omitempty"`
 }
 
-// ClFentryLoadInfo contains the program-specific load information for Fentry
-// programs
 type ClFentryLoadInfo struct {
-	// function is the name of the function to attach the Fentry program to.
+	// function is a required field and specifies the name of the Linux kernel
+	// function to attach the FEntry program. function must not be an empty string,
+	// must not exceed 64 characters in length, must start with alpha characters
+	// and must only contain alphanumeric characters.
+	// +required
 	// +kubebuilder:validation:Pattern="^[a-zA-Z][a-zA-Z0-9_]+."
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=64
@@ -39,20 +49,24 @@ type ClFentryLoadInfo struct {
 type AttachTypeAttach string
 
 const (
-	Attach  AttachTypeAttach = "Attach"
-	Dettach AttachTypeAttach = "Detach"
+	Attach AttachTypeAttach = "Attach"
 )
 
-// ClFentryAttachInfo indicates that the Fentry program should be attached to
-// the function identified in ClFentryLoadInfo. The only valid value for Attach
-// is true.
 type ClFentryAttachInfo struct {
-	// +kubebuilder:validation:Enum=Attach;Dettach;
+	// mode is a required field. When set to Attach, the FEntry program will
+	// attempt to be attached. To detach the FEntry program, remove the link entry.
+	// +required
+	// +kubebuilder:validation:Enum=Attach;
 	Mode AttachTypeAttach `json:"mode"`
 }
 
 type ClFentryProgramInfoState struct {
 	ClFentryLoadInfo `json:",inline"`
+
+	// links is a list of attachment points for the FEntry program. Each entry in
+	// the list includes a linkStatus, which indicates if the attachment was
+	// successful or not on this node, a linkId, which is the kernel ID for the
+	// link if successfully attached, and other attachment specific data.
 	// +optional
 	// +kubebuilder:validation:MaxItems=1
 	Links []ClFentryAttachInfoState `json:"links,omitempty"`
