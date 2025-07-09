@@ -14,7 +14,7 @@ patches:
 images:
 - name: controller
   newName: quay.io/netobserv/network-observability-operator
-  newTag: 1.9.0-community
+  newTag: 1.9.1-community
 labels:
 - includeSelectors: true
   pairs:

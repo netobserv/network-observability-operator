@@ -17,15 +17,15 @@ REPO ?= $(IMAGE_REGISTRY)/$(IMAGE_ORG)
 # Component versions to use in bundle / release (do not use $VERSION for that)
 PREVIOUS_VERSION ?= v1.8.2-community
 
-BUNDLE_VERSION ?= 1.9.0-community
+BUNDLE_VERSION ?= 1.9.1-community
 #File based catalog
-FBC_VERSION ?= 1.9.0-community
+FBC_VERSION ?= 1.9.1-community
 # console plugin
-export PLG_VERSION ?= v1.9.0-community
+export PLG_VERSION ?= v1.9.1-community
 # flowlogs-pipeline
-export FLP_VERSION ?= v1.9.0-community
+export FLP_VERSION ?= v1.9.1-community
 # eBPF agent
-export BPF_VERSION ?= v1.9.0-community
+export BPF_VERSION ?= v1.9.1-community
 
 # Allows building bundles in Mac replacing BSD 'sed' command by GNU-compatible 'gsed'
 ifeq (,$(shell which gsed 2>/dev/null))

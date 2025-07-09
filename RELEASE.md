@@ -11,7 +11,7 @@ To release them, a tag in the format "v1.6.0-community" or "v1.6.0-crc0" must be
 E.g:
 
 ```bash
-version="v1.9.0-community"
+version="v1.9.1-community"
 git tag -a "$version" -m "$version"
 git push upstream --tags
 ```
@@ -44,10 +44,10 @@ Once all sub-components are released (or have a release candidate), we can proce
 Edit the [Makefile](./Makefile) to update `PREVIOUS_VERSION`, `BUNDLE_VERSION`, `PLG_VERSION`, `FLP_VERSION` and `BPF_VERSION`.
 
 ```bash
-make update-bundle helm-update
+make update-bundle
 
 # Set desired operator version - CAREFUL, no leading "v" here
-version="1.9.0-community"
+version="1.9.1-community"
 vv=v$version
 test_branch=test-$vv
 
@@ -150,15 +150,15 @@ helm delete my-netobserv -n netobserv
 
 ```bash
 helm package helm/
-mv netobserv-operator-1.9.0.tgz /path/to/netobserv.github.io/static/helm/
+mv netobserv-operator-1.9.1.tgz /path/to/netobserv.github.io/static/helm/
 cd /path/to/netobserv.github.io/static/
 helm repo index helm/ --url https://netobserv.io/static/helm/
 
 # Now, check there's nothing wrong in the generated files before commit
 colordiff <(yq '.entries.netobserv-operator[0]' helm/index.yaml) <(yq '.entries.netobserv-operator[1]' helm/index.yaml)
 
-git add helm/netobserv-operator-1.9.0.tgz helm/index.yaml
-git commit -m "Publish helm 1.9.0-community"
+git add helm/netobserv-operator-1.9.1.tgz helm/index.yaml
+git commit -m "Publish helm 1.9.1-community"
 git push upstream HEAD:main
 ```
 
