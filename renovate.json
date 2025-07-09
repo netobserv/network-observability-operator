@@ -18,6 +18,9 @@
       }
     ]
   },
+  "helmv3": {
+    "schedule": ["* * 7 */3 *"]
+  },
   "dockerfile": {
     "packageRules": [
       {
