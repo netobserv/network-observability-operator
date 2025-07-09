@@ -150,14 +150,15 @@ helm delete my-netobserv -n netobserv
 
 ```bash
 helm package helm/
-mv netobserv-operator-1.9.1.tgz /path/to/netobserv.github.io/static/helm/
-cd /path/to/netobserv.github.io/static/
-helm repo index helm/ --url https://netobserv.io/static/helm/
+index_path=/path/to/netobserv.github.io/static/helm
+mkdir -p $index_path/new && mv netobserv-operator-1.9.1.tgz $index_path/new && cd $index_path
+helm repo index --merge index.yaml new/ --url https://netobserv.io/static/helm/
+mv new/* . && rmdir new
 
-# Now, check there's nothing wrong in the generated files before commit
-colordiff <(yq '.entries.netobserv-operator[0]' helm/index.yaml) <(yq '.entries.netobserv-operator[1]' helm/index.yaml)
+# Now, check there's nothing wrong in the generated files before commit (comparing last 2 versions)
+colordiff <(yq '.entries.netobserv-operator[0]' index.yaml) <(yq '.entries.netobserv-operator[1]' index.yaml)
 
-git add helm/netobserv-operator-1.9.1.tgz helm/index.yaml
+git add netobserv-operator-1.9.1.tgz index.yaml
 git commit -m "Publish helm 1.9.1-community"
 git push upstream HEAD:main
 ```

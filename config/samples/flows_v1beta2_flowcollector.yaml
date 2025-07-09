@@ -206,9 +206,10 @@ spec:
     # or
     # - type: IPFIX
     #   ipfix:
-    #     targetHost: "ipfix-collector.ipfix.svc.cluster.local"
-    #     targetPort: 4739
-    #     transport: TCP or UDP (optional - defaults to TCP)
+    #     # see https://github.com/netobserv/flowlogs-pipeline/blob/main/contrib/kubernetes/ipfix-collector-stdout.yaml
+    #     targetHost: "flp-ipfix-stdout.netobserv.svc.cluster.local"
+    #     targetPort: 2055
+    #     transport: UDP
     # or
     # - type: OpenTelemetry
     #   openTelemetry:

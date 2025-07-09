@@ -55,7 +55,7 @@ helm install my-netobserv -n netobserv --create-namespace --set standaloneConsol
 # If you're in OpenShift, you can omit "--set standaloneConsole.enable=true" to use the Console plugin instead.
 ```
 
-You can now create a `FlowCollector` resource. Refer to the [Configuration section](#configuration) of this document. A short `FlowCollector` should work, using most default values, plus with the standalone console enabled:
+You can now create a `FlowCollector` resource ([full API reference](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowsnetobserviov1beta2)). A short `FlowCollector` should work, using most default values, plus with the standalone console enabled:
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -83,7 +83,7 @@ EOF
 A few remarks:
 - While the [web console](https://github.com/netobserv/network-observability-console-plugin) is primarily designed as a plugin for the OpenShift Console, it is still possible to deploy it as a standalone, which the dev team sometimes use for testing. This is why it is mentioned as "TEST_CONSOLE" here.
 - If you're in OpenShift, you should omit "TEST_CONSOLE: true" to use the Console plugin instead, which offers a better / more integrated experience.
-- You can change the Prometheus and Loki URLs depending on your installation. This example works if you use the "standalone" installation described above, with `install.loki=true` and `install.prom=true`. Prometheus and Loki configuration options are documented [here](./docs/FlowCollector.md).
+- You can change the Prometheus and Loki URLs depending on your installation. This example works if you use the "standalone" installation described above, with `install.loki=true` and `install.prom=true`. Check more configuration options for [Prometheus](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecprometheus-1) and [Loki](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecloki-1).
 
 To view the test console, you can port-forward 9001:
 
