@@ -19,34 +19,44 @@ package v1alpha1
 
 // ClKprobeProgramInfo contains the information for the kprobe program
 type ClKprobeProgramInfo struct {
-	// The list of points to which the program should be attached.  The list items
-	// are optional and may be udated after the bpf program has been loaded
+	// links is an optional field and is the list of attachment points to which the
+	// KProbe program should be attached. The eBPF program is loaded in kernel
+	// memory when the BPF Application CRD is created and the selected Kubernetes
+	// nodes are active. The eBPF program will not be triggered until the program
+	// has also been attached to an attachment point described in this list. Items
+	// may be added or removed from the list at any point, causing the eBPF program
+	// to be attached or detached.
+	//
+	// The attachment point for a KProbe program is a Linux kernel function. By
+	// default, the eBPF program is triggered at the entry of the attachment point,
+	// but the attachment point can be adjusted using an optional offset.
 	// +optional
 	Links []ClKprobeAttachInfo `json:"links,omitempty"`
 }
 
 type ClKprobeAttachInfo struct {
-	// function to attach the kprobe to.
+	// function is a required field and specifies the name of the Linux kernel
+	// function to attach the KProbe program. function must not be an empty string,
+	// must not exceed 64 characters in length, must start with alpha characters
+	// and must only contain alphanumeric characters.
+	// +required
 	// +kubebuilder:validation:Pattern="^[a-zA-Z][a-zA-Z0-9_]+."
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=64
 	Function string `json:"function"`
 
-	// offset added to the address of the function for kprobe.
-	// The offset must be zero for kretprobes.
-	// TODO: Add a webhook to enforce kretprobe offset=0.
-	// See: https://github.com/bpfman/bpfman-operator/issues/403
+	// offset is an optional field and the value is added to the address of the
+	// attachment point function. If not provided, offset defaults to 0.
 	// +optional
 	// +kubebuilder:default:=0
 	Offset uint64 `json:"offset"`
 }
 
 type ClKprobeProgramInfoState struct {
-	// List of attach points for the BPF program on the given node. Each entry
-	// in *AttachInfoState represents a specific, unique attach point that is
-	// derived from *AttachInfo by fully expanding any selectors.  Each entry
-	// also contains information about the attach point required by the
-	// reconciler
+	// links is a list of attachment points for the KProbe program. Each entry in
+	// the list includes a linkStatus, which indicates if the attachment was
+	// successful or not on this node, a linkId, which is the kernel ID for the
+	// link if successfully attached, and other attachment specific data.
 	// +optional
 	Links []ClKprobeAttachInfoState `json:"links,omitempty"`
 }
@@ -54,9 +64,14 @@ type ClKprobeProgramInfoState struct {
 type ClKprobeAttachInfoState struct {
 	AttachInfoStateCommon `json:",inline"`
 
-	// Function to attach the kprobe to.
+	// function is the provisioned name of the Linux kernel function the KProbe
+	// program should be attached.
+	// +required
 	Function string `json:"function"`
 
-	// Offset added to the address of the function for kprobe.
+	// offset is the provisioned offset, whose value is added to the address of the
+	// attachment point function.
+	// +optional
+	// +kubebuilder:default:=0
 	Offset uint64 `json:"offset"`
 }

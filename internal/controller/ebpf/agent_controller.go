@@ -483,37 +483,37 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 
 func mapFlowFilterRuleToFilter(rule *flowslatest.EBPFFlowFilterRule) ebpfconfig.FlowFilter {
 	f := ebpfconfig.FlowFilter{
-		FilterIPCIDR:    rule.CIDR,
-		FilterAction:    rule.Action,
-		FilterDirection: rule.Direction,
-		FilterProtocol:  rule.Protocol,
+		IPCIDR:    rule.CIDR,
+		Action:    rule.Action,
+		Direction: rule.Direction,
+		Protocol:  rule.Protocol,
 	}
 
 	if rule.ICMPType != nil && *rule.ICMPType != 0 {
-		f.FilterICMPType = *rule.ICMPType
+		f.ICMPType = *rule.ICMPType
 	}
 	if rule.ICMPCode != nil && *rule.ICMPCode != 0 {
-		f.FilterICMPCode = *rule.ICMPCode
+		f.ICMPCode = *rule.ICMPCode
 	}
 
-	processPorts(rule.SourcePorts, &f.FilterSourcePort, &f.FilterSourcePorts, &f.FilterSourcePortRange)
-	processPorts(rule.DestPorts, &f.FilterDestinationPort, &f.FilterDestinationPorts, &f.FilterDestinationPortRange)
-	processPorts(rule.Ports, &f.FilterPort, &f.FilterPorts, &f.FilterPortRange)
+	processPorts(rule.SourcePorts, &f.SourcePort, &f.SourcePorts, &f.SourcePortRange)
+	processPorts(rule.DestPorts, &f.DestinationPort, &f.DestinationPorts, &f.DestinationPortRange)
+	processPorts(rule.Ports, &f.Port, &f.Ports, &f.PortRange)
 
 	if rule.PeerIP != "" {
-		f.FilterPeerIP = rule.PeerIP
+		f.PeerIP = rule.PeerIP
 	}
 	if rule.PeerCIDR != "" {
-		f.FilterPeerCIDR = rule.PeerCIDR
+		f.PeerCIDR = rule.PeerCIDR
 	}
 	if rule.TCPFlags != "" {
-		f.FilterTCPFlags = rule.TCPFlags
+		f.TCPFlags = rule.TCPFlags
 	}
 	if rule.PktDrops != nil && *rule.PktDrops {
-		f.FilterDrops = *rule.PktDrops
+		f.Drops = *rule.PktDrops
 	}
 	if rule.Sampling != nil && *rule.Sampling != 0 {
-		f.FilterSample = *rule.Sampling
+		f.Sample = *rule.Sampling
 	}
 
 	return f
@@ -521,37 +521,37 @@ func mapFlowFilterRuleToFilter(rule *flowslatest.EBPFFlowFilterRule) ebpfconfig.
 
 func mapFlowFilterToFilter(filter *flowslatest.EBPFFlowFilter) ebpfconfig.FlowFilter {
 	f := ebpfconfig.FlowFilter{
-		FilterIPCIDR:    filter.CIDR,
-		FilterAction:    filter.Action,
-		FilterDirection: filter.Direction,
-		FilterProtocol:  filter.Protocol,
+		IPCIDR:    filter.CIDR,
+		Action:    filter.Action,
+		Direction: filter.Direction,
+		Protocol:  filter.Protocol,
 	}
 
 	if filter.ICMPType != nil && *filter.ICMPType != 0 {
-		f.FilterICMPType = *filter.ICMPType
+		f.ICMPType = *filter.ICMPType
 	}
 	if filter.ICMPCode != nil && *filter.ICMPCode != 0 {
-		f.FilterICMPCode = *filter.ICMPCode
+		f.ICMPCode = *filter.ICMPCode
 	}
 
-	processPorts(filter.SourcePorts, &f.FilterSourcePort, &f.FilterSourcePorts, &f.FilterSourcePortRange)
-	processPorts(filter.DestPorts, &f.FilterDestinationPort, &f.FilterDestinationPorts, &f.FilterDestinationPortRange)
-	processPorts(filter.Ports, &f.FilterPort, &f.FilterPorts, &f.FilterPortRange)
+	processPorts(filter.SourcePorts, &f.SourcePort, &f.SourcePorts, &f.SourcePortRange)
+	processPorts(filter.DestPorts, &f.DestinationPort, &f.DestinationPorts, &f.DestinationPortRange)
+	processPorts(filter.Ports, &f.Port, &f.Ports, &f.PortRange)
 
 	if filter.PeerIP != "" {
-		f.FilterPeerIP = filter.PeerIP
+		f.PeerIP = filter.PeerIP
 	}
 	if filter.PeerCIDR != "" {
-		f.FilterPeerCIDR = filter.PeerCIDR
+		f.PeerCIDR = filter.PeerCIDR
 	}
 	if filter.TCPFlags != "" {
-		f.FilterTCPFlags = filter.TCPFlags
+		f.TCPFlags = filter.TCPFlags
 	}
 	if filter.PktDrops != nil && *filter.PktDrops {
-		f.FilterDrops = *filter.PktDrops
+		f.Drops = *filter.PktDrops
 	}
 	if filter.Sampling != nil && *filter.Sampling != 0 {
-		f.FilterSample = *filter.Sampling
+		f.Sample = *filter.Sampling
 	}
 
 	return f

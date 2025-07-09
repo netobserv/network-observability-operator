@@ -19,14 +19,25 @@ package v1alpha1
 
 // ClKprobeProgramInfo contains the information for the kprobe program
 type ClKretprobeProgramInfo struct {
-	// The list of points to which the program should be attached.  The list items
-	// are optional and may be udated after the bpf program has been loaded
+	// links is an optional field and is the list of attachment points to which the
+	// KRetProbe program should be attached. The eBPF program is loaded in kernel
+	// memory when the BPF Application CRD is created and the selected Kubernetes
+	// nodes are active. The eBPF program will not be triggered until the program
+	// has also been attached to an attachment point described in this list. Items
+	// may be added or removed from the list at any point, causing the eBPF program
+	// to be attached or detached.
+	//
+	// The attachment point for a KRetProbe program is a Linux kernel function.
 	// +optional
 	Links []ClKretprobeAttachInfo `json:"links,omitempty"`
 }
 
 type ClKretprobeAttachInfo struct {
-	// function to attach the kprobe to.
+	// function is a required field and specifies the name of the Linux kernel
+	// function to attach the KRetProbe program. function must not be an empty
+	// string, must not exceed 64 characters in length, must start with alpha
+	// characters and must only contain alphanumeric characters.
+	// +required
 	// +kubebuilder:validation:Pattern="^[a-zA-Z][a-zA-Z0-9_]+."
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=64
@@ -34,11 +45,10 @@ type ClKretprobeAttachInfo struct {
 }
 
 type ClKretprobeProgramInfoState struct {
-	// List of attach points for the BPF program on the given node. Each entry
-	// in *AttachInfoState represents a specific, unique attach point that is
-	// derived from *AttachInfo by fully expanding any selectors.  Each entry
-	// also contains information about the attach point required by the
-	// reconciler
+	// links is a list of attachment points for the KRetProbe program. Each entry
+	// in the list includes a linkStatus, which indicates if the attachment was
+	// successful or not on this node, a linkId, which is the kernel ID for the
+	// link if successfully attached, and other attachment specific data.
 	// +optional
 	Links []ClKretprobeAttachInfoState `json:"links,omitempty"`
 }
@@ -46,6 +56,7 @@ type ClKretprobeProgramInfoState struct {
 type ClKretprobeAttachInfoState struct {
 	AttachInfoStateCommon `json:",inline"`
 
-	// Function to attach the kprobe to.
+	// function is the provisioned name of the Linux kernel function the KRetProbe
+	// program should be attached.
 	Function string `json:"function"`
 }

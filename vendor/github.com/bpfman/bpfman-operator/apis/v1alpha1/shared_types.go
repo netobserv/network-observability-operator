@@ -21,71 +21,92 @@ import (
 )
 
 type InterfaceDiscovery struct {
-	// interfaceAutoDiscovery when enabled, the agent process monitors the creation and deletion of interfaces,
-	// automatically attaching eBPF hooks to newly discovered interfaces in both directions.
-	//+kubebuilder:default:=false
+	// interfaceAutoDiscovery is an optional field. When enabled, the agent
+	// monitors the creation and deletion of interfaces and automatically
+	// attached eBPF programs to the newly discovered interfaces.
+	// CAUTION: This has the potential to attach a given eBPF program to a large
+	// number of interfaces. Use with caution.
 	// +optional
+	// +kubebuilder:default:=false
 	InterfaceAutoDiscovery *bool `json:"interfaceAutoDiscovery,omitempty"`
 
-	// excludeInterfaces contains the interface names that are excluded from interface discovery
-	// it is matched as a case-sensitive string.
-	//+kubebuilder:default:={"lo"}
-	//+optional
+	// excludeInterfaces is an optional field that contains a list of interface
+	// names that are excluded from interface discovery. The interface names in
+	// the list are case-sensitive. By default, the list contains the loopback
+	// interface, "lo". This field is only taken into consideration if
+	// interfaceAutoDiscovery is set to true.
+	// +optional
+	// +kubebuilder:default:={"lo"}
 	ExcludeInterfaces []string `json:"excludeInterfaces,omitempty"`
 
-	// allowedInterfaces contains the interface names. If empty, the agent
-	// fetches all the interfaces in the system, excepting the ones listed in `excludeInterfaces`.
-	// An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
-	// Otherwise, it is matched as a case-sensitive string.
-	//+optional
+	// allowedInterfaces is an optional field that contains a list of interface
+	// names that are allowed to be discovered. If empty, the agent will fetch all
+	// the interfaces in the system, excepting the ones listed in
+	// excludeInterfaces. if non-empty, only entries in the list will be considered
+	// for discovery. If an entry enclosed by slashes, such as `/br-/` or
+	// `/veth*/`, then the entry is considered as a regular expression for
+	// matching. Otherwise, the interface names in the list are case-sensitive.
+	// This field is only taken into consideration if interfaceAutoDiscovery is set
+	// to true.
+	// +optional
 	AllowedInterfaces []string `json:"allowedInterfaces,omitempty"`
 }
 
-// InterfaceSelector defines interface to attach to.
+// InterfaceSelector describes the set of interfaces to attach a program to.
 // +kubebuilder:validation:MaxProperties=1
 // +kubebuilder:validation:MinProperties=1
 type InterfaceSelector struct {
-	// discoveryConfig allow configuring interface discovery functionality,
+	// interfacesDiscoveryConfig is an optional field that is used to control if
+	// and how to automatically discover interfaces. If the agent should
+	// automatically discover and attach eBPF programs to interfaces, use the
+	// fields under interfacesDiscoveryConfig to control what is allow and excluded
+	// from discovery.
 	// +optional
 	InterfacesDiscoveryConfig *InterfaceDiscovery `json:"interfacesDiscoveryConfig,omitempty"`
 
-	// interfaces refers to a list of network interfaces to attach the BPF
-	// program to.
+	// interfaces is an optional field and is a list of network interface names to
+	// attach the eBPF program. The interface names in the list are case-sensitive.
 	// +optional
 	Interfaces []string `json:"interfaces,omitempty"`
 
-	// primaryNodeInterface to attach BPF program to the primary interface on the node. Only 'true' accepted.
+	// primaryNodeInterface is and optional field and indicates to attach the eBPF
+	// program to the primary interface on the Kubernetes node. Only 'true' is
+	// accepted.
 	// +optional
 	PrimaryNodeInterface *bool `json:"primaryNodeInterface,omitempty"`
 }
 
-// ClContainerSelector identifies a set of containers. For example, this can be
-// used to identify a set of containers in which to attach uprobes.
+// ClContainerSelector identifies a set of containers.
 type ClContainerSelector struct {
-	// namespaces indicate the target namespaces.
+	// namespace is an optional field and indicates the target Kubernetes
+	// namespace. If not provided, all Kubernetes namespaces are included.
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
-	// pods indicate the target pods. This field must be specified, to select all pods use
-	// standard metav1.LabelSelector semantics and make it empty.
+	// pods is a required field and indicates the target pods. To select all pods
+	// use the standard metav1.LabelSelector semantics and make it empty.
+	// +required
 	Pods metav1.LabelSelector `json:"pods"`
 
-	// containerNames indicate the Name(s) of container(s).  If none are specified, all containers in the
-	// pod are selected.
+	// containerNames is an optional field and is a list of container names in a
+	// pod to attach the eBPF program. If no names are specified, all containers
+	// in the pod are selected.
 	// +optional
 	ContainerNames []string `json:"containerNames,omitempty"`
 }
 
-// ContainerSelector identifies a set of containers. It is different from ContainerSelector
+// ContainerSelector identifies a set of containers. It is different from ClContainerSelector
 // in that "Namespace" was removed. Namespace scoped programs can only attach to the namespace
-// they are created in, so namespace at this level doesn't apply.
+// they are created in.
 type ContainerSelector struct {
-	// pods indicate the target pods. This field must be specified, to select all pods use
-	// standard metav1.LabelSelector semantics and make it empty.
+	// pods is a required field and indicates the target pods. To select all pods
+	// use the standard metav1.LabelSelector semantics and make it empty.
+	// +required
 	Pods metav1.LabelSelector `json:"pods"`
 
-	// containerNames indicate the name(s) of container(s).  If none are specified, all containers in the
-	// pod are selected.
+	// containerNames is an optional field and is a list of container names in a
+	// pod to attach the eBPF program. If no names are  specified, all containers
+	// in the pod are selected.
 	// +optional
 	ContainerNames []string `json:"containerNames,omitempty"`
 }
@@ -93,53 +114,65 @@ type ContainerSelector struct {
 // ClNetworkNamespaceSelector identifies a network namespace for network-related
 // program types in the cluster-scoped ClusterBpfApplication object.
 type ClNetworkNamespaceSelector struct {
-	// Target namespace.
+	// namespace is an optional field and indicates the target network namespace.
+	// If not provided, the default network namespace is used.
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
-	// Target pods. This field must be specified, to select all pods use
-	// standard metav1.LabelSelector semantics and make it empty.
+	// pods is a required field and indicates the target pods. To select all pods
+	// use the standard metav1.LabelSelector semantics and make it empty.
+	// +required
 	Pods metav1.LabelSelector `json:"pods"`
 }
 
 // NetworkNamespaceSelector identifies a network namespace for network-related
 // program types in the namespace-scoped BpfApplication object.
 type NetworkNamespaceSelector struct {
-	// Target pods. This field must be specified, to select all pods use
-	// standard metav1.LabelSelector semantics and make it empty.
+	// pods is a required field and indicates the target pods. To select all pods
+	// use the standard metav1.LabelSelector semantics and make it empty.
+	// +required
 	Pods metav1.LabelSelector `json:"pods"`
 }
 
 // BpfAppCommon defines the common attributes for all BpfApp programs
 type BpfAppCommon struct {
-	// nodeSelector allows the user to specify which nodes to deploy the
-	// bpf program to. This field must be specified, to select all nodes
-	// use standard metav1.LabelSelector semantics and make it empty.
+	// nodeSelector is a required field and allows the user to specify which
+	// Kubernetes nodes to deploy the eBPF programs. To select all nodes use
+	// standard metav1.LabelSelector semantics and make it empty.
+	// +required
 	NodeSelector metav1.LabelSelector `json:"nodeSelector"`
 
-	// globalData allows the user to set global variables when the program is loaded
-	// with an array of raw bytes. This is a very low level primitive. The caller
-	// is responsible for formatting the byte string appropriately considering
-	// such things as size, endianness, alignment and packing of data structures.
+	// globalData is an optional field that allows the user to set global variables
+	// when the program is loaded. This allows the same compiled bytecode to be
+	// deployed by different BPF Applications to behave differently based on
+	// globalData configuration values.  It uses an array of raw bytes. This is a
+	// very low level primitive. The caller is responsible for formatting the byte
+	// string appropriately considering such things as size, endianness, alignment
+	// and packing of data structures.
 	// +optional
 	GlobalData map[string][]byte `json:"globalData,omitempty"`
 
-	// bytecode configures where the bpf program's bytecode should be loaded
-	// from.
+	// bytecode is a required field and configures where the eBPF program's
+	// bytecode should be loaded from. The image must contain one or more
+	// eBPF programs.
+	// +required
 	ByteCode ByteCodeSelector `json:"byteCode"`
 
-	// TODO: need to work out how MapOwnerSelector will work after load-attach-split
-	// mapOwnerSelector is used to select the loaded eBPF program this eBPF program
-	// will share a map with.
+	// mapOwnerSelector is an optional field used to share maps across
+	// applications. eBPF programs loaded with the same ClusterBpfApplication or
+	// BpfApplication instance do not need to use this field. This label selector
+	// allows maps from a different ClusterBpfApplication or BpfApplication
+	// instance to be used by this instance.
+	// TODO: mapOwnerSelector is currently not supported due to recent code rework.
 	// +optional
 	MapOwnerSelector *metav1.LabelSelector `json:"mapOwnerSelector,omitempty"`
 }
 
-// BpfAppStatus reflects the status of a BpfApplication or BpfApplicationState object
+// status reflects the status of a BPF Application and indicates if all the
+// eBPF programs for a given instance loaded successfully or not.
 type BpfAppStatus struct {
-	// For a BpfApplication object, Conditions contains the global cluster state
-	// for the object. For a BpfApplicationState object, Conditions contains the
-	// state of the BpfApplication object on the given node.
+	// conditions contains the summary state for all eBPF programs defined in the
+	// BPF Application instance for all the Kubernetes nodes in the cluster.
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +listType=map
@@ -151,8 +184,10 @@ type BpfAppStatus struct {
 // application program
 type AttachInfoStateCommon struct {
 	// shouldAttach reflects whether the attachment should exist.
+	// +required
 	ShouldAttach bool `json:"shouldAttach"`
 	// uuid is an Unique identifier for the attach point assigned by bpfman agent.
+	// +required
 	UUID string `json:"uuid"`
 	// linkId is an identifier for the link assigned by bpfman. This field is
 	// empty until the program is successfully attached and bpfman returns the
@@ -161,15 +196,18 @@ type AttachInfoStateCommon struct {
 	LinkId *uint32 `json:"linkId,omitempty"`
 	// linkStatus reflects whether the attachment has been reconciled
 	// successfully, and if not, why.
+	// +required
 	LinkStatus LinkStatus `json:"linkStatus"`
 }
 
 type BpfProgramStateCommon struct {
-	// name is the name of the function that is the entry point for the BPF
+	// name is the name of the function that is the entry point for the eBPF
 	// program
+	// +required
 	Name string `json:"name"`
 	// programLinkStatus reflects whether all links requested for the program
 	// are in the correct state.
+	// +required
 	ProgramLinkStatus ProgramLinkStatus `json:"programLinkStatus"`
 	// programId is the id of the program in the kernel.  Not set until the
 	// program is loaded.
@@ -190,43 +228,65 @@ const (
 	PullIfNotPresent PullPolicy = "IfNotPresent"
 )
 
-// ByteCodeSelector defines the various ways to reference bpf bytecode objects.
+// ByteCodeSelector defines the various ways to reference BPF bytecode objects.
+// +kubebuilder:validation:MaxProperties=1
+// +kubebuilder:validation:MinProperties=1
 type ByteCodeSelector struct {
-	// image used to specify a bytecode container image.
+	// image is an optional field and used to specify details on how to retrieve an
+	// eBPF program packaged in a OCI container image from a given registry.
 	// +optional
 	Image *ByteCodeImage `json:"image,omitempty"`
 
-	// path is used to specify a bytecode object via filepath.
-	// +kubebuilder:validation:Pattern=`^(/[^/\0]+)+/?$`
+	// path is an optional field and used to specify a bytecode object file via
+	// filepath on a Kubernetes node.
 	// +optional
+	// +kubebuilder:validation:Pattern=`^(/[^/\0]+)+/?$`
 	Path *string `json:"path,omitempty"`
 }
 
 // ByteCodeImage defines how to specify a bytecode container image.
 type ByteCodeImage struct {
-	// url is a valid container image URL used to reference a remote bytecode image.
+	// url is a required field and is a valid container image URL used to reference
+	// a remote bytecode image. url must not be an empty string, must not exceed
+	// 525 characters in length and must be a valid URL.
+	// +required
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MaxLength:=525
 	// +kubebuilder:validation:Pattern=`[a-zA-Z0-9_][a-zA-Z0-9._-]{0,127}`
 	Url string `json:"url"`
 
-	// pullPolicy describes a policy for if/when to pull a bytecode image. Defaults to IfNotPresent.
-	// +kubebuilder:default:=IfNotPresent
+	// pullPolicy is an optional field that describes a policy for if/when to pull
+	// a bytecode image. Defaults to IfNotPresent. Allowed values are:
+	//   Always, IfNotPresent and Never
+	//
+	// When set to Always, the given image will be pulled even if the image is
+	// already present on the node.
+	//
+	// When set to IfNotPresent, the given image will only be pulled if it is not
+	// present on the node.
+	//
+	// When set to Never, the given image will never be pulled and must be
+	// loaded on the node by some other means.
 	// +optional
+	// +kubebuilder:default:=IfNotPresent
 	ImagePullPolicy PullPolicy `json:"imagePullPolicy,omitempty"`
 
-	// imagePullSecret is the name of the secret bpfman should use to get remote image
-	// repository secrets.
+	// imagePullSecret is an optional field and indicates the secret which contains
+	// the credentials to access the image repository.
 	// +optional
 	ImagePullSecret *ImagePullSecretSelector `json:"imagePullSecret,omitempty"`
 }
 
 // ImagePullSecretSelector defines the name and namespace of an image pull secret.
 type ImagePullSecretSelector struct {
-	// name of the secret which contains the credentials to access the image repository.
+	// name is a required field and is the name of the secret which contains the
+	// credentials to access the image repository.
+	// +required
 	Name string `json:"name"`
 
-	// namespace of the secret which contains the credentials to access the image repository.
+	// namespace is a required field and is the namespace of the secret which
+	// contains the credentials to access the image repository.
+	// +required
 	Namespace string `json:"namespace"`
 }
 
@@ -243,7 +303,7 @@ const (
 	// the Bpf Application on all nodes in the cluster.
 	BpfAppCondPending BpfApplicationConditionType = "Pending"
 
-	// BpfAppCondSuccess indicates that the BPF application has been
+	// BpfAppCondSuccess indicates that the BPF Application has been
 	// successfully loaded and attached as requested on all nodes in the
 	// cluster.
 	BpfAppCondSuccess BpfApplicationConditionType = "Success"
@@ -327,7 +387,7 @@ const (
 	// reconciling the Bpf Application on the given node.
 	BpfAppStateCondPending BpfApplicationStateConditionType = "Pending"
 
-	// BpfAppStateCondSuccess indicates that the BPF application has been
+	// BpfAppStateCondSuccess indicates that the BPF Application has been
 	// successfully loaded and attached as requested on the given node.
 	BpfAppStateCondSuccess BpfApplicationStateConditionType = "Success"
 
@@ -415,7 +475,7 @@ const (
 	AppUnloadError AppLoadStatus = "UnloadError"
 	// The app is not selected to run on the node
 	NotSelected AppLoadStatus = "NotSelected"
-	// The app is not selected to run on the node
+	// The program list has changed which is not allowed
 	ProgListChangedError AppLoadStatus = "ProgramListChangedError"
 )
 
